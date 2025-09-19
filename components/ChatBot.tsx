@@ -8,9 +8,10 @@ interface ChatBotProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: any;
+  embedded?: boolean; // New prop to hide header when embedded
 }
 
-const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser }) => {
+const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedded = false }) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<{
     id: string;
@@ -102,29 +103,31 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50">
-      {/* Header */}
-      <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full border-2 border-white flex-shrink-0 overflow-hidden bg-white">
-            <img
-              src="/DiceBotIcon.svg"
-              alt="Dice-Bot"
-              className="w-full h-full object-cover"
-            />
+    <div className={embedded ? "h-full bg-white flex flex-col" : "fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50"}>
+      {/* Header - only show if not embedded */}
+      {!embedded && (
+        <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-full border-2 border-white flex-shrink-0 overflow-hidden bg-white">
+              <img
+                src="/DiceBotIcon.svg"
+                alt="Dice-Bot"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <span className="font-semibold">Dice-Bot</span>
+              <p className="text-xs text-yellow-100">AI Assistant - Always online</p>
+            </div>
           </div>
-          <div>
-            <span className="font-semibold">Dice-Bot</span>
-            <p className="text-xs text-yellow-100">AI Assistant - Always online</p>
-          </div>
+          <button
+            onClick={onClose}
+            className="text-white hover:text-gray-200 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="text-white hover:text-gray-200 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

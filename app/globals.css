@@ -2,6 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes subtleBounce {
+  0%, 85%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  5% {
+    transform: translateY(-4px) scale(1.03);
+  }
+  10% {
+    transform: translateY(0) scale(1);
+  }
+  15% {
+    transform: translateY(-3px) scale(1.02);
+  }
+  20% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tooltip-bounce {
+  animation: bounceIn 0.5s ease-out forwards, subtleBounce 4s ease-in-out infinite 3s;
+}
+
 @layer base {
   html {
     font-family: system-ui, sans-serif;
