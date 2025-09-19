@@ -32,7 +32,7 @@ export default function BackToTopButton() {
     <button
       onClick={scrollToTop}
       className={`fixed bottom-4 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-40 hover:scale-110 ${
-        isChatOpen ? 'right-[22rem]' : 'right-20'
+        isChatOpen ? 'right-[26rem]' : 'right-20'
       }`}
       style={{ backgroundColor: '#fbae17' }}
       onMouseEnter={(e) => e.target.style.backgroundColor = '#e09915'}
