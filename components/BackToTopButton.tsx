@@ -6,7 +6,7 @@ import { useChatState } from '@/contexts/ChatStateContext';
 
 export default function BackToTopButton() {
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const { isChatOpen, selectedChat } = useChatState();
+  const { isChatOpen } = useChatState();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,11 +31,12 @@ export default function BackToTopButton() {
   return (
     <button
       onClick={scrollToTop}
-      className={`fixed bottom-4 bg-primary-500 hover:bg-primary-600 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-40 hover:scale-110 ${
-        !isChatOpen ? 'right-20' : // Next to chat button when closed
-        isChatOpen && !selectedChat ? 'right-[22rem]' : // Previous position when chat menu open
-        'right-[26rem]' // Further left when specific chat window open
+      className={`fixed bottom-4 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-40 hover:scale-110 ${
+        isChatOpen ? 'right-[22rem]' : 'right-20'
       }`}
+      style={{ backgroundColor: '#fbae17' }}
+      onMouseEnter={(e) => e.target.style.backgroundColor = '#e09915'}
+      onMouseLeave={(e) => e.target.style.backgroundColor = '#fbae17'}
       aria-label="Back to top"
     >
       <ArrowUp className="w-6 h-6" />

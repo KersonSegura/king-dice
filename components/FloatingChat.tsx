@@ -11,7 +11,6 @@ import ChatBot from './ChatBot';
 export default function FloatingChat() {
   const { user, isAuthenticated } = useAuth();
   const { isChatOpen, setIsChatOpen, selectedChat, setSelectedChat } = useChatState();
-  const [isOpen, setIsOpen] = useState(false);
 
   if (!isAuthenticated || !user) {
     return null;
@@ -21,12 +20,9 @@ export default function FloatingChat() {
     <>
       {/* Floating Chat Button */}
       <div className="fixed bottom-4 right-4 z-50">
-        {!isOpen ? (
+        {!isChatOpen ? (
           <button
-            onClick={() => {
-              setIsOpen(true);
-              setIsChatOpen(true);
-            }}
+            onClick={() => setIsChatOpen(true)}
             className="relative text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 bg-blue-500 hover:bg-blue-600"
           >
             <MessageCircle className="w-6 h-6" />
@@ -40,7 +36,6 @@ export default function FloatingChat() {
               </h3>
               <button
                 onClick={() => {
-                  setIsOpen(false);
                   setIsChatOpen(false);
                   setSelectedChat(null);
                 }}
