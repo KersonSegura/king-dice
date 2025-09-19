@@ -1,0 +1,104 @@
+name: build native image
+
+on:
+  push:
+    branches: [ 'master', 'feature/**' ]
+    tags: [ 'v*.*.*' ]
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE: ${{ github.repository }}-native
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # build
+
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM version
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '24'
+          distribution: 'graalvm'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build artefacts
+        run: |
+          mvn --batch-mode native:compile -Pnative
+
+      # build image
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: dockerfiles/Dockerfile.native
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+
+      - name: Test image
+        run: |
+          DOCKER_PID=$(docker run -d -p 8080:80 --rm ${{ env.DOCKER_IMAGE }}:${{ github.sha }} 2>/dev/null)
+          sleep 2s
+          curl --fail http://localhost:8080/bgg-api/actuator/health
+          docker stop $DOCKER_PID
+
+      # deploy
+
+      - name: Login to Docker registry
+        if: github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        if: github.ref == 'refs/heads/master'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE }}
+
+      - name: Deploy image
+        if: github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: dockerfiles/Dockerfile.native
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    environment:
+      name: native-staging
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}/bgg-api/actuator/health
+
+    steps:
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: bgg-api-native-staging
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_NATIVE_STAGING }}
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE }}:master

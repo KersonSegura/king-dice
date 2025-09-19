@@ -1,0 +1,69 @@
+bgg:
+  web:
+    baseurl-bgs: https://boardgamegeek.com
+    baseurl-geekdo: https://api.geekdo.com
+  endpoints:
+    v1:
+      boardgame: ${bgg.web.baseurl-bgs}/xmlapi/boardgame
+      collection: ${bgg.web.baseurl-bgs}/xmlapi/collection
+      company: ${bgg.web.baseurl-bgs}/xmlapi/company
+      geeklist: ${bgg.web.baseurl-bgs}/xmlapi/geeklist
+      person: ${bgg.web.baseurl-bgs}/xmlapi/person
+      search: ${bgg.web.baseurl-bgs}/xmlapi/search
+      # /xmlapi/thread 302 redirects to /rss/thread
+      thread: ${bgg.web.baseurl-bgs}/xmlapi/thread
+    v2:
+      collection: ${bgg.web.baseurl-bgs}/xmlapi2/collection
+      company: ${bgg.web.baseurl-bgs}/xmlapi2/company
+      family: ${bgg.web.baseurl-bgs}/xmlapi2/family
+      forum: ${bgg.web.baseurl-bgs}/xmlapi2/forum
+      forumlist: ${bgg.web.baseurl-bgs}/xmlapi2/forumlist
+      guild: ${bgg.web.baseurl-bgs}/xmlapi2/guild
+      hot: ${bgg.web.baseurl-bgs}/xmlapi2/hot
+      person: ${bgg.web.baseurl-bgs}/xmlapi2/person
+      plays: ${bgg.web.baseurl-bgs}/xmlapi2/plays
+      search: ${bgg.web.baseurl-bgs}/xmlapi2/search
+      thing: ${bgg.web.baseurl-bgs}/xmlapi2/thing
+      thread: ${bgg.web.baseurl-bgs}/xmlapi2/thread
+      user: ${bgg.web.baseurl-bgs}/xmlapi2/user
+    v3:
+      geekaccount: ${bgg.web.baseurl-bgs}/geekaccount.php
+      geekcollection: ${bgg.web.baseurl-bgs}/geekcollection.php
+      geekplay: ${bgg.web.baseurl-bgs}/geekplay.php
+      geekpoll: ${bgg.web.baseurl-bgs}/geekpoll.php
+      geekpollitem: ${bgg.web.baseurl-bgs}/geekitempoll.php
+    v4:
+      articles: ${bgg.web.baseurl-geekdo}/api/articles
+      blogposts: ${bgg.web.baseurl-geekdo}/api/blogposts
+      blogs: ${bgg.web.baseurl-geekdo}/api/blogs
+      comments: ${bgg.web.baseurl-geekdo}/api/comments
+      fans: ${bgg.web.baseurl-geekdo}/api/fans
+      forums: ${bgg.web.baseurl-geekdo}/api/forums
+      geekitem: ${bgg.web.baseurl-geekdo}/api/geekitem
+      geekitems: ${bgg.web.baseurl-geekdo}/api/geekitems
+      geeklists: ${bgg.web.baseurl-geekdo}/api/geeklists
+      hotness: ${bgg.web.baseurl-geekdo}/api/hotness
+      listitems: ${bgg.web.baseurl-geekdo}/api/listitems
+      microbadges: ${bgg.web.baseurl-geekdo}/api/microbadges
+      subtypeinfo: ${bgg.web.baseurl-geekdo}/api/subtypeinfo
+      threads: ${bgg.web.baseurl-geekdo}/api/threads
+      users: ${bgg.web.baseurl-geekdo}/api/users
+    v5:
+      geekaccount: ${bgg.web.baseurl-bgs}/geekaccount
+      item: ${bgg.web.baseurl-bgs}/item
+      login: ${bgg.web.baseurl-bgs}/login/api/v1
+      search: ${bgg.web.baseurl-bgs}/search
+
+debug: false
+
+server:
+  port: 8080
+
+spring:
+  codec:
+    max-in-memory-size: 16MB
+  graphql:
+    graphiql:
+      enabled: true
+  webflux:
+    base-path: /bgg-api

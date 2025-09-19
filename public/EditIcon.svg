@@ -1,0 +1,60 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#linear-gradient);
+      }
+
+      .cls-2 {
+        fill: #cccecf;
+      }
+
+      .cls-3 {
+        fill: #4f5d73;
+      }
+
+      .cls-4 {
+        fill: #ffc99e;
+      }
+
+      .cls-5 {
+        fill: #fbae17;
+      }
+
+      .cls-6 {
+        fill: #c88030;
+      }
+
+      .cls-7 {
+        fill: #f27979;
+      }
+
+      .cls-8 {
+        fill: #313a48;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="108.6" y1="500" x2="608.0259" y2="500" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ccc"/>
+      <stop offset="0.2725" stop-color="#bcbcbc"/>
+      <stop offset="0.8054" stop-color="#919191"/>
+      <stop offset="1" stop-color="gray"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <rect class="cls-1" x="108.6" y="144.3482" width="499.4259" height="711.3036" rx="54.4"/>
+    <rect class="cls-2" x="108.6" y="144.3482" width="499.4259" height="711.3036" rx="54.4"/>
+    <rect class="cls-3" x="179.7864" y="268.7843" width="178.5266" height="34.7524"/>
+    <rect class="cls-3" x="179.7864" y="375.1435" width="328.4664" height="34.7524"/>
+    <rect class="cls-3" x="179.7864" y="464.5783" width="328.4664" height="34.7524"/>
+    <rect class="cls-3" x="179.7864" y="554.0131" width="328.4664" height="34.7524"/>
+    <rect class="cls-3" x="179.7864" y="643.4479" width="328.4664" height="34.7524"/>
+    <rect class="cls-3" x="179.7864" y="732.8827" width="328.4664" height="34.7524"/>
+    <polygon class="cls-4" points="309.337 524.173 259.521 775.777 511.756 726.591 491.577 545.823 309.337 524.173"/>
+    <path class="cls-5" d="M609.9177,223.5922,812.3366,426.011l-326.96,225.2252-100.7189-.4555q.175-49.6413.35-99.2826Q497.4628,387.5451,609.9177,223.5922Z"/>
+    <polyline class="cls-6" points="532.379 301.131 309.337 524.173 336.032 550.867 385.008 551.498 661.416 275.09 609.918 223.592 532.379 301.131"/>
+    <polyline class="cls-6" points="683.93 452.682 485.376 651.236 485.376 700.212 511.756 726.591 812.337 426.011 761.469 375.143 683.93 452.682"/>
+    <path class="cls-7" d="M608.0259,225.4839l64.7755-64.7754a55.241,55.241,0,0,1,78.1228,0L875.22,285.0044a55.2411,55.2411,0,0,1,0,78.1229L812.3366,426.011Z"/>
+    <rect class="cls-2" x="567.61" y="308.6889" width="286.2635" height="32.9961" transform="translate(438.1133 -407.3253) rotate(45)"/>
+    <polygon class="cls-8" points="275.71 694.014 341.727 759.747 259.521 775.777 275.71 694.014"/>
+  </g>
+</svg>

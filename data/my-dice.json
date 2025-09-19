@@ -1,0 +1,16 @@
+{
+  "users": {
+    "demo-user": {
+      "config": {
+        "background": "/dice/backgrounds/WhiteBackground.svg",
+        "dice": "/dice/dice/WhiteDice.svg",
+        "pattern": "/dice/patterns/1-2-3.svg",
+        "accessories": null,
+        "hat": null,
+        "item": null,
+        "companion": null
+      },
+      "updatedAt": "2025-08-29T20:55:44.586Z"
+    }
+  }
+}

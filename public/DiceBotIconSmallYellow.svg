@@ -1,0 +1,18 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fbae17;
+      }
+    </style>
+  </defs>
+  <g id="Dice-Bot">
+    <circle class="cls-1" cx="499.9999" cy="222.6834" r="54.1667"/>
+    <rect class="cls-1" x="435.5333" y="222.6834" width="128.9333" height="46.4" rx="11.3963"/>
+    <rect class="cls-1" x="728.3333" y="515.4834" width="128.9333" height="46.4" rx="23.2" transform="translate(1331.4834 -254.1166) rotate(90)"/>
+    <rect class="cls-1" x="142.7333" y="515.4834" width="128.9333" height="46.4" rx="23.2" transform="translate(745.8834 331.4834) rotate(90)"/>
+    <path class="cls-1" d="M757.8,831.4834H242.2a35,35,0,0,1-35-35v-515.6a35,35,0,0,1,35-35H757.8a35,35,0,0,1,35,35v515.6A35,35,0,0,1,757.8,831.4834Zm-20.4-81.6v-422.4a26.2,26.2,0,0,0-26.2-26.2H288.8a26.2,26.2,0,0,0-26.2,26.2v422.4a26.2,26.2,0,0,0,26.2,26.2H711.2A26.2,26.2,0,0,0,737.4,749.8834Z"/>
+    <rect class="cls-1" x="378.2" y="434.75" width="67.5773" height="168.4" rx="33.7886"/>
+    <rect class="cls-1" x="554.2227" y="434.75" width="67.5773" height="168.4" rx="33.7886"/>
+  </g>
+</svg>

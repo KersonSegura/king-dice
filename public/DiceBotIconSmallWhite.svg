@@ -1,0 +1,18 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <g id="Dice-Bot">
+    <circle class="cls-1" cx="499.9999" cy="99.6067" r="78.2066" transform="translate(76.014 382.7274) rotate(-45)"/>
+    <rect class="cls-1" x="406.9222" y="99.6066" width="186.1556" height="66.9929" rx="11.3963"/>
+    <rect class="cls-1" x="829.6706" y="522.3551" width="186.1556" height="66.9929" rx="23.2" transform="translate(1478.6 -366.8969) rotate(90)"/>
+    <rect class="cls-1" x="-15.8263" y="522.3551" width="186.1556" height="66.9929" rx="23.2" transform="translate(633.1031 478.6) rotate(90)"/>
+    <path class="cls-1" d="M887.7484,978.6H112.2516a35,35,0,0,1-35-35V168.1031a35,35,0,0,1,35-35H887.7484a35,35,0,0,1,35,35V943.6A35,35,0,0,1,887.7484,978.6ZM842.7612,872.4128V239.29a26.2,26.2,0,0,0-26.2-26.2H183.4388a26.2,26.2,0,0,0-26.2,26.2V872.4128a26.2,26.2,0,0,0,26.2,26.2H816.5612A26.2,26.2,0,0,0,842.7612,872.4128Z"/>
+    <rect class="cls-1" x="324.1436" y="405.7913" width="97.569" height="243.1381" rx="33.7886"/>
+    <rect class="cls-1" x="578.2875" y="405.7913" width="97.569" height="243.1381" rx="33.7886"/>
+  </g>
+</svg>

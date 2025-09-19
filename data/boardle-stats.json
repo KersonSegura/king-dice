@@ -1,0 +1,61 @@
+{
+  "user_1754498606845_aoutcys27": {
+    "gamesPlayed": 31,
+    "gamesWon": 22,
+    "currentStreak": 1,
+    "maxStreak": 11,
+    "guessDistribution": [
+      10,
+      6,
+      1,
+      3,
+      1,
+      1
+    ],
+    "gamesByMode": {
+      "title": {
+        "gamesPlayed": 15,
+        "gamesWon": 10,
+        "currentStreak": 1,
+        "maxStreak": 8,
+        "guessDistribution": [
+          1,
+          4,
+          0,
+          3,
+          1,
+          1
+        ]
+      },
+      "image": {
+        "gamesPlayed": 11,
+        "gamesWon": 7,
+        "currentStreak": 0,
+        "maxStreak": 6,
+        "guessDistribution": [
+          5,
+          1,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "card": {
+        "gamesPlayed": 5,
+        "gamesWon": 5,
+        "currentStreak": 5,
+        "maxStreak": 5,
+        "guessDistribution": [
+          4,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "lastPlayedDate": "2025-09-05T22:26:09.720Z"
+  }
+}

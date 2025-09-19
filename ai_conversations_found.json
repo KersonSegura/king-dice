@@ -1,0 +1,150 @@
+{
+  "totalFound": 20,
+  "searchPaths": [
+    "C:\\Users\\Kerson\\AppData\\Roaming\\Cursor",
+    "C:\\Users\\Kerson\\AppData\\Local\\Cursor",
+    "C:\\Users\\Kerson\\.cursor"
+  ],
+  "conversations": [
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\.aae19c05-9eac-48f7-a9d9-35e6c8a5b26f\\package.json",
+      "size": 306742,
+      "modified": "2025-09-18T20:38:01.692Z",
+      "pattern": "/message.*thread/i",
+      "preview": "{ \"name\": \"csharp\", \"publisher\": \"anysphere\", \"version\": \"1.0.1\", \"description\": \"Base language support for C#\", \"displayName\": \"C#\", \"author\": \"Anysphere\", \"icon\": \"images"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\.aae19c05-9eac-48f7-a9d9-35e6c8a5b26f\\package.nls.fr.json",
+      "size": 55153,
+      "modified": "2025-09-18T20:38:01.678Z",
+      "pattern": "/message.*thread/i",
+      "preview": "{ \"command.csharp.attachToProcess\": \"Attacher à un processus .NET 5+ ou .NET Core\", \"command.csharp.downloadDebugger\": \"Télécharger le débogueur .NET Core\", \"command.csharp.listProcess\": \"Proces"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\.aae19c05-9eac-48f7-a9d9-35e6c8a5b26f\\package.nls.json",
+      "size": 57634,
+      "modified": "2025-09-18T20:38:01.669Z",
+      "pattern": "/message.*thread/i",
+      "preview": "{ \"command.o.restart\": \"Restart OmniSharp\", \"command.o.pickProjectAndStart\": \"Select Project\", \"command.dotnet.openSolution\": \"Open Solution\", \"command.o.fixAll.solution\": \"Fix all occurrences"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\out\\client\\package.json",
+      "size": 39185,
+      "modified": "2025-08-19T18:10:40.841Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"name\":\"python\",\"displayName\":\"Python\",\"description\":\"Python language support with extension access points for IntelliSense (Pylance), Debugging (Python Debugger), linting, formatting, refactoring, u"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.cs.json",
+      "size": 18793,
+      "modified": "2025-08-19T18:10:39.874Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Přepněte inteligentní odesílání pro Python REPL. Inteligentní odesílání umožňuje odeslání nejmenšího spustitelného bloku kódu do REPL na Shift+Enter a odpoví"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.de.json",
+      "size": 19134,
+      "modified": "2025-08-19T18:10:39.866Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Schalten Sie Smart Send für die Python-REPL um. Smart Send ermöglicht mit UMSCHALT+EINGABETASTE das Senden des kleinsten ausführbaren Codeblocks an die REPL "
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.es.json",
+      "size": 18925,
+      "modified": "2025-08-19T18:10:39.859Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Alterne el envío inteligente para la REPL de Python. El envío inteligente permite enviar el bloque de código más pequeño que se pueda ejecutar a REPL en Mayú"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.fr.json",
+      "size": 19407,
+      "modified": "2025-08-19T18:10:39.840Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Activer/désactiver Smart Send pour Python REPL. Smart Send permet d’envoyer le plus petit bloc de code exécutable au REPL sur Maj+Entrée et déplace le curseu"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.it.json",
+      "size": 18561,
+      "modified": "2025-08-19T18:10:39.835Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Attiva/Disattiva Invio intelligente per Python REPL. Invio intelligente consente di inviare il blocco di codice più piccolo eseguibile a REPL in MAIUSC+INVIO"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.ja.json",
+      "size": 21176,
+      "modified": "2025-08-19T18:10:39.829Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Python REPL 用の Smart Send を切り替えます。Smart Send を使用すると、コードの実行可能な最小ブロックを Shift+Enter の REPL に送信し、それに応じてカーソルを移動できます。\",\"python.REPL.provideVariables.description\":\""
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.json",
+      "size": 18832,
+      "modified": "2025-08-19T18:10:39.822Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.command.python.startTerminalREPL.title\":\"Start Terminal REPL\",\"python.command.python.startNativeREPL.title\":\"Start Native Python REPL\",\"python.command.python.createEnvironment.title\":\"Create "
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.ko.json",
+      "size": 18621,
+      "modified": "2025-08-19T18:10:39.818Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Python REPL의 스마트 보내기를 토글합니다. 스마트 보내기를 사용하면 Shift+Enter로 실행 가능한 가장 작은 코드 블록을 REPL로 보낼 수 있으며 그에 따라 커서를 이동합니다.\",\"python.REPL.provideVariables.description\":\"네이티브"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.pl.json",
+      "size": 19373,
+      "modified": "2025-08-19T18:10:39.809Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Przełącz inteligentne wysyłanie dla okna REPL języka Python. Inteligentne wysyłanie umożliwia wysyłanie najmniejszego możliwego do uruchomienia bloku kodu do"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.pt-br.json",
+      "size": 18355,
+      "modified": "2025-08-19T18:10:39.799Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Alterne o Envio Inteligente para o REPL do Python. O Envio Inteligente permite enviar o menor bloco de código executável para o REPL em Shift + Enter e move "
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.qps-ploc.json",
+      "size": 21521,
+      "modified": "2025-08-19T18:10:39.788Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Tøgglë §mært §ëñð før thë Pÿthøñ RËP£. §mært §ëñð ëñæþlës sëñðïñg thë smællëst rµññæþlë þløçk øf çøðë tø thë RËP£ øñ §hïft+Ëñtër æñð møvës thë çµrsør æççørðï"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.ru.json",
+      "size": 25266,
+      "modified": "2025-08-19T18:10:39.780Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Переключение интеллектуальной отправки для REPL Python. Функция интеллектуальной отправки дает возможность отправлять наименьший пригодный для выполнения бло"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.tr.json",
+      "size": 18858,
+      "modified": "2025-08-19T18:10:39.769Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"Python REPL için Akıllı Göndermeyi açın/kapatın. Akıllı Gönderme, Shift+Enter tuşlarına basıldığında en küçük çalıştırılabilir kod blokunu REPL’ye göndermeye"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.zh-cn.json",
+      "size": 16110,
+      "modified": "2025-08-19T18:10:39.756Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"切换 Python REPL 的智能发送。借助智能发送，可通过 Shift+Enter 向 REPL 发送最小的可运行代码块，并相应地移动光标。\",\"python.REPL.provideVariables.description\":\"切换以为本机 REPL 的 REPL 变量视图提供变量。\",\"python.R"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\package.nls.zh-tw.json",
+      "size": 16396,
+      "modified": "2025-08-19T18:10:39.753Z",
+      "pattern": "/user.*message/i",
+      "preview": "{\"python.EnableREPLSmartSend.description\":\"切換 Python REPL 的 Smart Send。Smart Send 可讓您透過 Shift+Enter 將最小的可執行程式碼區塊傳送到 REPL，並據此移動資料指標。\",\"python.REPL.provideVariables.description\":\"切換以為原生 REPL 的 REPL 變數檢視"
+    },
+    {
+      "file": "C:\\Users\\Kerson\\.cursor\\extensions\\ms-python.python-2025.6.1-win32-x64\\telemetry.json",
+      "size": 69104,
+      "modified": "2025-08-19T18:10:39.733Z",
+      "pattern": "/ai.*response/i",
+      "preview": "{\"events\":{\"ms-python.pythondiagnostics.message\":{\"code\":{\"classification\":\"SystemMetaData\",\"purpose\":\"FeatureInsight\",\"owner\":\"karthiknadig\"}},\"ms-python.pythoneditor.load\":{\"appname\":{\"classificatio"
+    }
+  ]
+}

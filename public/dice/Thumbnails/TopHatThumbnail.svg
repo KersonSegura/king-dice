@@ -1,0 +1,29 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #1e1e1e;
+      }
+
+      .cls-2 {
+        fill: #282828;
+      }
+
+      .cls-3 {
+        fill: #c10000;
+      }
+
+      .cls-4 {
+        fill: #3a3a3a;
+      }
+    </style>
+  </defs>
+  <g id="Hat">
+    <g id="Top_Hat" data-name="Top Hat">
+      <ellipse class="cls-1" cx="256" cy="317.1313" rx="120.4681" ry="78.363"/>
+      <path class="cls-2" d="M343.8017,309.839c0,31.5432-39.31,57.114-87.8017,57.114s-87.8017-25.5708-87.8017-57.114V173.62H343.8017Z"/>
+      <path class="cls-3" d="M343.8017,287.8251V309.839c0,31.5432-39.31,57.114-87.8017,57.114s-87.8017-25.5708-87.8017-57.114V287.8251a99.6666,99.6666,0,0,0,175.6034,0Z"/>
+      <ellipse class="cls-4" cx="256" cy="173.6197" rx="87.8017" ry="57.114"/>
+    </g>
+  </g>
+</svg>

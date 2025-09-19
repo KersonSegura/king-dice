@@ -1,0 +1,32 @@
+[
+  {
+    "id": "admin",
+    "username": "KingDiceAdmin",
+    "email": "admin@kingdice.com",
+    "avatar": "/DiceLogo.svg",
+    "reputation": 1000,
+    "joinDate": "2025-08-06T16:08:41.032Z",
+    "isVerified": true
+  },
+  {
+    "id": "user_1754497437315_sca9exl1b",
+    "username": "KingDiceAdmin2",
+    "email": "admin2@kingdice.com",
+    "avatar": "/DiceLogo.svg",
+    "reputation": 100,
+    "joinDate": "2025-08-06T16:23:57.315Z",
+    "isVerified": true,
+    "isAdmin": true
+  },
+  {
+    "id": "user_1754498606845_aoutcys27",
+    "username": "KingDiceKSA",
+    "email": "kingdice.community@gmail.com",
+    "avatar": "/generated/dice-1756955869719.svg",
+    "reputation": 1000,
+    "joinDate": "2025-08-06T16:43:26.845Z",
+    "isVerified": true,
+    "isAdmin": true,
+    "title": "Knight"
+  }
+]

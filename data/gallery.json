@@ -1,0 +1,674 @@
+{
+  "images": [
+    {
+      "title": "Dice 000002",
+      "description": "",
+      "imageUrl": "/gallery/gallery-1756955365181.svg",
+      "thumbnailUrl": "/gallery/gallery-1756955365181.svg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756928015978.svg",
+        "reputation": 1000
+      },
+      "category": "dice-throne",
+      "tags": [],
+      "id": "img_1756955365184_eyyx1h7xx",
+      "createdAt": "2025-09-04T03:09:25.184Z",
+      "votes": {
+        "upvotes": 1,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false,
+      "userVote": null,
+      "userVotes": [
+        {
+          "userId": "user_1754498606845_aoutcys27",
+          "voteType": "up",
+          "timestamp": "2025-09-04T04:24:48.649Z",
+          "weekId": "2025-W36"
+        }
+      ]
+    },
+    {
+      "title": "hgfh",
+      "description": "hgfh",
+      "imageUrl": "/gallery/gallery-1756955532038.png",
+      "thumbnailUrl": "/gallery/gallery-1756955532038.png",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756928015978.svg",
+        "reputation": 1000
+      },
+      "category": "the-kings-card",
+      "tags": [],
+      "id": "img_1756955532048_7yxzldeb3",
+      "createdAt": "2025-09-04T03:12:12.048Z",
+      "votes": {
+        "upvotes": 2,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 6,
+      "isModerated": false,
+      "isDraft": false,
+      "commentsList": [
+        {
+          "id": "comment_1756962378009_h678dhnfq",
+          "author": {
+            "id": "user_1754498606845_aoutcys27",
+            "name": "KingDiceKSA",
+            "avatar": "/generated/dice-1756955869719.svg",
+            "title": "/dice/Titles/Knight.svg"
+          },
+          "content": "Hola test",
+          "createdAt": "2025-09-04T05:06:18.009Z",
+          "isEdited": false,
+          "replies": [
+            {
+              "id": "reply_1756962385304_bbt5xav76",
+              "author": {
+                "id": "user_1754498606845_aoutcys27",
+                "name": "KingDiceKSA",
+                "avatar": "/generated/dice-1756955869719.svg",
+                "title": "/dice/Titles/Knight.svg"
+              },
+              "content": "Test",
+              "createdAt": "2025-09-04T05:06:25.304Z",
+              "likes": 1,
+              "userLikes": [
+                "user_1754498606845_aoutcys27"
+              ],
+              "replies": []
+            },
+            {
+              "id": "reply_1756962790742_sblxby5mg",
+              "author": {
+                "id": "user_1754498606845_aoutcys27",
+                "name": "KingDiceKSA",
+                "avatar": "/generated/dice-1756955869719.svg",
+                "title": "/dice/Titles/Knight.svg"
+              },
+              "content": "test2",
+              "createdAt": "2025-09-04T05:13:10.743Z",
+              "likes": 1,
+              "userLikes": [
+                "user_1754498606845_aoutcys27"
+              ],
+              "replies": []
+            },
+            {
+              "id": "reply_1757410782394_e76b5bu4s",
+              "author": {
+                "id": "user_1754498606845_aoutcys27",
+                "name": "KingDiceKSA",
+                "avatar": "/generated/dice-1756955869719.svg",
+                "title": "Knight"
+              },
+              "content": "Testtttt",
+              "createdAt": "2025-09-09T09:39:42.394Z",
+              "isEdited": false,
+              "likes": 1,
+              "userLikes": [
+                "user_1754498606845_aoutcys27"
+              ],
+              "parentCommentId": "comment_1756962378009_h678dhnfq"
+            }
+          ],
+          "userLikes": [],
+          "likes": 0
+        },
+        {
+          "id": "comment_1757411620145_da0vpwz82",
+          "author": {
+            "id": "user_1754498606845_aoutcys27",
+            "name": "KingDiceKSA",
+            "avatar": "/generated/dice-1756955869719.svg",
+            "title": "Knight"
+          },
+          "content": "Testoh",
+          "createdAt": "2025-09-09T09:53:40.145Z",
+          "isEdited": false,
+          "likes": 1,
+          "userLikes": [
+            "user_1754498606845_aoutcys27"
+          ],
+          "replies": []
+        },
+        {
+          "id": "comment_1757411927908_8f1fcal1w",
+          "author": {
+            "id": "user_1754498606845_aoutcys27",
+            "name": "KingDiceKSA",
+            "avatar": "/generated/dice-1756955869719.svg",
+            "title": "Knight"
+          },
+          "content": "Hola",
+          "createdAt": "2025-09-09T09:58:47.908Z",
+          "isEdited": false,
+          "likes": 0,
+          "userLikes": [],
+          "replies": []
+        }
+      ],
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "user_1754498606845_aoutcys27",
+          "voteType": "up",
+          "timestamp": "2025-09-04T05:52:58.628Z",
+          "weekId": "2025-W36"
+        },
+        {
+          "userId": "user_1754498606845_aoutcys27",
+          "voteType": "up",
+          "timestamp": "2025-09-09T08:52:54.251Z",
+          "weekId": "2025-W37"
+        }
+      ]
+    },
+    {
+      "title": "uyfu",
+      "description": "jhjgjgj",
+      "imageUrl": "/gallery/gallery-1756956038177.jpg",
+      "thumbnailUrl": "/gallery/gallery-1756956038177.jpg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "setups",
+      "tags": [],
+      "id": "img_1756956038181_bf0lmehox",
+      "createdAt": "2025-09-04T03:20:38.181Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W36"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false
+    },
+    {
+      "title": "jhgfh",
+      "description": "hghgf",
+      "imageUrl": "/gallery/gallery-1756956090646.jpg",
+      "thumbnailUrl": "/gallery/gallery-1756956090646.jpg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "events",
+      "tags": [],
+      "id": "img_1756956090652_gujedzpry",
+      "createdAt": "2025-09-04T03:21:30.652Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W36"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false
+    },
+    {
+      "title": "uui",
+      "description": "iiiiii",
+      "imageUrl": "/gallery/gallery-1756956170432.jpg",
+      "thumbnailUrl": "/gallery/gallery-1756956170432.jpg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "collections",
+      "tags": [],
+      "id": "img_1756956170436_lth3rabwq",
+      "createdAt": "2025-09-04T03:22:50.436Z",
+      "votes": {
+        "upvotes": 1,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false,
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "user_1754498606845_aoutcys27",
+          "voteType": "up",
+          "timestamp": "2025-09-09T08:39:34.301Z",
+          "weekId": "2025-W37"
+        }
+      ]
+    },
+    {
+      "title": "Dice 000004",
+      "description": "",
+      "imageUrl": "/gallery/gallery-1756957214407.svg",
+      "thumbnailUrl": "/gallery/gallery-1756957214407.svg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "dice-throne",
+      "tags": [],
+      "id": "img_1756957214409_jqw1a4q9m",
+      "createdAt": "2025-09-04T03:40:14.409Z",
+      "votes": {
+        "upvotes": 1,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false,
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "user_1754498606845_aoutcys27",
+          "voteType": "up",
+          "timestamp": "2025-09-09T08:46:40.872Z",
+          "weekId": "2025-W37"
+        }
+      ]
+    },
+    {
+      "title": "iik",
+      "description": "kkkk",
+      "imageUrl": "/gallery/gallery-1756957252845.png",
+      "thumbnailUrl": "/gallery/gallery-1756957252845.png",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "collections",
+      "tags": [],
+      "id": "img_1756957252860_zp3kl40by",
+      "createdAt": "2025-09-04T03:40:52.860Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W36"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false
+    },
+    {
+      "title": "tretet",
+      "description": "tretret",
+      "imageUrl": "/gallery/gallery-1757398706666.jpg",
+      "thumbnailUrl": "/gallery/gallery-1757398706666.jpg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "collections",
+      "tags": [],
+      "id": "img_1757398706669_izkho1vbc",
+      "createdAt": "2025-09-09T06:18:26.669Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false
+    },
+    {
+      "title": "jhgj",
+      "description": "jhgj",
+      "imageUrl": "/gallery/gallery-1757398993285.jpg",
+      "thumbnailUrl": "/gallery/gallery-1757398993285.jpg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "collections",
+      "tags": [],
+      "id": "img_1757398993288_xo4otcqi7",
+      "createdAt": "2025-09-09T06:23:13.288Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false,
+      "userVote": null,
+      "userVotes": []
+    },
+    {
+      "title": "kjhk",
+      "description": "kjkh",
+      "imageUrl": "/gallery/gallery-1757399242819.png",
+      "thumbnailUrl": "/gallery/gallery-1757399242819.png",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "setups",
+      "tags": [],
+      "id": "img_1757399242828_7k0s33e7i",
+      "createdAt": "2025-09-09T06:27:22.828Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false,
+      "userVote": null,
+      "userVotes": []
+    },
+    {
+      "title": "",
+      "description": "fdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf\r\nfdsfsdfsdf",
+      "imageUrl": "/gallery/gallery-1757408720331.jpg",
+      "thumbnailUrl": "/gallery/gallery-1757408720331.jpg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "/dice/Titles/Knight.svg"
+      },
+      "category": "setups",
+      "tags": [],
+      "id": "img_1757408720334_vnzcj76sd",
+      "createdAt": "2025-09-09T09:05:20.334Z",
+      "votes": {
+        "upvotes": 1,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 4,
+      "isModerated": false,
+      "isDraft": false,
+      "commentsList": [
+        {
+          "id": "comment_1757411939021_47zxbqvan",
+          "author": {
+            "id": "user_1754498606845_aoutcys27",
+            "name": "KingDiceKSA",
+            "avatar": "/generated/dice-1756955869719.svg",
+            "title": "Knight"
+          },
+          "content": "gfgf",
+          "createdAt": "2025-09-09T09:58:59.021Z",
+          "isEdited": false,
+          "likes": 1,
+          "userLikes": [
+            "user_1754498606845_aoutcys27"
+          ],
+          "replies": [
+            {
+              "id": "reply_1757411944178_wtmiwl0y4",
+              "author": {
+                "id": "user_1754498606845_aoutcys27",
+                "name": "KingDiceKSA",
+                "avatar": "/generated/dice-1756955869719.svg",
+                "title": "Knight"
+              },
+              "content": "fdfdfd",
+              "createdAt": "2025-09-09T09:59:04.178Z",
+              "isEdited": false,
+              "likes": 1,
+              "userLikes": [
+                "user_1754498606845_aoutcys27"
+              ],
+              "parentCommentId": "comment_1757411939021_47zxbqvan"
+            }
+          ]
+        },
+        {
+          "id": "comment_1757453005557_oz79agu1t",
+          "author": {
+            "id": "user_1754498606845_aoutcys27",
+            "name": "KingDiceKSA",
+            "avatar": "/generated/dice-1756955869719.svg",
+            "title": "Knight"
+          },
+          "content": "hghtghf",
+          "createdAt": "2025-09-09T21:23:25.557Z",
+          "isEdited": false,
+          "likes": 0,
+          "userLikes": [],
+          "replies": []
+        },
+        {
+          "id": "comment_1757453616477_hemeth4hf",
+          "author": {
+            "id": "user_1754498606845_aoutcys27",
+            "name": "KingDiceKSA",
+            "avatar": "/generated/dice-1756955869719.svg",
+            "title": "Knight"
+          },
+          "content": "ssss",
+          "createdAt": "2025-09-09T21:33:36.477Z",
+          "isEdited": false,
+          "likes": 1,
+          "userLikes": [
+            "user_1754498606845_aoutcys27"
+          ],
+          "replies": []
+        }
+      ],
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "user_1754498606845_aoutcys27",
+          "voteType": "up",
+          "timestamp": "2025-09-09T21:36:47.685Z",
+          "weekId": "2025-W37"
+        }
+      ]
+    },
+    {
+      "title": "",
+      "description": "fdfdf",
+      "imageUrl": "/gallery/gallery-1757453634977.jpg",
+      "thumbnailUrl": "/gallery/gallery-1757453634977.jpg",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "Knight"
+      },
+      "category": "collections",
+      "tags": [],
+      "id": "img_1757453634982_2pvm80h1d",
+      "createdAt": "2025-09-09T21:33:54.982Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 1,
+      "isModerated": false,
+      "isDraft": false,
+      "commentsList": [
+        {
+          "id": "comment_1757453897221_jqcuiezq5",
+          "author": {
+            "id": "user_1754498606845_aoutcys27",
+            "name": "KingDiceKSA",
+            "avatar": "/generated/dice-1756955869719.svg",
+            "title": "Knight"
+          },
+          "content": "Test",
+          "createdAt": "2025-09-09T21:38:17.221Z",
+          "isEdited": false,
+          "likes": 0,
+          "userLikes": [],
+          "replies": []
+        }
+      ]
+    },
+    {
+      "title": "",
+      "description": "hgh",
+      "imageUrl": "/gallery/gallery-1757453919863.png",
+      "thumbnailUrl": "/gallery/gallery-1757453919863.png",
+      "author": {
+        "id": "user_1754498606845_aoutcys27",
+        "name": "KingDiceKSA",
+        "avatar": "/generated/dice-1756955869719.svg",
+        "reputation": 1000,
+        "title": "Knight"
+      },
+      "category": "collections",
+      "tags": [],
+      "id": "img_1757453919868_bkvrvoxwr",
+      "createdAt": "2025-09-09T21:38:39.868Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W37"
+      },
+      "views": 0,
+      "downloads": 0,
+      "comments": 0,
+      "isModerated": false,
+      "isDraft": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "dice-throne",
+      "name": "Dice Throne",
+      "description": "This is where legends roll. Showcase your custom die and claim your place in the Dice Throne.",
+      "icon": "ThroneIcon.svg",
+      "color": "bg-red-100 text-red-600",
+      "imageCount": 1
+    },
+    {
+      "id": "the-kings-card",
+      "name": "The King's Card",
+      "description": "Present your relic to the court. Each week, one card ascends to the King's side.",
+      "icon": "KingsCard.svg",
+      "color": "bg-pink-100 text-pink-600",
+      "imageCount": 0
+    },
+    {
+      "id": "collections",
+      "name": "Game Collections",
+      "description": "Show off your board game collections",
+      "icon": "CollectionIcon.svg",
+      "color": "bg-blue-100 text-blue-600",
+      "imageCount": 5
+    },
+    {
+      "id": "setups",
+      "name": "Game Setups",
+      "description": "Share your table layouts and game setups before the action begins",
+      "icon": "SetupsIcon.svg",
+      "color": "bg-green-100 text-green-600",
+      "imageCount": 2
+    },
+    {
+      "id": "events",
+      "name": "Game Events",
+      "description": "Board game events and meetups",
+      "icon": "EventsIcon.svg",
+      "color": "bg-purple-100 text-purple-600",
+      "imageCount": 0
+    }
+  ]
+}

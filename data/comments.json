@@ -1,0 +1,46 @@
+[
+  {
+    "id": "comment_1754555308292_vafv4mkkr",
+    "postId": "post_1754553037821_te2m8z2xh",
+    "content": "I don't know",
+    "author": {
+      "id": "user_1754496521151_rigsrdk2z",
+      "name": "KingDiceKSA",
+      "avatar": "/DiceLogo.svg",
+      "reputation": 0
+    },
+    "createdAt": "2025-08-07T08:28:28.292Z",
+    "votes": {
+      "upvotes": 1,
+      "downvotes": 0
+    },
+    "userVote": "upvote",
+    "isModerated": true,
+    "moderationResult": {
+      "isAppropriate": true,
+      "flags": []
+    }
+  },
+  {
+    "id": "comment_1754550972211_tg4ny49x0",
+    "postId": "post_1754538346874_fh3ns89f7",
+    "content": "Thank you!",
+    "author": {
+      "id": "user_1754496521151_rigsrdk2z",
+      "name": "KingDiceKSA",
+      "avatar": "/DiceLogo.svg",
+      "reputation": 0
+    },
+    "createdAt": "2025-08-07T07:16:12.211Z",
+    "votes": {
+      "upvotes": 1,
+      "downvotes": 0
+    },
+    "userVote": "upvote",
+    "isModerated": true,
+    "moderationResult": {
+      "isAppropriate": true,
+      "flags": []
+    }
+  }
+]

@@ -1,0 +1,58 @@
+{
+  "tags": [
+    {
+      "id": "dice-throne",
+      "name": "dice-throne",
+      "count": 0,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "board-game",
+      "name": "board-game",
+      "count": 0,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "collection",
+      "name": "collection",
+      "count": 0,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "setup",
+      "name": "setup",
+      "count": 0,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "custom",
+      "name": "custom",
+      "count": 0,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "art",
+      "name": "art",
+      "count": 0,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "dice",
+      "name": "dice",
+      "count": 1,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "gaming",
+      "name": "gaming",
+      "count": 0,
+      "createdAt": "2025-09-03T20:06:52.070Z"
+    },
+    {
+      "id": "catan",
+      "name": "catan",
+      "count": 2,
+      "createdAt": "2025-09-03T20:09:53.566Z"
+    }
+  ]
+}

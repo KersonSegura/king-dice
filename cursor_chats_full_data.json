@@ -1,0 +1,71 @@
+[
+  {
+    "file": "C:\\Users\\Kerson\\AppData\\Roaming\\Cursor\\User\\History\\-7ba8ce5b\\kYIK.json",
+    "size": 2377,
+    "modified": "2025-09-03T01:27:07.119Z",
+    "data": [
+      {
+        "id": "post_1754553037821_te2m8z2xh",
+        "title": "How Do You Teach Complex Games Without Losing Everyone?",
+        "content": "I love heavy games, but I’ve definitely had moments where teaching something like Gaia Project or Ark Nova just made everyone’s eyes glaze over.\n\nWhat are your best tips for teaching big or rule-heavy games to a group? Especially when they have mixed experience levels?\n\nDo you start with a theme overview, skip some rules, jump into a mock round, or just read the manual out loud (😬)? I’d love to hear your teaching hacks, your fails, or even what not to do.",
+        "author": {
+          "id": "user_1754496521151_rigsrdk2z",
+          "name": "KingDiceKSA",
+          "avatar": "/generated/dice-1756757774949.svg",
+          "reputation": 0
+        },
+        "category": "strategy",
+        "createdAt": "2025-08-07T07:50:37.821Z",
+        "votes": {
+          "upvotes": 1,
+          "downvotes": 0
+        },
+        "userVote": "up",
+        "replies": 1,
+        "isModerated": true,
+        "moderationResult": {
+          "isAppropriate": true,
+          "flags": []
+        },
+        "userVotes": [
+          {
+            "userId": "user_1754496521151_rigsrdk2z",
+            "voteType": "up",
+            "timestamp": "2025-08-07T08:28:17.445Z"
+          }
+        ]
+      },
+      {
+        "id": "post_1754538346874_fh3ns89f7",
+        "title": "👑🎲 Welcome to King Dice!",
+        "content": "Hey there!\nWelcome to King Dice, a new community for every board game enthusiast.\n\nHere, you can:\n💬 Join forum discussions\n🎲 Customize your own die avatar\n📸 Share your setups, collections & fan art\n🗳 Vote for your favorite games\n📚 Explore rules and discover new games\n\nThis is your kingdom now, so jump in, introduce yourself, and start rolling with us!\n\nLet the games begin! 🏁",
+        "author": {
+          "id": "user_1754496521151_rigsrdk2z",
+          "name": "KingDiceKSA",
+          "avatar": "/generated/dice-1756757774949.svg",
+          "reputation": 0
+        },
+        "category": "general",
+        "createdAt": "2025-08-07T03:45:46.874Z",
+        "votes": {
+          "upvotes": 0,
+          "downvotes": 1
+        },
+        "userVote": "down",
+        "replies": 1,
+        "isModerated": true,
+        "moderationResult": {
+          "isAppropriate": true,
+          "flags": []
+        },
+        "userVotes": [
+          {
+            "userId": "user_1754496521151_rigsrdk2z",
+            "voteType": "down",
+            "timestamp": "2025-08-07T07:49:27.331Z"
+          }
+        ]
+      }
+    ]
+  }
+]

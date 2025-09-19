@@ -1,0 +1,105 @@
+Unlocks at Level 1:
+Background - White, Black.
+Dice - White.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2.
+Accessories - None.
+Crowns & Hats - None.
+Item - Mana Potion, Health Potion.
+Companion - None.
+Title - Commoner
+
+Unlocks at Level 2:
+Background - White, Black, Blue, Green, Red, Yellow.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2.
+Accessories - None.
+Crowns & Hats - Cone.
+Item - Mana Potion, Health Potion.
+Companion - None.
+Title - Commoner, Squire.
+
+Unlocks at Level 3:
+Background - White, Black, Blue, Green, Red, Yellow.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2.
+Accessories - Bow.
+Crowns & Hats - Cone, Joker.
+Item - Mana Potion, Health Potion, Card Castle.
+Companion - Meeple.
+Title - Commoner, Squire, Knight.
+
+Unlocks at Level 4:
+Background - White, Black, Blue, Green, Red, Yellow, Game Board.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC.
+Accessories - Bow, Belt.
+Crowns & Hats - Cone, Joker.
+Item - Mana Potion, Health Potion, Card Castle, Poker Chips.
+Companion - Meeple.
+Title - Commoner, Squire, Knight, Champion.
+
+Unlocks at Level 5:
+Background - White, Black, Blue, Green, Red, Yellow, Game Board.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC.
+Accessories - Bow, Belt, Blush.
+Crowns & Hats - Cone, Joker, Top Hat.
+Item - Mana Potion, Health Potion, Card Castle, Poker Chips, Map, Coins.
+Companion - Meeple, Mini-Dice.
+Title - Commoner, Squire, Knight, Champion, Baron, Baroness.
+
+Unlocks at Level 6:
+Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits.
+Accessories - Bow, Belt, Blush, Sunglasses.
+Crowns & Hats - Cone, Joker, Top Hat.
+Item - Mana Potion, Health Potion, Card Castle, Poker Chips, Map, Coins, Shield, Mace.
+Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight.
+Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady.
+
+Unlocks at Level 7:
+Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits.
+Accessories - Bow, Belt, Blush, Sunglasses, Scar.
+Crowns & Hats - Cone, Joker, Top Hat.
+Item - Mana Potion, Health Potion, Card Castle, Poker Chips, Map, Coins, Shield, Mace, Bomb.
+Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull.
+Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage.
+
+Unlocks at Level 8:
+Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board, Casino.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik, Dice-Skull.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits, Elements.
+Accessories - Bow, Belt, Blush, Sunglasses, Scar.
+Crowns & Hats - Cone, Joker, Top Hat, Sorcerer Hat, Wizard Hat.
+Item - Mana Potion, Health Potion, Card Castle, Poker Chips, Map, Coins, Shield, Mace, Bomb, Staff, Spellbook.
+Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull, Eight Ball.
+Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage, Duke, Duchess.
+
+Unlocks at Level 9:
+Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board, Casino, Card Game.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik, Dice-Skull, Safe.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits, Elements.
+Accessories - Bow, Belt, Blush, Sunglasses, Scar, Patch.
+Crowns & Hats - Cone, Joker, Top Hat, Sorcerer Hat, Wizard Hat, Prince's Crown.
+Item - Mana Potion, Health Potion, Card Castle, Poker Chips, Map, Coins, Shield, Mace, Bomb, Staff, Spellbook, Sword.
+Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull, Eight Ball, Mimic.
+Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage, Duke, Duchess, Prince, Princess.
+
+Unlocks at Level 10:
+Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board, Casino, Card Game.
+Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik, Dice-Skull, Safe.
+Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits, Elements.
+Accessories - Bow, Belt, Blush, Sunglasses, Scar, Patch, King's Cape.
+Crowns & Hats - Cone, Joker, Top Hat, Sorcerer Hat, Wizard Hat, Prince's Crown, Queen's Crown, King's Crown.
+Item - Mana Potion, Health Potion, Card Castle, Poker Chips, Map, Coins, Shield, Mace, Bomb, Staff, Spellbook, Sword, Holy Grail.
+Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull, Eight Ball, Mimic, Dice-Bot.
+Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage, Duke, Duchess, Prince, Princess, King, Queen.
+
+Special objects:
+Gift - Only unlockable by donating to the page.
+King's Room - Only unlockable by winning Dice of the Week (Dice Throne in gallery).
+King's Card - Only unlockable by winning Card of the Week (The King's Card in gallery).
+Dice-Bot - Only unlockable by donating to the page.

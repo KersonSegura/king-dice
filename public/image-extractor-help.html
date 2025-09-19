@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>King Dice Image Extractor - Help</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .bookmarklet {
+            background: #fbae17;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .bookmarklet:hover {
+            background: #e6a015;
+        }
+        .step {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #fbae17;
+        }
+        .code {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎲 King Dice Image Extractor</h1>
+    
+    <p>This tool helps you extract images from any webpage and use them in your King Dice game rules editor.</p>
+
+    <h2>🚀 Quick Start - Bookmarklet Method (Recommended)</h2>
+    
+    <div class="step">
+        <h3>Step 1: Install the Bookmarklet (Super Simple Method)</h3>
+        <p><strong>Drag this button to your bookmarks bar:</strong></p>
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="javascript:(function(){const panel=document.createElement('div');panel.style.cssText='position:fixed;top:20px;right:20px;width:300px;max-height:500px;background:white;border:2px solid #fbae17;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:10000;font-family:Arial,sans-serif;font-size:14px;overflow-y:auto;';const images=Array.from(document.querySelectorAll('img')).filter(img=>img.src&&!img.src.startsWith('data:')&&img.naturalWidth>50&&img.naturalHeight>50&&!img.src.includes('avatar')&&!img.src.includes('icon')&&!img.src.includes('logo'));if(images.length===0){panel.innerHTML='<div style=\"padding:15px;text-align:center;color:#666;\"><h3 style=\"margin:0 0 10px 0;color:#333;\">No Images Found</h3><p style=\"margin:0;\">No suitable images found on this page.</p><button onclick=\"this.parentElement.parentElement.remove()\" style=\"margin-top:10px;padding:5px 10px;background:#fbae17;color:white;border:none;border-radius:4px;cursor:pointer;\">Close</button></div>';}else{let selectedImages=new Set();const updateUI=()=>{panel.innerHTML='<div style=\"padding:15px;border-bottom:1px solid #eee;\"><h3 style=\"margin:0 0 10px 0;color:#333;\">King Dice Image Extractor</h3><p style=\"margin:0 0 10px 0;color:#666;font-size:12px;\">Found '+images.length+' images. Select the ones you want to copy.</p><div style=\"display:flex;gap:5px;margin-bottom:10px;\"><button onclick=\"selectAll()\" style=\"padding:5px 10px;background:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;\">Select All</button><button onclick=\"clearAll()\" style=\"padding:5px 10px;background:#f44336;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;\">Clear</button><button onclick=\"copySelected()\" style=\"padding:5px 10px;background:#fbae17;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;\">Copy Selected ('+selectedImages.size+')</button></div></div><div style=\"max-height:300px;overflow-y:auto;\">'+images.map((img,index)=>'<div style=\"display:flex;align-items:center;padding:8px;border-bottom:1px solid #f0f0f0;cursor:pointer;\" onclick=\"toggleImage('+index+')\"><input type=\"checkbox\" '+(selectedImages.has(index)?'checked':'')+' style=\"margin-right:10px;\"><img src=\"'+img.src+'\" style=\"width:40px;height:40px;object-fit:cover;border-radius:4px;margin-right:10px;\"><div style=\"flex:1;min-width:0;\"><div style=\"font-weight:bold;font-size:12px;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">'+(img.alt||'Image '+(index+1))+'</div><div style=\"font-size:10px;color:#666;\">'+img.naturalWidth+'×'+img.naturalHeight+'</div></div></div>').join('')+'</div><div style=\"padding:15px;text-align:center;border-top:1px solid #eee;\"><button onclick=\"this.parentElement.parentElement.remove()\" style=\"padding:8px 16px;background:#666;color:white;border:none;border-radius:4px;cursor:pointer;\">Close</button></div>';};window.selectAll=()=>{selectedImages=new Set(images.map((_,i)=>i));updateUI();};window.clearAll=()=>{selectedImages=new Set();updateUI();};window.toggleImage=(index)=>{if(selectedImages.has(index)){selectedImages.delete(index);}else{selectedImages.add(index);}updateUI();};window.copySelected=async()=>{if(selectedImages.size===0){alert('Please select at least one image.');return;}try{const imageData=[];for(const index of selectedImages){const img=images[index];const response=await fetch(img.src);const blob=await response.blob();const reader=new FileReader();const base64=await new Promise(resolve=>{reader.onload=()=>resolve(reader.result);reader.readAsDataURL(blob);});imageData.push({src:base64,alt:img.alt||'Image '+(index+1),width:img.naturalWidth,height:img.naturalHeight});}localStorage.setItem('kingDiceExtractedImages',JSON.stringify(imageData));alert('Successfully copied '+selectedImages.size+' images! You can now paste them in the King Dice editor.');panel.remove();}catch(error){alert('Error copying images: '+error.message);}};updateUI();}panel.addEventListener('click',(e)=>{if(e.target===panel){panel.remove();}});document.body.appendChild(panel);})();" class="bookmarklet" style="display: inline-block; padding: 15px 30px; font-size: 18px; font-weight: bold; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.3s ease; background: #fbae17; color: white;">🎲 Extract Images</a>
+        </div>
+        <p><small>If you can't drag it, try right-clicking and selecting "Bookmark this link" or "Add to bookmarks"</small></p>
+        
+        <div style="background: #f0f8ff; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #007acc;">
+            <h4>📋 Alternative: Copy & Paste Method</h4>
+            <p>If dragging doesn't work, you can also:</p>
+            <ol>
+                <li><strong>Right-click on individual images</strong> you want on any webpage</li>
+                <li><strong>Select "Copy image"</strong> (not "Copy image address")</li>
+                <li><strong>In King Dice editor, press Ctrl+V</strong></li>
+                <li><strong>The image pastes directly!</strong></li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Use on Any Webpage</h3>
+        <p>When you're on a webpage with images you want to use:</p>
+        <ol>
+            <li>Click the "🎲 Extract Images" bookmarklet in your bookmarks bar</li>
+            <li>A panel will appear showing all images on the page</li>
+            <li>Select the images you want to copy</li>
+            <li>Click "Copy Selected"</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Use in King Dice</h3>
+        <p>In your King Dice game rules editor:</p>
+        <ol>
+            <li>Click the "🟠 Web Extract" button in the toolbar</li>
+            <li>Click "Scan Page for Images"</li>
+            <li>The images you copied will appear automatically</li>
+            <li>Select the ones you want and click "Extract Images"</li>
+        </ol>
+    </div>
+
+    <h2>🛠️ Alternative Methods</h2>
+
+    <div class="step">
+        <h3>Method 2: Direct Web Extraction</h3>
+        <p>If you're already on the King Dice site:</p>
+        <ol>
+            <li>Open the game rules editor</li>
+            <li>Click "🟠 Web Extract" in the toolbar</li>
+            <li>Click "Scan Page for Images"</li>
+            <li>Select and extract images directly</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Method 3: Traditional Copy/Paste</h3>
+        <p>For individual images:</p>
+        <ol>
+            <li>Right-click on an image and "Copy image"</li>
+            <li>In the King Dice editor, press Ctrl+V</li>
+            <li>The image will be pasted automatically</li>
+        </ol>
+    </div>
+
+    <div class="step">
+        <h3>Method 4: File Upload</h3>
+        <p>For images saved on your computer:</p>
+        <ol>
+            <li>Click "🔵 Upload Image" in the toolbar</li>
+            <li>Select one or more image files</li>
+            <li>Images will be added to your content</li>
+        </ol>
+    </div>
+
+    <h2>💡 Pro Tips</h2>
+
+    <div class="warning">
+        <strong>⚠️ Important:</strong> The bookmarklet method works best for extracting multiple images from webpages. For single images, right-click and "Copy image" is usually faster.
+    </div>
+
+    <ul>
+        <li><strong>Bulk Processing:</strong> Use the bookmarklet to select multiple images at once</li>
+        <li><strong>Smart Filtering:</strong> The tool automatically filters out small images, avatars, and icons</li>
+        <li><strong>Quality Check:</strong> Only images larger than 50x50 pixels are included</li>
+        <li><strong>Easy Selection:</strong> Click on images in the panel to select/deselect them</li>
+        <li><strong>Batch Operations:</strong> Use "Select All" or "Clear" for quick selection</li>
+    </ul>
+
+    <h2>🔧 Troubleshooting</h2>
+
+    <div class="step">
+        <h3>Bookmarklet Not Working?</h3>
+        <ul>
+            <li>Make sure you dragged it to your bookmarks bar (not just clicked it)</li>
+            <li>Try right-clicking the link and "Add to bookmarks"</li>
+            <li>Some browsers may block bookmarklets - check your security settings</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h3>No Images Found?</h3>
+        <ul>
+            <li>The page might not have suitable images (too small, or filtered out)</li>
+            <li>Try the "🟠 Web Extract" method instead</li>
+            <li>Some images might be loaded dynamically - try scrolling down first</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h3>Images Not Appearing in King Dice?</h3>
+        <ul>
+            <li>Make sure you clicked "Copy Selected" in the bookmarklet</li>
+            <li>Try refreshing the King Dice page and try again</li>
+            <li>Check that you're using the "🟠 Web Extract" button, not the others</li>
+        </ul>
+    </div>
+
+    <hr>
+    <p><small>This tool is part of the King Dice board game database system. For support, contact the development team.</small></p>
+
+</body>
+</html>

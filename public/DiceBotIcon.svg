@@ -1,0 +1,27 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #69fff7;
+      }
+
+      .cls-2 {
+        fill: #1c1c1c;
+      }
+
+      .cls-3 {
+        fill: #ccc;
+      }
+    </style>
+  </defs>
+  <g id="Dice-Bot">
+    <circle class="cls-1" cx="499.9999" cy="222.6834" r="54.1667"/>
+    <rect class="cls-2" x="435.5333" y="222.6834" width="128.9333" height="46.4" rx="11.3963"/>
+    <rect class="cls-2" x="718.3333" y="515.4834" width="128.9333" height="46.4" rx="23.2" transform="translate(1321.4834 -244.1166) rotate(90)"/>
+    <rect class="cls-2" x="152.7333" y="515.4834" width="128.9333" height="46.4" rx="23.2" transform="translate(755.8834 321.4834) rotate(90)"/>
+    <rect class="cls-3" x="207.2" y="245.8834" width="585.6" height="585.6" rx="35"/>
+    <rect class="cls-2" x="262.6" y="301.2834" width="474.8" height="474.8" rx="26.2"/>
+    <rect class="cls-1" x="378.2" y="434.75" width="67.5773" height="168.4" rx="33.7886"/>
+    <rect class="cls-1" x="554.2227" y="434.75" width="67.5773" height="168.4" rx="33.7886"/>
+  </g>
+</svg>
