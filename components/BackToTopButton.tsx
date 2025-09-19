@@ -14,9 +14,31 @@ export default function BackToTopButton() {
       setShowScrollTop(scrollTop > 300);
     };
 
+    // Initial check
     handleScroll();
+    
+    // Add scroll listener
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    // Additional checks for dynamic content loading
+    const recheckScroll = () => handleScroll();
+    
+    // Check after a short delay for dynamic content
+    const timeouts = [
+      setTimeout(recheckScroll, 100),
+      setTimeout(recheckScroll, 500),
+      setTimeout(recheckScroll, 1000),
+      setTimeout(recheckScroll, 2000)
+    ];
+    
+    // Also listen for resize events (content changes)
+    window.addEventListener('resize', recheckScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', recheckScroll);
+      timeouts.forEach(timeout => clearTimeout(timeout));
+    };
   }, []);
 
   const scrollToTop = () => {
