@@ -607,8 +607,8 @@ export default function HomePage() {
           ) : (
             <>
               {/* Centered featured tiles - Dice first, Card second */}
-              <div className="flex justify-center gap-4 mb-6">
-                <div className="">
+              <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
+                <div className="flex justify-center">
                   <Link href={featuredDiceThrone ? `/community-gallery?image=${featuredDiceThrone.id}` : '/community-gallery'}>
                     <div className={`relative rounded-lg overflow-hidden ${featuredDiceThrone ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white aspect-square w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`}>
                       {featuredDiceThrone ? (
@@ -633,7 +633,7 @@ export default function HomePage() {
                   )}
                 </div>
 
-                <div className="">
+                <div className="flex justify-center">
                   <Link href={featuredKingsCard ? `/community-gallery?image=${featuredKingsCard.id}` : '/community-gallery'}>
                     <div className={`relative rounded-lg overflow-hidden ${featuredKingsCard ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white aspect-square w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`}>
                       {featuredKingsCard ? (
@@ -660,7 +660,7 @@ export default function HomePage() {
               </div>
 
               {/* Other images */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
                 {otherGallery.slice(0, 4).map(img => (
                   <Link key={img.id} href={`/community-gallery?image=${img.id}`}>
                     <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-white aspect-square cursor-pointer hover:opacity-90 transition-opacity">
