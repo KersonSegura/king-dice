@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
+import * as Sentry from "@sentry/nextjs";
 
 // Custom hook for intersection observer
 function useIntersectionObserver(options = {}) {
@@ -107,6 +108,17 @@ export default function HomePage() {
   const [galleryLoading, setGalleryLoading] = useState(true);
   const [boardleMode, setBoardleMode] = useState<'title' | 'image' | 'card'>('title');
   const [timeUntilNextGame, setTimeUntilNextGame] = useState('');
+  
+  // Test function for Sentry (remove in production)
+  const testSentry = () => {
+    try {
+      myUndefinedFunction();
+    } catch (error) {
+      Sentry.captureException(error);
+      console.log('Sentry test error captured!');
+    }
+  };
+  
   useEffect(() => {
     const fetchGames = async () => {
       try {
@@ -320,6 +332,16 @@ export default function HomePage() {
               <Globe className="w-5 h-5 text-[#fbae17]" />
               <span>Active forums</span>
             </div>
+          </div>
+          
+          {/* Sentry Test Button - Remove in production */}
+          <div className="mt-8">
+            <button
+              onClick={testSentry}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            >
+              🚨 Test Sentry Error (Dev Only)
+            </button>
           </div>
 
           {/* Social Media Buttons */}
