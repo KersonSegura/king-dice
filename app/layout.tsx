@@ -11,7 +11,6 @@ import { ChatStateProvider } from '@/contexts/ChatStateContext'
 import ToastContainer from '@/components/ToastContainer'
 import FloatingChat from '@/components/FloatingChat'
 import BackToTopButton from '@/components/BackToTopButton'
-import MobileTestHelper from '@/components/MobileTestHelper'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -44,7 +43,6 @@ export default function RootLayout({
             <SocketProvider>
               <ChatStateProvider>
                 <ToastProvider>
-                  <MobileTestHelper />
                   <Header />
                   {children}
                   <FloatingChat />
