@@ -124,10 +124,10 @@ export default function BackToTopButton() {
         console.log('Button clicked, calling scrollToTop');
         scrollToTop();
       }}
-      className={`fixed bottom-4 text-white p-3 sm:p-4 rounded-full shadow-lg transition-all duration-300 z-50 hover:scale-110 ${
+      className={`fixed text-white p-3 sm:p-4 rounded-full shadow-lg transition-all duration-300 z-50 hover:scale-110 ${
         isChatOpen 
-          ? 'right-4 sm:right-[26rem]' 
-          : 'right-4 sm:right-[5.5rem]'
+          ? 'bottom-20 sm:bottom-4 right-4 sm:right-[26rem]' 
+          : 'bottom-20 sm:bottom-4 right-4 sm:right-[5.5rem]'
       }`}
       style={{ backgroundColor: '#fbae17' }}
       onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#e09915'}
