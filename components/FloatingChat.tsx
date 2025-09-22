@@ -560,7 +560,7 @@ export default function FloatingChat() {
             
             {/* Auto Tooltip - appears once per session */}
             {showAutoTooltip && (
-              <div className="absolute right-full top-0 mr-2 sm:bottom-full sm:right-0 sm:top-auto sm:mr-0 sm:mb-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg w-80 tooltip-bounce">
+              <div className="absolute right-full -top-2 mr-2 sm:bottom-full sm:right-0 sm:top-auto sm:mr-0 sm:mb-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg w-80 tooltip-bounce">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="font-medium mb-1 flex items-center space-x-2">
