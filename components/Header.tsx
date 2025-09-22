@@ -94,7 +94,7 @@ export default function Header() {
         <div className="flex justify-between items-center w-full h-16">
           {/* Left (Logo) */}
           <div className="flex items-center flex-shrink-0">
-            <Link href="/" className="flex items-center space-x-3">
+            <Link href="/" className="flex items-center space-x-3 p-2 -m-2 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="w-10 h-10 relative">
                 <Image
                   src="/DiceLogo.svg"
