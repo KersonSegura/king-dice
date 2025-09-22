@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUser, getUserByUsername, getUserByEmail, containsKingDiceVariation } from '@/lib/users';
-import bcrypt from 'bcryptjs';
+import { registerUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,21 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (username.length < 3) {
-      return NextResponse.json(
-        { message: 'Username must be at least 3 characters' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { message: 'Password must be at least 6 characters' },
-        { status: 400 }
-      );
-    }
-
     // Check if username contains KingDice variations (restricted to admin users only)
+    const containsKingDiceVariation = (username: string): boolean => {
+      const kingDiceVariations = ['kingdice', 'king-dice', 'king_dice', 'king dice'];
+      const lowerUsername = username.toLowerCase();
+      return kingDiceVariations.some(variation => lowerUsername.includes(variation));
+    };
+
     if (containsKingDiceVariation(username)) {
       return NextResponse.json(
         { message: 'Usernames containing "KingDice" variations are restricted to admin users only' },
@@ -36,36 +27,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if username already exists
-    const existingUser = getUserByUsername(username);
-    if (existingUser) {
+    // Register user using secure authentication
+    const authResult = await registerUser(username, email, password);
+
+    if (!authResult.success) {
       return NextResponse.json(
-        { message: 'Username already exists' },
+        { message: authResult.message },
         { status: 400 }
       );
     }
 
-    // Check if email already exists
-    const existingEmail = getUserByEmail(email);
-    if (existingEmail) {
-      return NextResponse.json(
-        { message: 'Email already exists' },
-        { status: 400 }
-      );
-    }
+    // Create response with user data and token
+    const response = NextResponse.json(
+      {
+        user: authResult.user,
+        token: authResult.token
+      },
+      { status: 201 }
+    );
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Set secure HTTP-only cookie for the token
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    };
 
-    // Create user (without password in response)
-    const newUser = createUser({
-      username,
-      email,
-      avatar: '/DiceLogo.svg' // Default avatar
-    }, false);
+    response.cookies.set('auth_token', authResult.token!, cookieOptions);
 
-    // Return user data
-    return NextResponse.json(newUser, { status: 201 });
+    return response;
+
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(

@@ -95,43 +95,88 @@ export default function PrivacySettings({
     <>
       <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
         <div className="space-y-4">
-          {/* Privacy Toggle */}
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              {isPrivate ? (
-                <Lock className="w-5 h-5 text-gray-600" />
-              ) : (
-                <Unlock className="w-5 h-5 text-gray-600" />
-              )}
-              <div>
-                <h4 className="font-medium text-gray-900">
-                  {isPrivate ? 'Private Profile' : 'Public Profile'}
-                </h4>
-                <p className="text-sm text-gray-600">
-                  {isPrivate 
-                    ? 'Only approved followers can see your posts and profile details'
-                    : 'Anyone can follow you and see your posts'
-                  }
-                </p>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => updatePrivacySettings(!isPrivate)}
-              disabled={updating}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:ring-offset-2 ${
-                isPrivate ? 'bg-[#fbae17]' : 'bg-gray-200'
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Privacy</h3>
+          
+          {/* Privacy Options */}
+          <div className="space-y-3">
+            {/* Public Profile Option */}
+            <div 
+              className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                !isPrivate 
+                  ? 'border-[#fbae17] bg-yellow-50' 
+                  : 'border-gray-200 hover:border-gray-300'
               } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => !updating && (!isPrivate || updatePrivacySettings(false))}
             >
-              <span className="sr-only">Toggle privacy</span>
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  isPrivate ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+              <div className="flex items-center space-x-3">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  !isPrivate 
+                    ? 'border-[#fbae17] bg-[#fbae17]' 
+                    : 'border-gray-300'
+                }`}>
+                  {!isPrivate && (
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  )}
+                </div>
+                <Unlock className="w-5 h-5 text-gray-600" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Public Profile</h4>
+                  <p className="text-sm text-gray-600">
+                    Anyone can follow you and see your posts
+                  </p>
+                </div>
+              </div>
+              
+              {!isPrivate && (
+                <div className="px-3 py-1 bg-[#fbae17] text-white text-sm font-medium rounded-full">
+                  Active
+                </div>
+              )}
+            </div>
+
+            {/* Private Profile Option */}
+            <div 
+              className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                isPrivate 
+                  ? 'border-[#fbae17] bg-yellow-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => !updating && (isPrivate || updatePrivacySettings(true))}
+            >
+              <div className="flex items-center space-x-3">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  isPrivate 
+                    ? 'border-[#fbae17] bg-[#fbae17]' 
+                    : 'border-gray-300'
+                }`}>
+                  {isPrivate && (
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  )}
+                </div>
+                <Lock className="w-5 h-5 text-gray-600" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Private Profile</h4>
+                  <p className="text-sm text-gray-600">
+                    Only approved followers can see your posts and profile details
+                  </p>
+                </div>
+              </div>
+              
+              {isPrivate && (
+                <div className="px-3 py-1 bg-[#fbae17] text-white text-sm font-medium rounded-full">
+                  Active
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* Help Text */}
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-xs text-gray-600">
+              <strong>Public Profile:</strong> Your posts and profile are visible to everyone. Anyone can follow you without approval.<br/>
+              <strong>Private Profile:</strong> Your posts are only visible to approved followers. New followers need your approval.
+            </p>
+          </div>
         </div>
       </div>
       

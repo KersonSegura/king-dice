@@ -243,6 +243,11 @@ export default function Feed({ userId, limit = 20 }: FeedProps) {
                       >
                         {item.author.username}
                       </Link>
+                      {item.author.title && (
+                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">
+                          {item.author.title}
+                        </span>
+                      )}
                       {item.author.isAdmin && (
                         <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
                           ADMIN

@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "sqlite"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // Enhanced Game model for comprehensive board game database
@@ -169,10 +168,12 @@ model User {
   id              String   @id @default(cuid())
   username        String   @unique
   email           String   @unique
-  password        String
+  passwordHash    String?  // Hashed password (nullable for backward compatibility)
   avatar          String?  // URL to user's avatar image
   isVerified      Boolean  @default(false)
   isAdmin         Boolean  @default(false)
+  level           Int      @default(1) // User level for XP system
+  xp              Int      @default(0) // User experience points
   joinDate        DateTime @default(now())
   title           String?  // User's current title/rank
   bio             String?  // User's bio/description
@@ -182,6 +183,8 @@ model User {
   favoriteCard    String?  // Base64 string of favorite card
   gamesList       String?  // JSON string storing user's games list
   isPrivate       Boolean  @default(false)  // Privacy setting
+  twoFactorEnabled Boolean @default(false)  // 2FA enabled status
+  twoFactorSecret String?  // 2FA secret for backup codes
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -200,8 +203,24 @@ model User {
   chatParticipants ChatParticipant[] @relation("ChatParticipant")
   messages        Message[] @relation("MessageSender")
   createdChats    Chat[] @relation("ChatCreator")
+  twoFactorCodes  TwoFactorCode[]
 
   @@map("users")
+}
+
+// Two-factor authentication verification codes
+model TwoFactorCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String   // 6-digit verification code
+  expiresAt DateTime // Code expiration time
+  used      Boolean  @default(false) // Whether code has been used
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("two_factor_codes")
 }
 
 // Existing models (keeping for compatibility)

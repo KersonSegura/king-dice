@@ -168,10 +168,23 @@ export default function ProfilePage() {
     file: null as File | null
   });
   const [categories, setCategories] = useState<any[]>([]);
-  const [profileColors, setProfileColors] = useState({
-    cover: '#fbae17',
-    background: '#f5f5f5',
-    containers: '#ffffff'
+  // Load colors from localStorage immediately to prevent flash
+  const [profileColors, setProfileColors] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedColors = localStorage.getItem('profileColors');
+      if (savedColors) {
+        try {
+          return JSON.parse(savedColors);
+        } catch (error) {
+          console.error('Error parsing saved colors:', error);
+        }
+      }
+    }
+    return {
+      cover: '#fbae17',
+      background: '#f5f5f5',
+      containers: '#ffffff'
+    };
   });
   const [isAdmin, setIsAdmin] = useState(false);
   const [userStats, setUserStats] = useState({
@@ -666,6 +679,9 @@ export default function ProfilePage() {
       // Check if user should be admin based on config
       const adminStatus = isUserAdmin(user.id, user.username, user.email);
       setIsAdmin(adminStatus);
+    } else {
+      // Clear localStorage when user logs out
+      localStorage.removeItem('profileColors');
     }
   }, [user]);
 
@@ -760,6 +776,8 @@ export default function ProfilePage() {
         if (data.colors) {
           console.log('Setting profile colors:', data.colors);
           setProfileColors(data.colors);
+          // Save to localStorage for immediate loading on next visit
+          localStorage.setItem('profileColors', JSON.stringify(data.colors));
         }
       } else {
         // If user doesn't exist in database yet, use default colors
@@ -1291,6 +1309,8 @@ export default function ProfilePage() {
         const responseData = await response.json();
         console.log('Colors saved successfully:', responseData);
         setProfileColors(colors);
+        // Save to localStorage for immediate loading on next visit
+        localStorage.setItem('profileColors', JSON.stringify(colors));
         showToast('Profile colors saved successfully! 🎨', 'success');
       } else {
         const errorData = await response.json();
@@ -1334,7 +1354,7 @@ export default function ProfilePage() {
   const getUserDiceAvatar = () => {
     // This will be integrated with the My Dice system
     // For now, return the default avatar
-    return user?.avatar || '/DiceLogo.svg';
+    return user?.avatar || '/DefaultDiceAvatar.svg';
   };
 
   // Simple text color detection based on cover color brightness
@@ -1406,15 +1426,16 @@ export default function ProfilePage() {
             {/* Profile Picture */}
             <div className="relative">
               <div 
-                className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+                className="w-32 h-32 rounded-full border-4 border-black overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
                 style={{
+                  backgroundColor: '#ffffff', // Ensure white background
                   backgroundImage: `url(${getUserDiceAvatar()})`,
                   backgroundSize: 'contain',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat'
                 }}
-                onClick={() => setShowImageModal(true)}
-                title="Click to view full size"
+                onClick={() => !isEditing && setShowImageModal(true)}
+                title={isEditing ? "Edit mode active - cannot view avatar" : "Click to view full size"}
               />
             </div>
 
@@ -1429,7 +1450,9 @@ export default function ProfilePage() {
                   </div>
                     )}
                   </div>
-              <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>Level {levelProgress.currentLevel} {levelProgress.currentLevelName}</p>
+              <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>
+                Level {levelProgress.currentLevel}{user.title ? ` ${user.title}` : ` ${levelProgress.currentLevelName}`}
+              </p>
               
               {/* XP Progress Bar */}
               <div className="w-full max-w-md">
@@ -1458,10 +1481,12 @@ export default function ProfilePage() {
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors backdrop-blur-sm ${
-                  isLightCover() 
-                    ? 'bg-gray-900/20 hover:bg-gray-900/30' 
-                    : 'bg-white/20 hover:bg-white/30'
-                } ${coverTextClass}`}
+                  isEditing 
+                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                    : isLightCover() 
+                      ? 'bg-gray-900/20 hover:bg-gray-900/30' 
+                      : 'bg-white/20 hover:bg-white/30'
+                } ${isEditing ? '' : coverTextClass}`}
               >
                 <Edit className="w-4 h-4" />
                 <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
@@ -1479,11 +1504,15 @@ export default function ProfilePage() {
                   <span>Colors</span>
                 </button>
               )}
-              <Link href="/settings" className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-semibold ${
-                isLightCover() 
-                  ? 'bg-white hover:bg-gray-100' 
-                  : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
-              } ${coverTextClass}`}>
+              <Link 
+                href={isEditing ? "#" : "/settings"} 
+                onClick={isEditing ? (e) => e.preventDefault() : undefined}
+                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-semibold ${
+                  isLightCover() 
+                    ? 'bg-white hover:bg-gray-100' 
+                    : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
+                } ${coverTextClass} ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
               </Link>
@@ -1573,7 +1602,7 @@ export default function ProfilePage() {
                     </button>
                     <button
                       onClick={handleCancel}
-                     className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                     className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium"
                     >
                      Cancel
                     </button>
@@ -1587,8 +1616,11 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">My Collection</h2>
                 <button 
-                  onClick={() => setShowGameSearchModal(true)}
-                  className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium"
+                  onClick={() => !isEditing && setShowGameSearchModal(true)}
+                  disabled={isEditing}
+                  className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium ${
+                    isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   Add Games
                 </button>
@@ -1639,8 +1671,11 @@ export default function ProfilePage() {
                             </span>
                           </div>
                           <button
-                            onClick={() => handleRemoveGame(game.id)}
-                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+                            onClick={() => !isEditing && handleRemoveGame(game.id)}
+                            disabled={isEditing}
+                            className={`opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity ${
+                              isEditing ? 'cursor-not-allowed' : ''
+                            }`}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -1662,8 +1697,11 @@ export default function ProfilePage() {
                   {gamesList.length > 10 && (
                     <div className="text-center pt-2">
                       <button 
-                        onClick={() => setShowAllGamesModal(true)}
-                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium text-sm"
+                        onClick={() => !isEditing && setShowAllGamesModal(true)}
+                        disabled={isEditing}
+                        className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium text-sm ${
+                          isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                       >
                         Show All Games ({gamesList.length})
                       </button>
@@ -1681,24 +1719,33 @@ export default function ProfilePage() {
                           <img
                             src={favoriteCard}
                             alt="Favorite card"
-                            className="w-full h-full object-contain rounded-lg group-hover:opacity-90 transition-opacity cursor-pointer"
-                            onClick={handleFavoriteCardClick}
+                          className={`w-full h-full object-contain rounded-lg group-hover:opacity-90 transition-opacity cursor-pointer ${
+                            isEditing ? 'pointer-events-none' : ''
+                          }`}
+                          onClick={isEditing ? undefined : handleFavoriteCardClick}
                           />
                           {/* Hover overlay with delete option */}
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
                               <button
                                 onClick={(e) => {
+                                  if (isEditing) return;
                                   e.stopPropagation();
                                   setShowDeleteFavoriteCardConfirm(true);
                                 }}
-                                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                                disabled={isEditing}
+                                className={`px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium ${
+                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
                               >
                                 Delete
                               </button>
                               <button
-                                onClick={handleFavoriteCardClick}
-                                className="px-3 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/80 transition-colors text-sm font-medium"
+                                onClick={isEditing ? undefined : handleFavoriteCardClick}
+                                disabled={isEditing}
+                                className={`px-3 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/80 transition-colors text-sm font-medium ${
+                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
                               >
                                 View Full Size
                               </button>
@@ -1738,24 +1785,33 @@ export default function ProfilePage() {
                           <img
                             src={collectionPhoto}
                             alt="Collection photo"
-                            className="w-full h-full object-contain rounded-lg group-hover:opacity-90 transition-opacity cursor-pointer"
-                            onClick={handleCollectionPhotoClick}
+                          className={`w-full h-full object-contain rounded-lg group-hover:opacity-90 transition-opacity cursor-pointer ${
+                            isEditing ? 'pointer-events-none' : ''
+                          }`}
+                          onClick={isEditing ? undefined : handleCollectionPhotoClick}
                           />
                           {/* Hover overlay with delete option */}
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
                               <button
                                 onClick={(e) => {
+                                  if (isEditing) return;
                                   e.stopPropagation();
                                   setShowDeleteCollectionPhotoConfirm(true);
                                 }}
-                                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                                disabled={isEditing}
+                                className={`px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium ${
+                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
                               >
                                 Delete
                               </button>
                               <button
-                                onClick={handleCollectionPhotoClick}
-                                className="px-3 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/80 transition-colors text-sm font-medium"
+                                onClick={isEditing ? undefined : handleCollectionPhotoClick}
+                                disabled={isEditing}
+                                className={`px-3 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/80 transition-colors text-sm font-medium ${
+                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
                               >
                                 View Full Size
                               </button>
@@ -1790,8 +1846,11 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Photos</h2>
                 <button 
-                  onClick={() => setShowUploadModal(true)}
-                  className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium"
+                  onClick={() => !isEditing && setShowUploadModal(true)}
+                  disabled={isEditing}
+                  className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium ${
+                    isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   Add Photo
                 </button>
@@ -1801,8 +1860,11 @@ export default function ProfilePage() {
                   userImages.slice(0, 6).map((image: GalleryImage) => (
                     <div 
                       key={image.id} 
-                      className="aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer relative"
+                      className={`aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer relative ${
+                        isEditing ? 'pointer-events-none opacity-50' : ''
+                      }`}
                       onClick={async () => {
+                        if (isEditing) return;
                         setSelectedImage({
                           url: image.imageUrl,
                           title: image.title,
@@ -1883,8 +1945,11 @@ export default function ProfilePage() {
               {userImages.length > 6 && (
                 <div className="mt-4 text-center">
                   <button 
-                    onClick={() => router.push(`/community-gallery?author=${encodeURIComponent(user?.username || '')}`)}
-                    className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium"
+                    onClick={() => !isEditing && router.push(`/community-gallery?author=${encodeURIComponent(user?.username || '')}`)}
+                    disabled={isEditing}
+                    className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium ${
+                      isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     View All {userImages.length} Photos
                   </button>
@@ -1902,6 +1967,7 @@ export default function ProfilePage() {
               currentUserId={user.id}
               isOwnProfile={true}
               profileColors={profileColors}
+              isEditing={isEditing}
             />
 
 

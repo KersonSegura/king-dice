@@ -1,0 +1,15 @@
+{
+  "cmfvf8x0y0000vbpvu6bgokym": {
+    "userId": "cmfvf8x0y0000vbpvu6bgokym",
+    "notifications": {
+      "emailNotifications": true,
+      "forumNotifications": true,
+      "galleryNotifications": false,
+      "marketingEmails": false
+    },
+    "security": {
+      "twoFactorEnabled": false
+    },
+    "lastUpdated": "2025-09-22T20:25:28.215Z"
+  }
+}

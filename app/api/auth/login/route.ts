@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserByUsername, getUserByEmail } from '@/lib/users';
-import bcrypt from 'bcryptjs';
+import { authenticateUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const { username, password, rememberMe } = await request.json();
 
     // Validate input
     if (!username || !password) {
@@ -14,39 +13,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by username or email
-    let user = getUserByUsername(username);
-    if (!user) {
-      // Try to find by email if username lookup failed
-      user = getUserByEmail(username);
-    }
-    
-    if (!user) {
+    // Authenticate user using secure authentication
+    const authResult = await authenticateUser(username, password);
+
+    if (!authResult.success) {
+      // Check if 2FA is required
+      if (authResult.requiresTwoFactor) {
+        return NextResponse.json(
+          { 
+            message: authResult.message,
+            requiresTwoFactor: true,
+            userId: authResult.userId
+          },
+          { status: 200 } // 200 because this is a successful response that requires 2FA
+        );
+      }
+      
       return NextResponse.json(
-        { message: 'Invalid username/email or password' },
+        { message: authResult.message },
         { status: 401 }
       );
     }
 
-    // For now, we'll use a simple password check
-    // In a real app, you'd store hashed passwords and compare them
-    // For demo purposes, we'll accept any password for existing users
-    if (user.id === 'admin') {
-      // Admin user can login with any password for demo
-      return NextResponse.json(user, { status: 200 });
-    }
-
-    // For KingDiceKSA, we'll check for a specific password
-    if ((user.username === 'KingDiceKSA' || user.email === 'kingdice.community@gmail.com') && password === 'Kinteligente7') {
-      return NextResponse.json(user, { status: 200 });
-    }
-
-    // For other users, we'll need to implement proper password checking
-    // For now, we'll return an error to encourage registration
-    return NextResponse.json(
-      { message: 'Please register first' },
-      { status: 401 }
+    // Create response with user data and token
+    const response = NextResponse.json(
+      {
+        user: authResult.user,
+        token: authResult.token
+      },
+      { status: 200 }
     );
+
+    // Set secure HTTP-only cookie for the token
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60 // 30 days if remember me, 7 days otherwise
+    };
+
+    response.cookies.set('auth_token', authResult.token!, cookieOptions);
+
+    return response;
+
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

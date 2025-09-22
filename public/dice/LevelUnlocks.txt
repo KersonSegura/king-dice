@@ -99,7 +99,8 @@ Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull, Eight 
 Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage, Duke, Duchess, Prince, Princess, King, Queen.
 
 Special objects:
-Gift - Only unlockable by donating to the page.
-King's Room - Only unlockable by winning Dice of the Week (Dice Throne in gallery).
-King's Card - Only unlockable by winning Card of the Week (The King's Card in gallery).
-Dice-Bot - Only unlockable by donating to the page.
+Gift Dice - Only unlockable by donating to the page.
+Dice-Bot Dice - Only unlockable by donating to the page.
+King's Room Background - Only unlockable by winning Dice of the Week (Dice Throne in gallery).
+King's Card Item - Only unlockable by winning Card of the Week (The King's Card in gallery).
+Dice-Bot Companion - Unlocks at Level 10.

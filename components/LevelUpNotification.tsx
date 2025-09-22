@@ -27,7 +27,10 @@ export default function LevelUpNotification({ isVisible, level, onClose }: Level
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div 
+      className="fixed inset-0 z-[9999]"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}
+    >
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -36,10 +39,10 @@ export default function LevelUpNotification({ isVisible, level, onClose }: Level
       
       {/* Level Up Image Container */}
       <div 
-        className={`relative transform transition-all duration-700 ease-out ${
+        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ease-out ${
           isAnimating 
-            ? 'translate-y-0 opacity-100 scale-100' 
-            : 'translate-y-full opacity-0 scale-95'
+            ? 'opacity-100 scale-100' 
+            : 'opacity-0 scale-90'
         }`}
       >
         {/* Level Up Image */}
@@ -49,14 +52,14 @@ export default function LevelUpNotification({ isVisible, level, onClose }: Level
             alt={`Level ${level} Achieved!`}
             width={400}
             height={400}
-            className="drop-shadow-2xl"
+            className="drop-shadow-2xl w-80 h-80 sm:w-96 sm:h-96 md:w-[400px] md:h-[400px]"
             priority
           />
           
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-lg font-bold transition-colors duration-200 shadow-lg"
+            className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-base sm:text-lg font-bold transition-colors duration-200 shadow-lg"
             aria-label="Close level up notification"
           >
             ×
@@ -64,11 +67,11 @@ export default function LevelUpNotification({ isVisible, level, onClose }: Level
         </div>
         
         {/* Celebration Text */}
-        <div className="text-center mt-4">
-          <h2 className="text-3xl font-bold text-white drop-shadow-lg">
+        <div className="text-center mt-4 px-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
             Level {level} Achieved!
           </h2>
-          <p className="text-lg text-yellow-200 drop-shadow-md mt-2">
+          <p className="text-base sm:text-lg text-yellow-200 drop-shadow-md mt-2">
             New items unlocked!
           </p>
         </div>

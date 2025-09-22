@@ -41,6 +41,7 @@ export const ASSET_LEVEL_REQUIREMENTS: Record<string, Record<string, AssetLevelR
     'Dice-SkullDice': { level: 8, levelName: 'Duke/Duchess', description: 'Skull-themed dice' },
     'SafeDice': { level: 9, levelName: 'Lord/Lady', description: 'Safe-themed dice' },
     'GiftDice': { level: 0, levelName: 'Special', description: 'Gift dice - only unlockable by donating to the page' },
+    'Dice-BotDice': { level: 0, levelName: 'Special', description: 'Dice-Bot dice - only unlockable by donating to the page' },
   },
 
   // Patterns - Progressive unlock order
@@ -107,6 +108,7 @@ export const ASSET_LEVEL_REQUIREMENTS: Record<string, Record<string, AssetLevelR
     'Dice-Skull': { level: 7, levelName: 'Archmage', description: 'Legendary dice skull companion' },
     'EightBall': { level: 8, levelName: 'Duke/Duchess', description: 'Eight ball companion' },
     'Mimic': { level: 9, levelName: 'Lord/Lady', description: 'Mysterious mimic companion' },
+    'Dice-Bot': { level: 10, levelName: 'King/Queen', description: 'Legendary Dice-Bot companion - unlocks at level 10' },
   },
 
   // Titles - Progressive unlock order

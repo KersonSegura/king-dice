@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 
-import LevelUpTest from "@/components/LevelUpTest";
 import ModernTooltip from "@/components/ModernTooltip";
 import BackButton from "@/components/BackButton";
 
@@ -380,68 +379,85 @@ export default function MyDicePage() {
   });
   const [loading, setLoading] = useState(true);
   const [userLevel, setUserLevel] = useState(1);
+  const [levelProgress, setLevelProgress] = useState({ progressPercentage: 0, xpForNextLevel: 100 });
   const [showXPHelp, setShowXPHelp] = useState(false);
 
-  // Load saved configuration from localStorage
-  const loadSavedConfiguration = (): Record<TabKey, string | null> => {
-    if (typeof window === 'undefined') return {
+  // Load saved configuration from server (user-specific)
+  const loadSavedConfiguration = async (): Promise<Record<TabKey, string | null>> => {
+    if (!user?.id) return {
       background: null, dice: null, pattern: null, accessories: null, hat: null, item: null, companion: null, title: null
     };
     
     try {
-      const saved = localStorage.getItem('kingDice-savedConfiguration');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        console.log('📂 Loaded saved configuration:', parsed);
-        
-        // Handle both old format (just config) and new format (with timestamp)
-        if (parsed.config) {
-          return parsed.config;
-        } else if (parsed.background || parsed.dice || parsed.pattern) {
-          // Old format - return as is
-          return parsed;
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error loading saved configuration:', error);
-    }
-    
-    return {
-      background: null, dice: null, pattern: null, accessories: null, hat: null, item: null, companion: null, title: null
-    };
-  };
-
-  // Save configuration to localStorage
-  const saveConfigurationToStorage = (config: Record<TabKey, string | null>) => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const saveData = {
-        config,
-        timestamp: new Date().toISOString(),
-        lastSaved: new Date().toLocaleString()
-      };
-      localStorage.setItem('kingDice-savedConfiguration', JSON.stringify(saveData));
-      console.log('💾 Configuration saved to localStorage:', saveData);
-    } catch (error) {
-      console.error('❌ Error saving configuration to localStorage:', error);
-    }
-  };
-
-  // Fetch user level
-  const fetchUserLevel = async () => {
-    if (!user?.id) return 1;
-    
-    try {
-      const response = await fetch(`/api/reputation?userId=${user.id}`);
+      const response = await fetch(`/api/my-dice/load?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
-        return data.user?.level || 1;
+        console.log('📂 Loaded saved configuration from server:', data);
+        return data.config;
+      }
+    } catch (error) {
+      console.error('❌ Error loading saved configuration from server:', error);
+    }
+    
+    // Return default configuration for new users
+    return {
+      background: "/dice/backgrounds/WhiteBackground.svg",
+      dice: "/dice/dice/WhiteDice.svg", 
+      pattern: "/dice/patterns/1-2-3.svg",
+      accessories: null,
+      hat: null,
+      item: null,
+      companion: null,
+      title: null
+    };
+  };
+
+  // Save configuration to server (user-specific)
+  const saveConfigurationToStorage = async (config: Record<TabKey, string | null>) => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch('/api/my-dice/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          config
+        }),
+      });
+
+      if (response.ok) {
+        console.log('💾 Saved configuration to server:', config);
+      } else {
+        console.error('❌ Failed to save configuration to server');
+      }
+    } catch (error) {
+      console.error('❌ Error saving configuration to server:', error);
+    }
+  };
+
+  // Fetch user level and progress
+  const fetchUserLevel = async () => {
+    if (!user?.id) return { level: 1, progress: { progressPercentage: 0, xpForNextLevel: 100 } };
+    
+    try {
+      const response = await fetch(`/api/reputation?userId=${user.id}&action=progress`);
+      if (response.ok) {
+        const data = await response.json();
+        return { 
+          level: data.progress?.currentLevel || 1, 
+          progress: {
+            progressPercentage: data.progress?.progressPercentage || 0,
+            xpForNextLevel: data.progress?.xpForNextLevel || 100
+          }
+        };
       }
     } catch (error) {
       console.error('Error fetching user level:', error);
     }
-    return 1;
+    return { level: 1, progress: { progressPercentage: 0, xpForNextLevel: 100 } };
   };
 
   useEffect(() => {
@@ -449,9 +465,10 @@ export default function MyDicePage() {
       try {
         setLoading(true);
         
-        // Fetch user level first
-        const level = await fetchUserLevel();
+        // Fetch user level and progress first
+        const { level, progress } = await fetchUserLevel();
         setUserLevel(level);
+        setLevelProgress(progress);
         
         // Fetch assets with user level
         const res = await fetch(`/api/dice-assets?userLevel=${level}`);
@@ -465,7 +482,7 @@ export default function MyDicePage() {
           setAssets(sorted);
 
           // Load saved configuration first
-          const savedConfig = loadSavedConfiguration();
+          const savedConfig = await loadSavedConfiguration();
           
           // Helper function to pick assets with fallback
           const pick = (tab: TabKey, fallbackIndex = 0): string | null => {
@@ -483,7 +500,7 @@ export default function MyDicePage() {
           let initialSelection = {
             background: savedConfig.background || pick("background"),
             dice: savedConfig.dice || pick("dice"),
-            pattern: null, // Always default to null (No Pattern) to avoid restricted pattern issues
+            pattern: savedConfig.pattern || null, // Use saved pattern, fallback to null
             accessories: savedConfig.accessories || null,
             hat: savedConfig.hat || null,
             item: savedConfig.item || null,
@@ -557,12 +574,25 @@ export default function MyDicePage() {
     load();
   }, []);
 
-  // Auto-save configuration whenever selected changes
+  // Auto-save configuration whenever selected changes (but not during initial load)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
   useEffect(() => {
-    if (!loading && Object.values(selected).some(val => val !== null)) {
+    if (!loading && initialLoadComplete && Object.values(selected).some(val => val !== null)) {
       saveConfigurationToStorage(selected);
     }
-  }, [selected, loading]);
+  }, [selected, loading, initialLoadComplete]);
+  
+  // Mark initial load as complete after loading finishes
+  useEffect(() => {
+    if (!loading) {
+      // Small delay to ensure all state updates are complete
+      const timer = setTimeout(() => {
+        setInitialLoadComplete(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   const handleSelect = (tab: TabKey, src: string) => {
     setSelected(prev => {
@@ -644,9 +674,6 @@ export default function MyDicePage() {
         }
       }
       
-      // Auto-save the new configuration to localStorage
-      saveConfigurationToStorage(newSelection);
-      
       return newSelection;
     });
   };
@@ -661,7 +688,7 @@ export default function MyDicePage() {
             <BackButton />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                My Dice{selected.title && selected.title !== "" ? ` - ${assets.title.find(asset => asset.src === selected.title)?.name || 'Unknown'}` : ''}
+                My Dice{user?.title ? ` - ${user.title}` : ''}
               </h1>
             {user && (
               <div className="mt-2 flex items-center gap-2">
@@ -669,7 +696,7 @@ export default function MyDicePage() {
                 <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
-                    style={{ width: `${Math.min(100, (userLevel / 10) * 100)}%` }}
+                    style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
                   ></div>
                 </div>
                 <span className="text-xs text-gray-500">Progress to next level</span>
@@ -1226,8 +1253,6 @@ export default function MyDicePage() {
         </div>
       )}
       
-      {/* Level Up Test Component - Remove in production */}
-      <LevelUpTest />
     </div>
   );
 } 

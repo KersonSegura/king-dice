@@ -1,18 +1,27 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/lib/users';
 import { useLevelUp } from './LevelUpContext';
 
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  avatar: string;
+  isAdmin: boolean;
+  level?: number;
+  xp?: number;
+}
 
 interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
-  logout: () => void;
+  login: (userData: User, token: string) => void;
+  logout: () => Promise<void>;
   updateAvatar: (avatarUrl: string) => void;
   syncUserData: (serverUser: any) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  verifyAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +42,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { showLevelUp } = useLevelUp();
-
 
   // Function to award daily login XP
   const awardDailyLoginXP = async (userId: string, username: string) => {
@@ -67,47 +75,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem('kingdice_user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
+  // Verify authentication on app start
+  const verifyAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
         
         // Award daily login XP if user hasn't logged in today
-        if (userData?.id && userData?.username) {
-          // Initialize last known level from user data if available
-          if (userData.level) {
-            initializeLevel(userData.level);
-          }
-          awardDailyLoginXP(userData.id, userData.username);
+        if (data.user?.id && data.user?.username) {
+          awardDailyLoginXP(data.user.id, data.user.username);
         }
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('kingdice_user');
+      } else {
+        // Token is invalid or expired
+        setUser(null);
       }
+    } catch (error) {
+      console.error('Error verifying authentication:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    verifyAuth();
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: User, token: string) => {
     setUser(userData);
-    localStorage.setItem('kingdice_user', JSON.stringify(userData));
     
     // Award daily login XP for new login
     if (userData?.id && userData?.username) {
-      // Initialize last known level from user data if available
-      if (userData.level) {
-        initializeLevel(userData.level);
-      }
       awardDailyLoginXP(userData.id, userData.username);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('kingdice_user');
+  const logout = async () => {
+    try {
+      // Call logout API to clear server-side session
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      // Clear local state regardless of API call result
+      setUser(null);
+    }
   };
 
   const updateAvatar = (avatarUrl: string) => {
@@ -115,7 +136,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (user) {
       const updatedUser = { ...user, avatar: avatarUrl };
       setUser(updatedUser);
-      localStorage.setItem('kingdice_user', JSON.stringify(updatedUser));
       console.log('✅ AuthContext: Avatar updated successfully to', avatarUrl);
     } else {
       console.log('❌ AuthContext: No user found, cannot update avatar');
@@ -126,7 +146,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('🔄 AuthContext: Syncing user data from server:', serverUser);
     if (serverUser) {
       setUser(serverUser);
-      localStorage.setItem('kingdice_user', JSON.stringify(serverUser));
       console.log('✅ AuthContext: User data synced successfully');
     }
   };
@@ -138,7 +157,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateAvatar,
     syncUserData,
     isAuthenticated: !!user,
-    isLoading
+    isLoading,
+    verifyAuth
   };
 
   return (
@@ -146,4 +166,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   );
-} 
+}

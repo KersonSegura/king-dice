@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style>.bg-cls-1{fill:#262626;}</style>
+    <style>.dice-cls-1{fill:#e5e5e5;}.dice-cls-2{fill:url(#dice-linear-gradient);}.dice-cls-3{fill:url(#dice-linear-gradient-2);}</style><linearGradient id="dice-linear-gradient" x1="139.1273" y1="308.5069" x2="256.0001" y2="308.5069" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ccc"/><stop offset="0.2725" stop-color="#bcbcbc"/><stop offset="0.8054" stop-color="#919191"/><stop offset="1" stop-color="gray"/></linearGradient><linearGradient id="dice-linear-gradient-2" x1="256.0001" y1="308.5069" x2="372.8727" y2="308.5069" xlink:href="#dice-linear-gradient"/>
+  </defs>
+  <g id="bg-Backgrounds"><g id="bg-Backgrounds"><rect id="bg-Black" class="bg-cls-1" width="512" height="512"/></g></g>
+  <g id="dice-Dice"><g id="dice-Dice"><g id="dice-White"><path class="dice-cls-1" d="M256,274.6582l116.8726-67.6975L256,139.2633,139.1273,206.9607Z"/><polygon class="dice-cls-2" points="139.127 206.961 139.127 342.356 256 410.053 256 274.658 139.127 206.961"/><polygon class="dice-cls-3" points="372.873 206.961 256 274.658 256 410.053 372.873 342.356 372.873 206.961"/></g></g></g>
+</svg>

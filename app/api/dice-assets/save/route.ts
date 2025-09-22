@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { updateUserAvatar, updateUserTitle, getUserByUsername, getUserById } from '@/lib/users';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,23 +27,20 @@ export async function POST(request: NextRequest) {
     // Clean up old profile images for this user
     await cleanupOldProfileImages(userId, profileImageUrl);
     
-    // Try to find user by ID first, then by username as fallback
-    let user = getUserById(userId);
-    if (!user && username) {
-      console.log('🔍 User not found by ID, trying username:', username);
-      user = getUserByUsername(username);
-      if (user) {
-        console.log('✅ Found user by username:', user.id);
-      }
-    }
+    // Find user in database
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
     
     if (!user) {
-      console.log('❌ User not found by ID or username');
+      console.log('❌ User not found by ID:', userId);
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
+    
+    console.log('✅ Found user:', user.username);
     
     // Extract title from diceConfig and convert file path to title name
     const selectedTitle = diceConfig.title;
@@ -56,28 +55,27 @@ export async function POST(request: NextRequest) {
     }
     console.log('👑 Extracted title name:', titleName);
     
-    // Update the user's profile image and title in the database using the correct user ID
-    const updatedUser = updateUserAvatar(user.id, profileImageUrl);
-    
-    if (!updatedUser) {
-      return NextResponse.json(
-        { error: 'Failed to update user avatar' },
-        { status: 500 }
-      );
-    }
-    
-    // Update the user's title if one is selected
-    let finalUpdatedUser = updatedUser;
-    if (selectedTitle) {
-      const titleUpdatedUser = updateUserTitle(user.id, titleName);
-      if (titleUpdatedUser) {
-        console.log('👑 User title updated:', titleUpdatedUser.title);
-        finalUpdatedUser = titleUpdatedUser;
+    // Update the user's avatar and title in the database
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        avatar: profileImageUrl,
+        title: selectedTitle ? titleName : null
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        avatar: true,
+        title: true,
+        isAdmin: true,
+        level: true,
+        xp: true
       }
-    }
+    });
     
-    console.log('✅ User avatar updated in database:', finalUpdatedUser.avatar);
-    console.log('✅ User title updated in database:', finalUpdatedUser.title);
+    console.log('✅ User avatar updated in database:', updatedUser.avatar);
+    console.log('✅ User title updated in database:', updatedUser.title);
     console.log('✅ Dice configuration saved successfully');
     
     return NextResponse.json({
@@ -85,7 +83,7 @@ export async function POST(request: NextRequest) {
       message: 'Dice configuration saved successfully',
       profileImageUrl,
       diceConfig,
-      updatedUser: finalUpdatedUser
+      updatedUser: updatedUser
     });
     
   } catch (error) {

@@ -520,12 +520,12 @@ export default function FloatingChat() {
   return (
     <>
       {/* Floating Chat Button */}
-      <div className="fixed bottom-4 right-4 z-50 sm:bottom-4 sm:right-4" style={{ position: 'fixed', bottom: '1rem', right: '1rem' }}>
+      <div className="fixed bottom-4 right-4 z-40 sm:bottom-4 sm:right-4" style={{ position: 'fixed', bottom: '1rem', right: '1rem' }}>
         {!isChatOpen ? (
           <div className="relative">
             <button
               onClick={() => setIsChatOpen(true)}
-              className={`relative text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 ${
+              className={`relative text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 overflow-hidden ${
                 unreadCount > 0 
                   ? 'bg-[#fbae17] hover:bg-[#e09915]' 
                   : 'bg-blue-500 hover:bg-blue-600'

@@ -17,7 +17,7 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [userStats, setUserStats] = useState({ level: 1, posts: 0 });
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -162,18 +162,15 @@ export default function Header() {
                 <>
                   {/* Avatar Button - Full clickable area */}
                   <div
-                    className="w-10 h-10 p-1 cursor-pointer"
-                  >
-                    <div
-                      className="w-8 h-8 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors"
-                      style={{
-                        backgroundImage: `url(${user?.avatar || '/DiceLogo.svg'})`,
-                        backgroundSize: 'contain',
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat'
-                      }}
-                    />
-                  </div>
+                    className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: '#ffffff', // Ensure white background
+                      backgroundImage: `url(${user?.avatar || '/DefaultDiceAvatar.svg'})`,
+                      backgroundSize: 'contain',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                  />
                     
                   {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
@@ -184,7 +181,8 @@ export default function Header() {
                                                        <div 
                                 className="w-16 h-16 rounded-full border-2 border-black overflow-hidden"
                                 style={{
-                                  backgroundImage: `url(${user?.avatar || '/DiceLogo.svg'})`,
+                                  backgroundColor: '#ffffff', // Ensure white background
+                                  backgroundImage: `url(${user?.avatar || '/DefaultDiceAvatar.svg'})`,
                                   backgroundSize: 'contain',
                                   backgroundPosition: 'center',
                                   backgroundRepeat: 'no-repeat'
@@ -194,7 +192,7 @@ export default function Header() {
                              <p className="text-sm font-semibold text-gray-900 truncate">{user?.username}</p>
                              {user?.title && (
                                <p className="text-xs text-yellow-600 font-medium truncate">
-                                 {user.title.split('/').pop()?.replace('.svg', '') || user.title}
+                                 {user.title}
                                </p>
                              )}
                              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
@@ -293,6 +291,11 @@ export default function Header() {
                     </div>
                   )}
                 </>
+              ) : isLoading ? (
+                <div className="flex items-center space-x-2 px-3 py-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
+                  <span className="text-gray-600">Loading...</span>
+                </div>
               ) : (
                 <button
                   onClick={() => setShowLoginModal(true)}

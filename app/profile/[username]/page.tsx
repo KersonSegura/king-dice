@@ -364,8 +364,9 @@ export default function UserProfilePage() {
             {/* Profile Picture */}
             <div className="relative">
               <div 
-                className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+                className="w-32 h-32 rounded-full border-4 border-black overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
                 style={{
+                  backgroundColor: '#ffffff', // Ensure white background
                   backgroundImage: `url(${userProfile.avatar})`,
                   backgroundSize: 'contain',
                   backgroundPosition: 'center',
@@ -388,7 +389,7 @@ export default function UserProfilePage() {
                 )}
               </div>
               <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>
-                Level {userProfile.levelProgress?.currentLevel || 1} {userProfile.levelProgress?.currentLevelName || 'Commoner'}
+                Level {userProfile.levelProgress?.currentLevel || 1}{userProfile.title ? ` ${userProfile.title}` : ` ${userProfile.levelProgress?.currentLevelName || 'Commoner'}`}
               </p>
               
               {/* XP Progress Bar */}

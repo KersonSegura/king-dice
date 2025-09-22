@@ -155,24 +155,30 @@ export default function SettingsPage() {
 
   const handleTwoFactorToggle = async () => {
     const newTwoFactorEnabled = !security.twoFactorEnabled;
-    const newSecurity = { ...security, twoFactorEnabled: newTwoFactorEnabled };
-    setSecurity(newSecurity);
     
     try {
-      await fetch('/api/users/settings', {
+      const response = await fetch('/api/auth/toggle-2fa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id,
-          settings: { security: newSecurity }
+          enabled: newTwoFactorEnabled
         })
       });
-      
-      showNotificationToast(
-        newTwoFactorEnabled 
-          ? 'Two-Factor Authentication enabled!' 
-          : 'Two-Factor Authentication disabled!'
-      );
+
+      if (response.ok) {
+        const newSecurity = { ...security, twoFactorEnabled: newTwoFactorEnabled };
+        setSecurity(newSecurity);
+        
+        showNotificationToast(
+          newTwoFactorEnabled 
+            ? 'Two-Factor Authentication enabled!' 
+            : 'Two-Factor Authentication disabled!'
+        );
+      } else {
+        const errorData = await response.json();
+        showNotificationToast(errorData.error || 'Failed to update security settings');
+      }
     } catch (error) {
       console.error('Error updating 2FA settings:', error);
       showNotificationToast('Failed to update security settings');

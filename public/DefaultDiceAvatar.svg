@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <!-- White background -->
+  <rect width="1000" height="1000" fill="#ffffff"/>
+  
+  <!-- White dice base -->
+  <g transform="translate(500, 500)">
+    <!-- Dice cube faces -->
+    <!-- Top face -->
+    <polygon points="-200,-150 200,-150 150,-200 -150,-200" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+    <!-- Front face -->
+    <polygon points="-200,-150 200,-150 200,150 -200,150" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+    <!-- Right face -->
+    <polygon points="200,-150 150,-200 150,200 200,150" fill="#f0f0f0" stroke="#cccccc" stroke-width="2"/>
+    
+    <!-- Dice dots (1-2-3 pattern) -->
+    <!-- Face 1 (top) - 1 dot -->
+    <circle cx="0" cy="-175" r="15" fill="#333333"/>
+    
+    <!-- Face 2 (front) - 2 dots -->
+    <circle cx="-80" cy="0" r="15" fill="#333333"/>
+    <circle cx="80" cy="0" r="15" fill="#333333"/>
+    
+    <!-- Face 3 (right) - 3 dots -->
+    <circle cx="175" cy="-50" r="15" fill="#333333"/>
+    <circle cx="175" cy="0" r="15" fill="#333333"/>
+    <circle cx="175" cy="50" r="15" fill="#333333"/>
+  </g>
+</svg>

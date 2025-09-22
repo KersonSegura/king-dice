@@ -11,6 +11,19 @@
         "companion": null
       },
       "updatedAt": "2025-08-29T20:55:44.586Z"
+    },
+    "cmfvf8x0y0000vbpvu6bgokym": {
+      "config": {
+        "background": "/dice/Backgrounds/WhiteBackground.svg",
+        "dice": "/dice/Dice/WhiteDice.svg",
+        "pattern": null,
+        "accessories": null,
+        "hat": null,
+        "item": null,
+        "companion": null,
+        "title": null
+      },
+      "updatedAt": "2025-09-22T20:30:34.950Z"
     }
   }
 }

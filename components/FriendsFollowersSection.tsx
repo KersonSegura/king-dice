@@ -28,6 +28,7 @@ interface FriendsFollowersSectionProps {
     background: string;
     containers: string;
   };
+  isEditing?: boolean;
 }
 
 export default function FriendsFollowersSection({ 
@@ -38,7 +39,8 @@ export default function FriendsFollowersSection({
     cover: '#fbae17',
     background: '#f5f5f5',
     containers: '#ffffff'
-  }
+  },
+  isEditing = false
 }: FriendsFollowersSectionProps) {
   const { showToast, ToastContainer } = useToast();
   const [socialStats, setSocialStats] = useState<SocialStats | null>(null);
@@ -248,13 +250,14 @@ export default function FriendsFollowersSection({
           {!isOwnProfile && currentUserId && (
             <button
               onClick={handleFollow}
+              disabled={isEditing}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 isFollowing
                   ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   : hasRequestPending
                   ? 'bg-gray-400 text-white hover:bg-gray-500'
                   : 'bg-[#fbae17] text-white hover:bg-[#fbae17]/80'
-              }`}
+              } ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {isFollowing ? (
                 <>
@@ -279,15 +282,19 @@ export default function FriendsFollowersSection({
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div 
-            className="text-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={() => setActiveTab('followers')}
+            className={`text-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+              isEditing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            onClick={() => !isEditing && setActiveTab('followers')}
           >
             <div className="text-2xl font-bold text-gray-900">{socialStats?.followers || 0}</div>
             <div className="text-sm text-gray-600">Followers</div>
           </div>
           <div 
-            className="text-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={() => setActiveTab('following')}
+            className={`text-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+              isEditing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            onClick={() => !isEditing && setActiveTab('following')}
           >
             <div className="text-2xl font-bold text-gray-900">{socialStats?.following || 0}</div>
             <div className="text-sm text-gray-600">Following</div>
@@ -302,8 +309,11 @@ export default function FriendsFollowersSection({
             </h4>
             {(currentTabCount || 0) > 0 && (
               <button
-                onClick={() => setShowAllModal(true)}
-                className="text-[#fbae17] hover:text-[#fbae17]/80 text-sm font-medium"
+                onClick={() => !isEditing && setShowAllModal(true)}
+                disabled={isEditing}
+                className={`text-[#fbae17] hover:text-[#fbae17]/80 text-sm font-medium ${
+                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 View All
               </button>
