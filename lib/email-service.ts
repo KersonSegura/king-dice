@@ -19,7 +19,7 @@ export class EmailService {
   constructor() {
     // For development, we'll just log emails
     // In production, configure with real SMTP settings
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: 'localhost',
       port: 1025,
       secure: false,
