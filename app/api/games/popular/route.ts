@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { CacheService } from '@/lib/redis';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,27 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || 'hot'; // 'hot' or 'ranked'
 
     console.log(`🔍 Getting popular games - Category: ${category}, Limit: ${limit}`);
+
+    // Check cache first
+    const cacheKey = `popular:${category}:${limit}`;
+    const cachedGames = await CacheService.getCachedPopularGames(cacheKey);
+    
+    if (cachedGames) {
+      console.log(`✅ Cache hit for popular games - Category: ${category}`);
+      return NextResponse.json({ 
+        games: cachedGames,
+        category: category,
+        total: cachedGames.length,
+        cached: true
+      }, {
+        headers: {
+          'Cache-Control': 'public, max-age=300',
+          'CDN-Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    console.log(`❌ Cache miss for popular games - Category: ${category}, fetching from database`);
 
     // Get games according to the specified category
     let games = await prisma.game.findMany({
@@ -67,10 +89,14 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Found ${games.length} games from category "${category}"`);
 
+    // Cache the results for 30 minutes
+    await CacheService.cachePopularGames(cacheKey, games, 1800);
+
     return NextResponse.json({ 
       games,
       category: category,
-      total: games.length
+      total: games.length,
+      cached: false
     }, {
       headers: {
         'Cache-Control': 'public, max-age=300', // Cache for 5 minutes

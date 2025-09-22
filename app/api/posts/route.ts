@@ -2,11 +2,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createPost, getAllPosts } from '@/lib/posts';
 import { moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
+import { CacheService } from '@/lib/redis';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const authorId = searchParams.get('author') || searchParams.get('authorId');
+    
+    // Check cache first
+    const cacheKey = `posts:${authorId || 'all'}`;
+    const cachedPosts = await CacheService.getCachedForumPosts(cacheKey);
+    
+    if (cachedPosts) {
+      console.log(`✅ Cache hit for posts - Author: ${authorId || 'all'}`);
+      return NextResponse.json({ 
+        posts: cachedPosts,
+        cached: true
+      }, {
+        headers: {
+          'Cache-Control': 'public, max-age=60',
+          'CDN-Cache-Control': 'public, max-age=60'
+        }
+      });
+    }
+
+    console.log(`❌ Cache miss for posts - Author: ${authorId || 'all'}, fetching from database`);
     
     let posts = getAllPosts();
     
@@ -15,7 +35,13 @@ export async function GET(request: NextRequest) {
       posts = posts.filter(post => post.author.id === authorId);
     }
     
-    return NextResponse.json({ posts }, {
+    // Cache the results for 15 minutes
+    await CacheService.cacheForumPosts(cacheKey, posts, 900);
+    
+    return NextResponse.json({ 
+      posts,
+      cached: false
+    }, {
       headers: {
         'Cache-Control': 'public, max-age=60', // Cache for 1 minute (posts change more frequently)
         'CDN-Cache-Control': 'public, max-age=60'
