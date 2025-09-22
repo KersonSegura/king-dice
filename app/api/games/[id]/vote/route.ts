@@ -4,6 +4,9 @@ import { awardXP } from '@/lib/reputation';
 // Almacenamiento temporal de votos (en memoria)
 const tempVotes = new Map<string, { rating: number; userId: string }>();
 
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }

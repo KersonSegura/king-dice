@@ -6,6 +6,9 @@ const dataDir = path.join(process.cwd(), 'data');
 const galleryFile = path.join(dataDir, 'gallery.json');
 
 // GET /api/gallery/comments?imageId=xxx - Get comments for an image
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

@@ -4,6 +4,9 @@ import { getCommentsByPostId, createComment } from '@/lib/comments';
 import { awardXP } from '@/lib/reputation';
 import { moderateText } from '@/lib/moderation';
 
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

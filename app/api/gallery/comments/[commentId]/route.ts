@@ -6,6 +6,9 @@ const dataDir = path.join(process.cwd(), 'data');
 const galleryFile = path.join(dataDir, 'gallery.json');
 
 // DELETE /api/gallery/comments/[commentId] - Delete a comment
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { commentId: string } }

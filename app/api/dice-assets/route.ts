@@ -154,6 +154,9 @@ function generateTitleAssets(userLevel: number): Asset[] {
   return [...assets, ...specialAssets];
 }
 
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
