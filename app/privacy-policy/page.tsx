@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Shield, Eye, Cookie, Download, Mail, AlertCircle } from 'lucide-react';
-import BackToTopButton from '@/components/BackToTopButton';
+// import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 import Footer from '@/components/Footer';
 
 export default function PrivacyPolicyPage() {
@@ -382,7 +382,7 @@ export default function PrivacyPolicyPage() {
         </section>
       </div>
 
-      <BackToTopButton />
+      {/* <BackToTopButton /> */}
       <Footer />
     </div>
   );

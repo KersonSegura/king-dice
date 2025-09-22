@@ -436,8 +436,8 @@ export default function PixelCanvasPage() {
       {/* Login Modal */}
       {showLoginModal && (
         <LoginModal
+          isOpen={showLoginModal}
           onClose={() => setShowLoginModal(false)}
-          onLoginSuccess={handleLoginSuccess}
         />
       )}
     </div>

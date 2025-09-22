@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       }
     } catch (error) {
       console.error('❌ Digital Corner chat reset failed:', error);
-      results.push({ chat: 'Digital Corner', error: error.message });
+      results.push({ chat: 'Digital Corner', error: error instanceof Error ? error.message : 'Unknown error' });
     }
     
     // Reset Pixel Canvas chat
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       }
     } catch (error) {
       console.error('❌ Pixel Canvas chat reset failed:', error);
-      results.push({ chat: 'Pixel Canvas', error: error.message });
+      results.push({ chat: 'Pixel Canvas', error: error instanceof Error ? error.message : 'Unknown error' });
     }
     
     console.log('✅ Daily chat reset completed for both chats');

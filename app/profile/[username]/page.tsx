@@ -74,7 +74,7 @@ interface UserProfile {
 
 export default function UserProfilePage() {
   const params = useParams();
-  const username = params.username as string;
+  const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -643,7 +643,7 @@ export default function UserProfilePage() {
             {/* Friends & Followers Section */}
             <FriendsFollowersSection
               userId={userProfile.id}
-              currentUserId={null} // No current user for visitor view
+              currentUserId={undefined} // No current user for visitor view
               isOwnProfile={false}
               profileColors={profileColors}
             />

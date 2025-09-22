@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { FileText, Users, Shield, AlertTriangle, Gavel, Clock } from 'lucide-react';
-import BackToTopButton from '@/components/BackToTopButton';
+// import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 import Footer from '@/components/Footer';
 
 export default function TermsOfServicePage() {
@@ -464,7 +464,7 @@ export default function TermsOfServicePage() {
         </section>
       </div>
 
-      <BackToTopButton />
+      {/* <BackToTopButton /> */}
       <Footer />
     </div>
   );

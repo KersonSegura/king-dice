@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { ThumbsUp, User, Trophy, Star } from 'lucide-react';
+import Image from 'next/image';
 import CatanMapGenerator from '@/components/CatanMapGenerator';
 import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import BackButton from '@/components/BackButton';
 import Footer from '@/components/Footer';
-import BackToTopButton from '@/components/BackToTopButton';
+// import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 interface Nomination {
   id: number;
@@ -280,10 +281,13 @@ export default function CatanMapGeneratorPage() {
                    >
                     <div className="w-full h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded mb-3 flex items-center justify-center overflow-hidden">
                       {nomination.imageData ? (
-                        <img 
+                        <Image 
                           src={nomination.imageData} 
                           alt={`Nominated Map ${nomination.id}`}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
                         />
                       ) : (
                         <span className="text-3xl">🎲</span>
@@ -409,7 +413,7 @@ export default function CatanMapGeneratorPage() {
       )}
 
       {/* Back to Top Button */}
-      <BackToTopButton />
+      {/* <BackToTopButton /> */}
 
       {/* Footer */}
       <div className="mt-auto">

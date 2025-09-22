@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Edit3, Save, X, Plus, FileText, Eye, EyeOff, Database, Gamepad2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Search, Edit3, Save, X, Plus, FileText, Eye, EyeOff, Database, Gamepad2, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
 import RichTextEditor, { RichTextEditorRef } from './RichTextEditor';
 import Footer from './Footer';
-import BackToTopButton from './BackToTopButton';
+import LazyList from './LazyList';
+// import BackToTopButton from './BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
   id: number;
@@ -129,6 +130,16 @@ export default function BoardGameDatabase() {
     existingGame: null
   });
   const [duplicateCheckTimeout, setDuplicateCheckTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [deletingGame, setDeletingGame] = useState<{[key: number]: boolean}>({});
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    gameId: number | null;
+    gameName: string;
+    isOpen: boolean;
+  }>({
+    gameId: null,
+    gameName: '',
+    isOpen: false
+  });
   const [newGameForm, setNewGameForm] = useState<NewGameForm>({
     nameEn: '',
     nameEs: '',
@@ -571,6 +582,12 @@ export default function BoardGameDatabase() {
           rulesText: ''
         });
         
+        // Clear scraper URLs after successful game addition
+        setScraperUrls({
+          gameUrl: '',
+          rulesUrl: ''
+        });
+        
         setShowAddGameForm(false);
         
         // Refresh games list
@@ -590,6 +607,50 @@ export default function BoardGameDatabase() {
       showToast(`Error adding game: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     } finally {
       setAddingGame(false);
+    }
+  };
+
+  const confirmDeleteGame = (game: Game) => {
+    setDeleteConfirm({
+      gameId: game.id,
+      gameName: game.nameEn || game.nameEs,
+      isOpen: true
+    });
+  };
+
+  const cancelDeleteGame = () => {
+    setDeleteConfirm({
+      gameId: null,
+      gameName: '',
+      isOpen: false
+    });
+  };
+
+  const deleteGame = async (gameId: number) => {
+    setDeletingGame(prev => ({ ...prev, [gameId]: true }));
+    
+    try {
+      const response = await fetch(`/api/boardgames/${gameId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        // Remove the game from the local state
+        setGames(prev => prev.filter(game => game.id !== gameId));
+        showToast('Game deleted successfully!', 'success');
+        
+        // Close the confirmation modal
+        cancelDeleteGame();
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'Error deleting game');
+      }
+    } catch (error) {
+      console.error('Error deleting game:', error);
+      showToast(`Error deleting game: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+    } finally {
+      setDeletingGame(prev => ({ ...prev, [gameId]: false }));
     }
   };
 
@@ -1179,7 +1240,7 @@ export default function BoardGameDatabase() {
                     <input
                       type="number"
                       min="1"
-                      max="20"
+                      max="99"
                       value={newGameForm.minPlayers || ''}
                       onChange={(e) => setNewGameForm(prev => ({ 
                         ...prev, 
@@ -1197,7 +1258,7 @@ export default function BoardGameDatabase() {
                     <input
                       type="number"
                       min="1"
-                      max="20"
+                      max="99"
                       value={newGameForm.maxPlayers || ''}
                       onChange={(e) => setNewGameForm(prev => ({ 
                         ...prev, 
@@ -1582,6 +1643,14 @@ export default function BoardGameDatabase() {
                                 <Edit3 className="w-4 h-4" />
                                 <span>Editar Juego</span>
                               </button>
+                              <button
+                                onClick={() => confirmDeleteGame(game)}
+                                disabled={deletingGame[game.id]}
+                                className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-red-400 text-sm"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span>{deletingGame[game.id] ? 'Eliminando...' : 'Eliminar Juego'}</span>
+                              </button>
                               {hasRules ? (
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
                                   <FileText className="w-4 h-4 mr-1" />
@@ -1735,8 +1804,54 @@ export default function BoardGameDatabase() {
         )}
       </div>
 
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Eliminar Juego</h3>
+                  <p className="text-sm text-gray-500">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-700">
+                  ¿Estás seguro de que quieres eliminar el juego{' '}
+                  <span className="font-semibold text-gray-900">"{deleteConfirm.gameName}"</span>?
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Se eliminarán todas las reglas, descripciones y datos asociados.
+                </p>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={cancelDeleteGame}
+                  disabled={deletingGame[deleteConfirm.gameId || 0]}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => deleteConfirm.gameId && deleteGame(deleteConfirm.gameId)}
+                  disabled={deletingGame[deleteConfirm.gameId || 0]}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-red-400"
+                >
+                  {deletingGame[deleteConfirm.gameId || 0] ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Back to Top Button */}
-      <BackToTopButton />
+      {/* <BackToTopButton /> */}
 
       {/* Footer */}
       <div className="mt-auto">

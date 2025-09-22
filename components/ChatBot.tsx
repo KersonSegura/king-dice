@@ -31,17 +31,43 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
     scrollToBottom();
   }, [messages]);
 
+  // Load previous bot messages from localStorage on open
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      // Add welcome message when bot opens
-      setMessages([{
-        id: 'welcome',
-        text: "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
-        isBot: true,
-        timestamp: new Date()
-      }]);
+    if (isOpen && currentUser?.id) {
+      const storageKey = `dicebot-messages-${currentUser.id}`;
+      const savedMessages = localStorage.getItem(storageKey);
+      
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages);
+          // Convert timestamp strings back to Date objects
+          const messagesWithDates = parsedMessages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setMessages(messagesWithDates);
+          console.log('Loaded', messagesWithDates.length, 'previous bot messages');
+        } catch (error) {
+          console.error('Error loading bot messages:', error);
+          // Add welcome message if loading fails
+          setMessages([{
+            id: 'welcome',
+            text: "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
+            isBot: true,
+            timestamp: new Date()
+          }]);
+        }
+      } else {
+        // Add welcome message for new users
+        setMessages([{
+          id: 'welcome',
+          text: "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
+          isBot: true,
+          timestamp: new Date()
+        }]);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, currentUser?.id]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
@@ -78,7 +104,15 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, botMessage]);
+      const updatedMessages = [...messages, userMessage, botMessage];
+      setMessages(updatedMessages);
+      
+      // Save to localStorage for persistence
+      if (currentUser?.id) {
+        const storageKey = `dicebot-messages-${currentUser.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(updatedMessages));
+        console.log('Saved bot conversation to localStorage');
+      }
     } catch (error) {
       console.error('Error sending message to bot:', error);
       const errorMessage = {
@@ -87,7 +121,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         isBot: true,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+      const updatedMessages = [...messages, userMessage, errorMessage];
+      setMessages(updatedMessages);
+      
+      // Save even error messages for continuity
+      if (currentUser?.id) {
+        const storageKey = `dicebot-messages-${currentUser.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(updatedMessages));
+      }
     } finally {
       setIsLoading(false);
     }

@@ -11,6 +11,7 @@ import { ChatStateProvider } from '@/contexts/ChatStateContext'
 import ToastContainer from '@/components/ToastContainer'
 import FloatingChat from '@/components/FloatingChat'
 import BackToTopButton from '@/components/BackToTopButton'
+import MobileTestHelper from '@/components/MobileTestHelper'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
   title: 'King Dice - Find the rules for your favorite games',
   description: 'The best board game rules database in English. Search and find the rules for Exploding Kittens and thousands of other games.',
   keywords: 'board games, rules, exploding kittens, games, english',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
@@ -42,6 +44,7 @@ export default function RootLayout({
             <SocketProvider>
               <ChatStateProvider>
                 <ToastProvider>
+                  <MobileTestHelper />
                   <Header />
                   {children}
                   <FloatingChat />

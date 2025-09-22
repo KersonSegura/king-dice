@@ -39,11 +39,11 @@ function useIntersectionObserver(options = {}) {
     };
   }, [options, hasIntersected]);
 
-  return [ref, isIntersecting, hasIntersected];
+  return [ref, isIntersecting, hasIntersected] as const;
 }
 
 // Lazy loading wrapper component
-function LazySection({ children, fallback = null }) {
+function LazySection({ children, fallback = null }: { children: React.ReactNode; fallback?: React.ReactNode }) {
   const [ref, isIntersecting, hasIntersected] = useIntersectionObserver({
     threshold: 0.1,
     rootMargin: '50px'

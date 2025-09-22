@@ -80,7 +80,7 @@ export default function TestLevelUpPage() {
             </div>
             <div className="bg-gray-50 p-4 rounded">
               <h3 className="font-medium text-gray-700">User Level</h3>
-              <p className="text-2xl font-bold text-purple-600">{user.level || 1}</p>
+              <p className="text-2xl font-bold text-purple-600">1</p>
             </div>
           </div>
         </div>

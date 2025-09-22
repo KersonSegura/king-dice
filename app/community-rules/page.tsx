@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Shield, Users, Heart, AlertTriangle, CheckCircle, Award, MessageSquare, Camera, Star, Ban } from 'lucide-react';
-import BackToTopButton from '@/components/BackToTopButton';
+// import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 import Footer from '@/components/Footer';
 
 export default function CommunityRulesPage() {
@@ -577,7 +577,7 @@ export default function CommunityRulesPage() {
         </section>
       </div>
 
-      <BackToTopButton />
+      {/* <BackToTopButton /> */}
       <Footer />
     </div>
   );

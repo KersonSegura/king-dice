@@ -61,12 +61,21 @@ interface Comment {
     id: string;
     name: string;
     avatar: string;
+    reputation: number;
     title?: string;
   };
   content: string;
   createdAt: string;
   isEdited?: boolean;
   editedAt?: string;
+  isModerated: boolean;
+  moderationResult?: {
+    isAppropriate: boolean;
+    flags: string[];
+  };
+  likes?: number;
+  userLiked?: boolean;
+  userLikes?: string[];
 }
 
 interface GalleryCategory {
@@ -1095,6 +1104,8 @@ export default function CommunityGalleryPage() {
                       alt={image.title}
                       fill
                       className="object-cover group-hover:opacity-90 transition-opacity"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   )}
 
@@ -1248,6 +1259,8 @@ export default function CommunityGalleryPage() {
                         alt={image.title}
                         fill
                         className="object-cover rounded-lg group-hover:opacity-90 transition-opacity"
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                       />
                     )}
                   </div>

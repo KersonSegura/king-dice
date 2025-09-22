@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Footer from '@/components/Footer';
-import BackToTopButton from '@/components/BackToTopButton';
+// import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
   id: number;
@@ -476,7 +476,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
       </div>
 
       {/* Back to Top Button */}
-      <BackToTopButton />
+      {/* <BackToTopButton /> */}
 
       {/* Footer */}
       <div className="mt-auto">

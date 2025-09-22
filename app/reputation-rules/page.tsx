@@ -215,7 +215,7 @@ export default function ReputationRulesPage() {
                       <div className="font-medium text-gray-900 capitalize">
                         {badge.replace('_', ' ')}
                       </div>
-                      <div className="text-sm text-gray-500">{description}</div>
+                      <div className="text-sm text-gray-500">{description.description}</div>
                     </div>
                   </div>
                 ))}

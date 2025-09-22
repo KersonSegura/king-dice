@@ -40,7 +40,7 @@ export default function PostDetailPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
-  const postId = params.id as string;
+  const postId = params?.id as string;
   
   const [post, setPost] = useState<ForumPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);

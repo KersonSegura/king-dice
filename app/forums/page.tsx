@@ -45,8 +45,8 @@ export default function ForumsPage() {
 
   // Handle URL parameters for category and author selection
   useEffect(() => {
-    const categoryParam = searchParams.get('category');
-    const authorParam = searchParams.get('author');
+    const categoryParam = searchParams?.get('category');
+    const authorParam = searchParams?.get('author');
     
     if (categoryParam && ['general', 'strategy', 'reviews'].includes(categoryParam)) {
       setSelectedCategory(categoryParam);

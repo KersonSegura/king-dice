@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { BoardleGame } from '@/components/BoardleGame';
 import BackButton from '@/components/BackButton';
 import Footer from '@/components/Footer';
-import BackToTopButton from '@/components/BackToTopButton';
+// import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 export default function BoardlePage() {
   return (
@@ -26,7 +26,7 @@ export default function BoardlePage() {
       </div>
 
       {/* Back to Top Button */}
-      <BackToTopButton />
+      {/* <BackToTopButton /> */}
 
       {/* Footer */}
       <div className="mt-auto">

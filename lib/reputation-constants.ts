@@ -24,8 +24,26 @@ export const REPUTATION_RULES = {
   COMMENT_GETS_LIKE: 1,
   COMMENT_GETS_DISLIKE: -1,
   UPLOAD_IMAGE: 10,
+  IMAGE_GETS_LIKE: 1,       // XP for image receiving a like
+  IMAGE_GETS_DISLIKE: -1,   // XP penalty for image receiving a dislike
   VOTE_GAME: 1,
-  DAILY_LOGIN: 2
+  VOTE_GAME_UP: 1,          // XP for voting a game up
+  VOTE_GAME_DOWN: 0,        // No XP for voting a game down
+  POST_REACHES_10_LIKES: 10,   // Milestone bonus for popular posts
+  POST_REACHES_50_LIKES: 50,
+  POST_REACHES_100_LIKES: 100,
+  IMAGE_REACHES_10_LIKES: 10,  // Milestone bonus for popular images
+  IMAGE_REACHES_50_LIKES: 50,
+  IMAGE_REACHES_100_LIKES: 100,
+  DAILY_LOGIN: 2,
+
+  // Reputation thresholds for badges
+  THRESHOLDS: {
+    TRUSTED: 100,
+    MODERATOR: 500,
+    ELITE: 1000,
+    LEGENDARY: 2500
+  }
 };
 
 export const BADGE_DESCRIPTIONS = {

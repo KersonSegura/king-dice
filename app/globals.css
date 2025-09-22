@@ -63,6 +63,25 @@
     height: 100%;
   }
   
+  /* Mobile-specific optimizations */
+  @media (max-width: 640px) {
+    body {
+      font-size: 16px; /* Prevent zoom on iOS */
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Improve touch targets */
+    button, [role="button"], input, textarea {
+      min-height: 44px; /* iOS recommended touch target */
+    }
+    
+    /* Smooth scrolling on mobile */
+    * {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+  
   body {
     min-height: 100vh;
   }

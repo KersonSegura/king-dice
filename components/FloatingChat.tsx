@@ -7,6 +7,7 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import ChatList from './ChatList';
 import Chat from './Chat';
 import ChatBot from './ChatBot';
+import GroupChatModal from './GroupChatModal';
 
 // Custom User Search Component
 function CustomChatList({ 
@@ -24,6 +25,7 @@ function CustomChatList({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [existingChats, setExistingChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -54,6 +56,26 @@ function CustomChatList({
     }
   };
 
+  // Fetch existing chats
+  const fetchExistingChats = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch(`/api/chats?userId=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setExistingChats(data.chats || []);
+      }
+    } catch (error) {
+      console.error('Error fetching chats:', error);
+    }
+  };
+
+  // Load existing chats on mount
+  useEffect(() => {
+    fetchExistingChats();
+  }, [user?.id]);
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,8 +104,10 @@ function CustomChatList({
         const chat = {
           id: data.chat.id,
           name: targetUser.username,
-          type: 'direct',
-          participants: data.chat.participants
+          type: 'direct' as const,
+          participants: data.chat.participants,
+          createdAt: data.chat.createdAt || new Date().toISOString(),
+          updatedAt: data.chat.updatedAt || new Date().toISOString()
         };
         onSelectChat(chat);
       }
@@ -157,29 +181,109 @@ function CustomChatList({
 
       {/* Results */}
       <div className="flex-1 overflow-y-auto">
-        {/* Dice-Bot Chat - Always show first */}
-        <div
-          onClick={onStartBotChat}
-          className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white border-2 border-gray-200">
-              <img
-                src="/DiceBotIcon.svg"
-                alt="Dice-Bot"
-                className="w-8 h-8"
-              />
+            {/* Create Group Button */}
+            <div className="p-4 border-b border-gray-100">
+              <button
+                onClick={onCreateGroup}
+                className="w-full flex items-center space-x-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+              >
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-500 text-white">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="text-sm font-semibold text-blue-900">
+                    Create Group Chat
+                  </h3>
+                  <p className="text-sm text-blue-700">
+                    Start a group conversation
+                  </p>
+                </div>
+                <Plus className="w-5 h-5 text-blue-600" />
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-gray-900">
-                Dice-Bot
-              </h3>
-              <p className="text-sm text-gray-500">
-                AI Assistant - Always available
-              </p>
+
+            {/* Dice-Bot Chat - Always show first */}
+            <div
+              onClick={onStartBotChat}
+              className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white border-2 border-gray-200">
+                  <img
+                    src="/DiceBotIcon.svg"
+                    alt="Dice-Bot"
+                    className="w-8 h-8"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Dice-Bot
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    AI Assistant - Always available
+                  </p>
+                </div>
+              </div>
             </div>
+
+        {/* Existing Chats */}
+        {!hasSearched && existingChats.length > 0 && (
+          <div className="border-b border-gray-100">
+            <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Recent Chats
+            </div>
+            {existingChats.slice(0, 5).map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => onSelectChat(chat)}
+                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
+                    {chat.type === 'group' ? (
+                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white">
+                        <Users className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                        {chat.participants && chat.participants.length > 0 ? (
+                          chat.participants.find((p: any) => p.id !== user?.id)?.avatar ? (
+                            <img
+                              src={chat.participants.find((p: any) => p.id !== user?.id)?.avatar}
+                              alt={chat.name}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            chat.name.charAt(0).toUpperCase()
+                          )
+                        ) : (
+                          chat.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-900 truncate">
+                      {chat.name}
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      {chat.type === 'group' && (
+                        <span className="text-xs text-green-600">
+                          {chat.participants?.length || 0} members
+                        </span>
+                      )}
+                      {chat.lastMessage && (
+                        <p className="text-sm text-gray-500 truncate">
+                          {chat.lastMessage.sender.username}: {chat.lastMessage.content}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        )}
 
         {/* User Search Results */}
         {loading ? (
@@ -346,6 +450,39 @@ export default function FloatingChat() {
     setShowCreateGroup(true);
   };
 
+  const handleCreateGroupChat = async (groupName: string, selectedUsers: any[]) => {
+    try {
+      const participants = [user?.id, ...selectedUsers.map(u => u.id)];
+      
+      const response = await fetch('/api/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'group',
+          name: groupName,
+          participants,
+          createdBy: user?.id
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const chat = {
+          id: data.chat.id,
+          name: data.chat.name,
+          type: 'group' as const,
+          participants: data.chat.participants,
+          createdAt: data.chat.createdAt,
+          updatedAt: data.chat.updatedAt
+        };
+        setSelectedChat(chat);
+        setShowCreateGroup(false);
+      }
+    } catch (error) {
+      console.error('Error creating group chat:', error);
+    }
+  };
+
   const handleStartDirectChat = () => {
     setShowStartDirectChat(true);
   };
@@ -359,8 +496,10 @@ export default function FloatingChat() {
     const botChat = {
       id: 'dice-bot',
       name: 'Dice-Bot',
-      type: 'bot',
-      participants: []
+      type: 'bot' as const,
+      participants: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     setSelectedChat(botChat);
   };
@@ -381,7 +520,7 @@ export default function FloatingChat() {
   return (
     <>
       {/* Floating Chat Button */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-50 sm:bottom-4 sm:right-4" style={{ position: 'fixed', bottom: '1rem', right: '1rem' }}>
         {!isChatOpen ? (
           <div className="relative">
             <button
@@ -447,8 +586,10 @@ export default function FloatingChat() {
               </div>
             )}
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-96 h-[500px]">
+                ) : (
+                  <div className="bg-white shadow-xl border border-gray-200 
+                    fixed inset-4 sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
+                    rounded-lg h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] sm:max-w-none">
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
               <div className="flex items-center space-x-3">
@@ -517,7 +658,7 @@ export default function FloatingChat() {
             </div>
 
             {/* Chat Content */}
-            <div className="h-[452px]">
+            <div className="flex-1 h-[calc(100%-4rem)] sm:h-[452px]">
               {selectedChat ? (
                 selectedChat.type === 'bot' ? (
                   <div className="h-full">
@@ -550,6 +691,14 @@ export default function FloatingChat() {
           </div>
         )}
       </div>
+
+      {/* Group Chat Creation Modal */}
+      <GroupChatModal
+        isOpen={showCreateGroup}
+        onClose={() => setShowCreateGroup(false)}
+        onCreateGroup={handleCreateGroupChat}
+        currentUser={user}
+      />
     </>
   );
 }

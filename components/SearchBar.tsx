@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, X, User, Gamepad2, Clock } from 'lucide-react';
+import { Search, X, User, Dice6, Clock } from 'lucide-react';
 
 interface SearchResult {
   id: string;
@@ -16,6 +16,7 @@ interface SearchResult {
   year?: number;
   players?: string;
   duration?: string;
+  image?: string;
   type: 'user' | 'game';
 }
 
@@ -130,7 +131,7 @@ export default function SearchBar() {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search users and games..."
+          placeholder="Search users and board games..."
           value={query}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
@@ -167,7 +168,7 @@ export default function SearchBar() {
                 >
                   <div className="flex-shrink-0">
                     {result.type === 'user' ? (
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
                         {result.avatar ? (
                           <Image
                             src={result.avatar}
@@ -177,12 +178,22 @@ export default function SearchBar() {
                             className="w-8 h-8 rounded-full object-cover"
                           />
                         ) : (
-                          (result.username || 'U').charAt(0).toUpperCase()
+                          <Dice6 className="w-4 h-4 text-white" />
                         )}
                       </div>
                     ) : (
-                      <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
-                        <Gamepad2 className="w-4 h-4 text-white" />
+                      <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center overflow-hidden">
+                        {result.image ? (
+                          <Image
+                            src={result.image}
+                            alt={result.name || 'Board Game'}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <Dice6 className="w-4 h-4 text-white" />
+                        )}
                       </div>
                     )}
                   </div>
@@ -213,8 +224,8 @@ export default function SearchBar() {
                         </>
                       ) : (
                         <>
-                          <Gamepad2 className="w-3 h-3" />
-                          <span>Game</span>
+                          <Dice6 className="w-3 h-3" />
+                          <span>Board Game</span>
                           {result.year && (
                             <>
                               <span>•</span>
@@ -238,7 +249,7 @@ export default function SearchBar() {
             <div className="px-4 py-8 text-center text-gray-500">
               <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
               <p className="text-sm">No results found for "{query}"</p>
-              <p className="text-xs text-gray-400 mt-1">Try searching for users or games</p>
+              <p className="text-xs text-gray-400 mt-1">Try searching for users or board games</p>
             </div>
           ) : null}
         </div>

@@ -423,7 +423,7 @@ export default function ImageModal({
               {/* Comments Section */}
               <div className="border-t border-gray-200 pt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Comments ({comments.reduce((total, comment) => total + 1 + (comment.replies ? comment.replies.length : 0), 0)})
+                  Comments ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
                 </h3>
                 
                 {/* Add Comment Form */}
@@ -454,8 +454,9 @@ export default function ImageModal({
                               maxHeight: '120px'
                             }}
                             onInput={(e) => {
-                              e.target.style.height = 'auto';
-                              e.target.style.height = e.target.scrollHeight + 'px';
+                              const target = e.target as HTMLTextAreaElement;
+                              target.style.height = 'auto';
+                              target.style.height = target.scrollHeight + 'px';
                             }}
                           />
                           <button
@@ -596,8 +597,9 @@ export default function ImageModal({
                                         maxHeight: '120px'
                                       }}
                                       onInput={(e) => {
-                                        e.target.style.height = 'auto';
-                                        e.target.style.height = e.target.scrollHeight + 'px';
+                                        const target = e.target as HTMLTextAreaElement;
+                                        target.style.height = 'auto';
+                                        target.style.height = target.scrollHeight + 'px';
                                       }}
                                 />
                                 <button
@@ -618,9 +620,9 @@ export default function ImageModal({
                           </div>
                         
                       {/* Replies Thread */}
-                        {comment.replies && comment.replies.length > 0 && (
+                        {(comment as any).replies && (comment as any).replies.length > 0 && (
                         <div className="ml-11 space-y-3">
-                          {comment.replies.map((reply: any) => (
+                          {(comment as any).replies.map((reply: any) => (
                             <div key={reply.id} className="flex space-x-3">
                               <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                                 {reply.author.avatar ? (

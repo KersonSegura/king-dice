@@ -300,7 +300,7 @@ export default function FriendsFollowersSection({
             <h4 className="font-medium text-gray-900 capitalize">
               {activeTab} ({currentTabCount || 0})
             </h4>
-            {currentTabCount > 0 && (
+            {(currentTabCount || 0) > 0 && (
               <button
                 onClick={() => setShowAllModal(true)}
                 className="text-[#fbae17] hover:text-[#fbae17]/80 text-sm font-medium"

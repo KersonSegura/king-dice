@@ -236,7 +236,7 @@ export default function GameSearchModal({
                         {game.name}
                       </h3>
                       {(game as any).isPopular && (
-                        <Star className="w-4 h-4 text-[#fbae17] fill-current" title="Popular game" />
+                        <Star className="w-4 h-4 text-[#fbae17] fill-current" />
                       )}
                     </div>
                     <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">

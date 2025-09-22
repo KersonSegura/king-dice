@@ -198,7 +198,7 @@ export async function PUT(request: NextRequest) {
       svgContent += `<rect width="${width}" height="${height}" fill="#ffffff"/>`;
       
       // Add each pixel
-      pixels.forEach(pixel => {
+      pixels.forEach((pixel: any) => {
         if (pixel.color && pixel.color !== '#ffffff' && pixel.color !== '#FFFFFF') {
           svgContent += `<rect x="${pixel.x}" y="${pixel.y}" width="1" height="1" fill="${pixel.color}"/>`;
         }

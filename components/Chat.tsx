@@ -58,6 +58,9 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       </div>
     );
   }
+
+  // TypeScript assertion: after the bot check, chatType can only be 'direct' | 'group'
+  const regularChatType = chatType as 'direct' | 'group';
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -70,7 +73,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load messages
+  // Load messages and mark as read
   useEffect(() => {
     const loadMessages = async () => {
       try {
@@ -78,6 +81,21 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         if (response.ok) {
           const data = await response.json();
           setMessages(data.messages);
+          
+          // Mark messages as read when chat is opened
+          if (user?.id) {
+            try {
+              await fetch('/api/messages/unread', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, chatId })
+              });
+              console.log('✅ Messages marked as read');
+            } catch (readError) {
+              console.error('Error marking messages as read:', readError);
+              // Don't show error to user - this is not critical
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading messages:', error);
@@ -88,7 +106,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     };
 
     loadMessages();
-  }, [chatId, showToast]);
+  }, [chatId, showToast, user?.id]);
 
   // Socket events
   useEffect(() => {
@@ -142,12 +160,29 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
 
     try {
       // Emit to socket for real-time updates and database saving
-      if (socket) {
+      if (socket && isConnected) {
+        console.log('Sending message via socket:', messageData);
         socket.emit('send-message', messageData);
         setNewMessage('');
         setReplyingTo(null);
       } else {
-        showToast('Connection lost. Please refresh the page.', 'error');
+        // Fallback: Save directly to API if socket is not available
+        console.log('Socket not available, saving via API:', messageData);
+        const response = await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(messageData)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(prev => [...prev, data.message]);
+          setNewMessage('');
+          setReplyingTo(null);
+          showToast('Message sent', 'success');
+        } else {
+          showToast('Failed to send message', 'error');
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -218,16 +253,12 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
           <div className="flex items-center space-x-3">
-            {chatType === 'bot' ? (
-              // Dice-Bot avatar (not clickable)
-              <div className="w-10 h-10 rounded-full border-2 border-gray-300 flex-shrink-0 overflow-hidden bg-white">
-                <img
-                  src="/DiceBotIcon.svg"
-                  alt="Dice-Bot"
-                  className="w-full h-full object-cover"
-                />
+            {regularChatType === 'group' ? (
+              // Group chat icon
+              <div className="w-10 h-10 rounded-full border-2 border-gray-300 flex-shrink-0 overflow-hidden bg-blue-500 flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
               </div>
-            ) : chatType === 'direct' ? (
+            ) : regularChatType === 'direct' ? (
               // User avatar (clickable to profile)
               <button
                 onClick={() => {
@@ -261,8 +292,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
             <div>
               <h3 className="font-semibold text-gray-900">{chatName}</h3>
               <p className="text-sm text-gray-500">
-                {chatType === 'bot' ? 'AI Assistant - Always online' :
-                 chatType === 'direct' ? 
+                {regularChatType === 'direct' ?
                   getOtherParticipant()?.isVerified ? '✓ Verified' : 'Online' :
                   `${participants.length} members`
                 }

@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 export default function GameDetailPage() {
   const params = useParams();
-  const gameId = params.id as string;
+  const gameId = params?.id as string;
   
   const [game, setGame] = useState<BGGGame | null>(null);
   const [rules, setRules] = useState<BGGRules[]>([]);
