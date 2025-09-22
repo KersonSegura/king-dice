@@ -588,17 +588,11 @@ export default function FloatingChat() {
           </div>
                 ) : (
                   <>
-                    {/* Mobile backdrop */}
-                    <div 
-                      className="fixed inset-0 bg-black bg-opacity-50 z-30 sm:hidden"
-                      onClick={() => setIsChatOpen(false)}
-                    />
-                    
                     <div className="bg-white shadow-xl border border-gray-200 
-                      fixed top-16 bottom-0 right-0 w-96 sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
-                      rounded-l-lg sm:max-w-none transform transition-transform duration-300 ease-in-out z-40">
+                      fixed top-16 bottom-0 left-0 right-0 w-full sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
+                      sm:max-w-none transform transition-transform duration-300 ease-in-out z-40">
             {/* Chat Header */}
-            <div className="flex items-center justify-between p-4 border-b rounded-t-lg sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
+            <div className="flex items-center justify-between p-4 border-b sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
               <div className="flex items-center space-x-3">
                 {selectedChat && (
                   <button
