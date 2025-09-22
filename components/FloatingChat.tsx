@@ -560,7 +560,7 @@ export default function FloatingChat() {
             
             {/* Auto Tooltip - appears once per session */}
             {showAutoTooltip && (
-              <div className="absolute bottom-full left-0 sm:right-0 mb-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg w-80 tooltip-bounce">
+              <div className="absolute bottom-full left-0 sm:left-auto sm:right-0 mb-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg w-80 tooltip-bounce">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="font-medium mb-1 flex items-center space-x-2">
@@ -582,7 +582,7 @@ export default function FloatingChat() {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="absolute top-full left-6 sm:right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600"></div>
+                <div className="absolute top-full left-6 sm:left-auto sm:right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600"></div>
               </div>
             )}
           </div>
