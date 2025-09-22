@@ -595,8 +595,8 @@ export default function FloatingChat() {
                     />
                     
                     <div className="bg-white shadow-xl border border-gray-200 
-                      fixed inset-y-0 right-0 w-80 sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
-                      rounded-l-lg h-full sm:max-w-none transform transition-transform duration-300 ease-in-out z-40">
+                      fixed top-16 bottom-0 right-0 w-96 sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
+                      rounded-l-lg sm:max-w-none transform transition-transform duration-300 ease-in-out z-40">
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b rounded-t-lg sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
               <div className="flex items-center space-x-3">
