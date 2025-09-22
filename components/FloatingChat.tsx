@@ -587,11 +587,18 @@ export default function FloatingChat() {
             )}
           </div>
                 ) : (
-                  <div className="bg-white shadow-xl border border-gray-200 
-                    fixed inset-4 sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
-                    rounded-lg h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] sm:max-w-none">
+                  <>
+                    {/* Mobile backdrop */}
+                    <div 
+                      className="fixed inset-0 bg-black bg-opacity-50 z-30 sm:hidden"
+                      onClick={() => setIsChatOpen(false)}
+                    />
+                    
+                    <div className="bg-white shadow-xl border border-gray-200 
+                      fixed inset-y-0 right-0 w-80 sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
+                      rounded-l-lg h-full sm:max-w-none transform transition-transform duration-300 ease-in-out z-40">
             {/* Chat Header */}
-            <div className="flex items-center justify-between p-4 border-b rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
+            <div className="flex items-center justify-between p-4 border-b rounded-t-lg sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
               <div className="flex items-center space-x-3">
                 {selectedChat && (
                   <button
@@ -651,9 +658,9 @@ export default function FloatingChat() {
                   setIsChatOpen(false);
                   setSelectedChat(null);
                 }}
-                className="text-white hover:text-gray-200"
+                className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6 sm:w-5 sm:h-5" />
               </button>
             </div>
 
@@ -689,6 +696,7 @@ export default function FloatingChat() {
               )}
             </div>
           </div>
+                    </>
         )}
       </div>
 
