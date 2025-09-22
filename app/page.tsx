@@ -615,6 +615,12 @@ export default function HomePage() {
                         <>
                           <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow">Featured</div>
                           <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title} fill className="object-cover" loading="lazy" />
+                          <div className="absolute bottom-2 left-2 right-2 flex justify-center">
+                            <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
+                              <Crown className="w-3 h-3" />
+                              <span>Dice of the Week</span>
+                            </div>
+                          </div>
                         </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm text-center px-2">
@@ -623,14 +629,6 @@ export default function HomePage() {
                       )}
                     </div>
                   </Link>
-                  {featuredDiceThrone && (
-                    <div className="mt-2 flex justify-center">
-                      <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
-                        <Crown className="w-3 h-3" />
-                        <span>Dice of the Week</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex justify-center">
@@ -640,6 +638,12 @@ export default function HomePage() {
                         <>
                           <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow">Featured</div>
                           <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title} fill className="object-cover" loading="lazy" />
+                          <div className="absolute bottom-2 left-2 right-2 flex justify-center">
+                            <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
+                              <Crown className="w-3 h-3" />
+                              <span>Card of the Week</span>
+                            </div>
+                          </div>
                         </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm text-center px-2">
@@ -648,14 +652,6 @@ export default function HomePage() {
                       )}
                     </div>
                   </Link>
-                  {featuredKingsCard && (
-                    <div className="mt-2 flex justify-center">
-                      <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
-                        <Crown className="w-3 h-3" />
-                        <span>Card of the Week</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
