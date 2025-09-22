@@ -38,7 +38,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setIsLoading(true);
 
     if (isRegistering) {
-      // Registration logic
+      // Client-side validation for registration
+      if (!formData.username || !formData.email || !formData.password) {
+        setError('All fields are required');
+        setIsLoading(false);
+        return;
+      }
+
+      if (formData.username.length < 3) {
+        setError('Username must be at least 3 characters');
+        setIsLoading(false);
+        return;
+      }
+
       if (formData.password !== formData.confirmPassword) {
         setError('Passwords do not match');
         setIsLoading(false);
@@ -47,6 +59,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
       if (formData.password.length < 6) {
         setError('Password must be at least 6 characters');
+        setIsLoading(false);
+        return;
+      }
+
+      // Check email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address');
         setIsLoading(false);
         return;
       }
@@ -74,10 +94,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           setShowConfirmPassword(false);
         } else {
           const errorData = await response.json();
-          setError(errorData.message || 'Registration failed');
+          setError(errorData.message || 'Registration failed. Please try again.');
         }
       } catch (error) {
-        setError('Registration failed. Please try again.');
+        console.error('Registration error:', error);
+        setError('Network error. Please check your connection and try again.');
       } finally {
         setIsLoading(false);
       }
@@ -120,10 +141,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           setShowConfirmPassword(false);
         } else {
           const errorData = await response.json();
-          setError(errorData.message || 'Login failed');
+          setError(errorData.message || 'Login failed. Please try again.');
         }
       } catch (error) {
-        setError('Login failed. Please try again.');
+        console.error('Login error:', error);
+        setError('Network error. Please check your connection and try again.');
       } finally {
         setIsLoading(false);
       }
