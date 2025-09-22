@@ -104,7 +104,7 @@ export default function Header() {
                   className="w-full h-full"
                 />
               </div>
-              <span className="text-xl font-bold text-dark-900">King Dice</span>
+              <span className="text-xl font-bold text-dark-900 hidden sm:inline">King Dice</span>
             </Link>
           </div>
 

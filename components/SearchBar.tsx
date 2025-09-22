@@ -122,7 +122,7 @@ export default function SearchBar() {
   };
 
   return (
-    <div className="relative flex-1 max-w-md mx-4" ref={searchRef}>
+    <div className="relative flex-1 max-w-md mx-2 sm:mx-4" ref={searchRef}>
       {/* Search Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,7 +131,7 @@ export default function SearchBar() {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search users and board games..."
+          placeholder="Search users and games..."
           value={query}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
