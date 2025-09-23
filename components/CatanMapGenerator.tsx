@@ -2343,9 +2343,9 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       </div>
 
         {/* Map - centered on mobile, right-aligned on desktop */}
-        <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
+        <div className="w-full lg:w-2/3 flex justify-center lg:justify-end -mx-4 sm:mx-0">
           {/* Mobile: Scalable container that fits the entire map */}
-          <div className="w-full sm:w-auto overflow-auto sm:overflow-visible px-2 sm:px-0">
+          <div className="w-full sm:w-auto overflow-y-auto overflow-x-hidden sm:overflow-visible px-0 sm:px-0">
             <div 
               className="w-full sm:w-auto flex justify-center"
               style={{ 
@@ -2366,7 +2366,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               >
                 {/* Scale container for mobile - scales everything together */}
                 <div 
-                  className="scale-95 sm:scale-100"
+                  className="scale-[0.85] sm:scale-100"
                   style={{
                     transformOrigin: "center center",
                     width: "100%",
