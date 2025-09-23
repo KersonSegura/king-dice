@@ -2345,11 +2345,11 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         {/* Map - centered on mobile, right-aligned on desktop */}
         <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
           {/* Mobile: Scalable container that fits the entire map */}
-          <div className="w-full sm:w-auto overflow-auto sm:overflow-visible">
+          <div className="w-full sm:w-auto overflow-auto sm:overflow-visible px-2 sm:px-0">
             <div 
               className="w-full sm:w-auto flex justify-center"
               style={{ 
-                maxHeight: '70vh',
+                maxHeight: '75vh',
                 maxWidth: '100vw'
               }}
             >
@@ -2366,7 +2366,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               >
                 {/* Scale container for mobile - scales everything together */}
                 <div 
-                  className="scale-[0.6] sm:scale-100"
+                  className="scale-95 sm:scale-100"
                   style={{
                     transformOrigin: "center center",
                     width: "100%",
@@ -2442,7 +2442,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             marginTop: mapType === 'expansion' ? '50px' : '0px',
             marginLeft: mapType === 'expansion' ? '-200px' : '0px'
           }}>
-            {/* Background Catan Map - Back inside scaled container but much larger to compensate */}
+            {/* Background Catan Map - Now scales with the container */}
             <img
               src={mapType === 'expansion' ? '/CatanMapGenerator/ExpCatanMap.svg' : 
                    customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : 
@@ -2450,16 +2450,16 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             alt="Catan Map Background"
             style={{
               position: "absolute",
-                width: mapType === 'expansion' ? '1000px' : // More reasonable size to prevent stretching
-                       customRules.imageStyle === 'classic' ? `${MAP_WIDTH - 2}px` : 
+                width: mapType === 'expansion' ? '1024px' : // Use original size
+                       customRules.imageStyle === 'classic' ? `${MAP_WIDTH}px` : 
                        `${MAP_WIDTH}px`,
-                height: mapType === 'expansion' ? '863px' : // More reasonable size to prevent stretching
-                        customRules.imageStyle === 'classic' ? `${MAP_HEIGHT - 2}px` : 
+                height: mapType === 'expansion' ? '885px' : // Use original size
+                        customRules.imageStyle === 'classic' ? `${MAP_HEIGHT}px` : 
                         `${MAP_HEIGHT}px`,
-                top: mapType === 'expansion' ? '-55px' : '0px', // Moved up 5px
-                left: mapType === 'expansion' ? '200px' : '0px', // Moved more to the right
-                transform: mapType === 'expansion' ? 'scale(1.07)' : 'none', // Zoom in to make map bigger
-                objectFit: mapType === 'expansion' ? 'contain' : 'initial', // Only prevent stretching on expansion maps
+                top: mapType === 'expansion' ? '0px' : '0px',
+                left: mapType === 'expansion' ? '0px' : '0px',
+                transform: 'none', // No individual scaling - let container handle it
+                objectFit: 'initial',
                 zIndex: 0, // Ensure it's behind everything
               }}
             />
