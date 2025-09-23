@@ -2522,23 +2522,23 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               // Expansion tiles: Different sizes based on art style
               if (customRules.imageStyle === 'classic') {
                 // Classic art expansion tiles - smaller
-                tileWidth = 139; // Smaller for classic art
-                tileHeight = 117; // Smaller for classic art
+                tileWidth = 120; // Made smaller for better centering
+                tileHeight = 100; // Made smaller for better centering
               } else {
-                // King Dice art expansion tiles - original size
-                tileWidth = 233; // Reduced from 234px to 233px
-                tileHeight = 201; // Reduced from 202px to 201px
+                // King Dice art expansion tiles - made smaller
+                tileWidth = 200; // Made smaller for better centering
+                tileHeight = 172; // Made smaller for better centering
               }
             } else {
-              // Classic tiles with different scales
-              const tileScale = customRules.imageStyle === 'classic' ? 0.65 : 1.0;
+              // Classic tiles with different scales - made smaller
+              const tileScale = customRules.imageStyle === 'classic' ? 0.55 : 0.85;
               tileWidth = 235 * SCALE_FACTOR * tileScale;
               tileHeight = 275 * SCALE_FACTOR * tileScale;
             }
             
-            // Move everything just 2 pixels to the left and 1 pixel up (only for classic maps)
-            const leftOffset = mapType === 'expansion' ? 0 : -2;
-            const topOffset = mapType === 'expansion' ? 0 : -1;
+            // Fine-tune positioning for better centering with map base
+            const leftOffset = mapType === 'expansion' ? 0 : 0;
+            const topOffset = mapType === 'expansion' ? 0 : 0;
             
             return (
               <div key={`tile-${i}`}>
@@ -2570,14 +2570,14 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                     alt={`Catan number token ${hexagon.number}`}
                     style={{
                       position: "absolute",
-                      width: mapType === 'expansion' ? '57.4754px' : `${71.4 * SCALE_FACTOR}px`,
-                      height: mapType === 'expansion' ? '57.4754px' : `${71.4 * SCALE_FACTOR}px`,
+                      width: mapType === 'expansion' ? '45px' : `${60 * SCALE_FACTOR}px`,
+                      height: mapType === 'expansion' ? '45px' : `${60 * SCALE_FACTOR}px`,
                       left: mapType === 'expansion' ? 
-                        `${pos.x + (233 - 57.4754) / 2 - 115 - 50}px` : 
-                        `${pos.x + (235 * SCALE_FACTOR - NUMBER_WIDTH) / 2 + leftOffset}px`,
+                        `${pos.x + (200 - 45) / 2 - 115 - 50}px` : 
+                        `${pos.x + (235 * SCALE_FACTOR - (60 * SCALE_FACTOR)) / 2 + leftOffset}px`,
                       top: mapType === 'expansion' ? 
-                        `${pos.y + (201 - 57.4754) / 2 - 100 - 50}px` : 
-                        `${pos.y + (TILE_HEIGHT - NUMBER_HEIGHT) / 2 + topOffset}px`,
+                        `${pos.y + (172 - 45) / 2 - 100 - 50}px` : 
+                        `${pos.y + (275 * SCALE_FACTOR - (60 * SCALE_FACTOR)) / 2 + topOffset}px`,
                       pointerEvents: "none",
                       zIndex: 1, // Lower z-index to appear behind tiles
                     }}
