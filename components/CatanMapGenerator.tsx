@@ -2349,7 +2349,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             <div className="mb-6">
               <label className="block text-sm font-medium text-dark-700 mb-2">Image Style</label>
               <div className="flex gap-2">
-        <button
+                <button
                   onClick={() => handleImageStyleChange('classic')}
                   className={`px-3 py-1 text-xs rounded transition-colors ${
                     customRules.imageStyle === 'classic'
