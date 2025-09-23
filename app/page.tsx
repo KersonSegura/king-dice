@@ -972,9 +972,9 @@ export default function HomePage() {
 
                                  {boardleMode === 'image' && (
                    <>
-                     <div className="flex gap-0 items-start justify-center">
+                     <div className="flex gap-4 sm:gap-6 items-start justify-center">
                        {/* Image Mode - Letter Grid (Left) */}
-                       <div className="w-80">
+                       <div className="w-64 sm:w-80">
                          <div className="space-y-2 mb-4">
                            {/* First guess - SCORE (C in wrong position) */}
                            <div className="flex items-center gap-3 justify-center">
@@ -1051,13 +1051,13 @@ export default function HomePage() {
                        </div>
 
                        {/* Image Mode - Zoomed Image (Right) */}
-                       <div className="w-48">
-                         <div className="text-center text-sm text-gray-600 mb-4">
+                       <div className="w-32 sm:w-48">
+                         <div className="text-center text-xs sm:text-sm text-gray-600 mb-4">
                            Start with a very<br />
                            zoomed-in image
                          </div>
                          <div className="flex justify-center">
-                           <div className="relative w-48 h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
+                           <div className="relative w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
                              <Image
                                src="/boardle-images/066-catan.jpg"
                                alt="Zoomed in game image"
@@ -1090,9 +1090,9 @@ export default function HomePage() {
 
                                  {boardleMode === 'card' && (
                    <>
-                     <div className="flex gap-0 items-start justify-center">
+                     <div className="flex gap-4 sm:gap-6 items-start justify-center">
                        {/* Card Mode - Letter Grid (Left) */}
-                       <div className="w-80">
+                       <div className="w-64 sm:w-80">
                          <div className="space-y-2 mb-4">
                            {/* First guess - SCORE (C in wrong position) */}
                            <div className="flex items-center gap-3 justify-center">
@@ -1169,9 +1169,9 @@ export default function HomePage() {
                        </div>
 
                        {/* Card Mode - Full Card Image (Right) */}
-                       <div className="w-48">
+                       <div className="w-32 sm:w-48">
                          <div className="flex justify-center">
-                           <div className="relative w-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300" style={{ height: '248px' }}>
+                           <div className="relative w-32 h-40 sm:w-48 sm:h-60 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
                              <Image
                                src="/boardle-images/cards/002-catan.jpg"
                                alt="Game card"
