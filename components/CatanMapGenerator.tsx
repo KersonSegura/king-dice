@@ -2344,20 +2344,26 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
         {/* Map - centered on mobile, right-aligned on desktop */}
         <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
-          <div 
-            className="w-full overflow-auto sm:overflow-visible sm:max-h-none"
-            style={{ maxHeight: '80vh' }}
-          >
-            <div
-              className="catan-board-wrapper relative"
-              style={{
-                position: "relative",
-                width: `${MAP_WIDTH}px`,
-                height: `${MAP_HEIGHT}px`,
-                margin: "0 auto",
-                overflow: "visible",
+          {/* Mobile: Scalable container that fits the entire map */}
+          <div className="w-full sm:w-auto overflow-auto sm:overflow-visible">
+            <div 
+              className="w-full sm:w-auto flex justify-center"
+              style={{ 
+                maxHeight: '70vh',
+                maxWidth: '100vw'
               }}
             >
+              <div
+                className="catan-board-wrapper relative scale-[0.6] sm:scale-100"
+                style={{
+                  position: "relative",
+                  width: `${MAP_WIDTH}px`,
+                  height: `${MAP_HEIGHT}px`,
+                  margin: "0 auto",
+                  overflow: "visible",
+                  transformOrigin: "center center"
+                }}
+              >
             {/* Nomination Buttons - Top Right */}
             {/* Classic Map Nomination Button */}
             {mapType === 'classic' && (
