@@ -1535,8 +1535,27 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   
   // SCALED DIMENSIONS - Smaller map for better page layout
   const SCALE_FACTOR = 0.6; // 60% of original size
-  const MAP_WIDTH = 1021.91 * SCALE_FACTOR;
-  const MAP_HEIGHT = 885 * SCALE_FACTOR;
+  const BASE_MAP_WIDTH = 1021.91 * SCALE_FACTOR;
+  const BASE_MAP_HEIGHT = 885 * SCALE_FACTOR;
+  
+  // Mobile responsive dimensions
+  const [mobileScale, setMobileScale] = useState(0.7); // Start smaller on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const MAP_WIDTH = isMobile ? BASE_MAP_WIDTH * mobileScale : BASE_MAP_WIDTH;
+  const MAP_HEIGHT = isMobile ? BASE_MAP_HEIGHT * mobileScale : BASE_MAP_HEIGHT;
+  
+  // Zoom controls for mobile
+  const handleZoomIn = () => {
+    setMobileScale(prev => Math.min(prev + 0.1, 1.2));
+  };
+  
+  const handleZoomOut = () => {
+    setMobileScale(prev => Math.max(prev - 0.1, 0.5));
+  };
+  
+  const handleResetZoom = () => {
+    setMobileScale(0.7);
+  };
   const TILE_WIDTH = 240 * SCALE_FACTOR;
   const TILE_HEIGHT = 280 * SCALE_FACTOR;
   const NUMBER_WIDTH = 71.4 * SCALE_FACTOR;
@@ -2195,6 +2214,125 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           </button>
         </div>
         
+        {/* Mobile Zoom Controls - Only show on mobile */}
+        {isMobile && (
+          <div className="flex justify-center gap-2 mb-4">
+            <button
+              onClick={handleZoomOut}
+              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              title="Zoom Out"
+            >
+              −
+            </button>
+            <button
+              onClick={handleResetZoom}
+              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors text-sm"
+              title="Reset Zoom"
+            >
+              Reset
+            </button>
+            <button
+              onClick={handleZoomIn}
+              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              title="Zoom In"
+            >
+              +
+            </button>
+          </div>
+        )}
+        
+        {/* Mobile Settings Panel - Only show on mobile */}
+        {isMobile && (
+          <div className="bg-white rounded-lg p-4 mb-4 mx-4">
+            <h4 className="text-lg font-semibold text-dark-900 mb-3">Settings</h4>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-dark-700 mb-2">Image Style</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleImageStyleChange('classic')}
+                  className={`px-3 py-1 text-xs rounded transition-colors ${
+                    customRules.imageStyle === 'classic'
+                      ? 'text-black font-semibold'
+                      : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+                  }`}
+                  style={{
+                    backgroundColor: customRules.imageStyle === 'classic' ? '#fbae17' : undefined
+                  }}
+                >
+                  Classic
+                </button>
+                <button 
+                  onClick={() => handleImageStyleChange('king-dice')}
+                  className={`px-3 py-1 text-xs rounded transition-colors ${
+                    customRules.imageStyle === 'king-dice'
+                      ? 'text-black font-semibold'
+                      : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+                  }`}
+                  style={{
+                    backgroundColor: customRules.imageStyle === 'king-dice' ? '#fbae17' : undefined
+                  }}
+                >
+                  King Dice
+                </button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input 
+                  type="checkbox" 
+                  className="mr-2" 
+                  checked={customRules.sixEightCanTouch}
+                  onChange={(e) => handleCustomRuleChange('sixEightCanTouch', e.target.checked)}
+                />
+                <span className="text-sm text-dark-700">6 & 8 Can Touch</span>
+              </label>
+              
+              <label className="flex items-center">
+                <input 
+                  type="checkbox" 
+                  className="mr-2" 
+                  checked={customRules.twoTwelveCanTouch}
+                  onChange={(e) => handleCustomRuleChange('twoTwelveCanTouch', e.target.checked)}
+                />
+                <span className="text-sm text-dark-700">2 & 12 Can Touch</span>
+              </label>
+              
+              <label className="flex items-center">
+                <input 
+                  type="checkbox" 
+                  className="mr-2" 
+                  checked={customRules.sameNumbersCanTouch}
+                  onChange={(e) => handleCustomRuleChange('sameNumbersCanTouch', e.target.checked)}
+                />
+                <span className="text-sm text-dark-700">Same Numbers Can Touch</span>
+              </label>
+              
+              {mapType === 'classic' && (
+                <label className="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="mr-2" 
+                    checked={customRules.sameResourceCanTouch}
+                    onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
+                  />
+                  <span className="text-sm text-dark-700">Same Resource Can Touch</span>
+                </label>
+              )}
+            </div>
+            
+            <div className="mt-4 pt-3 border-t border-gray-200">
+              <button
+                onClick={() => generateMap()}
+                disabled={isGenerating}
+                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGenerating ? 'Generating...' : 'Generate New Map'}
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
 
@@ -2298,16 +2436,34 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
         {/* Map - centered on mobile, right-aligned on desktop */}
         <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
-        <div
-            className="catan-board-wrapper relative"
-          style={{
-            position: "relative",
-              width: `${MAP_WIDTH}px`,
-              height: `${MAP_HEIGHT}px`,
-            margin: "0 auto",
-              overflow: "visible",
-            }}
-          >
+          {/* Mobile wrapper for better scrolling */}
+          {isMobile ? (
+            <div 
+              className="w-full overflow-auto"
+              style={{ maxHeight: '70vh' }}
+            >
+              <div
+                className="catan-board-wrapper relative"
+                style={{
+                  position: "relative",
+                  width: `${MAP_WIDTH}px`,
+                  height: `${MAP_HEIGHT}px`,
+                  margin: "0 auto",
+                  overflow: "visible",
+                }}
+              >
+          ) : (
+            <div
+              className="catan-board-wrapper relative"
+              style={{
+                position: "relative",
+                width: `${MAP_WIDTH}px`,
+                height: `${MAP_HEIGHT}px`,
+                margin: "0 auto",
+                overflow: "visible",
+              }}
+            >
+          )}
             {/* Nomination Buttons - Top Right */}
             {/* Classic Map Nomination Button */}
             {mapType === 'classic' && (
@@ -2522,7 +2678,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             );
           })}
           </div>
-          </div>
+          {/* Close mobile wrapper */}
+          {isMobile && (
+            </div>
+          )}
         </div>
       </div>
     </div>
