@@ -2159,7 +2159,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       <div className="text-center mb-8">
         <h3 className="text-2xl font-bold text-dark-900 mb-6">Catan Map Generator by King Dice</h3>
         
-        <div className="flex justify-center gap-4 mb-4 relative">
+        {/* Desktop Map Type Buttons - Hidden on mobile */}
+        <div className="hidden sm:flex justify-center gap-4 mb-4 relative">
           <button
             onClick={() => {
               console.log('🔍 Classic button clicked! Current mapType:', mapType);
