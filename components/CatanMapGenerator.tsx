@@ -2689,6 +2689,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           </div>
         </div>
       )}
+      </div>
     </div>
     </div>
   );
