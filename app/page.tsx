@@ -707,7 +707,8 @@ export default function HomePage() {
                 <h2 className="text-3xl font-bold text-dark-900">Pixel Canvas</h2>
               </div>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Join the community in creating collaborative pixel art!
+                Join the community in creating collaborative<br />
+                pixel art!
               </p>
               
               {/* Stats */}
@@ -750,7 +751,8 @@ export default function HomePage() {
                 <h2 className="text-3xl font-bold text-dark-900">Pixel Canvas</h2>
               </div>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Join the community in creating collaborative pixel art!
+                Join the community in creating collaborative<br />
+                pixel art!
               </p>
               
               {/* Stats */}
