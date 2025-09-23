@@ -1540,7 +1540,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   
   // Mobile responsive dimensions
   const [showSettingsModal, setShowSettingsModal] = useState(false); // Settings modal state
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const MAP_WIDTH = BASE_MAP_WIDTH;
   const MAP_HEIGHT = BASE_MAP_HEIGHT;
   const TILE_WIDTH = 240 * SCALE_FACTOR;
@@ -2203,46 +2202,44 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         </div>
         
         {/* Mobile Controls - Only show on mobile */}
-        {isMobile && (
-          <div className="flex justify-center gap-2 mb-4">
-            <button
-              onClick={() => handleMapTypeChange('classic')}
-              disabled={isGenerating}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                mapType === 'classic' 
-                  ? 'text-black font-semibold' 
-                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-              style={{ 
-                backgroundColor: mapType === 'classic' ? '#fbae17' : undefined
-              }}
-            >
-              Classic
-            </button>
-            
-            <button
-              onClick={() => handleMapTypeChange('expansion')}
-              disabled={isGenerating}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                mapType === 'expansion' 
-                  ? 'text-black font-semibold' 
-                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-              style={{ 
-                backgroundColor: mapType === 'expansion' ? '#fbae17' : undefined
-              }}
-            >
-              Expansion
-            </button>
-            
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-            >
-              Settings
-            </button>
-          </div>
-        )}
+        <div className="flex sm:hidden justify-center gap-2 mb-4">
+          <button
+            onClick={() => handleMapTypeChange('classic')}
+            disabled={isGenerating}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              mapType === 'classic' 
+                ? 'text-black font-semibold' 
+                : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            style={{ 
+              backgroundColor: mapType === 'classic' ? '#fbae17' : undefined
+            }}
+          >
+            Classic
+          </button>
+          
+          <button
+            onClick={() => handleMapTypeChange('expansion')}
+            disabled={isGenerating}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              mapType === 'expansion' 
+                ? 'text-black font-semibold' 
+                : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            style={{ 
+              backgroundColor: mapType === 'expansion' ? '#fbae17' : undefined
+            }}
+          >
+            Expansion
+          </button>
+          
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+          >
+            Settings
+          </button>
+        </div>
         
 
       </div>
@@ -2348,8 +2345,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         {/* Map - centered on mobile, right-aligned on desktop */}
         <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
           <div 
-            className={isMobile ? "w-full overflow-auto" : ""}
-            style={isMobile ? { maxHeight: '80vh' } : {}}
+            className="w-full overflow-auto sm:overflow-visible sm:max-h-none"
+            style={{ maxHeight: '80vh' }}
           >
             <div
               className="catan-board-wrapper relative"
@@ -2580,7 +2577,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       </div>
       
       {/* Mobile Settings Modal */}
-      {isMobile && showSettingsModal && (
+      {showSettingsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto">
             <div className="p-6">
