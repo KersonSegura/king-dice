@@ -613,12 +613,11 @@ export default function HomePage() {
                     <div className={`relative rounded-lg overflow-hidden ${featuredDiceThrone ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`} style={{ aspectRatio: '1 / 1.1' }}>
                       {featuredDiceThrone ? (
                         <>
-                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow z-10">Featured</div>
                           <div className="absolute inset-0 bottom-8">
                             <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title} fill className="object-cover" loading="lazy" />
                           </div>
-                          <div className="absolute bottom-1 left-2 right-2 flex justify-center">
-                            <div className="flex items-center space-x-1 px-2 py-1 rounded bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
+                          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
+                            <div className="flex items-center space-x-1 text-white text-xs font-semibold">
                               <Crown className="w-3 h-3" />
                               <span>Dice of the Week</span>
                             </div>
@@ -638,12 +637,11 @@ export default function HomePage() {
                     <div className={`relative rounded-lg overflow-hidden ${featuredKingsCard ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`} style={{ aspectRatio: '1 / 1.1' }}>
                       {featuredKingsCard ? (
                         <>
-                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow z-10">Featured</div>
                           <div className="absolute inset-0 bottom-8">
                             <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title} fill className="object-cover" loading="lazy" />
                           </div>
-                          <div className="absolute bottom-1 left-2 right-2 flex justify-center">
-                            <div className="flex items-center space-x-1 px-2 py-1 rounded bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
+                          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
+                            <div className="flex items-center space-x-1 text-white text-xs font-semibold">
                               <Crown className="w-3 h-3" />
                               <span>Card of the Week</span>
                             </div>
