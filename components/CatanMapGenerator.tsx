@@ -1539,24 +1539,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   const BASE_MAP_HEIGHT = 885 * SCALE_FACTOR;
   
   // Mobile responsive dimensions
-  const [mobileScale, setMobileScale] = useState(0.7); // Start smaller on mobile
   const [showSettingsModal, setShowSettingsModal] = useState(false); // Settings modal state
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const MAP_WIDTH = isMobile ? BASE_MAP_WIDTH * mobileScale : BASE_MAP_WIDTH;
-  const MAP_HEIGHT = isMobile ? BASE_MAP_HEIGHT * mobileScale : BASE_MAP_HEIGHT;
-  
-  // Zoom controls for mobile
-  const handleZoomIn = () => {
-    setMobileScale(prev => Math.min(prev + 0.1, 1.2));
-  };
-  
-  const handleZoomOut = () => {
-    setMobileScale(prev => Math.max(prev - 0.1, 0.5));
-  };
-  
-  const handleResetZoom = () => {
-    setMobileScale(0.7);
-  };
+  const MAP_WIDTH = BASE_MAP_WIDTH;
+  const MAP_HEIGHT = BASE_MAP_HEIGHT;
   const TILE_WIDTH = 240 * SCALE_FACTOR;
   const TILE_HEIGHT = 280 * SCALE_FACTOR;
   const NUMBER_WIDTH = 71.4 * SCALE_FACTOR;
@@ -2219,32 +2205,40 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         {isMobile && (
           <div className="flex justify-center gap-2 mb-4">
             <button
-              onClick={handleZoomOut}
-              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-              title="Zoom Out"
+              onClick={() => handleMapTypeChange('classic')}
+              disabled={isGenerating}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                mapType === 'classic' 
+                  ? 'text-black font-semibold' 
+                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              style={{ 
+                backgroundColor: mapType === 'classic' ? '#fbae17' : undefined
+              }}
             >
-              −
+              Classic
             </button>
+            
             <button
-              onClick={handleResetZoom}
-              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors text-sm"
-              title="Reset Zoom"
+              onClick={() => handleMapTypeChange('expansion')}
+              disabled={isGenerating}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                mapType === 'expansion' 
+                  ? 'text-black font-semibold' 
+                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              style={{ 
+                backgroundColor: mapType === 'expansion' ? '#fbae17' : undefined
+              }}
             >
-              Reset
+              Expansion
             </button>
-            <button
-              onClick={handleZoomIn}
-              className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-              title="Zoom In"
-            >
-              +
-            </button>
+            
             <button
               onClick={() => setShowSettingsModal(true)}
-              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              title="Settings"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
             >
-              ⚙️
+              Settings
             </button>
           </div>
         )}
@@ -2354,7 +2348,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
           <div 
             className={isMobile ? "w-full overflow-auto" : ""}
-            style={isMobile ? { maxHeight: '70vh' } : {}}
+            style={isMobile ? { maxHeight: '80vh' } : {}}
           >
             <div
               className="catan-board-wrapper relative"
