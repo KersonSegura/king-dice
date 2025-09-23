@@ -297,7 +297,7 @@ export default function HomePage() {
       <section className="bg-gray-900 py-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-8">
-            Find your favorite{' '}
+            Find your favorite<span className="sm:hidden"><br /></span><span className="hidden sm:inline">{' '}</span>
             <span className="text-[#fbae17]">board games</span>
           </h1>
           
@@ -449,7 +449,7 @@ export default function HomePage() {
               Top Ranked Games
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
-              The best board games according to historical ranking. These are the games with the best average rating of all time.
+              The best board games according to historical ranking.<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>These are the games with the best average rating<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>of all time.
             </p>
           </div>
           
