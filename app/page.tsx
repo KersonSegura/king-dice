@@ -378,7 +378,7 @@ export default function HomePage() {
               Community Feed
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
-              Discover what the community is sharing - from game setups to strategy discussions and more!
+              Discover what the community is sharing - from game setups to strategy discussions!
             </p>
           </div>
           
