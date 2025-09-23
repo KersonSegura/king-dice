@@ -2156,6 +2156,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       case 'desert': return '/CatanMapGenerator/CatanDesertTile.svg';
       default: return '/CatanMapGenerator/CatanGrainTile.svg';
       }
+    }
   };
 
   // Helper function to get number token image based on selected style
@@ -2435,23 +2436,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
         {/* Map - centered on mobile, right-aligned on desktop */}
         <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
-          {/* Mobile wrapper for better scrolling */}
-          {isMobile ? (
-            <div 
-              className="w-full overflow-auto"
-              style={{ maxHeight: '70vh' }}
-            >
-              <div
-                className="catan-board-wrapper relative"
-                style={{
-                  position: "relative",
-                  width: `${MAP_WIDTH}px`,
-                  height: `${MAP_HEIGHT}px`,
-                  margin: "0 auto",
-                  overflow: "visible",
-                }}
-              >
-          ) : (
+          <div 
+            className={isMobile ? "w-full overflow-auto" : ""}
+            style={isMobile ? { maxHeight: '70vh' } : {}}
+          >
             <div
               className="catan-board-wrapper relative"
               style={{
@@ -2462,7 +2450,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 overflow: "visible",
               }}
             >
-          )}
             {/* Nomination Buttons - Top Right */}
             {/* Classic Map Nomination Button */}
             {mapType === 'classic' && (
@@ -2677,12 +2664,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             );
           })}
           </div>
-          {/* Close mobile wrapper */}
-          {isMobile && (
-            </div>
-          )}
+          </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
