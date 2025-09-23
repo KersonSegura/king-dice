@@ -1540,6 +1540,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   
   // Mobile responsive dimensions
   const [mobileScale, setMobileScale] = useState(0.7); // Start smaller on mobile
+  const [showSettingsModal, setShowSettingsModal] = useState(false); // Settings modal state
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const MAP_WIDTH = isMobile ? BASE_MAP_WIDTH * mobileScale : BASE_MAP_WIDTH;
   const MAP_HEIGHT = isMobile ? BASE_MAP_HEIGHT * mobileScale : BASE_MAP_HEIGHT;
@@ -2214,7 +2215,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           </button>
         </div>
         
-        {/* Mobile Zoom Controls - Only show on mobile */}
+        {/* Mobile Controls - Only show on mobile */}
         {isMobile && (
           <div className="flex justify-center gap-2 mb-4">
             <button
@@ -2238,101 +2239,16 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             >
               +
             </button>
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              title="Settings"
+            >
+              ⚙️
+            </button>
           </div>
         )}
         
-        {/* Mobile Settings Panel - Only show on mobile */}
-        {isMobile && (
-          <div className="bg-white rounded-lg p-4 mb-4 mx-4">
-            <h4 className="text-lg font-semibold text-dark-900 mb-3">Settings</h4>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-dark-700 mb-2">Image Style</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleImageStyleChange('classic')}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    customRules.imageStyle === 'classic'
-                      ? 'text-black font-semibold'
-                      : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-                  }`}
-                  style={{
-                    backgroundColor: customRules.imageStyle === 'classic' ? '#fbae17' : undefined
-                  }}
-                >
-                  Classic
-                </button>
-                <button 
-                  onClick={() => handleImageStyleChange('king-dice')}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    customRules.imageStyle === 'king-dice'
-                      ? 'text-black font-semibold'
-                      : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-                  }`}
-                  style={{
-                    backgroundColor: customRules.imageStyle === 'king-dice' ? '#fbae17' : undefined
-                  }}
-                >
-                  King Dice
-                </button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  className="mr-2" 
-                  checked={customRules.sixEightCanTouch}
-                  onChange={(e) => handleCustomRuleChange('sixEightCanTouch', e.target.checked)}
-                />
-                <span className="text-sm text-dark-700">6 & 8 Can Touch</span>
-              </label>
-              
-              <label className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  className="mr-2" 
-                  checked={customRules.twoTwelveCanTouch}
-                  onChange={(e) => handleCustomRuleChange('twoTwelveCanTouch', e.target.checked)}
-                />
-                <span className="text-sm text-dark-700">2 & 12 Can Touch</span>
-              </label>
-              
-              <label className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  className="mr-2" 
-                  checked={customRules.sameNumbersCanTouch}
-                  onChange={(e) => handleCustomRuleChange('sameNumbersCanTouch', e.target.checked)}
-                />
-                <span className="text-sm text-dark-700">Same Numbers Can Touch</span>
-              </label>
-              
-              {mapType === 'classic' && (
-                <label className="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    className="mr-2" 
-                    checked={customRules.sameResourceCanTouch}
-                    onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
-                  />
-                  <span className="text-sm text-dark-700">Same Resource Can Touch</span>
-                </label>
-              )}
-            </div>
-            
-            <div className="mt-4 pt-3 border-t border-gray-200">
-              <button
-                onClick={() => generateMap()}
-                disabled={isGenerating}
-                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGenerating ? 'Generating...' : 'Generate New Map'}
-              </button>
-            </div>
-          </div>
-        )}
 
       </div>
 
@@ -2667,6 +2583,114 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           </div>
         </div>
       </div>
+      
+      {/* Mobile Settings Modal */}
+      {isMobile && showSettingsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-dark-900">Settings</h3>
+                <button
+                  onClick={() => setShowSettingsModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-dark-700 mb-3">Image Style</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleImageStyleChange('classic')}
+                    className={`px-4 py-2 text-sm rounded transition-colors ${
+                      customRules.imageStyle === 'classic'
+                        ? 'text-black font-semibold'
+                        : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+                    }`}
+                    style={{
+                      backgroundColor: customRules.imageStyle === 'classic' ? '#fbae17' : undefined
+                    }}
+                  >
+                    Classic
+                  </button>
+                  <button 
+                    onClick={() => handleImageStyleChange('king-dice')}
+                    className={`px-4 py-2 text-sm rounded transition-colors ${
+                      customRules.imageStyle === 'king-dice'
+                        ? 'text-black font-semibold'
+                        : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+                    }`}
+                    style={{
+                      backgroundColor: customRules.imageStyle === 'king-dice' ? '#fbae17' : undefined
+                    }}
+                  >
+                    King Dice
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-4 mb-6">
+                <label className="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="mr-3 w-4 h-4" 
+                    checked={customRules.sixEightCanTouch}
+                    onChange={(e) => handleCustomRuleChange('sixEightCanTouch', e.target.checked)}
+                  />
+                  <span className="text-sm text-dark-700">6 & 8 Can Touch</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="mr-3 w-4 h-4" 
+                    checked={customRules.twoTwelveCanTouch}
+                    onChange={(e) => handleCustomRuleChange('twoTwelveCanTouch', e.target.checked)}
+                  />
+                  <span className="text-sm text-dark-700">2 & 12 Can Touch</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="mr-3 w-4 h-4" 
+                    checked={customRules.sameNumbersCanTouch}
+                    onChange={(e) => handleCustomRuleChange('sameNumbersCanTouch', e.target.checked)}
+                  />
+                  <span className="text-sm text-dark-700">Same Numbers Can Touch</span>
+                </label>
+                
+                {mapType === 'classic' && (
+                  <label className="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="mr-3 w-4 h-4" 
+                      checked={customRules.sameResourceCanTouch}
+                      onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
+                    />
+                    <span className="text-sm text-dark-700">Same Resource Can Touch</span>
+                  </label>
+                )}
+              </div>
+              
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    generateMap();
+                    setShowSettingsModal(false);
+                  }}
+                  disabled={isGenerating}
+                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? 'Generating...' : 'Generate New Map'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );
