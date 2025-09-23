@@ -617,8 +617,8 @@ export default function HomePage() {
                             <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title} fill className="object-cover" loading="lazy" />
                           </div>
                           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
-                            <div className="flex items-center space-x-1 text-white text-xs font-semibold">
-                              <Crown className="w-3 h-3" />
+                            <div className="flex items-center space-x-2 text-white text-sm font-semibold">
+                              <Crown className="w-4 h-4" />
                               <span>Dice of the Week</span>
                             </div>
                           </div>
@@ -641,8 +641,8 @@ export default function HomePage() {
                             <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title} fill className="object-cover" loading="lazy" />
                           </div>
                           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
-                            <div className="flex items-center space-x-1 text-white text-xs font-semibold">
-                              <Crown className="w-3 h-3" />
+                            <div className="flex items-center space-x-2 text-white text-sm font-semibold">
+                              <Crown className="w-4 h-4" />
                               <span>Card of the Week</span>
                             </div>
                           </div>
