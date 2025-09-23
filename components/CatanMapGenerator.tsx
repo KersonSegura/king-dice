@@ -2156,7 +2156,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       case 'desert': return '/CatanMapGenerator/CatanDesertTile.svg';
       default: return '/CatanMapGenerator/CatanGrainTile.svg';
       }
-    }
   };
 
   // Helper function to get number token image based on selected style
