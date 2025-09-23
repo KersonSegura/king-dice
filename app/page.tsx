@@ -610,11 +610,13 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
                 <div className="flex justify-center">
                   <Link href={featuredDiceThrone ? `/community-gallery?image=${featuredDiceThrone.id}` : '/community-gallery'}>
-                    <div className={`relative rounded-lg overflow-hidden ${featuredDiceThrone ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white aspect-square w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`}>
+                    <div className={`relative rounded-lg overflow-hidden ${featuredDiceThrone ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`} style={{ aspectRatio: '1 / 1.2' }}>
                       {featuredDiceThrone ? (
                         <>
-                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow">Featured</div>
-                          <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title} fill className="object-cover" loading="lazy" />
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow z-10">Featured</div>
+                          <div className="absolute inset-0 bottom-12">
+                            <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title} fill className="object-cover" loading="lazy" />
+                          </div>
                           <div className="absolute bottom-2 left-2 right-2 flex justify-center">
                             <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
                               <Crown className="w-3 h-3" />
@@ -633,11 +635,13 @@ export default function HomePage() {
 
                 <div className="flex justify-center">
                   <Link href={featuredKingsCard ? `/community-gallery?image=${featuredKingsCard.id}` : '/community-gallery'}>
-                    <div className={`relative rounded-lg overflow-hidden ${featuredKingsCard ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white aspect-square w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`}>
+                    <div className={`relative rounded-lg overflow-hidden ${featuredKingsCard ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`} style={{ aspectRatio: '1 / 1.2' }}>
                       {featuredKingsCard ? (
                         <>
-                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow">Featured</div>
-                          <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title} fill className="object-cover" loading="lazy" />
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[#fbae17] text-white text-xs font-semibold shadow z-10">Featured</div>
+                          <div className="absolute inset-0 bottom-12">
+                            <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title} fill className="object-cover" loading="lazy" />
+                          </div>
                           <div className="absolute bottom-2 left-2 right-2 flex justify-center">
                             <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-semibold shadow-lg">
                               <Crown className="w-3 h-3" />
