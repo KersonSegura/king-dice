@@ -2354,7 +2354,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               }}
             >
               <div
-                className="catan-board-wrapper relative scale-[0.6] sm:scale-100"
+                className="catan-board-wrapper relative"
                 style={{
                   position: "relative",
                   width: `${MAP_WIDTH}px`,
@@ -2364,6 +2364,15 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   transformOrigin: "center center"
                 }}
               >
+                {/* Scale container for mobile - scales everything together */}
+                <div 
+                  className="scale-[0.6] sm:scale-100"
+                  style={{
+                    transformOrigin: "center center",
+                    width: "100%",
+                    height: "100%"
+                  }}
+                >
             {/* Nomination Buttons - Top Right */}
             {/* Classic Map Nomination Button */}
             {mapType === 'classic' && (
@@ -2577,6 +2586,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               </div>
             );
           })}
+                </div>
           </div>
           </div>
         </div>
