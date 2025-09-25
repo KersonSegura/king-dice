@@ -125,7 +125,9 @@
     position: fixed !important;
   }
 }
-  
+
+/* Mobile-specific height for mobile-main-container */
+@media (max-width: 639px) {
   .mobile-main-container {
     height: 400px !important; /* Reduced from 691px (MAP_HEIGHT) */
     min-height: 400px !important;
