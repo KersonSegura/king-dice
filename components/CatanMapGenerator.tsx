@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import ModernTooltip from './ModernTooltip';
+import { useToast } from './Toast';
 
 interface Hexagon {
   id: number;
@@ -89,7 +90,6 @@ function buildSpiralPath(): number[] {
   }
   
   const path = outer.concat(inner).concat([CENTER]);
-  console.log(`🔄 Path variety: ${dirCW ? 'CW' : 'CCW'}, Outer+${kOuter}, Inner+${kInner}`);
   return path;
 }
 
@@ -135,9 +135,6 @@ export function placeNumbersOfficial(desertIdx: number, rotation?: number): (num
 }
 
 export function noHotAdjacency(nums: (number|null)[], customRules: any): boolean {
-  console.log("🔍 Checking CLASSIC number adjacency validation...");
-  console.log("Custom rules:", customRules);
-  console.log("Numbers to validate:", nums);
   
   for (let i=0;i<19;i++){
     const a = nums[i];
@@ -149,20 +146,16 @@ export function noHotAdjacency(nums: (number|null)[], customRules: any): boolean
         // Rule 1: 6 cannot be adjacent to 8 and vice versa (unless custom rule allows)
         if ((a === 6 && b === 8) || (a === 8 && b === 6)) {
           if (!customRules.sixEightCanTouch) {
-            console.log(`🚫 6-8 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - 6 and 8 cannot be adjacent`);
             return false;
           } else {
-            console.log(`✅ 6-8 adjacency allowed by custom rule: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b})`);
           }
         }
         // Rule 2: Two 6s can NEVER be adjacent to each other (ALWAYS enforced)
         if (a === 6 && b === 6) {
-          console.log(`🚫 6-6 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - two 6s can NEVER be adjacent`);
           return false;
         }
         // Rule 3: Two 8s can NEVER be adjacent to each other (ALWAYS enforced)
         if (a === 8 && b === 8) {
-          console.log(`🚫 8-8 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - two 8s can NEVER be adjacent`);
           return false;
         }
       }
@@ -179,7 +172,6 @@ export function noHotAdjacency(nums: (number|null)[], customRules: any): boolean
         const j = NEIGHBORS[i][jIdx];
         const b = nums[j];
         if (a === b) {
-          console.log(`🚫 Same number violation: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - same numbers cannot be adjacent`);
           return false;
         }
       }
@@ -195,7 +187,6 @@ export function noHotAdjacency(nums: (number|null)[], customRules: any): boolean
           const j = NEIGHBORS[i][jIdx];
           const b = nums[j];
           if ((a === 2 && b === 12) || (a === 12 && b === 2)) {
-            console.log(`🚫 2-12 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - 2 and 12 cannot be adjacent`);
             return false;
           }
         }
@@ -203,13 +194,6 @@ export function noHotAdjacency(nums: (number|null)[], customRules: any): boolean
     }
   }
   
-  console.log("✅ CLASSIC number adjacency validation passed - all rules satisfied");
-  console.log("📋 Validation summary:");
-  console.log("  - 6 & 8 adjacency: ✅ Valid");
-  console.log("  - 6 & 6 adjacency: ✅ Valid");
-  console.log("  - 8 & 8 adjacency: ✅ Valid");
-  console.log("  - 2 & 12 adjacency: ✅ Valid");
-  console.log("  - Same numbers: ✅ Valid");
   return true;
 }
 
@@ -282,13 +266,11 @@ export function repairHotAdjacency(nums: (number|null)[], customRules: any): (nu
 }
 
 export function generateValidNumbers(desertIdx: number, customRules: any): (number|null)[] {
-  console.log("🎯 Generating valid numbers with custom rules:", customRules);
   
   // Strategy 1: Try path variety with many attempts
   for (let tries=0; tries<2000; tries++) {
     const nums = placeNumbersAR(desertIdx);
     if (noHotAdjacency(nums, customRules)) {
-      console.log(`✅ Valid numbers found on attempt ${tries + 1}`);
       return nums;
     }
   }
@@ -297,7 +279,6 @@ export function generateValidNumbers(desertIdx: number, customRules: any): (numb
   for (let r=0; r<CHITS_AR.length; r++){
     const nums = placeNumbersOfficial(desertIdx, r);
     if (noHotAdjacency(nums, customRules)) {
-      console.log(`✅ Valid numbers found with rotation ${r}`);
       return nums;
     }
   }
@@ -306,13 +287,11 @@ export function generateValidNumbers(desertIdx: number, customRules: any): (numb
   for (let tries=0; tries<1000; tries++) {
     const nums = placeNumbersAR(desertIdx);
     if (noHotAdjacency(nums, customRules)) {
-      console.log(`✅ Valid numbers found on fallback attempt ${tries + 1}`);
       return nums;
     }
   }
   
   // Strategy 4: Final fallback - repair any board
-  console.log("⚠️ Using repair strategy as final fallback...");
   const repaired = repairHotAdjacency(placeNumbersAR(desertIdx), customRules);
   
   // CRITICAL: Never return invalid numbers for 6-8 adjacency
@@ -322,7 +301,6 @@ export function generateValidNumbers(desertIdx: number, customRules: any): (numb
     throw new Error("Failed to generate valid numbers that satisfy 6-8 adjacency rules");
   }
   
-  console.log("✅ Numbers successfully repaired and validated");
   return repaired;
 }
 
@@ -379,15 +357,12 @@ function maxClusterSize(terrains: Terrain[], target: Terrain): number {
 
 // Active prevention of chains longer than 2 for expansion maps
 function preventLongChains(terrains: Terrain[]): boolean {
-  console.log('🔍 DEBUG: preventLongChains called with terrains:', terrains);
   
   const isExpansionMap = terrains.length === 30;
   if (!isExpansionMap) {
-    console.log('🔍 DEBUG: Not an expansion map, skipping');
     return true; // Only apply to expansion maps
   }
   
-  console.log('🔍 DEBUG: This is an expansion map, checking for chains...');
   const neighbors = EXPANSION_NEIGHBORS;
   
   // Check each tile to ensure it doesn't create chains longer than 2
@@ -399,12 +374,10 @@ function preventLongChains(terrains: Terrain[]): boolean {
     const sameTypeNeighbors = neighbors[i].filter(n => terrains[n] === currentTerrain);
     
     if (sameTypeNeighbors.length > 0) {
-      console.log(`🔍 DEBUG: Tile ${i + 1} (${currentTerrain}) has ${sameTypeNeighbors.length} same-type neighbors: ${sameTypeNeighbors.map(n => `${n + 1}(${terrains[n]})`).join(', ')}`);
     }
     
     // If this tile has 2+ neighbors of the same type, check if they form a chain
     if (sameTypeNeighbors.length >= 2) {
-      console.log(`⚠️ DEBUG: Tile ${i + 1} (${currentTerrain}) has ${sameTypeNeighbors.length} same-type neighbors - checking for chains...`);
       
       // Check if any of these neighbors are connected to each other
       for (let j = 0; j < sameTypeNeighbors.length; j++) {
@@ -412,29 +385,22 @@ function preventLongChains(terrains: Terrain[]): boolean {
           const neighbor1 = sameTypeNeighbors[j];
           const neighbor2 = sameTypeNeighbors[k];
           
-          console.log(`🔍 DEBUG: Checking if neighbors ${neighbor1 + 1} and ${neighbor2 + 1} are connected...`);
-          console.log(`🔍 DEBUG: Neighbors of ${neighbor1 + 1}: ${neighbors[neighbor1].map(n => `${n + 1}(${terrains[n]})`).join(', ')}`);
           
           // If these two neighbors are also connected, we have a chain of 3
           if (neighbors[neighbor1].includes(neighbor2)) {
-            console.log(`🚫 Chain of 3 detected: Tile ${i + 1} (${currentTerrain}) connects to tiles ${neighbor1 + 1} and ${neighbor2 + 1}, which are also connected`);
-            console.log(`🚫 This forms a triangle/chain of 3 ${currentTerrain} tiles!`);
             return false;
           } else {
-            console.log(`✅ DEBUG: Neighbors ${neighbor1 + 1} and ${neighbor2 + 1} are NOT connected - no chain formed`);
           }
         }
       }
     }
   }
   
-  console.log('✅ DEBUG: No chains of 3+ detected, validation passed');
   return true;
 }
 
 // Repair expansion map clustering by swapping resources
 function repairExpansionClustering(terrains: Terrain[]): Terrain[] | null {
-  console.log('🔧 Starting expansion clustering repair...');
   
   const isExpansionMap = terrains.length === 30;
   if (!isExpansionMap) return null;
@@ -447,7 +413,6 @@ function repairExpansionClustering(terrains: Terrain[]): Terrain[] | null {
   
   while (attempts < maxAttempts) {
     attempts++;
-    console.log(`🔧 Repair attempt ${attempts}/${maxAttempts}`);
     
     // Find all chains of 3+ tiles
     const chainsToFix: Array<{tile: number, resource: Terrain, neighbors: number[]}> = [];
@@ -479,13 +444,8 @@ function repairExpansionClustering(terrains: Terrain[]): Terrain[] | null {
     }
     
     if (chainsToFix.length === 0) {
-      console.log('✅ No chains to fix, repair complete!');
       return terrains;
     }
-    
-    console.log(`🔧 Found ${chainsToFix.length} chains to fix:`, chainsToFix.map(c => 
-      `Tile ${c.tile + 1}(${c.resource}) with neighbors ${c.neighbors.map(n => n + 1).join(', ')}`
-    ));
     
     // Try to fix one chain by swapping resources
     for (const chain of chainsToFix) {
@@ -509,7 +469,6 @@ function repairExpansionClustering(terrains: Terrain[]): Terrain[] | null {
           // Pick a random tile to swap with
           const swapTile = otherResourceTiles[Math.floor(Math.random() * otherResourceTiles.length)];
           
-          console.log(`🔧 Swapping Tile ${chain.tile + 1}(${chain.resource}) with Tile ${swapTile + 1}(${otherResource})`);
           
           // Perform the swap
           [terrains[chain.tile], terrains[swapTile]] = [terrains[swapTile], terrains[chain.tile]];
@@ -522,7 +481,6 @@ function repairExpansionClustering(terrains: Terrain[]): Terrain[] | null {
     }
     
     if (!repaired) {
-      console.log('⚠️ Could not find valid swaps, trying to shuffle resources...');
       // If we can't find good swaps, try shuffling some resources
       const nonDesertTiles = terrains.map((t, i) => ({ terrain: t, index: i })).filter(t => t.terrain !== 'desert');
       const shuffled = shuffleInPlace([...nonDesertTiles]);
@@ -535,7 +493,6 @@ function repairExpansionClustering(terrains: Terrain[]): Terrain[] | null {
   }
   
   if (attempts >= maxAttempts) {
-    console.log('⚠️ Max repair attempts reached, returning best attempt');
   }
   
   return terrains;
@@ -574,7 +531,6 @@ function checkIfSwapCreatesChain(terrains: Terrain[], tile1: number, tile2: numb
 }
 
 export function terrainsPassClusterRule(terrains: Terrain[], customRules: any): boolean {
-  console.log("🔍 Checking terrain cluster validation...");
   const terrainTypes = ["grain","wood","sheep","brick","ore"] as Terrain[];
   
   // For expansion maps (30 tiles), enforce strict no-clustering rule regardless of checkbox
@@ -587,7 +543,6 @@ export function terrainsPassClusterRule(terrains: Terrain[], customRules: any): 
     if (isExpansionMap) {
       // Expansion maps: Maximum 2 tiles of same resource can touch (strict clustering prevention)
       if (maxCluster > 2) {
-        console.log(`🚫 EXPANSION MAP: Terrain cluster violation: ${t} has cluster size ${maxCluster} > 2 (max allowed: 2)`);
         return false;
       }
       // Additional check: if we have exactly 2, ensure they don't form a chain with a third
@@ -599,13 +554,11 @@ export function terrainsPassClusterRule(terrains: Terrain[], customRules: any): 
     if (customRules.sameResourceCanTouch) {
       // Checkbox checked: Maximum 2 tiles of same resource can touch
       if (maxCluster > 2) {
-        console.log(`🚫 Terrain cluster violation: ${t} has cluster size ${maxCluster} > 2 (max allowed: 2)`);
         return false;
       }
     } else {
       // Checkbox unchecked: NO same resource tiles can touch at all
       if (maxCluster > 1) {
-        console.log(`🚫 Terrain cluster violation: ${t} has cluster size ${maxCluster} > 1 (no touching allowed)`);
         return false;
         }
       }
@@ -613,11 +566,8 @@ export function terrainsPassClusterRule(terrains: Terrain[], customRules: any): 
   }
   
   if (isExpansionMap) {
-    console.log("✅ EXPANSION MAP: Terrain cluster validation passed - max 2 tiles can touch");
   } else if (customRules.sameResourceCanTouch) {
-    console.log("✅ Classic map: Terrain cluster validation passed - max 2 tiles can touch");
   } else {
-    console.log("✅ Classic map: Terrain cluster validation passed - no same resources touching");
   }
   return true;
 }
@@ -634,50 +584,38 @@ export function generateValidTerrains(customRules: any): Terrain[] {
 
 // ---------- MAIN: build board without rendering invalid states ----------
 export function makeValidBoard(customRules: any): Board {
-  console.log('🎲 Starting classic board generation...');
   
   const terrains = generateValidTerrains(customRules);
   const desertIdx = terrains.indexOf("desert");
   const numbers = generateValidNumbers(desertIdx, customRules);
   
   // CRITICAL: Final validation before returning
-  console.log('🔍 Final validation of classic board...');
   if (!noHotAdjacency(numbers, customRules)) {
     console.error('🚫 CRITICAL: Final classic board validation failed!');
     console.error('🚫 This should NEVER happen - throwing error to prevent invalid map display');
     throw new Error('Classic board failed final validation - 6-8 adjacency rules violated');
   }
   
-  console.log('✅ Classic board generated and validated successfully');
   return { terrains, numbers };
 }
 
 // Expansion board generation (5-6 players) - Improved step-by-step logic
 export function makeValidExpansionBoard(customRules: any): Board {
-  console.log('🎲 Starting improved expansion board generation...');
   
   // Step 1: Place Deserts First
-  console.log('📍 Step 1: Placing deserts...');
   const desertPositions = placeDesertsRandomly();
-  console.log('✅ Deserts placed at positions:', desertPositions);
   
   // Step 2: Place Resource Tiles
-  console.log('🌾 Step 2: Placing resource tiles...');
   const terrains = placeResourceTiles(desertPositions);
-  console.log('✅ Resource tiles placed:', terrains);
   
   // Step 3: Place Number Tokens Using Smart Placement Strategy
-  console.log('🔢 Step 3: Placing number tokens...');
   // This will automatically use smart placement if 6-8 cannot touch,
   // or fall back to the original chit ring method if they can touch
   const numbers = placeNumberTokens(desertPositions, customRules);
-  console.log('✅ Number tokens placed:', numbers);
   
   // Step 4: Randomization for Variety (already implemented in the functions above)
-  console.log('🎲 Step 4: Randomization applied for variety');
   
   // Step 5: Final validation and output
-  console.log('🔍 Step 5: Final validation of expansion board...');
   
   // CRITICAL: Final validation before returning
   if (!noHotAdjacencyExpansion(numbers, customRules)) {
@@ -685,15 +623,6 @@ export function makeValidExpansionBoard(customRules: any): Board {
     console.error('🚫 This should NEVER happen - throwing error to prevent invalid map display');
     throw new Error('Expansion board failed final validation - 6-8 adjacency rules violated');
   }
-  
-  console.log('📤 Step 5: Final board generated and validated');
-  console.log('🔍 Final expansion board:', {
-    terrainsCount: terrains.length,
-    numbersCount: numbers.length,
-    terrains: terrains,
-    numbers: numbers,
-    desertPositions: desertPositions
-  });
   
   return { terrains: terrains as Terrain[], numbers: numbers };
 }
@@ -707,7 +636,6 @@ function placeDesertsRandomly(): number[] {
 
 // Step 2: Place resource tiles with simple retry logic
 function placeResourceTiles(desertPositions: number[]): Terrain[] {
-  console.log('🎯 Starting simple resource placement with retry logic...');
   
   // Resource pool as array
   const resourcePool: Terrain[] = [
@@ -722,18 +650,15 @@ function placeResourceTiles(desertPositions: number[]): Terrain[] {
   const emptyPositions = Array.from({ length: 30 }, (_, i) => i)
     .filter(i => !desertPositions.includes(i));
   
-  console.log(`🎯 Placing ${emptyPositions.length} resources with retry logic...`);
   
   // Try multiple times to get a valid placement
   for (let attempt = 0; attempt < 2000; attempt++) {
     const result = placeResourcesSimple(resourcePool, emptyPositions, desertPositions);
     if (result) {
-      console.log(`✅ Valid resource placement found on attempt ${attempt + 1}`);
       return result;
     }
     
     if (attempt % 200 === 0) {
-      console.log(`🔄 Attempt ${attempt + 1} failed, continuing...`);
     }
   }
   
@@ -743,7 +668,6 @@ function placeResourceTiles(desertPositions: number[]): Terrain[] {
 
 // Simple, reliable resource placement with immediate validation
 function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[], desertPositions: number[]): Terrain[] | null {
-  console.log('🎯 Using simple, reliable placement strategy...');
   
   // Initialize board with deserts
   const terrains: Terrain[] = new Array(30).fill('desert');
@@ -763,7 +687,6 @@ function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[],
     );
     
     if (validResources.length === 0) {
-      console.log(`🚫 No valid resources for position ${pos + 1}`);
       return null; // No valid placement, fail and retry
     }
     
@@ -775,7 +698,6 @@ function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[],
     
     // IMMEDIATELY check if this creates any clustering issues
     if (hasAnyClustering(terrains)) {
-      console.log(`🚫 Placement at position ${pos + 1} created clustering - failing this attempt`);
       return null; // This placement created clustering, fail and retry
     }
     
@@ -785,10 +707,8 @@ function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[],
       shuffledResources.splice(resourceIndexToRemove, 1);
     }
     
-    console.log(`✅ Position ${pos + 1}: Placed ${chosenResource}`);
   }
   
-  console.log('✅ All resources placed successfully with no clustering!');
   return terrains;
 }
 
@@ -830,7 +750,6 @@ function hasResourceClustering(terrains: Terrain[], resourceType: Terrain): bool
     const clusterSize = getClusterSize(terrains, i, resourceType, visited);
     
     if (clusterSize > 2) {
-      console.log(`🚫 Found cluster of ${clusterSize} ${resourceType} tiles starting at position ${i + 1}`);
       return true;
     }
   }
@@ -871,7 +790,6 @@ function getClusterSize(terrains: Terrain[], startPos: number, resourceType: Ter
 
 // Aggressive placement strategy when normal placement fails
 function placeResourcesAggressively(desertPositions: number[], resourcePool: Terrain[]): Terrain[] {
-  console.log('🔧 Using aggressive placement strategy with clustering prevention...');
   
   // Try multiple times to get a valid placement even with aggressive strategy
   for (let attempt = 0; attempt < 200; attempt++) {
@@ -891,7 +809,6 @@ function placeResourcesAggressively(desertPositions: number[], resourcePool: Ter
           let betterPosition = findBetterPosition(terrains, resourceToPlace, desertPositions);
           if (betterPosition !== -1) {
             terrains[betterPosition] = resourceToPlace;
-            console.log(`🔧 Moved ${resourceToPlace} from position ${i + 1} to better position ${betterPosition + 1}`);
           } else {
             // If no better position, this attempt failed
             placementFailed = true;
@@ -907,7 +824,6 @@ function placeResourcesAggressively(desertPositions: number[], resourcePool: Ter
     
     // Check if this placement has any clustering issues
     if (!placementFailed && !hasAnyClustering(terrains)) {
-      console.log(`✅ Aggressive placement successful on attempt ${attempt + 1}`);
       return terrains;
     }
   }
@@ -919,7 +835,6 @@ function placeResourcesAggressively(desertPositions: number[], resourcePool: Ter
 
 // Create a minimal valid board when all else fails
 function createMinimalValidBoard(desertPositions: number[], resourcePool: Terrain[]): Terrain[] {
-  console.log('🔧 Creating minimal valid board...');
   
   const terrains: Terrain[] = new Array(30).fill('desert');
   const shuffledResources = shuffleInPlace([...resourcePool]);
@@ -942,7 +857,6 @@ function createMinimalValidBoard(desertPositions: number[], resourcePool: Terrai
     resourceIndex++;
   }
   
-  console.log('⚠️ Minimal board created (may have clustering issues)');
   return terrains;
 }
 
@@ -1004,12 +918,10 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
   
   // If 6 & 8 cannot touch, use smart placement to prevent adjacency
   if (!customRules.sixEightCanTouch) {
-    console.log('🔒 Using smart placement to prevent 6-8 adjacency...');
     return placeNumbersSmartly(desertPositions, customRules);
   }
   
   // Otherwise, use the original chit ring method
-  console.log('🎲 Using original chit ring method...');
   
   // Try multiple times to get a valid placement
   for (let attempt = 0; attempt < 200; attempt++) {
@@ -1036,7 +948,6 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
     
     // Check if this placement satisfies the adjacency rules
     if (noHotAdjacencyExpansion(numbers, customRules)) {
-      console.log(`✅ Valid number placement found on attempt ${attempt + 1}`);
       return numbers;
     }
   }
@@ -1071,7 +982,6 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
     throw new Error("Failed to generate valid expansion numbers that satisfy 6-8 adjacency rules");
   }
   
-  console.log("✅ Expansion numbers successfully repaired and validated");
   return repaired;
 }
 
@@ -1080,7 +990,6 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
 // we PREVENT them by placing 6s and 8s in non-adjacent positions from the start.
 // This ensures that no 6-8 adjacency violations can ever occur.
 function placeNumbersSmartly(desertPositions: number[], customRules: any): (number | null)[] {
-  console.log('🧠 Smart placement: Placing 6s and 8s first to prevent adjacency...');
   
 
   
@@ -1102,14 +1011,10 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
     .filter(i => !desertPositions.includes(i));
   
   // Step 1: Place the 6s first in random non-adjacent positions
-  console.log('🎯 Step 1: Placing 6s in non-adjacent positions...');
-  console.log(`🔍 Available positions: [${availablePositions.map(p => p + 1).join(', ')}]`);
   const sixes = expansionNumbers.filter(n => n === 6);
   const sixPositions: number[] = [];
   
   for (const six of sixes) {
-    console.log(`🎯 Trying to place 6 #${sixPositions.length + 1}...`);
-    console.log(`🔍 Current 6 positions: [${sixPositions.map(p => p + 1).join(', ')}]`);
     
     // Find all positions that are not adjacent to any existing 6
     const validPositions = availablePositions.filter(pos => {
@@ -1134,21 +1039,18 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       if (!isValid) {
         if (isAdjacentToSix) {
           const adjacentSixes = neighbors.filter(neighbor => sixPositions.includes(neighbor));
-          console.log(`🚫 Position ${pos + 1} rejected: adjacent to existing 6s at [${adjacentSixes.map(p => p + 1).join(', ')}]`);
         }
         if (isAdjacentToExistingSixes) {
           const adjacentToSixes = sixPositions.filter(sixPos => {
             const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
             return sixNeighbors.includes(pos);
           });
-          console.log(`🚫 Position ${pos + 1} rejected: existing 6s at [${adjacentToSixes.map(p => p + 1).join(', ')}] are adjacent to it`);
         }
         if (wouldCreateAdjacentSixes) {
           const wouldBeAdjacentTo = sixPositions.filter(existingSixPos => {
             const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
             return existingSixNeighbors.includes(pos);
           });
-          console.log(`🚫 Position ${pos + 1} rejected: would make existing 6s at [${wouldBeAdjacentTo.map(p => p + 1).join(', ')}] adjacent to each other`);
         }
       }
       
@@ -1171,19 +1073,13 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       availablePositions.splice(index, 1);
     }
     
-    console.log(`✅ Placed 6 at position ${chosenPos + 1}`);
   }
   
   // Step 2: Place the 8s in random non-adjacent positions (also not adjacent to 6s)
-  console.log('🎯 Step 2: Placing 8s in non-adjacent positions...');
-  console.log(`🔍 Available positions: [${availablePositions.map(p => p + 1).join(', ')}]`);
-  console.log(`🔍 Current 6 positions: [${sixPositions.map(p => p + 1).join(', ')}]`);
   const eights = expansionNumbers.filter(n => n === 8);
   const eightPositions: number[] = [];
   
   for (const eight of eights) {
-    console.log(`🎯 Trying to place 8 #${eightPositions.length + 1}...`);
-    console.log(`🔍 Current 8 positions: [${eightPositions.map(p => p + 1).join(', ')}]`);
     
     // Find all positions that are not adjacent to any existing 6 or 8
     const validPositions = availablePositions.filter(pos => {
@@ -1220,7 +1116,6 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         if (isAdjacentToSixOrEight) {
           const adjacentSixes = neighbors.filter(neighbor => sixPositions.includes(neighbor));
           const adjacentEights = neighbors.filter(neighbor => eightPositions.includes(neighbor));
-          console.log(`🚫 Position ${pos + 1} rejected: adjacent to existing 6s at [${adjacentSixes.map(p => p + 1).join(', ')}], 8s at [${adjacentEights.map(p => p + 1).join(', ')}]`);
         }
         if (isAdjacentToExistingHotNumbers) {
           const adjacentToSixes = sixPositions.filter(sixPos => {
@@ -1231,21 +1126,18 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
             const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
             return eightNeighbors.includes(pos);
           });
-          console.log(`🚫 Position ${pos + 1} rejected: existing 6s at [${adjacentToSixes.map(p => p + 1).join(', ')}], 8s at [${adjacentToEights.map(p => p + 1).join(', ')}] are adjacent to it`);
         }
         if (wouldCreateAdjacentEights) {
           const wouldBeAdjacentTo = eightPositions.filter(existingEightPos => {
             const existingEightNeighbors = EXPANSION_NEIGHBORS[existingEightPos] || [];
             return existingEightNeighbors.includes(pos);
           });
-          console.log(`🚫 Position ${pos + 1} rejected: would make existing 8s at [${wouldBeAdjacentTo.map(p => p + 1).join(', ')}] adjacent to each other`);
         }
         if (wouldCreateAdjacentSixes) {
           const wouldBeAdjacentTo = sixPositions.filter(existingSixPos => {
             const sixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
             return sixNeighbors.includes(pos);
           });
-          console.log(`🚫 Position ${pos + 1} rejected: would make existing 6s at [${wouldBeAdjacentTo.map(p => p + 1).join(', ')}] adjacent to each other`);
         }
       }
       
@@ -1268,11 +1160,9 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       availablePositions.splice(index, 1);
     }
     
-    console.log(`✅ Placed 8 at position ${chosenPos + 1}`);
   }
   
   // Step 3: Place all remaining numbers randomly in remaining positions
-  console.log('🎯 Step 3: Placing remaining numbers randomly...');
   const remainingNumbers = expansionNumbers.filter(n => n !== 6 && n !== 8);
   const shuffledRemaining = shuffleInPlace([...remainingNumbers]);
   
@@ -1283,7 +1173,6 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
   }
   
   // Final validation to ensure no adjacency violations
-  console.log('🔍 Final validation of smart placement...');
   
 
   
@@ -1292,7 +1181,6 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
     throw new Error('Smart placement failed to prevent adjacency violations');
   }
   
-  console.log('✅ Smart placement completed successfully - no 6-8 adjacency violations!');
   return numbers;
 }
 
@@ -1324,7 +1212,6 @@ function generateSpiralOrder(): number[] {
 
 // Repair adjacency violations by swapping numbers
 function repairExpansionAdjacency(numbers: (number | null)[], customRules: any): (number | null)[] {
-  console.log('🔧 Attempting to repair adjacency violations...');
   
   // Try multiple repair strategies
   for (let attempt = 0; attempt < 50; attempt++) {
@@ -1347,7 +1234,6 @@ function repairExpansionAdjacency(numbers: (number | null)[], customRules: any):
           // Try swapping
           [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
           if (noHotAdjacencyExpansion(numbers, customRules)) {
-            console.log(`✅ Repair successful by swapping positions ${i + 1} and ${j + 1}`);
             return numbers;
           }
           // Revert swap
@@ -1422,10 +1308,6 @@ export const EXPANSION_NEIGHBORS: number[][] = [
 // Expansion-specific adjacency validation
 export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any): boolean {
   const validationId = Math.random().toString(36).substr(2, 9);
-  console.log(`🔍 [${validationId}] Checking EXPANSION number adjacency validation...`);
-  console.log(`🔍 [${validationId}] Custom rules:`, customRules);
-  console.log(`🔍 [${validationId}] Numbers to validate:`, nums);
-  console.log(`🔍 [${validationId}] Validation call stack:`, new Error().stack?.split('\n').slice(1, 4).join('\n'));
   
   for (let i = 0; i < 29; i++) { // Only check tiles 1-29 (tile 30 has no neighbors)
     const a = nums[i];
@@ -1438,20 +1320,16 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
         // Rule 1: 6 cannot be adjacent to 8 and vice versa (unless custom rule allows)
         if ((a === 6 && b === 8) || (a === 8 && b === 6)) {
           if (!customRules.sixEightCanTouch) {
-            console.log(`🚫 [${validationId}] 6-8 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - 6 and 8 cannot be adjacent`);
             return false;
           } else {
-            console.log(`✅ [${validationId}] 6-8 adjacency allowed by custom rule: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b})`);
           }
         }
         // Rule 2: Two 6s can NEVER be adjacent to each other (ALWAYS enforced)
         if (a === 6 && b === 6) {
-          console.log(`🚫 [${validationId}] 6-6 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - two 6s can NEVER be adjacent`);
           return false;
         }
         // Rule 3: Two 8s can NEVER be adjacent to each other (ALWAYS enforced)
         if (a === 8 && b === 8) {
-          console.log(`🚫 [${validationId}] 8-8 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - two 8s can NEVER be adjacent`);
           return false;
         }
       }
@@ -1468,7 +1346,6 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
         const j = EXPANSION_NEIGHBORS[i][jIdx];
         const b = nums[j];
         if (a === b) {
-          console.log(`🚫 Same number violation: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - same numbers cannot be adjacent`);
           return false;
         }
       }
@@ -1484,7 +1361,6 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
           const j = EXPANSION_NEIGHBORS[i][jIdx];
           const b = nums[j];
           if ((a === 2 && b === 12) || (a === 12 && b === 2)) {
-            console.log(`🚫 2-12 VIOLATION: Position ${i + 1} (${a}) adjacent to position ${j + 1} (${b}) - 2 and 12 cannot be adjacent`);
             return false;
           }
         }
@@ -1492,13 +1368,6 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
     }
   }
   
-  console.log(`✅ [${validationId}] EXPANSION number adjacency validation passed - all rules satisfied`);
-  console.log(`📋 [${validationId}] Validation summary:`);
-  console.log(`  - 6 & 8 adjacency: ✅ Valid`);
-  console.log(`  - 6 & 6 adjacency: ✅ Valid`);
-  console.log(`  - 8 & 8 adjacency: ✅ Valid`);
-  console.log(`  - 2 & 12 adjacency: ✅ Valid`);
-  console.log(`  - Same numbers: ✅ Valid`);
   return true;
 }
 
@@ -1508,10 +1377,8 @@ export function validateBoard(board: Board, customRules: any): boolean {
   const terrainsValid = terrainsPassClusterRule(board.terrains, customRules);
   
   if (!numbersValid) {
-    console.log("❌ Number validation failed");
   }
   if (!terrainsValid) {
-    console.log("❌ Terrain validation failed");
   }
   
   return numbersValid && terrainsValid;
@@ -1522,6 +1389,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   const [isGenerating, setIsGenerating] = useState(false);
   const [isNominating, setIsNominating] = useState(false);
   const [isNominated, setIsNominated] = useState(false);
+
   const [mapType, setMapType] = useState<MapType>('classic');
   const [customRules, setCustomRules] = useState({
     sixEightCanTouch: false,
@@ -1532,6 +1400,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   });
   const userId = useUserId();
   const { user } = useAuth();
+  const { showToast, ToastContainer } = useToast();
   
   // SCALED DIMENSIONS - Smaller map for better page layout
   const SCALE_FACTOR = 0.6; // 60% of original size
@@ -1540,6 +1409,152 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   
   // Mobile responsive dimensions
   const [showSettingsModal, setShowSettingsModal] = useState(false); // Settings modal state
+  
+  // Separate dragging state for base map and tiles/numbers
+  const [isDraggingBase, setIsDraggingBase] = useState(false);
+  const [isDraggingTiles, setIsDraggingTiles] = useState(false);
+  const [baseMapPosition, setBaseMapPosition] = useState({ x: 0, y: 0 });
+  const [tilesPosition, setTilesPosition] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isLocked, setIsLocked] = useState(false); // Start unlocked so you can position
+  const [lockedBaseMapPosition, setLockedBaseMapPosition] = useState({ x: 0, y: 0 });
+  const [lockedTilesPosition, setLockedTilesPosition] = useState({ x: 0, y: 0 });
+
+  // Function to lock current positions
+  const lockPositions = () => {
+    setLockedBaseMapPosition({ ...baseMapPosition });
+    setLockedTilesPosition({ ...tilesPosition });
+    setIsLocked(true);
+  };
+
+  // Function to unlock positions
+  const unlockPositions = () => {
+    setIsLocked(false);
+    // Reset to default positions when unlocking
+    if (mapType === 'expansion') {
+      setBaseMapPosition({ x: -100, y: -50 });
+      setTilesPosition({ x: -100, y: -50 });
+    } else {
+      setBaseMapPosition({ x: 0, y: 0 });
+      setTilesPosition({ x: 0, y: 0 });
+    }
+  };
+
+
+  // No useEffect needed - positions are already (0,0) for both maps
+
+  // Drag handlers for base map
+  const handleBaseMapMouseDown = (e: React.MouseEvent) => {
+    if (isLocked) return;
+    setIsDraggingBase(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleBaseMapMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingBase || isLocked) return;
+    e.preventDefault();
+    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+    if (rect) {
+      setBaseMapPosition({
+        x: e.clientX - rect.left - dragOffset.x,
+        y: e.clientY - rect.top - dragOffset.y
+      });
+    }
+  };
+
+  const handleBaseMapMouseUp = () => {
+    setIsDraggingBase(false);
+  };
+
+  // Drag handlers for tiles/numbers
+  const handleTilesMouseDown = (e: React.MouseEvent) => {
+    if (isLocked) return;
+    setIsDraggingTiles(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleTilesMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingTiles || isLocked) return;
+    e.preventDefault();
+    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+    if (rect) {
+      setTilesPosition({
+        x: e.clientX - rect.left - dragOffset.x,
+        y: e.clientY - rect.top - dragOffset.y
+      });
+    }
+  };
+
+  const handleTilesMouseUp = () => {
+    setIsDraggingTiles(false);
+  };
+
+  // Touch handlers for base map
+  const handleBaseMapTouchStart = (e: React.TouchEvent) => {
+    if (isLocked) return;
+    setIsDraggingBase(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const touch = e.touches[0];
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    });
+  };
+
+  const handleBaseMapTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingBase || isLocked) return;
+    e.preventDefault();
+    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+    if (rect) {
+      const touch = e.touches[0];
+      setBaseMapPosition({
+        x: touch.clientX - rect.left - dragOffset.x,
+        y: touch.clientY - rect.top - dragOffset.y
+      });
+    }
+  };
+
+  const handleBaseMapTouchEnd = () => {
+    setIsDraggingBase(false);
+  };
+
+  // Touch handlers for tiles/numbers
+  const handleTilesTouchStart = (e: React.TouchEvent) => {
+    if (isLocked) return;
+    setIsDraggingTiles(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const touch = e.touches[0];
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    });
+  };
+
+  const handleTilesTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingTiles || isLocked) return;
+    e.preventDefault();
+    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+    if (rect) {
+      const touch = e.touches[0];
+      setTilesPosition({
+        x: touch.clientX - rect.left - dragOffset.x,
+        y: touch.clientY - rect.top - dragOffset.y
+      });
+    }
+  };
+
+  const handleTilesTouchEnd = () => {
+    setIsDraggingTiles(false);
+  };
+  
   const MAP_WIDTH = BASE_MAP_WIDTH;
   const MAP_HEIGHT = BASE_MAP_HEIGHT;
   const TILE_WIDTH = 240 * SCALE_FACTOR;
@@ -1613,65 +1628,35 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
   const generateMap = (forcedMapType?: MapType) => {
     const currentMapType = forcedMapType || mapType;
-    console.log('🎲 generateMap called with forcedMapType:', forcedMapType);
-    console.log('🎲 currentMapType resolved to:', currentMapType);
-    console.log('🎲 mapType state is:', mapType);
     
     setIsGenerating(true);
     setIsNominated(false); // Reset nomination status for new map
-    console.log('🎲 Generating valid Catan board...');
-    console.log('🎯 Current custom rules:', customRules);
 
     // Use setTimeout to prevent blocking the UI
     setTimeout(() => {
       try {
-        console.log('🎯 Generating board for map type:', currentMapType);
-        console.log('🔍 About to call board generator...');
         
         let board;
         if (currentMapType === 'expansion') {
-          console.log('🔍 Calling makeValidExpansionBoard...');
           board = makeValidExpansionBoard(customRules);
-          console.log('🔍 Expansion board generated successfully');
         } else {
-          console.log('🔍 Calling makeValidBoard for CLASSIC mode...');
           try {
             board = makeValidBoard(customRules);
-            console.log('🔍 Classic board generated successfully:', board);
           } catch (error) {
             console.error('❌ Error generating classic board:', error);
             throw error;
           }
         }
-        
-        console.log('✅ Valid board generated:', board);
-        console.log('🎯 Board details:', {
-          mapType,
-          terrainsLength: board.terrains.length,
-          numbersLength: board.numbers.length,
-          terrains: board.terrains,
-          numbers: board.numbers
-        });
 
         // Convert to hexagons format
         const currentTilePositions = currentMapType === 'classic' ? classicTilePositions : expansionTilePositions;
-        console.log('🔍 Current tile positions count:', currentTilePositions.length);
-        console.log('🔍 Board terrains count:', board.terrains.length);
-        console.log('🔍 Board numbers count:', board.numbers.length);
         
         // Debug: Check if we have enough board data for all positions
         if (currentMapType === 'expansion') {
-          console.log('🔍 Expansion board check:', {
-            positionsNeeded: currentTilePositions.length,
-            terrainsAvailable: board.terrains.length,
-            numbersAvailable: board.numbers.length,
-            terrains: board.terrains,
-            numbers: board.numbers
-          });
+          // Expansion board validation
         }
         
         // CRITICAL: Validate board before creating hexagons
-        console.log('🚨 PRE-HEXAGON VALIDATION - Ensuring board is valid before rendering...');
         
         if (currentMapType === 'classic') {
           if (!noHotAdjacency(board.numbers, customRules)) {
@@ -1685,7 +1670,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           }
         }
         
-        console.log('✅ PRE-HEXAGON VALIDATION PASSED - Board is valid for hexagon creation');
         
         // Ensure we have the right number of hexagons
         let newHexagons: Hexagon[] = currentTilePositions.map((pos, index) => {
@@ -1704,10 +1688,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         };
         }).filter(Boolean) as Hexagon[]; // Remove any null entries
 
-        console.log(`🔍 Created ${newHexagons.length} hexagons for ${currentMapType} map`);
         
         // CRITICAL: Validate hexagon data integrity
-        console.log('🚨 HEXAGON DATA VALIDATION - Ensuring created hexagons are valid...');
         
         // Check that all hexagons have valid data
         for (let i = 0; i < newHexagons.length; i++) {
@@ -1732,10 +1714,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           }
         }
         
-        console.log('✅ HEXAGON DATA VALIDATION PASSED - All hexagons are valid');
 
         // Final validation (different for classic vs expansion)
-        console.log('🔍 Running final validation...');
         if (currentMapType === 'classic') {
           if (!noHotAdjacency(board.numbers, customRules)) {
             throw new Error('6-8 adjacency rule failed in final validation');
@@ -1744,21 +1724,16 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             throw new Error('Terrain cluster rule failed in final validation');
           }
         } else {
-          console.log('🔍 Running expansion-specific validation...');
           if (!noHotAdjacencyExpansion(board.numbers, customRules)) {
             throw new Error('Expansion 6-8 adjacency rule failed in final validation');
           }
           
           // Final validation for expansion terrain clustering
-          console.log('🔍 Running final expansion terrain cluster validation...');
           // Since we're using the simple placement approach, clustering should already be prevented
-          console.log('✅ Expansion terrain validation passed - clustering prevented during placement');
         }
 
-        console.log('🎯 Board validation passed - rendering...');
         
         // ABSOLUTE FINAL VALIDATION - Never render invalid boards
-        console.log('🚨 ABSOLUTE FINAL VALIDATION - Double-checking before render...');
         
         if (currentMapType === 'classic') {
           if (!noHotAdjacency(board.numbers, customRules)) {
@@ -1772,12 +1747,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           }
         }
         
-        console.log('✅ ABSOLUTE VALIDATION PASSED - Board is safe to render');
-        console.log('🔍 About to set hexagons:', newHexagons.length, 'hexagons');
-        console.log('🔍 First few hexagons:', newHexagons.slice(0, 3));
         
       setHexagons(newHexagons);
-        console.log('🔍 Hexagons state updated');
       setIsGenerating(false);
       } catch (error) {
         console.error('❌ Board generation failed:', error);
@@ -1795,10 +1766,19 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   const handleNominateClassicMap = async () => {
     if (hexagons.length === 0 || mapType !== 'classic') return;
     
+    console.log('🌟 Starting classic map nomination...', {
+      hexagonsLength: hexagons.length,
+      mapType,
+      userId,
+      user: user ? { id: user.id, username: user.username } : null
+    });
+    
     setIsNominating(true);
     try {
       // Capture the map as an image
+      console.log('📸 Capturing map image...');
       const mapImage = await captureMapImage();
+      console.log('✅ Map image captured, length:', mapImage.length);
       
       // Create a map data object for classic nomination
       const mapData = {
@@ -1818,14 +1798,15 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       };
 
       const username = user?.username || (userId ? `User_${userId.slice(-6)}` : 'Anonymous');
-      
-      console.log('🔍 Nominating CLASSIC map:', {
-        mapType: 'classic',
-        tileCount: hexagons.length,
-        customRules: nominationCustomRules
-      });
 
       // Send nomination to API
+      console.log('📤 Sending nomination to API...', {
+        mapDataLength: Object.keys(mapData).length,
+        imageBase64Length: mapImage.length,
+        userId: user?.id || null,
+        username
+      });
+      
       const response = await fetch('/api/catan-nominations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1839,47 +1820,40 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         })
       });
 
+      console.log('📡 API Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to save classic nomination');
+        const errorText = await response.text();
+        console.error('❌ API Error response:', errorText);
+        throw new Error(`Failed to save classic nomination: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('✅ Classic nomination response:', result);
+      console.log('✅ API Success response:', result);
       setIsNominated(true);
-      alert(`Classic Catan map nominated successfully! Your nomination ID is: ${result.nominationId}`);
+      showToast(`Classic Catan map nominated successfully! ID: ${result.nominationId}`, 'success');
       
     } catch (error) {
       console.error('❌ Failed to nominate classic map:', error);
-      alert('Failed to nominate classic map. Please try again.');
+      showToast('Failed to nominate classic map. Please try again.', 'error');
     } finally {
       setIsNominating(false);
     }
   };
 
   const handleNominateExpansionMap = async () => {
-    console.log('🔍 handleNominateExpansionMap called');
-    console.log('🔍 Current state:', { 
-      hexagonsLength: hexagons.length, 
-      mapType, 
-      isNominating,
-      currentHexagons: hexagons.slice(0, 5).map(h => ({ type: h.type, number: h.number }))
-    });
-    
     if (hexagons.length === 0 || mapType !== 'expansion') {
-      console.log('❌ Validation failed:', { hexagonsLength: hexagons.length, mapType });
       return;
     }
     
     setIsNominating(true);
     try {
-      console.log('🔍 About to capture expansion map image...');
       
       // Add a small delay to ensure the expansion map is fully rendered
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Capture the map as an image
       const mapImage = await captureMapImage();
-      console.log('🔍 Expansion map image captured, length:', mapImage.length);
       
       // Create a map data object for expansion nomination
       const mapData = {
@@ -1899,14 +1873,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       };
 
       const username = user?.username || (userId ? `User_${userId.slice(-6)}` : 'Anonymous');
-      
-      console.log('🔍 Nominating EXPANSION map:', {
-        mapType: 'expansion',
-        tileCount: hexagons.length,
-        customRules: nominationCustomRules,
-        terrains: mapData.terrains.slice(0, 10), // Show first 10 terrains
-        numbers: mapData.numbers.slice(0, 10) // Show first 10 numbers
-      });
 
       // Log the exact data being sent to API for EXPANSION
       const apiPayload = { 
@@ -1917,14 +1883,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         username: username,
         avatar: null
       };
-      
-      console.log('🔍 EXPANSION API Payload:', {
-        mapDataLength: mapData.terrains.length,
-        mapDataType: mapData.mapType,
-        customRulesMapType: nominationCustomRules.mapType,
-        customRulesTileCount: nominationCustomRules.tileCount,
-        firstFewTerrains: mapData.terrains.slice(0, 5)
-      });
 
       // Send nomination to API
       const response = await fetch('/api/catan-nominations', {
@@ -1938,13 +1896,12 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       }
 
       const result = await response.json();
-      console.log('✅ Expansion nomination response:', result);
       setIsNominated(true);
-      alert(`Expansion Catan map nominated successfully! Your nomination ID is: ${result.nominationId}`);
+      showToast(`Expansion Catan map nominated successfully! ID: ${result.nominationId}`, 'success');
       
     } catch (error) {
       console.error('❌ Failed to nominate expansion map:', error);
-      alert('Failed to nominate expansion map. Please try again.');
+      showToast('Failed to nominate expansion map. Please try again.', 'error');
     } finally {
       setIsNominating(false);
     }
@@ -1957,19 +1914,14 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   };
 
   const handleMapTypeChange = (newMapType: MapType) => {
-    console.log('🔍 Map type changing from', mapType, 'to', newMapType);
-    console.log('🔍 Current hexagons length before change:', hexagons.length);
     
     // Update state first
     setMapType(newMapType);
-    console.log('🔍 State updated, new mapType:', newMapType);
     
     // Clear existing hexagons to force a fresh render
     setHexagons([]);
-    console.log('🔍 Hexagons cleared');
     
     // Generate map immediately with the new type
-    console.log('🔍 About to generate map after type change, current mapType:', newMapType);
     generateMap(newMapType);
   };
 
@@ -1980,8 +1932,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   const captureMapImage = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        // Get the map container element
-        const mapContainer = document.querySelector('.catan-board-wrapper') as HTMLElement;
+        // Get the map container element - use mobile-map-container for the actual map content
+        const mapContainer = document.querySelector('.mobile-map-container') as HTMLElement;
         if (!mapContainer) {
           reject(new Error('Map container not found'));
           return;
@@ -1999,14 +1951,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           captureWidth = MAP_WIDTH;
           captureHeight = MAP_HEIGHT;
         }
-
-        console.log('🔍 Capturing map with dimensions:', { 
-          mapType, 
-          captureWidth, 
-          captureHeight, 
-          containerWidth: mapContainer.offsetWidth, 
-          containerHeight: mapContainer.offsetHeight 
-        });
 
         // Use html2canvas to capture the map
         import('html2canvas').then(({ default: html2canvas }) => {
@@ -2029,13 +1973,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   };
 
   useEffect(() => {
-    console.log('🔍 CatanMapGenerator mounted - initial mapType:', mapType);
     generateMap();
-    console.log('🔍 CatanMapGenerator mounted - checking state...');
-    console.log('🔍 hexagons length:', hexagons.length);
-    console.log('🔍 isGenerating:', isGenerating);
-    console.log('🔍 isNominating:', isNominated);
-    console.log('🔍 isNominated:', isNominated);
     
     // Debug button visibility
     setTimeout(() => {
@@ -2046,48 +1984,26 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       const testBtn = document.getElementById('test-button-left');
       const mapContainer = document.querySelector('.catan-board-wrapper');
       
-      console.log('🔍 Map type:', mapType);
-      console.log('🔍 Looking for button ID:', mapType === 'expansion' ? 'nomination-star-button-expansion' : 'nomination-star-button');
-      console.log('🔍 Star button found:', !!starBtn);
-      console.log('🔍 Test button found:', !!testBtn);
-      console.log('🔍 Map container found:', !!mapContainer);
       
       if (starBtn) {
-        console.log('🔍 Star button position:', starBtn.getBoundingClientRect());
-        console.log('🔍 Star button styles:', window.getComputedStyle(starBtn));
-        console.log('🔍 Star button classes:', starBtn.className);
-        console.log('🔍 Star button parent:', starBtn.parentElement);
-        console.log('🔍 Star button display:', window.getComputedStyle(starBtn).display);
-        console.log('🔍 Star button visibility:', window.getComputedStyle(starBtn).visibility);
-        console.log('🔍 Star button opacity:', window.getComputedStyle(starBtn).opacity);
       } else {
-        console.log('❌ Star button NOT FOUND in DOM');
       }
       
       if (testBtn) {
-        console.log('🔍 Test button position:', testBtn.getBoundingClientRect());
-        console.log('🔍 Test button styles:', window.getComputedStyle(testBtn));
-        console.log('🔍 Test button classes:', testBtn.className);
       }
       
       if (mapContainer) {
-        console.log('🔍 Map container position:', mapContainer.getBoundingClientRect());
-        console.log('🔍 Map container styles:', window.getComputedStyle(mapContainer));
-        console.log('🔍 Map container children count:', mapContainer.children.length);
-        console.log('🔍 Map container position style:', window.getComputedStyle(mapContainer).position);
       }
     }, 1000);
   }, []);
 
   // Monitor mapType changes
   useEffect(() => {
-    console.log('🔍 mapType changed to:', mapType);
   }, [mapType]);
 
   // Monitor hexagons changes
   useEffect(() => {
     if (hexagons.length > 0) {
-      console.log(`🔍 Rendering ${hexagons.length} tiles for ${mapType} map`);
     }
   }, [hexagons, mapType]);
 
@@ -2154,15 +2070,13 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   };
 
   return (
-    <div className={`w-full max-w-7xl mx-auto px-4 ${className}`}>
+    <div className={`w-full ${className}`}>
       <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold text-dark-900 mb-6">Catan Map Generator by King Dice</h3>
         
         {/* Desktop Map Type Buttons - Hidden on mobile */}
         <div className="hidden sm:flex justify-center gap-4 mb-4 relative">
           <button
             onClick={() => {
-              console.log('🔍 Classic button clicked! Current mapType:', mapType);
               handleMapTypeChange('classic');
             }}
             disabled={isGenerating}
@@ -2182,7 +2096,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           
           <button
             onClick={() => {
-              console.log('🔍 Expansion button clicked! Current mapType:', mapType);
               handleMapTypeChange('expansion');
             }}
             disabled={isGenerating}
@@ -2202,43 +2115,57 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         </div>
         
         {/* Mobile Controls - Only show on mobile */}
-        <div className="flex sm:hidden justify-center gap-2 mb-4">
-          <button
-            onClick={() => handleMapTypeChange('classic')}
-            disabled={isGenerating}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              mapType === 'classic' 
-                ? 'text-black font-semibold' 
-                : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            style={{ 
-              backgroundColor: mapType === 'classic' ? '#fbae17' : undefined
-            }}
-          >
-            Classic
-          </button>
+        <div className="sm:hidden mb-4">
+          {/* Map Type Buttons */}
+          <div className="flex justify-center gap-3 mb-4">
+            <button
+              onClick={() => handleMapTypeChange('classic')}
+              disabled={isGenerating}
+              className={`w-32 h-14 rounded-lg font-medium transition-colors text-base ${
+                mapType === 'classic' 
+                  ? 'text-black font-semibold' 
+                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              style={{ 
+                backgroundColor: mapType === 'classic' ? '#fbae17' : undefined
+              }}
+            >
+              Classic
+            </button>
+            
+            <button
+              onClick={() => handleMapTypeChange('expansion')}
+              disabled={isGenerating}
+              className={`w-32 h-14 rounded-lg font-medium transition-colors text-base ${
+                mapType === 'expansion' 
+                  ? 'text-black font-semibold' 
+                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              style={{ 
+                backgroundColor: mapType === 'expansion' ? '#fbae17' : undefined
+              }}
+            >
+              Expansion
+            </button>
+          </div>
           
-          <button
-            onClick={() => handleMapTypeChange('expansion')}
-            disabled={isGenerating}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              mapType === 'expansion' 
-                ? 'text-black font-semibold' 
-                : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            style={{ 
-              backgroundColor: mapType === 'expansion' ? '#fbae17' : undefined
-            }}
-          >
-            Expansion
-          </button>
-          
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-          >
-            Settings
-          </button>
+          {/* Options and Shuffle Buttons */}
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="w-32 h-14 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-base"
+            >
+              Options
+            </button>
+            
+            <button
+              onClick={() => generateMap()}
+              disabled={isGenerating}
+              className="w-32 h-14 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-base"
+            >
+              {isGenerating ? 'Generating...' : 'Shuffle'}
+            </button>
+          </div>
         </div>
         
 
@@ -2255,9 +2182,9 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             </p>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium text-dark-700 mb-2">Image Style</label>
+              <label className="block text-base font-medium text-dark-700 mb-2">Image Style</label>
               <div className="flex gap-2">
-                <button
+        <button
                   onClick={() => handleImageStyleChange('classic')}
                   className={`px-3 py-1 text-xs rounded transition-colors ${
                     customRules.imageStyle === 'classic'
@@ -2294,7 +2221,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.sixEightCanTouch}
                   onChange={(e) => handleCustomRuleChange('sixEightCanTouch', e.target.checked)}
                 />
-                <span className="text-sm text-dark-700">6 & 8 Can Touch</span>
+                <span className="text-base text-dark-700">6 & 8 Can Touch</span>
               </label>
               
               <label className="flex items-center">
@@ -2304,7 +2231,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.twoTwelveCanTouch}
                   onChange={(e) => handleCustomRuleChange('twoTwelveCanTouch', e.target.checked)}
                 />
-                <span className="text-sm text-dark-700">2 & 12 Can Touch</span>
+                <span className="text-base text-dark-700">2 & 12 Can Touch</span>
               </label>
               
               <label className="flex items-center">
@@ -2314,7 +2241,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.sameNumbersCanTouch}
                   onChange={(e) => handleCustomRuleChange('sameNumbersCanTouch', e.target.checked)}
                 />
-                <span className="text-sm text-dark-700">Same Numbers Can Touch</span>
+                <span className="text-base text-dark-700">Same Numbers Can Touch</span>
               </label>
               
               {mapType === 'classic' && (
@@ -2325,7 +2252,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.sameResourceCanTouch}
                   onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
                 />
-                <span className="text-sm text-dark-700">Same Resource Can Touch</span>
+                <span className="text-base text-dark-700">Same Resource Can Touch</span>
               </label>
               )}
             </div>
@@ -2343,36 +2270,27 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       </div>
 
         {/* Map - centered on mobile, right-aligned on desktop */}
-        <div className="w-full lg:w-2/3 flex justify-center lg:justify-end -mx-4 sm:mx-0">
+        <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
           {/* Mobile: Scalable container that fits the entire map */}
-          <div className="w-full sm:w-auto overflow-y-auto overflow-x-hidden sm:overflow-visible px-0 sm:px-0">
-            <div 
-              className="w-full sm:w-auto flex justify-center"
-              style={{ 
-                maxHeight: '75vh',
-                maxWidth: '100vw'
+          <div className="w-full sm:w-auto sm:overflow-visible">
+        <div
+              className="w-full sm:w-auto flex justify-center items-center"
+          style={{
+                height: 'auto',
+                minHeight: '400px',
+                margin: '0 auto'
               }}
             >
+              {/* Final Container - applies mobile scaling */}
               <div
-                className="catan-board-wrapper relative"
+                className="relative scale-[1.23] sm:scale-[0.85] mx-auto mobile-main-container"
                 style={{
-                  position: "relative",
-                  width: `${MAP_WIDTH}px`,
-                  height: `${MAP_HEIGHT}px`,
-                  margin: "0 auto",
-                  overflow: "visible",
-                  transformOrigin: "center center"
+                  transformOrigin: "0 0",
+              width: `${MAP_WIDTH}px`,
+              height: `${MAP_HEIGHT}px`,
+                  isolation: "isolate"
                 }}
               >
-                {/* Scale container for mobile - scales everything together */}
-                <div 
-                  className="scale-[0.85] sm:scale-100"
-                  style={{
-                    transformOrigin: "center center",
-                    width: "100%",
-                    height: "100%"
-                  }}
-                >
             {/* Nomination Buttons - Top Right */}
             {/* Classic Map Nomination Button */}
             {mapType === 'classic' && (
@@ -2433,116 +2351,137 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               </button>
             )}
             
-          {/* Render all resource tiles using scaled pixel coordinates */}
-          {/* Note: Classic has 19 tiles, Expansion has 30 tiles */}
-          <div style={{
-            transform: mapType === 'expansion' ? 'scale(0.595)' : 'none',
+          {/* Tiles Container - Inside scaling container */}
+          <div className="scale-[0.6] sm:scale-100" style={{ transformOrigin: 'center center' }}>
+             {/* Classic Map */}
+             {mapType === 'classic' && (
+               <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                 {/* Tiles/Numbers Container */}
+          <div className="mobile-map-container" style={{
+                   transform: `translate(${tilesPosition.x}px, ${tilesPosition.y}px) scale(1)`,
             transformOrigin: 'center center',
-            position: 'relative',
-            marginTop: mapType === 'expansion' ? '50px' : '0px',
-            marginLeft: mapType === 'expansion' ? '-200px' : '0px'
-          }}>
-            {/* Background Catan Map - Now scales with the container */}
-            <img
-              src={mapType === 'expansion' ? '/CatanMapGenerator/ExpCatanMap.svg' : 
-                   customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : 
-                   '/CatanMapGenerator/CatanMap.svg'}
+                   position: 'absolute',
+                   marginTop: '0px',
+                   marginLeft: '0px',
+                   width: '1024px',
+                   height: '885px',
+                   minWidth: '1024px',
+                   minHeight: '885px',
+                 }}>
+                   {/* Base Map - Inside tiles container */}
+                   <img
+                     src={customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : '/CatanMapGenerator/CatanMap.svg'}
             alt="Catan Map Background"
             style={{
               position: "absolute",
-                width: mapType === 'expansion' ? '1024px' : // Use original size
-                       customRules.imageStyle === 'classic' ? `${MAP_WIDTH}px` : 
-                       `${MAP_WIDTH}px`,
-                height: mapType === 'expansion' ? '885px' : // Use original size
-                        customRules.imageStyle === 'classic' ? `${MAP_HEIGHT}px` : 
-                        `${MAP_HEIGHT}px`,
-                top: mapType === 'expansion' ? '0px' : '0px',
-                left: mapType === 'expansion' ? '0px' : '0px',
-                transform: 'none', // No individual scaling - let container handle it
-                objectFit: 'initial',
-                zIndex: 0, // Ensure it's behind everything
-              }}
-            />
-            
-            {/* Expansion Map Nomination Button - Positioned inside scaled container */}
-            {/* Temporarily disabled to avoid duplicate IDs */}
-            {/*
-            {mapType === 'expansion' && (
-              <button
-                onClick={handleNominateExpansionMap}
-                disabled={isGenerating || hexagons.length === 0 || isNominating}
-                className="absolute p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
-                id="nomination-star-button-expansion"
-                title="Nominate this Expansion Catan map"
+                       width: '615px', // 5px bigger than 610px
+                       height: '532px', // 5px bigger than 527px (maintaining aspect ratio)
+                       top: '30%', // Move up from 50%
+                       left: '30%', // Move left from 50%
+                       transform: 'translate(-50%, -50%)', // Center within container
+                       zIndex: 0,
+                       objectFit: 'contain', // Scale to fit the container
+                       pointerEvents: 'none'
+                     }}
+                   />
+                  {hexagons.map((hexagon, i) => {
+                    const currentTilePositions = classicTilePositions;
+                    const pos = currentTilePositions[i];
+                    let tileWidth, tileHeight;
+                    if (customRules.imageStyle === 'classic') {
+                      tileWidth = 235 * SCALE_FACTOR * 0.65;
+                      tileHeight = 275 * SCALE_FACTOR * 0.65;
+                    } else {
+                      tileWidth = 235 * SCALE_FACTOR;
+                      tileHeight = 275 * SCALE_FACTOR;
+                    }
+                    return (
+                      <div key={`tile-${i}`}>
+                        <img
+                          key={`tile-${i}`}
+                          src={getResourceImage(hexagon.type)}
+                          alt={`Catan ${hexagon.type} resource tile`}
                 style={{
-                  position: 'absolute',
-                  top: '60px', // Adjusted for scaled container
-                  right: '60px', // Adjusted for scaled container
-                  zIndex: 10
-                }}
-              >
-                {isNominating ? (
-                  <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
-                ) : (
-                  <svg
-                    className={`w-5 h-5 transition-all duration-200 ${isNominated ? 'text-yellow-500 fill-current' : 'text-gray-400 hover:text-yellow-400'}`}
-                    fill={isNominated ? 'currentColor' : 'none'}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976-2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00-.951-.69l1.519-4.674z"
-                    />
-                  </svg>
-                )}
-              </button>
+                              position: "absolute",
+                              width: `${tileWidth}px`,
+                              height: `${tileHeight}px`,
+                              left: `${pos.x + (235 * SCALE_FACTOR - tileWidth) / 2 - 2}px`,
+                              top: `${pos.y + (275 * SCALE_FACTOR - tileHeight) / 2 - 1}px`,
+                              pointerEvents: "none",
+                              zIndex: 1,
+                              transform: 'scale(1)',
+                              transformOrigin: 'center center'
+                            }}
+                        />
+                        {hexagon.number && (
+                          <img
+                            key={`num-${i}`}
+                            src={getNumberImage(hexagon.number)}
+                            alt={`Catan number token ${hexagon.number}`}
+                            style={{
+                              position: "absolute",
+                              width: `${71.4 * SCALE_FACTOR}px`,
+                              height: `${71.4 * SCALE_FACTOR}px`,
+                              left: `${pos.x + (235 * SCALE_FACTOR - NUMBER_WIDTH) / 2 - 2}px`,
+                              top: `${pos.y + (TILE_HEIGHT - NUMBER_HEIGHT) / 2 - 1}px`,
+                              pointerEvents: "none",
+                              zIndex: 2,
+                              transform: 'scale(1)',
+                              transformOrigin: 'center center'
+                            }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
-            */}
             
+            {/* Expansion Map */}
+            {mapType === 'expansion' && (
+              <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                {/* Tiles/Numbers Container */}
+                <div className="mobile-map-container" style={{
+                  transform: `translate(${tilesPosition.x - 190}px, ${tilesPosition.y - 140}px) scale(0.55)`,
+                  transformOrigin: 'center center',
+                  position: 'absolute',
+                  marginTop: '0px',
+                  marginLeft: '0px',
+                  width: '1024px',
+                  height: '885px',
+                  minWidth: '1024px',
+                  minHeight: '885px',
+                }}>
+                  {/* Base Map - Inside tiles container */}
+                  <img
+                    src="/CatanMapGenerator/ExpCatanMap.svg"
+                    alt="Catan Expansion Map Background"
+                    style={{
+                      position: "absolute",
+                      width: '1050px', // 5px smaller
+                      height: '908px', // 5px smaller
+                      top: '377px', // Set to 377px
+                      left: '608px', // Set to 608px
+                      transform: 'translate(-50%, -50%)', // Center within container
+                      zIndex: 0,
+                      objectFit: 'contain', // Scale to fit the container
+                      pointerEvents: 'none'
+                    }}
+                  />
           {hexagons.map((hexagon, i) => {
-            const currentTilePositions = mapType === 'classic' ? classicTilePositions : expansionTilePositions;
+                    const currentTilePositions = expansionTilePositions;
             const pos = currentTilePositions[i];
-            
-            // Debug logging for expansion tiles
-            if (mapType === 'expansion') {
-              console.log(`🔍 Tile ${i + 1}:`, {
-                type: hexagon.type,
-                number: hexagon.number,
-                position: pos,
-                tileIndex: i
-              });
-            }
-            
-            // Different tile sizes for different styles and map types
             let tileWidth, tileHeight;
-            if (mapType === 'expansion') {
-              // Expansion tiles: Different sizes based on art style
               if (customRules.imageStyle === 'classic') {
-                // Classic art expansion tiles - smaller
-                tileWidth = 120; // Made smaller for better centering
-                tileHeight = 100; // Made smaller for better centering
+                      tileWidth = 139;
+                      tileHeight = 117;
               } else {
-                // King Dice art expansion tiles - made smaller
-                tileWidth = 200; // Made smaller for better centering
-                tileHeight = 172; // Made smaller for better centering
-              }
-            } else {
-              // Classic tiles with different scales - made smaller
-              const tileScale = customRules.imageStyle === 'classic' ? 0.55 : 0.85;
-              tileWidth = 235 * SCALE_FACTOR * tileScale;
-              tileHeight = 275 * SCALE_FACTOR * tileScale;
-            }
-            
-            // Fine-tune positioning for better centering with map base
-            const leftOffset = mapType === 'expansion' ? 0 : 0;
-            const topOffset = mapType === 'expansion' ? 0 : 0;
-            
+                      tileWidth = 233;
+                      tileHeight = 201;
+                    }
             return (
               <div key={`tile-${i}`}>
-                {/* Resource Tile */}
                 <img
                   key={`tile-${i}`}
                   src={getResourceImage(hexagon.type)}
@@ -2551,18 +2490,14 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                     position: "absolute",
                     width: `${tileWidth}px`,
                     height: `${tileHeight}px`,
-                    left: mapType === 'expansion' ? 
-                      `${pos.x - tileWidth / 2 - 50}px` : 
-                      `${pos.x + (235 * SCALE_FACTOR - tileWidth) / 2 + leftOffset}px`,
-                    top: mapType === 'expansion' ? 
-                      `${pos.y - tileHeight / 2 - 50}px` : 
-                      `${pos.y + (275 * SCALE_FACTOR - tileHeight) / 2 + topOffset}px`,
+                            left: `${pos.x - tileWidth / 2 - 50}px`,
+                            top: `${pos.y - tileHeight / 2 - 50}px`,
                     pointerEvents: "none",
-                    zIndex: 2, // Higher z-index to appear above numbers
+                            zIndex: 1,
+                            transform: 'scale(1)',
+                            transformOrigin: 'center center'
                   }}
                 />
-                
-                {/* Number Token (if not desert) */}
                 {hexagon.number && (
                   <img
                     key={`num-${i}`}
@@ -2570,49 +2505,142 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                     alt={`Catan number token ${hexagon.number}`}
                     style={{
                       position: "absolute",
-                      width: mapType === 'expansion' ? '45px' : `${60 * SCALE_FACTOR}px`,
-                      height: mapType === 'expansion' ? '45px' : `${60 * SCALE_FACTOR}px`,
-                      left: mapType === 'expansion' ? 
-                        `${pos.x + (200 - 45) / 2 - 115 - 50}px` : 
-                        `${pos.x + (235 * SCALE_FACTOR - (60 * SCALE_FACTOR)) / 2 + leftOffset}px`,
-                      top: mapType === 'expansion' ? 
-                        `${pos.y + (172 - 45) / 2 - 100 - 50}px` : 
-                        `${pos.y + (275 * SCALE_FACTOR - (60 * SCALE_FACTOR)) / 2 + topOffset}px`,
+                              width: '57.4754px',
+                              height: '57.4754px',
+                              left: `${pos.x + (233 - 57.4754) / 2 - 115 - 50}px`,
+                              top: `${pos.y + (201 - 57.4754) / 2 - 100 - 50}px`,
                       pointerEvents: "none",
-                      zIndex: 1, // Lower z-index to appear behind tiles
+                              zIndex: 2,
+                              transform: 'scale(1)',
+                              transformOrigin: 'center center'
                     }}
                   />
                 )}
               </div>
             );
           })}
-                </div>
           </div>
+          </div>
+            )}
+        </div>
+      </div>
+
+        {/* Smartphone View Maps - Only visible on mobile */}
+        <div className="block sm:hidden">
+          {/* Mobile Classic Map */}
+          {mapType === 'classic' && (
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+              {/* Background Catan Map - Fixed 95% width */}
+              <img
+                src={customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : '/CatanMapGenerator/CatanMap.svg'}
+                alt="Catan Map Background"
+                style={{
+                  position: "absolute",
+                  width: '95vw',
+                  height: 'auto',
+                  top: '0px',
+                  left: '0px',
+                  transform: `translate(${baseMapPosition.x}px, ${baseMapPosition.y}px)`,
+                  objectFit: 'contain',
+                  zIndex: 0
+                }}
+              />
+              
+              {/* Tiles/Numbers Container */}
+              <div style={{
+                transform: `translate(${tilesPosition.x}px, ${tilesPosition.y}px) scale(1)`,
+                transformOrigin: 'center center',
+                position: 'relative',
+                marginTop: '0px',
+                marginLeft: '0px',
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'transparent'
+              }}>
+                {hexagons.map((hexagon, i) => {
+                  const currentTilePositions = classicTilePositions;
+                  const pos = currentTilePositions[i];
+                  let tileWidth, tileHeight;
+                  // Calculate scale factor based on 95vw vs original map width
+                  const mobileScale = (window.innerWidth * 0.95) / MAP_WIDTH;
+                  if (customRules.imageStyle === 'classic') {
+                    tileWidth = 235 * SCALE_FACTOR * 0.65 * mobileScale;
+                    tileHeight = 275 * SCALE_FACTOR * 0.65 * mobileScale;
+                  } else {
+                    tileWidth = 235 * SCALE_FACTOR * mobileScale;
+                    tileHeight = 275 * SCALE_FACTOR * mobileScale;
+                  }
+                  return (
+                    <div key={`mobile-tile-${i}`}>
+                      <img
+                        key={`mobile-tile-${i}`}
+                        src={getResourceImage(hexagon.type)}
+                        alt={`Catan ${hexagon.type} resource tile`}
+                        style={{
+                          position: "absolute",
+                          width: `${tileWidth}px`,
+                          height: `${tileHeight}px`,
+                          left: `${pos.x * mobileScale + (235 * SCALE_FACTOR * mobileScale - tileWidth) / 2 - 2}px`,
+                          top: `${pos.y * mobileScale + (275 * SCALE_FACTOR * mobileScale - tileHeight) / 2 - 1}px`,
+                          pointerEvents: "none",
+                          zIndex: 1,
+                        }}
+                      />
+                      {hexagon.number && (
+                        <img
+                          key={`mobile-num-${i}`}
+                          src={getNumberImage(hexagon.number)}
+                          alt={`Catan number token ${hexagon.number}`}
+                          style={{
+                            position: "absolute",
+                            width: `${71.4 * SCALE_FACTOR * mobileScale}px`,
+                            height: `${71.4 * SCALE_FACTOR * mobileScale}px`,
+                            left: `${pos.x * mobileScale + (235 * SCALE_FACTOR * mobileScale - NUMBER_WIDTH * mobileScale) / 2 - 2}px`,
+                            top: `${pos.y * mobileScale + (TILE_HEIGHT * mobileScale - NUMBER_HEIGHT * mobileScale) / 2 - 1}px`,
+                            pointerEvents: "none",
+                            zIndex: 2,
+                          }}
+                        />
+                      )}
+    </div>
+  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      
+            </div>
           </div>
         </div>
       </div>
-      
-      {/* Mobile Settings Modal */}
+
+      {/* Settings Modal */}
       {showSettingsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-dark-900">Settings</h3>
-                <button
-                  onClick={() => setShowSettingsModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                >
-                  ×
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Settings</h3>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div>
+              <h4 className="text-lg font-semibold text-dark-900 mb-4">Generation Custom Rules</h4>
+              <p className="text-xs text-gray-500 mb-4">
+                Check/Uncheck boxes to customize the rules on your map
+              </p>
               
               <div className="mb-6">
-                <label className="block text-sm font-medium text-dark-700 mb-3">Image Style</label>
+                <label className="block text-base font-medium text-dark-700 mb-2">Image Style</label>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleImageStyleChange('classic')}
-                    className={`px-4 py-2 text-sm rounded transition-colors ${
+                    className={`px-3 py-1 text-xs rounded transition-colors ${
                       customRules.imageStyle === 'classic'
                         ? 'text-black font-semibold'
                         : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
@@ -2625,7 +2653,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   </button>
                   <button 
                     onClick={() => handleImageStyleChange('king-dice')}
-                    className={`px-4 py-2 text-sm rounded transition-colors ${
+                    className={`px-3 py-1 text-xs rounded transition-colors ${
                       customRules.imageStyle === 'king-dice'
                         ? 'text-black font-semibold'
                         : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
@@ -2639,69 +2667,98 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 </div>
               </div>
               
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3">
                 <label className="flex items-center">
                   <input 
                     type="checkbox" 
-                    className="mr-3 w-4 h-4" 
+                    className="mr-2" 
                     checked={customRules.sixEightCanTouch}
                     onChange={(e) => handleCustomRuleChange('sixEightCanTouch', e.target.checked)}
                   />
-                  <span className="text-sm text-dark-700">6 & 8 Can Touch</span>
+                  <span className="text-base text-dark-700">6 & 8 Can Touch</span>
                 </label>
                 
                 <label className="flex items-center">
                   <input 
                     type="checkbox" 
-                    className="mr-3 w-4 h-4" 
+                    className="mr-2" 
                     checked={customRules.twoTwelveCanTouch}
                     onChange={(e) => handleCustomRuleChange('twoTwelveCanTouch', e.target.checked)}
                   />
-                  <span className="text-sm text-dark-700">2 & 12 Can Touch</span>
+                  <span className="text-base text-dark-700">2 & 12 Can Touch</span>
                 </label>
                 
                 <label className="flex items-center">
                   <input 
                     type="checkbox" 
-                    className="mr-3 w-4 h-4" 
+                    className="mr-2" 
                     checked={customRules.sameNumbersCanTouch}
                     onChange={(e) => handleCustomRuleChange('sameNumbersCanTouch', e.target.checked)}
                   />
-                  <span className="text-sm text-dark-700">Same Numbers Can Touch</span>
+                  <span className="text-base text-dark-700">Same Numbers Can Touch</span>
                 </label>
                 
                 {mapType === 'classic' && (
-                  <label className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      className="mr-3 w-4 h-4" 
-                      checked={customRules.sameResourceCanTouch}
-                      onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
-                    />
-                    <span className="text-sm text-dark-700">Same Resource Can Touch</span>
-                  </label>
+                <label className="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    className="mr-2" 
+                    checked={customRules.sameResourceCanTouch}
+                    onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
+                  />
+                  <span className="text-base text-dark-700">Same Resource Can Touch</span>
+                </label>
                 )}
               </div>
               
-              <div className="pt-4 border-t border-gray-200">
+              <div className="mt-6 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => {
-                    generateMap();
-                    setShowSettingsModal(false);
+                  onClick={async () => {
+                    try {
+                      if (user?.id) {
+                        const response = await fetch('/api/users/settings', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            userId: user.id,
+                            settings: {
+                              catanMapPreferences: {
+                                imageStyle: customRules.imageStyle,
+                                sixEightCanTouch: customRules.sixEightCanTouch,
+                                twoTwelveCanTouch: customRules.twoTwelveCanTouch,
+                                sameNumbersCanTouch: customRules.sameNumbersCanTouch,
+                                sameResourceCanTouch: customRules.sameResourceCanTouch
+                              }
+                            }
+                          })
+                        });
+                        
+                        if (response.ok) {
+                        } else {
+                          console.error('❌ Failed to save preferences');
+                        }
+                      }
+                      setShowSettingsModal(false);
+                    } catch (error) {
+                      console.error('Error saving preferences:', error);
+                      setShowSettingsModal(false);
+                    }
                   }}
-                  disabled={isGenerating}
-                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full text-black py-2 px-4 rounded hover:opacity-90 text-base font-medium transition-colors"
+                  style={{ backgroundColor: '#fbae17' }}
                 >
-                  {isGenerating ? 'Generating...' : 'Generate New Map'}
+                  Save
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-      </div>
-    </div>
+      
+      {/* Toast Container for modern notifications */}
+      <ToastContainer />
     </div>
   );
 }
-

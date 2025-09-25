@@ -39,15 +39,9 @@ export default function CatanMapGeneratorPage() {
   const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Debug: Log authentication status
-    console.log('🔍 CatanMapGeneratorPage - Auth status:', {
-      isAuthenticated,
-      userId: currentUserId,
-      user: user ? { id: user.id, username: user.username } : null
-    });
-    
     fetchNominations();
   }, [currentUserId, user, isAuthenticated]);
+
 
   const fetchNominations = async () => {
     try {
@@ -55,15 +49,9 @@ export default function CatanMapGeneratorPage() {
       const response = await fetch('/api/catan-nominations');
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched nominations data:', data);
         
         if (data.nominations && data.nominations.length > 0) {
-          console.log('First nomination user data:', {
-            id: data.nominations[0].id,
-            userId: data.nominations[0].userId,
-            username: data.nominations[0].username,
-            avatar: data.nominations[0].avatar
-          });
+          // Nominations data available
         }
         
         setNominations(data.nominations || []);
@@ -137,7 +125,6 @@ export default function CatanMapGeneratorPage() {
       }
 
       const result = await response.json();
-      console.log(`✅ Vote ${result.action} successfully for user: ${user.username}`);
     } catch (error) {
       console.error('Failed to submit vote:', error);
       alert('Failed to submit vote. Please try again.');
@@ -155,23 +142,29 @@ export default function CatanMapGeneratorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pt-12 flex flex-col">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: 'min(1280px, 100vw - 2rem)' }}>
         {/* Header */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            <BackButton />
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Catan Map Generator</h1>
-              <p className="text-lg text-gray-600">Create and share your custom Catan maps</p>
+        <div className="flex items-center justify-center mb-8 pt-8 sm:pt-0">
+          <div className="flex items-center space-x-4 max-w-full">
+            <div className="hidden sm:block">
+              <BackButton />
+            </div>
+            <div className="text-center flex-1 min-w-0">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2 break-words">Catan Map Generator</h1>
+              <p className="text-lg text-gray-600 break-words">
+                <span className="block sm:hidden">Create and share your<br />custom Catan maps</span>
+                <span className="hidden sm:block">Create and share your custom Catan maps</span>
+              </p>
             </div>
           </div>
         </div>
         
+        
         <CatanMapGenerator />
         
                 {/* Top 10 Community Favorite Maps */}
-        <div className="mt-16 bg-white rounded-lg p-8 shadow-md">
+        <div className="mt-4 sm:mt-16 bg-white rounded-lg p-8 shadow-md">
           <h2 className="text-2xl font-bold text-dark-900 mb-6 text-center flex items-center justify-center gap-2">
             <Trophy className="w-8 h-8" style={{ color: '#fbae17' }} />
             Top 10 Community Favorite Maps
@@ -257,7 +250,7 @@ export default function CatanMapGeneratorPage() {
           </div>
           
         {/* Community Nominated Maps */}
-        <div className="mt-16 bg-white rounded-lg p-8 shadow-md">
+        <div className="mt-4 sm:mt-16 bg-white rounded-lg p-8 shadow-md">
                      <h2 className="text-2xl font-bold text-dark-900 mb-6 text-center flex items-center justify-center gap-2">
              <Star className="w-8 h-8" style={{ color: '#fbae17' }} />
              Community Nominated Maps

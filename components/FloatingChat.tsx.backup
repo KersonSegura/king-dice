@@ -164,7 +164,7 @@ function CustomChatList({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-[452px] flex flex-col">
       {/* Search Bar */}
       <div className="p-4 border-b">
         <div className="relative">
@@ -364,9 +364,7 @@ function CustomChatList({
 
 export default function FloatingChat() {
   const { user, isAuthenticated } = useAuth();
-  const contextChatState = useChatState();
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const { isChatOpen, setIsChatOpen, selectedChat, setSelectedChat } = useChatState();
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showStartDirectChat, setShowStartDirectChat] = useState(false);
   const [showAutoTooltip, setShowAutoTooltip] = useState(false);
@@ -374,14 +372,6 @@ export default function FloatingChat() {
   const [hasShownTooltip, setHasShownTooltip] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
-
-  // Dispatch custom event for BackToTopButton to listen to
-  useEffect(() => {
-    const event = new CustomEvent('chatStateChanged', {
-      detail: { isChatOpen, selectedChat }
-    });
-    window.dispatchEvent(event);
-  }, [isChatOpen, selectedChat]);
 
   // Icon animation effect - ALWAYS call this hook
   useEffect(() => {
@@ -529,182 +519,178 @@ export default function FloatingChat() {
 
   return (
     <>
-      {/* Floating Chat Button - Always render but hide when chat is open */}
-      <button
-        onClick={() => {
-          console.log('Chat button clicked! Current state:', { isChatOpen, selectedChat });
-          setIsChatOpen(true);
-        }}
-        className={`fixed bottom-4 right-4 z-40 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 ${
-          isChatOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        } ${
-          unreadCount > 0 
-            ? 'bg-[#fbae17] hover:bg-[#e09915]' 
-            : 'bg-blue-500 hover:bg-blue-600'
-        }`}
-      >
-        <div className="relative w-6 h-6">
-          <MessageCircle 
-            className={`w-6 h-6 absolute inset-0 transition-all duration-300 ${
-              iconState === 'message' ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
-            }`} 
-          />
-          <div 
-            className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-              iconState === 'bot' ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+      {/* Floating Chat Button */}
+      <div className="fixed bottom-4 right-4 z-30 sm:bottom-4 sm:right-4">
+        {!isChatOpen ? (
+          <button
+            onClick={() => setIsChatOpen(true)}
+            className={`relative text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-105 overflow-hidden ${
+              unreadCount > 0 
+                ? 'bg-[#fbae17] hover:bg-[#e09915]' 
+                : 'bg-blue-500 hover:bg-blue-600'
             }`}
           >
-            <img
-              src="/DiceBotIconSmallWhite.svg"
-              alt="Dice-Bot"
-              className="w-6 h-6"
-            />
-          </div>
-        </div>
-        
-        {/* Notification Badge */}
-        {unreadCount > 0 && (
-          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 border-2 border-white">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </div>
-        )}
-      </button>
-
-      {/* Chat Interface - Only render when chat is open */}
-      {isChatOpen && (
-        <div className="bg-white shadow-xl border border-gray-200 
-          fixed top-16 left-0 right-0 w-full sm:fixed sm:top-20 sm:left-auto sm:right-4 sm:w-96 sm:h-auto sm:rounded-lg
-          transform transition-transform duration-300 ease-in-out z-40 desktop-chat-height flex flex-col mobile-chat-full-height">
-          {/* Chat Header */}
-          <div className="flex items-center justify-between p-4 border-b sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
-            <div className="flex items-center space-x-3">
-              {selectedChat && (
-                <button
-                  onClick={() => setSelectedChat(null)}
-                  className="text-white hover:text-gray-200"
-                  title="Back to search"
+              <div className="relative">
+                <MessageCircle 
+                  className={`w-6 h-6 transition-all duration-300 ${
+                    iconState === 'message' ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+                  }`} 
+                />
+                <div 
+                  className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+                    iconState === 'bot' ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+                  }`}
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              )}
-              
-              {selectedChat && (
-                <>
-                  {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
-                    {selectedChat.type === 'bot' ? (
-                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border-2 border-white">
-                        <img
-                          src="/DiceBotIcon.svg"
-                          alt="Dice-Bot"
-                          className="w-6 h-6"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {selectedChat.participants && selectedChat.participants.length > 0 ? (
-                          selectedChat.participants.find((p: any) => p.id !== user?.id)?.avatar ? (
-                            <img
-                              src={selectedChat.participants.find((p: any) => p.id !== user?.id)?.avatar}
-                              alt={selectedChat.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            selectedChat.name.charAt(0).toUpperCase()
-                          )
-                        ) : (
-                          selectedChat.name.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Username */}
-                  <h3 className="font-semibold text-white">
-                    {selectedChat.name}
-                  </h3>
-                </>
-              )}
-              
-              {!selectedChat && (
-                <h3 className="font-semibold text-white">Chat</h3>
-              )}
-            </div>
-            
-            <button
-              onClick={() => {
-                setIsChatOpen(false);
-                setSelectedChat(null);
-              }}
-              className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-            >
-              <X className="w-6 h-6 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-
-          {/* Chat Content */}
-          <div className="flex-1">
-            {selectedChat ? (
-              selectedChat.type === 'bot' ? (
-                <div className="h-full flex flex-col">
-                  <ChatBot 
-                    isOpen={true}
-                    onClose={() => setSelectedChat(null)}
-                    currentUser={user}
-                    embedded={true}
+                  <img
+                    src="/DiceBotIconSmallWhite.svg"
+                    alt="Dice-Bot"
+                    className="w-6 h-6"
                   />
                 </div>
-              ) : (
-                <Chat 
-                  chatId={selectedChat.id}
-                  chatName={selectedChat.name}
-                  chatType={selectedChat.type}
-                  participants={selectedChat.participants}
-                  onClose={() => setSelectedChat(null)}
-                />
-              )
-            ) : (
-              <CustomChatList 
-                onSelectChat={handleSelectChat}
-                onCreateGroup={handleCreateGroup}
-                onStartDirectChat={handleStartDirectChat}
-                onStartBotChat={handleStartBotChat}
-                user={user}
-              />
+              </div>
+              
+              {/* Notification Badge */}
+              {unreadCount > 0 && (
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 border-2 border-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </div>
+              )}
+          </button>
+          
+          {/* Auto Tooltip - appears once per session */}
+            {showAutoTooltip && (
+              <div className="absolute right-full -top-4 mr-2 sm:bottom-full sm:right-0 sm:top-auto sm:mr-0 sm:mb-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg w-80 tooltip-bounce">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="font-medium mb-1 flex items-center space-x-2">
+                      <img
+                        src="/DiceBotIconSmallWhite.svg"
+                        alt="Dice-Bot"
+                        className="w-4 h-4"
+                      />
+                      <span>Ask Dice-Bot!</span>
+                    </div>
+                    <div className="text-xs opacity-90">
+                      Get instant help with board game rules, recommendations, and strategies
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAutoTooltip(false)}
+                    className="ml-2 text-white hover:text-gray-200 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="absolute top-1/2 left-full w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-blue-600 transform -translate-y-1/2 sm:top-full sm:right-6 sm:left-auto sm:transform-none sm:border-l-0 sm:border-r-4 sm:border-t-4 sm:border-b-0"></div>
+              </div>
             )}
-          </div>
-
-        </div>
-      )}
-
-      {/* Auto Tooltip - appears once per session */}
-      {!isChatOpen && showAutoTooltip && (
-        <div className="fixed bottom-4 right-20 sm:bottom-20 sm:right-4 z-50 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg w-64 tooltip-bounce">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="font-medium mb-1 flex items-center space-x-2">
-                <img
-                  src="/DiceBotIconSmallWhite.svg"
-                  alt="Dice-Bot"
-                  className="w-4 h-4"
-                />
-                <span>Ask Dice-Bot!</span>
+        ) : (
+          <>
+                    <div className="bg-white shadow-xl border border-gray-200 
+                      fixed top-16 bottom-0 left-0 right-0 w-full sm:relative sm:inset-auto sm:w-96 sm:h-[500px] sm:rounded-lg
+                      sm:max-w-none transform transition-transform duration-300 ease-in-out z-40">
+            {/* Chat Header */}
+            <div className="flex items-center justify-between p-4 border-b sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
+              <div className="flex items-center space-x-3">
+                {selectedChat && (
+                  <button
+                    onClick={() => setSelectedChat(null)}
+                    className="text-white hover:text-gray-200"
+                    title="Back to search"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                )}
+                
+                {selectedChat && (
+                  <>
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                      {selectedChat.type === 'bot' ? (
+                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border-2 border-white">
+                          <img
+                            src="/DiceBotIcon.svg"
+                            alt="Dice-Bot"
+                            className="w-6 h-6"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                          {selectedChat.participants && selectedChat.participants.length > 0 ? (
+                            selectedChat.participants.find((p: any) => p.id !== user?.id)?.avatar ? (
+                              <img
+                                src={selectedChat.participants.find((p: any) => p.id !== user?.id)?.avatar}
+                                alt={selectedChat.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              selectedChat.name.charAt(0).toUpperCase()
+                            )
+                          ) : (
+                            selectedChat.name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Username */}
+                    <h3 className="font-semibold text-white">
+                      {selectedChat.name}
+                    </h3>
+                  </>
+                )}
+                
+                {!selectedChat && (
+                  <h3 className="font-semibold text-white">Chat</h3>
+                )}
               </div>
-              <div className="text-xs opacity-90">
-                Chat with Dice-Bot for rules, strategies, and game recommendations!
-              </div>
+              
+              <button
+                onClick={() => {
+                  setIsChatOpen(false);
+                  setSelectedChat(null);
+                }}
+                className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+              >
+                <X className="w-6 h-6 sm:w-5 sm:h-5" />
+              </button>
             </div>
-            <button
-              onClick={() => setShowAutoTooltip(false)}
-              className="ml-2 text-white hover:text-gray-200 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+
+            {/* Chat Content */}
+            <div className="flex-1 h-[calc(100%-4rem)] sm:h-[452px]">
+              {selectedChat ? (
+                selectedChat.type === 'bot' ? (
+                  <div className="h-full">
+                    <ChatBot 
+                      isOpen={true}
+                      onClose={() => setSelectedChat(null)}
+                      currentUser={user}
+                      embedded={true}
+                    />
+                  </div>
+                ) : (
+                  <Chat 
+                    chatId={selectedChat.id}
+                    chatName={selectedChat.name}
+                    chatType={selectedChat.type}
+                    participants={selectedChat.participants}
+                    onClose={() => setSelectedChat(null)}
+                  />
+                )
+              ) : (
+                <CustomChatList 
+                  onSelectChat={handleSelectChat}
+                  onCreateGroup={handleCreateGroup}
+                  onStartDirectChat={handleStartDirectChat}
+                  onStartBotChat={handleStartBotChat}
+                  user={user}
+                />
+              )}
+            </div>
           </div>
-          {/* Mobile: Arrow pointing right, Desktop: Arrow pointing up */}
-          <div className="absolute bottom-1/2 -right-2 sm:bottom-auto sm:-right-2 sm:top-full sm:right-6 w-0 h-0 border-t-4 border-b-4 border-l-4 sm:border-l-4 sm:border-r-4 sm:border-t-4 border-transparent border-l-blue-600 sm:border-t-blue-600 transform translate-y-1/2 sm:translate-y-0"></div>
-        </div>
-      )}
+                    </>
+        )}
+      </div>
 
       {/* Group Chat Creation Modal */}
       <GroupChatModal

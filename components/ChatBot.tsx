@@ -144,7 +144,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
   if (!isOpen) return null;
 
   return (
-    <div className={embedded ? "h-full bg-white flex flex-col" : "fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50"}>
+    <div className={embedded ? "h-full bg-white flex flex-col min-h-0" : "fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50"}>
       {/* Header - only show if not embedded */}
       {!embedded && (
         <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between">
@@ -171,7 +171,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -235,7 +235,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
         <div className="flex space-x-2">
           <input
             type="text"

@@ -89,7 +89,7 @@ export default function Header() {
   }, [isAuthenticated, user]);
 
   return (
-    <header className="bg-white shadow-md border-b border-dark-200 sticky top-0 z-50">
+    <header className="bg-white shadow-md border-b border-dark-200">
       <div className="w-full px-6 sm:px-8 lg:px-12">
         <div className="flex justify-between items-center w-full h-16">
           {/* Left (Logo) */}

@@ -10,6 +10,13 @@
     "security": {
       "twoFactorEnabled": false
     },
-    "lastUpdated": "2025-09-22T20:25:28.215Z"
+    "lastUpdated": "2025-09-25T08:19:37.285Z",
+    "catanMapPreferences": {
+      "imageStyle": "classic",
+      "sixEightCanTouch": false,
+      "twoTwelveCanTouch": true,
+      "sameNumbersCanTouch": true,
+      "sameResourceCanTouch": true
+    }
   }
 }

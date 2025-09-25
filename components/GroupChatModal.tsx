@@ -112,8 +112,8 @@ export default function GroupChatModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 sm:p-0">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md sm:mx-4 max-h-[90vh] sm:max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col" style={{ transform: 'translateY(-20vh)' }}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-2">
