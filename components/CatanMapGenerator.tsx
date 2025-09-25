@@ -1939,20 +1939,19 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           return;
         }
 
-        // Determine dimensions based on map type
+        // Determine dimensions based on map type - capture only the visible map area
         let captureWidth, captureHeight;
         if (mapType === 'expansion') {
-          // For expansion maps, use the actual container dimensions to preserve aspect ratio
-          // Since the background is now inside the scaled container, we need to account for the scaling
-          captureWidth = mapContainer.offsetWidth;
-          captureHeight = mapContainer.offsetHeight;
+          // For expansion maps, capture the actual visible map area (background image size)
+          captureWidth = 615; // Background image width
+          captureHeight = 532; // Background image height
         } else {
-          // For classic maps, use the standard dimensions
-          captureWidth = MAP_WIDTH;
-          captureHeight = MAP_HEIGHT;
+          // For classic maps, capture the actual visible map area (background image size)
+          captureWidth = 615; // Background image width  
+          captureHeight = 532; // Background image height
         }
 
-        // Use html2canvas to capture the map
+        // Use html2canvas to capture the map with specific dimensions
         import('html2canvas').then(({ default: html2canvas }) => {
           html2canvas(mapContainer, {
             width: captureWidth,

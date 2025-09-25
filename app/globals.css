@@ -101,9 +101,10 @@
 /* Mobile map positioning - only for smartphone view */
 @media (max-width: 639px) {
   .mobile-main-container {
-    transform: translate(0px, 20px) scale(1.0) !important;
-    left: 50% !important;
-    margin-left: -306.573px !important; /* Half of MAP_WIDTH (613.146px) */
+    margin: 0 auto !important;
+    transform: none !important;
+    left: auto !important;
+    margin-left: auto !important;
   }
   
   /* Ensure fixed elements stay within viewport */
@@ -160,11 +161,15 @@
   }
 }
 
-/* Desktop map positioning - move up and left */
+/* Desktop map positioning - reset mobile styles */
 @media (min-width: 640px) {
   .mobile-main-container {
-    margin-top: -30px !important;
-    margin-left: -50px !important;
+    margin: 0 auto !important;
+    transform: none !important;
+    left: auto !important;
+    margin-left: auto !important;
+    height: auto !important;
+    min-height: auto !important;
   }
   
   /* Move desktop star button to the right */
