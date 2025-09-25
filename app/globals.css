@@ -98,13 +98,13 @@
     /* height: 100%; */ /* Temporarily commented out - this might be preventing scrolling */
   }
 
-/* Mobile map positioning - only for smartphone view */
+/* Mobile map positioning - LOCKED CONFIGURATION */
 @media (max-width: 639px) {
   .mobile-main-container {
-    margin: 0 auto !important;
-    transform: none !important;
-    left: auto !important;
-    margin-left: auto !important;
+    /* Mobile positioning restored to original working configuration */
+    transform: translate(0px, 20px) scale(1.0) !important;
+    left: 50% !important;
+    margin-left: -306.573px !important; /* Half of MAP_WIDTH (613.146px) */
   }
   
   /* Ensure fixed elements stay within viewport */
@@ -131,7 +131,7 @@
     min-height: 400px !important;
   }
   
-  /* Position nomination button relative to map - moves with map centering */
+  /* Position nomination button relative to map - LOCKED MOBILE CONFIGURATION */
   #nomination-star-button,
   #nomination-star-button-expansion {
     position: absolute !important;
@@ -161,18 +161,17 @@
   }
 }
 
-/* Desktop map positioning - reset mobile styles */
+/* Desktop map positioning - LOCKED CONFIGURATION */
 @media (min-width: 640px) {
   .mobile-main-container {
-    margin: 0 auto !important;
-    transform: none !important;
-    left: auto !important;
-    margin-left: auto !important;
+    /* Desktop positioning restored to original working configuration */
+    margin-top: -30px !important;
+    margin-left: -50px !important;
     height: auto !important;
     min-height: auto !important;
   }
   
-  /* Move desktop star button to the right */
+  /* Move desktop star button to the right - LOCKED POSITION */
   #nomination-star-button,
   #nomination-star-button-expansion {
     right: 8px !important;

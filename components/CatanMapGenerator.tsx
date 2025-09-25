@@ -2442,7 +2442,9 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               <div style={{ position: "relative", width: "100%", height: "100%" }}>
                 {/* Tiles/Numbers Container */}
                 <div className="mobile-map-container" style={{
-                  transform: `translate(${tilesPosition.x - 190}px, ${tilesPosition.y - 140}px) scale(0.55)`,
+                  transform: window.innerWidth < 640 
+                    ? `translate(${tilesPosition.x - 275}px, ${tilesPosition.y - 100}px) scale(0.75)` // Mobile expansion map - LOCKED CONFIGURATION
+                    : `translate(${tilesPosition.x - 190}px, ${tilesPosition.y - 140}px) scale(0.55)`, // Desktop expansion map - LOCKED CONFIGURATION
                   transformOrigin: 'center center',
                   position: 'absolute',
                   marginTop: '0px',
