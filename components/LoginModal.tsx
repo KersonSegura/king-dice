@@ -141,6 +141,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           setShowConfirmPassword(false);
         } else {
           const errorData = await response.json();
+          console.log('Login error response:', errorData);
           setError(errorData.message || 'Login failed. Please try again.');
         }
       } catch (error) {
