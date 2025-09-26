@@ -181,9 +181,9 @@ export default function ProfilePage() {
       }
     }
     return {
-      cover: '#fbae17',
-      background: '#f5f5f5',
-      containers: '#ffffff'
+    cover: '#fbae17',
+    background: '#f5f5f5',
+    containers: '#ffffff'
     };
   });
   const [isAdmin, setIsAdmin] = useState(false);
@@ -1484,8 +1484,8 @@ export default function ProfilePage() {
                   isEditing 
                     ? 'bg-red-500 hover:bg-red-600 text-white' 
                     : isLightCover() 
-                      ? 'bg-gray-900/20 hover:bg-gray-900/30' 
-                      : 'bg-white/20 hover:bg-white/30'
+                    ? 'bg-gray-900/20 hover:bg-gray-900/30' 
+                    : 'bg-white/20 hover:bg-white/30'
                 } ${isEditing ? '' : coverTextClass}`}
               >
                 <Edit className="w-4 h-4" />
@@ -1508,9 +1508,9 @@ export default function ProfilePage() {
                 href={isEditing ? "#" : "/settings"} 
                 onClick={isEditing ? (e) => e.preventDefault() : undefined}
                 className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-semibold ${
-                  isLightCover() 
-                    ? 'bg-white hover:bg-gray-100' 
-                    : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
+                isLightCover() 
+                  ? 'bg-white hover:bg-gray-100' 
+                  : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
                 } ${coverTextClass} ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Settings className="w-4 h-4" />

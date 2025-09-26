@@ -51,6 +51,7 @@
     "bcryptjs": "^3.0.2",
     "canvas": "^3.2.0",
     "clsx": "^2.0.0",
+    "dom-to-image": "^2.6.0",
     "dotenv": "^17.2.1",
     "fast-xml-parser": "^5.2.5",
     "html2canvas": "^1.4.1",

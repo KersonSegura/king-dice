@@ -126,21 +126,23 @@
   }
 }
 
+.mobile-main-container {
+  height: 400px !important; /* Reduced from 691px (MAP_HEIGHT) */
+  min-height: 400px !important;
+}
+
 /* Mobile-specific height for mobile-main-container */
 @media (max-width: 639px) {
-  .mobile-main-container {
-    height: 400px !important; /* Reduced from 691px (MAP_HEIGHT) */
-    min-height: 400px !important;
-  }
   
   /* Position nomination button relative to map - LOCKED MOBILE CONFIGURATION */
   #nomination-star-button,
+  #nomination-star-button-mobile,
   #nomination-star-button-expansion {
     position: absolute !important;
-    top: 5% !important;
-    left: 75% !important;
+    top: 1% !important;
+    left: 131% !important;
     transform: translate(-50%, -50%) !important;
-    z-index: 999 !important;
+    z-index: 99999 !important;
     border-radius: 50% !important;
     width: 48px !important;
     height: 48px !important;
@@ -157,6 +159,7 @@
   
   /* Make star icon bigger and centered on mobile */
   #nomination-star-button svg,
+  #nomination-star-button-mobile svg,
   #nomination-star-button-expansion svg {
     width: 24px !important;
     height: 24px !important;
@@ -165,12 +168,33 @@
 
 /* Desktop map positioning - LOCKED CONFIGURATION */
 @media (min-width: 640px) {
+  /* Add top padding for desktop view to separate title from header */
+  .max-w-7xl.mx-auto {
+    padding-top: 2rem !important;
+  }
+  
   .mobile-main-container {
-    /* Desktop positioning restored to original working configuration */
-    margin-top: -30px !important;
+    /* Desktop positioning - moved up for normal view */
+    margin-top: -450px !important;
     margin-left: -50px !important;
     height: auto !important;
     min-height: auto !important;
+  }
+  
+  /* Classic map specific positioning - moved up more */
+  .mobile-main-container.classic-map {
+    margin-top: -430px !important;
+  }
+  
+  /* Force classic map positioning with higher specificity */
+  div.mobile-main-container.classic-map {
+    margin-top: -430px !important;
+  }
+  
+  /* Even more specific selector for classic map */
+  .scale-\[0\.6\].sm\:scale-100 .mobile-main-container.classic-map {
+    margin-top: -430px !important;
+    transform: translateY(-20px) !important;
   }
   
   /* Move desktop star button to the right - LOCKED POSITION */
@@ -178,6 +202,19 @@
   #nomination-star-button-expansion {
     right: 8px !important;
     left: auto !important;
+    width: 56px !important;
+    height: 56px !important;
+    padding: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Make desktop star icon bigger */
+  #nomination-star-button svg,
+  #nomination-star-button-expansion svg {
+    width: 28px !important;
+    height: 28px !important;
   }
 }
 
@@ -245,6 +282,7 @@ main, #__next, [data-reactroot] {
   body > div > *:last-child {
     margin-top: auto;
   }
+}
 
 @layer components {
   .btn-primary {

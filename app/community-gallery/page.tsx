@@ -862,7 +862,7 @@ export default function CommunityGalleryPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-white rounded-lg p-4 shadow">
                   <div className="aspect-square bg-gray-200 rounded mb-4"></div>
@@ -1080,7 +1080,7 @@ export default function CommunityGalleryPage() {
 
         {/* Images */}
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {filteredImages.map(image => (
               <div 
                 key={image.id} 

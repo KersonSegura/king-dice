@@ -1389,6 +1389,18 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   const [isGenerating, setIsGenerating] = useState(false);
   const [isNominating, setIsNominating] = useState(false);
   const [isNominated, setIsNominated] = useState(false);
+  const [showScreenshotTool, setShowScreenshotTool] = useState(false);
+  const [screenshotArea, setScreenshotArea] = useState({
+    x: 200,
+    y: 100,
+    width: 615,
+    height: 532
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [testScreenshot, setTestScreenshot] = useState<string | null>(null);
+  const [showTestResult, setShowTestResult] = useState(false);
 
   const [mapType, setMapType] = useState<MapType>('classic');
   const [customRules, setCustomRules] = useState({
@@ -1798,7 +1810,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       };
 
       const username = user?.username || (userId ? `User_${userId.slice(-6)}` : 'Anonymous');
-
+      
       // Send nomination to API
       console.log('📤 Sending nomination to API...', {
         mapDataLength: Object.keys(mapData).length,
@@ -1821,7 +1833,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       });
 
       console.log('📡 API Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ API Error response:', errorText);
@@ -1929,43 +1941,110 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
     setCustomRules(prev => ({ ...prev, [rule]: value }));
   };
 
+  // Screenshot tool handlers
+  const handleMouseDown = (e: React.MouseEvent, action: 'drag' | 'resize') => {
+    e.preventDefault();
+    if (action === 'drag') {
+      setIsDragging(true);
+    } else {
+      setIsResizing(true);
+    }
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging && !isResizing) return;
+
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+
+    if (isDragging) {
+      setScreenshotArea(prev => ({
+        ...prev,
+        x: Math.max(0, prev.x + deltaX),
+        y: Math.max(0, prev.y + deltaY)
+      }));
+    } else if (isResizing) {
+      setScreenshotArea(prev => ({
+        ...prev,
+        width: Math.max(100, prev.width + deltaX),
+        height: Math.max(100, prev.height + deltaY)
+      }));
+    }
+
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setIsResizing(false);
+  };
+
+  const toggleScreenshotTool = () => {
+    setShowScreenshotTool(!showScreenshotTool);
+  };
+
+  const moveToMap = () => {
+    // Find the map container and position the red rectangle over it
+    const mapContainer = document.querySelector('.mobile-map-container') as HTMLElement;
+    if (!mapContainer) {
+      alert('Map container not found!');
+      return;
+    }
+    
+    const mapRect = mapContainer.getBoundingClientRect();
+    console.log('🗺️ Map container position:', mapRect);
+    
+    // Position the red rectangle over the map area
+    setScreenshotArea({
+      x: mapRect.left,
+      y: mapRect.top,
+      width: 615, // Standard map width
+      height: 532  // Standard map height
+    });
+    
+    console.log('✅ Moved red rectangle to map area');
+  };
+
+
   const captureMapImage = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        // Get the map container element - use mobile-map-container for the actual map content
-        const mapContainer = document.querySelector('.mobile-map-container') as HTMLElement;
+        console.log('📸 Capturing map image from dedicated container...');
+        
+        // Find the new map container
+        const mapContainer = document.getElementById('map-container') as HTMLElement;
         if (!mapContainer) {
           reject(new Error('Map container not found'));
           return;
         }
 
-        // Determine dimensions based on map type - capture only the visible map area
-        let captureWidth, captureHeight;
-        if (mapType === 'expansion') {
-          // For expansion maps, capture the actual visible map area (background image size)
-          captureWidth = 615; // Background image width
-          captureHeight = 532; // Background image height
-        } else {
-          // For classic maps, capture the actual visible map area (background image size)
-          captureWidth = 615; // Background image width  
-          captureHeight = 532; // Background image height
-        }
-
-        // Use html2canvas to capture the map with specific dimensions
+        console.log('🗺️ Map container found, capturing...');
+        
+        // Use html2canvas to capture the map container directly
         import('html2canvas').then(({ default: html2canvas }) => {
           html2canvas(mapContainer, {
-            width: captureWidth,
-            height: captureHeight,
             useCORS: true,
-            allowTaint: true
+            allowTaint: true,
+            logging: false
           }).then((canvas: HTMLCanvasElement) => {
-            // Convert canvas to base64 image
+            console.log('✅ Canvas created, size:', canvas.width, 'x', canvas.height);
+            
+            // Convert directly to base64
             const imageData = canvas.toDataURL('image/png');
+            console.log('✅ Map capture complete, length:', imageData.length);
             resolve(imageData);
-          }).catch(reject);
-        }).catch(reject);
+          }).catch((error) => {
+            console.error('❌ html2canvas failed:', error);
+            reject(error);
+          });
+        }).catch((error) => {
+          console.error('❌ Failed to import html2canvas:', error);
+          reject(error);
+        });
 
       } catch (error) {
+        console.error('❌ Error in captureMapImage:', error);
         reject(error);
       }
     });
@@ -2171,8 +2250,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       </div>
 
       {/* Map Container with responsive layout */}
-      <div className="w-full flex flex-col lg:flex-row lg:justify-between lg:items-center gap-8">
-        {/* Left side content - hidden on mobile, shown on desktop */}
+      <div className="w-full flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+        {/* Left side content - Generation Custom Rules */}
         <div className="hidden lg:block lg:w-1/3 lg:pr-8">
           <div className="bg-white rounded-lg p-6">
             <h4 className="text-lg font-semibold text-dark-900 mb-4">Generation Custom Rules</h4>
@@ -2268,28 +2347,17 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           </div>
       </div>
 
-        {/* Map - centered on mobile, right-aligned on desktop */}
-        <div className="w-full lg:w-2/3 flex justify-center lg:justify-end">
-          {/* Mobile: Scalable container that fits the entire map */}
-          <div className="w-full sm:w-auto sm:overflow-visible">
-        <div
-              className="w-full sm:w-auto flex justify-center items-center"
-          style={{
-                height: 'auto',
-                minHeight: '400px',
-                margin: '0 auto'
-              }}
-            >
-              {/* Final Container - applies mobile scaling */}
-              <div
-                className="relative scale-[1.23] sm:scale-[0.85] mx-auto mobile-main-container"
-                style={{
-                  transformOrigin: "0 0",
-              width: `${MAP_WIDTH}px`,
-              height: `${MAP_HEIGHT}px`,
-                  isolation: "isolate"
-                }}
-              >
+        {/* Map Container - Full width to use all available space */}
+        {/* Map Container with mobile-specific padding */}
+        <div className="bg-white rounded-lg shadow-md" style={{ padding: window.innerWidth < 640 ? '8px' : '24px', maxWidth: '100%', overflow: 'hidden' }}>
+            {/* Map Display Area - Responsive width for mobile, fixed for desktop */}
+    <div className="relative overflow-hidden bg-white" id="map-container" style={{ 
+      width: window.innerWidth < 640 ? '100%' : '750px', 
+      maxWidth: window.innerWidth < 640 ? '100%' : '750px', 
+      height: window.innerWidth < 640 ? (mapType === 'expansion' ? '358px' : '303px') : '532px' 
+    }}>
+                {/* Map Content Container - Centered and Contained */}
+                <div className="relative w-full h-full mobile-main-container flex items-center justify-center" style={{ overflow: 'visible', transform: 'translateY(450px) translateX(48px)' }}>
             {/* Nomination Buttons - Top Right */}
             {/* Classic Map Nomination Button */}
             {mapType === 'classic' && (
@@ -2350,36 +2418,42 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               </button>
             )}
             
-          {/* Tiles Container - Inside scaling container */}
-          <div className="scale-[0.6] sm:scale-100" style={{ transformOrigin: 'center center' }}>
-             {/* Classic Map */}
-             {mapType === 'classic' && (
-               <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                 {/* Tiles/Numbers Container */}
-          <div className="mobile-map-container" style={{
+            
+
+            
+          {/* Map Content Wrapper - Centered and Contained */}
+          <div className="flex items-center justify-center w-full h-full" style={{ overflow: 'visible' }}>
+            {/* Map Container - Original size restored */}
+            <div className="relative" style={{ width: '615px', height: '532px', overflow: 'visible' }}>
+               {/* Classic Map - Hidden on mobile */}
+               {mapType === 'classic' && (
+               <div className="hidden sm:block" style={{ position: "relative", width: "100%", height: "100%" }}>
+                 {/* Tiles/Numbers Container - Original dimensions restored */}
+          <div className="mobile-map-container classic-map" style={{
                    transform: `translate(${tilesPosition.x}px, ${tilesPosition.y}px) scale(1)`,
             transformOrigin: 'center center',
-                   position: 'absolute',
-                   marginTop: '0px',
+            position: 'relative',
                    marginLeft: '0px',
-                   width: '1024px',
-                   height: '885px',
-                   minWidth: '1024px',
-                   minHeight: '885px',
+                   width: '615px',
+                   height: '532px',
+                   overflow: 'visible',
                  }}>
-                   {/* Base Map - Inside tiles container */}
-                   <img
-                     src={customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : '/CatanMapGenerator/CatanMap.svg'}
+                  {/* Base Map - Original dimensions restored */}
+                  <img
+                    src={customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : '/CatanMapGenerator/CatanMap.svg'}
             alt="Catan Map Background"
+            loading="eager"
             style={{
               position: "absolute",
-                       width: '615px', // 5px bigger than 610px
-                       height: '532px', // 5px bigger than 527px (maintaining aspect ratio)
-                       top: '30%', // Move up from 50%
-                       left: '30%', // Move left from 50%
-                       transform: 'translate(-50%, -50%)', // Center within container
+                       width: 'auto',
+                       height: 'auto',
+                       maxWidth: '615px',
+                       maxHeight: '532px',
+                       top: '50%',
+                       left: '50%',
+                       transform: 'translate(-50%, -50%)',
                        zIndex: 0,
-                       objectFit: 'contain', // Scale to fit the container
+                       objectFit: 'contain',
                        pointerEvents: 'none'
                      }}
                    />
@@ -2400,6 +2474,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                           key={`tile-${i}`}
                           src={getResourceImage(hexagon.type)}
                           alt={`Catan ${hexagon.type} resource tile`}
+                          loading="eager"
                 style={{
                               position: "absolute",
                               width: `${tileWidth}px`,
@@ -2415,8 +2490,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                         {hexagon.number && (
                           <img
                             key={`num-${i}`}
-                            src={getNumberImage(hexagon.number)}
-                            alt={`Catan number token ${hexagon.number}`}
+                        src={getNumberImage(hexagon.number)}
+                        alt={`Catan number token ${hexagon.number}`}
+                        loading="eager"
+                            loading="eager"
                             style={{
                               position: "absolute",
                               width: `${71.4 * SCALE_FACTOR}px`,
@@ -2437,36 +2514,36 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               </div>
             )}
             
-            {/* Expansion Map */}
+            {/* Expansion Map - Hidden on mobile */}
             {mapType === 'expansion' && (
-              <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                {/* Tiles/Numbers Container */}
+              <div className="hidden sm:block" style={{ position: "relative", width: "100%", height: "100%" }}>
+                {/* Tiles/Numbers Container - Original dimensions restored */}
                 <div className="mobile-map-container" style={{
-                  transform: window.innerWidth < 640 
-                    ? `translate(${tilesPosition.x - 275}px, ${tilesPosition.y - 100}px) scale(0.75)` // Mobile expansion map - LOCKED CONFIGURATION
-                    : `translate(${tilesPosition.x - 190}px, ${tilesPosition.y - 140}px) scale(0.55)`, // Desktop expansion map - LOCKED CONFIGURATION
+                  transform: `translate(0px, 0px) scale(0.6)`, // Desktop expansion map - centered at 0,0
                   transformOrigin: 'center center',
-                  position: 'absolute',
+                  position: 'relative',
                   marginTop: '0px',
                   marginLeft: '0px',
-                  width: '1024px',
-                  height: '885px',
-                  minWidth: '1024px',
-                  minHeight: '885px',
+                  width: '1025px', // Scale up to account for 0.6 scaling
+                  height: '887px', // Scale up to account for 0.6 scaling
+                  overflow: 'visible',
                 }}>
-                  {/* Base Map - Inside tiles container */}
+                  {/* Base Map - Positioned at new center reference */}
                   <img
                     src="/CatanMapGenerator/ExpCatanMap.svg"
                     alt="Catan Expansion Map Background"
+                    loading="eager"
                     style={{
                       position: "absolute",
-                      width: '1050px', // 5px smaller
-                      height: '908px', // 5px smaller
-                      top: '377px', // Set to 377px
-                      left: '608px', // Set to 608px
-                      transform: 'translate(-50%, -50%)', // Center within container
+                      width: 'auto',
+                      height: 'auto',
+                      maxWidth: '1025px', // Scale up to account for 0.6 scaling
+                      maxHeight: '887px', // Scale up to account for 0.6 scaling
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-89%, -84%)', // Keep the perfect positioning as new center
                       zIndex: 0,
-                      objectFit: 'contain', // Scale to fit the container
+                      objectFit: 'contain',
                       pointerEvents: 'none'
                     }}
                   />
@@ -2487,12 +2564,13 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   key={`tile-${i}`}
                   src={getResourceImage(hexagon.type)}
                   alt={`Catan ${hexagon.type} resource tile`}
+                  loading="eager"
                   style={{
                     position: "absolute",
                     width: `${tileWidth}px`,
                     height: `${tileHeight}px`,
-                            left: `${pos.x - tileWidth / 2 - 50}px`,
-                            top: `${pos.y - tileHeight / 2 - 50}px`,
+                            left: `${pos.x - tileWidth / 2 - 483}px`, // Keep the perfect positioning as new center
+                            top: `${pos.y - tileHeight / 2 - 285}px`, // Keep the perfect positioning as new center
                     pointerEvents: "none",
                             zIndex: 1,
                             transform: 'scale(1)',
@@ -2502,14 +2580,16 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 {hexagon.number && (
                   <img
                     key={`num-${i}`}
-                    src={getNumberImage(hexagon.number)}
-                    alt={`Catan number token ${hexagon.number}`}
+                        src={getNumberImage(hexagon.number)}
+                        alt={`Catan number token ${hexagon.number}`}
+                        loading="eager"
+                    loading="eager"
                     style={{
                       position: "absolute",
                               width: '57.4754px',
                               height: '57.4754px',
-                              left: `${pos.x + (233 - 57.4754) / 2 - 115 - 50}px`,
-                              top: `${pos.y + (201 - 57.4754) / 2 - 100 - 50}px`,
+                              left: `${pos.x + (233 - 57.4754) / 2 - 115 - 483}px`, // Keep the perfect positioning as new center
+                              top: `${pos.y + (201 - 57.4754) / 2 - 100 - 285}px`, // Keep the perfect positioning as new center
                       pointerEvents: "none",
                               zIndex: 2,
                               transform: 'scale(1)',
@@ -2523,6 +2603,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           </div>
           </div>
             )}
+            </div> {/* End Map Container */}
         </div>
       </div>
 
@@ -2531,45 +2612,76 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           {/* Mobile Classic Map */}
           {mapType === 'classic' && (
             <div style={{ position: "relative", width: "100%", height: "100%" }}>
-              {/* Background Catan Map - Fixed 95% width */}
-              <img
-                src={customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : '/CatanMapGenerator/CatanMap.svg'}
-                alt="Catan Map Background"
-                style={{
-                  position: "absolute",
-                  width: '95vw',
-                  height: 'auto',
-                  top: '0px',
-                  left: '0px',
-                  transform: `translate(${baseMapPosition.x}px, ${baseMapPosition.y}px)`,
-                  objectFit: 'contain',
-                  zIndex: 0
-                }}
-              />
+              {/* Mobile Classic Map Nomination Button */}
+              <button
+                onClick={handleNominateClassicMap}
+                disabled={isGenerating || hexagons.length === 0 || isNominating}
+                className="absolute top-2 right-2 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                id="nomination-star-button-mobile"
+                title="Nominate this Classic Catan map"
+                style={{ zIndex: 99999, pointerEvents: 'auto' }}
+              >
+                {isNominating ? (
+                  <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
+                ) : (
+                  <svg
+                    className={`w-5 h-5 transition-all duration-200 ${isNominated ? 'text-yellow-500 fill-current' : 'text-gray-400 hover:text-yellow-400'}`}
+                    fill={isNominated ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <polygon
+                      points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
               
-              {/* Tiles/Numbers Container */}
-              <div style={{
-                transform: `translate(${tilesPosition.x}px, ${tilesPosition.y}px) scale(1)`,
+              {/* Tiles/Numbers Container - Scaled down desktop version */}
+              <div className="mobile-map-container classic-map" style={{
+                transform: `translate(${tilesPosition.x - 134}px, ${tilesPosition.y - 164}px) scale(0.57)`,
                 transformOrigin: 'center center',
                 position: 'relative',
-                marginTop: '0px',
+                marginTop: '-350px',
                 marginLeft: '0px',
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'transparent'
+                width: '615px',
+                height: '532px',
+                overflow: 'visible',
+                pointerEvents: 'none',
+                zIndex: 1,
               }}>
+                {/* Base Map - Inside tiles container */}
+                <img
+                  src={customRules.imageStyle === 'classic' ? '/CatanMapGenerator/ClassicCatanMap.svg' : '/CatanMapGenerator/CatanMap.svg'}
+                  alt="Catan Map Background"
+                  loading="eager"
+                  style={{
+                    position: "absolute",
+                    width: 'auto',
+                    height: 'auto',
+                    maxWidth: '615px',
+                    maxHeight: '532px',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 0,
+                    objectFit: 'contain',
+                    pointerEvents: 'none'
+                  }}
+                />
                 {hexagons.map((hexagon, i) => {
                   const currentTilePositions = classicTilePositions;
                   const pos = currentTilePositions[i];
                   let tileWidth, tileHeight;
-                  // Calculate scale factor based on 95vw vs original map width
-                  const mobileScale = (window.innerWidth * 0.95) / MAP_WIDTH;
                   if (customRules.imageStyle === 'classic') {
-                    tileWidth = 235 * SCALE_FACTOR * 0.65 * mobileScale;
-                    tileHeight = 275 * SCALE_FACTOR * 0.65 * mobileScale;
+                    tileWidth = 235 * SCALE_FACTOR * 0.65;
+                    tileHeight = 275 * SCALE_FACTOR * 0.65;
                   } else {
-                    tileWidth = 235 * SCALE_FACTOR * mobileScale;
-                    tileHeight = 275 * SCALE_FACTOR * mobileScale;
+                    tileWidth = 235 * SCALE_FACTOR;
+                    tileHeight = 275 * SCALE_FACTOR;
                   }
                   return (
                     <div key={`mobile-tile-${i}`}>
@@ -2577,29 +2689,35 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                         key={`mobile-tile-${i}`}
                         src={getResourceImage(hexagon.type)}
                         alt={`Catan ${hexagon.type} resource tile`}
+                        loading="eager"
                         style={{
                           position: "absolute",
                           width: `${tileWidth}px`,
                           height: `${tileHeight}px`,
-                          left: `${pos.x * mobileScale + (235 * SCALE_FACTOR * mobileScale - tileWidth) / 2 - 2}px`,
-                          top: `${pos.y * mobileScale + (275 * SCALE_FACTOR * mobileScale - tileHeight) / 2 - 1}px`,
+                          left: `${pos.x + (235 * SCALE_FACTOR - tileWidth) / 2 - 2}px`,
+                          top: `${pos.y + (275 * SCALE_FACTOR - tileHeight) / 2 - 1}px`,
                           pointerEvents: "none",
                           zIndex: 1,
+                          transform: 'scale(1)',
+                          transformOrigin: 'center center'
                         }}
                       />
                       {hexagon.number && (
                         <img
                           key={`mobile-num-${i}`}
-                          src={getNumberImage(hexagon.number)}
-                          alt={`Catan number token ${hexagon.number}`}
+                        src={getNumberImage(hexagon.number)}
+                        alt={`Catan number token ${hexagon.number}`}
+                        loading="eager"
                           style={{
                             position: "absolute",
-                            width: `${71.4 * SCALE_FACTOR * mobileScale}px`,
-                            height: `${71.4 * SCALE_FACTOR * mobileScale}px`,
-                            left: `${pos.x * mobileScale + (235 * SCALE_FACTOR * mobileScale - NUMBER_WIDTH * mobileScale) / 2 - 2}px`,
-                            top: `${pos.y * mobileScale + (TILE_HEIGHT * mobileScale - NUMBER_HEIGHT * mobileScale) / 2 - 1}px`,
+                            width: `${NUMBER_WIDTH}px`,
+                            height: `${NUMBER_HEIGHT}px`,
+                            left: `${pos.x + (235 * SCALE_FACTOR - NUMBER_WIDTH) / 2 - 2}px`,
+                            top: `${pos.y + (275 * SCALE_FACTOR - NUMBER_HEIGHT) / 2 - 1}px`,
                             pointerEvents: "none",
                             zIndex: 2,
+                            transform: 'scale(1)',
+                            transformOrigin: 'center center'
                           }}
                         />
                       )}
@@ -2609,12 +2727,124 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               </div>
             </div>
           )}
-        </div>
-      
+
+      {/* Mobile Expansion Map */}
+      {mapType === 'expansion' && (
+        <div style={{ position: "relative", width: "100%", height: "100%", paddingBottom: "20px" }}>
+          {/* Mobile Expansion Map Nomination Button */}
+          <button
+            onClick={handleNominateExpansionMap}
+            disabled={isGenerating || hexagons.length === 0 || isNominating}
+            className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+            id="nomination-star-button-expansion"
+            title="Nominate this Expansion Catan map"
+            style={{ fontSize: '0', lineHeight: '1' }}
+          >
+            {isNominating ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
+            ) : (
+              <svg
+                className={`w-5 h-5 transition-all duration-200 ${isNominated ? 'text-yellow-500 fill-current' : 'text-gray-400 hover:text-yellow-400'}`}
+                fill={isNominated ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <polygon
+                  points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </button>
+              
+              {/* Tiles/Numbers Container - Scaled down desktop version */}
+              <div className="mobile-map-container" style={{
+                transform: `translate(${tilesPosition.x - 205}px, ${tilesPosition.y - 196}px) scale(0.398)`,
+                transformOrigin: 'center center',
+                position: 'relative',
+                marginTop: '-350px',
+                marginLeft: '0px',
+                width: '1025px', // Scale up to account for 0.6 scaling
+                height: '887px', // Scale up to account for 0.6 scaling
+                overflow: 'visible',
+              }}>
+                {/* Base Map - Inside tiles container */}
+                <img
+                  src="/CatanMapGenerator/ExpCatanMap.svg"
+                  alt="Catan Expansion Map Background"
+                  loading="eager"
+                  style={{
+                    position: "absolute",
+                    width: 'auto',
+                    height: 'auto',
+                    maxWidth: '1025px', // Scale up to account for 0.6 scaling
+                    maxHeight: '887px', // Scale up to account for 0.6 scaling
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-89%, -84%)', // Keep the perfect positioning as new center
+                    zIndex: 0,
+                    objectFit: 'contain',
+                    pointerEvents: 'none'
+                  }}
+                />
+                {hexagons.map((hexagon, i) => {
+                  const currentTilePositions = expansionTilePositions;
+                  const pos = currentTilePositions[i];
+                  let tileWidth, tileHeight;
+                  if (customRules.imageStyle === 'classic') {
+                    tileWidth = 139;
+                    tileHeight = 117;
+                  } else {
+                    tileWidth = 233;
+                    tileHeight = 201;
+                  }
+                  return (
+                    <div key={`mobile-tile-${i}`}>
+                      <img
+                        key={`mobile-tile-${i}`}
+                        src={getResourceImage(hexagon.type)}
+                        alt={`Catan ${hexagon.type} resource tile`}
+                        loading="eager"
+                        style={{
+                          position: "absolute",
+                          width: `${tileWidth}px`,
+                          height: `${tileHeight}px`,
+                          left: `${pos.x - tileWidth / 2 - 483}px`, // Keep the perfect positioning as new center
+                          top: `${pos.y - tileHeight / 2 - 285}px`, // Keep the perfect positioning as new center
+                          pointerEvents: "none",
+                          zIndex: 1,
+                          transform: 'scale(1)',
+                          transformOrigin: 'center center'
+                        }}
+                      />
+                      {hexagon.number && (
+                        <img
+                          key={`mobile-num-${i}`}
+                        src={getNumberImage(hexagon.number)}
+                        alt={`Catan number token ${hexagon.number}`}
+                        loading="eager"
+                          style={{
+                            position: "absolute",
+                            width: '57.4754px',
+                            height: '57.4754px',
+                            left: `${pos.x + (233 - 57.4754) / 2 - 115 - 483}px`, // Keep the perfect positioning as new center
+                            top: `${pos.y + (201 - 57.4754) / 2 - 100 - 285}px`, // Keep the perfect positioning as new center
+                            pointerEvents: "none",
+                            zIndex: 2,
+                            transform: 'scale(1)',
+                            transformOrigin: 'center center'
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      </div>
 
       {/* Settings Modal */}
       {showSettingsModal && (
@@ -2760,6 +2990,9 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       
       {/* Toast Container for modern notifications */}
       <ToastContainer />
+        </div>
+      </div>
+      </div>
     </div>
   );
 }
