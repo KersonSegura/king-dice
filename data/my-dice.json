@@ -24,6 +24,19 @@
         "title": null
       },
       "updatedAt": "2025-09-22T20:30:34.950Z"
+    },
+    "cmg88zsa300017kbsvllkpdof": {
+      "config": {
+        "background": "/dice/Backgrounds/BlackBackground.svg",
+        "dice": "/dice/Dice/WhiteDice.svg",
+        "pattern": "/dice/Patterns/1-2-3.svg",
+        "accessories": null,
+        "hat": null,
+        "item": null,
+        "companion": null,
+        "title": "/dice/Titles/Commoner.svg"
+      },
+      "updatedAt": "2025-10-02T17:54:41.928Z"
     }
   }
 }

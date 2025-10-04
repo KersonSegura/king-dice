@@ -192,18 +192,18 @@ export default function Footer() {
 
         {/* Newsletter Signup */}
         <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="max-w-md mx-auto text-center">
+          <div className="max-w-lg mx-auto text-center px-4">
             <h3 className="text-lg font-semibold mb-2">Stay Updated</h3>
             <p className="text-gray-400 text-sm mb-4">
               Get notified about new features and updates
             </p>
-            <div className="flex">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] text-white placeholder-gray-400"
+                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg sm:rounded-l-lg sm:rounded-r-none focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] text-white placeholder-gray-400"
               />
-              <button className="px-6 py-2 bg-[#fbae17] hover:bg-yellow-600 text-white rounded-r-lg transition-colors font-medium">
+              <button className="px-6 py-2 bg-[#fbae17] hover:bg-yellow-600 text-white rounded-lg sm:rounded-l-none sm:rounded-r-lg transition-colors font-medium whitespace-nowrap">
                 Subscribe
               </button>
             </div>

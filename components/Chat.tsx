@@ -90,7 +90,6 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user.id, chatId })
               });
-              console.log('✅ Messages marked as read');
             } catch (readError) {
               console.error('Error marking messages as read:', readError);
               // Don't show error to user - this is not critical

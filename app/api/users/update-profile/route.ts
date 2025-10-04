@@ -4,16 +4,17 @@ import { isUserAdmin } from '@/lib/admin-utils';
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const { userId, username, email, bio, favoriteGames } = await request.json();
+    const { userId, username, email, bio, favoriteGames, profileColors } = await request.json();
     
     console.log('Received update profile request:', {
       userId,
       username,
       email,
       bio,
-      favoriteGames
+      favoriteGames,
+      profileColors
     });
 
     // Validate input
@@ -123,6 +124,11 @@ export async function POST(request: NextRequest) {
       updateData.favoriteGames = JSON.stringify(favoriteGames);
     }
 
+    // Add profile colors if provided (store as JSON string)
+    if (profileColors !== undefined) {
+      updateData.profileColors = JSON.stringify(profileColors);
+    }
+
     // Update or create user profile
     let updatedUser;
     try {
@@ -146,7 +152,7 @@ export async function POST(request: NextRequest) {
             isAdmin: isAdmin,
             bio: bio || null,
             favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
-            profileColors: null
+            profileColors: profileColors ? JSON.stringify(profileColors) : null
           }
         });
         console.log('User created successfully:', updatedUser);

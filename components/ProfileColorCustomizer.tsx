@@ -446,8 +446,14 @@ export default function ProfileColorCustomizer({ isOpen, onClose, currentColors,
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-16"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -491,7 +497,7 @@ export default function ProfileColorCustomizer({ isOpen, onClose, currentColors,
                       <div className={`absolute top-2 left-2 text-xs font-bold ${
                         theme.textColor === 'light' ? 'text-white' : 'text-gray-900'
                       }`}>
-                        {theme.textColor === 'light' ? 'WHITE' : 'DARK'}
+                        {theme.textColor === 'light' ? 'WHITE TEXT' : 'DARK TEXT'}
                       </div>
                     </div>
                     <div className="flex space-x-1">

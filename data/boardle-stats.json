@@ -57,5 +57,64 @@
       }
     },
     "lastPlayedDate": "2025-09-05T22:26:09.720Z"
+  },
+  "cmg88zsa300017kbsvllkpdof": {
+    "gamesPlayed": 2,
+    "gamesWon": 1,
+    "currentStreak": 0,
+    "maxStreak": 1,
+    "guessDistribution": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "gamesByMode": {
+      "title": {
+        "gamesPlayed": 0,
+        "gamesWon": 0,
+        "currentStreak": 0,
+        "maxStreak": 0,
+        "guessDistribution": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "image": {
+        "gamesPlayed": 1,
+        "gamesWon": 1,
+        "currentStreak": 1,
+        "maxStreak": 1,
+        "guessDistribution": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      },
+      "card": {
+        "gamesPlayed": 1,
+        "gamesWon": 0,
+        "currentStreak": 0,
+        "maxStreak": 0,
+        "guessDistribution": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "lastPlayedDate": "2025-10-01T22:20:09.238Z"
   }
 }

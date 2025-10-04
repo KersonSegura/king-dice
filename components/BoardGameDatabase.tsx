@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, Edit3, Save, X, Plus, FileText, Eye, EyeOff, Database, Gamepad2, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
 import RichTextEditor, { RichTextEditorRef } from './RichTextEditor';
 import Footer from './Footer';
@@ -92,6 +93,7 @@ interface NewGameForm {
 }
 
 export default function BoardGameDatabase() {
+  const searchParams = useSearchParams();
   const [games, setGames] = useState<Game[]>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
@@ -213,6 +215,17 @@ export default function BoardGameDatabase() {
   useEffect(() => {
     fetchGames(1, searchTerm, showOnlyWithoutRules);
   }, [searchTerm, showOnlyWithoutRules]);
+
+  // Handle game parameter from URL
+  useEffect(() => {
+    const gameId = searchParams.get('game');
+    if (gameId && games.length > 0) {
+      const game = games.find(g => g.id === parseInt(gameId));
+      if (game) {
+        setSelectedGame(game);
+      }
+    }
+  }, [searchParams, games]);
 
 
   // Cleanup timeout on unmount

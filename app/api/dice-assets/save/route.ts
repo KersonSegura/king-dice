@@ -110,26 +110,43 @@ async function cleanupOldProfileImages(userId: string, currentImageUrl: string) 
       !file.includes(path.basename(currentImageUrl))
     );
     
-    // Delete old dice files (keep only the 5 most recent)
-    if (diceFiles.length > 5) {
-      // Sort by timestamp (newest first)
-      const sortedFiles = diceFiles.sort((a, b) => {
+    // Check which files are still referenced in the database
+    const referencedFiles = new Set();
+    
+    // Get all user avatars that reference generated files
+    const users = await prisma.user.findMany({
+      select: { avatar: true }
+    });
+    
+    users.forEach(user => {
+      if (user.avatar && user.avatar.includes('/generated/dice-')) {
+        const filename = path.basename(user.avatar);
+        referencedFiles.add(filename);
+      }
+    });
+    
+    // Only delete files that are not referenced by any user AND are old (more than 10 files)
+    const unreferencedFiles = diceFiles.filter(file => !referencedFiles.has(file));
+    
+    if (unreferencedFiles.length > 10) {
+      // Sort by timestamp (oldest first for deletion)
+      const sortedFiles = unreferencedFiles.sort((a, b) => {
         const timestampA = parseInt(a.replace('dice-', '').replace('.svg', ''));
         const timestampB = parseInt(b.replace('dice-', '').replace('.svg', ''));
-        return timestampB - timestampA;
+        return timestampA - timestampB;
       });
       
-      // Delete files beyond the 5 most recent
-      const filesToDelete = sortedFiles.slice(5);
+      // Delete only the oldest unreferenced files (keep 10 most recent unreferenced)
+      const filesToDelete = sortedFiles.slice(0, unreferencedFiles.length - 10);
       
       for (const file of filesToDelete) {
         const filePath = path.join(generatedDir, file);
         await fs.unlink(filePath);
-        console.log(`🗑️ Deleted old dice SVG: ${file}`);
+        console.log(`🗑️ Deleted old unreferenced dice SVG: ${file}`);
       }
     }
     
-    console.log(`🧹 Cleanup completed. Kept ${Math.min(diceFiles.length, 5)} most recent dice SVGs.`);
+    console.log(`🧹 Cleanup completed. Kept ${diceFiles.length - Math.max(0, unreferencedFiles.length - 10)} dice SVGs.`);
     
   } catch (error) {
     console.error('❌ Error during cleanup:', error);

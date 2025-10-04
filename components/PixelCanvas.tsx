@@ -59,22 +59,37 @@ export default function PixelCanvas({
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
   const [countdownTimer, setCountdownTimer] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [zoomLevel, setZoomLevel] = useState(0.75);
   const baseZoom = 1.5; // This is our "normal" size (0% zoom)
+  
+  // Initialize zoom level based on device type
+  const getInitialZoom = () => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    return isMobile ? baseZoom * 0.7 : baseZoom * 0.5; // Start at minimum for each device
+  };
+  
+  const [zoomLevel, setZoomLevel] = useState(getInitialZoom);
+  
+  // Get minimum zoom level based on device type
+  const getMinZoom = () => {
+    // Check if it's a mobile device
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    return isMobile ? baseZoom * 0.7 : baseZoom * 0.5; // 70% on mobile, 50% on desktop
+  };
+  
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isClicking, setIsClicking] = useState(false);
-  const [clickStartTime, setClickStartTime] = useState(0);
-  const [hasMoved, setHasMoved] = useState(false);
-  const [hasDragged, setHasDragged] = useState(false);
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false);
   const [isEditingColor, setIsEditingColor] = useState(false);
   const [tempColorCode, setTempColorCode] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [isEyedropperMode, setIsEyedropperMode] = useState(false);
+  
+  // Touch handling for mobile
+  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
+  const [lastTouchCenter, setLastTouchCenter] = useState<{ x: number; y: number } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
@@ -101,10 +116,10 @@ export default function PixelCanvas({
     if (!isAuthenticated || !user) return;
     
     try {
-      const response = await fetch('/api/pixel-canvas/cooldown');
+      const response = await fetch(`/api/pixel-canvas/cooldown?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
-        setCooldownRemaining(data.cooldownRemaining);
+        setCooldownRemaining(data.remainingMinutes);
         setCooldownSeconds(data.cooldownSeconds);
         
         // Start countdown timer if there's a cooldown
@@ -174,6 +189,8 @@ export default function PixelCanvas({
         await fetchCanvasData();
         // Start 30-second countdown immediately
         setCountdownTimer(30);
+        // Also check server-side cooldown to ensure sync
+        await checkCooldown();
       } else {
         showToast(data.message, 'error');
         if (data.cooldownRemaining) {
@@ -441,7 +458,7 @@ export default function PixelCanvas({
   };
 
   const handleZoomOut = () => {
-    const newZoomLevel = Math.max(zoomLevel - 0.5, baseZoom * 0.5); // Min 75% (0.5x base = -50% zoom)
+    const newZoomLevel = Math.max(zoomLevel - 0.5, getMinZoom());
     setZoomLevel(newZoomLevel);
   };
 
@@ -467,33 +484,40 @@ export default function PixelCanvas({
   };
 
   const handleResetView = () => {
-    setZoomLevel(baseZoom * 0.5); // Reset to 50% (75% actual zoom)
+    setZoomLevel(getMinZoom()); // Reset to minimum zoom (80% on mobile, 50% on desktop)
     // Reset pan to center (canvas is now centered by CSS)
     setPanX(0);
     setPanY(0);
   };
 
-  // Helper function to constrain pan values within reasonable bounds
+  // Helper function to constrain pan values to keep canvas visible within container bounds
   const constrainPan = (newPanX: number, newPanY: number, currentZoomLevel = zoomLevel) => {
     if (!canvasData || !containerRef.current) return { x: newPanX, y: newPanY };
     
+    // Calculate actual canvas dimensions at current zoom
     const canvasWidth = canvasData.width * pixelSize * currentZoomLevel;
     const canvasHeight = canvasData.height * pixelSize * currentZoomLevel;
     
-    // Get container dimensions
+    // Get container dimensions (accounting for padding)
     const containerRect = containerRef.current.getBoundingClientRect();
-    const containerWidth = containerRect.width - 32; // Account for padding
-    const containerHeight = containerRect.height - 32; // Account for padding
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     
-    // Scale limits with zoom level - more zoom = more pan space needed
-    const basePanDistance = Math.max(containerWidth, containerHeight) * 0.5;
-    const maxPanDistance = basePanDistance * Math.max(1, currentZoomLevel / baseZoom * 2); // 2x scaling for more space
+    // Different padding for mobile vs desktop
+    const padding = isMobile ? 32 : 32; // p-4 = 16px each side = 32px total
+    const containerWidth = containerRect.width - padding;
+    const containerHeight = containerRect.height - padding;
     
-    // Canvas is centered, so pan limits are symmetric around 0
-    const minX = -maxPanDistance;
-    const maxX = maxPanDistance;
-    const minY = -maxPanDistance;
-    const maxY = maxPanDistance;
+    // Calculate how much the canvas extends beyond the container
+    const excessWidth = Math.max(0, canvasWidth - containerWidth);
+    const excessHeight = Math.max(0, canvasHeight - containerHeight);
+    
+     // No constraints - allow free panning in all directions
+     // You can pan the canvas anywhere you want
+     const minX = -excessWidth;
+     const maxX = containerWidth;
+     const minY = -excessHeight;
+     const maxY = containerHeight;
+    
     
     return {
       x: Math.max(minX, Math.min(maxX, newPanX)),
@@ -501,109 +525,152 @@ export default function PixelCanvas({
     };
   };
 
-  // Document-level mouse move handler (works outside container)
-  const handleDocumentMouseMove = useCallback((e: MouseEvent) => {
-    console.log('Document mouse move:', { isClicking, isDragging, hasMoved, hasDragged });
-    
-    if (isClicking) {
-      // Check if we've moved enough to start dragging
-      const moveDistance = Math.sqrt(
-        Math.pow(e.clientX - (dragStart.x + panX), 2) + 
-        Math.pow(e.clientY - (dragStart.y + panY), 2)
-      );
-      
-      if (moveDistance > 3) { // 3px threshold to start drag (more sensitive)
-        console.log('Starting drag from document mouse move');
-        setHasMoved(true); // Mark that movement occurred
-        setHasDragged(true); // Mark that dragging occurred
+
+
+  // Pan controls - simplified like WeeklyCanvasSnapshot
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 0) { // Left click
+      e.preventDefault();
         setIsDragging(true);
-        setIsClicking(false); // Stop clicking mode immediately
+      setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
       }
-    }
+  };
     
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (isDragging) {
-      console.log('Dragging via document mouse move');
       e.preventDefault();
       const newPanX = e.clientX - dragStart.x;
       const newPanY = e.clientY - dragStart.y;
       const constrained = constrainPan(newPanX, newPanY);
+      
+      
       setPanX(constrained.x);
       setPanY(constrained.y);
     }
-  }, [isClicking, isDragging, dragStart, panX, panY, constrainPan, hasMoved, hasDragged]);
+  };
 
-  // Document-level mouse up handler (works outside container)
-  const handleDocumentMouseUp = useCallback((e: MouseEvent) => {
-    // Remove document event listeners
-    document.removeEventListener('mousemove', handleDocumentMouseMove);
-    document.removeEventListener('mouseup', handleDocumentMouseUp);
-    
-    // Only paint if it was a pure click (no movement, no dragging, quick release)
-    if (isClicking && !isDragging && !hasMoved && !hasDragged) {
-      const clickDuration = Date.now() - clickStartTime;
-      if (clickDuration < 200) { // Only if click was quick (< 200ms)
-        // Calculate pixel coordinates directly here instead of calling handleCanvasClick
-        if (canvasData) {
-          const canvas = canvasRef.current;
-          if (canvas) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            const x = Math.floor((e.clientX - rect.left) * scaleX / pixelSize);
-            const y = Math.floor((e.clientY - rect.top) * scaleY / pixelSize);
+  // Touch event handlers for mobile
+  const getTouchDistance = (touches: TouchList) => {
+    if (touches.length < 2) return null;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) + 
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    );
+  };
 
-            if (x >= 0 && x < canvasData.width && y >= 0 && y < canvasData.height) {
-              handlePixelClick(x, y);
-            }
-          }
-        }
-      }
+  const getTouchCenter = (touches: TouchList) => {
+    if (touches.length === 0) return null;
+    if (touches.length === 1) {
+      return { x: touches[0].clientX, y: touches[0].clientY };
     }
-    
-    // Reset all states
-    setIsClicking(false);
-    setIsDragging(false);
-    setHasMoved(false);
-    setHasDragged(false);
-  }, [isClicking, isDragging, hasMoved, hasDragged, clickStartTime, canvasData, pixelSize, handlePixelClick]);
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  };
 
-  // Pan controls and click detection
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0) { // Left click
-      e.preventDefault();
-      setIsClicking(true);
-      setClickStartTime(Date.now());
-      setHasMoved(false); // Reset movement tracking
-      setHasDragged(false); // Reset drag tracking
-      
-      // Start potential drag
-      setIsDragging(false);
-      setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
-      
-      // Add document-level mouse events for dragging outside container
-      document.addEventListener('mousemove', handleDocumentMouseMove);
-      document.addEventListener('mouseup', handleDocumentMouseUp);
-    } else if (e.button === 1) { // Middle mouse
-      e.preventDefault();
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // e.preventDefault(); // Removed to avoid passive event listener error
+    
+    if (e.touches.length === 1) {
+      // Single touch - start drag
+      const touch = e.touches[0];
       setIsDragging(true);
-      setHasDragged(true); // Mark as dragged
-      setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
-      
-      // Add document-level mouse events for dragging outside container
-      document.addEventListener('mousemove', handleDocumentMouseMove);
-      document.addEventListener('mouseup', handleDocumentMouseUp);
+      setDragStart({ x: touch.clientX - panX, y: touch.clientY - panY });
+    } else if (e.touches.length === 2) {
+      // Two touches - start pinch zoom
+      const distance = getTouchDistance(e.touches);
+      const center = getTouchCenter(e.touches);
+      if (distance && center) {
+        setLastTouchDistance(distance);
+        setLastTouchCenter(center);
+      }
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // This now just calls the document handler
-    handleDocumentMouseMove(e.nativeEvent);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // e.preventDefault(); // Removed to avoid passive event listener error
+    
+    if (e.touches.length === 1 && isDragging) {
+      // Single touch drag
+      const touch = e.touches[0];
+      const newPanX = touch.clientX - dragStart.x;
+      const newPanY = touch.clientY - dragStart.y;
+      const constrained = constrainPan(newPanX, newPanY);
+      
+      
+      setPanX(constrained.x);
+      setPanY(constrained.y);
+    } else if (e.touches.length === 2 && lastTouchDistance && lastTouchCenter) {
+      // Two finger pinch zoom
+      const currentDistance = getTouchDistance(e.touches);
+      const currentCenter = getTouchCenter(e.touches);
+      
+      if (currentDistance && currentCenter) {
+        const scale = currentDistance / lastTouchDistance;
+        const delta = scale > 1 ? 0.1 : -0.1;
+        const newZoomLevel = Math.max(getMinZoom(), Math.min(baseZoom * 3.33, zoomLevel + delta));
+        
+        if (newZoomLevel !== zoomLevel && canvasData && containerRef.current) {
+          const containerRect = containerRef.current.getBoundingClientRect();
+          const centerX = currentCenter.x - containerRect.left;
+          const centerY = currentCenter.y - containerRect.top;
+          
+          const containerCenterX = containerRect.width / 2;
+          const containerCenterY = containerRect.height / 2;
+          
+          const canvasX = (centerX - containerCenterX - panX) / (pixelSize * zoomLevel);
+          const canvasY = (centerY - containerCenterY - panY) / (pixelSize * zoomLevel);
+          
+          setZoomLevel(newZoomLevel);
+          
+          const newPanX = centerX - containerCenterX - (canvasX * pixelSize * newZoomLevel);
+          const newPanY = centerY - containerCenterY - (canvasY * pixelSize * newZoomLevel);
+          
+          const constrained = constrainPan(newPanX, newPanY, newZoomLevel);
+          setPanX(constrained.x);
+          setPanY(constrained.y);
+        }
+        
+        setLastTouchDistance(currentDistance);
+        setLastTouchCenter(currentCenter);
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+      e.preventDefault();
+      
+    if (e.touches.length === 0) {
+      // All touches ended
+      setIsDragging(false);
+      setLastTouchDistance(null);
+      setLastTouchCenter(null);
+    }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    // This now just calls the document handler
-    handleDocumentMouseUp(e.nativeEvent);
+    if (!isDragging) {
+      // Handle pixel placement on click
+      if (canvasData && canvasRef.current) {
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const x = Math.floor((e.clientX - rect.left) * scaleX / pixelSize);
+        const y = Math.floor((e.clientY - rect.top) * scaleY / pixelSize);
+        
+        if (x >= 0 && x < canvasData.width && y >= 0 && y < canvasData.height) {
+          handlePixelClick(x, y);
+        }
+      }
+    }
+    setIsDragging(false);
   };
 
   // Draw canvas
@@ -707,7 +774,7 @@ export default function PixelCanvas({
         const success = await saveWeeklySnapshot(canvasRef.current, canvasData);
         if (success) {
           markWeeklySnapshotTaken();
-          console.log('Weekly canvas snapshot taken');
+          // Silent success for weekly snapshot
         }
       } catch (error) {
         console.error('Error taking weekly snapshot:', error);
@@ -740,7 +807,7 @@ export default function PixelCanvas({
         e.stopPropagation();
         
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        const newZoomLevel = Math.max(baseZoom * 0.5, Math.min(baseZoom * 3.33, zoomLevel + delta));
+        const newZoomLevel = Math.max(getMinZoom(), Math.min(baseZoom * 3.33, zoomLevel + delta));
         
         if (newZoomLevel !== zoomLevel && canvasData && containerRef.current) {
           // Get mouse position relative to the canvas container
@@ -799,15 +866,16 @@ export default function PixelCanvas({
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-2">
+      <div className="text-center mb-6">
+        {/* Title */}
+        <div className="flex items-center justify-center space-x-2 mb-3">
           <Square className="w-6 h-6 text-blue-500" />
           <h2 className="text-xl font-bold text-gray-900">Community Pixel Canvas</h2>
         </div>
         
-        {/* Stats */}
+        {/* Stats - Second Line */}
         {stats && (
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center justify-center space-x-4 text-sm text-gray-600 flex-wrap gap-2">
             <div className="flex items-center space-x-1">
               <Square className="w-4 h-4" />
               <span>{width * height} pixels</span>
@@ -815,14 +883,6 @@ export default function PixelCanvas({
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
               <span>{stats.uniqueUsers} users</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Clock className="w-4 h-4" />
-              <span>
-                {countdownTimer ? (
-                  `${countdownTimer}s cooldown`
-                ) : 'Ready to paint (30s cooldown)'}
-              </span>
             </div>
           </div>
         )}
@@ -870,22 +930,42 @@ export default function PixelCanvas({
                 <RotateCcw className="w-4 h-4" />
               </button>
             </div>
+            
+            {/* Cooldown Status */}
+            {isAuthenticated && (
+              <div className="flex items-center space-x-1 text-sm text-gray-600">
+                <Clock className="w-4 h-4" />
+                <span>
+                  {countdownTimer ? (
+                    `${countdownTimer}s cooldown`
+                  ) : 'Ready to paint'}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Canvas Container */}
           <div 
             ref={containerRef}
-            className="bg-gray-100 p-4 rounded-lg overflow-hidden flex items-center justify-center"
+            className="bg-gray-100 p-4 rounded-lg overflow-hidden flex items-center justify-center h-[400px] sm:h-[700px]"
             style={{ 
               width: '100%', 
-              height: '700px',
-              position: 'relative'
+              position: 'relative',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              touchAction: 'none', // Prevent default touch behaviors
+              userSelect: 'none', // Prevent text selection
+              WebkitUserSelect: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none'
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             <div 
               className="inline-block origin-center"
@@ -904,8 +984,16 @@ export default function PixelCanvas({
                   imageRendering: 'pixelated',
                   maxWidth: '100%',
                   height: 'auto',
-                  cursor: isEyedropperMode ? 'crosshair' : 'pointer'
+                  cursor: isEyedropperMode ? 'crosshair' : 'pointer',
+                  touchAction: 'none', // Prevent default touch behaviors
+                  userSelect: 'none', // Prevent text selection
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none'
                 }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               />
             </div>
           </div>

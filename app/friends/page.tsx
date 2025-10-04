@@ -279,7 +279,7 @@ export default function FriendsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link 
-                href="/profile" 
+                href={`/profile/${user?.username}`} 
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />

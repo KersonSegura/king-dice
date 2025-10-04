@@ -6,9 +6,9 @@
       "imageUrl": "/gallery/gallery-1756955365181.svg",
       "thumbnailUrl": "/gallery/gallery-1756955365181.svg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756928015978.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000
       },
       "category": "dice-throne",
@@ -31,7 +31,7 @@
       "userVote": null,
       "userVotes": [
         {
-          "userId": "user_1754498606845_aoutcys27",
+          "userId": "cmg88zsa300017kbsvllkpdof",
           "voteType": "up",
           "timestamp": "2025-09-04T04:24:48.649Z",
           "weekId": "2025-W36"
@@ -44,9 +44,9 @@
       "imageUrl": "/gallery/gallery-1756955532038.png",
       "thumbnailUrl": "/gallery/gallery-1756955532038.png",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756928015978.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000
       },
       "category": "the-kings-card",
@@ -54,25 +54,25 @@
       "id": "img_1756955532048_7yxzldeb3",
       "createdAt": "2025-09-04T03:12:12.048Z",
       "votes": {
-        "upvotes": 2,
+        "upvotes": 3,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W37"
+        "weekId": "2025-W40"
       },
       "views": 0,
       "downloads": 0,
-      "comments": 6,
+      "comments": 7,
       "isModerated": false,
       "isDraft": false,
       "commentsList": [
         {
           "id": "comment_1756962378009_h678dhnfq",
           "author": {
-            "id": "user_1754498606845_aoutcys27",
-            "name": "KingDiceKSA",
-            "avatar": "/generated/dice-1756955869719.svg",
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg",
             "title": "/dice/Titles/Knight.svg"
           },
           "content": "Hola test",
@@ -82,41 +82,41 @@
             {
               "id": "reply_1756962385304_bbt5xav76",
               "author": {
-                "id": "user_1754498606845_aoutcys27",
-                "name": "KingDiceKSA",
-                "avatar": "/generated/dice-1756955869719.svg",
+                "id": "cmg88zsa300017kbsvllkpdof",
+                "name": "kingdice",
+                "avatar": "/generated/dice-1759344526558.svg",
                 "title": "/dice/Titles/Knight.svg"
               },
               "content": "Test",
               "createdAt": "2025-09-04T05:06:25.304Z",
               "likes": 1,
               "userLikes": [
-                "user_1754498606845_aoutcys27"
+                "cmg88zsa300017kbsvllkpdof"
               ],
               "replies": []
             },
             {
               "id": "reply_1756962790742_sblxby5mg",
               "author": {
-                "id": "user_1754498606845_aoutcys27",
-                "name": "KingDiceKSA",
-                "avatar": "/generated/dice-1756955869719.svg",
+                "id": "cmg88zsa300017kbsvllkpdof",
+                "name": "kingdice",
+                "avatar": "/generated/dice-1759344526558.svg",
                 "title": "/dice/Titles/Knight.svg"
               },
               "content": "test2",
               "createdAt": "2025-09-04T05:13:10.743Z",
               "likes": 1,
               "userLikes": [
-                "user_1754498606845_aoutcys27"
+                "cmg88zsa300017kbsvllkpdof"
               ],
               "replies": []
             },
             {
               "id": "reply_1757410782394_e76b5bu4s",
               "author": {
-                "id": "user_1754498606845_aoutcys27",
-                "name": "KingDiceKSA",
-                "avatar": "/generated/dice-1756955869719.svg",
+                "id": "cmg88zsa300017kbsvllkpdof",
+                "name": "kingdice",
+                "avatar": "/generated/dice-1759344526558.svg",
                 "title": "Knight"
               },
               "content": "Testtttt",
@@ -124,7 +124,7 @@
               "isEdited": false,
               "likes": 1,
               "userLikes": [
-                "user_1754498606845_aoutcys27"
+                "cmg88zsa300017kbsvllkpdof"
               ],
               "parentCommentId": "comment_1756962378009_h678dhnfq"
             }
@@ -135,9 +135,9 @@
         {
           "id": "comment_1757411620145_da0vpwz82",
           "author": {
-            "id": "user_1754498606845_aoutcys27",
-            "name": "KingDiceKSA",
-            "avatar": "/generated/dice-1756955869719.svg",
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg",
             "title": "Knight"
           },
           "content": "Testoh",
@@ -145,20 +145,34 @@
           "isEdited": false,
           "likes": 1,
           "userLikes": [
-            "user_1754498606845_aoutcys27"
+            "cmg88zsa300017kbsvllkpdof"
           ],
           "replies": []
         },
         {
           "id": "comment_1757411927908_8f1fcal1w",
           "author": {
-            "id": "user_1754498606845_aoutcys27",
-            "name": "KingDiceKSA",
-            "avatar": "/generated/dice-1756955869719.svg",
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg",
             "title": "Knight"
           },
           "content": "Hola",
           "createdAt": "2025-09-09T09:58:47.908Z",
+          "isEdited": false,
+          "likes": 0,
+          "userLikes": [],
+          "replies": []
+        },
+        {
+          "id": "comment_1759456763292_0e67c4nhf",
+          "author": {
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg"
+          },
+          "content": "Yest",
+          "createdAt": "2025-10-03T01:59:23.292Z",
           "isEdited": false,
           "likes": 0,
           "userLikes": [],
@@ -168,16 +182,22 @@
       "userVote": "up",
       "userVotes": [
         {
-          "userId": "user_1754498606845_aoutcys27",
+          "userId": "cmg88zsa300017kbsvllkpdof",
           "voteType": "up",
           "timestamp": "2025-09-04T05:52:58.628Z",
           "weekId": "2025-W36"
         },
         {
-          "userId": "user_1754498606845_aoutcys27",
+          "userId": "cmg88zsa300017kbsvllkpdof",
           "voteType": "up",
           "timestamp": "2025-09-09T08:52:54.251Z",
           "weekId": "2025-W37"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-03T08:40:15.630Z",
+          "weekId": "2025-W40"
         }
       ]
     },
@@ -187,9 +207,9 @@
       "imageUrl": "/gallery/gallery-1756956038177.jpg",
       "thumbnailUrl": "/gallery/gallery-1756956038177.jpg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -217,9 +237,9 @@
       "imageUrl": "/gallery/gallery-1756956090646.jpg",
       "thumbnailUrl": "/gallery/gallery-1756956090646.jpg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -247,9 +267,9 @@
       "imageUrl": "/gallery/gallery-1756956170432.jpg",
       "thumbnailUrl": "/gallery/gallery-1756956170432.jpg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -273,7 +293,7 @@
       "userVote": "up",
       "userVotes": [
         {
-          "userId": "user_1754498606845_aoutcys27",
+          "userId": "cmg88zsa300017kbsvllkpdof",
           "voteType": "up",
           "timestamp": "2025-09-09T08:39:34.301Z",
           "weekId": "2025-W37"
@@ -286,9 +306,9 @@
       "imageUrl": "/gallery/gallery-1756957214407.svg",
       "thumbnailUrl": "/gallery/gallery-1756957214407.svg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -297,12 +317,12 @@
       "id": "img_1756957214409_jqw1a4q9m",
       "createdAt": "2025-09-04T03:40:14.409Z",
       "votes": {
-        "upvotes": 1,
+        "upvotes": 2,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W37"
+        "weekId": "2025-W40"
       },
       "views": 0,
       "downloads": 0,
@@ -312,10 +332,16 @@
       "userVote": "up",
       "userVotes": [
         {
-          "userId": "user_1754498606845_aoutcys27",
+          "userId": "cmg88zsa300017kbsvllkpdof",
           "voteType": "up",
           "timestamp": "2025-09-09T08:46:40.872Z",
           "weekId": "2025-W37"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-03T08:58:06.022Z",
+          "weekId": "2025-W40"
         }
       ]
     },
@@ -325,9 +351,9 @@
       "imageUrl": "/gallery/gallery-1756957252845.png",
       "thumbnailUrl": "/gallery/gallery-1756957252845.png",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -355,9 +381,9 @@
       "imageUrl": "/gallery/gallery-1757398706666.jpg",
       "thumbnailUrl": "/gallery/gallery-1757398706666.jpg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -385,9 +411,9 @@
       "imageUrl": "/gallery/gallery-1757398993285.jpg",
       "thumbnailUrl": "/gallery/gallery-1757398993285.jpg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -417,9 +443,9 @@
       "imageUrl": "/gallery/gallery-1757399242819.png",
       "thumbnailUrl": "/gallery/gallery-1757399242819.png",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -449,9 +475,9 @@
       "imageUrl": "/gallery/gallery-1757408720331.jpg",
       "thumbnailUrl": "/gallery/gallery-1757408720331.jpg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "/dice/Titles/Knight.svg"
       },
@@ -476,9 +502,9 @@
         {
           "id": "comment_1757411939021_47zxbqvan",
           "author": {
-            "id": "user_1754498606845_aoutcys27",
-            "name": "KingDiceKSA",
-            "avatar": "/generated/dice-1756955869719.svg",
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg",
             "title": "Knight"
           },
           "content": "gfgf",
@@ -486,15 +512,15 @@
           "isEdited": false,
           "likes": 1,
           "userLikes": [
-            "user_1754498606845_aoutcys27"
+            "cmg88zsa300017kbsvllkpdof"
           ],
           "replies": [
             {
               "id": "reply_1757411944178_wtmiwl0y4",
               "author": {
-                "id": "user_1754498606845_aoutcys27",
-                "name": "KingDiceKSA",
-                "avatar": "/generated/dice-1756955869719.svg",
+                "id": "cmg88zsa300017kbsvllkpdof",
+                "name": "kingdice",
+                "avatar": "/generated/dice-1759344526558.svg",
                 "title": "Knight"
               },
               "content": "fdfdfd",
@@ -502,7 +528,7 @@
               "isEdited": false,
               "likes": 1,
               "userLikes": [
-                "user_1754498606845_aoutcys27"
+                "cmg88zsa300017kbsvllkpdof"
               ],
               "parentCommentId": "comment_1757411939021_47zxbqvan"
             }
@@ -511,9 +537,9 @@
         {
           "id": "comment_1757453005557_oz79agu1t",
           "author": {
-            "id": "user_1754498606845_aoutcys27",
-            "name": "KingDiceKSA",
-            "avatar": "/generated/dice-1756955869719.svg",
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg",
             "title": "Knight"
           },
           "content": "hghtghf",
@@ -526,9 +552,9 @@
         {
           "id": "comment_1757453616477_hemeth4hf",
           "author": {
-            "id": "user_1754498606845_aoutcys27",
-            "name": "KingDiceKSA",
-            "avatar": "/generated/dice-1756955869719.svg",
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg",
             "title": "Knight"
           },
           "content": "ssss",
@@ -536,7 +562,7 @@
           "isEdited": false,
           "likes": 1,
           "userLikes": [
-            "user_1754498606845_aoutcys27"
+            "cmg88zsa300017kbsvllkpdof"
           ],
           "replies": []
         }
@@ -544,7 +570,7 @@
       "userVote": "up",
       "userVotes": [
         {
-          "userId": "user_1754498606845_aoutcys27",
+          "userId": "cmg88zsa300017kbsvllkpdof",
           "voteType": "up",
           "timestamp": "2025-09-09T21:36:47.685Z",
           "weekId": "2025-W37"
@@ -557,9 +583,9 @@
       "imageUrl": "/gallery/gallery-1757453634977.jpg",
       "thumbnailUrl": "/gallery/gallery-1757453634977.jpg",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "Knight"
       },
@@ -577,20 +603,34 @@
       },
       "views": 0,
       "downloads": 0,
-      "comments": 1,
+      "comments": 2,
       "isModerated": false,
       "isDraft": false,
       "commentsList": [
         {
           "id": "comment_1757453897221_jqcuiezq5",
           "author": {
-            "id": "user_1754498606845_aoutcys27",
-            "name": "KingDiceKSA",
-            "avatar": "/generated/dice-1756955869719.svg",
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg",
             "title": "Knight"
           },
           "content": "Test",
           "createdAt": "2025-09-09T21:38:17.221Z",
+          "isEdited": false,
+          "likes": 0,
+          "userLikes": [],
+          "replies": []
+        },
+        {
+          "id": "comment_1759484470551_jhjfen9x7",
+          "author": {
+            "id": "cmg88zsa300017kbsvllkpdof",
+            "name": "kingdice",
+            "avatar": "/generated/dice-1759344526558.svg"
+          },
+          "content": "jkj",
+          "createdAt": "2025-10-03T09:41:10.551Z",
           "isEdited": false,
           "likes": 0,
           "userLikes": [],
@@ -604,9 +644,9 @@
       "imageUrl": "/gallery/gallery-1757453919863.png",
       "thumbnailUrl": "/gallery/gallery-1757453919863.png",
       "author": {
-        "id": "user_1754498606845_aoutcys27",
-        "name": "KingDiceKSA",
-        "avatar": "/generated/dice-1756955869719.svg",
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg",
         "reputation": 1000,
         "title": "Knight"
       },
@@ -615,18 +655,27 @@
       "id": "img_1757453919868_bkvrvoxwr",
       "createdAt": "2025-09-09T21:38:39.868Z",
       "votes": {
-        "upvotes": 0,
+        "upvotes": 1,
         "downvotes": 0
       },
       "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W37"
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W40"
       },
       "views": 0,
       "downloads": 0,
       "comments": 0,
       "isModerated": false,
-      "isDraft": false
+      "isDraft": false,
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-03T08:40:16.824Z",
+          "weekId": "2025-W40"
+        }
+      ]
     }
   ],
   "categories": [

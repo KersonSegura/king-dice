@@ -4,19 +4,25 @@
     "title": "Test Post",
     "content": "This is a test post",
     "author": {
-      "id": "test_user",
-      "name": "Test User",
-      "avatar": "/DiceLogo.svg",
+      "id": "cmg88zsa300017kbsvllkpdof",
+      "name": "kingdice",
+      "avatar": "/generated/dice-1759344526558.svg",
       "reputation": 0
     },
     "category": "general",
     "createdAt": "2025-09-09T16:43:07.152Z",
     "votes": {
       "upvotes": 0,
-      "downvotes": 0
+      "downvotes": 1
     },
-    "userVote": null,
-    "userVotes": [],
+    "userVote": "down",
+    "userVotes": [
+      {
+        "userId": "cmg88zsa300017kbsvllkpdof",
+        "voteType": "down",
+        "timestamp": "2025-10-03T00:08:44.224Z"
+      }
+    ],
     "replies": 0,
     "isModerated": true,
     "moderationResult": {
@@ -29,19 +35,25 @@
     "title": "bgfgfbb",
     "content": "bbbbb",
     "author": {
-      "id": "user_1754498606845_aoutcys27",
-      "name": "KingDiceKSA",
-      "avatar": "/generated/dice-1756955869719.svg",
+      "id": "cmg88zsa300017kbsvllkpdof",
+      "name": "kingdice",
+      "avatar": "/generated/dice-1759344526558.svg",
       "reputation": 1000
     },
     "category": "reviews",
     "createdAt": "2025-09-09T16:42:43.654Z",
     "votes": {
       "upvotes": 0,
-      "downvotes": 0
+      "downvotes": 1
     },
-    "userVote": null,
-    "userVotes": [],
+    "userVote": "down",
+    "userVotes": [
+      {
+        "userId": "cmg88zsa300017kbsvllkpdof",
+        "voteType": "down",
+        "timestamp": "2025-10-03T00:08:44.438Z"
+      }
+    ],
     "replies": 0,
     "isModerated": true,
     "moderationResult": {
@@ -54,9 +66,9 @@
     "title": "TTTTest",
     "content": "tttttt",
     "author": {
-      "id": "user_1754498606845_aoutcys27",
-      "name": "KingDiceKSA",
-      "avatar": "/generated/dice-1756955869719.svg",
+      "id": "cmg88zsa300017kbsvllkpdof",
+      "name": "kingdice",
+      "avatar": "/generated/dice-1759344526558.svg",
       "reputation": 1000
     },
     "category": "reviews",
@@ -79,19 +91,25 @@
     "title": "gfdgd",
     "content": "fdgdgdfg",
     "author": {
-      "id": "user_1754498606845_aoutcys27",
-      "name": "KingDiceKSA",
-      "avatar": "/generated/dice-1756955869719.svg",
+      "id": "cmg88zsa300017kbsvllkpdof",
+      "name": "kingdice",
+      "avatar": "/generated/dice-1759344526558.svg",
       "reputation": 1000
     },
     "category": "general",
     "createdAt": "2025-09-09T16:35:51.590Z",
     "votes": {
       "upvotes": 0,
-      "downvotes": 0
+      "downvotes": 1
     },
-    "userVote": null,
-    "userVotes": [],
+    "userVote": "down",
+    "userVotes": [
+      {
+        "userId": "cmg88zsa300017kbsvllkpdof",
+        "voteType": "down",
+        "timestamp": "2025-10-03T00:08:47.077Z"
+      }
+    ],
     "replies": 0,
     "isModerated": true,
     "moderationResult": {
@@ -104,9 +122,9 @@
     "title": "How Do You Teach Complex Games Without Losing Everyone?",
     "content": "I love heavy games, but I’ve definitely had moments where teaching something like Gaia Project or Ark Nova just made everyone’s eyes glaze over.\n\nWhat are your best tips for teaching big or rule-heavy games to a group? Especially when they have mixed experience levels?\n\nDo you start with a theme overview, skip some rules, jump into a mock round, or just read the manual out loud (😬)? I’d love to hear your teaching hacks, your fails, or even what not to do.",
     "author": {
-      "id": "user_1754496521151_rigsrdk2z",
-      "name": "KingDiceKSA",
-      "avatar": "/generated/dice-1756757774949.svg",
+      "id": "cmg88zsa300017kbsvllkpdof",
+      "name": "kingdice",
+      "avatar": "/generated/dice-1759344526558.svg",
       "reputation": 0
     },
     "category": "strategy",
@@ -124,12 +142,12 @@
     },
     "userVotes": [
       {
-        "userId": "user_1754496521151_rigsrdk2z",
+        "userId": "cmg88zsa300017kbsvllkpdof",
         "voteType": "down",
         "timestamp": "2025-09-09T15:51:13.244Z"
       },
       {
-        "userId": "user_1754498606845_aoutcys27",
+        "userId": "cmg88zsa300017kbsvllkpdof",
         "voteType": "up",
         "timestamp": "2025-09-09T16:14:34.995Z"
       }
@@ -140,9 +158,9 @@
     "title": "👑🎲 Welcome to King Dice!",
     "content": "Hey there!\nWelcome to King Dice, a new community for every board game enthusiast.\n\nHere, you can:\n💬 Join forum discussions\n🎲 Customize your own die avatar\n📸 Share your setups, collections & fan art\n🗳 Vote for your favorite games\n📚 Explore rules and discover new games\n\nThis is your kingdom now, so jump in, introduce yourself, and start rolling with us!\n\nLet the games begin! 🏁",
     "author": {
-      "id": "user_1754496521151_rigsrdk2z",
-      "name": "KingDiceKSA",
-      "avatar": "/generated/dice-1756757774949.svg",
+      "id": "cmg88zsa300017kbsvllkpdof",
+      "name": "kingdice",
+      "avatar": "/generated/dice-1759344526558.svg",
       "reputation": 0
     },
     "category": "general",
@@ -160,7 +178,7 @@
     },
     "userVotes": [
       {
-        "userId": "user_1754496521151_rigsrdk2z",
+        "userId": "cmg88zsa300017kbsvllkpdof",
         "voteType": "down",
         "timestamp": "2025-08-07T07:49:27.331Z"
       }

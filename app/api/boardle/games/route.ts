@@ -509,11 +509,34 @@ export async function GET(request: NextRequest) {
       return clues.slice(0, 5);
     };
 
+    // Fetch clues from database
+    const fetchCluesFromDatabase = async (gameName: string): Promise<string[]> => {
+      try {
+        const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/boardle/hints?gameName=${encodeURIComponent(gameName)}&gameMode=title`);
+        if (response.ok) {
+          const data = await response.json();
+          return data.hints || [];
+        }
+      } catch (error) {
+        console.error('Error fetching hints from database:', error);
+      }
+      
+      // Fallback to generic clues if database fetch fails
+      return [
+        'Players take turns making moves on a game board.',
+        'The game involves collecting resources or scoring points.',
+        'Players compete to achieve victory conditions.',
+        'The game includes cards, dice, or other game components.',
+        'Strategy and planning are important for success.'
+      ];
+    };
+
     // Format for Boardle component - return only the daily game
+    const clues = await fetchCluesFromDatabase(dailyGame.name);
     const boardleGames = [{
       name: dailyGame.name.toUpperCase(),
       imageUrl: '', // Title Mode doesn't use images
-      clues: generateCluesForGame(dailyGame.name)
+      clues: clues
     }];
     
     console.log(`🎯 Title Mode: Daily game selected (Day ${dailyGameIndex + 1})`);

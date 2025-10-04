@@ -542,10 +542,33 @@ export async function GET(request: NextRequest) {
     };
 
     // Format for Boardle component - return only the daily game
+    // Fetch clues from database
+    const fetchCluesFromDatabase = async (gameName: string): Promise<string[]> => {
+      try {
+        const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/boardle/hints?gameName=${encodeURIComponent(gameName)}&gameMode=card`);
+        if (response.ok) {
+          const data = await response.json();
+          return data.hints || [];
+        }
+      } catch (error) {
+        console.error('Error fetching hints from database:', error);
+      }
+      
+      // Fallback to generic clues if database fetch fails
+      return [
+        'Players use cards to make moves or take actions.',
+        'The game involves collecting or playing cards strategically.',
+        'Players compete to score points or achieve goals.',
+        'Cards have different values, effects, or abilities.',
+        'Hand management and timing are important for success.'
+      ];
+    };
+
+    const clues = await fetchCluesFromDatabase(dailyGame.name);
     const boardleGames = [{
       name: dailyGame.name.toUpperCase(),
       imageUrl: `/api/boardle/card-image?id=${dailyGameIndex}`,
-      clues: generateCluesForGame(dailyGame.name),
+      clues: clues,
       zoomType: dailyGame.zoomType
     }];
     

@@ -10,13 +10,16 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const username = searchParams.get('username');
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    if (!userId && !username) {
+      return NextResponse.json({ error: 'User ID or username is required' }, { status: 400 });
     }
 
+    const whereClause = userId ? { id: userId } : { username: username };
+
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: whereClause,
       select: {
         collectionPhoto: true,
         favoriteCard: true,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, MessageCircle, Heart, Flag, Trash2 } from 'lucide-react';
+import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import ExpandableText from './ExpandableText';
 import ReportContent from './ReportContent';
 
@@ -60,6 +60,10 @@ interface ImageModalProps {
   currentUser?: any;
   onRefreshComments?: () => void;
   onRefreshActivity?: () => void;
+  // Navigation props
+  allImages?: any[];
+  currentImageIndex?: number;
+  onNavigate?: (direction: 'prev' | 'next') => void;
 }
 
 export default function ImageModal({ 
@@ -91,7 +95,10 @@ export default function ImageModal({
   isAuthenticated = false,
   currentUser,
   onRefreshComments,
-  onRefreshActivity
+  onRefreshActivity,
+  allImages = [],
+  currentImageIndex = 0,
+  onNavigate
 }: ImageModalProps) {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -114,6 +121,32 @@ export default function ImageModal({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isOpen || !onNavigate || !allImages.length) return;
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        onNavigate('prev');
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        onNavigate('next');
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onNavigate, onClose, allImages.length]);
 
   const handleAddComment = async () => {
     if (!newComment.trim() || !onAddComment || isSubmittingComment) return;
@@ -304,24 +337,259 @@ export default function ImageModal({
     <div 
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
       style={{ pointerEvents: 'auto' }}
-      onClick={(e) => {
-        console.log('Backdrop clicked, closing modal');
-        console.log('Event target:', e.target);
-        console.log('Event currentTarget:', e.currentTarget);
-        console.log('Are they the same?', e.target === e.currentTarget);
-        onClose();
-      }}
+      onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex"
+        className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col sm:flex-row"
         style={{ pointerEvents: 'auto' }}
-        onClick={(e) => {
-          console.log('Modal content clicked, stopping propagation');
-          e.stopPropagation();
-        }}
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Layout - Instagram Style */}
+        <div className="sm:hidden flex flex-col h-full">
+          {/* Header with Avatar, User, Date, and Close Button */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div 
+                className="w-8 h-8 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
+                style={{
+                  backgroundImage: author?.avatar ? `url(${author.avatar})` : undefined,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundColor: author?.avatar ? undefined : '#d1d5db'
+                }}
+              />
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">{author?.name || 'Unknown User'}</h3>
+                <p className="text-xs text-gray-500">{createdAt ? formatRelativeTime(createdAt) : ''}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Image - Full Width */}
+          <div className="flex-1 bg-gray-100 flex items-center justify-center relative group">
+            {/* Navigation Arrows */}
+            {onNavigate && allImages.length > 1 && (
+              <>
+                {/* Previous Arrow */}
+                {currentImageIndex > 0 && (
+                  <button
+                    onClick={() => onNavigate('prev')}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                )}
+                
+                {/* Next Arrow */}
+                {currentImageIndex < allImages.length - 1 && (
+                  <button
+                    onClick={() => onNavigate('next')}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                )}
+              </>
+            )}
+            
+            <img
+              src={imageUrl}
+              alt={alt || title || 'Gallery image'}
+              className="w-full h-full object-contain"
+            />
+          </div>
+
+          {/* Actions and Comments - Below Image */}
+          <div className="flex flex-col border-t border-gray-200">
+            {/* Actions Row */}
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={onLike}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                      isLiked 
+                      ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                    <span>{likeCount || 0}</span>
+                  </button>
+                  
+                  {/* Featured Badge */}
+                  {isFeatured && (
+                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-[#fbae17] text-white flex items-center gap-1 shadow-sm">
+                      <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2.7 0l1.4-5.9L12 14l2.9-3.9L16.3 16H7.7z"/>
+                      </svg>
+                      {category === 'the-kings-card' ? 'Card of the Week' : 'Dice of the Week'}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  {canDelete && onDelete && (
+                    <button
+                      onClick={handleImageDelete}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
+                  
+                  {canReport && onReport && (
+                    <button
+                      onClick={handleImageReport}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title="Report"
+                    >
+                      <Flag className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              {description && (
+                <div className="text-gray-700 mb-4 max-h-20 overflow-y-auto text-sm">
+                  <p className="whitespace-pre-wrap">
+                    {description}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Comments Section */}
+            <div className="border-t border-gray-200 p-4 max-h-48 overflow-y-auto">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                Comments ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
+              </h3>
+              
+              {/* Add Comment Form */}
+              {isAuthenticated && onAddComment && (
+                <div className="mb-4">
+                  <div className="flex space-x-2">
+                    <div 
+                      className="w-6 h-6 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
+                      style={{
+                        backgroundImage: currentUser?.avatar ? `url(${currentUser.avatar})` : undefined,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundColor: currentUser?.avatar ? undefined : '#d1d5db'
+                      }}
+                    />
+                    <div className="flex-1 relative">
+                      <div className="relative">
+                        <textarea
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          placeholder="Write a comment..."
+                          className="w-full p-2 pr-8 border border-gray-300 rounded-full focus:border-blue-500 focus:outline-none resize-none bg-gray-50 focus:bg-white transition-colors text-sm"
+                          rows={1}
+                          style={{ 
+                            minHeight: '32px', 
+                            maxHeight: '80px'
+                          }}
+                          onInput={(e) => {
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = 'auto';
+                            target.style.height = target.scrollHeight + 'px';
+                          }}
+                        />
+                        <button
+                          onClick={handleAddComment}
+                          disabled={!newComment.trim() || isSubmittingComment}
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                        >
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Comments List - Compact for Mobile */}
+              <div className="space-y-3">
+                {comments.slice(0, 5).map((comment) => (
+                  <div key={comment.id} className="space-y-2">
+                    {/* Main Comment */}
+                    <div className="flex space-x-2">
+                      <div 
+                        className="w-6 h-6 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
+                        style={{
+                          backgroundImage: comment.author.avatar ? `url(${comment.author.avatar})` : undefined,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundColor: comment.author.avatar ? undefined : '#d1d5db'
+                        }}
+                      />
+                      <div className="flex-1">
+                        <div className="bg-gray-50 rounded-lg p-2">
+                          <div className="flex items-center space-x-1 mb-1">
+                            <span className="font-semibold text-gray-900 text-xs">{comment.author.name}</span>
+                            <span className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</span>
+                          </div>
+                          <p className="text-gray-700 text-xs">{comment.content}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Show More Comments Button */}
+                {comments.length > 5 && (
+                  <button className="text-xs text-blue-500 hover:text-blue-600 w-full text-left">
+                    View all {comments.length} comments
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout - Facebook Style */}
+        <div className="hidden sm:flex w-full">
         {/* Left Side - Image */}
-        <div className="flex-1 bg-gray-100 flex items-center justify-center">
+        <div className="flex-1 bg-gray-100 flex items-center justify-center relative group">
+          {/* Navigation Arrows */}
+          {onNavigate && allImages.length > 1 && (
+            <>
+              {/* Previous Arrow */}
+              {currentImageIndex > 0 && (
+                <button
+                  onClick={() => onNavigate('prev')}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+              
+              {/* Next Arrow */}
+              {currentImageIndex < allImages.length - 1 && (
+                <button
+                  onClick={() => onNavigate('next')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+            </>
+          )}
+          
           <img
             src={imageUrl}
             alt={alt || title || 'Gallery image'}
@@ -334,17 +602,16 @@ export default function ImageModal({
           {/* Header with Close Button */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                {author?.avatar ? (
-                  <img
-                    src={author.avatar}
-                    alt={author.name}
-                    className="w-10 h-10 rounded-full object-cover"
+                <div 
+                  className="w-10 h-10 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
+                  style={{
+                    backgroundImage: author?.avatar ? `url(${author.avatar})` : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundColor: author?.avatar ? undefined : '#d1d5db'
+                  }}
                 />
-              ) : (
-                  <div className="w-6 h-6 bg-gray-400 rounded-full"></div>
-                )}
-              </div>
               <div>
                 <h3 className="font-semibold text-gray-900">{author?.name || 'Unknown User'}</h3>
                 <p className="text-sm text-gray-500">{createdAt ? formatDate(createdAt) : ''}</p>
@@ -462,9 +729,9 @@ export default function ImageModal({
                           <button
                             onClick={handleAddComment}
                             disabled={!newComment.trim() || isSubmittingComment}
-                            className="absolute right-1 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors p-1 bg-transparent border-none outline-none"
                           >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                             </svg>
                           </button>
@@ -605,9 +872,9 @@ export default function ImageModal({
                                 <button
                                       onClick={handleReplySubmit}
                                   disabled={!replyContent.trim() || isSubmittingReply}
-                                      className="absolute right-1 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                                      className="absolute right-1 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors p-1 bg-transparent border-none outline-none"
                                 >
-                                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                                       </svg>
                                 </button>
@@ -702,6 +969,7 @@ export default function ImageModal({
                       )}
                     </div>
                   ))}
+                </div>
                 </div>
                 </div>
             </div>

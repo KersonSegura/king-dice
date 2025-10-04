@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
     
     if (search) {
       whereClause.OR = [
-        { nameEn: { contains: search } },
-        { nameEs: { contains: search } },
-        { name: { contains: search } }
+        { nameEn: { contains: search, mode: 'insensitive' } },
+        { nameEs: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } }
       ];
     }
     
@@ -52,8 +52,9 @@ export async function GET(request: NextRequest) {
         baseGameExpansions: true,
       },
       orderBy: [
-        { yearRelease: 'desc' },
-        { nameEn: 'asc' }
+        // Prioritize exact matches first
+        { nameEn: 'asc' },
+        { yearRelease: 'desc' }
       ],
       skip: offset,
       take: limit,

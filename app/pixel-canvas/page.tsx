@@ -34,7 +34,7 @@ interface ChatMessage {
 }
 
 export default function PixelCanvasPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { socket, isConnected } = useSocket();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -49,12 +49,14 @@ export default function PixelCanvasPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated (but wait for auth to load)
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       setShowLoginModal(true);
+    } else if (isLoading) {
+      setShowLoginModal(false); // Hide modal while loading
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
 
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
@@ -86,7 +88,7 @@ export default function PixelCanvasPage() {
           }
         }
       } catch (error) {
-        console.error('Error initializing Pixel Canvas chat:', error);
+        // Silent error handling for chat initialization
       }
     };
 
@@ -163,7 +165,6 @@ export default function PixelCanvasPage() {
       
       // If it's midnight (00:00), trigger a chat refresh
       if (hours === 0 && minutes === 0) {
-        console.log('🕐 Midnight detected - refreshing Pixel Canvas chat messages');
         // Clear local messages and refetch
         setChatMessages([]);
         
@@ -176,7 +177,7 @@ export default function PixelCanvasPage() {
               setChatMessages(data.chat.messages || []);
             }
           } catch (error) {
-            console.error('Error refreshing Pixel Canvas chat after reset:', error);
+            // Silent error handling for chat refresh
           }
         }, 1000); // Wait 1 second after midnight
       }
@@ -256,8 +257,20 @@ export default function PixelCanvasPage() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Show loading state while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -284,9 +297,12 @@ export default function PixelCanvasPage() {
           {/* Right Column - Live Chat */}
           <div className="flex-1">
             <div className="bg-white rounded-lg shadow-sm border p-6 h-[700px] flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Live Chat</h2>
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <div className="mb-4">
+                {/* Title - First Line */}
+                <h2 className="text-xl font-semibold text-gray-900 text-center mb-3">Live Chat</h2>
+                
+                {/* Stats - Second Line */}
+                <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 flex-wrap gap-2">
                   <div className="flex items-center space-x-1">
                     <Users className="w-4 h-4" />
                     <span>{onlineUsers} online</span>

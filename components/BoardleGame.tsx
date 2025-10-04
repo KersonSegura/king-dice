@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, X, HelpCircle, RotateCcw, Lightbulb, Type, Image, RectangleHorizontal } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBoardleStats } from '@/hooks/useBoardleStats';
@@ -109,6 +109,7 @@ export function BoardleGame({}: BoardleGameProps) {
   
   // Validation message state
   const [showValidationMessage, setShowValidationMessage] = useState(false);
+  const [showCluesPopup, setShowCluesPopup] = useState(false);
   
   // User authentication and statistics
   const { user, isAuthenticated } = useAuth();
@@ -968,7 +969,7 @@ export function BoardleGame({}: BoardleGameProps) {
     return revealedLetters.map(([letter, status]) => (
       <div
         key={letter}
-        className={`w-8 h-8 border-2 flex items-center justify-center text-sm font-bold rounded ${
+        className={`w-6 h-6 sm:w-8 sm:h-8 border-2 flex items-center justify-center text-xs sm:text-sm font-bold rounded ${
           status === 'correct' 
             ? 'bg-green-500 text-white border-green-500' 
             : 'bg-yellow-500 text-white border-yellow-500'
@@ -1016,7 +1017,7 @@ export function BoardleGame({}: BoardleGameProps) {
     return revealedLetters.map(([letter, status]) => (
       <div
         key={letter}
-        className={`w-8 h-8 border-2 flex items-center justify-center text-sm font-bold rounded ${
+        className={`w-6 h-6 sm:w-8 sm:h-8 border-2 flex items-center justify-center text-xs sm:text-sm font-bold rounded ${
           status === 'correct' 
             ? 'bg-green-500 text-white border-green-500' 
             : 'bg-yellow-500 text-white border-yellow-500'
@@ -1064,7 +1065,7 @@ export function BoardleGame({}: BoardleGameProps) {
     return revealedLetters.map(([letter, status]) => (
       <div
         key={letter}
-        className={`w-8 h-8 border-2 flex items-center justify-center text-sm font-bold rounded ${
+        className={`w-6 h-6 sm:w-8 sm:h-8 border-2 flex items-center justify-center text-xs sm:text-sm font-bold rounded ${
           status === 'correct' 
             ? 'bg-green-500 text-white border-green-500' 
             : 'bg-yellow-500 text-white border-yellow-500'
@@ -1437,15 +1438,16 @@ export function BoardleGame({}: BoardleGameProps) {
 
     const maxLength = targetGameData.name.length;
     const letters = guess.padEnd(maxLength, ' ').split('').slice(0, maxLength);
+    const tileSize = getResponsiveTileSize();
 
     return (
       <div key={index} className="flex items-center gap-3 mb-2">
         {/* Guess number */}
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+        <div className={`${tileSize} rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white shrink-0`} style={{ backgroundColor: '#4B86FE' }}>
           {index + 1}
         </div>
         {/* Guess row */}
-        <div className="flex gap-1 justify-center flex-wrap flex-1">
+        <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap flex-1">
           {letters.map((letter, letterIndex) => {
             const targetChar = targetGameData.name[letterIndex];
             let status = 'absent';
@@ -1472,7 +1474,7 @@ export function BoardleGame({}: BoardleGameProps) {
             return (
               <div
                 key={letterIndex}
-                className={`w-8 h-8 border-2 flex items-center justify-center text-sm font-bold rounded ${
+                className={`${tileSize} border-2 flex items-center justify-center text-xs sm:text-sm font-bold rounded ${
                   status === 'correct' ? 'bg-green-500 text-white border-green-500' :
                   status === 'present' ? 'bg-yellow-500 text-white border-yellow-500' :
                   status === 'space' ? 'bg-gray-300 border-gray-400' :
@@ -1496,25 +1498,26 @@ export function BoardleGame({}: BoardleGameProps) {
 
     const remainingGuesses = 6 - guesses.length;
     const rows = [];
+    const tileSize = getResponsiveTileSize();
 
     for (let i = 0; i < remainingGuesses; i++) {
       rows.push(
         <div key={`empty-${i}`} className="flex items-center gap-3 mb-2">
           {/* Empty guess number */}
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 border-2 border-gray-300 shrink-0">
+          <div className={`${tileSize} rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-gray-400 border-2 border-gray-300 shrink-0`}>
             {guesses.length + i + 1}
           </div>
           {/* Empty guess row */}
-          <div className="flex gap-1 justify-center flex-wrap flex-1">
+          <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap flex-1">
             {Array(targetGameData.name.length).fill('').map((_, j) => {
             const targetChar = targetGameData.name[j];
             
             return (
               <div 
                 key={j} 
-                className={`w-8 h-8 border-2 rounded flex items-center justify-center ${
+                className={`${tileSize} border-2 rounded flex items-center justify-center ${
                   targetChar === ' ' ? 'bg-gray-300 border-gray-400' :
-                  ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar) ? 'bg-blue-200 text-blue-800 border-blue-400 text-sm font-bold' :
+                  ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar) ? 'bg-blue-200 text-blue-800 border-blue-400 text-xs sm:text-sm font-bold' :
                   'bg-white border-gray-300'
                 }`}
               >
@@ -1536,15 +1539,16 @@ export function BoardleGame({}: BoardleGameProps) {
 
     const maxLength = targetGameData.name.length;
     const letters = guess.padEnd(maxLength, ' ').split('').slice(0, maxLength);
+    const tileSize = getResponsiveTileSize();
 
     return (
       <div key={index} className="flex items-center gap-3 mb-2">
         {/* Guess number */}
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+        <div className={`${tileSize} rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white shrink-0`} style={{ backgroundColor: '#4B86FE' }}>
           {index + 1}
         </div>
         {/* Guess row */}
-        <div className="flex gap-1 justify-center flex-wrap flex-1">
+        <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap flex-1">
           {letters.map((letter, letterIndex) => {
             const targetChar = targetGameData.name[letterIndex];
             let status = 'absent';
@@ -1571,7 +1575,7 @@ export function BoardleGame({}: BoardleGameProps) {
             return (
               <div
                 key={letterIndex}
-                className={`w-8 h-8 border-2 flex items-center justify-center text-sm font-bold rounded ${
+                className={`${tileSize} border-2 flex items-center justify-center text-xs sm:text-sm font-bold rounded ${
                   status === 'correct' ? 'bg-green-500 text-white border-green-500' :
                   status === 'present' ? 'bg-yellow-500 text-white border-yellow-500' :
                   status === 'space' ? 'bg-gray-300 border-gray-400' :
@@ -1595,25 +1599,26 @@ export function BoardleGame({}: BoardleGameProps) {
 
     const remainingGuesses = 6 - imageGuesses.length;
     const rows = [];
+    const tileSize = getResponsiveTileSize();
 
     for (let i = 0; i < remainingGuesses; i++) {
       rows.push(
         <div key={`empty-${i}`} className="flex items-center gap-3 mb-2">
           {/* Empty guess number */}
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 border-2 border-gray-300 shrink-0">
+          <div className={`${tileSize} rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-gray-400 border-2 border-gray-300 shrink-0`}>
             {imageGuesses.length + i + 1}
           </div>
           {/* Empty guess row */}
-          <div className="flex gap-1 justify-center flex-wrap flex-1">
+          <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap flex-1">
             {Array(targetGameData.name.length).fill('').map((_, j) => {
             const targetChar = targetGameData.name[j];
             
             return (
               <div 
                 key={j} 
-                className={`w-8 h-8 border-2 rounded flex items-center justify-center ${
+                className={`${tileSize} border-2 rounded flex items-center justify-center ${
                   targetChar === ' ' ? 'bg-gray-300 border-gray-400' :
-                  ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar) ? 'bg-blue-200 text-blue-800 border-blue-400 text-sm font-bold' :
+                  ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar) ? 'bg-blue-200 text-blue-800 border-blue-400 text-xs sm:text-sm font-bold' :
                   'bg-white border-gray-300'
                 }`}
               >
@@ -1635,15 +1640,16 @@ export function BoardleGame({}: BoardleGameProps) {
 
     const maxLength = targetGameData.name.length;
     const letters = guess.padEnd(maxLength, ' ').split('').slice(0, maxLength);
+    const tileSize = getResponsiveTileSize();
 
     return (
       <div key={index} className="flex items-center gap-3 mb-2">
         {/* Guess number */}
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+        <div className={`${tileSize} rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white shrink-0`} style={{ backgroundColor: '#4B86FE' }}>
           {index + 1}
         </div>
         {/* Guess row */}
-        <div className="flex gap-1 justify-center flex-wrap flex-1">
+        <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap flex-1">
           {letters.map((letter, letterIndex) => {
             const targetChar = targetGameData.name[letterIndex];
             let status = 'absent';
@@ -1670,7 +1676,7 @@ export function BoardleGame({}: BoardleGameProps) {
             return (
               <div
                 key={letterIndex}
-                className={`w-8 h-8 border-2 flex items-center justify-center text-sm font-bold rounded ${
+                className={`${tileSize} border-2 flex items-center justify-center text-xs sm:text-sm font-bold rounded ${
                   status === 'correct' ? 'bg-green-500 text-white border-green-500' :
                   status === 'present' ? 'bg-yellow-500 text-white border-yellow-500' :
                   status === 'space' ? 'bg-gray-300 border-gray-400' :
@@ -1694,25 +1700,26 @@ export function BoardleGame({}: BoardleGameProps) {
 
     const remainingGuesses = 6 - cardGuesses.length;
     const rows = [];
+    const tileSize = getResponsiveTileSize();
 
     for (let i = 0; i < remainingGuesses; i++) {
       rows.push(
         <div key={`empty-${i}`} className="flex items-center gap-3 mb-2">
           {/* Empty guess number */}
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 border-2 border-gray-300 shrink-0">
+          <div className={`${tileSize} rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-gray-400 border-2 border-gray-300 shrink-0`}>
             {cardGuesses.length + i + 1}
           </div>
           {/* Empty guess row */}
-          <div className="flex gap-1 justify-center flex-wrap flex-1">
+          <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap flex-1">
             {Array(targetGameData.name.length).fill('').map((_, j) => {
             const targetChar = targetGameData.name[j];
             
             return (
               <div 
                 key={j} 
-                className={`w-8 h-8 border-2 rounded flex items-center justify-center ${
+                className={`${tileSize} border-2 rounded flex items-center justify-center ${
                   targetChar === ' ' ? 'bg-gray-300 border-gray-400' :
-                  ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar) ? 'bg-blue-200 text-blue-800 border-blue-400 text-sm font-bold' :
+                  ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar) ? 'bg-blue-200 text-blue-800 border-blue-400 text-xs sm:text-sm font-bold' :
                   'bg-white border-gray-300'
                 }`}
               >
@@ -1728,40 +1735,111 @@ export function BoardleGame({}: BoardleGameProps) {
     return rows;
   };
 
+  // Helper function to get responsive tile size based on game name length
+  const getResponsiveTileSize = () => {
+    if (!targetGameData) return 'w-6 h-6 sm:w-8 sm:h-8';
+    
+    const nameLength = targetGameData.name.length;
+    
+    // For very long names (>15 chars), use smaller tiles on mobile ONLY
+    if (nameLength > 15) {
+      return 'w-5 h-5 sm:w-8 sm:h-8'; // Smaller on mobile, 32x32 on desktop
+    }
+    return 'w-6 h-6 sm:w-8 sm:h-8'; // 24x24 on mobile, 32x32 on desktop
+  };
+
+  // Helper function to get line break positions for smartphone view
+  const getLineBreakPositions = () => {
+    if (!targetGameData) return [];
+    
+    // Only apply wrapping logic on mobile view (sm and below)
+    // On desktop (lg and above), all games should fit in one line
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      return []; // No line breaks on desktop
+    }
+    
+    const name = targetGameData.name;
+    const breakPositions = [];
+    
+    // Find natural break points (spaces, colons, commas, dashes)
+    const naturalBreaks = [];
+    for (let i = 0; i < name.length; i++) {
+      if ([' ', ':', ',', '-'].includes(name[i])) {
+        naturalBreaks.push(i);
+      }
+    }
+    
+    // If we have natural breaks, try to split into 2 lines
+    if (naturalBreaks.length > 0) {
+      // Find the break point closest to the middle
+      const midPoint = Math.floor(name.length / 2);
+      let bestBreak = naturalBreaks[0];
+      
+      for (const breakPos of naturalBreaks) {
+        if (Math.abs(breakPos - midPoint) < Math.abs(bestBreak - midPoint)) {
+          bestBreak = breakPos;
+        }
+      }
+      
+      // Only add the break if it creates reasonable line lengths
+      const firstLineLength = bestBreak;
+      const secondLineLength = name.length - bestBreak - 1; // -1 to exclude the break character
+      
+      // Ensure both lines are reasonable length (at least 3 characters each)
+      if (firstLineLength >= 3 && secondLineLength >= 3) {
+        breakPositions.push(bestBreak + 1); // Break after the character
+      }
+    }
+    
+    return breakPositions;
+  };
+
   // Function to render individual letter inputs
   const renderLetterInputs = () => {
     if (!targetGameData) return null;
 
+    const tileSize = getResponsiveTileSize();
+    const lineBreakPositions = getLineBreakPositions();
+
     return (
-      <div className="flex gap-1 justify-center flex-wrap mb-4">
+      <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap mb-4">
         {Array.from({ length: targetGameData.name.length }).map((_, index) => {
           const targetChar = targetGameData.name[index];
           const isSpace = targetChar === ' ';
           const isSpecialChar = ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar);
           const isFlipping = flippingTiles.includes(index);
           
+          // Add line break at natural break points
+          const shouldBreakLine = lineBreakPositions.includes(index);
+          
           if (isSpace) {
             // Render a space indicator
             return (
+              <React.Fragment key={index}>
+                {shouldBreakLine && <div className="w-full" />}
               <div
-                key={index}
-                className="w-8 h-8 bg-gray-300 border-2 border-gray-400 rounded flex items-center justify-center"
+                  className={`${tileSize} bg-gray-300 border-2 border-gray-400 rounded flex items-center justify-center`}
               />
+              </React.Fragment>
             );
           } else if (isSpecialChar) {
             // Render special character (non-editable)
             return (
+              <React.Fragment key={index}>
+                {shouldBreakLine && <div className="w-full" />}
               <div
-                key={index}
-                className="w-8 h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-sm font-bold"
+                  className={`${tileSize} bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold`}
               >
                 {targetChar}
               </div>
+              </React.Fragment>
             );
           } else {
             // Render input for regular letters with flip animation
             return (
-              <div key={index} className="relative">
+              <React.Fragment key={index}>
+                {shouldBreakLine && <div className="w-full" />}
+                <div className="relative">
                 <input
                   id={`letter-input-${index}`}
                   type="text"
@@ -1769,7 +1847,7 @@ export function BoardleGame({}: BoardleGameProps) {
                   value={letterInputs[index] || ''}
                   onChange={(e) => handleLetterInputChange(index, e.target.value)}
                   onKeyDown={(e) => handleLetterInputKeyDown(index, e)}
-                  className={`w-8 h-8 border-2 border-gray-300 rounded text-center text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
+                    className={`${tileSize} border-2 border-gray-300 rounded text-center text-xs sm:text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 ${
                     isFlipping ? 'scale-95 opacity-75' : ''
                   }`}
                   style={{ '--tw-ring-color': '#4B86FE' } as React.CSSProperties}
@@ -1777,7 +1855,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 {/* Flip animation overlay */}
                 {isFlipping && (
                   <div 
-                    className="absolute inset-0 w-8 h-8 rounded border-2 flex items-center justify-center text-sm font-bold text-white animate-flip"
+                      className={`absolute inset-0 ${tileSize} rounded border-2 flex items-center justify-center text-xs sm:text-sm font-bold text-white animate-flip`}
                     style={{
                       backgroundColor: getFlipTileColor(index, letterInputs[index] || ''),
                       borderColor: getFlipTileColor(index, letterInputs[index] || '')
@@ -1787,6 +1865,7 @@ export function BoardleGame({}: BoardleGameProps) {
                   </div>
                 )}
               </div>
+              </React.Fragment>
             );
           }
         })}
@@ -1832,16 +1911,16 @@ export function BoardleGame({}: BoardleGameProps) {
         {gameMode === 'title' && guesses && guesses.map((guess, index) => (
           <div key={index} className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
-            <div className="flex gap-1 justify-center">
+            <div className="flex gap-0.5 sm:gap-1 justify-center">
               {Array.from({ length: maxLength }).map((_, j) => {
                 const targetChar = targetGameData.name[j];
                 const guessChar = guess[j] || '';
                 
                 if (targetChar === ' ') {
-                  return <div key={j} className="w-8 h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
+                  return <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
                 } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
                   return (
-                    <div key={j} className="w-8 h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-sm font-bold">
+                    <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
                       {targetChar}
                     </div>
                   );
@@ -1856,7 +1935,7 @@ export function BoardleGame({}: BoardleGameProps) {
                   return (
                     <div 
                       key={j} 
-                      className={`w-8 h-8 border-2 border-transparent rounded flex items-center justify-center text-sm font-bold ${
+                      className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
                         isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
                       }`}
                     >
@@ -1872,16 +1951,16 @@ export function BoardleGame({}: BoardleGameProps) {
         {gameMode === 'image' && imageGuesses && imageGuesses.map((guess, index) => (
           <div key={index} className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
-            <div className="flex gap-1 justify-center">
+            <div className="flex gap-0.5 sm:gap-1 justify-center">
               {Array.from({ length: maxLength }).map((_, j) => {
                 const targetChar = targetGameData.name[j];
                 const guessChar = guess[j] || '';
                 
                 if (targetChar === ' ') {
-                  return <div key={j} className="w-8 h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
+                  return <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
                 } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
                   return (
-                    <div key={j} className="w-8 h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-sm font-bold">
+                    <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
                       {targetChar}
                     </div>
                   );
@@ -1896,7 +1975,7 @@ export function BoardleGame({}: BoardleGameProps) {
                   return (
                     <div 
                       key={j} 
-                      className={`w-8 h-8 border-2 border-transparent rounded flex items-center justify-center text-sm font-bold ${
+                      className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
                         isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
                       }`}
                     >
@@ -1912,16 +1991,16 @@ export function BoardleGame({}: BoardleGameProps) {
         {gameMode === 'card' && cardGuesses && cardGuesses.map((guess, index) => (
           <div key={index} className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
-            <div className="flex gap-1 justify-center">
+            <div className="flex gap-0.5 sm:gap-1 justify-center">
               {Array.from({ length: maxLength }).map((_, j) => {
                 const targetChar = targetGameData.name[j];
                 const guessChar = guess[j] || '';
                 
                 if (targetChar === ' ') {
-                  return <div key={j} className="w-8 h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
+                  return <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
                 } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
                   return (
-                    <div key={j} className="w-8 h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-sm font-bold">
+                    <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
                       {targetChar}
                     </div>
                   );
@@ -1936,7 +2015,7 @@ export function BoardleGame({}: BoardleGameProps) {
                   return (
                     <div 
                       key={j} 
-                      className={`w-8 h-8 border-2 border-transparent rounded flex items-center justify-center text-sm font-bold ${
+                      className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
                         isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
                       }`}
                     >
@@ -1953,22 +2032,33 @@ export function BoardleGame({}: BoardleGameProps) {
          {currentRow < 6 && !gameOver && (
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-blue-600 w-6 text-right font-bold">{currentRow + 1}</span>
-            <div className="flex gap-1 justify-center">
+            <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
               {Array.from({ length: maxLength }).map((_, index) => {
                 const targetChar = targetGameData.name[index];
+                const lineBreakPositions = getLineBreakPositions();
+                const shouldBreakLine = lineBreakPositions.includes(index);
                 
                 if (targetChar === ' ') {
-                  return <div key={index} className="w-8 h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
+                  return (
+                    <React.Fragment key={index}>
+                      {shouldBreakLine && <div className="w-full" />}
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />
+                    </React.Fragment>
+                  );
                 } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
                   return (
-                    <div key={index} className="w-8 h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-sm font-bold">
+                    <React.Fragment key={index}>
+                      {shouldBreakLine && <div className="w-full" />}
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
                       {targetChar}
                     </div>
+                    </React.Fragment>
                   );
                 } else {
             return (
+                    <React.Fragment key={index}>
+                      {shouldBreakLine && <div className="w-full" />}
               <input
-                key={index}
                 id={`letter-input-${index}`}
                 type="text"
                 maxLength={1}
@@ -1977,13 +2067,18 @@ export function BoardleGame({}: BoardleGameProps) {
                 value={letterInputs[index] || ''}
                 onChange={(e) => handleLetterInputChange(index, e.target.value)}
                 onKeyDown={(e) => handleLetterInputKeyDown(index, e)}
-                   className={`w-8 h-8 border-2 rounded text-center text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:border-transparent bg-white ${
+                        className={`w-6 h-6 sm:w-8 sm:h-8 border-2 rounded text-center text-xs sm:text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:border-transparent bg-white p-0 m-0 shrink-0 boardle-input-tile ${
                      !letterInputs[index] || letterInputs[index].trim() === '' 
                        ? 'border-red-300 focus:border-red-500' 
                        : 'border-gray-300 focus:border-blue-500'
                    }`}
-                style={{ '--tw-ring-color': '#4B86FE' } as React.CSSProperties}
-              />
+                        size={1}
+                        style={{ 
+                          '--tw-ring-color': '#4B86FE',
+                          boxSizing: 'border-box'
+                        } as React.CSSProperties}
+                      />
+                    </React.Fragment>
             );
           }
         })}
@@ -1995,20 +2090,35 @@ export function BoardleGame({}: BoardleGameProps) {
         {Array.from({ length: 6 - currentRow - 1 }).map((_, index) => (
           <div key={`empty-${index}`} className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-400 w-6 text-right">{currentRow + index + 2}</span>
-            <div className="flex gap-1 justify-center">
+            <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
               {Array.from({ length: maxLength }).map((_, j) => {
                 const targetChar = targetGameData.name[j];
+                const lineBreakPositions = getLineBreakPositions();
+                const shouldBreakLine = lineBreakPositions.includes(j);
                 
                 if (targetChar === ' ') {
-                  return <div key={j} className="w-8 h-8 bg-gray-200 border-2 border-gray-300 rounded" />;
+                  return (
+                    <React.Fragment key={j}>
+                      {shouldBreakLine && <div className="w-full" />}
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border-2 border-gray-300 rounded" />
+                    </React.Fragment>
+                  );
                 } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
                   return (
-                    <div key={j} className="w-8 h-8 bg-blue-100 text-blue-600 border-2 border-blue-300 rounded flex items-center justify-center text-sm font-bold">
+                    <React.Fragment key={j}>
+                      {shouldBreakLine && <div className="w-full" />}
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 text-blue-600 border-2 border-blue-300 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
                       {targetChar}
       </div>
+                    </React.Fragment>
     );
                 } else {
-                  return <div key={j} className="w-8 h-8 border-2 border-gray-200 rounded bg-gray-50" />;
+                  return (
+                    <React.Fragment key={j}>
+                      {shouldBreakLine && <div className="w-full" />}
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-gray-200 rounded bg-gray-50" />
+                    </React.Fragment>
+                  );
                 }
               })}
             </div>
@@ -2126,7 +2236,7 @@ export function BoardleGame({}: BoardleGameProps) {
             }`}
             style={gameMode === 'title' ? { backgroundColor: '#4B86FE' } : {}}
           >
-            <Type className="w-4 h-4" />
+            <Type className="w-6 h-6 sm:w-4 sm:h-4" />
             <span>Title Mode</span>
           </button>
           <button
@@ -2138,7 +2248,7 @@ export function BoardleGame({}: BoardleGameProps) {
             }`}
             style={gameMode === 'image' ? { backgroundColor: '#4B86FE' } : {}}
           >
-            <Image className="w-4 h-4" />
+            <Image className="w-6 h-6 sm:w-4 sm:h-4" />
             <span>Image Mode</span>
           </button>
           <button
@@ -2150,7 +2260,7 @@ export function BoardleGame({}: BoardleGameProps) {
             }`}
             style={gameMode === 'card' ? { backgroundColor: '#4B86FE' } : {}}
           >
-            <RectangleHorizontal className="w-4 h-4" style={{ transform: 'rotate(90deg)' }} />
+            <RectangleHorizontal className="w-6 h-6 sm:w-4 sm:h-4" style={{ transform: 'rotate(90deg)' }} />
             <span>Card Mode</span>
           </button>
         </div>
@@ -2168,11 +2278,111 @@ export function BoardleGame({}: BoardleGameProps) {
 
                      
 
+        {/* Image Mode - Image Section (Above Main Content - MOBILE ONLY) */}
+        {gameMode === 'image' && (
+          <div className="mb-8 flex justify-center lg:hidden">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <h3 className="text-lg font-semibold mb-3 text-center">Guess the Board Game by Image</h3>
                                                                                                                                                                                                                                <div className="flex justify-center">
-                                                                                                                  <div className="flex flex-col lg:flex-row gap-6">
+                {targetGameData?.imageUrl ? (
+                  <div 
+                    className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100 select-none" 
+                    style={{ width: '500px', height: '400px' }}
+                    onContextMenu={(e) => e.preventDefault()}
+                    onDragStart={(e) => e.preventDefault()}
+                    onDrop={(e) => e.preventDefault()}
+                  >
+                    {!imageLoaded && (
+                      <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center z-10">
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-sm text-gray-600">Loading image...</span>
+                        </div>
+                      </div>
+                    )}
+                    <img
+                      src={targetGameData.imageUrl}
+                      alt="Board game to guess"
+                      className="w-full h-full object-contain pointer-events-none"
+                      style={{
+                        ...getImageTransform(),
+                        opacity: imageLoaded ? 1 : 0,
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        msUserSelect: 'none',
+                        WebkitTouchCallout: 'none'
+                      }}
+                      onLoad={() => setImageLoaded(true)}
+                      onError={() => setImageLoaded(true)}
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
+                      draggable={false}
+                      unselectable="on"
+                    />
+                    {/* Zoom indicator */}
+                    {imageLoaded && (
+                      <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                        {gameWon ? 'Full Image' : `Zoom: ${Math.round(getImageZoomLevel())}%`}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full h-[450px] bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-500">No image available</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-center text-sm text-gray-600 mt-2">
+                Each guess reveals more of the image and a new clue!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Card Mode - Card Image Section (Above Main Content - MOBILE ONLY) */}
+        {gameMode === 'card' && (
+          <div className="mb-8 flex justify-center lg:hidden">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <h3 className="text-lg font-semibold mb-3 text-center">Guess which game this card comes from</h3>
+              <div className="flex justify-center">
+                {targetGameData?.imageUrl ? (
+                  <div className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100" style={{ width: '500px', height: '400px' }}>
+                    <img
+                      src={targetGameData.imageUrl}
+                      alt="Game card to guess"
+                      className="w-full h-full object-contain"
+                      style={{
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        msUserSelect: 'none',
+                        WebkitTouchCallout: 'none'
+                      }}
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
+                      draggable={false}
+                      unselectable="on"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-[450px] bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-500">No image available</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-center text-sm text-gray-600 mt-2">
+                Each guess reveals a new clue!
+              </p>
+            </div>
+          </div>
+        )}
+
+                                                                                                                                                                                                                               <div className="flex justify-center">
+                                                                                                                  <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start">
         
         {/* Left Side - Game Board */}
-           <div className="flex-shrink-0" style={{
+           <div className="flex-shrink-0 w-full max-w-sm sm:max-w-none" style={{
              width: targetGameData?.name ? `${Math.max(280, Math.min(900, targetGameData.name.length * 32 + 120))}px` : '400px'
            }}>
                       {gameMode === 'title' ? (
@@ -2182,14 +2392,24 @@ export function BoardleGame({}: BoardleGameProps) {
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold mb-3">Guess the Board Game</h3>
                     {renderUnifiedGameBoard()}
+                    <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mt-4">
                     <button
                       onClick={handleLetterGuess}
                        disabled={gameOver || !areAllTilesFilled()}
-                      className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed mt-4"
+                        className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
                       style={{ backgroundColor: '#4B86FE' }}
                     >
                       Submit Guess
                     </button>
+                      {/* Clues Button for Smartphone View */}
+                      <button
+                        onClick={() => setShowCluesPopup(true)}
+                        className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                      >
+                        <Lightbulb className="w-4 h-4" />
+                        Clues ({revealedClues.length})
+                    </button>
+                    </div>
       </div>
                   <p className="text-center text-sm text-gray-600 mt-2">
                     Attempts: {guesses.length} / 6
@@ -2200,7 +2420,7 @@ export function BoardleGame({}: BoardleGameProps) {
                <div className="mb-6">
                    <div>
                      <h3 className="text-lg font-semibold mb-4 text-center">Revealed Letters</h3>
-                 <div className="flex gap-1 justify-center flex-wrap">
+                 <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
                    {renderRevealedLetters()}
                  </div>
                </div>
@@ -2208,22 +2428,22 @@ export function BoardleGame({}: BoardleGameProps) {
 
                 {/* Title Mode - Game Over Message */}
                 {gameOver && (
-                  <div className="mb-6 text-center">
+                  <div className="mb-6 text-center w-full max-w-xs sm:max-w-none mx-auto">
                     {gameWon ? (
-                      <div className="text-green-600 font-bold text-xl mb-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="flex items-center gap-2">
-                            <img src="/PartyIcon.svg" alt="Party" className="w-10 h-10" />
-                            Congratulations, you found {targetGameData?.name}!
+                      <div className="text-green-600 font-bold text-lg sm:text-xl mb-2">
+                        <div className="flex flex-col items-center justify-center gap-2 px-4">
+                          <div className="flex flex-col sm:flex-row items-center gap-2 justify-center text-center">
+                            <img src="/PartyIcon.svg" alt="Party" className="w-12 h-12 sm:w-10 sm:h-10 flex-shrink-0" />
+                            <span className="break-words">Congratulations, you found {targetGameData?.name}!</span>
                           </div>
-                          <p className="text-sm text-green-600">Come back tomorrow for a new challenge!</p>
+                          <p className="text-xs sm:text-sm text-green-600">Come back tomorrow for a new challenge!</p>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-red-600 font-bold text-xl mb-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div>Game Over! The answer was {targetGameData?.name}</div>
-                          <p className="text-sm text-red-600">Come back tomorrow to try again!</p>
+                      <div className="text-red-600 font-bold text-lg sm:text-xl mb-2">
+                        <div className="flex flex-col items-center justify-center gap-2 px-4">
+                          <div className="break-words">Game Over! The answer was {targetGameData?.name}</div>
+                          <p className="text-xs sm:text-sm text-red-600">Come back tomorrow to try again!</p>
                         </div>
                       </div>
                     )}
@@ -2237,48 +2457,49 @@ export function BoardleGame({}: BoardleGameProps) {
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold mb-3">Guess the Board Game</h3>
                     {renderUnifiedGameBoard()}
+                    <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mt-4">
                     <button
                       onClick={handleLetterGuess}
                        disabled={gameOver || !areAllTilesFilled()}
-                      className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed mt-4"
+                        className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
                       style={{ backgroundColor: '#4B86FE' }}
                     >
                       Submit Guess
                     </button>
+                      {/* Clues Button for Smartphone View */}
+                      <button
+                        onClick={() => setShowCluesPopup(true)}
+                        className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                      >
+                        <Lightbulb className="w-4 h-4" />
+                        Clues ({revealedClues.length})
+                    </button>
+                    </div>
                   </div>
                   <p className="text-center text-sm text-gray-600 mt-2">
                     Attempts: {imageGuesses.length} / 6
                   </p>
                 </div>
 
-                                 {/* Image Mode - Revealed Letters Section */}
-                 <div className="mb-6">
-                   <div>
-                     <h3 className="text-lg font-semibold mb-4 text-center">Revealed Letters</h3>
-                     <div className="flex gap-1 justify-center flex-wrap">
-                       {renderImageRevealedLetters()}
-                     </div>
-                   </div>
-                 </div>
 
                 {/* Image Mode - Game Over Message */}
                 {gameOver && (
-                  <div className="mb-6 text-center">
+                  <div className="mb-6 text-center w-full max-w-xs sm:max-w-none mx-auto">
                     {gameWon ? (
-                      <div className="text-green-600 font-bold text-xl mb-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="flex items-center gap-2">
-                            <img src="/PartyIcon.svg" alt="Party" className="w-10 h-10" />
-                            Congratulations, you found {targetGameData?.name}!
+                      <div className="text-green-600 font-bold text-lg sm:text-xl mb-2">
+                        <div className="flex flex-col items-center justify-center gap-2 px-4">
+                          <div className="flex flex-col sm:flex-row items-center gap-2 justify-center text-center">
+                            <img src="/PartyIcon.svg" alt="Party" className="w-12 h-12 sm:w-10 sm:h-10 flex-shrink-0" />
+                            <span className="break-words">Congratulations, you found {targetGameData?.name}!</span>
                           </div>
-                          <p className="text-sm text-green-600">Come back tomorrow for a new challenge!</p>
+                          <p className="text-xs sm:text-sm text-green-600">Come back tomorrow for a new challenge!</p>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-red-600 font-bold text-xl mb-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div>Game Over! The answer was {targetGameData?.name}</div>
-                          <p className="text-sm text-red-600">Come back tomorrow to try again!</p>
+                      <div className="text-red-600 font-bold text-lg sm:text-xl mb-2">
+                        <div className="flex flex-col items-center justify-center gap-2 px-4">
+                          <div className="break-words">Game Over! The answer was {targetGameData?.name}</div>
+                          <p className="text-xs sm:text-sm text-red-600">Come back tomorrow to try again!</p>
                         </div>
                       </div>
                     )}
@@ -2292,48 +2513,49 @@ export function BoardleGame({}: BoardleGameProps) {
                  <div className="text-center mb-4">
                    <h3 className="text-lg font-semibold mb-3">Guess the Board Game</h3>
                    {renderUnifiedGameBoard()}
+                   <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mt-4">
                    <button
                      onClick={handleLetterGuess}
                       disabled={gameOver || !areAllTilesFilled()}
-                     className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed mt-4"
+                       className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
                        style={{ backgroundColor: '#4B86FE' }}
                      >
                        Submit Guess
                      </button>
+                       {/* Clues Button for Smartphone View */}
+                       <button
+                         onClick={() => setShowCluesPopup(true)}
+                         className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                       >
+                         <Lightbulb className="w-4 h-4" />
+                         Clues ({revealedClues.length})
+                     </button>
+                     </div>
                    </div>
                    <p className="text-center text-sm text-gray-600 mt-2">
                      Attempts: {cardGuesses.length} / 6
                    </p>
                  </div>
 
-                                   {/* Card Mode - Revealed Letters Section */}
-                  <div className="mb-6">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3 text-center">Revealed Letters</h3>
-                      <div className="flex gap-1 justify-center flex-wrap">
-                        {renderCardRevealedLetters()}
-                      </div>
-                    </div>
-                  </div>
 
                  {/* Card Mode - Game Over Message */}
                {gameOver && (
                  <div className="mb-6 text-center">
                    {gameWon ? (
-                     <div className="text-green-600 font-bold text-xl mb-2">
-                       <div className="flex flex-col items-center justify-center gap-2">
-                         <div className="flex items-center gap-2">
-                           <img src="/PartyIcon.svg" alt="Party" className="w-10 h-10" />
-                           Congratulations, you found {targetGameData?.name}!
+                     <div className="text-green-600 font-bold text-lg sm:text-xl mb-2">
+                       <div className="flex flex-col items-center justify-center gap-2 px-4">
+                         <div className="flex items-center gap-2 flex-wrap justify-center text-center">
+                           <img src="/PartyIcon.svg" alt="Party" className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
+                           <span className="break-words">Congratulations, you found {targetGameData?.name}!</span>
                          </div>
-                         <p className="text-sm text-green-600">Come back tomorrow for a new challenge!</p>
+                         <p className="text-xs sm:text-sm text-green-600">Come back tomorrow for a new challenge!</p>
                        </div>
                      </div>
                    ) : (
-                     <div className="text-red-600 font-bold text-xl mb-2">
-                       <div className="flex flex-col items-center justify-center gap-2">
-                         <div>Game Over! The answer was {targetGameData?.name}</div>
-                         <p className="text-sm text-red-600">Come back tomorrow to try again!</p>
+                     <div className="text-red-600 font-bold text-lg sm:text-xl mb-2">
+                       <div className="flex flex-col items-center justify-center gap-2 px-4">
+                         <div className="break-words">Game Over! The answer was {targetGameData?.name}</div>
+                         <p className="text-xs sm:text-sm text-red-600">Come back tomorrow to try again!</p>
                        </div>
                      </div>
                    )}
@@ -2345,7 +2567,7 @@ export function BoardleGame({}: BoardleGameProps) {
 
                                              {/* Title Mode - Right Column (Clues Only) */}
                        {gameMode === 'title' && (
-                         <div className="flex-shrink-0 w-80 space-y-6">
+                         <div className="hidden lg:flex flex-shrink-0 w-80 space-y-6">
                           {/* Title Mode - Clues Section */}
                           <div className="bg-white p-6 rounded-lg shadow-lg">
                             <div className="flex items-center gap-3 mb-4">
@@ -2357,7 +2579,7 @@ export function BoardleGame({}: BoardleGameProps) {
                               {revealedClues.map((clue, index) => (
                                 <div key={index} className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
                                   <div className="flex items-start gap-3">
-                                    <span className="bg-blue-500 text-white text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                                    <span className="bg-blue-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                                       {index + 1}
                                     </span>
                                     <p className="text-base text-gray-700 flex-1 leading-relaxed">{clue}</p>
@@ -2368,7 +2590,7 @@ export function BoardleGame({}: BoardleGameProps) {
                               {!gameOver && revealedClues.length < (targetGameData?.clues.length || 0) && (
                                 <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-300">
                                   <div className="flex items-center gap-3">
-                                    <span className="bg-gray-400 text-white text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                                    <span className="bg-gray-400 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                                       {revealedClues.length + 1}
                                     </span>
                                     <p className="text-base text-gray-500 italic">
@@ -2384,8 +2606,8 @@ export function BoardleGame({}: BoardleGameProps) {
 
                                              {/* Image Mode - Middle Column with Image and Revealed Letters */}
                        {gameMode === 'image' && (
-                         <div className="flex-shrink-0 space-y-6" style={{ width: '500px' }}>
-                          {/* Image Mode - Progressive Zoom Image */}
+                         <div className="flex-shrink-0 space-y-6 hidden lg:block" style={{ width: '500px' }}>
+                          {/* Image Mode - Image Section */}
                           <div className="bg-white p-4 rounded-lg shadow-lg">
                 <h3 className="text-lg font-semibold mb-3 text-center">Guess the Board Game by Image</h3>
                 <div className="flex justify-center">
@@ -2400,7 +2622,7 @@ export function BoardleGame({}: BoardleGameProps) {
                       {!imageLoaded && (
                         <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center z-10">
                           <div className="flex flex-col items-center space-y-2">
-                            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                             <span className="text-sm text-gray-600">Loading image...</span>
                           </div>
                         </div>
@@ -2441,17 +2663,21 @@ export function BoardleGame({}: BoardleGameProps) {
                 <p className="text-center text-sm text-gray-600 mt-2">
                   Each guess reveals more of the image and a new clue!
                 </p>
-                 
-
               </div>
 
-
+                          {/* Image Mode - Revealed Letters Section */}
+                          <div className="bg-white p-4 rounded-lg shadow-lg">
+                            <h3 className="text-lg font-semibold mb-4 text-center">Revealed Letters</h3>
+                            <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
+                              {renderImageRevealedLetters()}
+                            </div>
+                          </div>
                 </div>
                       )}
 
                       {/* Image Mode - Right Column with Clues */}
                       {gameMode === 'image' && (
-                        <div className="flex-shrink-0 w-80 space-y-6">
+                        <div className="hidden lg:flex flex-shrink-0 w-80 space-y-6">
                           {/* Image Mode - Clues Section */}
                           <div className="bg-white p-6 rounded-lg shadow-lg">
                             <div className="flex items-center gap-3 mb-4">
@@ -2463,7 +2689,7 @@ export function BoardleGame({}: BoardleGameProps) {
                               {revealedClues.map((clue, index) => (
                                 <div key={index} className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
                                   <div className="flex items-start gap-3">
-                                    <span className="bg-blue-500 text-white text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                                    <span className="bg-blue-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                                       {index + 1}
                                     </span>
                                     <p className="text-base text-gray-700 flex-1 leading-relaxed">{clue}</p>
@@ -2474,7 +2700,7 @@ export function BoardleGame({}: BoardleGameProps) {
                               {!gameOver && revealedClues.length < (targetGameData?.clues.length || 0) && (
                                 <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-300">
                                   <div className="flex items-center gap-3">
-                                    <span className="bg-gray-400 text-white text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                                    <span className="bg-gray-400 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                                       {revealedClues.length + 1}
                                     </span>
                                     <p className="text-base text-gray-500 italic">
@@ -2490,8 +2716,8 @@ export function BoardleGame({}: BoardleGameProps) {
 
                                              {/* Card Mode - Middle Column with Card Image and Revealed Letters */}
                        {gameMode === 'card' && (
-                         <div className="flex-shrink-0 space-y-6" style={{ width: '500px' }}>
-              {/* Card Mode - Game Card Image */}
+                         <div className="flex-shrink-0 space-y-6 hidden lg:block" style={{ width: '500px' }}>
+                          {/* Card Mode - Card Image Section */}
                           <div className="bg-white p-4 rounded-lg shadow-lg">
                             <h3 className="text-lg font-semibold mb-3 text-center">Guess which game this card comes from</h3>
                 <div className="flex justify-center">
@@ -2499,29 +2725,45 @@ export function BoardleGame({}: BoardleGameProps) {
                                                                  <div className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100" style={{ width: '500px', height: '400px' }}>
                       <img
                         src={targetGameData.imageUrl}
-                        alt=""
+                                    alt="Game card to guess"
                         className="w-full h-full object-contain"
-                        style={{ objectFit: 'contain' }}
-                        loading="lazy"
-                        decoding="async"
-                      />
-
+                                    style={{
+                                      userSelect: 'none',
+                                      WebkitUserSelect: 'none',
+                                      MozUserSelect: 'none',
+                                      msUserSelect: 'none',
+                                      WebkitTouchCallout: 'none'
+                                    }}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                    onDragStart={(e) => e.preventDefault()}
+                                    draggable={false}
+                                    unselectable="on"
+                                  />
                     </div>
                   ) : (
                                 <div className="w-full h-[450px] bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-500">No card image available</span>
+                                  <span className="text-gray-500">No image available</span>
                     </div>
                   )}
                 </div>
+                            <p className="text-center text-sm text-gray-600 mt-2">
+                              Each guess reveals a new clue!
+                            </p>
               </div>
 
-
+                          {/* Card Mode - Revealed Letters Section */}
+                          <div className="bg-white p-4 rounded-lg shadow-lg">
+                            <h3 className="text-lg font-semibold mb-4 text-center">Revealed Letters</h3>
+                            <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
+                              {renderCardRevealedLetters()}
+                            </div>
+                          </div>
         </div>
       )}
 
                       {/* Card Mode - Right Column with Clues */}
                       {gameMode === 'card' && (
-                        <div className="flex-shrink-0 w-80 space-y-6">
+                        <div className="hidden lg:flex flex-shrink-0 w-80 space-y-6">
                           {/* Card Mode - Clues Section */}
                           <div className="bg-white p-6 rounded-lg shadow-lg">
                             <div className="flex items-center gap-3 mb-4">
@@ -2533,7 +2775,7 @@ export function BoardleGame({}: BoardleGameProps) {
               {revealedClues.map((clue, index) => (
                 <div key={index} className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
                   <div className="flex items-start gap-3">
-                    <span className="bg-blue-500 text-white text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                    <span className="bg-blue-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                       {index + 1}
                     </span>
                     <p className="text-base text-gray-700 flex-1 leading-relaxed">{clue}</p>
@@ -2544,7 +2786,7 @@ export function BoardleGame({}: BoardleGameProps) {
               {!gameOver && revealedClues.length < (targetGameData?.clues.length || 0) && (
                 <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-300">
                   <div className="flex items-center gap-3">
-                    <span className="bg-gray-400 text-white text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                    <span className="bg-gray-400 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                       {revealedClues.length + 1}
                     </span>
                     <p className="text-base text-gray-500 italic">
@@ -2701,6 +2943,61 @@ export function BoardleGame({}: BoardleGameProps) {
             >
               Got it!
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Clues Popup for Smartphone View */}
+      {showCluesPopup && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowCluesPopup(false)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-3">
+                <Lightbulb className="w-6 h-6 text-yellow-500" />
+                <h3 className="text-xl font-semibold">Clues</h3>
+              </div>
+              <button
+                onClick={() => setShowCluesPopup(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-4">
+                {revealedClues.map((clue, index) => (
+                  <div key={index} className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                    <div className="flex items-start gap-3">
+                      <span className="bg-blue-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                        {index + 1}
+                      </span>
+                      <p className="text-base text-gray-700 flex-1 leading-relaxed">{clue}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {!gameOver && revealedClues.length < (targetGameData?.clues.length || 0) && (
+                  <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-300">
+                    <div className="flex items-center gap-3">
+                      <span className="bg-gray-400 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
+                        {revealedClues.length + 1}
+                      </span>
+                      <p className="text-base text-gray-500 italic">
+                        Make a guess to reveal the next clue
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

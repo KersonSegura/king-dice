@@ -16,7 +16,6 @@ import LoginModal from '@/components/LoginModal';
 import ModernTooltip from '@/components/ModernTooltip';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import BackButton from '@/components/BackButton';
-import Footer from '@/components/Footer';
 
 export default function ForumsPage() {
   const searchParams = useSearchParams();
@@ -37,6 +36,9 @@ export default function ForumsPage() {
   const [loading, setLoading] = useState(true);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [votingPosts, setVotingPosts] = useState<Set<string>>(new Set());
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [newPost, setNewPost] = useState({
     title: '',
     content: '',
@@ -61,10 +63,11 @@ export default function ForumsPage() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const response = await fetch('/api/posts');
+        const response = await fetch('/api/posts?page=1&limit=20');
         if (response.ok) {
           const data = await response.json();
           setPosts(data.posts);
+          setHasMorePosts((data.posts || []).length === 20);
         }
       } catch (error) {
         console.error('Error loading posts:', error);
@@ -102,6 +105,47 @@ export default function ForumsPage() {
     loadPosts();
     setLoading(false);
   }, []);
+
+  // Infinite scroll functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
+        if (!isLoadingMore && hasMorePosts) {
+          loadMorePosts();
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, hasMorePosts]);
+
+  const loadMorePosts = async () => {
+    if (isLoadingMore || !hasMorePosts) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const response = await fetch(`/api/posts?page=${nextPage}&limit=20`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const newPosts = data.posts || [];
+        
+        if (newPosts.length > 0) {
+          setPosts(prevPosts => [...prevPosts, ...newPosts]);
+          setCurrentPage(nextPage);
+          setHasMorePosts(newPosts.length === 20);
+        } else {
+          setHasMorePosts(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
 
   const handleCreatePost = async () => {
@@ -340,18 +384,30 @@ export default function ForumsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg p-6 shadow">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              ))}
-            </div>
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#f9fafb',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}
+      >
+        <div className="text-center px-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Forums</h2>
+          <p className="text-gray-600">Fetching posts and categories...</p>
+          <div className="mt-4 flex justify-center space-x-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
           </div>
         </div>
       </div>
@@ -362,7 +418,7 @@ export default function ForumsPage() {
     <div className="min-h-screen bg-gray-50 pt-8 flex flex-col">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <BackButton />
             <Image 
@@ -372,14 +428,15 @@ export default function ForumsPage() {
               height={32}
               className="w-8 h-8"
             />
-            <h1 className="text-3xl font-bold text-gray-900">Community Forums</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Community Forums</h1>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button
               onClick={() => setShowGuidelines(true)}
-              className="btn-secondary"
+              className="btn-secondary text-sm sm:text-base"
             >
-              Community Guidelines
+              <span className="hidden sm:inline">Community Guidelines</span>
+              <span className="sm:hidden">Guidelines</span>
             </button>
             <button
               onClick={() => {
@@ -389,7 +446,7 @@ export default function ForumsPage() {
                   setShowLoginModal(true);
                 }
               }}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center justify-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span>New Post</span>
@@ -399,11 +456,11 @@ export default function ForumsPage() {
 
         {/* Author Filter Indicator */}
         {selectedAuthor && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center justify-between">
+          <div className="mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <div className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-blue-600" />
-                <span className="text-blue-800 font-medium">
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                <span className="text-blue-800 font-medium text-sm sm:text-base">
                   Showing posts by: <span className="font-semibold">{selectedAuthor}</span>
                 </span>
               </div>
@@ -415,7 +472,7 @@ export default function ForumsPage() {
                   url.searchParams.delete('author');
                   window.history.replaceState({}, '', url.toString());
                 }}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium self-start sm:self-auto"
               >
                 Clear Filter
               </button>
@@ -424,27 +481,27 @@ export default function ForumsPage() {
         )}
 
         {/* Categories */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`p-4 rounded-lg border-2 transition-colors ${
+            className={`p-3 sm:p-4 rounded-lg border-2 transition-colors ${
               selectedCategory === 'all' 
                 ? 'border-primary-500 bg-primary-50' 
                 : 'border-gray-200 bg-white hover:border-gray-300'
             }`}
           >
             <div className="text-center">
-              <div className="flex justify-center mb-2">
+              <div className="flex justify-center mb-1 sm:mb-2">
                 <Image
                   src="/AllPostsIcon.svg"
                   alt="All Posts"
                   width={32}
                   height={32}
-                  className="w-8 h-8"
+                  className="w-6 h-6 sm:w-8 sm:h-8"
                 />
               </div>
-              <h3 className="font-semibold text-gray-900">All Posts</h3>
-              <p className="text-sm text-gray-600">{posts.length} posts</p>
+              <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">All Posts</h3>
+              <p className="text-xs text-gray-600">{posts.length} posts</p>
             </div>
           </button>
           
@@ -466,23 +523,23 @@ export default function ForumsPage() {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`p-4 rounded-lg border-2 transition-colors ${
+                className={`p-3 sm:p-4 rounded-lg border-2 transition-colors ${
                   selectedCategory === category.id 
                     ? 'border-primary-500 bg-primary-50' 
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
                 <div className="text-center">
-                  <div className="flex justify-center mb-2">
+                  <div className="flex justify-center mb-1 sm:mb-2">
                     <Image
                       src={getIconSrc(category.id)}
                       alt={category.name}
                       width={32}
                       height={32}
-                      className="w-8 h-8"
+                      className="w-6 h-6 sm:w-8 sm:h-8"
                     />
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">{category.name}</h3>
+                  <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">{category.name}</h3>
                   <p className="text-xs text-gray-600">{category.postCount} posts</p>
                 </div>
               </button>
@@ -493,131 +550,94 @@ export default function ForumsPage() {
         {/* Posts */}
         <div className="space-y-4">
           {filteredPosts.map(post => (
-            <div key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-start space-x-4">
-                {/* Author info and likes */}
-                <div className="flex flex-col items-center space-y-2">
-                  <div 
-                    className="w-12 h-12 rounded-full border-2 border-black overflow-hidden"
-                    style={{
-                      backgroundImage: `url(${post.author.avatar || '/DiceLogo.svg'})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat'
-                    }}
-                  />
-                </div>
+            <div key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+              <div className="relative">
+                {/* Avatar - positioned absolutely in top left */}
+                <div 
+                  className="absolute top-0 left-0 w-12 h-12 sm:w-12 sm:h-12 rounded-full border-2 border-black overflow-hidden"
+                  style={{
+                    backgroundImage: `url(${post.author.avatar || '/DiceLogo.svg'})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                  }}
+                />
 
-                {/* Post content */}
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-[#fbae17]">{post.author.name}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        categories.find(c => c.id === post.category)?.color || 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {categories.find(c => c.id === post.category)?.name || post.category}
-                      </span>
-                      {post.isModerated && post.moderationResult?.isAppropriate && (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600 flex items-center space-x-1">
-                          <Image
-                            src="/CheckIcon.svg"
-                            alt="Check Icon"
-                            width={12}
-                            height={12}
-                            className="w-3 h-3"
-                          />
-                          <span>Verified</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {/* Title and badges - positioned to the right of avatar */}
+                <div className="ml-16 sm:ml-16">
+                  {/* Title */}
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                     <Link href={`/forums/post/${post.id}`} className="hover:text-primary-600">
                       {post.title}
                     </Link>
                   </h3>
                   
-                  <p className="text-gray-600 mb-4 line-clamp-2">
+                  {/* Author and Category badges */}
+                  <div className="flex items-center space-x-2 mb-3">
+                    <span className="font-medium text-[#fbae17] text-sm">{post.author.name}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      categories.find(c => c.id === post.category)?.color || 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {categories.find(c => c.id === post.category)?.name || post.category}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Post content - uses full width */}
+                <div className="w-full">
+                  <p className="text-gray-600 mb-4 line-clamp-2 text-sm sm:text-base">
                     {post.content}
                   </p>
 
+                  {/* Bottom row: Interactions and actions */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleVote(post.id, 'up');
-                          }}
-                          disabled={votingPosts.has(post.id)}
-                          className={`p-1 rounded-full transition-colors ${
-                            post.userVotes?.find(vote => vote.userId === user?.id)?.voteType === 'up'
-                              ? 'bg-green-100 text-green-600' 
-                              : 'hover:bg-gray-100 text-gray-400'
-                          } ${votingPosts.has(post.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <ThumbsUp className="w-4 h-4" />
-                        </button>
-                        <span className="font-medium">{post.votes.upvotes - post.votes.downvotes}</span>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleVote(post.id, 'down');
-                          }}
-                          disabled={votingPosts.has(post.id)}
-                          className={`p-1 rounded-full transition-colors ${
-                            post.userVotes?.find(vote => vote.userId === user?.id)?.voteType === 'down'
-                              ? 'bg-red-100 text-red-600' 
-                              : 'hover:bg-gray-100 text-gray-400'
-                          } ${votingPosts.has(post.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <ThumbsDown className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500">
+                      {/* Vote count display */}
                       <div className="flex items-center space-x-1">
-                        <MessageCircle className="w-4 h-4" />
+                        <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                        <span className="font-medium">{post.votes.upvotes - post.votes.downvotes}</span>
+                      </div>
+                      
+                      {/* Replies */}
+                      <div className="flex items-center space-x-1">
+                        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>{post.replies} replies</span>
                       </div>
+                      
+                      {/* Date */}
                       <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>{formatDate(post.createdAt)}</span>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
+                      
                       {/* Delete button - only show to post author */}
                       {isAuthenticated && user && post.author.id === user.id && (
                         <ModernTooltip content="Delete post" position="top">
                           <button
                             onClick={() => handleDeletePost(post.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                         </ModernTooltip>
                       )}
-                      
-                      <ModernTooltip content={!isAuthenticated ? 'Sign in to report' : 'Report post'} position="top">
-                        <button
-                          onClick={() => {
-                            if (isAuthenticated) {
-                              handleReport(post);
-                            } else {
-                              setShowLoginModal(true);
-                            }
-                          }}
-                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          <Flag className="w-4 h-4" />
-                        </button>
-                      </ModernTooltip>
                     </div>
+                    
+                    {/* Report button - far right */}
+                    <ModernTooltip content={!isAuthenticated ? 'Sign in to report' : 'Report post'} position="top">
+                      <button
+                        onClick={() => {
+                          if (isAuthenticated) {
+                            handleReport(post);
+                          } else {
+                            setShowLoginModal(true);
+                          }
+                        }}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                    </ModernTooltip>
                   </div>
                 </div>
               </div>
@@ -632,6 +652,20 @@ export default function ForumsPage() {
             <p className="text-gray-600">Be the first to start a discussion in this category!</p>
           </div>
         )}
+
+        {/* Loading indicator for infinite scroll */}
+        {isLoadingMore && (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+
+        {/* End of content indicator */}
+        {!hasMorePosts && filteredPosts.length > 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>You've reached the end!</p>
+          </div>
+        )}
       </div>
 
       {/* Login Modal */}
@@ -639,9 +673,9 @@ export default function ForumsPage() {
 
       {/* Create Post Modal */}
       {showCreatePost && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
-            <h2 className="text-xl font-semibold mb-4">Create New Post</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4">Create New Post</h2>
             
             <div className="space-y-4">
               <div>
@@ -651,7 +685,7 @@ export default function ForumsPage() {
                 <select
                   value={newPost.category}
                   onChange={(e) => setNewPost({...newPost, category: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                 >
                   {categories.map(category => (
                     <option key={category.id} value={category.id}>
@@ -669,7 +703,7 @@ export default function ForumsPage() {
                   type="text"
                   value={newPost.title}
                   onChange={(e) => setNewPost({...newPost, title: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                   placeholder="Enter your post title..."
                 />
               </div>
@@ -682,23 +716,23 @@ export default function ForumsPage() {
                   value={newPost.content}
                   onChange={(e) => setNewPost({...newPost, content: e.target.value})}
                   rows={6}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
                   placeholder="Write your post content..."
                 />
               </div>
             </div>
             
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
               <button
                 onClick={() => setShowCreatePost(false)}
-                className="btn-secondary"
+                className="btn-secondary w-full sm:w-auto"
                 disabled={isCreatingPost}
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreatePost}
-                className={`btn-primary ${isCreatingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`btn-primary w-full sm:w-auto ${isCreatingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={isCreatingPost}
               >
                 {isCreatingPost ? 'Creating...' : 'Create Post'}
@@ -759,10 +793,6 @@ export default function ForumsPage() {
       />
 
 
-      {/* Footer */}
-      <div className="mt-auto">
-        <Footer />
-      </div>
     </div>
   );
 } 

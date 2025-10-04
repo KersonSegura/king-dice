@@ -8,13 +8,15 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const authorId = searchParams.get('author') || searchParams.get('authorId');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
     
     // Check cache first
-    const cacheKey = `posts:${authorId || 'all'}`;
+    const cacheKey = `posts:${authorId || 'all'}:${page}:${limit}`;
     const cachedPosts = await CacheService.getCachedForumPosts(cacheKey);
     
     if (cachedPosts) {
-      console.log(`✅ Cache hit for posts - Author: ${authorId || 'all'}`);
+      console.log(`✅ Cache hit for posts - Author: ${authorId || 'all'}, Page: ${page}`);
       return NextResponse.json({ 
         posts: cachedPosts,
         cached: true
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log(`❌ Cache miss for posts - Author: ${authorId || 'all'}, fetching from database`);
+    console.log(`❌ Cache miss for posts - Author: ${authorId || 'all'}, Page: ${page}, fetching from database`);
     
     let posts = getAllPosts();
     
@@ -35,11 +37,16 @@ export async function GET(request: NextRequest) {
       posts = posts.filter(post => post.author.id === authorId);
     }
     
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedPosts = posts.slice(startIndex, endIndex);
+    
     // Cache the results for 15 minutes
-    await CacheService.cacheForumPosts(cacheKey, posts, 900);
+    await CacheService.cacheForumPosts(cacheKey, paginatedPosts, 900);
     
     return NextResponse.json({ 
-      posts,
+      posts: paginatedPosts,
       cached: false
     }, {
       headers: {
@@ -58,9 +65,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== POST CREATION DEBUG ===');
     const body = await request.json();
-    console.log('Request body:', JSON.stringify(body, null, 2));
     
     const { title, content, category, author } = body;
     

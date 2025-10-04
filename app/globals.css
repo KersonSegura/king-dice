@@ -309,4 +309,26 @@ main, #__next, [data-reactroot] {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  
+  /* Force exact tile dimensions for Boardle game */
+  .boardle-input-tile {
+    height: 24px !important;
+    width: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    box-sizing: border-box !important;
+  }
+  
+  @media (min-width: 640px) {
+    .boardle-input-tile {
+      height: 32px !important;
+      width: 32px !important;
+      min-height: 32px !important;
+      max-height: 32px !important;
+      min-width: 32px !important;
+      max-width: 32px !important;
+    }
+  }
 } 

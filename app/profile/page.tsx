@@ -217,6 +217,31 @@ export default function ProfilePage() {
   const [imageLikes, setImageLikes] = useState<{[imageId: string]: boolean}>({});
   const [loadingComments, setLoadingComments] = useState(false);
 
+  // Early returns for loading and authentication states
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fbae17] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to view your profile</h1>
+          <Link href="/" className="btn-primary">
+            Go Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // Drag and drop sensors with better responsiveness
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1024,7 +1049,6 @@ export default function ProfilePage() {
     // Stats and recent activity will be updated automatically via useEffect
   };
 
-
   const handleCollectionPhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -1078,30 +1102,6 @@ export default function ProfilePage() {
     setShowDeleteFavoriteCardConfirm(false);
     showToast('Favorite card deleted!', 'success');
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fbae17] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to view your profile</h1>
-          <Link href="/" className="btn-primary">
-            Go Home
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -1370,7 +1370,6 @@ export default function ProfilePage() {
     // Calculate luminance
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     
-    
     // If luminance is greater than 0.5, it's a light color
     return luminance > 0.5;
   };
@@ -1401,7 +1400,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: profileColors.background }}>
-        {/* Back button */}
       <div className="border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
         <div className="max-w-6xl mx-auto">
           <Link 
@@ -1426,7 +1424,11 @@ export default function ProfilePage() {
             {/* Profile Picture */}
             <div className="relative">
               <div 
-                className="w-32 h-32 rounded-full border-4 border-black overflow-hidden shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+                className={`w-32 h-32 rounded-full border-4 border-black overflow-hidden shadow-lg transition-all ${
+                  isEditing 
+                    ? 'cursor-not-allowed opacity-50' 
+                    : 'cursor-pointer hover:shadow-xl'
+                }`}
                 style={{
                   backgroundColor: '#ffffff', // Ensure white background
                   backgroundImage: `url(${getUserDiceAvatar()})`,
@@ -1434,8 +1436,8 @@ export default function ProfilePage() {
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat'
                 }}
-                onClick={() => !isEditing && setShowImageModal(true)}
-                title={isEditing ? "Edit mode active - cannot view avatar" : "Click to view full size"}
+                onClick={!isEditing ? () => setShowImageModal(true) : undefined}
+                title={isEditing ? "Edit mode - viewing disabled" : "Click to view full size"}
               />
             </div>
 
@@ -1481,12 +1483,10 @@ export default function ProfilePage() {
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors backdrop-blur-sm ${
-                  isEditing 
-                    ? 'bg-red-500 hover:bg-red-600 text-white' 
-                    : isLightCover() 
+                  isLightCover() 
                     ? 'bg-gray-900/20 hover:bg-gray-900/30' 
                     : 'bg-white/20 hover:bg-white/30'
-                } ${isEditing ? '' : coverTextClass}`}
+                } ${coverTextClass}`}
               >
                 <Edit className="w-4 h-4" />
                 <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
@@ -1505,13 +1505,13 @@ export default function ProfilePage() {
                 </button>
               )}
               <Link 
-                href={isEditing ? "#" : "/settings"} 
-                onClick={isEditing ? (e) => e.preventDefault() : undefined}
+                href="/settings" 
                 className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-semibold ${
                 isLightCover() 
                   ? 'bg-white hover:bg-gray-100' 
                   : 'bg-white/20 hover:bg-white/30 backdrop-blur-sm'
-                } ${coverTextClass} ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${coverTextClass} ${isEditing ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                onClick={isEditing ? (e) => e.preventDefault() : undefined}
               >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
@@ -1602,7 +1602,7 @@ export default function ProfilePage() {
                     </button>
                     <button
                       onClick={handleCancel}
-                     className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium"
+                     className="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                     >
                      Cancel
                     </button>
@@ -1618,8 +1618,9 @@ export default function ProfilePage() {
                 <button 
                   onClick={() => !isEditing && setShowGameSearchModal(true)}
                   disabled={isEditing}
-                  className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium ${
-                    isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                  className={`font-medium ${isEditing 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-[#fbae17] hover:text-[#fbae17]/80'
                   }`}
                 >
                   Add Games
@@ -1673,8 +1674,9 @@ export default function ProfilePage() {
                           <button
                             onClick={() => !isEditing && handleRemoveGame(game.id)}
                             disabled={isEditing}
-                            className={`opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity ${
-                              isEditing ? 'cursor-not-allowed' : ''
+                            className={`transition-opacity ${isEditing 
+                              ? 'opacity-0 cursor-not-allowed' 
+                              : 'opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700'
                             }`}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1699,8 +1701,9 @@ export default function ProfilePage() {
                       <button 
                         onClick={() => !isEditing && setShowAllGamesModal(true)}
                         disabled={isEditing}
-                        className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium text-sm ${
-                          isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                        className={`font-medium text-sm ${isEditing 
+                          ? 'text-gray-400 cursor-not-allowed' 
+                          : 'text-[#fbae17] hover:text-[#fbae17]/80'
                         }`}
                       >
                         Show All Games ({gamesList.length})
@@ -1719,32 +1722,37 @@ export default function ProfilePage() {
                           <img
                             src={favoriteCard}
                             alt="Favorite card"
-                          className={`w-full h-full object-contain rounded-lg group-hover:opacity-90 transition-opacity cursor-pointer ${
-                            isEditing ? 'pointer-events-none' : ''
-                          }`}
-                          onClick={isEditing ? undefined : handleFavoriteCardClick}
+                            className={`w-full h-full object-contain rounded-lg transition-opacity ${
+                              isEditing 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : 'group-hover:opacity-90 cursor-pointer'
+                            }`}
+                            onClick={!isEditing ? handleFavoriteCardClick : undefined}
                           />
                           {/* Hover overlay with delete option */}
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
                               <button
                                 onClick={(e) => {
-                                  if (isEditing) return;
                                   e.stopPropagation();
-                                  setShowDeleteFavoriteCardConfirm(true);
+                                  !isEditing && setShowDeleteFavoriteCardConfirm(true);
                                 }}
                                 disabled={isEditing}
-                                className={`px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium ${
-                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                                  isEditing 
+                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                    : 'bg-red-500 text-white hover:bg-red-600'
                                 }`}
                               >
                                 Delete
                               </button>
                               <button
-                                onClick={isEditing ? undefined : handleFavoriteCardClick}
+                                onClick={!isEditing ? handleFavoriteCardClick : undefined}
                                 disabled={isEditing}
-                                className={`px-3 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/80 transition-colors text-sm font-medium ${
-                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                                  isEditing 
+                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                    : 'bg-[#fbae17] text-white hover:bg-[#fbae17]/80'
                                 }`}
                               >
                                 View Full Size
@@ -1785,32 +1793,37 @@ export default function ProfilePage() {
                           <img
                             src={collectionPhoto}
                             alt="Collection photo"
-                          className={`w-full h-full object-contain rounded-lg group-hover:opacity-90 transition-opacity cursor-pointer ${
-                            isEditing ? 'pointer-events-none' : ''
-                          }`}
-                          onClick={isEditing ? undefined : handleCollectionPhotoClick}
+                            className={`w-full h-full object-contain rounded-lg transition-opacity ${
+                              isEditing 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : 'group-hover:opacity-90 cursor-pointer'
+                            }`}
+                            onClick={!isEditing ? handleCollectionPhotoClick : undefined}
                           />
                           {/* Hover overlay with delete option */}
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
                               <button
                                 onClick={(e) => {
-                                  if (isEditing) return;
                                   e.stopPropagation();
-                                  setShowDeleteCollectionPhotoConfirm(true);
+                                  !isEditing && setShowDeleteCollectionPhotoConfirm(true);
                                 }}
                                 disabled={isEditing}
-                                className={`px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium ${
-                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                                  isEditing 
+                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                    : 'bg-red-500 text-white hover:bg-red-600'
                                 }`}
                               >
                                 Delete
                               </button>
                               <button
-                                onClick={isEditing ? undefined : handleCollectionPhotoClick}
+                                onClick={!isEditing ? handleCollectionPhotoClick : undefined}
                                 disabled={isEditing}
-                                className={`px-3 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/80 transition-colors text-sm font-medium ${
-                                  isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                                className={`px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                                  isEditing 
+                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                    : 'bg-[#fbae17] text-white hover:bg-[#fbae17]/80'
                                 }`}
                               >
                                 View Full Size
@@ -1848,8 +1861,9 @@ export default function ProfilePage() {
                 <button 
                   onClick={() => !isEditing && setShowUploadModal(true)}
                   disabled={isEditing}
-                  className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium ${
-                    isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                  className={`font-medium ${isEditing 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-[#fbae17] hover:text-[#fbae17]/80'
                   }`}
                 >
                   Add Photo
@@ -1860,11 +1874,10 @@ export default function ProfilePage() {
                   userImages.slice(0, 6).map((image: GalleryImage) => (
                     <div 
                       key={image.id} 
-                      className={`aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-pointer relative ${
-                        isEditing ? 'pointer-events-none opacity-50' : ''
+                      className={`aspect-square bg-gray-100 rounded-lg overflow-hidden group relative ${
+                        isEditing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                       }`}
-                      onClick={async () => {
-                        if (isEditing) return;
+                      onClick={!isEditing ? async () => {
                         setSelectedImage({
                           url: image.imageUrl,
                           title: image.title,
@@ -1891,7 +1904,7 @@ export default function ProfilePage() {
                         }
                         
                         setShowImageModal(true);
-                      }}
+                      } : undefined}
                     >
                       <img 
                         src={image.thumbnailUrl || image.imageUrl} 
@@ -1947,8 +1960,9 @@ export default function ProfilePage() {
                   <button 
                     onClick={() => !isEditing && router.push(`/community-gallery?author=${encodeURIComponent(user?.username || '')}`)}
                     disabled={isEditing}
-                    className={`text-[#fbae17] hover:text-[#fbae17]/80 font-medium ${
-                      isEditing ? 'opacity-50 cursor-not-allowed' : ''
+                    className={`font-medium ${isEditing 
+                      ? 'text-gray-400 cursor-not-allowed' 
+                      : 'text-[#fbae17] hover:text-[#fbae17]/80'
                     }`}
                   >
                     View All {userImages.length} Photos
@@ -1967,7 +1981,6 @@ export default function ProfilePage() {
               currentUserId={user.id}
               isOwnProfile={true}
               profileColors={profileColors}
-              isEditing={isEditing}
             />
 
 

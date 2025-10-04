@@ -89,7 +89,15 @@ export default function Header() {
   }, [isAuthenticated, user]);
 
   return (
-    <header className="bg-white shadow-md border-b border-dark-200">
+    <header 
+      className="bg-white shadow-md border-b border-dark-200"
+      onClick={() => {
+        // Close mobile menu when clicking outside of it
+        if (isMenuOpen) {
+          setIsMenuOpen(false);
+        }
+      }}
+    >
       <div className="w-full px-6 sm:px-8 lg:px-12">
         <div className="flex justify-between items-center w-full h-16">
           {/* Left (Logo) */}
@@ -209,7 +217,7 @@ export default function Header() {
                       {/* Menu Items */}
                       <div className="py-2">
                         <Link 
-                          href="/profile" 
+                          href={`/profile/${user?.username}`} 
                           className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
                         >
                                                      <div className="w-8 h-8 rounded-lg flex items-center justify-center">
@@ -325,12 +333,10 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-dark-200">
-            {/* Mobile Search */}
-            <div className="px-4 mb-4">
-              <SearchBar />
-            </div>
-            
+          <div 
+            className="md:hidden py-4 border-t border-dark-200 max-h-[70vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <nav className="flex flex-col space-y-4">
               {/* Mobile Home Link */}
               <Link 
@@ -426,6 +432,26 @@ export default function Header() {
               {/* Mobile Features Section */}
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-4">Features</h3>
+                
+                {isAuthenticated && (
+                  <Link
+                    href="/my-dice"
+                    className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
+                      <Image
+                        src="/MyDiceIcon.svg"
+                        alt="My Dice"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <span>My Dice</span>
+                  </Link>
+                )}
+                
                 <Link
                   href="/catan-map-generator"
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
@@ -471,24 +497,22 @@ export default function Header() {
                   <span>Boardle</span>
                 </Link>
                 
-                {isAuthenticated && (
-                  <Link
-                    href="/my-dice"
-                    className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
-                      <Image
-                        src="/MyDiceIcon.svg"
-                        alt="My Dice"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                    </div>
-                    <span>My Dice</span>
-                  </Link>
-                )}
+                <Link
+                  href="/digital-corner"
+                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
+                    <Image
+                      src="/PCIcon.svg"
+                      alt="Digital Corner"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                  </div>
+                  <span>Digital Corner</span>
+                </Link>
               </div>
               
               {/* Mobile Discord Button */}

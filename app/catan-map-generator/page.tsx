@@ -205,8 +205,8 @@ export default function CatanMapGeneratorPage() {
   }, [isLoadingMore, hasMoreMaps, nominations.length, displayedCount]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: 'min(1280px, 100vw - 2rem)' }}>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {/* Header */}
         <div className="flex items-center justify-center mb-8 pt-8 sm:pt-0">
           <div className="flex items-center space-x-4 max-w-full">

@@ -691,22 +691,24 @@ export default function MyDicePage() {
                 My Dice{user?.title ? ` - ${user.title}` : ''}
               </h1>
             {user && (
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-sm text-gray-600">Level {userLevel}</span>
-                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
-                    style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-500">Progress to next level</span>
-                <button
-                  onClick={() => setShowXPHelp(true)}
-                  className="ml-2 px-2 py-1 text-xs bg-[#fbae17] text-white rounded-full hover:bg-[#e6a015] transition-colors"
-                >
-                  How do I earn XP?
-                </button>
-              </div>
+               <div className="mt-2 flex items-center justify-between sm:justify-start gap-2">
+                 <div className="flex items-center gap-2">
+                   <span className="text-sm text-gray-600">Level {userLevel}</span>
+                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                     <div 
+                       className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
+                       style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
+                     ></div>
+                   </div>
+                   <span className="hidden sm:inline text-xs text-gray-500">Progress to next level</span>
+                 </div>
+                 <button
+                   onClick={() => setShowXPHelp(true)}
+                   className="px-2 py-1 text-xs bg-[#fbae17] text-white rounded-full hover:bg-[#e6a015] transition-colors"
+                 >
+                   How do I earn XP?
+                 </button>
+               </div>
             )}
             </div>
           </div>
@@ -960,7 +962,7 @@ export default function MyDicePage() {
 
               {/* Asset grid for active tab - fixed max height with scroll */}
               <div className="p-4 max-h-[560px] overflow-y-auto overflow-x-hidden">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-2 gap-3">
                 {/* Optional None option for tabs except background and dice */}
                 {activeTab !== "background" && activeTab !== "dice" && (
                   <button
@@ -1009,7 +1011,7 @@ export default function MyDicePage() {
                           }
                         }}
                         disabled={isDisabled}
-                        className={`relative rounded-lg border transition-shadow flex items-center justify-center px-4 py-2 min-h-[3rem] ${
+                        className={`relative rounded-lg border transition-shadow flex items-center justify-center px-4 py-2 min-h-[4rem] sm:min-h-[3rem] ${
                           isDisabled 
                             ? "bg-gray-200 border-gray-300 cursor-not-allowed opacity-60" 
                             : isActive 
@@ -1017,7 +1019,7 @@ export default function MyDicePage() {
                               : "bg-white border-gray-200 hover:shadow-md"
                         }`}
                       >
-                        <span className={`text-sm font-medium ${
+                        <span className={`text-sm sm:text-sm text-base font-medium ${
                           isDisabled ? 'text-gray-400' : 'text-gray-800'
                         }`}>
                           {asset.name}

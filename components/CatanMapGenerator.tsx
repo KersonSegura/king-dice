@@ -1788,9 +1788,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
     setIsNominating(true);
     try {
       // Capture the map as an image
-      console.log('📸 Capturing map image...');
       const mapImage = await captureMapImage();
-      console.log('✅ Map image captured, length:', mapImage.length);
       
       // Create a map data object for classic nomination
       const mapData = {
@@ -1841,7 +1839,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       }
 
       const result = await response.json();
-      console.log('✅ API Success response:', result);
       setIsNominated(true);
       showToast(`Classic Catan map nominated successfully! ID: ${result.nominationId}`, 'success');
       
@@ -2002,15 +1999,12 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       width: 615, // Standard map width
       height: 532  // Standard map height
     });
-    
-    console.log('✅ Moved red rectangle to map area');
   };
 
 
   const captureMapImage = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        console.log('📸 Capturing map image from dedicated container...');
         
         // Find the new map container
         const mapContainer = document.getElementById('map-container') as HTMLElement;
@@ -2028,11 +2022,8 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             allowTaint: true,
             logging: false
           }).then((canvas: HTMLCanvasElement) => {
-            console.log('✅ Canvas created, size:', canvas.width, 'x', canvas.height);
-            
             // Convert directly to base64
             const imageData = canvas.toDataURL('image/png');
-            console.log('✅ Map capture complete, length:', imageData.length);
             resolve(imageData);
           }).catch((error) => {
             console.error('❌ html2canvas failed:', error);
@@ -2350,10 +2341,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         {/* Map Container - Full width to use all available space */}
         {/* Map Container with mobile-specific padding */}
         <div className="bg-white rounded-lg shadow-md" style={{ padding: window.innerWidth < 640 ? '8px' : '24px', maxWidth: '100%', overflow: 'hidden' }}>
-            {/* Map Display Area - Responsive width for mobile, fixed for desktop */}
+            {/* Map Display Area - Responsive width for all screen sizes */}
     <div className="relative overflow-hidden bg-white" id="map-container" style={{ 
-      width: window.innerWidth < 640 ? '100%' : '750px', 
-      maxWidth: window.innerWidth < 640 ? '100%' : '750px', 
+      width: window.innerWidth < 640 ? '100%' : 'min(750px, 100%)', 
+      maxWidth: '100%', 
       height: window.innerWidth < 640 ? (mapType === 'expansion' ? '358px' : '303px') : '532px' 
     }}>
                 {/* Map Content Container - Centered and Contained */}
@@ -2422,9 +2413,9 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
             
           {/* Map Content Wrapper - Centered and Contained */}
-          <div className="flex items-center justify-center w-full h-full" style={{ overflow: 'visible' }}>
-            {/* Map Container - Original size restored */}
-            <div className="relative" style={{ width: '615px', height: '532px', overflow: 'visible' }}>
+          <div className="flex items-center justify-center w-full h-full overflow-hidden">
+            {/* Map Container - Responsive size */}
+            <div className="relative max-w-full max-h-full" style={{ width: '615px', height: '532px', maxWidth: '100%', maxHeight: '100%' }}>
                {/* Classic Map - Hidden on mobile */}
                {mapType === 'classic' && (
                <div className="hidden sm:block" style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -2848,10 +2839,16 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
       {/* Settings Modal */}
       {showSettingsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setShowSettingsModal(false)}
+        >
+          <div 
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Settings</h3>
+              <h3 className="text-lg font-semibold">Generation Custom Rules</h3>
               <button
                 onClick={() => setShowSettingsModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-xl"
@@ -2861,7 +2858,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             </div>
             
             <div>
-              <h4 className="text-lg font-semibold text-dark-900 mb-4">Generation Custom Rules</h4>
               <p className="text-xs text-gray-500 mb-4">
                 Check/Uncheck boxes to customize the rules on your map
               </p>

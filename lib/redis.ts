@@ -1,10 +1,18 @@
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Initialize Redis client with fallback for development
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+// Only initialize Redis if valid URL and token are provided
+const redis = redisUrl && redisToken && 
+  !redisUrl.includes('your-upstash-redis-url-here') && 
+  !redisToken.includes('your-upstash-redis-token-here')
+  ? new Redis({
+      url: redisUrl,
+      token: redisToken,
+    })
+  : null;
 
 export default redis;
 
@@ -14,6 +22,10 @@ export class CacheService {
 
   // Set cache with TTL (Time To Live) in seconds
   static async set(key: string, value: any, ttl: number = 3600): Promise<void> {
+    if (!this.redis) {
+      console.warn('Redis not available, skipping cache set');
+      return;
+    }
     try {
       await this.redis.setex(key, ttl, JSON.stringify(value));
     } catch (error) {
@@ -23,6 +35,10 @@ export class CacheService {
 
   // Get cache value
   static async get<T>(key: string): Promise<T | null> {
+    if (!this.redis) {
+      console.warn('Redis not available, returning null for cache get');
+      return null;
+    }
     try {
       const value = await this.redis.get(key);
       return value ? JSON.parse(value as string) : null;
@@ -34,6 +50,10 @@ export class CacheService {
 
   // Delete cache
   static async del(key: string): Promise<void> {
+    if (!this.redis) {
+      console.warn('Redis not available, skipping cache delete');
+      return;
+    }
     try {
       await this.redis.del(key);
     } catch (error) {
@@ -43,6 +63,10 @@ export class CacheService {
 
   // Check if key exists
   static async exists(key: string): Promise<boolean> {
+    if (!this.redis) {
+      console.warn('Redis not available, returning false for cache exists');
+      return false;
+    }
     try {
       const result = await this.redis.exists(key);
       return result === 1;
@@ -122,6 +146,10 @@ export class CacheService {
 
   // Clear all cache (use with caution)
   static async clearAll(): Promise<void> {
+    if (!this.redis) {
+      console.warn('Redis not available, skipping cache clear all');
+      return;
+    }
     try {
       const keys = await this.redis.keys('kingdice:*');
       if (keys.length > 0) {

@@ -69,10 +69,10 @@ export default function BackToTopButton() {
     return null;
   }
 
-  const buttonClasses = `fixed z-[35] text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
+  const buttonClasses = `fixed z-[35] text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hidden sm:block ${
     isChatOpen 
       ? 'bottom-4 right-[26rem]' // Left of the chat (chat is 24rem wide + 2rem margin)
-      : 'bottom-20 right-4 sm:bottom-4 sm:right-20' // Mobile: above chat, Desktop: left of chat
+      : 'bottom-4 right-20' // Desktop: left of chat
   }`;
 
   return (
