@@ -85,6 +85,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
+    // Log what we're receiving (for debugging)
+    console.log('Received game data:', {
+      nameEn: body.nameEn,
+      hasId: 'id' in body,
+      id: body.id
+    });
+    
+    // Remove id if it somehow exists in the body (shouldn't happen, but defensive)
+    delete body.id;
+    
     // Check for duplicate games (case-sensitive for now)
     const existingGame = await prisma.game.findFirst({
       where: {
