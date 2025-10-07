@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
         users = await prisma.user.findMany({
           where: {
             OR: [
-              { username: { contains: searchQuery } },
-              { email: { contains: searchQuery } }
+              { username: { contains: searchQuery, mode: 'insensitive' } },
+              { email: { contains: searchQuery, mode: 'insensitive' } }
             ]
           },
           select: {
@@ -60,9 +60,9 @@ export async function GET(request: NextRequest) {
         const dbGames = await prisma.game.findMany({
           where: {
             OR: [
-              { nameEn: { contains: searchQuery } },
-              { nameEs: { contains: searchQuery } },
-              { name: { contains: searchQuery } }
+              { nameEn: { contains: searchQuery, mode: 'insensitive' } },
+              { nameEs: { contains: searchQuery, mode: 'insensitive' } },
+              { name: { contains: searchQuery, mode: 'insensitive' } }
             ]
           },
           select: {
