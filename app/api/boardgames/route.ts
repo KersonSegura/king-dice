@@ -122,25 +122,25 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create a new game
+    // Create a new game - explicitly define all fields (no spread operator)
     const game = await prisma.game.create({
       data: {
-        nameEn: body.nameEn,
-        nameEs: body.nameEs,
-        yearRelease: body.yearRelease,
-        designer: body.designer,
-        developer: body.developer,
-        minPlayers: body.minPlayers,
-        maxPlayers: body.maxPlayers,
-        durationMinutes: body.durationMinutes,
-        imageUrl: body.imageUrl,
-        thumbnailUrl: body.thumbnailUrl,
+        nameEn: body.nameEn || '',
+        nameEs: body.nameEs || '',
+        yearRelease: body.yearRelease || null,
+        designer: body.designer || null,
+        developer: body.developer || null,
+        minPlayers: body.minPlayers || null,
+        maxPlayers: body.maxPlayers || null,
+        durationMinutes: body.durationMinutes || null,
+        imageUrl: body.imageUrl || null,
+        thumbnailUrl: body.thumbnailUrl || null,
         // Legacy fields
-        name: body.nameEn,
-        year: body.yearRelease,
-        minPlayTime: body.durationMinutes,
-        maxPlayTime: body.durationMinutes,
-        image: body.thumbnailUrl || body.imageUrl,
+        name: body.nameEn || '',
+        year: body.yearRelease || null,
+        minPlayTime: body.durationMinutes || null,
+        maxPlayTime: body.durationMinutes || null,
+        image: body.thumbnailUrl || body.imageUrl || null,
         expansions: 0,
         category: 'ranked',
         userRating: 0,
