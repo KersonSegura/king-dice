@@ -424,6 +424,44 @@ export default function CommunityGalleryPage() {
     }
   };
 
+  const handleEditDescription = async (newDescription: string) => {
+    if (!isAuthenticated || !user || !selectedImage) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/gallery/${selectedImage.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          authorId: user.id,
+          description: newDescription
+        })
+      });
+
+      if (response.ok) {
+        // Update the image in local state
+        const updateImage = (img: GalleryImage) => 
+          img.id === selectedImage.id ? { ...img, description: newDescription } : img;
+        
+        setImages(prevImages => prevImages.map(updateImage));
+        setDisplayedImages(prevImages => prevImages.map(updateImage));
+        setAllImages(prevImages => prevImages.map(updateImage));
+        setSelectedImage(prev => prev ? { ...prev, description: newDescription } : null);
+        
+        showToast('Description updated successfully', 'success');
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to update description', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating description:', error);
+      showToast('Error updating description. Please try again.', 'error');
+    }
+  };
+
   const handleVote = async (imageId: string, voteType: 'up' | 'down') => {
     if (!isAuthenticated || !user) {
       return;
@@ -1864,9 +1902,11 @@ export default function CommunityGalleryPage() {
           onLike={() => handleLike(selectedImage.id)}
           onDelete={() => handleDeleteImage(selectedImage.id)}
           onReport={() => handleReport(selectedImage)}
+          onEditDescription={handleEditDescription}
           isLiked={selectedImage.userVote === 'up'}
           canDelete={!!(isAuthenticated && user && selectedImage.author.id === user.id)}
           canReport={!!(isAuthenticated && user)}
+          canEdit={!!(isAuthenticated && user && selectedImage.author.id === user.id)}
           likeCount={selectedImage.votes?.upvotes || 0}
           imageId={selectedImage.id}
           comments={imageComments}

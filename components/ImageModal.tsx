@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
 import ExpandableText from './ExpandableText';
 import ReportContent from './ReportContent';
 
@@ -43,9 +43,11 @@ interface ImageModalProps {
   onLike?: () => void;
   onDelete?: () => void;
   onReport?: (reason: string, details?: string) => Promise<void> | void;
+  onEditDescription?: (newDescription: string) => Promise<void> | void;
   isLiked?: boolean;
   canDelete?: boolean;
   canReport?: boolean;
+  canEdit?: boolean;
   likeCount?: number;
   imageId?: string;
   // Comment-related props
@@ -80,9 +82,11 @@ export default function ImageModal({
   onLike,
   onDelete,
   onReport,
+  onEditDescription,
   isLiked,
   canDelete,
   canReport,
+  canEdit,
   likeCount,
   imageId,
   comments = [],
@@ -109,10 +113,14 @@ export default function ImageModal({
   const [showImageReportModal, setShowImageReportModal] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState(description || '');
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      setEditedDescription(description || '');
+      setIsEditingDescription(false);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -120,7 +128,7 @@ export default function ImageModal({
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, description]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -295,6 +303,28 @@ export default function ImageModal({
     }
   };
 
+  const handleEditDescription = () => {
+    setIsEditingDescription(true);
+  };
+
+  const handleSaveDescription = async () => {
+    if (onEditDescription && editedDescription.trim() !== description) {
+      try {
+        await onEditDescription(editedDescription.trim());
+        setIsEditingDescription(false);
+      } catch (error) {
+        console.error('Error updating description:', error);
+      }
+    } else {
+      setIsEditingDescription(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedDescription(description || '');
+    setIsEditingDescription(false);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -416,8 +446,8 @@ export default function ImageModal({
                     onClick={onLike}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                       isLiked 
-                      ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'text-red-600 hover:bg-red-50' 
+                      : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
@@ -459,11 +489,48 @@ export default function ImageModal({
               </div>
 
               {/* Description */}
-              {description && (
-                <div className="text-gray-700 mb-4 max-h-20 overflow-y-auto text-sm">
-                  <p className="whitespace-pre-wrap">
-                    {description}
-                  </p>
+              {(description || isEditingDescription) && (
+                <div className="mb-4">
+                  {isEditingDescription ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                        rows={3}
+                        placeholder="Write a description..."
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-3 py-1 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveDescription}
+                          className="px-3 py-1 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <p className="text-gray-700 text-sm whitespace-pre-wrap pr-8">
+                        {description}
+                      </p>
+                      {canEdit && onEditDescription && (
+                        <button
+                          onClick={handleEditDescription}
+                          className="absolute top-0 right-0 p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          title="Edit description"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -639,11 +706,51 @@ export default function ImageModal({
                         </span>
                       )}
                     </div>
-              {description && (
-                <div className="text-gray-700 mb-4 max-h-32 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:bg-gray-200 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full">
-                  <p className="whitespace-pre-wrap">
-                    {description}
-                  </p>
+              {(description || isEditingDescription) && (
+                <div className="mb-4">
+                  {isEditingDescription ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        rows={4}
+                        placeholder="Write a description..."
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveDescription}
+                          className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center space-x-1"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>Save</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="text-gray-700 max-h-32 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:bg-gray-200 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full pr-8">
+                        <p className="whitespace-pre-wrap">
+                          {description}
+                        </p>
+                      </div>
+                      {canEdit && onEditDescription && (
+                        <button
+                          onClick={handleEditDescription}
+                          className="absolute top-0 right-0 p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          title="Edit description"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -655,8 +762,8 @@ export default function ImageModal({
                       onClick={onLike}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                         isLiked 
-                        ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'text-red-600 hover:bg-red-50' 
+                        : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />

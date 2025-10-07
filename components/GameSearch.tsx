@@ -51,7 +51,7 @@ export default function GameSearch() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for a game... (e.g.: Exploding Kittens)"
+          placeholder="Search for a board game"
           className="input-field pl-10 pr-4 py-3 text-lg"
           onFocus={() => setShowResults(true)}
         />

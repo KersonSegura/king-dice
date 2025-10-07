@@ -10,15 +10,15 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get('username');
+    const userId = searchParams.get('userId');
 
-
-    if (!username) {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    if (!username && !userId) {
+      return NextResponse.json({ error: 'Username or userId is required' }, { status: 400 });
     }
 
-    // Find user in database (simplified query first)
+    // Find user in database by username or userId
     const user = await prisma.user.findUnique({
-      where: { username }
+      where: username ? { username } : { id: userId }
     });
 
     if (!user) {
@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
           containers: '#ffffff'
         },
         gamesList: user.gamesList ? JSON.parse(user.gamesList) : [],
+        collectionPhoto: user.collectionPhoto,
+        favoriteCard: user.favoriteCard,
         isAdmin: user.isAdmin,
         levelProgress: {
           currentLevel,

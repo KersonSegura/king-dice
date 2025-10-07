@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function PUT(request: NextRequest) {
   try {
-    const { userId, username, email, bio, favoriteGames, profileColors } = await request.json();
+    const { userId, username, email, bio, favoriteGames, profileColors, collectionPhoto, favoriteCard, gamesList } = await request.json();
     
     console.log('Received update profile request:', {
       userId,
@@ -14,7 +14,10 @@ export async function PUT(request: NextRequest) {
       email,
       bio,
       favoriteGames,
-      profileColors
+      profileColors,
+      collectionPhoto,
+      favoriteCard,
+      gamesList
     });
 
     // Validate input
@@ -64,10 +67,12 @@ export async function PUT(request: NextRequest) {
           id: userId,
           username: username,
           email: email,
-          password: '', // Empty password for now
+          passwordHash: '', // Empty password for now
           isAdmin: isAdmin,
           bio: bio || null,
-          favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null
+          favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
+          collectionPhoto: collectionPhoto || null,
+          favoriteCard: favoriteCard || null
         }
       });
       
@@ -129,6 +134,21 @@ export async function PUT(request: NextRequest) {
       updateData.profileColors = JSON.stringify(profileColors);
     }
 
+    // Add collection photo if provided
+    if (collectionPhoto !== undefined) {
+      updateData.collectionPhoto = collectionPhoto;
+    }
+
+    // Add favorite card if provided
+    if (favoriteCard !== undefined) {
+      updateData.favoriteCard = favoriteCard;
+    }
+
+    // Add games list if provided (store as JSON string)
+    if (gamesList !== undefined) {
+      updateData.gamesList = JSON.stringify(gamesList);
+    }
+
     // Update or create user profile
     let updatedUser;
     try {
@@ -148,11 +168,14 @@ export async function PUT(request: NextRequest) {
             id: userId,
             username,
             email,
-            password: '', // Empty password for now
+            passwordHash: '', // Empty password for now
             isAdmin: isAdmin,
             bio: bio || null,
             favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
-            profileColors: profileColors ? JSON.stringify(profileColors) : null
+            profileColors: profileColors ? JSON.stringify(profileColors) : null,
+            collectionPhoto: collectionPhoto || null,
+            favoriteCard: favoriteCard || null,
+            gamesList: gamesList ? JSON.stringify(gamesList) : null
           }
         });
         console.log('User created successfully:', updatedUser);

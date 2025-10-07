@@ -75,6 +75,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch user data to get actual username and avatar
+    let authorName = 'User';
+    let authorAvatar = '/default-avatar.png';
+    
+    try {
+      const userResponse = await fetch(`${request.nextUrl.origin}/api/users/profile?userId=${authorId}`);
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        authorName = userData.user?.username || 'User';
+        authorAvatar = userData.user?.avatar || '/default-avatar.png';
+      }
+    } catch (error) {
+      console.error('Error fetching user data for gallery post:', error);
+    }
+
     // Read existing gallery data
     const galleryPath = path.join(process.cwd(), 'data', 'gallery.json');
     let galleryData = { images: [] };
@@ -88,18 +103,20 @@ export async function POST(request: NextRequest) {
     const newImage = {
       id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       imageUrl,
+      thumbnailUrl: imageUrl, // Use same URL for thumbnail (can be optimized later)
       title: category === 'Collections' ? 'Collection Photo' : 'Favorite Card',
       description,
       category,
       author: {
         id: authorId,
-        name: 'User', // Will be updated with actual username
-        avatar: '/default-avatar.png'
+        name: authorName,
+        avatar: authorAvatar
       },
       createdAt: new Date().toISOString(),
       votes: {
         upvotes: 0,
-        downvotes: 0
+        downvotes: 0,
+        voters: []
       },
       comments: []
     };

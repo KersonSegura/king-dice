@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 interface LoadingScreenProps {
   message?: string;
   subMessage?: string;
@@ -24,11 +26,8 @@ export default function LoadingScreen({
     >
       <div 
         style={{
-          backgroundColor: 'white',
+          backgroundColor: 'transparent',
           padding: '2rem',
-          borderRadius: '0.5rem',
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
           position: 'absolute',
           top: '50%',
           left: '50%',
@@ -37,7 +36,15 @@ export default function LoadingScreen({
         }}
       >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="mb-6">
+            <Image 
+              src="/DiceLogo.svg" 
+              alt="King Dice Logo" 
+              width={80} 
+              height={80}
+              className="mx-auto animate-pulse"
+            />
+          </div>
           <h2 className="text-lg font-medium text-gray-900">{message}</h2>
           <p className="text-sm text-gray-600 mt-2">{subMessage}</p>
         </div>

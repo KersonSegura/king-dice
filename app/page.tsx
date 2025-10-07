@@ -707,18 +707,20 @@ export default function HomePage() {
                 <h2 className="text-3xl font-bold text-dark-900">Pixel Canvas</h2>
               </div>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Join the community in creating collaborative<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>pixel art!
+                Join the community in creating<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>collaborative pixel art!
               </p>
               
               {/* Stats */}
-              <div className="flex items-center justify-center space-x-6 text-sm text-gray-600 mt-3">
-                <div className="flex items-center space-x-1">
-                  <Square className="w-4 h-4" />
-                  <span>40,000 pixels</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Users className="w-4 h-4" />
-                  <span>1 users</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-600 mt-3">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-1">
+                    <Square className="w-4 h-4" />
+                    <span>40,000 pixels</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Users className="w-4 h-4" />
+                    <span>1 users</span>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Clock className="w-4 h-4" />
@@ -750,18 +752,20 @@ export default function HomePage() {
                 <h2 className="text-3xl font-bold text-dark-900">Pixel Canvas</h2>
               </div>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Join the community in creating collaborative<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>pixel art!
+                Join the community in creating<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>collaborative pixel art!
               </p>
               
               {/* Stats */}
-              <div className="flex items-center justify-center space-x-6 text-sm text-gray-600 mt-3">
-                <div className="flex items-center space-x-1">
-                  <Square className="w-4 h-4" />
-                  <span>40,000 pixels</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Users className="w-4 h-4" />
-                  <span>1 users</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-600 mt-3">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-1">
+                    <Square className="w-4 h-4" />
+                    <span>40,000 pixels</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Users className="w-4 h-4" />
+                    <span>1 users</span>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Clock className="w-4 h-4" />

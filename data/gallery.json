@@ -1,6 +1,102 @@
 {
   "images": [
     {
+      "id": "img_1759862091423_15rgfkdsd",
+      "imageUrl": "/uploads/favorite-card-1759862086894.jpg",
+      "thumbnailUrl": "/uploads/favorite-card-1759862086894.jpg",
+      "title": "Favorite Card",
+      "description": "test",
+      "category": "the-kings-card",
+      "author": {
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg"
+      },
+      "createdAt": "2025-10-07T18:34:51.423Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0,
+        "voters": []
+      },
+      "comments": []
+    },
+    {
+      "id": "img_1759861186680_7o0wt1jds",
+      "imageUrl": "/uploads/favorite-card-1759861184169.jpg",
+      "thumbnailUrl": "/uploads/favorite-card-1759861184169.jpg",
+      "title": "Favorite Card",
+      "description": "Favorite card",
+      "category": "the-kings-card",
+      "author": {
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg"
+      },
+      "createdAt": "2025-10-07T18:19:46.680Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0,
+        "voters": []
+      },
+      "comments": []
+    },
+    {
+      "id": "img_1759861028916_xoavdnzq2",
+      "imageUrl": "/uploads/favorite-card-1759861025117.jpg",
+      "thumbnailUrl": "/uploads/favorite-card-1759861025117.jpg",
+      "title": "Favorite Card",
+      "description": "Favorite card",
+      "category": "the-kings-card",
+      "author": {
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "kingdice",
+        "avatar": "/generated/dice-1759344526558.svg"
+      },
+      "createdAt": "2025-10-07T18:17:08.916Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0,
+        "voters": []
+      },
+      "comments": []
+    },
+    {
+      "id": "img_1759859999918_c625rbc3m",
+      "imageUrl": "/uploads/favorite-card-1759859997242.jpg",
+      "title": "Favorite Card",
+      "description": "Favorite card",
+      "category": "King's Card",
+      "author": {
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "User",
+        "avatar": "/default-avatar.png"
+      },
+      "createdAt": "2025-10-07T17:59:59.918Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "comments": []
+    },
+    {
+      "id": "img_1759783760740_13ejbr0fa",
+      "imageUrl": "/uploads/collection-photo-1759783757628.png",
+      "title": "Collection Photo",
+      "description": "My game collection",
+      "category": "Collections",
+      "author": {
+        "id": "cmg88zsa300017kbsvllkpdof",
+        "name": "User",
+        "avatar": "/default-avatar.png"
+      },
+      "createdAt": "2025-10-06T20:49:20.740Z",
+      "votes": {
+        "upvotes": 0,
+        "downvotes": 0
+      },
+      "comments": []
+    },
+    {
       "title": "Dice 000002",
       "description": "",
       "imageUrl": "/gallery/gallery-1756955365181.svg",
@@ -685,7 +781,7 @@
       "description": "This is where legends roll. Showcase your custom die and claim your place in the Dice Throne.",
       "icon": "ThroneIcon.svg",
       "color": "bg-red-100 text-red-600",
-      "imageCount": 1
+      "imageCount": 2
     },
     {
       "id": "the-kings-card",
@@ -693,7 +789,7 @@
       "description": "Present your relic to the court. Each week, one card ascends to the King's side.",
       "icon": "KingsCard.svg",
       "color": "bg-pink-100 text-pink-600",
-      "imageCount": 0
+      "imageCount": 1
     },
     {
       "id": "collections",
@@ -701,7 +797,7 @@
       "description": "Show off your board game collections",
       "icon": "CollectionIcon.svg",
       "color": "bg-blue-100 text-blue-600",
-      "imageCount": 5
+      "imageCount": 6
     },
     {
       "id": "setups",
@@ -709,7 +805,7 @@
       "description": "Share your table layouts and game setups before the action begins",
       "icon": "SetupsIcon.svg",
       "color": "bg-green-100 text-green-600",
-      "imageCount": 2
+      "imageCount": 3
     },
     {
       "id": "events",
@@ -717,7 +813,7 @@
       "description": "Board game events and meetups",
       "icon": "EventsIcon.svg",
       "color": "bg-purple-100 text-purple-600",
-      "imageCount": 0
+      "imageCount": 1
     }
   ]
 }

@@ -23,6 +23,7 @@ interface ProfileColorCustomizerProps {
   onClose: () => void;
   currentColors: ProfileColors;
   onSave: (colors: ProfileColors) => void;
+  onPreview?: (colors: ProfileColors) => void;
 }
 
 const COLOR_THEMES: ColorTheme[] = [
@@ -414,7 +415,7 @@ const COLOR_THEMES: ColorTheme[] = [
 
 const THEMES_PER_PAGE = 12;
 
-export default function ProfileColorCustomizer({ isOpen, onClose, currentColors, onSave }: ProfileColorCustomizerProps) {
+export default function ProfileColorCustomizer({ isOpen, onClose, currentColors, onSave, onPreview }: ProfileColorCustomizerProps) {
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -425,9 +426,18 @@ export default function ProfileColorCustomizer({ isOpen, onClose, currentColors,
 
   const handleThemeSelect = (theme: ColorTheme) => {
     setSelectedTheme(theme.name);
+    // Apply theme immediately for real-time preview (local state only)
+    if (onPreview) {
+      onPreview({
+        cover: theme.cover,
+        background: theme.background,
+        containers: theme.containers
+      });
+    }
   };
 
   const handleSave = () => {
+    // Save the selected theme to database
     const theme = COLOR_THEMES.find(t => t.name === selectedTheme);
     if (theme) {
       onSave({

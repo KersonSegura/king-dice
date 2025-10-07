@@ -21,6 +21,7 @@ export default function Header() {
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Simple hover handlers - no delays, just immediate response
   const openMenu = () => {
@@ -44,6 +45,25 @@ export default function Header() {
       }
     };
   }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside as any);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside as any);
+    };
+  }, [isMenuOpen]);
 
   // Fetch user stats when authenticated
   useEffect(() => {
@@ -89,15 +109,7 @@ export default function Header() {
   }, [isAuthenticated, user]);
 
   return (
-    <header 
-      className="bg-white shadow-md border-b border-dark-200"
-      onClick={() => {
-        // Close mobile menu when clicking outside of it
-        if (isMenuOpen) {
-          setIsMenuOpen(false);
-        }
-      }}
-    >
+    <header className="bg-white shadow-md border-b border-dark-200">
       <div className="w-full px-6 sm:px-8 lg:px-12">
         <div className="flex justify-between items-center w-full h-16">
           {/* Left (Logo) */}
@@ -334,8 +346,8 @@ export default function Header() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div 
+            ref={mobileMenuRef}
             className="md:hidden py-4 border-t border-dark-200 max-h-[70vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
           >
             <nav className="flex flex-col space-y-4">
               {/* Mobile Home Link */}
