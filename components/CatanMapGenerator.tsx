@@ -1410,9 +1410,21 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
     sameResourceCanTouch: true,
     imageStyle: 'king-dice' // Add image style state
   });
+  const [isMobile, setIsMobile] = useState(false);
   const userId = useUserId();
   const { user } = useAuth();
   const { showToast, ToastContainer } = useToast();
+  
+  // Detect mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // SCALED DIMENSIONS - Smaller map for better page layout
   const SCALE_FACTOR = 0.6; // 60% of original size
@@ -2340,12 +2352,12 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
         {/* Map Container - Full width to use all available space */}
         {/* Map Container with mobile-specific padding */}
-        <div className="bg-white rounded-lg shadow-md" style={{ padding: window.innerWidth < 640 ? '8px' : '24px', maxWidth: '100%', overflow: 'hidden' }}>
+        <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '24px', maxWidth: '100%', overflow: 'hidden' }}>
             {/* Map Display Area - Responsive width for all screen sizes */}
     <div className="relative overflow-hidden bg-white" id="map-container" style={{ 
-      width: window.innerWidth < 640 ? '100%' : 'min(750px, 100%)', 
+      width: isMobile ? '100%' : 'min(750px, 100%)', 
       maxWidth: '100%', 
-      height: window.innerWidth < 640 ? (mapType === 'expansion' ? '358px' : '303px') : '532px' 
+      height: isMobile ? (mapType === 'expansion' ? '358px' : '303px') : '532px' 
     }}>
                 {/* Map Content Container - Centered and Contained */}
                 <div className="relative w-full h-full mobile-main-container flex items-center justify-center" style={{ overflow: 'visible', transform: 'translateY(450px) translateX(48px)' }}>

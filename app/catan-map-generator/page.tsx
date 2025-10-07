@@ -194,6 +194,8 @@ export default function CatanMapGeneratorPage() {
 
   // Infinite scroll effect
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleScroll = () => {
       if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
         loadMoreMaps();
