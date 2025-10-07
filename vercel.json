@@ -5,10 +5,6 @@
       "schedule": "0 0 * * *"
     },
     {
-      "path": "/api/cron/daily-price-refresh",
-      "schedule": "0 1 * * *"
-    },
-    {
       "path": "/api/cron/weekly-canvas-snapshot",
       "schedule": "0 0 * * 0"
     }
