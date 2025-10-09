@@ -234,8 +234,8 @@ function getThumbnailPath(originalPath: string): string {
   const extension = filename.substring(lastDotIndex);
   const baseName = filename.substring(0, lastDotIndex);
   
-  // Add "thumbnail" to the end and use the Thumbnails folder
-  const thumbnailName = baseName + 'thumbnail' + extension;
+  // Add "Thumbnail" with capital T to match the actual file naming convention
+  const thumbnailName = baseName + 'Thumbnail' + extension;
   return `/dice/Thumbnails/${thumbnailName}`;
 }
 
@@ -962,7 +962,7 @@ export default function MyDicePage() {
 
               {/* Asset grid for active tab - fixed max height with scroll */}
               <div className="p-4 max-h-[560px] overflow-y-auto overflow-x-hidden">
-                <div className="grid grid-cols-3 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {/* Optional None option for tabs except background and dice */}
                 {activeTab !== "background" && activeTab !== "dice" && (
                   <button

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { X, Mail, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
@@ -31,6 +31,23 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     email: string;
     username: string;
   } | null>(null);
+
+  // Load saved credentials on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedUsername = localStorage.getItem('kingdice_saved_username');
+      const savedPassword = localStorage.getItem('kingdice_saved_password');
+      
+      if (savedUsername && savedPassword) {
+        setFormData(prev => ({
+          ...prev,
+          username: savedUsername,
+          password: savedPassword
+        }));
+        setRememberPassword(true);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +152,17 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           
           // Regular login success
           login(data.user, data.token);
+          
+          // Save credentials to localStorage if remember password is checked
+          if (rememberPassword && typeof window !== 'undefined') {
+            localStorage.setItem('kingdice_saved_username', formData.username);
+            localStorage.setItem('kingdice_saved_password', formData.password);
+          } else if (typeof window !== 'undefined') {
+            // Clear saved credentials if remember password is unchecked
+            localStorage.removeItem('kingdice_saved_username');
+            localStorage.removeItem('kingdice_saved_password');
+          }
+          
           onClose();
           setFormData({ username: '', email: '', password: '', confirmPassword: '' });
           setShowPassword(false);
@@ -278,7 +306,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 id="remember-password"
                 type="checkbox"
                 checked={rememberPassword}
-                onChange={(e) => setRememberPassword(e.target.checked)}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setRememberPassword(checked);
+                  
+                  // Clear saved credentials immediately when unchecked
+                  if (!checked && typeof window !== 'undefined') {
+                    localStorage.removeItem('kingdice_saved_username');
+                    localStorage.removeItem('kingdice_saved_password');
+                  }
+                }}
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-password" className="ml-2 block text-sm text-gray-700">
