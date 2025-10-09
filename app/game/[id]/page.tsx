@@ -3,7 +3,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
@@ -50,7 +50,7 @@ interface Game {
 
 async function getGame(id: string): Promise<Game | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/game/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/games/${id}`, {
       cache: 'no-store'
     });
     
@@ -270,9 +270,6 @@ export default function GamePage({ params }: { params: { id: string } }) {
       try {
         const fetchedGame = await getGame(params.id);
         setGame(fetchedGame);
-        if (!fetchedGame) {
-          notFound();
-        }
       } catch (error) {
         console.error('Error fetching game:', error);
         setGame(null);
@@ -297,7 +294,33 @@ export default function GamePage({ params }: { params: { id: string } }) {
   }
 
   if (!game) {
-    notFound();
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-6">Game Not Found</h2>
+          <p className="text-gray-600 mb-8 max-w-md">
+            Sorry, we couldn't find the game you're looking for. It might have been removed or doesn't exist.
+          </p>
+          <div className="space-x-4">
+            <Link
+              href="/"
+              className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/90 transition-colors"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Go Home
+            </Link>
+            <Link
+              href="/boardgames"
+              className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Browse Games
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const description = game.descriptions?.find(d => d.language === 'en');
