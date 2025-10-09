@@ -3,6 +3,9 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -12,30 +15,33 @@ export async function GET(
 
     if (isNaN(id)) {
       return NextResponse.json(
-        { error: 'ID inválido' },
+        { error: 'Invalid ID' },
         { status: 400 }
       );
     }
 
     const game = await prisma.game.findUnique({
       where: { id },
-      select: {
-        id: true,
-        bggId: true,
-        name: true,
-        year: true,
-        minPlayers: true,
-        maxPlayers: true,
-        image: true,
-        userRating: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        descriptions: true,
+        rules: true,
+        gameCategories: {
+          include: {
+            category: true
+          }
+        },
+        gameMechanics: {
+          include: {
+            mechanic: true
+          }
+        },
+        baseGameExpansions: true,
       }
     });
 
     if (!game) {
       return NextResponse.json(
-        { error: 'Juego no encontrado' },
+        { error: 'Game not found' },
         { status: 404 }
       );
     }
@@ -43,9 +49,9 @@ export async function GET(
     return NextResponse.json({ game });
 
   } catch (error) {
-    console.error('Error obteniendo juego:', error);
+    console.error('Error fetching game:', error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   } finally {
