@@ -46,7 +46,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ game });
+    return NextResponse.json({ game }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
 
   } catch (error) {
     console.error('Error fetching game:', error);
