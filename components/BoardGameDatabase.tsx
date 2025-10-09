@@ -394,12 +394,6 @@ export default function BoardGameDatabase() {
         return;
       }
 
-      // Validate year if provided
-      if (gameData.yearRelease && (gameData.yearRelease < 1800 || gameData.yearRelease > 2030)) {
-        alert('El año de lanzamiento debe estar entre 1800 y 2030');
-        return;
-      }
-
       // Validate player counts if provided
       if (gameData.minPlayers && gameData.maxPlayers && gameData.minPlayers > gameData.maxPlayers) {
         alert('El número mínimo de jugadores no puede ser mayor que el máximo');
@@ -970,7 +964,7 @@ export default function BoardGameDatabase() {
     <div className="min-h-screen bg-gray-100 p-4 flex flex-col">
       {/* Toast Notification */}
       {toast.visible && (
-        <div className={`fixed top-4 right-4 z-50 max-w-md rounded-lg shadow-lg p-4 transition-all duration-300 transform ${
+        <div className={`fixed top-20 right-4 z-[9999] max-w-md rounded-lg shadow-lg p-4 transition-all duration-300 transform ${
           toast.visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
         } ${
           toast.type === 'success' ? 'bg-green-500 text-white' :
@@ -1208,8 +1202,6 @@ export default function BoardGameDatabase() {
                     </label>
                     <input
                       type="number"
-                      min="1800"
-                      max="2030"
                       value={newGameForm.yearRelease || ''}
                       onChange={(e) => setNewGameForm(prev => ({ 
                         ...prev, 
@@ -1521,8 +1513,6 @@ export default function BoardGameDatabase() {
                                 <input
                                   type="number"
                                   placeholder="Year"
-                                  min="1800"
-                                  max="2030"
                                   value={editingGameData[game.id]?.yearRelease || ''}
                                   onChange={(e) => setEditingGameData(prev => ({
                                     ...prev,

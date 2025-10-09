@@ -28,6 +28,13 @@ export async function POST(request: NextRequest) {
         fullDescription = rulesData.description;
         gameInfo.fullDescription = fullDescription;
       }
+      
+      // If we found a slideshow image in the rules page, use it for both imageUrl and thumbnailUrl
+      if (rulesData.slideshowImageUrl) {
+        gameInfo.imageUrl = rulesData.slideshowImageUrl;
+        gameInfo.thumbnailUrl = rulesData.slideshowImageUrl;
+        console.log('✅ Found slideshow image:', rulesData.slideshowImageUrl);
+      }
     }
 
     return NextResponse.json({
@@ -138,22 +145,182 @@ async function scrapeGameInfo(url: string) {
   });
   
   // Extract description from the main game page
-  const h3Elements = document.querySelectorAll('h3');
-  for (const h3 of h3Elements) {
-    if (h3.textContent?.includes('Description:')) {
-      // Look for the next paragraph element that contains the actual description
-      let nextElement = h3.nextElementSibling;
+  // Strategy 1: Look for heading with "Description:" and get following paragraphs
+  const headingElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  let foundDescription = false;
+  
+  for (const heading of headingElements) {
+    const headingText = heading.textContent?.trim() || '';
+    console.log('Found heading:', headingText);
+    
+    if (headingText.includes('Description')) {
+      console.log('Found Description heading!');
+      // Collect all following paragraphs until we hit another heading or certain content
+      let descriptionParts: string[] = [];
+      let nextElement = heading.nextElementSibling;
+      
       while (nextElement) {
-        if (nextElement.tagName === 'P') {
-          const description = nextElement.textContent?.trim() || '';
-          if (description.length > 50) { // Make sure it's substantial content
-            gameInfo.fullDescription = description;
+        const tagName = nextElement.tagName?.toLowerCase();
+        const elementText = nextElement.textContent?.trim() || '';
+        console.log(`  Checking next element: ${tagName}, text length: ${elementText.length}`);
+        
+        // Stop if we hit another heading (likely a new section)
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+          console.log('  Hit another heading, stopping');
+          break;
+        }
+        
+        // Stop if we hit a table, div with class, or horizontal rule
+        if (['table', 'hr'].includes(tagName)) {
+          console.log('  Hit table/hr, stopping');
+          break;
+        }
+        
+        // Collect paragraph content (no character limit)
+        if (tagName === 'p') {
+          const paragraphText = nextElement.textContent?.trim() || '';
+          // Skip footer-like content only
+          if (paragraphText.length > 0 &&
+              !paragraphText.includes('Retail Price') &&
+              !paragraphText.includes('Check These Posts') &&
+              !paragraphText.includes('Continue Reading') &&
+              !paragraphText.includes('Read More') &&
+              !paragraphText.includes('Prices:') &&
+              !paragraphText.includes('Expansions:')) {
+            console.log('  Adding paragraph:', paragraphText.substring(0, 50) + '...');
+            descriptionParts.push(paragraphText);
+          } else if (paragraphText.length > 0) {
+            console.log('  Skipping paragraph (footer or section marker)');
+          }
+        }
+        
+        nextElement = nextElement.nextElementSibling;
+      }
+      
+      // Combine all description parts
+      if (descriptionParts.length > 0) {
+        gameInfo.fullDescription = descriptionParts.join('\n\n');
+        foundDescription = true;
+        console.log('✅ Found description:', gameInfo.fullDescription.substring(0, 100) + '...');
+      }
+      break;
+    }
+  }
+  
+  // Strategy 2: If no description found via heading, try looking in the main content area
+  if (!foundDescription) {
+    console.log('⚠️ No description found via heading, trying alternative method...');
+    
+    // Find the Description heading first to know where to start
+    let descriptionHeading = null;
+    for (const heading of headingElements) {
+      if (heading.textContent?.includes('Description')) {
+        descriptionHeading = heading;
+        break;
+      }
+    }
+    
+    if (descriptionHeading) {
+      console.log('Found Description heading, collecting only paragraphs in that section');
+      let descriptionParts: string[] = [];
+      let currentElement = descriptionHeading.nextElementSibling;
+      
+      while (currentElement) {
+        const tagName = currentElement.tagName?.toLowerCase();
+        const text = currentElement.textContent?.trim() || '';
+        
+        // Stop if we encounter "Prices:" or similar section markers
+        if (text.includes('Prices:') || text.includes('Expansions:') || 
+            text.includes('Check These Posts') || text.includes('Retail Price')) {
+          console.log('  Encountered Prices/Expansions section, stopping');
+          break;
+        }
+        
+        // Stop if we hit another heading (new section)
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+          console.log('  Hit next section heading:', text.substring(0, 30));
+          break;
+        }
+        
+        // Stop if we hit a table (usually Prices table)
+        if (tagName === 'table') {
+          console.log('  Hit table, stopping');
+          break;
+        }
+        
+        // Stop if we hit horizontal rule (section divider)
+        if (tagName === 'hr') {
+          console.log('  Hit horizontal rule, stopping');
+          break;
+        }
+        
+        // Check if this is a div container (like whitebox) - look inside it for paragraphs
+        if (tagName === 'div') {
+          console.log('  Found div container, looking inside for paragraphs');
+          const paragraphsInDiv = currentElement.querySelectorAll('p');
+          for (const p of paragraphsInDiv) {
+            const paragraphText = p.textContent?.trim() || '';
+            if (paragraphText.length > 0) {
+              descriptionParts.push(paragraphText);
+              console.log('  Adding paragraph from div:', paragraphText.substring(0, 50) + '...');
+            }
+          }
+          // If we found paragraphs in the div, we can stop looking for more
+          if (paragraphsInDiv.length > 0) {
             break;
           }
         }
-        nextElement = nextElement.nextElementSibling;
+        
+        // Collect paragraph content directly (no character limit)
+        if (tagName === 'p' && text.length > 0) {
+          // Skip footer-like content
+          if (!text.includes('This site is dedicated') && 
+              !text.includes('Our mission') && 
+              !text.includes('Created by') &&
+              !text.includes('Published by') &&
+              !text.includes('Read More') &&
+              !text.includes('Continue Reading')) {
+            descriptionParts.push(text);
+            console.log('  Adding paragraph:', text.substring(0, 50) + '...');
+          }
+        }
+        
+        currentElement = currentElement.nextElementSibling;
       }
-      break;
+      
+      if (descriptionParts.length > 0) {
+        gameInfo.fullDescription = descriptionParts.join('\n\n');
+        console.log('✅ Found description:', gameInfo.fullDescription.substring(0, 100) + '...');
+      }
+    } else {
+      // Fallback: Look for content paragraphs
+      console.log('No Description heading found, using fallback method');
+      const allParagraphs = document.querySelectorAll('p');
+      let descriptionParts: string[] = [];
+      
+      for (const p of allParagraphs) {
+        const text = p.textContent?.trim() || '';
+        
+        // Only collect content paragraphs, skip footer and metadata (no character limit)
+        if (text.length > 0 && 
+            !text.includes('This site is dedicated') && 
+            !text.includes('Our mission') && 
+            !text.includes('Created by') &&
+            !text.includes('Published by') &&
+            !text.includes('Retail Price') && 
+            !text.includes('Read More') &&
+            !descriptionParts.length) {
+          descriptionParts.push(text);
+          break; // Just take the first content paragraph as fallback
+        }
+      }
+      
+      if (descriptionParts.length > 0) {
+        gameInfo.fullDescription = descriptionParts.join('\n\n');
+        console.log('✅ Found description via fallback:', gameInfo.fullDescription.substring(0, 100) + '...');
+      } else {
+        console.log('❌ Could not find description');
+      }
     }
   }
   
@@ -379,10 +546,32 @@ async function scrapeGameRules(url: string) {
     .replace(/\n{3,}/g, '\n\n') // Remove excessive line breaks
     .trim();
   
+  // Add credits to UltraBoardGames.com at the end
+  if (rulesContent) {
+    rulesContent += '\n\n---\n\n<em>Rules source: UltraBoardGames.com</em>';
+  }
+  
   description = description.trim();
+  
+  // Extract slideshow image URL if present
+  let slideshowImageUrl = null;
+  const allImages = document.querySelectorAll('img');
+  for (const img of allImages) {
+    const imgElement = img as HTMLImageElement;
+    const imgSrc = imgElement.src;
+    
+    // Look for images in the /img/slideshow/ directory
+    if (imgSrc && imgSrc.includes('/img/slideshow/')) {
+      // Convert relative URLs to absolute
+      slideshowImageUrl = imgSrc.startsWith('http') ? imgSrc : `https://www.ultraboardgames.com${imgSrc}`;
+      console.log('🖼️ Found slideshow image:', slideshowImageUrl);
+      break; // Take the first slideshow image found
+    }
+  }
   
   return {
     rulesContent,
-    description
+    description,
+    slideshowImageUrl
   };
 }
