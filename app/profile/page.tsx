@@ -10,6 +10,7 @@ import Image from 'next/image';
 import ProfileColorCustomizer from '@/components/ProfileColorCustomizer';
 import { useToast } from '@/components/Toast';
 import ImageModal from '@/components/ImageModal';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 import FriendsFollowersSection from '@/components/FriendsFollowersSection';
 import { isUserAdmin } from '@/lib/admin-utils';
 import TagSelector from '@/components/TagSelector';
@@ -160,6 +161,8 @@ export default function ProfilePage() {
     likeCount?: number,
     imageId?: string
   } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [newImage, setNewImage] = useState({
     description: '',
@@ -375,6 +378,56 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error updating like:', error);
       showToast('Failed to update like', 'error', 2000);
+    }
+  };
+
+  // Handle image deletion
+  const handleDeleteImage = (imageId: string) => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+    setImageToDelete(imageId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!isAuthenticated || !user || !imageToDelete) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/gallery/${imageToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          authorId: user.id
+        })
+      });
+
+      if (response.ok) {
+        // Remove the image from the local state
+        setUserImages(prevImages => prevImages.filter(image => image.id !== imageToDelete));
+        
+        // Close the image modal if the deleted image is currently selected
+        if (selectedImage && selectedImage.imageId === imageToDelete) {
+          setShowImageModal(false);
+          setSelectedImage(null);
+          setImageComments([]);
+        }
+        
+        showToast('Image deleted successfully', 'success');
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to delete image', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      showToast('Error deleting image. Please try again.', 'error');
+    } finally {
+      setImageToDelete(null);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -2454,12 +2507,7 @@ export default function ProfilePage() {
         onReportComment={handleCommentReport}
         onRefreshComments={() => selectedImage?.imageId && loadImageComments(selectedImage.imageId)}
         onRefreshActivity={loadRecentActivity}
-        onDelete={async () => {
-          // TODO: Implement image delete functionality
-          console.log('Delete clicked for image:', selectedImage?.imageId);
-          // For now, just show a toast - the actual delete logic would go here
-          showToast('Image delete functionality not yet implemented', 'info', 2000);
-        }}
+        onDelete={() => selectedImage?.imageId && handleDeleteImage(selectedImage.imageId)}
         onReport={async (reason: string, details?: string) => {
           // TODO: Implement image report functionality
           console.log('Report clicked for image:', selectedImage?.imageId, 'Reason:', reason, 'Details:', details);
@@ -2470,6 +2518,21 @@ export default function ProfilePage() {
         canReport={selectedImage?.author?.name !== user?.username}
         isLiked={selectedImage?.imageId ? imageLikes[selectedImage.imageId] || false : false}
         currentUserId={user?.id}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setImageToDelete(null);
+        }}
+        onConfirm={confirmDeleteImage}
+        title="Delete Image"
+        message="Are you sure you want to delete this image? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
       />
 
     </div>

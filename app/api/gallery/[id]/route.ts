@@ -99,6 +99,10 @@ export async function DELETE(
     // Remove the image
     images.splice(imageIndex, 1);
 
+    // Write back to file
+    galleryData.images = images;
+    fs.writeFileSync(dataFilePath, JSON.stringify(galleryData, null, 2));
+
     // Update category image counts
     updateCategoryImageCounts();
 

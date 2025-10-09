@@ -409,8 +409,22 @@ export default function CommunityGalleryPage() {
       });
 
       if (response.ok) {
-        // Remove the image from the local state
-        setImages(prevImages => prevImages.filter(image => image.id !== imageToDelete));
+        // Remove the image from both state arrays
+        setAllImages(prevImages => prevImages.filter(image => image.id !== imageToDelete));
+        setDisplayedImages(prevImages => prevImages.filter(image => image.id !== imageToDelete));
+        
+        // Close the image modal if the deleted image is currently selected
+        if (selectedImage && selectedImage.id === imageToDelete) {
+          setShowImageModal(false);
+          setSelectedImage(null);
+          setImageComments([]);
+          
+          // Remove image parameter from URL when closing modal
+          const url = new URL(window.location.href);
+          url.searchParams.delete('image');
+          window.history.pushState({}, '', url);
+        }
+        
         showToast('Image deleted successfully', 'success');
       } else {
         const error = await response.json();
@@ -421,6 +435,7 @@ export default function CommunityGalleryPage() {
       showToast('Error deleting image. Please try again.', 'error');
     } finally {
       setImageToDelete(null);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -559,6 +574,11 @@ export default function CommunityGalleryPage() {
     setSelectedImageIndex(imageIndex);
     setShowImageModal(true);
     
+    // Update URL with image parameter
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('image', image.id);
+    window.history.pushState({}, '', currentUrl);
+    
     // Load comments for this image
     try {
       const url = user 
@@ -590,6 +610,11 @@ export default function CommunityGalleryPage() {
     setSelectedImage(null);
     setSelectedImageIndex(0);
     setImageComments([]);
+    
+    // Remove image parameter from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('image');
+    window.history.pushState({}, '', url);
   };
 
   const handleNavigate = async (direction: 'prev' | 'next') => {
@@ -605,6 +630,11 @@ export default function CommunityGalleryPage() {
     const newImage = displayedImages[newIndex];
     setSelectedImage(newImage);
     setSelectedImageIndex(newIndex);
+    
+    // Update URL with new image parameter
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('image', newImage.id);
+    window.history.pushState({}, '', currentUrl);
     
     // Load comments for the new image
     try {
