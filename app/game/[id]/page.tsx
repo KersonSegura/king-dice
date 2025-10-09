@@ -50,7 +50,7 @@ interface Game {
 
 async function getGame(id: string): Promise<Game | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/games/${id}`, {
+    const response = await fetch(`/api/games/${id}`, {
       cache: 'no-store'
     });
     
