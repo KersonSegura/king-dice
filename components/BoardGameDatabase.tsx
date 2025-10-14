@@ -1405,14 +1405,23 @@ export default function BoardGameDatabase() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Game Description
+                    <span className="text-xs text-gray-500 ml-2">(Supports markdown links: [text](url))</span>
                   </label>
                   <textarea
                     rows={4}
                     value={newGameForm.fullDescription}
                     onChange={(e) => setNewGameForm(prev => ({ ...prev, fullDescription: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
-                    placeholder="A detailed description of the game..."
+                    placeholder="A detailed description of the game... You can add links like [Link Text](https://example.com)"
                   />
+                  {newGameForm.fullDescription && (
+                    <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-xs text-gray-600 mb-1 font-medium">Preview:</p>
+                      <div className="text-sm text-gray-700">
+                        {parseMarkdownLinks(newGameForm.fullDescription)}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Rules */}
@@ -1664,10 +1673,11 @@ export default function BoardGameDatabase() {
                               <div className="col-span-full">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Game Description
+                                  <span className="text-xs text-gray-500 ml-2">(Supports markdown links: [text](url))</span>
                                 </label>
                                 <textarea
                                   rows={4}
-                                  placeholder="Game description..."
+                                  placeholder="Game description... You can add links like [Link Text](https://example.com)"
                                   value={editingGameData[game.id]?.fullDescription || ''}
                                   onChange={(e) => setEditingGameData(prev => ({
                                     ...prev,
@@ -1675,6 +1685,14 @@ export default function BoardGameDatabase() {
                                   }))}
                                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
                                 />
+                                {editingGameData[game.id]?.fullDescription && (
+                                  <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-600 mb-1 font-medium">Preview:</p>
+                                    <div className="text-xs text-gray-700">
+                                      {parseMarkdownLinks(editingGameData[game.id]?.fullDescription || '')}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ) : (
