@@ -493,6 +493,30 @@ export default function BoardGameDatabase() {
       if (response.ok) {
         const data = await response.json();
         
+        // Check for duplicate before filling the form
+        const gameName = data.gameInfo.nameEn || '';
+        if (gameName) {
+          const duplicateResponse = await fetch(`/api/boardgames?search=${encodeURIComponent(gameName)}&limit=1`);
+          if (duplicateResponse.ok) {
+            const duplicateData = await duplicateResponse.json();
+            const exactMatch = duplicateData.games.find((game: any) => 
+              game.nameEn?.toLowerCase() === gameName.toLowerCase() ||
+              game.nameEs?.toLowerCase() === gameName.toLowerCase() ||
+              game.name?.toLowerCase() === gameName.toLowerCase()
+            );
+            
+            if (exactMatch) {
+              // Game already exists - show error and don't fill the form
+              showToast(
+                `Cannot save: "${exactMatch.nameEn}" ${exactMatch.yearRelease ? `(${exactMatch.yearRelease})` : ''} already exists in the database!`,
+                'error'
+              );
+              setScrapingGame(false);
+              return;
+            }
+          }
+        }
+        
         // Fill the form with scraped data
         setNewGameForm({
           nameEn: data.gameInfo.nameEn || '',
@@ -528,12 +552,15 @@ export default function BoardGameDatabase() {
 
   const handleAddGame = async () => {
     if (!newGameForm.nameEn.trim()) {
-      // Just return silently if no name provided
+      showToast('Please enter a game name', 'error');
       return;
     }
 
     if (duplicateCheck.isDuplicate) {
-      // Just return silently if duplicate detected
+      showToast(
+        `Cannot save: "${duplicateCheck.existingGame.nameEn}" ${duplicateCheck.existingGame.yearRelease ? `(${duplicateCheck.existingGame.yearRelease})` : ''} already exists in the database!`,
+        'error'
+      );
       return;
     }
 
@@ -762,6 +789,46 @@ export default function BoardGameDatabase() {
       .replace(/&#9;/g, '\t');
   };
 
+  const parseMarkdownLinks = (text: string): React.ReactNode[] => {
+    if (!text) return [text];
+    
+    // Split text by markdown link pattern: [text](url)
+    const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = linkPattern.exec(text)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      
+      // Add the link
+      const [, linkText, url] = match;
+      parts.push(
+        <a
+          key={`link-${match.index}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#fbae17] hover:text-[#fbae17]/80 underline font-medium"
+        >
+          {linkText}
+        </a>
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text after last link
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    
+    return parts.length > 0 ? parts : [text];
+  };
+
 
   const renderRulesWithImages = (text: string) => {
     if (!text) return text;
@@ -822,10 +889,11 @@ export default function BoardGameDatabase() {
         );
       }
       
-      // Regular text
+      // Regular text - parse markdown links
+      const parsedContent = parseMarkdownLinks(part);
       return (
         <span key={index} className="whitespace-pre-wrap">
-          {part}
+          {parsedContent}
         </span>
       );
     });
@@ -922,7 +990,7 @@ export default function BoardGameDatabase() {
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Description:</h3>
               <div className="prose max-w-none">
                 <p className="text-gray-700 whitespace-pre-line">
-                  {getGameDescription(selectedGame)}
+                  {parseMarkdownLinks(getGameDescription(selectedGame))}
                 </p>
               </div>
             </div>
@@ -1054,7 +1122,18 @@ export default function BoardGameDatabase() {
                     type="url"
                     required
                     value={scraperUrls.gameUrl}
-                    onChange={(e) => setScraperUrls(prev => ({ ...prev, gameUrl: e.target.value }))}
+                    onChange={(e) => {
+                      const gameUrl = e.target.value;
+                      // Auto-generate rulesUrl by replacing the last part with /game-rules.php
+                      let rulesUrl = '';
+                      if (gameUrl.includes('/index.php')) {
+                        rulesUrl = gameUrl.replace('/index.php', '/game-rules.php');
+                      } else if (gameUrl.endsWith('.php')) {
+                        // Replace any .php file at the end with /game-rules.php
+                        rulesUrl = gameUrl.replace(/\/[^/]+\.php$/, '/game-rules.php');
+                      }
+                      setScraperUrls({ gameUrl, rulesUrl });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="https://www.ultraboardgames.com/azul/index.php"
                   />
@@ -1071,11 +1150,11 @@ export default function BoardGameDatabase() {
                     type="url"
                     value={scraperUrls.rulesUrl}
                     onChange={(e) => setScraperUrls(prev => ({ ...prev, rulesUrl: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-50"
                     placeholder="https://www.ultraboardgames.com/azul/game-rules.php"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Rules page to extract game rules content
+                    Auto-generated from Game Info URL (editable if needed)
                   </p>
                 </div>
 
@@ -1361,13 +1440,18 @@ export default function BoardGameDatabase() {
                   </button>
                   <button
                     type="submit"
-                    disabled={addingGame}
-                    className="flex items-center gap-2 px-6 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 transition-colors"
+                    disabled={addingGame || duplicateCheck.isDuplicate}
+                    className="flex items-center gap-2 px-6 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {addingGame ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         Adding Game...
+                      </>
+                    ) : duplicateCheck.isDuplicate ? (
+                      <>
+                        <span className="text-lg">⚠️</span>
+                        Cannot Save (Duplicate)
                       </>
                     ) : (
                       <>

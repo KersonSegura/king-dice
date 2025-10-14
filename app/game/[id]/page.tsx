@@ -83,6 +83,46 @@ function cleanHtmlEntities(text: string) {
     .replace(/&#9;/g, '\t');
 }
 
+function parseMarkdownLinks(text: string): React.ReactNode[] {
+  if (!text) return [text];
+  
+  // Split text by markdown link pattern: [text](url)
+  const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = linkPattern.exec(text)) !== null) {
+    // Add text before the link
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    
+    // Add the link
+    const [, linkText, url] = match;
+    parts.push(
+      <a
+        key={`link-${match.index}`}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[#fbae17] hover:text-[#fbae17]/80 underline font-medium"
+      >
+        {linkText}
+      </a>
+    );
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text after last link
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : [text];
+}
+
 function renderRulesWithImages(text: string) {
   if (!text) return null;
 
@@ -190,11 +230,14 @@ function renderRulesWithImages(text: string) {
         continue;
       }
 
-      // Regular text line
+      // Regular text line - parse markdown links
       if (line.length > 0 || i < lines.length - 1) {
+        const textWithNewline = line + (i < lines.length - 1 ? '\n' : '');
+        const parsedContent = parseMarkdownLinks(textWithNewline);
+        
         processedLines.push(
           <span key={`text-${partIndex}-${i}`} className="whitespace-pre-wrap">
-            {line + (i < lines.length - 1 ? '\n' : '')}
+            {parsedContent}
           </span>
         );
       }
@@ -263,6 +306,8 @@ function renderRulesWithImages(text: string) {
 export default function GamePage({ params }: { params: { id: string } }) {
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAllDesigners, setShowAllDesigners] = useState(false);
+  const [showAllPublishers, setShowAllPublishers] = useState(false);
 
   // Fetch game data
   useEffect(() => {
@@ -419,20 +464,72 @@ export default function GamePage({ params }: { params: { id: string } }) {
 
                   {/* Designer & Publisher */}
                   <div className="space-y-2 mb-6">
-                    {game.designer && (
-                      <div className="flex items-center text-gray-600">
-                        <User className="w-5 h-5 mr-2 text-[#fbae17]" />
-                        <span className="font-medium">Designer:</span>
-                        <span className="ml-2">{game.designer}</span>
-                      </div>
-                    )}
-                    {game.developer && (
-                      <div className="flex items-center text-gray-600">
-                        <Building2 className="w-5 h-5 mr-2 text-[#fbae17]" />
-                        <span className="font-medium">Publisher:</span>
-                        <span className="ml-2">{game.developer}</span>
-                      </div>
-                    )}
+                    {game.designer && (() => {
+                      const designers = game.designer.split(',').map(d => d.trim()).filter(d => d);
+                      const hasMore = designers.length > 3;
+                      const displayedDesigners = showAllDesigners ? designers : designers.slice(0, 3);
+                      
+                      return (
+                        <div className="flex items-start text-gray-600">
+                          <User className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <span className="font-medium">Designer:</span>
+                            <span className="ml-2">
+                              {displayedDesigners.join(', ')}
+                              {hasMore && !showAllDesigners && (
+                                <button
+                                  onClick={() => setShowAllDesigners(true)}
+                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                >
+                                  +{designers.length - 3} more
+                                </button>
+                              )}
+                              {hasMore && showAllDesigners && (
+                                <button
+                                  onClick={() => setShowAllDesigners(false)}
+                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                >
+                                  Show less
+                                </button>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {game.developer && (() => {
+                      const publishers = game.developer.split(',').map(p => p.trim()).filter(p => p);
+                      const hasMore = publishers.length > 3;
+                      const displayedPublishers = showAllPublishers ? publishers : publishers.slice(0, 3);
+                      
+                      return (
+                        <div className="flex items-start text-gray-600">
+                          <Building2 className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <span className="font-medium">Publisher:</span>
+                            <span className="ml-2">
+                              {displayedPublishers.join(', ')}
+                              {hasMore && !showAllPublishers && (
+                                <button
+                                  onClick={() => setShowAllPublishers(true)}
+                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                >
+                                  +{publishers.length - 3} more
+                                </button>
+                              )}
+                              {hasMore && showAllPublishers && (
+                                <button
+                                  onClick={() => setShowAllPublishers(false)}
+                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                >
+                                  Show less
+                                </button>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -484,7 +581,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
             </h2>
             <div className="prose max-w-none">
               <p className="text-gray-700 text-lg leading-relaxed">
-                {cleanHtmlEntities(description.fullDescription)}
+                {parseMarkdownLinks(cleanHtmlEntities(description.fullDescription))}
               </p>
             </div>
           </div>
