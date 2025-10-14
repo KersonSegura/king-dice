@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
+import SplitText from '@/components/SplitText';
 
 // Custom hook for intersection observer
 function useIntersectionObserver(options = {}) {
@@ -296,9 +297,35 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="bg-gray-900 py-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-8">
-            Find your favorite<span className="sm:hidden"><br /></span><span className="hidden sm:inline">{' '}</span>
-            <span className="text-[#fbae17]">board games</span>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
+            <SplitText
+              text="Find your favorite "
+              className="text-white inline-block"
+              delay={50}
+              duration={0.7}
+              ease="power3.out"
+              splitType="chars"
+              from={{ opacity: 0, y: 40, scale: 0.9 }}
+              to={{ opacity: 1, y: 0, scale: 1 }}
+              threshold={1}
+              rootMargin="0px"
+              tag="span"
+            />
+            <span className="sm:hidden"><br /></span>
+            <SplitText
+              text="board games"
+              className="text-[#fbae17] inline-block"
+              delay={50}
+              initialDelay={950}
+              duration={0.7}
+              ease="power3.out"
+              splitType="chars"
+              from={{ opacity: 0, y: 40, scale: 0.9 }}
+              to={{ opacity: 1, y: 0, scale: 1 }}
+              threshold={1}
+              rootMargin="0px"
+              tag="span"
+            />
           </h1>
           
           <div className="mb-12">
