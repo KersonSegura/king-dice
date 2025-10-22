@@ -102,7 +102,6 @@ async function scrapeGameInfo(url: string, websiteType: string) {
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
       },
-      timeout: 30000
     });
     
     console.log('📡 Response status:', response.status);
@@ -204,7 +203,6 @@ async function scrapeGameRules(url: string, websiteType: string) {
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
       },
-      timeout: 30000
     });
     
     if (!response.ok) {
