@@ -226,7 +226,7 @@ async function scrapeGameInfo(url: string) {
             if ((childTagName === 'ul' || childTagName === 'ol') && childText.length > 0) {
               const listItems = childElement.querySelectorAll('li');
               if (listItems.length > 0) {
-                const listTexts = Array.from(listItems).map((li: Element) => li.textContent?.trim() || '');
+                const listTexts = Array.from(listItems as NodeListOf<Element>).map((li: Element) => li.textContent?.trim() || '');
                 // Skip if this looks like a navigation menu
                 if (!listTexts.some(item => 
                   item.includes('Home') || 
@@ -276,7 +276,7 @@ async function scrapeGameInfo(url: string) {
         if (tagName === 'ul' || tagName === 'ol') {
           const listItems = nextElement.querySelectorAll('li');
           if (listItems.length > 0) {
-            const listTexts = Array.from(listItems).map((li: Element) => li.textContent?.trim() || '');
+            const listTexts = Array.from(listItems as NodeListOf<Element>).map((li: Element) => li.textContent?.trim() || '');
             // Skip if this looks like a navigation menu
             if (!listTexts.some(item => 
               item.includes('Home') || 
@@ -384,7 +384,7 @@ async function scrapeGameInfo(url: string) {
             if ((childTagName === 'ul' || childTagName === 'ol') && childText.length > 0) {
               const listItems = childElement.querySelectorAll('li');
               if (listItems.length > 0) {
-                const listTexts = Array.from(listItems).map((li: Element) => li.textContent?.trim() || '');
+                const listTexts = Array.from(listItems as NodeListOf<Element>).map((li: Element) => li.textContent?.trim() || '');
                 // Skip if this looks like a navigation menu
                 if (!listTexts.some(item => 
                   item.includes('Home') || 
@@ -430,7 +430,7 @@ async function scrapeGameInfo(url: string) {
         if ((tagName === 'ul' || tagName === 'ol') && text.length > 0) {
           const listItems = currentElement.querySelectorAll('li');
           if (listItems.length > 0) {
-            const listTexts = Array.from(listItems).map((li: Element) => li.textContent?.trim() || '');
+            const listTexts = Array.from(listItems as NodeListOf<Element>).map((li: Element) => li.textContent?.trim() || '');
             // Skip if this looks like a navigation menu
             if (!listTexts.some(item => 
               item.includes('Home') || 
@@ -541,7 +541,7 @@ async function scrapeGameRules(url: string) {
     // Skip menu-like lists and navigation elements
     if (tagName === 'ul' || tagName === 'ol') {
       const listItems = element.querySelectorAll('li');
-      const listTexts = Array.from(listItems).map((li: Element) => li.textContent?.trim() || '');
+                const listTexts = Array.from(listItems as NodeListOf<Element>).map((li: Element) => li.textContent?.trim() || '');
       
       // Skip if this looks like a navigation menu
       if (listTexts.some(item => 
