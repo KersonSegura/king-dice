@@ -45,7 +45,7 @@ export default function BoardleHintsAdmin() {
       const response = await fetch('/api/games');
       if (response.ok) {
         const data = await response.json();
-        const gameNames = data.games.map((game: any) => game.nameEn || game.name).filter(Boolean);
+        const gameNames: string[] = data.games.map((game: any) => game.nameEn || game.name).filter((name: any): name is string => Boolean(name));
         setGames([...new Set(gameNames)].sort());
       }
     } catch (error) {
