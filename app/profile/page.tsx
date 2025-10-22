@@ -445,8 +445,7 @@ export default function ProfilePage() {
           author: {
             id: user.id,
             name: user.username,
-            avatar: user.avatar,
-            title: user.title
+            avatar: user.avatar
           }
         })
       });
