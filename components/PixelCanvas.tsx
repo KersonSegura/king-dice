@@ -687,9 +687,9 @@ export default function PixelCanvas({
 
     // Enable crisp pixel rendering
     ctx.imageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.msImageSmoothingEnabled = false;
+    (ctx as any).webkitImageSmoothingEnabled = false;
+    (ctx as any).mozImageSmoothingEnabled = false;
+    (ctx as any).msImageSmoothingEnabled = false;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
