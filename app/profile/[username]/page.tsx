@@ -1623,9 +1623,9 @@ export default function UserProfilePage() {
         onDelete={() => showToast('Please log in to delete images', 'info')}
         onReport={() => showToast('Please log in to report images', 'info')}
         onEditDescription={handleEditDescription}
-        canDelete={!!(isAuthenticated && user && selectedImage?.author?.id === user.id)}
+        canDelete={!!(isAuthenticated && user && selectedImage?.author?.name === user.username)}
         canReport={!!(isAuthenticated && user)}
-        canEdit={!!(isAuthenticated && user && selectedImage?.author?.id === user.id)}
+        canEdit={!!(isAuthenticated && user && selectedImage?.author?.name === user.username)}
         isLiked={selectedImage?.imageId ? imageLikes[selectedImage.imageId] || false : false}
         currentUserId={user?.id || ""}
       />
