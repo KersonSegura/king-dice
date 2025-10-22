@@ -878,7 +878,7 @@ export default function UserProfilePage() {
       },
       createdAt: galleryImage.createdAt,
       category: galleryImage.category,
-      isFeatured: galleryImage.isFeatured,
+      isFeatured: false,
       likeCount: galleryImage.votes?.upvotes || 0,
       imageId: galleryImage.id
     });
