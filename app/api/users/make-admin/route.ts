@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
           id: userId,
           username: username,
           email: email,
-          password: '', // Empty password for now
           isAdmin: true,
           bio: null,
           favoriteGames: null,
