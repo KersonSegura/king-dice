@@ -2585,7 +2585,6 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                         src={getNumberImage(hexagon.number)}
                         alt={`Catan number token ${hexagon.number}`}
                         loading="eager"
-                    loading="eager"
                     style={{
                       position: "absolute",
                               width: '57.4754px',
