@@ -211,8 +211,7 @@ function ForumsPageContent() {
         author: {
           id: user.id,
           name: user.username,
-          avatar: user.avatar,
-          reputation: user.reputation
+          avatar: user.avatar
         }
       };
       
