@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
           id: userId,
           username: 'User', // Default username, will be updated when user logs in properly
           email: 'user@example.com', // Default email
-          password: '', // Empty password for now
           profileColors: colorsJson
         }
       });
