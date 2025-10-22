@@ -143,7 +143,7 @@ async function scrapeGameInfo(url: string) {
   
   // Extract designer and publisher from paragraphs
   const paragraphs = document.querySelectorAll('p');
-  paragraphs.forEach(p => {
+  paragraphs.forEach((p: Element) => {
     const text = p.textContent || '';
     
     if (text.includes('Created by:')) {
