@@ -324,7 +324,7 @@ export default function HomePage() {
               to={{ opacity: 1, y: 0, scale: 1 }}
               threshold={1}
               rootMargin="0px"
-              tag="span"
+              tag="p"
             />
           </h1>
           
