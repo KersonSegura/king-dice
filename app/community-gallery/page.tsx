@@ -1607,7 +1607,7 @@ function CommunityGalleryPageContent() {
                         )}
                       </div>
                       
-                      <div className={`flex items-center gap-2 ${viewMode === 'feed' ? 'mb-1' : 'mb-2'}`}>
+                      <div className="flex items-center gap-2 mb-2">
                         {image.isDraft && (
                           <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
                             Draft
