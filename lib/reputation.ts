@@ -176,7 +176,7 @@ export function awardXP(
   }
 
   // Check if user has exceeded daily XP limit (only award XP if under limit)
-  const dailyXPLimit = dailyXPLimits[action];
+  const dailyXPLimit = dailyXPLimits[action as keyof typeof dailyXPLimits];
   let shouldAwardXP = true;
   if (dailyXPLimit) {
     // For like actions, count total XP earned from likes, not number of likes
