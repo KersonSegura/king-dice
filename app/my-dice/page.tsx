@@ -688,7 +688,7 @@ export default function MyDicePage() {
             <BackButton />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                My Dice{user?.title ? ` - ${user.title}` : ''}
+                My Dice
               </h1>
             {user && (
                <div className="mt-2 flex items-center justify-between sm:justify-start gap-2">
