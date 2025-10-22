@@ -7,7 +7,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
-    const { commentId } = params;
+    const { commentId } = await params;
     const { voteType, userId } = await request.json();
     
     if (!voteType || !userId) {
@@ -52,7 +52,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
-    const { id: postId, commentId } = params;
+    const { id: postId, commentId } = await params;
     const { userId } = await request.json();
     
     if (!userId) {
