@@ -459,7 +459,7 @@ function scrapeOfficialGameRulesContent(document: Document, url: string) {
   const allImages = document.querySelectorAll('img');
   const imageMarkdowns: string[] = [];
   
-  allImages.forEach((img: Element, index: number) => {
+  allImages.forEach((img: HTMLImageElement, index: number) => {
     if (img.src && !img.src.includes('data:') && !img.src.includes('placeholder')) {
       let imgUrl = img.src;
       if (!imgUrl.startsWith('http')) {
