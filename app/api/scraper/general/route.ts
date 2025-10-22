@@ -528,7 +528,7 @@ function htmlToMarkdown(html: string, baseUrl: string): string {
   html = html.replace(/<ul[^>]*>(.*?)<\/ul>/gi, (match, content) => {
     const items = content.match(/<li[^>]*>(.*?)<\/li>/gi);
     if (items) {
-      const listItems = items.map(item => {
+      const listItems = items.map((item: string) => {
         const cleanItem = item.replace(/<[^>]*>/g, '').trim();
         return `- ${cleanItem}`;
       }).join('\n');
