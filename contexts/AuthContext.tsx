@@ -9,6 +9,7 @@ interface User {
   email: string;
   avatar: string;
   isAdmin: boolean;
+  isVerified: boolean;
   level?: number;
   xp?: number;
 }
