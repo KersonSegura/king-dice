@@ -978,9 +978,6 @@ export default function PixelCanvas({
                 ref={canvasRef}
                 className={`border border-gray-300 ${isEyedropperMode ? 'cursor-crosshair' : 'cursor-pointer'}`}
                 style={{
-                  imageRendering: '-moz-crisp-edges',
-                  imageRendering: '-webkit-crisp-edges',
-                  imageRendering: 'crisp-edges',
                   imageRendering: 'pixelated',
                   maxWidth: '100%',
                   height: 'auto',
