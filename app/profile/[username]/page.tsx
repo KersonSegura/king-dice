@@ -890,7 +890,7 @@ export default function UserProfilePage() {
     if (userProfile?.id) {
       setImageLikes(prev => ({
         ...prev,
-        [galleryImage.id]: galleryImage.votes?.voters?.includes(userProfile.id) || false
+        [galleryImage.id]: false
       }));
     }
     
