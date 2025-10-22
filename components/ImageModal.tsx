@@ -290,10 +290,10 @@ export default function ImageModal({
     setShowImageReportModal(true);
   };
 
-  const handleImageReportSubmit = async (report: { reason: string; details: string }) => {
+  const handleImageReportSubmit = async (report: { reason: string; description: string }) => {
     if (onReport) {
       try {
-        await onReport(report.reason, report.details);
+        await onReport(report.reason, report.description);
         setShowImageReportModal(false);
         // Don't close the main modal - let the parent handle it
       } catch (error) {
