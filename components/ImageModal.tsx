@@ -257,11 +257,11 @@ export default function ImageModal({
     setShowReportModal(true);
   };
 
-  const handleReportSubmit = async (report: { reason: string; details: string }) => {
+  const handleReportSubmit = async (report: { reason: string; description: string }) => {
     if (!onReportComment || !commentToReport) return;
     
     try {
-      await onReportComment(commentToReport, report.reason, report.details);
+      await onReportComment(commentToReport, report.reason, report.description);
       setShowReportModal(false);
       setCommentToReport(null);
     } catch (error) {
