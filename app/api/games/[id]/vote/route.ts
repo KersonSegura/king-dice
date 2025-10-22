@@ -9,10 +9,11 @@ const tempVotes = new Map<string, { rating: number; userId: string }>();
 export const dynamic = 'force-dynamic';
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gameId = parseInt(params.id);
+    const { id: idString } = await params;
+    const gameId = parseInt(idString);
     const { rating, userId } = await request.json();
 
     // Validaciones
@@ -75,10 +76,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gameId = parseInt(params.id);
+    const { id: idString } = await params;
+    const gameId = parseInt(idString);
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 

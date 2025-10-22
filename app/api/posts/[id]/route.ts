@@ -6,7 +6,7 @@ const dataFilePath = path.join(process.cwd(), 'data', 'posts.json');
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = params;

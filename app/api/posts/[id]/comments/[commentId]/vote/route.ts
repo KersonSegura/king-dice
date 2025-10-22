@@ -5,7 +5,7 @@ let comments: any[] = [];
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
+  { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
     const { commentId } = params;

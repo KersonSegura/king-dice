@@ -7,10 +7,11 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { gameId: string } }
+  { params }: { params: Promise<{ gameId: string }> }
 ) {
   try {
-    const gameId = parseInt(params.gameId);
+    const { gameId: gameIdString } = await params;
+    const gameId = parseInt(gameIdString);
     
     // Get the game info first
     const game = await prisma.game.findUnique({

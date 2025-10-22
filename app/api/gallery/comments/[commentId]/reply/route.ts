@@ -55,7 +55,7 @@ interface GalleryImage {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { commentId: string } }
+  { params }: { params: Promise<{ commentId: string }> }
 ) {
   try {
     const { commentId } = params;

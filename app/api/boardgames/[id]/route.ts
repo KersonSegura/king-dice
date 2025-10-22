@@ -5,10 +5,11 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gameId = parseInt(params.id);
+    const { id: idString } = await params;
+    const gameId = parseInt(idString);
     
     if (isNaN(gameId)) {
       return NextResponse.json(
@@ -63,10 +64,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gameId = parseInt(params.id);
+    const { id: idString } = await params;
+    const gameId = parseInt(idString);
     const body = await request.json();
     
     if (isNaN(gameId)) {
@@ -350,10 +352,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gameId = parseInt(params.id);
+    const { id: idString } = await params;
+    const gameId = parseInt(idString);
     
     if (isNaN(gameId)) {
       return NextResponse.json(

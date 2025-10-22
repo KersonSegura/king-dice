@@ -9,10 +9,10 @@ import { moderateText } from '@/lib/moderation';
 export const dynamic = 'force-dynamic';
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = params.id;
+    const postId = idString;
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get('sortBy') as 'newest' | 'best' | 'top' || 'best';
     
@@ -40,10 +40,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const postId = params.id;
+    const postId = idString;
     const { content, author } = await request.json();
     
     // Validate required fields

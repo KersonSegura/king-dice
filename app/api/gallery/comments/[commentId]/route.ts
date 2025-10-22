@@ -11,7 +11,7 @@ const galleryFile = path.join(dataDir, 'gallery.json');
 export const dynamic = 'force-dynamic';
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { commentId: string } }
+  { params }: { params: Promise<{ commentId: string }> }
 ) {
   try {
     const { commentId } = params;

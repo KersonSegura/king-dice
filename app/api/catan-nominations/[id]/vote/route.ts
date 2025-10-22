@@ -5,11 +5,12 @@ const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await request.json();
-    const nominationId = parseInt(params.id);
+    const { id: idString } = await params;
+    const nominationId = parseInt(idString);
     
     if (isNaN(nominationId)) {
       return NextResponse.json(

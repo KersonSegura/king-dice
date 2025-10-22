@@ -4,7 +4,7 @@ import { updatePostRepliesCount } from '@/lib/posts';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
+  { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
     const { commentId } = params;
@@ -49,7 +49,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
+  { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
     const { id: postId, commentId } = params;
