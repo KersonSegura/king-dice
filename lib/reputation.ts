@@ -116,7 +116,7 @@ export function awardXP(
   username: string,
   action: keyof typeof XP_ACTIONS,
   relatedId?: string
-): { userXP: UserXP | null; leveledUp: boolean; newLevel?: number } {
+): { userXP: UserXP | null; leveledUp: boolean; newLevel?: number; dailyLimitReached?: boolean; spamBlocked?: boolean; xpAwarded?: boolean } {
   const xpAction = XP_ACTIONS[action];
   if (!xpAction) {
     console.error(`Invalid XP action: ${action}`);
