@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Read existing gallery data
     const galleryPath = path.join(process.cwd(), 'data', 'gallery.json');
-    let galleryData = { images: [] };
+    let galleryData: { images: any[] } = { images: [] };
     
     if (fs.existsSync(galleryPath)) {
       const fileContent = fs.readFileSync(galleryPath, 'utf8');
