@@ -166,7 +166,7 @@ export function awardXP(
   };
 
   // Check if user has exceeded daily action limit
-  const dailyActionLimit = dailyActionLimits[action];
+  const dailyActionLimit = dailyActionLimits[action as keyof typeof dailyActionLimits];
   if (dailyActionLimit) {
     const todayActionCount = todayActions.filter(entry => entry.action === action).length;
     if (todayActionCount >= dailyActionLimit) {
