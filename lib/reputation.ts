@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { REPUTATION_RULES } from './reputation-constants';
 
 // File path for storing XP data
 const XP_FILE = path.join(process.cwd(), 'data', 'xp.json');
