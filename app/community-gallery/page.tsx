@@ -332,9 +332,7 @@ function CommunityGalleryPageContent() {
       formData.append('author', JSON.stringify({
         id: user.id,
         name: user.username,
-        avatar: user.avatar || '/DiceLogo.svg',
-        reputation: 0, // Default reputation since it's not in User schema
-        title: user.title
+        avatar: user.avatar || '/DiceLogo.svg'
       }));
 
       // Upload to our API
