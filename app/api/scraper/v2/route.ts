@@ -253,7 +253,7 @@ function convertHtmlToMarkdown(html: string): string {
     .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (match, content) => {
       const items = content.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
       if (items) {
-        return '\n' + items.map(item => 
+        return '\n' + items.map((item: string) => 
           '- ' + item.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '$1').replace(/<[^>]*>/g, '').trim()
         ).join('\n') + '\n\n';
       }
@@ -262,7 +262,7 @@ function convertHtmlToMarkdown(html: string): string {
     .replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, content) => {
       const items = content.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
       if (items) {
-        return '\n' + items.map((item, index) => 
+        return '\n' + items.map((item: string, index: number) => 
           `${index + 1}. ` + item.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '$1').replace(/<[^>]*>/g, '').trim()
         ).join('\n') + '\n\n';
       }
