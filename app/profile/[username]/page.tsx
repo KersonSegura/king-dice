@@ -824,7 +824,7 @@ export default function UserProfilePage() {
       });
 
       if (response.ok) {
-        setUserProfile(prev => prev ? { ...prev, favoriteCard: null } : null);
+        setUserProfile(prev => prev ? { ...prev, favoriteCard: undefined } : null);
         // Refresh entire profile to ensure UI updates
         await loadUserProfile();
         showToast('Favorite card removed', 'success');
