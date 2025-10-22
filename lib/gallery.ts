@@ -438,7 +438,7 @@ export function getUserVote(imageId: string, userId: string): 'up' | 'down' | nu
     }
     
     const currentWeekId = getCurrentWeekId();
-    const userVote = image.userVotes.find(vote => 
+    const userVote = image.userVotes.find((vote: UserVote) => 
       vote.userId === userId && vote.weekId === currentWeekId
     );
     
