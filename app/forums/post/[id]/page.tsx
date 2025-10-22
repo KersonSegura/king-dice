@@ -225,8 +225,7 @@ export default function PostDetailPage() {
           author: {
             id: user.id,
             name: user.username,
-            avatar: user.avatar || '/DiceLogo.svg',
-            reputation: user.reputation || 0
+            avatar: user.avatar || '/DiceLogo.svg'
           }
         })
       });
