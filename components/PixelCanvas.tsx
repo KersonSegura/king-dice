@@ -550,7 +550,7 @@ export default function PixelCanvas({
   };
 
   // Touch event handlers for mobile
-  const getTouchDistance = (touches: TouchList) => {
+  const getTouchDistance = (touches: React.TouchList) => {
     if (touches.length < 2) return null;
     const touch1 = touches[0];
     const touch2 = touches[1];
@@ -560,7 +560,7 @@ export default function PixelCanvas({
     );
   };
 
-  const getTouchCenter = (touches: TouchList) => {
+  const getTouchCenter = (touches: React.TouchList) => {
     if (touches.length === 0) return null;
     if (touches.length === 1) {
       return { x: touches[0].clientX, y: touches[0].clientY };
