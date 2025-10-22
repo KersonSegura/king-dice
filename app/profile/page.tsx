@@ -1503,7 +1503,7 @@ export default function ProfilePage() {
                     )}
                   </div>
               <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>
-                Level {levelProgress.currentLevel}{user.title ? ` ${user.title}` : ` ${levelProgress.currentLevelName}`}
+                Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
               </p>
               
               {/* XP Progress Bar */}
