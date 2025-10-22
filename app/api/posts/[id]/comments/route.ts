@@ -12,6 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: idString } = await params;
     const postId = idString;
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get('sortBy') as 'newest' | 'best' | 'top' || 'best';
@@ -43,6 +44,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: idString } = await params;
     const postId = idString;
     const { content, author } = await request.json();
     
