@@ -829,8 +829,7 @@ function CommunityGalleryPageContent() {
           author: {
             id: user.id,
             name: user.username,
-            avatar: user.avatar || '/DiceLogo.svg',
-            title: user.title
+            avatar: user.avatar || '/DiceLogo.svg'
           }
         })
       });
