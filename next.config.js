@@ -47,6 +47,55 @@ const nextConfig = {
       },
     ],
   },
+  // Optimize bundle size for Vercel
+  serverExternalPackages: [
+    'canvas',
+    'jsdom',
+    'sqlite3',
+    'html2canvas',
+    'dom-to-image',
+    'nodemailer',
+    'bcryptjs',
+    'jsonwebtoken',
+    'fast-xml-parser',
+    'xml2js'
+  ],
+  // Reduce bundle size
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Exclude large dependencies from server bundle
+      config.externals = config.externals || [];
+      config.externals.push({
+        'canvas': 'commonjs canvas',
+        'jsdom': 'commonjs jsdom',
+        'sqlite3': 'commonjs sqlite3',
+        'html2canvas': 'commonjs html2canvas',
+        'dom-to-image': 'commonjs dom-to-image',
+        'nodemailer': 'commonjs nodemailer',
+        'bcryptjs': 'commonjs bcryptjs',
+        'jsonwebtoken': 'commonjs jsonwebtoken',
+        'fast-xml-parser': 'commonjs fast-xml-parser',
+        'xml2js': 'commonjs xml2js'
+      });
+    }
+    
+    // Optimize bundle splitting
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      },
+    };
+    
+    return config;
+  },
 }
 
 module.exports = withSentryConfig(nextConfig, {
@@ -62,8 +111,9 @@ module.exports = withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
+  // Disable source maps to reduce bundle size
+  widenClientFileUpload: false,
+  hideSourceMaps: true,
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,

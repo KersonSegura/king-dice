@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { JSDOM } from 'jsdom';
+
+// Conditional import for jsdom (only available in development)
+let JSDOM: any = null;
+try {
+  if (process.env.NODE_ENV === 'development') {
+    JSDOM = require('jsdom').JSDOM;
+  }
+} catch (error) {
+  console.log('JSDOM not available in production environment');
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if JSDOM is available (only in development)
+    if (!JSDOM) {
+      return NextResponse.json(
+        { error: 'Scraping functionality is only available in development environment' },
+        { status: 503 }
+      );
+    }
+
     const { gameUrl, rulesUrl } = await request.json();
     
     if (!gameUrl) {

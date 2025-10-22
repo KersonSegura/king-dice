@@ -50,18 +50,12 @@
     "@upstash/redis": "^1.35.4",
     "axios": "^1.6.2",
     "bcryptjs": "^3.0.2",
-    "canvas": "^3.2.0",
     "clsx": "^2.0.0",
-    "dom-to-image": "^2.6.0",
     "dotenv": "^17.2.1",
-    "fast-xml-parser": "^5.2.5",
     "gsap": "^3.13.0",
-    "html2canvas": "^1.4.1",
-    "jsdom": "^27.0.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.294.0",
     "next": "^16.0.0",
-    "nodemailer": "^7.0.6",
     "openai": "^5.20.1",
     "react": "^18",
     "react-beautiful-dnd": "^13.1.1",
@@ -70,10 +64,8 @@
     "react-dom": "^18",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "sqlite3": "^5.1.7",
     "tailwind-merge": "^2.0.0",
-    "uuid": "^13.0.0",
-    "xml2js": "^0.6.2"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/html2canvas": "^0.5.35",
@@ -81,11 +73,19 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
+    "canvas": "^3.2.0",
+    "dom-to-image": "^2.6.0",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
+    "fast-xml-parser": "^5.2.5",
+    "html2canvas": "^1.4.1",
+    "jsdom": "^27.0.0",
+    "nodemailer": "^7.0.6",
     "postcss": "^8",
     "prisma": "^5.7.1",
+    "sqlite3": "^5.1.7",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "xml2js": "^0.6.2"
   }
 }

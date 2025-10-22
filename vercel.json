@@ -8,5 +8,21 @@
       "path": "/api/cron/weekly-canvas-snapshot",
       "schedule": "0 0 * * 0"
     }
-  ]
+  ],
+  "functions": {
+    "app/api/scraper/general/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/scraper/v2/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/scraper/ultraboardgames/route.ts": {
+      "maxDuration": 10
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
 }
