@@ -14,7 +14,7 @@ export async function DELETE(
   { params }: { params: Promise<{ commentId: string }> }
 ) {
   try {
-    const { commentId } = params;
+    const { commentId } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 

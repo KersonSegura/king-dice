@@ -9,7 +9,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { authorId } = await request.json();
 
     // Read current posts - the file contains an array directly

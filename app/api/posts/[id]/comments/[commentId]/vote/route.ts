@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
-    const { commentId } = params;
+    const { commentId } = await params;
     const { voteType } = await request.json();
     
     if (voteType === undefined || !['up', 'down', null].includes(voteType)) {

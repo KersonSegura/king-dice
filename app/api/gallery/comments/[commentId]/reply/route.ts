@@ -58,7 +58,7 @@ export async function POST(
   { params }: { params: Promise<{ commentId: string }> }
 ) {
   try {
-    const { commentId } = params;
+    const { commentId } = await params;
     const { content, author } = await request.json();
 
     if (!content || !author) {
