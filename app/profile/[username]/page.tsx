@@ -873,7 +873,6 @@ export default function UserProfilePage() {
       title: galleryImage.title,
       description: galleryImage.description,
       author: {
-        id: galleryImage.author?.id || userProfile.id,
         name: galleryImage.author?.name || userProfile.username,
         avatar: galleryImage.author?.avatar || userProfile.avatar
       },
