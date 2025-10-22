@@ -56,7 +56,7 @@ async function scrapeBGG(url: string): Promise<Partial<GameData>> {
     // Extract data from JavaScript variables
     try {
       // Extract GEEK.geekitemPreload data
-      const geekItemMatch = html.match(/GEEK\.geekitemPreload\s*=\s*({.*?});/s);
+      const geekItemMatch = html.match(/GEEK\.geekitemPreload\s*=\s*({[\s\S]*?});/);
       if (geekItemMatch) {
         const geekData = JSON.parse(geekItemMatch[1]);
         
