@@ -21,9 +21,11 @@ scraped_rules/
 *.js
 *.sql
 
-# Exclude test files
+# Exclude test files (but not CSS files)
 test-*
-*test*
+*test*.js
+*test*.ts
+*test*.json
 
 # Exclude large data files
 data/
