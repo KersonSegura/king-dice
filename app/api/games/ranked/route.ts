@@ -13,17 +13,14 @@ export async function GET(request: NextRequest) {
 
     console.log(`🏆 Getting TOP ${limit} RANKED GAMES`);
 
-    // Get the best ranked games
+    // Get the top ranked games from BGG
     let games = await prisma.game.findMany({
       where: {
-        category: 'ranked',
-        userRating: {
-          not: null
-        }
+        category: 'top-ranked'
       },
       take: limit,
       orderBy: {
-        userRating: 'desc'
+        id: 'asc' // Order by ID to maintain BGG ranking order
       },
       select: {
         id: true,
@@ -42,11 +39,11 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // If no ranked games, get any game from ranked category
+    // If no top-ranked games, get any game from top-ranked category
     if (games.length === 0) {
       games = await prisma.game.findMany({
         where: {
-          category: 'ranked'
+          category: 'top-ranked'
         },
         take: limit,
         select: {
@@ -71,9 +68,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ 
       games,
-      category: 'ranked',
+      category: 'top-ranked',
       total: games.length,
-      description: 'The best games according to BoardGameGeek historical ranking'
+      description: 'The top ranked games from BoardGameGeek'
     }, {
       headers: {
         'Cache-Control': 'public, max-age=300', // Cache for 5 minutes

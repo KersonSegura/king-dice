@@ -28,33 +28,37 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      const newSocket = io(process.env.NODE_ENV === 'production' 
-        ? process.env.NEXT_PUBLIC_SOCKET_URL || 'https://your-domain.com'
-        : 'http://localhost:3000', {
-        path: '/api/socketio',
-        autoConnect: true,
-      });
+    // Temporarily disabled Socket.IO to prevent connection errors
+    // TODO: Re-implement Socket.IO with proper App Router support
+    console.log('Socket.IO temporarily disabled');
+    
+    // if (isAuthenticated && user) {
+    //   const newSocket = io(process.env.NODE_ENV === 'production' 
+    //     ? process.env.NEXT_PUBLIC_SOCKET_URL || 'https://your-domain.com'
+    //     : 'http://localhost:3000', {
+    //     path: '/api/socketio',
+    //     autoConnect: true,
+    //   });
 
-      newSocket.on('connect', () => {
-        console.log('Connected to socket server');
-        setIsConnected(true);
-        newSocket.emit('join-user', user.id);
-        newSocket.emit('user-online', { userId: user.id, username: user.username });
-      });
+    //   newSocket.on('connect', () => {
+    //     console.log('Connected to socket server');
+    //     setIsConnected(true);
+    //     newSocket.emit('join-user', user.id);
+    //     newSocket.emit('user-online', { userId: user.id, username: user.username });
+    //   });
 
-      newSocket.on('disconnect', () => {
-        console.log('Disconnected from socket server');
-        setIsConnected(false);
-        newSocket.emit('user-offline', { userId: user.id });
-      });
+    //   newSocket.on('disconnect', () => {
+    //     console.log('Disconnected from socket server');
+    //     setIsConnected(false);
+    //     newSocket.emit('user-offline', { userId: user.id });
+    //   });
 
-      setSocket(newSocket);
+    //   setSocket(newSocket);
 
-      return () => {
-        newSocket.close();
-      };
-    }
+    //   return () => {
+    //     newSocket.close();
+    //   };
+    // }
   }, [isAuthenticated, user]);
 
   return (

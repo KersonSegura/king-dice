@@ -143,12 +143,16 @@ export async function POST(request: NextRequest) {
         await tx.game.delete({
           where: { id: existingGame.id }
         });
+      }, {
+        timeout: 30000, // 30 seconds timeout for complex operations
+        maxWait: 5000,  // 5 seconds max wait to acquire a connection
       });
       
       console.log(`✅ Existing game deleted, proceeding with new data...`);
     }
     
     // Use a transaction to ensure all operations succeed or all fail
+    // Increased timeout to 30 seconds for complex operations
     const result = await prisma.$transaction(async (tx) => {
       // Create a new game - explicitly define all fields (no spread operator)
       const game = await tx.game.create({
@@ -163,6 +167,10 @@ export async function POST(request: NextRequest) {
           durationMinutes: body.durationMinutes || null,
           imageUrl: body.imageUrl || null,
           thumbnailUrl: body.thumbnailUrl || null,
+          videoUrl: body.videoUrl || null,
+          pdfUrl: body.pdfUrl || null,
+          pdfFile: body.pdfFile || null,
+          officialWebsite: body.officialWebsite || null,
           // Legacy fields
           name: body.nameEn || '',
           year: body.yearRelease || null,
@@ -223,6 +231,9 @@ export async function POST(request: NextRequest) {
       }
 
       return game;
+    }, {
+      timeout: 30000, // 30 seconds timeout for complex operations
+      maxWait: 5000,  // 5 seconds max wait to acquire a connection
     });
 
     console.log(`✅ Transaction completed successfully for game: ${result.nameEn}`);

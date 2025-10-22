@@ -41,62 +41,6 @@
       "comments": []
     },
     {
-      "id": "img_1759861028916_xoavdnzq2",
-      "imageUrl": "/uploads/favorite-card-1759861025117.jpg",
-      "thumbnailUrl": "/uploads/favorite-card-1759861025117.jpg",
-      "title": "Favorite Card",
-      "description": "Favorite card",
-      "category": "the-kings-card",
-      "author": {
-        "id": "cmg88zsa300017kbsvllkpdof",
-        "name": "kingdice",
-        "avatar": "/generated/dice-1759344526558.svg"
-      },
-      "createdAt": "2025-10-07T18:17:08.916Z",
-      "votes": {
-        "upvotes": 0,
-        "downvotes": 0,
-        "voters": []
-      },
-      "comments": []
-    },
-    {
-      "id": "img_1759859999918_c625rbc3m",
-      "imageUrl": "/uploads/favorite-card-1759859997242.jpg",
-      "title": "Favorite Card",
-      "description": "Favorite card",
-      "category": "King's Card",
-      "author": {
-        "id": "cmg88zsa300017kbsvllkpdof",
-        "name": "User",
-        "avatar": "/default-avatar.png"
-      },
-      "createdAt": "2025-10-07T17:59:59.918Z",
-      "votes": {
-        "upvotes": 0,
-        "downvotes": 0
-      },
-      "comments": []
-    },
-    {
-      "id": "img_1759783760740_13ejbr0fa",
-      "imageUrl": "/uploads/collection-photo-1759783757628.png",
-      "title": "Collection Photo",
-      "description": "My game collection",
-      "category": "Collections",
-      "author": {
-        "id": "cmg88zsa300017kbsvllkpdof",
-        "name": "User",
-        "avatar": "/default-avatar.png"
-      },
-      "createdAt": "2025-10-06T20:49:20.740Z",
-      "votes": {
-        "upvotes": 0,
-        "downvotes": 0
-      },
-      "comments": []
-    },
-    {
       "title": "Dice 000002",
       "description": "",
       "imageUrl": "/gallery/gallery-1756955365181.svg",
@@ -328,36 +272,6 @@
       "isDraft": false
     },
     {
-      "title": "jhgfh",
-      "description": "hghgf",
-      "imageUrl": "/gallery/gallery-1756956090646.jpg",
-      "thumbnailUrl": "/gallery/gallery-1756956090646.jpg",
-      "author": {
-        "id": "cmg88zsa300017kbsvllkpdof",
-        "name": "kingdice",
-        "avatar": "/generated/dice-1759344526558.svg",
-        "reputation": 1000,
-        "title": "/dice/Titles/Knight.svg"
-      },
-      "category": "events",
-      "tags": [],
-      "id": "img_1756956090652_gujedzpry",
-      "createdAt": "2025-09-04T03:21:30.652Z",
-      "votes": {
-        "upvotes": 0,
-        "downvotes": 0
-      },
-      "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W36"
-      },
-      "views": 0,
-      "downloads": 0,
-      "comments": 0,
-      "isModerated": false,
-      "isDraft": false
-    },
-    {
       "title": "uui",
       "description": "iiiiii",
       "imageUrl": "/gallery/gallery-1756956170432.jpg",
@@ -500,70 +414,6 @@
       "comments": 0,
       "isModerated": false,
       "isDraft": false
-    },
-    {
-      "title": "jhgj",
-      "description": "jhgj",
-      "imageUrl": "/gallery/gallery-1757398993285.jpg",
-      "thumbnailUrl": "/gallery/gallery-1757398993285.jpg",
-      "author": {
-        "id": "cmg88zsa300017kbsvllkpdof",
-        "name": "kingdice",
-        "avatar": "/generated/dice-1759344526558.svg",
-        "reputation": 1000,
-        "title": "/dice/Titles/Knight.svg"
-      },
-      "category": "collections",
-      "tags": [],
-      "id": "img_1757398993288_xo4otcqi7",
-      "createdAt": "2025-09-09T06:23:13.288Z",
-      "votes": {
-        "upvotes": 0,
-        "downvotes": 0
-      },
-      "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W37"
-      },
-      "views": 0,
-      "downloads": 0,
-      "comments": 0,
-      "isModerated": false,
-      "isDraft": false,
-      "userVote": null,
-      "userVotes": []
-    },
-    {
-      "title": "kjhk",
-      "description": "kjkh",
-      "imageUrl": "/gallery/gallery-1757399242819.png",
-      "thumbnailUrl": "/gallery/gallery-1757399242819.png",
-      "author": {
-        "id": "cmg88zsa300017kbsvllkpdof",
-        "name": "kingdice",
-        "avatar": "/generated/dice-1759344526558.svg",
-        "reputation": 1000,
-        "title": "/dice/Titles/Knight.svg"
-      },
-      "category": "setups",
-      "tags": [],
-      "id": "img_1757399242828_7k0s33e7i",
-      "createdAt": "2025-09-09T06:27:22.828Z",
-      "votes": {
-        "upvotes": 0,
-        "downvotes": 0
-      },
-      "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W37"
-      },
-      "views": 0,
-      "downloads": 0,
-      "comments": 0,
-      "isModerated": false,
-      "isDraft": false,
-      "userVote": null,
-      "userVotes": []
     },
     {
       "title": "",
@@ -789,7 +639,7 @@
       "description": "Present your relic to the court. Each week, one card ascends to the King's side.",
       "icon": "KingsCard.svg",
       "color": "bg-pink-100 text-pink-600",
-      "imageCount": 1
+      "imageCount": 3
     },
     {
       "id": "collections",
@@ -797,7 +647,7 @@
       "description": "Show off your board game collections",
       "icon": "CollectionIcon.svg",
       "color": "bg-blue-100 text-blue-600",
-      "imageCount": 6
+      "imageCount": 5
     },
     {
       "id": "setups",
@@ -805,7 +655,7 @@
       "description": "Share your table layouts and game setups before the action begins",
       "icon": "SetupsIcon.svg",
       "color": "bg-green-100 text-green-600",
-      "imageCount": 3
+      "imageCount": 2
     },
     {
       "id": "events",
@@ -813,7 +663,7 @@
       "description": "Board game events and meetups",
       "icon": "EventsIcon.svg",
       "color": "bg-purple-100 text-purple-600",
-      "imageCount": 1
+      "imageCount": 0
     }
   ]
 }

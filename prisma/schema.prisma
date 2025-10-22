@@ -21,6 +21,10 @@ model Game {
   durationMinutes    Int?
   imageUrl           String?
   thumbnailUrl       String?
+  videoUrl           String?
+  pdfUrl             String?
+  pdfFile            String?
+  officialWebsite    String?
   name               String            @default("")
   year               Int?
   minPlayTime        Int?

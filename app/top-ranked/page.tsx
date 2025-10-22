@@ -31,7 +31,7 @@ export default function TopRankedPage() {
   useEffect(() => {
     const fetchTopRankedGames = async () => {
       try {
-        const response = await fetch('/api/games/ranked?limit=50');
+        const response = await fetch('/api/games/most-played?limit=25');
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -61,10 +61,10 @@ export default function TopRankedPage() {
                 />
                 Top Ranked Games
               </h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                The highest-rated board games of all time. 
-                These games have earned their place at the top through exceptional gameplay and design.
-              </p>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              The 25 most played games this month according to BoardGameGeek.
+              These games are trending with players around the world.
+            </p>
             </div>
           </div>
         </div>
@@ -77,8 +77,8 @@ export default function TopRankedPage() {
           </div>
         ) : games.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games.map((game) => (
-              <GameCardWithVote key={game.id} game={game} />
+            {games.map((game, index) => (
+              <GameCardWithVote key={game.id} game={{ ...game, rank: index + 1 }} />
             ))}
           </div>
         ) : (

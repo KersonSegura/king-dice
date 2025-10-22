@@ -149,8 +149,67 @@ export async function PUT(
       updateData.thumbnailUrl = body.thumbnailUrl;
       updateData.image = body.thumbnailUrl || body.imageUrl; // Update legacy field
     }
+    if (body.videoUrl !== undefined) updateData.videoUrl = body.videoUrl;
+    if (body.pdfUrl !== undefined) updateData.pdfUrl = body.pdfUrl;
+    if (body.pdfFile !== undefined) updateData.pdfFile = body.pdfFile;
+    if (body.officialWebsite !== undefined) updateData.officialWebsite = body.officialWebsite;
+
+    // Debug: Log the update data
+    console.log('Updating game with data:', updateData);
+    
+    // Validate each field individually
+    for (const [key, value] of Object.entries(updateData)) {
+      console.log(`Field ${key}:`, typeof value, value);
+      
+      // Check for problematic values
+      if (value === null && key !== 'yearRelease' && key !== 'minPlayers' && key !== 'maxPlayers' && key !== 'durationMinutes') {
+        console.warn(`Field ${key} has null value`);
+      }
+      
+      if (typeof value === 'string' && value.length > 10000) {
+        console.warn(`Field ${key} is very long: ${value.length} characters`);
+      }
+      
+      // Special validation for nameEn field
+      if (key === 'nameEn' && typeof value === 'string') {
+        console.log(`nameEn field received: "${value}" (length: ${value.length})`);
+        if (value.trim().length === 0) {
+          console.error(`Field ${key} is empty`);
+          return NextResponse.json(
+            { error: 'Empty name', message: 'Game name cannot be empty', field: key },
+            { status: 400 }
+          );
+        }
+      }
+      
+    // Check for invalid characters in strings
+    if (typeof value === 'string' && /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(value)) {
+      console.error(`Field ${key} contains invalid characters`);
+      console.error(`Field ${key} value:`, JSON.stringify(value));
+      console.error(`Field ${key} char codes:`, Array.from(value).map(c => c.charCodeAt(0)));
+      return NextResponse.json(
+        { error: 'Invalid characters', message: `Field ${key} contains invalid characters`, field: key },
+        { status: 400 }
+      );
+    }
+    }
+    
+    // Check PDF file size if present
+    if (updateData.pdfFile) {
+      const pdfSizeKB = Math.round(updateData.pdfFile.length / 1024);
+      console.log(`PDF file size in API: ${pdfSizeKB} KB`);
+      
+      if (pdfSizeKB > 11264) { // 11MB limit
+        return NextResponse.json(
+          { error: 'PDF file too large', message: `PDF file is ${pdfSizeKB} KB, maximum allowed is 11MB` },
+          { status: 400 }
+        );
+      }
+    }
 
     // Update the game
+    console.log('Attempting Prisma update with data:', updateData);
+    
     const updatedGame = await prisma.game.update({
       where: { id: gameId },
       data: updateData,
@@ -170,6 +229,8 @@ export async function PUT(
         baseGameExpansions: true,
       }
     });
+    
+    console.log('Prisma update successful');
 
     // Update description if provided
     if (body.fullDescription !== undefined) {
@@ -230,10 +291,57 @@ export async function PUT(
 
   } catch (error) {
     console.error('Error updating board game:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error constructor:', error?.constructor?.name);
+    console.error('Error message:', error instanceof Error ? error.message : 'No message');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    
+    // Check if it's a Prisma validation error
+    if (error instanceof Error && error.message.includes('Invalid')) {
+      console.error('Prisma validation error details:', error.message);
+      console.error('Full error object:', error);
+      
+      // Try to extract the specific field causing the issue
+      let specificField = 'unknown';
+      if (error.message.includes('nameEn')) specificField = 'nameEn';
+      else if (error.message.includes('nameEs')) specificField = 'nameEs';
+      else if (error.message.includes('designer')) specificField = 'designer';
+      else if (error.message.includes('developer')) specificField = 'developer';
+      else if (error.message.includes('pdfFile')) specificField = 'pdfFile';
+      else if (error.message.includes('pdfUrl')) specificField = 'pdfUrl';
+      else if (error.message.includes('videoUrl')) specificField = 'videoUrl';
+      else if (error.message.includes('imageUrl')) specificField = 'imageUrl';
+      else if (error.message.includes('thumbnailUrl')) specificField = 'thumbnailUrl';
+      
+      return NextResponse.json(
+        { 
+          error: 'Invalid data format', 
+          message: `The field "${specificField}" contains invalid values. Please check the console for details.`,
+          details: error.message,
+          field: specificField,
+          fullError: error.toString()
+        },
+        { status: 400 }
+      );
+    }
+    
+    // Check for database connection errors
+    if (error instanceof Error && error.message.includes('connect')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection error', 
+          message: 'Unable to connect to database. Please try again.',
+          details: error.message
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { 
         error: 'Failed to update board game', 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : 'No details available'
       },
       { status: 500 }
     );

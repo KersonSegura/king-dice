@@ -31,7 +31,7 @@ export default function HotGamesPage() {
   useEffect(() => {
     const fetchHotGames = async () => {
       try {
-        const response = await fetch('/api/games/popular?category=hot&limit=50');
+        const response = await fetch('/api/games/hotness?limit=50');
         const data = await response.json();
         setGames(data.games || []);
       } catch (error) {
@@ -61,10 +61,10 @@ export default function HotGamesPage() {
                 />
                 Hot Games
               </h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Discover the most trending and popular board games right now. 
-                These games are currently generating buzz in the board gaming community.
-              </p>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              The 50 hottest games today according to BoardGameGeek.
+              These games are generating the most buzz and interest right now.
+            </p>
             </div>
           </div>
         </div>
@@ -77,8 +77,8 @@ export default function HotGamesPage() {
           </div>
         ) : games.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games.map((game) => (
-              <GameCardWithVote key={game.id} game={game} />
+            {games.map((game, index) => (
+              <GameCardWithVote key={game.id} game={{ ...game, rank: index + 1 }} />
             ))}
           </div>
         ) : (

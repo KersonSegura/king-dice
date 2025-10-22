@@ -33,6 +33,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'store.401games.ca',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.rulespal.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 }

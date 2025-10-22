@@ -176,6 +176,66 @@ async function scrapeGameInfo(url: string) {
           break;
         }
         
+        // Check if this is a div container (like whitebox) - look inside it for content
+        if (tagName === 'div') {
+          console.log('  Found div container, looking inside for content');
+          
+          // Process children in order to maintain the original structure
+          const children = Array.from(nextElement.children);
+          
+          for (const child of children) {
+            const childTagName = child.tagName?.toLowerCase();
+            const childText = child.textContent?.trim() || '';
+            
+            // Skip style tags
+            if (childTagName === 'style') {
+              continue;
+            }
+            
+            // Process paragraphs
+            if (childTagName === 'p' && childText.length > 0 &&
+                !childText.includes('Retail Price') &&
+                !childText.includes('Check These Posts') &&
+                !childText.includes('Continue Reading') &&
+                !childText.includes('Read More') &&
+                !childText.includes('Prices:') &&
+                !childText.includes('Expansions:')) {
+              console.log('  Adding paragraph from div:', childText.substring(0, 50) + '...');
+              descriptionParts.push(childText);
+            }
+            
+            // Process lists
+            if ((childTagName === 'ul' || childTagName === 'ol') && childText.length > 0) {
+              const listItems = child.querySelectorAll('li');
+              if (listItems.length > 0) {
+                const listTexts = Array.from(listItems).map(li => li.textContent?.trim() || '');
+                // Skip if this looks like a navigation menu
+                if (!listTexts.some(item => 
+                  item.includes('Home') || 
+                  item.includes('Games') || 
+                  item.includes('Blog') ||
+                  item.includes('Categories') ||
+                  item.includes('Shops') ||
+                  item.includes('Overview') ||
+                  item.includes('Buy ') ||
+                  item.includes('Videos') ||
+                  item.includes('Other Games')
+                )) {
+                  console.log('  Adding list from div with', listItems.length, 'items');
+                  // Format bullet points with bullet symbols
+                  const formattedList = listTexts.map(item => `• ${item}`).join('\n');
+                  descriptionParts.push(formattedList);
+                }
+              }
+            }
+          }
+          
+          // If we found content in the div, we can stop looking for more
+          if (children.length > 0) {
+            break;
+          }
+        }
+        
         // Collect paragraph content (no character limit)
         if (tagName === 'p') {
           const paragraphText = nextElement.textContent?.trim() || '';
@@ -194,10 +254,35 @@ async function scrapeGameInfo(url: string) {
           }
         }
         
+        // Collect list content (bullet points)
+        if (tagName === 'ul' || tagName === 'ol') {
+          const listItems = nextElement.querySelectorAll('li');
+          if (listItems.length > 0) {
+            const listTexts = Array.from(listItems).map(li => li.textContent?.trim() || '');
+            // Skip if this looks like a navigation menu
+            if (!listTexts.some(item => 
+              item.includes('Home') || 
+              item.includes('Games') || 
+              item.includes('Blog') ||
+              item.includes('Categories') ||
+              item.includes('Shops') ||
+              item.includes('Overview') ||
+              item.includes('Buy ') ||
+              item.includes('Videos') ||
+              item.includes('Other Games')
+            )) {
+              console.log('  Adding list with', listItems.length, 'items');
+              // Format bullet points with bullet symbols
+              const formattedList = listTexts.map(item => `• ${item}`).join('\n');
+              descriptionParts.push(formattedList);
+            }
+          }
+        }
+        
         nextElement = nextElement.nextElementSibling;
       }
       
-      // Combine all description parts
+      // Combine all description parts with proper spacing
       if (descriptionParts.length > 0) {
         gameInfo.fullDescription = descriptionParts.join('\n\n');
         foundDescription = true;
@@ -254,19 +339,56 @@ async function scrapeGameInfo(url: string) {
           break;
         }
         
-        // Check if this is a div container (like whitebox) - look inside it for paragraphs
+        // Check if this is a div container (like whitebox) - look inside it for content
         if (tagName === 'div') {
-          console.log('  Found div container, looking inside for paragraphs');
-          const paragraphsInDiv = currentElement.querySelectorAll('p');
-          for (const p of paragraphsInDiv) {
-            const paragraphText = p.textContent?.trim() || '';
-            if (paragraphText.length > 0) {
-              descriptionParts.push(paragraphText);
-              console.log('  Adding paragraph from div:', paragraphText.substring(0, 50) + '...');
+          console.log('  Found div container, looking inside for content');
+          
+          // Process children in order to maintain the original structure
+          const children = Array.from(currentElement.children);
+          
+          for (const child of children) {
+            const childTagName = child.tagName?.toLowerCase();
+            const childText = child.textContent?.trim() || '';
+            
+            // Skip style tags
+            if (childTagName === 'style') {
+              continue;
+            }
+            
+            // Process paragraphs
+            if (childTagName === 'p' && childText.length > 0) {
+              descriptionParts.push(childText);
+              console.log('  Adding paragraph from div:', childText.substring(0, 50) + '...');
+            }
+            
+            // Process lists
+            if ((childTagName === 'ul' || childTagName === 'ol') && childText.length > 0) {
+              const listItems = child.querySelectorAll('li');
+              if (listItems.length > 0) {
+                const listTexts = Array.from(listItems).map(li => li.textContent?.trim() || '');
+                // Skip if this looks like a navigation menu
+                if (!listTexts.some(item => 
+                  item.includes('Home') || 
+                  item.includes('Games') || 
+                  item.includes('Blog') ||
+                  item.includes('Categories') ||
+                  item.includes('Shops') ||
+                  item.includes('Overview') ||
+                  item.includes('Buy ') ||
+                  item.includes('Videos') ||
+                  item.includes('Other Games')
+                )) {
+                  console.log('  Adding list from div with', listItems.length, 'items');
+                  // Format bullet points with bullet symbols
+                  const formattedList = listTexts.map(item => `• ${item}`).join('\n');
+                  descriptionParts.push(formattedList);
+                }
+              }
             }
           }
-          // If we found paragraphs in the div, we can stop looking for more
-          if (paragraphsInDiv.length > 0) {
+          
+          // If we found content in the div, we can stop looking for more
+          if (children.length > 0) {
             break;
           }
         }
@@ -282,6 +404,31 @@ async function scrapeGameInfo(url: string) {
               !text.includes('Continue Reading')) {
             descriptionParts.push(text);
             console.log('  Adding paragraph:', text.substring(0, 50) + '...');
+          }
+        }
+        
+        // Collect list content (bullet points)
+        if ((tagName === 'ul' || tagName === 'ol') && text.length > 0) {
+          const listItems = currentElement.querySelectorAll('li');
+          if (listItems.length > 0) {
+            const listTexts = Array.from(listItems).map(li => li.textContent?.trim() || '');
+            // Skip if this looks like a navigation menu
+            if (!listTexts.some(item => 
+              item.includes('Home') || 
+              item.includes('Games') || 
+              item.includes('Blog') ||
+              item.includes('Categories') ||
+              item.includes('Shops') ||
+              item.includes('Overview') ||
+              item.includes('Buy ') ||
+              item.includes('Videos') ||
+              item.includes('Other Games')
+            )) {
+              console.log('  Adding list with', listItems.length, 'items');
+              // Format bullet points with bullet symbols
+              const formattedList = listTexts.map(item => `• ${item}`).join('\n');
+              descriptionParts.push(formattedList);
+            }
           }
         }
         

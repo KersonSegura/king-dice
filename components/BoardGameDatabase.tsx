@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Edit3, Save, X, Plus, FileText, Eye, EyeOff, Database, Gamepad2, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { Search, Edit3, Save, X, Plus, FileText, Eye, EyeOff, Database, Gamepad2, CheckCircle, AlertCircle, Trash2, ChevronDown, ChevronUp, Play, Download } from 'lucide-react';
 import RichTextEditor, { RichTextEditorRef } from './RichTextEditor';
 import Footer from './Footer';
 import LazyList from './LazyList';
+import VideoLinks from './VideoLinks';
+import PDFHandler from './PDFHandler';
 // import BackToTopButton from './BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -21,6 +23,7 @@ interface Game {
   durationMinutes?: number;
   imageUrl?: string;
   thumbnailUrl?: string;
+  pdfFile?: string;
   gameCategories: Array<{
     category: {
       id: number;
@@ -88,6 +91,10 @@ interface NewGameForm {
   durationMinutes?: number;
   imageUrl?: string;
   thumbnailUrl?: string;
+  videoUrl?: string;
+  pdfUrl?: string;
+  pdfFile?: string;
+  officialWebsite?: string;
   fullDescription?: string;
   rulesText?: string;
 }
@@ -107,6 +114,7 @@ export default function BoardGameDatabase() {
   const [showOnlyWithoutRules, setShowOnlyWithoutRules] = useState(false);
   const [showAddGameForm, setShowAddGameForm] = useState(false);
   const [showScraperForm, setShowScraperForm] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [addingGame, setAddingGame] = useState(false);
   const [scrapingGame, setScrapingGame] = useState(false);
   const [scraperUrls, setScraperUrls] = useState({
@@ -153,6 +161,10 @@ export default function BoardGameDatabase() {
     durationMinutes: undefined,
     imageUrl: '',
     thumbnailUrl: '',
+    videoUrl: '',
+    pdfUrl: '',
+    pdfFile: '',
+    officialWebsite: '',
     fullDescription: '',
     rulesText: ''
   });
@@ -369,6 +381,9 @@ export default function BoardGameDatabase() {
         durationMinutes: game.durationMinutes,
         imageUrl: game.imageUrl,
         thumbnailUrl: game.thumbnailUrl,
+        videoUrl: game.videoUrl,
+        pdfUrl: game.pdfUrl,
+        officialWebsite: game.officialWebsite,
         fullDescription: currentDescription !== 'No description available' ? currentDescription : ''
       }
     }));
@@ -417,10 +432,96 @@ export default function BoardGameDatabase() {
         return;
       }
 
+      if (gameData.videoUrl && !isValidUrl(gameData.videoUrl)) {
+        alert('La URL del video no es válida');
+        return;
+      }
+
+      if (gameData.pdfUrl && !isValidUrl(gameData.pdfUrl)) {
+        alert('La URL del PDF no es válida');
+        return;
+      }
+
+      // Clean and prepare the data for the API
+      const cleanGameData: any = {};
+      
+      // Helper function to clean string values
+      const cleanString = (value: any, isUrl: boolean = false): string | undefined => {
+        if (value === undefined || value === null) return undefined;
+        if (typeof value !== 'string') return String(value);
+        
+        // Remove null bytes and other problematic characters
+        let cleaned = value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
+        
+        // Additional cleaning for specific issues
+        cleaned = cleaned.replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, ''); // Keep only printable characters and Unicode
+        cleaned = cleaned.replace(/\s+/g, ' '); // Replace multiple spaces with single space
+        
+        // Different cleaning for URLs vs other strings
+        if (isUrl) {
+          // For URLs, only remove truly problematic characters but keep : and /
+          cleaned = cleaned.replace(/[<>"\\|*\x00-\x1F\x7F]/g, ''); // Remove problematic characters but keep : and /
+          cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width characters
+          cleaned = cleaned.replace(/\u00A0/g, ' '); // Replace non-breaking spaces with regular spaces
+        } else {
+          // For non-URL strings, apply aggressive cleaning including : and /
+          cleaned = cleaned.replace(/[<>:"/\\|?*\x00-\x1F\x7F]/g, ''); // Remove problematic characters
+          cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width characters
+          cleaned = cleaned.replace(/\u00A0/g, ' '); // Replace non-breaking spaces with regular spaces
+        }
+        
+        return cleaned;
+      };
+      
+      // Only include defined fields with proper cleaning
+      if (gameData.nameEn !== undefined) {
+        let cleanedName = cleanString(gameData.nameEn);
+        
+        // Extra safety check for nameEn - if it's still problematic, create a safe version
+        if (cleanedName && cleanedName.length > 0) {
+          // Remove any remaining problematic characters
+          cleanedName = cleanedName.replace(/[^\w\s\-'&().,]/g, '');
+          // Ensure it's not just whitespace
+          if (cleanedName.trim().length === 0) {
+            cleanedName = 'Untitled Game';
+          }
+        }
+        
+        cleanGameData.nameEn = cleanedName;
+      }
+      if (gameData.nameEs !== undefined) cleanGameData.nameEs = cleanString(gameData.nameEs);
+      if (gameData.yearRelease !== undefined) cleanGameData.yearRelease = gameData.yearRelease;
+      if (gameData.designer !== undefined) cleanGameData.designer = cleanString(gameData.designer);
+      if (gameData.developer !== undefined) cleanGameData.developer = cleanString(gameData.developer);
+      if (gameData.minPlayers !== undefined) cleanGameData.minPlayers = gameData.minPlayers;
+      if (gameData.maxPlayers !== undefined) cleanGameData.maxPlayers = gameData.maxPlayers;
+      if (gameData.durationMinutes !== undefined) cleanGameData.durationMinutes = gameData.durationMinutes;
+      if (gameData.imageUrl !== undefined) cleanGameData.imageUrl = cleanString(gameData.imageUrl, true);
+      if (gameData.thumbnailUrl !== undefined) cleanGameData.thumbnailUrl = cleanString(gameData.thumbnailUrl, true);
+      if (gameData.videoUrl !== undefined) cleanGameData.videoUrl = cleanString(gameData.videoUrl, true);
+      if (gameData.pdfUrl !== undefined) cleanGameData.pdfUrl = cleanString(gameData.pdfUrl, true);
+      if (gameData.pdfFile !== undefined) cleanGameData.pdfFile = gameData.pdfFile; // Don't clean base64 data
+      if (gameData.officialWebsite !== undefined) cleanGameData.officialWebsite = cleanString(gameData.officialWebsite, true);
+      if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
+
+      // Debug: Log the data being sent
+      console.log('Sending game data to API:', cleanGameData);
+      
+      // Check if PDF file is too large
+      if (cleanGameData.pdfFile) {
+        const pdfSizeKB = Math.round(cleanGameData.pdfFile.length / 1024);
+        console.log(`PDF file size: ${pdfSizeKB} KB`);
+        
+        if (pdfSizeKB > 11264) { // 11MB limit
+          alert(`PDF file is too large (${pdfSizeKB} KB). Please use a smaller file or PDF URL instead.`);
+          return;
+        }
+      }
+
       const response = await fetch(`/api/boardgames/${gameId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(gameData)
+        body: JSON.stringify(cleanGameData)
       });
       
       const responseData = await response.json();
@@ -484,17 +585,18 @@ export default function BoardGameDatabase() {
 
     setScrapingGame(true);
     try {
-      const response = await fetch('/api/scraper/ultraboardgames', {
+        const urls = [scraperUrls.gameUrl, scraperUrls.rulesUrl].filter(url => url.trim());
+        const response = await fetch('/api/scraper/v2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(scraperUrls)
+        body: JSON.stringify({ urls })
       });
 
       if (response.ok) {
         const data = await response.json();
         
         // Check for duplicate before filling the form
-        const gameName = data.gameInfo.nameEn || '';
+        const gameName = data.data.combined.name || '';
         if (gameName) {
           const duplicateResponse = await fetch(`/api/boardgames?search=${encodeURIComponent(gameName)}&limit=1`);
           if (duplicateResponse.ok) {
@@ -519,25 +621,28 @@ export default function BoardGameDatabase() {
         
         // Fill the form with scraped data
         setNewGameForm({
-          nameEn: data.gameInfo.nameEn || '',
-          nameEs: data.gameInfo.nameEs || '',
-          yearRelease: data.gameInfo.yearRelease || undefined,
-          designer: data.gameInfo.designer || '',
-          developer: data.gameInfo.developer || '',
-          minPlayers: data.gameInfo.minPlayers || undefined,
-          maxPlayers: data.gameInfo.maxPlayers || undefined,
-          durationMinutes: data.gameInfo.durationMinutes || undefined,
-          imageUrl: data.gameInfo.imageUrl || '',
-          thumbnailUrl: data.gameInfo.thumbnailUrl || '',
-          fullDescription: data.gameInfo.fullDescription || '',
-          rulesText: data.rulesContent || ''
+          nameEn: data.data.combined.name || '',
+          nameEs: data.data.combined.name || '', // Use same name for both languages
+          yearRelease: data.data.combined.releaseYear || undefined,
+          designer: data.data.combined.designer || '',
+          developer: data.data.combined.publisher || '', // Use publisher as developer
+          minPlayers: data.data.combined.minPlayers || undefined,
+          maxPlayers: data.data.combined.maxPlayers || undefined,
+          durationMinutes: data.data.combined.playTime || undefined,
+          imageUrl: data.data.combined.imageUrl || '',
+          thumbnailUrl: data.data.combined.imageUrl || '', // Use same image for thumbnail
+          videoUrl: '', // Leave empty for manual entry
+          pdfUrl: '', // Leave empty for manual entry
+          officialWebsite: '', // Leave empty for manual entry
+          fullDescription: data.data.combined.description || '',
+          rulesText: data.data.combined.rules || ''
         });
         
         // Hide scraper form and show add game form
         setShowScraperForm(false);
         setShowAddGameForm(true);
         
-        showToast(`Successfully scraped "${data.gameInfo.nameEn}"!`, 'success');
+        showToast(`Successfully scraped "${data.data.combined.name}"!`, 'success');
       } else {
         const error = await response.json();
         throw new Error(error.message || 'Failed to scrape game data');
@@ -612,6 +717,10 @@ export default function BoardGameDatabase() {
           durationMinutes: undefined,
           imageUrl: '',
           thumbnailUrl: '',
+          videoUrl: '',
+          pdfUrl: '',
+          pdfFile: '',
+          officialWebsite: '',
           fullDescription: '',
           rulesText: ''
         });
@@ -761,6 +870,32 @@ export default function BoardGameDatabase() {
     return 'No description available';
   };
 
+  // Helper function to truncate description
+  const truncateDescription = (text: string, maxLength: number = 300) => {
+    if (!text || text.length <= maxLength) return text;
+    
+    // Find the last sentence ending before the max length
+    const truncated = text.substring(0, maxLength);
+    const lastSentenceEnd = Math.max(
+      truncated.lastIndexOf('.'),
+      truncated.lastIndexOf('!'),
+      truncated.lastIndexOf('?')
+    );
+    
+    if (lastSentenceEnd > maxLength * 0.7) {
+      return text.substring(0, lastSentenceEnd + 1);
+    }
+    
+    // If no good sentence break, just truncate at word boundary
+    const lastSpace = truncated.lastIndexOf(' ');
+    return text.substring(0, lastSpace) + '...';
+  };
+
+  const getDisplayDescription = (game: Game) => {
+    const fullDescription = getGameDescription(game);
+    return showFullDescription ? fullDescription : truncateDescription(fullDescription);
+  };
+
   const getGameRules = (game: Game) => {
     if (game.rules && game.rules.length > 0) {
       const englishRules = game.rules.find(r => r.language === 'en');
@@ -789,44 +924,93 @@ export default function BoardGameDatabase() {
       .replace(/&#9;/g, '\t');
   };
 
-  const parseMarkdownLinks = (text: string): React.ReactNode[] => {
-    if (!text) return [text];
+  // Process markdown content and convert heading anchors to HTML elements with IDs
+  const processMarkdownContent = (text: string): React.ReactNode => {
+    if (!text) return text;
     
-    // Split text by markdown link pattern: [text](url)
-    const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match;
+    // Split by lines to process headings with anchors
+    const lines = text.split('\n');
+    const processedLines: React.ReactNode[] = [];
     
-    while ((match = linkPattern.exec(text)) !== null) {
-      // Add text before the link
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
+    lines.forEach((line, index) => {
+      // Check if line is a heading with explicit anchor ID (e.g., "## Heading {#anchor-id}")
+      const headingWithAnchor = line.match(/^(#{1,6})\s+(.+?)\s+\{#([^}]+)\}$/);
+      
+      if (headingWithAnchor) {
+        const [, hashes, headingText, anchorId] = headingWithAnchor;
+        const level = hashes.length;
+        
+        // Create heading element with explicit ID
+        const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
+        processedLines.push(
+          <HeadingTag
+            key={`heading-${index}`}
+            id={anchorId}
+            className={`font-bold text-gray-900 mt-6 mb-3 ${
+              level === 1 ? 'text-2xl' : 
+              level === 2 ? 'text-xl' : 
+              level === 3 ? 'text-lg' : 
+              level === 4 ? 'text-base' : 
+              'text-sm'
+            }`}
+          >
+            {headingText}
+          </HeadingTag>
+        );
+      } else {
+        // Check if line is a regular heading without anchor (e.g., "## Heading")
+        const regularHeading = line.match(/^(#{1,6})\s+(.+)$/);
+        
+        if (regularHeading) {
+          const [, hashes, headingText] = regularHeading;
+          const level = hashes.length;
+          
+          // Generate anchor ID from heading text
+          const anchorId = headingText
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+            .replace(/\s+/g, '-') // Replace spaces with hyphens
+            .replace(/-+/g, '-') // Replace multiple hyphens with single
+            .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+          
+          // Create heading element with auto-generated ID
+          const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
+          processedLines.push(
+            <HeadingTag
+              key={`heading-${index}`}
+              id={anchorId}
+              className={`font-bold text-gray-900 mt-6 mb-3 ${
+                level === 1 ? 'text-2xl' : 
+                level === 2 ? 'text-xl' : 
+                level === 3 ? 'text-lg' : 
+                level === 4 ? 'text-base' : 
+                'text-sm'
+              }`}
+            >
+              {headingText}
+            </HeadingTag>
+          );
+        } else {
+          // Regular line - process for markdown links
+          processedLines.push(
+            <div key={`line-${index}`} className="mb-2">
+              {parseMarkdownLinks(line)}
+            </div>
+          );
+        }
       }
-      
-      // Add the link
-      const [, linkText, url] = match;
-      parts.push(
-        <a
-          key={`link-${match.index}`}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#fbae17] hover:text-[#fbae17]/80 underline font-medium"
-        >
-          {linkText}
-        </a>
-      );
-      
-      lastIndex = match.index + match[0].length;
-    }
+    });
     
-    // Add remaining text after last link
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
+    return <div>{processedLines}</div>;
+  };
+
+  const parseMarkdownLinks = (text: string): React.ReactNode => {
+    if (!text) return text;
     
-    return parts.length > 0 ? parts : [text];
+    // Simply remove all markdown links and return plain text
+    let processedText = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+    return <span style={{ whiteSpace: 'pre-line' }}>{processedText}</span>;
   };
 
 
@@ -989,9 +1173,29 @@ export default function BoardGameDatabase() {
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Description:</h3>
               <div className="prose max-w-none">
-                <p className="text-gray-700 whitespace-pre-line">
-                  {parseMarkdownLinks(getGameDescription(selectedGame))}
-                </p>
+                <div className="text-gray-700 text-sm">
+                  {processMarkdownContent(getDisplayDescription(selectedGame))}
+                </div>
+                
+                {/* Show More/Less Button */}
+                {selectedGame && getGameDescription(selectedGame).length > 300 && (
+                  <button
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="mt-3 inline-flex items-center text-[#fbae17] hover:text-[#fbae17]/80 font-medium transition-colors text-sm"
+                  >
+                    {showFullDescription ? (
+                      <>
+                        <span>Show Less</span>
+                        <ChevronUp className="w-4 h-4 ml-1" />
+                      </>
+                    ) : (
+                      <>
+                        <span>Show More</span>
+                        <ChevronDown className="w-4 h-4 ml-1" />
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1107,16 +1311,16 @@ export default function BoardGameDatabase() {
           {showScraperForm && (
             <div className="border-t border-gray-200 pt-6">
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">🕷️ UltraBoardGames Scraper</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">🕷️ Game Scraper (BGG + RulesPal)</h3>
                 <p className="text-sm text-gray-600">
-                  Automatically extract game information from UltraBoardGames.com
+                  Extract game metadata from BoardGameGeek and rules from RulesPal
                 </p>
               </div>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Game Info URL (Required) *
+                    BGG Game URL (Required) *
                   </label>
                   <input
                     type="url"
@@ -1135,34 +1339,34 @@ export default function BoardGameDatabase() {
                       setScraperUrls({ gameUrl, rulesUrl });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="https://www.ultraboardgames.com/azul/index.php"
+                    placeholder="https://boardgamegeek.com/boardgame/230802/azul"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Main game page with title, year, players, designer, etc.
+                    BoardGameGeek page with game metadata (name, year, players, designer, publisher, etc.)
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Game Rules URL (Optional)
+                    RulesPal Rules URL (Optional)
                   </label>
                   <input
                     type="url"
                     value={scraperUrls.rulesUrl}
                     onChange={(e) => setScraperUrls(prev => ({ ...prev, rulesUrl: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-50"
-                    placeholder="https://www.ultraboardgames.com/azul/game-rules.php"
+                    placeholder="https://www.rulespal.com/azul/rulebook"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Auto-generated from Game Info URL (editable if needed)
+                    RulesPal page with complete game rules and images (optional)
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                   <div className="text-sm text-gray-600">
                     <strong>Example URLs:</strong><br />
-                    Game: https://www.ultraboardgames.com/azul/index.php<br />
-                    Rules: https://www.ultraboardgames.com/azul/game-rules.php
+                    BGG: https://boardgamegeek.com/boardgame/230802/azul<br />
+                    RulesPal: https://www.rulespal.com/azul/rulebook
                   </div>
                   
                   <div className="flex items-center gap-3">
@@ -1319,6 +1523,19 @@ export default function BoardGameDatabase() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Official Website
+                    </label>
+                    <input
+                      type="url"
+                      value={newGameForm.officialWebsite}
+                      onChange={(e) => setNewGameForm(prev => ({ ...prev, officialWebsite: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                      placeholder="https://www.catan.com/"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Min Players
                     </label>
                     <input
@@ -1399,28 +1616,127 @@ export default function BoardGameDatabase() {
                       placeholder="https://example.com/game-thumbnail.jpg"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Video Tutorial URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      value={newGameForm.videoUrl}
+                      onChange={(e) => setNewGameForm(prev => ({ ...prev, videoUrl: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                      placeholder="https://youtube.com/watch?v=... or embedded URL"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      PDF Rules (Optional)
+                    </label>
+                    
+                    {/* PDF URL Input */}
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Or enter PDF URL:
+                      </label>
+                      <input
+                        type="url"
+                        value={newGameForm.pdfUrl}
+                        onChange={(e) => setNewGameForm(prev => ({ ...prev, pdfUrl: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] text-sm"
+                        placeholder="https://example.com/game-rules.pdf"
+                      />
+                    </div>
+
+                    {/* PDF File Upload */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#fbae17] transition-colors">
+                      <label className="cursor-pointer">
+                        <div className="flex flex-col items-center">
+                          <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          <p className="text-sm text-gray-600 mb-1">
+                            <span className="font-medium text-[#fbae17]">Click to upload PDF</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">PDF files only (max 11MB)</p>
+                          {newGameForm.pdfFile && (
+                            <p className="text-xs text-green-600 mt-1">✓ PDF file ready to upload</p>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.type !== 'application/pdf') {
+                                showToast('Please select a PDF file', 'error');
+                                return;
+                              }
+                              if (file.size > 10 * 1024 * 1024) {
+                                showToast('File size must be less than 11MB', 'error');
+                                return;
+                              }
+                              
+                              // Convert to base64
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                setNewGameForm(prev => ({ 
+                                  ...prev, 
+                                  pdfFile: reader.result as string,
+                                  pdfUrl: '' // Clear URL if file is uploaded
+                                }));
+                                showToast('PDF file selected successfully', 'success');
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    {/* Clear PDF File Button */}
+                    {newGameForm.pdfFile && (
+                      <button
+                        type="button"
+                        onClick={() => setNewGameForm(prev => ({ ...prev, pdfFile: '' }))}
+                        className="mt-2 text-xs text-red-600 hover:text-red-800 underline"
+                      >
+                        Remove PDF file
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Game Description
-                    <span className="text-xs text-gray-500 ml-2">(Supports markdown links: [text](url))</span>
-                  </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Game Description
+              <span className="text-xs text-gray-500 ml-2">(Supports markdown: links [text](url), internal links [text](#anchor), images ![alt](url), bold **text**, etc.)</span>
+            </label>
                   <textarea
-                    rows={4}
+                    rows={6}
                     value={newGameForm.fullDescription}
                     onChange={(e) => setNewGameForm(prev => ({ ...prev, fullDescription: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
-                    placeholder="A detailed description of the game... You can add links like [Link Text](https://example.com)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] font-mono text-sm"
+                    placeholder="A detailed description of the game... 
+
+You can use markdown formatting:
+- Links: [Link Text](https://example.com)
+- Internal links: [Jump to Section](#section-id)
+- Images: ![Alt Text](https://example.com/image.jpg)
+- Bold: **bold text**
+- Lists: - item 1, - item 2"
                   />
                   {newGameForm.fullDescription && (
-                    <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <p className="text-xs text-gray-600 mb-1 font-medium">Preview:</p>
-                      <div className="text-sm text-gray-700">
-                        {parseMarkdownLinks(newGameForm.fullDescription)}
-                      </div>
-                    </div>
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-xs text-gray-600 mb-1 font-medium">Preview:</p>
+              <div className="text-xs text-gray-700">
+                {parseMarkdownLinks(newGameForm.fullDescription)}
+              </div>
+            </div>
                   )}
                 </div>
 
@@ -1670,28 +1986,154 @@ export default function BoardGameDatabase() {
                                 }))}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
                               />
-                              <div className="col-span-full">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Game Description
-                                  <span className="text-xs text-gray-500 ml-2">(Supports markdown links: [text](url))</span>
+                              <input
+                                type="url"
+                                placeholder="Official Website (optional)"
+                                value={editingGameData[game.id]?.officialWebsite || ''}
+                                onChange={(e) => setEditingGameData(prev => ({
+                                  ...prev,
+                                  [game.id]: { ...prev[game.id], officialWebsite: e.target.value }
+                                }))}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                              />
+                              <input
+                                type="url"
+                                placeholder="Video Tutorial URL (optional)"
+                                value={editingGameData[game.id]?.videoUrl || ''}
+                                onChange={(e) => setEditingGameData(prev => ({
+                                  ...prev,
+                                  [game.id]: { ...prev[game.id], videoUrl: e.target.value }
+                                }))}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                              />
+                              {/* PDF Upload Section */}
+                              <div className="space-y-2">
+                                <label className="block text-xs font-medium text-gray-700">
+                                  PDF Rules (Optional)
                                 </label>
+                                
+                                {/* PDF URL Input */}
+                                <input
+                                  type="url"
+                                  placeholder="Or enter PDF URL..."
+                                  value={editingGameData[game.id]?.pdfUrl || ''}
+                                  onChange={(e) => setEditingGameData(prev => ({
+                                    ...prev,
+                                    [game.id]: { ...prev[game.id], pdfUrl: e.target.value }
+                                  }))}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                                />
+                                
+                                {/* PDF File Upload */}
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-[#fbae17] transition-colors">
+                                  <label className="cursor-pointer">
+                                    <div className="flex flex-col items-center">
+                                      <svg className="w-6 h-6 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                      </svg>
+                                      <p className="text-xs text-gray-600 mb-1">
+                                        <span className="font-medium text-[#fbae17]">Upload PDF</span> or drag
+                                      </p>
+                                      <p className="text-xs text-gray-500">Max 11MB</p>
+                                      {editingGameData[game.id]?.pdfFile && (
+                                        <p className="text-xs text-green-600 mt-1">✓ PDF ready</p>
+                                      )}
+                                    </div>
+                                    <input
+                                      type="file"
+                                      accept=".pdf"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          if (file.type !== 'application/pdf') {
+                                            showToast('Please select a PDF file', 'error');
+                                            return;
+                                          }
+                                          if (file.size > 10 * 1024 * 1024) {
+                                            showToast('File size must be less than 11MB', 'error');
+                                            return;
+                                          }
+                                          
+                                          // Show uploading state
+                                          showToast('Uploading PDF file...', 'info');
+                                          
+                                          try {
+                                            const reader = new FileReader();
+                                            
+                                            // Create a promise to handle the async file reading
+                                            const fileData = await new Promise<string>((resolve, reject) => {
+                                              reader.onload = () => resolve(reader.result as string);
+                                              reader.onerror = () => reject(new Error('Failed to read file'));
+                                              reader.readAsDataURL(file);
+                                            });
+                                            
+                                            // Update the form data
+                                            setEditingGameData(prev => ({
+                                              ...prev,
+                                              [game.id]: { 
+                                                ...prev[game.id], 
+                                                pdfFile: fileData,
+                                                pdfUrl: '' 
+                                              }
+                                            }));
+                                            
+                                            // Show success message
+                                            const fileSizeKB = Math.round(file.size / 1024);
+                                            showToast(`PDF file uploaded successfully (${fileSizeKB} KB)`, 'success');
+                                            
+                                          } catch (error) {
+                                            console.error('Error reading PDF file:', error);
+                                            showToast('Failed to read PDF file', 'error');
+                                          }
+                                        }
+                                      }}
+                                      className="hidden"
+                                    />
+                                  </label>
+                                </div>
+                                
+                                {/* Clear PDF File Button */}
+                                {editingGameData[game.id]?.pdfFile && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingGameData(prev => ({
+                                      ...prev,
+                                      [game.id]: { ...prev[game.id], pdfFile: '' }
+                                    }))}
+                                    className="text-xs text-red-600 hover:text-red-800 underline"
+                                  >
+                                    Remove PDF file
+                                  </button>
+                                )}
+                              </div>
+                              <div className="col-span-full">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Game Description
+              <span className="text-xs text-gray-500 ml-2">(Supports markdown: links [text](url), internal links [text](#anchor), images ![alt](url), bold **text**, etc.)</span>
+            </label>
                                 <textarea
-                                  rows={4}
-                                  placeholder="Game description... You can add links like [Link Text](https://example.com)"
+                                  rows={6}
+                                  placeholder="Game description... 
+
+You can use markdown formatting:
+- Links: [Link Text](https://example.com)
+- Images: ![Alt Text](https://example.com/image.jpg)
+- Bold: **bold text**
+- Lists: - item 1, - item 2"
                                   value={editingGameData[game.id]?.fullDescription || ''}
                                   onChange={(e) => setEditingGameData(prev => ({
                                     ...prev,
                                     [game.id]: { ...prev[game.id], fullDescription: e.target.value }
                                   }))}
-                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] font-mono"
                                 />
                                 {editingGameData[game.id]?.fullDescription && (
-                                  <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-600 mb-1 font-medium">Preview:</p>
-                                    <div className="text-xs text-gray-700">
-                                      {parseMarkdownLinks(editingGameData[game.id]?.fullDescription || '')}
-                                    </div>
-                                  </div>
+            <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-xs text-gray-600 mb-1 font-medium">Preview:</p>
+              <div className="text-xs text-gray-700">
+                {parseMarkdownLinks(editingGameData[game.id]?.fullDescription || '')}
+              </div>
+            </div>
                                 )}
                               </div>
                             </div>
@@ -1717,6 +2159,50 @@ export default function BoardGameDatabase() {
                                   <span>⏱️ {game.durationMinutes} min</span>
                                 )}
                               </div>
+                              
+                              {/* Video and PDF Links */}
+                              {(game.videoUrl || game.pdfUrl) && (
+                                <div className="mt-3">
+                                  {/* Video Links with Embedded Players */}
+                                  {game.videoUrl && (
+                                    <VideoLinks 
+                                      videoUrls={game.videoUrl} 
+                                      gameName={game.nameEn}
+                                    />
+                                  )}
+                                  
+                                  {/* Simple PDF Open Button */}
+                                  {game.pdfUrl && (
+                                    <div className="mb-4">
+                                      <a
+                                        href={game.pdfUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#e09915] transition-colors duration-200 shadow-md hover:shadow-lg"
+                                      >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        Open PDF Rules
+                                      </a>
+                                      <p className="text-xs text-gray-600 mt-1">
+                                        Direct link to PDF rules
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {/* PDF Handler */}
+                                  <PDFHandler 
+                                    pdfUrl={game.pdfUrl}
+                                    pdfFile={game.pdfFile}
+                                    gameName={game.nameEn}
+                                    gameId={game.id}
+                                    isAdmin={true}
+                                    onPDFUploaded={() => {
+                                      // Refresh the games list to show updated PDF
+                                      fetchGames(pagination.page, searchTerm, showOnlyWithoutRules);
+                                    }}
+                                  />
+                                </div>
+                              )}
                             </>
                           )}
                         </div>

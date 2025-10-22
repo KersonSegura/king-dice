@@ -3,7 +3,9 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe } from 'lucide-react';
+import VideoLinks from '@/components/VideoLinks';
+import PDFHandler from '@/components/PDFHandler';
 import { useState, useEffect } from 'react';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
@@ -20,6 +22,10 @@ interface Game {
   durationMinutes?: number;
   imageUrl?: string;
   thumbnailUrl?: string;
+  videoUrl?: string;
+  pdfUrl?: string;
+  pdfFile?: string;
+  officialWebsite?: string;
   gameCategories: Array<{
     category: {
       id: number;
@@ -83,44 +89,94 @@ function cleanHtmlEntities(text: string) {
     .replace(/&#9;/g, '\t');
 }
 
-function parseMarkdownLinks(text: string): React.ReactNode[] {
-  if (!text) return [text];
+
+// Process markdown content and convert heading anchors to HTML elements with IDs
+function processMarkdownContent(text: string): React.ReactNode {
+  if (!text) return text;
   
-  // Split text by markdown link pattern: [text](url)
-  const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
+  // Split by lines to process headings with anchors
+  const lines = text.split('\n');
+  const processedLines: React.ReactNode[] = [];
   
-  while ((match = linkPattern.exec(text)) !== null) {
-    // Add text before the link
-    if (match.index > lastIndex) {
-      parts.push(text.substring(lastIndex, match.index));
+  lines.forEach((line, index) => {
+    // Check if line is a heading with explicit anchor ID (e.g., "## Heading {#anchor-id}")
+    const headingWithAnchor = line.match(/^(#{1,6})\s+(.+?)\s+\{#([^}]+)\}$/);
+    
+    if (headingWithAnchor) {
+      const [, hashes, headingText, anchorId] = headingWithAnchor;
+      const level = hashes.length;
+      
+      // Create heading element with explicit ID
+      const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
+      processedLines.push(
+        <HeadingTag
+          key={`heading-${index}`}
+          id={anchorId}
+          className={`font-bold text-gray-900 mt-6 mb-3 ${
+            level === 1 ? 'text-2xl' : 
+            level === 2 ? 'text-xl' : 
+            level === 3 ? 'text-lg' : 
+            level === 4 ? 'text-base' : 
+            'text-sm'
+          }`}
+        >
+          {headingText}
+        </HeadingTag>
+      );
+    } else {
+      // Check if line is a regular heading without anchor (e.g., "## Heading")
+      const regularHeading = line.match(/^(#{1,6})\s+(.+)$/);
+      
+      if (regularHeading) {
+        const [, hashes, headingText] = regularHeading;
+        const level = hashes.length;
+        
+        // Generate anchor ID from heading text
+        const anchorId = headingText
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .replace(/-+/g, '-') // Replace multiple hyphens with single
+          .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+        
+        // Create heading element with auto-generated ID
+        const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
+        processedLines.push(
+          <HeadingTag
+            key={`heading-${index}`}
+            id={anchorId}
+            className={`font-bold text-gray-900 mt-6 mb-3 ${
+              level === 1 ? 'text-2xl' : 
+              level === 2 ? 'text-xl' : 
+              level === 3 ? 'text-lg' : 
+              level === 4 ? 'text-base' : 
+              'text-sm'
+            }`}
+          >
+            {headingText}
+          </HeadingTag>
+        );
+      } else {
+        // Regular line - process for markdown links
+        processedLines.push(
+          <div key={`line-${index}`} className="mb-2">
+            {parseMarkdownLinks(line)}
+          </div>
+        );
+      }
     }
-    
-    // Add the link
-    const [, linkText, url] = match;
-    parts.push(
-      <a
-        key={`link-${match.index}`}
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-[#fbae17] hover:text-[#fbae17]/80 underline font-medium"
-      >
-        {linkText}
-      </a>
-    );
-    
-    lastIndex = match.index + match[0].length;
-  }
+  });
   
-  // Add remaining text after last link
-  if (lastIndex < text.length) {
-    parts.push(text.substring(lastIndex));
-  }
+  return <div>{processedLines}</div>;
+}
+
+function parseMarkdownLinks(text: string): React.ReactNode {
+  if (!text) return text;
   
-  return parts.length > 0 ? parts : [text];
+  // Simply remove all markdown links and return plain text
+  let processedText = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+  return <span style={{ whiteSpace: 'pre-line' }}>{processedText}</span>;
 }
 
 function renderRulesWithImages(text: string) {
@@ -308,6 +364,26 @@ export default function GamePage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [showAllDesigners, setShowAllDesigners] = useState(false);
   const [showAllPublishers, setShowAllPublishers] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf'>('rules');
+
+  // Helper function to clean up URL for display
+  const getCleanUrlDisplay = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      let cleanUrl = urlObj.hostname;
+      
+      // Remove 'www.' prefix if present
+      if (cleanUrl.startsWith('www.')) {
+        cleanUrl = cleanUrl.substring(4);
+      }
+      
+      return cleanUrl;
+    } catch {
+      // If URL parsing fails, return the original URL
+      return url;
+    }
+  };
 
   // Fetch game data
   useEffect(() => {
@@ -380,6 +456,33 @@ export default function GamePage({ params }: { params: { id: string } }) {
 
   const description = game.descriptions?.find(d => d.language === 'en');
   const rules = game.rules?.find(r => r.language === 'es') || game.rules?.find(r => r.language === 'en');
+
+  // Helper function to truncate description
+  const truncateDescription = (text: string, maxLength: number = 500) => {
+    if (!text || text.length <= maxLength) return text;
+    
+    // Find the last sentence ending before the max length
+    const truncated = text.substring(0, maxLength);
+    const lastSentenceEnd = Math.max(
+      truncated.lastIndexOf('.'),
+      truncated.lastIndexOf('!'),
+      truncated.lastIndexOf('?')
+    );
+    
+    if (lastSentenceEnd > maxLength * 0.7) {
+      return text.substring(0, lastSentenceEnd + 1);
+    }
+    
+    // If no good sentence break, just truncate at word boundary
+    const lastSpace = truncated.lastIndexOf(' ');
+    return text.substring(0, lastSpace) + '...';
+  };
+
+  const getDisplayDescription = () => {
+    if (!description?.fullDescription) return '';
+    const cleanDesc = cleanHtmlEntities(description.fullDescription);
+    return showFullDescription ? cleanDesc : truncateDescription(cleanDesc);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -530,6 +633,22 @@ export default function GamePage({ params }: { params: { id: string } }) {
                         </div>
                       );
                     })()}
+                    {game.officialWebsite && (
+                      <div className="flex items-start text-gray-600">
+                        <Globe className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <span className="font-medium">Official Website:</span>
+                          <a
+                            href={game.officialWebsite}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 underline break-all"
+                          >
+                            {getCleanUrlDisplay(game.officialWebsite)}
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -580,26 +699,171 @@ export default function GamePage({ params }: { params: { id: string } }) {
               About This Game
             </h2>
             <div className="prose max-w-none">
-              <p className="text-gray-700 text-lg leading-relaxed">
-                {parseMarkdownLinks(cleanHtmlEntities(description.fullDescription))}
-              </p>
+              <div className="text-gray-700 text-sm leading-relaxed">
+                {processMarkdownContent(getDisplayDescription())}
+              </div>
+              
+              {/* Show More/Less Button */}
+              {description.fullDescription && description.fullDescription.length > 500 && (
+                <button
+                  onClick={() => setShowFullDescription(!showFullDescription)}
+                  className="mt-4 inline-flex items-center text-[#fbae17] hover:text-[#fbae17]/80 font-medium transition-colors"
+                >
+                  {showFullDescription ? (
+                    <>
+                      <span>Show Less</span>
+                      <ChevronUp className="w-4 h-4 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Show More</span>
+                      <ChevronDown className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        {/* Rules Section */}
-        {rules?.rulesText && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <svg className="w-6 h-6 mr-2 text-[#fbae17]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Game Rules
-            </h2>
-            <div className="prose max-w-none">
-              <div className="text-gray-700 leading-relaxed">
-                {renderRulesWithImages(cleanHtmlEntities(rules.rulesText))}
-              </div>
+        {/* Game Resources Section with Tabs */}
+        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile) && (
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            {/* Tab Headers */}
+            <div className="border-b border-gray-200">
+              <nav className="flex space-x-8 px-8 pt-6" aria-label="Tabs">
+                {rules?.rulesText && (
+                  <button
+                    onClick={() => setActiveTab('rules')}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                      activeTab === 'rules'
+                        ? 'border-[#fbae17] text-[#fbae17]'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <FileText className="w-5 h-5 mr-2" />
+                    Game Rules
+                  </button>
+                )}
+                
+                {game?.videoUrl && (
+                  <button
+                    onClick={() => setActiveTab('video')}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                      activeTab === 'video'
+                        ? 'border-[#fbae17] text-[#fbae17]'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Video Tutorial
+                  </button>
+                )}
+                
+                {(game?.pdfUrl || game?.pdfFile) && (
+                  <button
+                    onClick={() => setActiveTab('pdf')}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                      activeTab === 'pdf'
+                        ? 'border-[#fbae17] text-[#fbae17]'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    PDF
+                  </button>
+                )}
+              </nav>
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-8">
+              {activeTab === 'rules' && rules?.rulesText && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <FileText className="w-6 h-6 mr-2 text-[#fbae17]" />
+                    Game Rules
+                  </h2>
+                  <div className="prose max-w-none">
+                    <div className="text-gray-700 leading-relaxed">
+                      {renderRulesWithImages(cleanHtmlEntities(rules.rulesText))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'video' && game?.videoUrl && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <Play className="w-6 h-6 mr-2 text-[#fbae17]" />
+                    Video Tutorials
+                  </h2>
+                  <VideoLinks 
+                    videoUrls={game.videoUrl} 
+                    gameName={game.nameEn}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'pdf' && (game?.pdfUrl || game?.pdfFile) && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <Download className="w-6 h-6 mr-2 text-[#fbae17]" />
+                    PDF Rules
+                  </h2>
+                  
+                  {/* Simple PDF Open Button */}
+                  {game.pdfUrl && (
+                    <div className="mb-6">
+                      <a
+                        href={game.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-6 py-3 bg-[#fbae17] text-white rounded-lg font-medium hover:bg-[#e09915] transition-colors duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                      >
+                        <Download className="w-5 h-5 mr-2" />
+                        Open PDF Rules
+                      </a>
+                      <p className="text-sm text-gray-600 mt-2">
+                        Click to open the PDF rules in a new tab
+                      </p>
+                    </div>
+                  )}
+                  
+                  <PDFHandler 
+                    pdfUrl={game.pdfUrl}
+                    pdfFile={game.pdfFile}
+                    gameName={game.nameEn}
+                    gameId={game.id}
+                    isAdmin={false}
+                  />
+                </div>
+              )}
+
+              {/* No content available message */}
+              {activeTab === 'rules' && !rules?.rulesText && (
+                <div className="text-center py-12">
+                  <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Rules Available</h3>
+                  <p className="text-gray-600">Game rules are not yet available for this game.</p>
+                </div>
+              )}
+
+              {activeTab === 'video' && !game?.videoUrl && (
+                <div className="text-center py-12">
+                  <Play className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Video Tutorial Available</h3>
+                  <p className="text-gray-600">Video tutorial is not yet available for this game.</p>
+                </div>
+              )}
+
+              {activeTab === 'pdf' && !game?.pdfUrl && !game?.pdfFile && (
+                <div className="text-center py-12">
+                  <Download className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No PDF Available</h3>
+                  <p className="text-gray-600">PDF rules are not yet available for this game.</p>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -21,6 +21,7 @@ interface Game {
   userRating?: number | null;
   userVotes?: number;
   expansions?: number | null;
+  rank?: number; // For ranking badge
 }
 
 interface GameCardWithVoteProps {
@@ -73,6 +74,15 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
       <div className="flex h-48">
         {/* Left Section - Game Image (40% width) */}
         <div className="relative w-2/5 bg-gray-200 overflow-hidden">
+          {/* Ranking Badge */}
+          {game.rank && (
+            <div className="absolute top-2 left-2 z-10">
+              <div className="bg-[#fbae17] text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                #{game.rank}
+              </div>
+            </div>
+          )}
+          
           {game.image ? (
             <Image
               src={game.image}
