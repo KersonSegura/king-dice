@@ -333,7 +333,7 @@ function CommunityGalleryPageContent() {
         id: user.id,
         name: user.username,
         avatar: user.avatar || '/DiceLogo.svg',
-        reputation: user.reputation || 0,
+        reputation: 0, // Default reputation since it's not in User schema
         title: user.title
       }));
 
