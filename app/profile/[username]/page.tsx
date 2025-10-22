@@ -1804,7 +1804,7 @@ export default function UserProfilePage() {
       <ProfileColorCustomizer
         isOpen={showColorCustomizer}
         onClose={() => setShowColorCustomizer(false)}
-        profileColors={profileColors}
+        currentColors={profileColors}
         onPreview={(newColors) => {
           // Real-time preview - update local state only
           setProfileColors(newColors);
