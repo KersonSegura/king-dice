@@ -1192,7 +1192,7 @@ export default function ImageModal({
       {/* Image Report Modal */}
       {showImageReportModal && (
         <ReportContent
-          contentType="image"
+          contentType="gallery_image"
           contentId={imageId || ''}
           onReport={handleImageReportSubmit}
           onClose={() => setShowImageReportModal(false)}
