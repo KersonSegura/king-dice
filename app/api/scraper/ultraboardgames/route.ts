@@ -201,8 +201,9 @@ async function scrapeGameInfo(url: string) {
           const children = Array.from(nextElement.children);
           
           for (const child of children) {
-            const childTagName = child.tagName?.toLowerCase();
-            const childText = child.textContent?.trim() || '';
+            const childElement = child as Element;
+            const childTagName = childElement.tagName?.toLowerCase();
+            const childText = childElement.textContent?.trim() || '';
             
             // Skip style tags
             if (childTagName === 'style') {
@@ -223,7 +224,7 @@ async function scrapeGameInfo(url: string) {
             
             // Process lists
             if ((childTagName === 'ul' || childTagName === 'ol') && childText.length > 0) {
-              const listItems = child.querySelectorAll('li');
+              const listItems = childElement.querySelectorAll('li');
               if (listItems.length > 0) {
                 const listTexts = Array.from(listItems).map(li => li.textContent?.trim() || '');
                 // Skip if this looks like a navigation menu
@@ -364,8 +365,9 @@ async function scrapeGameInfo(url: string) {
           const children = Array.from(currentElement.children);
           
           for (const child of children) {
-            const childTagName = child.tagName?.toLowerCase();
-            const childText = child.textContent?.trim() || '';
+            const childElement = child as Element;
+            const childTagName = childElement.tagName?.toLowerCase();
+            const childText = childElement.textContent?.trim() || '';
             
             // Skip style tags
             if (childTagName === 'style') {
@@ -380,7 +382,7 @@ async function scrapeGameInfo(url: string) {
             
             // Process lists
             if ((childTagName === 'ul' || childTagName === 'ol') && childText.length > 0) {
-              const listItems = child.querySelectorAll('li');
+              const listItems = childElement.querySelectorAll('li');
               if (listItems.length > 0) {
                 const listTexts = Array.from(listItems).map(li => li.textContent?.trim() || '');
                 // Skip if this looks like a navigation menu
