@@ -540,7 +540,7 @@ function htmlToMarkdown(html: string, baseUrl: string): string {
   html = html.replace(/<ol[^>]*>(.*?)<\/ol>/gi, (match, content) => {
     const items = content.match(/<li[^>]*>(.*?)<\/li>/gi);
     if (items) {
-      const listItems = items.map((item, index) => {
+      const listItems = items.map((item: string, index: number) => {
         const cleanItem = item.replace(/<[^>]*>/g, '').trim();
         return `${index + 1}. ${cleanItem}`;
       }).join('\n');
