@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Edit3, Save, X, Plus, FileText, Eye, EyeOff, Database, Gamepad2, CheckCircle, AlertCircle, Trash2, ChevronDown, ChevronUp, Play, Download } from 'lucide-react';
 import RichTextEditor, { RichTextEditorRef } from './RichTextEditor';
@@ -99,7 +99,7 @@ interface NewGameForm {
   rulesText?: string;
 }
 
-export default function BoardGameDatabase() {
+function BoardGameDatabaseContent() {
   const searchParams = useSearchParams();
   const [games, setGames] = useState<Game[]>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -2449,5 +2449,13 @@ You can use markdown formatting:
         <Footer />
       </div>
     </div>
+  );
+}
+
+export default function BoardGameDatabase() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-yellow-500"></div></div>}>
+      <BoardGameDatabaseContent />
+    </Suspense>
   );
 }

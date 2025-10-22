@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { Image as ImageIcon, Heart, ThumbsUp, MessageCircle, Flag, Plus, User, Calendar, Download, Trash2, Crown, Search, X, ArrowUp } from 'lucide-react';
 import Image from 'next/image';
@@ -88,7 +88,7 @@ interface GalleryCategory {
   imageCount: number;
 }
 
-export default function CommunityGalleryPage() {
+function CommunityGalleryPageContent() {
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -1957,5 +1957,13 @@ export default function CommunityGalleryPage() {
 
 
     </div>
+  );
+}
+
+export default function CommunityGalleryPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <CommunityGalleryPageContent />
+    </Suspense>
   );
 } 

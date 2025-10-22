@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,7 +17,7 @@ import ModernTooltip from '@/components/ModernTooltip';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import BackButton from '@/components/BackButton';
 
-export default function ForumsPage() {
+function ForumsPageContent() {
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -794,5 +794,13 @@ export default function ForumsPage() {
 
 
     </div>
+  );
+}
+
+export default function ForumsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-yellow-500"></div></div>}>
+      <ForumsPageContent />
+    </Suspense>
   );
 } 
