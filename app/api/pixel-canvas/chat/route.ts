@@ -131,9 +131,7 @@ export async function GET(request: NextRequest) {
           id: message.replyTo.sender.id,
           username: message.replyTo.sender.username,
           avatar: message.replyTo.sender.avatar,
-          title: message.replyTo.sender.isAdmin ? 'Admin' : message.replyTo.sender.isVerified ? 'Verified' : undefined,
-          isVerified: message.replyTo.sender.isVerified,
-          isAdmin: message.replyTo.sender.isAdmin
+          title: undefined // replyTo.sender doesn't have admin/verified status
         }
       } : undefined
     }));
