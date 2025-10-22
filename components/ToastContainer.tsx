@@ -13,7 +13,6 @@ export default function ToastContainer() {
           key={toast.id}
           message={toast.message}
           type={toast.type}
-          isVisible={true}
           onClose={() => hideToast(toast.id)}
           duration={toast.duration}
         />
