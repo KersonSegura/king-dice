@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe } from 'lucide-react';
 import VideoLinks from '@/components/VideoLinks';
 import PDFHandler from '@/components/PDFHandler';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
@@ -359,7 +359,8 @@ function renderRulesWithImages(text: string) {
   );
 }
 
-export default function GamePage({ params }: { params: { id: string } }) {
+export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAllDesigners, setShowAllDesigners] = useState(false);
@@ -389,7 +390,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchGame = async () => {
       try {
-        const fetchedGame = await getGame(params.id);
+        const fetchedGame = await getGame(id);
         setGame(fetchedGame);
       } catch (error) {
         console.error('Error fetching game:', error);
@@ -400,7 +401,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
     };
 
     fetchGame();
-  }, [params.id]);
+  }, [id]);
 
 
   if (loading) {
