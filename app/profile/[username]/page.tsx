@@ -852,7 +852,7 @@ export default function UserProfilePage() {
       });
 
       if (response.ok) {
-        setUserProfile(prev => prev ? { ...prev, collectionPhoto: null } : null);
+        setUserProfile(prev => prev ? { ...prev, collectionPhoto: undefined } : null);
         // Refresh entire profile to ensure UI updates
         await loadUserProfile();
         showToast('Collection photo removed', 'success');
