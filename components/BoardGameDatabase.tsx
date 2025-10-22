@@ -23,7 +23,10 @@ interface Game {
   durationMinutes?: number;
   imageUrl?: string;
   thumbnailUrl?: string;
+  videoUrl?: string;
+  pdfUrl?: string;
   pdfFile?: string;
+  officialWebsite?: string;
   gameCategories: Array<{
     category: {
       id: number;
