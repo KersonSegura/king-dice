@@ -253,7 +253,7 @@ export function awardXP(
   
   // Log level up if it happened
   if (leveledUp) {
-    console.log(`🎉 ${username} leveled up to ${newLevel.name}! (Level ${newLevel.level})`);
+    console.log(`🎉 ${username} leveled up to ${newLevel.levelName}! (Level ${newLevel.level})`);
   }
 
   return { 
