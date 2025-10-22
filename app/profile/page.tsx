@@ -1037,9 +1037,7 @@ export default function ProfilePage() {
       formData.append('author', JSON.stringify({
         id: user.id,
         name: user.username,
-        avatar: user.avatar || '/DiceLogo.svg',
-        reputation: user.reputation || 0,
-        title: user.title
+        avatar: user.avatar || '/DiceLogo.svg'
       }));
 
       // Upload to our API
