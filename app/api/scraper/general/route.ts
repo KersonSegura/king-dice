@@ -334,7 +334,7 @@ function scrapeOfficialGameRules(document: Document, url: string) {
 
   // Extract game details from meta tags or structured data
   const metaTags = document.querySelectorAll('meta');
-  metaTags.forEach(meta => {
+  metaTags.forEach((meta: Element) => {
     const name = meta.getAttribute('name') || meta.getAttribute('property') || '';
     const content = meta.getAttribute('content') || '';
     
@@ -459,7 +459,7 @@ function scrapeOfficialGameRulesContent(document: Document, url: string) {
   const allImages = document.querySelectorAll('img');
   const imageMarkdowns: string[] = [];
   
-  allImages.forEach((img, index) => {
+  allImages.forEach((img: Element, index: number) => {
     if (img.src && !img.src.includes('data:') && !img.src.includes('placeholder')) {
       let imgUrl = img.src;
       if (!imgUrl.startsWith('http')) {
