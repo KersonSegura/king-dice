@@ -12,6 +12,7 @@ interface SearchResult {
   avatar?: string;
   isVerified?: boolean;
   isAdmin?: boolean;
+  createdAt?: string;
   name?: string;
   year?: number;
   players?: string;
