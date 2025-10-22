@@ -322,7 +322,7 @@ export function updateImageVote(imageId: string, voteType: 'up' | 'down' | null,
     }
     
     // Get current user vote for this week
-    const currentUserVote = image.userVotes?.find(vote => 
+    const currentUserVote = image.userVotes?.find((vote: UserVote) => 
       vote.userId === userId && vote.weekId === currentWeekId
     );
     const currentVoteType = currentUserVote?.voteType || null;
