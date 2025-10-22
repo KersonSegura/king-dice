@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID or username is required' }, { status: 400 });
     }
 
-    const whereClause = userId ? { id: userId } : { username: username };
+    const whereClause = userId ? { id: userId } : { username: username! };
 
     const user = await prisma.user.findUnique({
       where: whereClause,
