@@ -250,26 +250,26 @@ function convertHtmlToMarkdown(html: string): string {
     .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
     .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
     // Convert lists
-    .replace(/<ul[^>]*>(.*?)<\/ul>/gis, (match, content) => {
-      const items = content.match(/<li[^>]*>(.*?)<\/li>/gis);
+    .replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (match, content) => {
+      const items = content.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
       if (items) {
         return '\n' + items.map(item => 
-          '- ' + item.replace(/<li[^>]*>(.*?)<\/li>/gis, '$1').replace(/<[^>]*>/g, '').trim()
+          '- ' + item.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '$1').replace(/<[^>]*>/g, '').trim()
         ).join('\n') + '\n\n';
       }
       return '';
     })
-    .replace(/<ol[^>]*>(.*?)<\/ol>/gis, (match, content) => {
-      const items = content.match(/<li[^>]*>(.*?)<\/li>/gis);
+    .replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (match, content) => {
+      const items = content.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
       if (items) {
         return '\n' + items.map((item, index) => 
-          `${index + 1}. ` + item.replace(/<li[^>]*>(.*?)<\/li>/gis, '$1').replace(/<[^>]*>/g, '').trim()
+          `${index + 1}. ` + item.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '$1').replace(/<[^>]*>/g, '').trim()
         ).join('\n') + '\n\n';
       }
       return '';
     })
     // Convert paragraphs
-    .replace(/<p[^>]*>(.*?)<\/p>/gis, '$1\n\n')
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
     // Convert line breaks
     .replace(/<br[^>]*>/gi, '\n')
     // Remove remaining HTML tags but preserve content
