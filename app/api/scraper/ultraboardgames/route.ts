@@ -100,7 +100,7 @@ async function scrapeGameInfo(url: string) {
   
   // Extract data from the rating table
   const tableRows = document.querySelectorAll('table tr');
-  tableRows.forEach(row => {
+  tableRows.forEach((row: Element) => {
     const cells = row.querySelectorAll('td');
     if (cells.length >= 2) {
       const label = cells[0].textContent?.replace(':', '').trim().toLowerCase() || '';
