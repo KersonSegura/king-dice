@@ -210,11 +210,6 @@ export default function Header() {
                               />
                                                      <div className="flex-1 min-w-0 space-y-1">
                              <p className="text-sm font-semibold text-gray-900 truncate">{user?.username}</p>
-                             {user?.title && (
-                               <p className="text-xs text-yellow-600 font-medium truncate">
-                                 {user.title}
-                               </p>
-                             )}
                              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                              <div className="flex items-center space-x-2">
                                <span className="text-xs text-gray-600">Level {userStats.level}</span>
