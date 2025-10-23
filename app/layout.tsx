@@ -38,10 +38,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-blue-500`}>
-        <AuthProvider>
-          <Header />
-          {children}
-        </AuthProvider>
+        <LevelUpProvider>
+          <AuthProvider>
+            <Header />
+            {children}
+          </AuthProvider>
+        </LevelUpProvider>
       </body>
     </html>
   )
