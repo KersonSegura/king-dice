@@ -295,9 +295,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <section className="bg-gray-900 pt-12 pb-8">
+      <section className="bg-gray-900 pt-6 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
+          <h1 className="text-4xl md:text-6xl font-bold text-white" style={{ overflow: 'visible' }}>
             <SplitText
               text="Find your favorite "
               className="text-white inline-block"
@@ -328,7 +328,7 @@ export default function HomePage() {
             />
           </h1>
           
-          <div className="mb-12">
+          <div className="mb-6">
             <GameSearch />
           </div>
 
