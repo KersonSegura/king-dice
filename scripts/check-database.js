@@ -2,31 +2,30 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-async function checkDatabase() {
+async function checkAll() {
   try {
-    const games = await prisma.game.findMany({
-      select: {
-        nameEn: true,
-        yearRelease: true,
-        minPlayers: true,
-        maxPlayers: true,
-        designer: true,
-        developer: true
-      }
-    });
+    const posts = await prisma.post.findMany();
+    const images = await prisma.galleryImage.findMany();
+    const users = await prisma.user.findMany();
     
-    console.log(`Games collected so far: ${games.length}`);
-    console.log('---');
+    console.log('📝 Total posts:', posts.length);
+    console.log('🖼️ Total images:', images.length);
+    console.log('👥 Total users:', users.length);
     
-    games.forEach(game => {
-      console.log(`- ${game.nameEn} (${game.yearRelease}) ${game.minPlayers}-${game.maxPlayers} players, Designer: ${game.designer || 'Unknown'}, Developer: ${game.developer || 'Unknown'}`);
-    });
+    if (posts.length > 0) {
+      console.log('Posts:');
+      posts.forEach(p => console.log('  -', p.title, 'by', p.authorId));
+    }
     
+    if (images.length > 0) {
+      console.log('Images:');
+      images.forEach(i => console.log('  -', i.title, 'by', i.authorId));
+    }
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Error:', error);
   } finally {
     await prisma.$disconnect();
   }
 }
 
-checkDatabase(); 
+checkAll();

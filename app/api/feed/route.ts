@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getAllImages } from '@/lib/gallery';
+import { getAllPosts } from '@/lib/posts';
 
 
 // Force dynamic rendering
@@ -16,49 +15,14 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     let feedItems: any[] = [];
+
+    // Get users the current user follows (simplified for now)
+    // TODO: Implement following system with JSON files
     let followingIds: string[] = [];
 
-    // Get users the current user follows
-    if (userId) {
-      const followingUsers = await prisma.follow.findMany({
-        where: { followerId: userId },
-        select: { followingId: true }
-      });
-      followingIds = followingUsers.map(f => f.followingId);
-    }
-
-    // Get all posts and gallery images
-    const posts = await prisma.post.findMany({
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            isVerified: true,
-            isAdmin: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit * 3 // Get more to sort properly
-    });
-
-    const galleryImages = await prisma.galleryImage.findMany({
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            isVerified: true,
-            isAdmin: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit * 3
-    });
+    // Get all posts and gallery images from JSON files
+    const posts = getAllPosts();
+    const galleryImages = getAllImages();
 
     // Combine and process all items
     const allItems = [
@@ -72,15 +36,15 @@ export async function GET(request: NextRequest) {
           reputation: 0
         },
         category: post.category,
-        createdAt: post.createdAt.toISOString(),
-        votes: JSON.parse(post.votes),
+        createdAt: post.createdAt,
+        votes: post.votes,
         userVote: null,
         engagement: {
           comments: post.replies,
           shares: 0
         },
         isFollowing: followingIds.includes(post.author.id),
-        popularityScore: JSON.parse(post.votes).upvotes + post.replies * 2
+        popularityScore: post.votes.upvotes + post.replies * 2
       })),
       ...galleryImages.map(image => ({
         id: image.id,
@@ -94,8 +58,8 @@ export async function GET(request: NextRequest) {
           reputation: 0
         },
         category: image.category,
-        createdAt: image.createdAt.toISOString(),
-        votes: JSON.parse(image.votes),
+        createdAt: image.createdAt,
+        votes: image.votes,
         userVote: null,
         engagement: {
           views: image.views,
@@ -104,7 +68,7 @@ export async function GET(request: NextRequest) {
           shares: 0
         },
         isFollowing: followingIds.includes(image.author.id),
-        popularityScore: JSON.parse(image.votes).upvotes + image.views + image.downloads + image.comments * 2
+        popularityScore: image.votes.upvotes + image.views + image.downloads + image.comments * 2
       }))
     ];
 
@@ -124,29 +88,13 @@ export async function GET(request: NextRequest) {
         popularityScore: undefined
       }));
 
-    // Get user reputations for all authors
-    const authorIds = [...new Set(feedItems.map(item => item.author.id))];
-    const reputations = await prisma.user.findMany({
-      where: { id: { in: authorIds } },
-      select: { id: true, username: true }
-    });
-
-    // Add reputation data (simplified for now)
-    feedItems = feedItems.map(item => ({
-      ...item,
-      author: {
-        ...item.author,
-        reputation: Math.floor(Math.random() * 1000) // Placeholder - would need actual reputation system
-      }
-    }));
-
     const hasMore = feedItems.length === limit;
 
     return NextResponse.json({
       items: feedItems,
       hasMore,
       page,
-      total: feedItems.length
+      total: allItems.length
     });
 
   } catch (error) {

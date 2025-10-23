@@ -233,7 +233,7 @@ header {
 /* Force header to be sticky on all pages */
 body {
   position: relative !important;
-  padding-top: 4rem !important; /* Add padding to account for fixed header */
+  /* padding-top: 4rem !important; */ /* Removed - this was causing the white space */
 }
 
 /* Ensure no parent elements interfere with sticky positioning */
@@ -271,11 +271,11 @@ main, #__next, [data-reactroot] {
   }
   
   /* Fix the blue div (direct child of body) that's causing the gap */
-  body > div {
+  /* body > div {
     min-height: 100vh !important;
     display: flex !important;
     flex-direction: column !important;
-  }
+  } */ /* Removed - this was causing the large blue space */
   
   /* Ensure footer sticks to bottom */
   body > div > footer,

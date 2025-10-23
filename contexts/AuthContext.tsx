@@ -78,14 +78,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Verify authentication on app start
   const verifyAuth = async () => {
+    console.log('🔍 AuthContext: Starting auth verification...');
     try {
       const response = await fetch('/api/auth/verify', {
         method: 'GET',
         credentials: 'include'
       });
 
+      console.log('📡 AuthContext: Response status:', response.status);
+      console.log('📡 AuthContext: Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ AuthContext: Auth successful, user:', data.user?.username);
         setUser(data.user);
         
         // Award daily login XP if user hasn't logged in today
@@ -94,10 +99,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } else {
         // Token is invalid or expired
+        console.log('❌ AuthContext: Auth failed, status:', response.status);
+        const errorText = await response.text();
+        console.log('❌ AuthContext: Error response:', errorText);
         setUser(null);
       }
     } catch (error) {
-      console.error('Error verifying authentication:', error);
+      console.error('💥 AuthContext: Error verifying authentication:', error);
       setUser(null);
     } finally {
       setIsLoading(false);

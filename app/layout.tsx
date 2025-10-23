@@ -37,13 +37,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-blue-500`}>
+      <body className={`${inter.className}`} suppressHydrationWarning={true}>
         <LevelUpProvider>
           <AuthProvider>
-            <ToastProvider>
-              <Header />
-              {children}
-            </ToastProvider>
+            <SocketProvider>
+              <ChatStateProvider>
+                <ToastProvider>
+                  <Header />
+                  {children}
+                  <FloatingChat />
+                  <BackToTopButton />
+                  <ToastContainer />
+                </ToastProvider>
+              </ChatStateProvider>
+            </SocketProvider>
           </AuthProvider>
         </LevelUpProvider>
       </body>

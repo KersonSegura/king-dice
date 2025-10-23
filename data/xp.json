@@ -792,5 +792,135 @@
       }
     ],
     "lastLogin": "2025-09-04T06:01:58.439Z"
+  },
+  "cmg88zsa300017kbsvllkpdof": {
+    "userId": "cmg88zsa300017kbsvllkpdof",
+    "username": "kingdice",
+    "xp": 40,
+    "level": 1,
+    "levelName": "Commoner",
+    "actions": [
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:01:08.086Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:02:21.117Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:04:40.751Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:05:30.626Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:06:24.516Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:09:27.079Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:44:15.819Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T00:47:06.360Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T02:59:50.112Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T03:20:03.910Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:00:58.894Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:08:49.023Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:09:44.982Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:09:50.170Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:15:58.345Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:24:53.033Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:34:20.279Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:52:49.794Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:53:01.424Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-23T06:58:40.253Z"
+      }
+    ],
+    "lastLogin": "2025-10-23T06:58:40.253Z"
   }
 }

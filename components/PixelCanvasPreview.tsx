@@ -129,7 +129,7 @@ export default function PixelCanvasPreview() {
   return (
     <div className="space-y-6">
       {/* Canvas Preview */}
-      <div className="bg-gray-100 p-4 rounded-lg inline-block mx-auto">
+      <div className="bg-gray-100 p-4 rounded-lg flex justify-center">
         <canvas
           ref={canvasRef}
           className="border border-gray-300"
