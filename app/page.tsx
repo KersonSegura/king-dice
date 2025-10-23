@@ -96,7 +96,7 @@ export default function HomePage() {
   const { user, isAuthenticated } = useAuth();
   const [hotGames, setHotGames] = useState<Game[]>([]);
   const [topRankedGames, setTopRankedGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentLimit, setCurrentLimit] = useState(6);
   const [forumStats, setForumStats] = useState({
