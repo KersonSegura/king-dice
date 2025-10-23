@@ -180,11 +180,10 @@ const SplitText = ({
   const renderTag = () => {
     const style = {
       textAlign,
-      display: 'inline-block',
+      display: isReady ? 'inline-block' : 'none', // Hide completely until text is split and ready to animate
       whiteSpace: 'normal',
       wordWrap: 'break-word',
-      willChange: 'transform, opacity',
-      visibility: isReady ? 'visible' : 'hidden' // Hide until text is split and ready to animate
+      willChange: 'transform, opacity'
     } as React.CSSProperties;
     const classes = `split-parent ${className}`;
     
