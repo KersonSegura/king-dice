@@ -298,34 +298,8 @@ export default function HomePage() {
       <section className="bg-gray-900 py-20 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
-            <SplitText
-              text="Find your favorite "
-              className="text-white inline-block"
-              delay={50}
-              duration={0.7}
-              ease="power3.out"
-              splitType="chars"
-              from={{ opacity: 0, y: 40, scale: 0.9 }}
-              to={{ opacity: 1, y: 0, scale: 1 }}
-              threshold={1}
-              rootMargin="0px"
-              tag="p"
-            />
-            <span className="sm:hidden"><br /></span>
-            <SplitText
-              text="board games"
-              className="text-[#fbae17] inline-block"
-              delay={50}
-              initialDelay={950}
-              duration={0.7}
-              ease="power3.out"
-              splitType="chars"
-              from={{ opacity: 0, y: 40, scale: 0.9 }}
-              to={{ opacity: 1, y: 0, scale: 1 }}
-              threshold={1}
-              rootMargin="0px"
-              tag="p"
-            />
+            <span className="text-white">Find your favorite </span>
+            <span className="text-[#fbae17]">board games</span>
           </h1>
           
           <div className="mb-12">
