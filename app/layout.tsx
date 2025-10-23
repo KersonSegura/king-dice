@@ -38,21 +38,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-blue-500`}>
-        <LevelUpProvider>
-          <AuthProvider>
-            <SocketProvider>
-              <ChatStateProvider>
-                <ToastProvider>
-                  <Header />
-                  {children}
-                  <FloatingChat />
-                  <BackToTopButton />
-                  <ToastContainer />
-                </ToastProvider>
-              </ChatStateProvider>
-            </SocketProvider>
-          </AuthProvider>
-        </LevelUpProvider>
+        <Header />
+        {children}
       </body>
     </html>
   )
