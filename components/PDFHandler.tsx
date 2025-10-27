@@ -36,31 +36,8 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
           }
         }
         
-        // Check if URL has expired (has X-Amz-Expires or is s3.amazonaws.com)
-        const hasExpired = cleanPdfUrl.includes('X-Amz-Expires') || cleanPdfUrl.includes('s3.amazonaws.com');
-        
+        // Just open the URL - don't check if expired, let the browser handle it
         let urlToOpen = cleanPdfUrl;
-        
-        if (hasExpired) {
-          // Fetch fresh URL from BGG
-          try {
-            const response = await fetch(`/api/games/${gameId}/fetch-pdf`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.pdfUrl) {
-                urlToOpen = data.pdfUrl;
-              } else {
-                // No PDF found, redirect to BGG files page
-                const bggFilesUrl = `https://boardgamegeek.com/boardgame/${data.bggId || gameId}/files`;
-                window.open(bggFilesUrl, '_blank', 'noopener,noreferrer');
-                setIsLoading(false);
-                return;
-              }
-            }
-          } catch (fetchError) {
-            console.error('Failed to fetch fresh PDF URL:', fetchError);
-          }
-        }
         
         // Open the URL in a new tab
         window.open(urlToOpen, '_blank', 'noopener,noreferrer');
@@ -96,33 +73,9 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
           }
         }
         
-        // Check if URL has expired
-        const hasExpired = cleanPdfUrl.includes('X-Amz-Expires') || cleanPdfUrl.includes('s3.amazonaws.com');
-        
-        let urlToDownload = cleanPdfUrl;
-        
-        if (hasExpired) {
-          // Fetch fresh URL from BGG
-          try {
-            const response = await fetch(`/api/games/${gameId}/fetch-pdf`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.pdfUrl) {
-                urlToDownload = data.pdfUrl;
-              } else {
-                setError(`No PDF available. Please visit: https://boardgamegeek.com/boardgame/${data.bggId || gameId}/files`);
-                setIsLoading(false);
-                return;
-              }
-            }
-          } catch (fetchError) {
-            console.error('Failed to fetch fresh PDF URL:', fetchError);
-          }
-        }
-        
-        // Download the PDF
+        // Download the PDF directly
         const link = document.createElement('a');
-        link.href = urlToDownload;
+        link.href = cleanPdfUrl;
         link.download = `${gameName}-rules.pdf`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
