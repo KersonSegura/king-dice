@@ -3,7 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, X, User, Dice6, Clock } from 'lucide-react';
+import { Search, X, User, Dice6, Clock, Plus } from 'lucide-react';
+import SuggestGameModal from './SuggestGameModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SearchResult {
   id: string;
@@ -27,9 +29,11 @@ export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -109,6 +113,11 @@ export default function SearchBar() {
   const handleResultClick = () => {
     setIsOpen(false);
     setQuery('');
+  };
+
+  const handleSuggestGame = () => {
+    setShowSuggestModal(true);
+    setIsOpen(false);
   };
 
   const formatTime = (dateString: string) => {
@@ -247,14 +256,31 @@ export default function SearchBar() {
               ))}
             </div>
           ) : hasSearched ? (
-            <div className="px-4 py-8 text-center text-gray-500">
-              <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">No results found for "{query}"</p>
-              <p className="text-xs text-gray-400 mt-1">Try searching for users or board games</p>
+            <div className="px-4 py-6 text-center text-gray-500">
+              <Search className="w-8 h-8 mx-auto mb-3 text-gray-300" />
+              <p className="text-sm mb-2">No results found for "{query}"</p>
+              <p className="text-xs text-gray-400 mb-4">Try searching for users or board games</p>
+              
+              {/* Suggest Game Button */}
+              <button
+                onClick={handleSuggestGame}
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white text-sm rounded-lg hover:bg-[#fbae17]/90 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Suggest "{query}" as a game</span>
+              </button>
             </div>
           ) : null}
         </div>
       )}
+      
+      {/* Suggest Game Modal */}
+      <SuggestGameModal
+        isOpen={showSuggestModal}
+        onClose={() => setShowSuggestModal(false)}
+        gameName={query}
+        suggestedBy={user?.username || 'Anonymous User'}
+      />
     </div>
   );
 }

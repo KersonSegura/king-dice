@@ -796,7 +796,7 @@
   "cmg88zsa300017kbsvllkpdof": {
     "userId": "cmg88zsa300017kbsvllkpdof",
     "username": "kingdice",
-    "xp": 40,
+    "xp": 60,
     "level": 1,
     "levelName": "Commoner",
     "actions": [
@@ -919,8 +919,108 @@
         "xp": 2,
         "description": "Daily login",
         "timestamp": "2025-10-23T06:58:40.253Z"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T07:52:43.137Z",
+        "relatedId": "img_1756955532048_7yxzldeb3"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T07:52:48.576Z",
+        "relatedId": "img_1756955532048_7yxzldeb3"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T07:52:59.941Z",
+        "relatedId": "img_1757453919868_bkvrvoxwr"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T07:53:07.185Z",
+        "relatedId": "img_1757453919868_bkvrvoxwr"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T07:54:33.072Z",
+        "relatedId": "img_1756955532048_7yxzldeb3"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T07:54:38.286Z",
+        "relatedId": "img_1756957214409_jqw1a4q9m"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T18:23:58.651Z",
+        "relatedId": "img_1759862091423_15rgfkdsd"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T18:28:12.839Z",
+        "relatedId": "img_1759862091423_15rgfkdsd"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T18:28:17.952Z",
+        "relatedId": "img_1757453919868_bkvrvoxwr"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-23T18:28:23.512Z",
+        "relatedId": "img_1756957214409_jqw1a4q9m"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-24T18:49:43.265Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-27T17:07:36.982Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-27T19:00:41.483Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-27T19:02:17.299Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-27T22:08:19.759Z"
       }
     ],
-    "lastLogin": "2025-10-23T06:58:40.253Z"
+    "lastLogin": "2025-10-27T22:08:19.759Z"
   }
 }

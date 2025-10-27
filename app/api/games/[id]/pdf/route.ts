@@ -49,10 +49,10 @@ export async function POST(
       );
     }
 
-    // Validate file size (max 11MB)
-    if (file.size > 11 * 1024 * 1024) {
+    // Validate file size (max 15MB)
+    if (file.size > 15 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'File size must be less than 11MB' },
+        { error: 'File size must be less than 15MB' },
         { status: 400 }
       );
     }

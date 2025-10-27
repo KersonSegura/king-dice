@@ -495,8 +495,18 @@ function CommunityGalleryPageContent() {
 
       if (response.ok) {
         const result = await response.json();
-        // Update the image in local state
+        // Update all image states
         setImages(prevImages => 
+          prevImages.map(img => 
+            img.id === imageId ? result.image : img
+          )
+        );
+        setAllImages(prevImages => 
+          prevImages.map(img => 
+            img.id === imageId ? result.image : img
+          )
+        );
+        setDisplayedImages(prevImages => 
           prevImages.map(img => 
             img.id === imageId ? result.image : img
           )
@@ -545,8 +555,18 @@ function CommunityGalleryPageContent() {
 
       if (response.ok) {
         const result = await response.json();
-        // Update the image in local state
+        // Update all image states
         setImages(prevImages => 
+          prevImages.map(img => 
+            img.id === imageId ? result.image : img
+          )
+        );
+        setAllImages(prevImages => 
+          prevImages.map(img => 
+            img.id === imageId ? result.image : img
+          )
+        );
+        setDisplayedImages(prevImages => 
           prevImages.map(img => 
             img.id === imageId ? result.image : img
           )
@@ -1331,6 +1351,13 @@ function CommunityGalleryPageContent() {
                       </div>
                     </div>
                   )}
+
+                  {/* Username overlay for all view modes */}
+                  <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                      {image.author.name}
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Only show detailed info in grid/list/feed mode, not explore mode */}

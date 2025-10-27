@@ -34,6 +34,9 @@ model Game {
   category           String            @default("ranked")
   userRating         Float?            @default(0)
   userVotes          Int               @default(0)
+  bggRanking         Int?
+  bggRating          Float?
+  bggVotes           Int?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   baseGameExpansions Expansion[]       @relation("BaseGameExpansions")

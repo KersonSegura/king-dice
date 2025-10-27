@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         content: post.content,
         author: {
           ...post.author,
+          username: post.author.name, // Map name to username for consistency
           reputation: 0
         },
         category: post.category,
@@ -55,6 +56,7 @@ export async function GET(request: NextRequest) {
         thumbnailUrl: image.thumbnailUrl,
         author: {
           ...image.author,
+          username: image.author.name, // Map name to username for consistency
           reputation: 0
         },
         category: image.category,

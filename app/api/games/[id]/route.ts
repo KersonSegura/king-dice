@@ -23,7 +23,28 @@ export async function GET(
 
     const game = await prisma.game.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        bggId: true,
+        nameEn: true,
+        nameEs: true,
+        yearRelease: true,
+        designer: true,
+        developer: true,
+        minPlayers: true,
+        maxPlayers: true,
+        durationMinutes: true,
+        imageUrl: true,
+        thumbnailUrl: true,
+        videoUrl: true,
+        pdfUrl: true,
+        pdfFile: true,
+        officialWebsite: true,
+        bggRanking: true,
+        bggRating: true,
+        bggVotes: true,
+        userRating: true,
+        userVotes: true,
         descriptions: true,
         rules: true,
         gameCategories: {

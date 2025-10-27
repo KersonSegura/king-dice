@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe } from 'lucide-react';
 import VideoLinks from '@/components/VideoLinks';
 import PDFHandler from '@/components/PDFHandler';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -26,6 +28,12 @@ interface Game {
   pdfUrl?: string;
   pdfFile?: string;
   officialWebsite?: string;
+  bggId?: number;
+  bggRanking?: number;
+  bggRating?: number;
+  bggVotes?: number;
+  userRating?: number;
+  userVotes?: number;
   gameCategories: Array<{
     category: {
       id: number;
@@ -367,6 +375,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [showAllPublishers, setShowAllPublishers] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf'>('rules');
+  
+  // Ranking button state
+  const [isVoting, setIsVoting] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const starButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Auth and toast hooks
+  const { isAuthenticated, user } = useAuth();
+  const { showToast } = useToast();
 
   // Helper function to clean up URL for display
   const getCleanUrlDisplay = (url: string): string => {
@@ -383,6 +400,42 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     } catch {
       // If URL parsing fails, return the original URL
       return url;
+    }
+  };
+
+  // Ranking button handlers
+  const handleStarMouseEnter = () => {
+    setShowTooltip(true);
+  };
+
+  const handleStarMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
+  const handleStarClick = async () => {
+    if (!isAuthenticated || !user) {
+      showToast('Please sign in to vote', 'info');
+      return;
+    }
+    if (isVoting) return;
+    setIsVoting(true);
+    try {
+      const response = await fetch(`/api/games/${game?.id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: 8, userId: user.id }),
+      });
+      if (response.ok) { 
+        showToast('Vote submitted successfully!', 'success'); 
+      } else { 
+        const error = await response.json(); 
+        showToast(error.error || 'Failed to submit vote', 'error'); 
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      showToast('Failed to submit vote', 'error');
+    } finally { 
+      setIsVoting(false); 
     }
   };
 
@@ -564,6 +617,48 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         <span className="font-medium">{game.durationMinutes} min</span>
                       </div>
                     )}
+                  </div>
+
+                  {/* Ranking Button */}
+                  <div className="mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <button 
+                          ref={starButtonRef}
+                          className="text-white p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2" 
+                          style={{ backgroundColor: '#fbae17' }}
+                          onMouseEnter={handleStarMouseEnter}
+                          onMouseLeave={handleStarMouseLeave}
+                          onClick={handleStarClick}
+                          disabled={isVoting}
+                        >
+                          <Star className="w-5 h-5" />
+                          <span className="font-medium">
+                            {isVoting ? 'Voting...' : 'Vote'}
+                          </span>
+                        </button>
+                        
+                        {/* Tooltip */}
+                        {showTooltip && (
+                          <div 
+                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg whitespace-nowrap z-50"
+                            style={{
+                              transform: 'translateX(-50%)'
+                            }}
+                          >
+                            <div className="flex items-center space-x-1">
+                              <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                              <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {game.bggVotes && (
+                          <span>Based on {game.bggVotes.toLocaleString()} votes</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Designer & Publisher */}
@@ -812,24 +907,6 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     <Download className="w-6 h-6 mr-2 text-[#fbae17]" />
                     PDF Rules
                   </h2>
-                  
-                  {/* Simple PDF Open Button */}
-                  {game.pdfUrl && (
-                    <div className="mb-6">
-                      <a
-                        href={game.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-6 py-3 bg-[#fbae17] text-white rounded-lg font-medium hover:bg-[#e09915] transition-colors duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                      >
-                        <Download className="w-5 h-5 mr-2" />
-                        Open PDF Rules
-                      </a>
-                      <p className="text-sm text-gray-600 mt-2">
-                        Click to open the PDF rules in a new tab
-                      </p>
-                    </div>
-                  )}
                   
                   <PDFHandler 
                     pdfUrl={game.pdfUrl}

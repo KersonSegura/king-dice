@@ -1,0 +1,23 @@
+# Email Configuration for Game Suggestions
+# Add these variables to your .env.local file
+
+# SMTP Configuration (for Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+
+# Admin email to receive suggestions
+ADMIN_EMAIL=admin@yourdomain.com
+
+# Instructions:
+# 1. For Gmail:
+#    - Enable 2-factor authentication
+#    - Generate an "App Password" for this application
+#    - Use the app password as SMTP_PASS
+#
+# 2. For other email providers:
+#    - Update SMTP_HOST and SMTP_PORT accordingly
+#    - Use your email credentials
+#
+# 3. Replace ADMIN_EMAIL with your actual admin email address

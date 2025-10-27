@@ -42,9 +42,12 @@ interface FeedItem {
 interface FeedProps {
   userId?: string;
   limit?: number;
+  onItemClick?: (item: FeedItem) => void;
+  featuredDiceThroneId?: string;
+  featuredKingsCardId?: string;
 }
 
-export default function Feed({ userId, limit = 20 }: FeedProps) {
+export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThroneId, featuredKingsCardId }: FeedProps) {
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
@@ -239,13 +242,17 @@ export default function Feed({ userId, limit = 20 }: FeedProps) {
       {/* Feed Items - Instagram Style Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1">
         {feedItems.map((item) => (
-          <div key={`${item.type}-${item.id}`} className="group relative bg-white overflow-hidden hover:z-10 transition-all duration-200">
+          <div 
+            key={`${item.type}-${item.id}`} 
+            className="group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
+            onClick={() => onItemClick?.(item)}
+          >
             {/* Main Image/Content - Square Aspect Ratio */}
             <div className="aspect-square relative overflow-hidden bg-gray-100">
               {item.imageUrl ? (
                 <Image
                   src={item.thumbnailUrl || item.imageUrl}
-                  alt={item.title}
+                  alt={item.title || 'Community post'}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-300"
                 />
@@ -272,11 +279,25 @@ export default function Feed({ userId, limit = 20 }: FeedProps) {
                 </div>
               </div>
 
-              {/* Follow indicator */}
-              {item.isFollowing && (
-                <div className="absolute top-1 left-1">
-                  <div className="bg-[#fbae17] text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                    Following
+              {/* Username and Follow indicator */}
+              <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="flex items-center space-x-1">
+                  <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                    {item.author.username}
+                  </div>
+                  {item.isFollowing && (
+                    <div className="bg-[#fbae17] text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                      Following
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Featured item crown badge */}
+              {(item.id === featuredDiceThroneId || item.id === featuredKingsCardId) && (
+                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="bg-[#fbae17] text-white p-1 rounded-full">
+                    <Crown className="w-3 h-3 fill-current" />
                   </div>
                 </div>
               )}

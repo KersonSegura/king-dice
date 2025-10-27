@@ -467,8 +467,8 @@ function BoardGameDatabaseContent() {
           cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width characters
           cleaned = cleaned.replace(/\u00A0/g, ' '); // Replace non-breaking spaces with regular spaces
         } else {
-          // For non-URL strings, apply aggressive cleaning including : and /
-          cleaned = cleaned.replace(/[<>:"/\\|?*\x00-\x1F\x7F]/g, ''); // Remove problematic characters
+          // For non-URL strings, apply cleaning but preserve colons for game names
+          cleaned = cleaned.replace(/[<>"/\\|?*\x00-\x1F\x7F]/g, ''); // Remove problematic characters but keep :
           cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove zero-width characters
           cleaned = cleaned.replace(/\u00A0/g, ' '); // Replace non-breaking spaces with regular spaces
         }
@@ -482,8 +482,8 @@ function BoardGameDatabaseContent() {
         
         // Extra safety check for nameEn - if it's still problematic, create a safe version
         if (cleanedName && cleanedName.length > 0) {
-          // Remove any remaining problematic characters
-          cleanedName = cleanedName.replace(/[^\w\s\-'&().,]/g, '');
+          // Remove any remaining problematic characters but preserve colons
+          cleanedName = cleanedName.replace(/[^\w\s\-'&().,:]/g, '');
           // Ensure it's not just whitespace
           if (cleanedName.trim().length === 0) {
             cleanedName = 'Untitled Game';
@@ -510,14 +510,24 @@ function BoardGameDatabaseContent() {
       // Debug: Log the data being sent
       console.log('Sending game data to API:', cleanGameData);
       
-      // Check if PDF file is too large
+      // Check if PDF file is too large (check actual file size, not base64 length)
       if (cleanGameData.pdfFile) {
-        const pdfSizeKB = Math.round(cleanGameData.pdfFile.length / 1024);
-        console.log(`PDF file size: ${pdfSizeKB} KB`);
-        
-        if (pdfSizeKB > 11264) { // 11MB limit
-          alert(`PDF file is too large (${pdfSizeKB} KB). Please use a smaller file or PDF URL instead.`);
-          return;
+        // Extract the actual file size from base64 data
+        // Base64 data format: "data:application/pdf;base64,<base64string>"
+        const base64Data = cleanGameData.pdfFile.split(',')[1];
+        if (base64Data) {
+          // Calculate actual file size from base64 (base64 is ~33% larger than original)
+          const actualFileSizeBytes = Math.round((base64Data.length * 3) / 4);
+          const actualFileSizeKB = Math.round(actualFileSizeBytes / 1024);
+          const actualFileSizeMB = (actualFileSizeKB / 1024).toFixed(2);
+          
+          console.log(`Actual PDF file size: ${actualFileSizeKB} KB (${actualFileSizeMB} MB)`);
+          console.log(`Base64 string length: ${cleanGameData.pdfFile.length} characters`);
+          
+          if (actualFileSizeKB > 15360) { // 15MB limit
+            alert(`PDF file is too large (${actualFileSizeKB} KB / ${actualFileSizeMB} MB). Please use a smaller file or PDF URL instead.`);
+            return;
+          }
         }
       }
 
@@ -1662,7 +1672,7 @@ function BoardGameDatabaseContent() {
                           <p className="text-sm text-gray-600 mb-1">
                             <span className="font-medium text-[#fbae17]">Click to upload PDF</span> or drag and drop
                           </p>
-                          <p className="text-xs text-gray-500">PDF files only (max 11MB)</p>
+                          <p className="text-xs text-gray-500">PDF files only (max 15MB)</p>
                           {newGameForm.pdfFile && (
                             <p className="text-xs text-green-600 mt-1">✓ PDF file ready to upload</p>
                           )}
@@ -1677,8 +1687,8 @@ function BoardGameDatabaseContent() {
                                 showToast('Please select a PDF file', 'error');
                                 return;
                               }
-                              if (file.size > 10 * 1024 * 1024) {
-                                showToast('File size must be less than 11MB', 'error');
+                              if (file.size > 15 * 1024 * 1024) {
+                                showToast('File size must be less than 15MB', 'error');
                                 return;
                               }
                               
@@ -2037,7 +2047,7 @@ You can use markdown formatting:
                                       <p className="text-xs text-gray-600 mb-1">
                                         <span className="font-medium text-[#fbae17]">Upload PDF</span> or drag
                                       </p>
-                                      <p className="text-xs text-gray-500">Max 11MB</p>
+                                      <p className="text-xs text-gray-500">Max 15MB</p>
                                       {editingGameData[game.id]?.pdfFile && (
                                         <p className="text-xs text-green-600 mt-1">✓ PDF ready</p>
                                       )}
@@ -2052,8 +2062,8 @@ You can use markdown formatting:
                                             showToast('Please select a PDF file', 'error');
                                             return;
                                           }
-                                          if (file.size > 10 * 1024 * 1024) {
-                                            showToast('File size must be less than 11MB', 'error');
+                                          if (file.size > 15 * 1024 * 1024) {
+                                            showToast('File size must be less than 15MB', 'error');
                                             return;
                                           }
                                           

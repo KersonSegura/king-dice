@@ -27,36 +27,47 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       if (pdfFile) {
         window.open(`/api/games/${gameId}/pdf`, '_blank');
       } else if (pdfUrl) {
-        // Check if the URL has expired (common for S3 signed URLs)
-        // If it's a signed URL with an expiration, redirect to BGG files page
-        if (pdfUrl.includes('s3.amazonaws.com') || pdfUrl.includes('X-Amz-Expires')) {
-          // Replace the URL with a link to BGG's files page for the game
-          const bggFilesUrl = `https://boardgamegeek.com/boardgame/${gameId}/files`;
-          window.open(bggFilesUrl, '_blank', 'noopener,noreferrer');
-          
-          // Set a helpful error message
-          setError('The direct PDF link has expired. Opening BGG files page where you can find the latest PDF.');
-          
-          // Clear the error after a few seconds
-          setTimeout(() => setError(null), 10000);
-          return;
+        // Check if URL has expired (has X-Amz-Expires or is s3.amazonaws.com)
+        const hasExpired = pdfUrl.includes('X-Amz-Expires') || pdfUrl.includes('s3.amazonaws.com');
+        
+        let urlToOpen = pdfUrl;
+        
+        if (hasExpired) {
+          // Fetch fresh URL from BGG
+          try {
+            const response = await fetch(`/api/games/${gameId}/fetch-pdf`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.pdfUrl) {
+                urlToOpen = data.pdfUrl;
+              } else {
+                // No PDF found, redirect to BGG files page
+                const bggFilesUrl = `https://boardgamegeek.com/boardgame/${gameId}/files`;
+                window.open(bggFilesUrl, '_blank', 'noopener,noreferrer');
+                setIsLoading(false);
+                return;
+              }
+            }
+          } catch (fetchError) {
+            console.error('Failed to fetch fresh PDF URL:', fetchError);
+          }
         }
         
         // Extract clean URL if it's wrapped in chrome-extension
-        let cleanUrl = pdfUrl;
-        if (pdfUrl.includes('chrome-extension://')) {
+        let cleanUrl = urlToOpen;
+        if (urlToOpen.includes('chrome-extension://')) {
           // Extract the actual URL from the chrome-extension wrapper
-          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          const urlMatch = urlToOpen.match(/chrome-extension:\/\/[^/]+\/(.+)/);
           if (urlMatch && urlMatch[1]) {
             cleanUrl = decodeURIComponent(urlMatch[1]);
           }
         }
         
-        // For external PDF URLs, open directly without the chrome extension wrapper
+        // Open the URL in a new tab
         window.open(cleanUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (err) {
-      setError('Unable to open PDF. Please try the download button or visit the BGG files page.');
+      setError('Unable to open PDF. Please try downloading it manually.');
     } finally {
       setIsLoading(false);
     }
@@ -77,17 +88,41 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         link.click();
         document.body.removeChild(link);
       } else if (pdfUrl) {
+        // Check if URL has expired
+        const hasExpired = pdfUrl.includes('X-Amz-Expires') || pdfUrl.includes('s3.amazonaws.com');
+        
+        let urlToDownload = pdfUrl;
+        
+        if (hasExpired) {
+          // Fetch fresh URL from BGG
+          try {
+            const response = await fetch(`/api/games/${gameId}/fetch-pdf`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.pdfUrl) {
+                urlToDownload = data.pdfUrl;
+              } else {
+                setError('No PDF available. Please visit the BGG files page.');
+                setIsLoading(false);
+                return;
+              }
+            }
+          } catch (fetchError) {
+            console.error('Failed to fetch fresh PDF URL:', fetchError);
+          }
+        }
+        
         // Extract clean URL if it's wrapped in chrome-extension
-        let cleanUrl = pdfUrl;
-        if (pdfUrl.includes('chrome-extension://')) {
+        let cleanUrl = urlToDownload;
+        if (urlToDownload.includes('chrome-extension://')) {
           // Extract the actual URL from the chrome-extension wrapper
-          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          const urlMatch = urlToDownload.match(/chrome-extension:\/\/[^/]+\/(.+)/);
           if (urlMatch && urlMatch[1]) {
             cleanUrl = decodeURIComponent(urlMatch[1]);
           }
         }
         
-        // Fallback to external URL
+        // Download the PDF
         const link = document.createElement('a');
         link.href = cleanUrl;
         link.download = `${gameName}-rules.pdf`;

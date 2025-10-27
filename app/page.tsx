@@ -5,9 +5,11 @@ import GameCardWithVote from '@/components/GameCardWithVote';
 import ModernTooltip from '@/components/ModernTooltip';
 import PixelCanvasPreview from '@/components/PixelCanvasPreview';
 import Feed from '@/components/Feed';
+import ImageModal from '@/components/ImageModal';
 import { BookOpen, Users, Star, Globe, Search, Clock, Calendar, Crown, Square, Plus } from 'lucide-react';
 import HomePageFooter from '@/components/HomePageFooter';
-import { ArrowUp, MessageCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowUp, MessageCircle, Heart, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
@@ -72,6 +74,9 @@ interface Game {
   numVotes: number | null;
   userRating?: number | null;
   userVotes?: number;
+  bggRanking?: number | null;
+  bggRating?: number | null;
+  bggVotes?: number | null;
   expansions?: number | null;
   category?: string;
 }
@@ -89,11 +94,13 @@ type GalleryImage = {
   views: number;
   downloads: number;
   comments: number;
+  userVote?: 'up' | 'down' | 'none';
 };
 
 export default function HomePage() {
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [hotGames, setHotGames] = useState<Game[]>([]);
   const [topRankedGames, setTopRankedGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
@@ -108,6 +115,14 @@ export default function HomePage() {
   const [galleryLoading, setGalleryLoading] = useState(true);
   const [boardleMode, setBoardleMode] = useState<'title' | 'image' | 'card'>('title');
   const [timeUntilNextGame, setTimeUntilNextGame] = useState('');
+  
+  // Modal state
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState<GalleryImage | null>(null);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  
+  // ImageModal state and handlers
+  const [imageComments, setImageComments] = useState<any[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   
   
   useEffect(() => {
@@ -201,6 +216,26 @@ export default function HomePage() {
     };
     fetchGallery();
   }, []);
+
+  // Handle URL parameters for opening specific image
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const imageParam = urlParams.get('image');
+    if (imageParam && galleryImages.length > 0) {
+      const targetImage = galleryImages.find(img => img.id === imageParam);
+      if (targetImage) {
+        setSelectedGalleryImage(targetImage);
+        setShowGalleryModal(true);
+        // Load comments for this image
+        if (user) {
+          fetch(`/api/gallery/comments?imageId=${targetImage.id}&userId=${user.id}`)
+            .then(response => response.json())
+            .then(data => setImageComments(data.comments || []))
+            .catch(error => console.error('Error loading comments:', error));
+        }
+      }
+    }
+  }, [galleryImages, user]);
 
   const featuredKingsCard = useMemo(() => {
     const candidates = galleryImages.filter(img => img.category === 'the-kings-card');
@@ -310,7 +345,229 @@ export default function HomePage() {
     return min === max ? `${min} min` : `${min}-${max} min`;
   };
 
+  // ImageModal handlers
+  const closeImageModal = () => {
+    setShowGalleryModal(false);
+    setSelectedGalleryImage(null);
+    setImageComments([]);
+    
+    // Remove image parameter from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('image');
+    window.history.pushState({}, '', url);
+  };
 
+  const handleLike = async (imageId: string) => {
+    if (!user) return;
+    
+    try {
+      const response = await fetch('/api/gallery/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageId,
+          voteType: selectedGalleryImage?.userVote === 'up' ? 'none' : 'up',
+          userId: user.id
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (selectedGalleryImage && selectedGalleryImage.id === imageId) {
+          setSelectedGalleryImage(result.image);
+        }
+        // Update gallery images
+        setGalleryImages(prevImages => 
+          prevImages.map(img => 
+            img.id === imageId ? result.image : img
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error liking image:', error);
+    }
+  };
+
+  const handleAddComment = async (content: string) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/gallery/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageId: selectedGalleryImage?.id,
+          content,
+          author: {
+            id: user.id,
+            name: user.username,
+            avatar: user.avatar || '/DiceLogo.svg'
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setImageComments(prev => [...prev, data.comment]);
+        
+        // Update comment count
+        if (selectedGalleryImage) {
+          setSelectedGalleryImage(prev => prev ? {
+            ...prev,
+            comments: (prev.comments || 0) + 1
+          } : null);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/gallery/comments/${commentId}?userId=${user.id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setImageComments(prev => prev.filter(comment => comment.id !== commentId));
+        
+        // Update comment count
+        if (selectedGalleryImage) {
+          setSelectedGalleryImage(prev => prev ? {
+            ...prev,
+            comments: Math.max((prev.comments || 0) - 1, 0)
+          } : null);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  const handleLikeComment = async (commentId: string) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/gallery/comments/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          commentId,
+          userId: user.id
+        })
+      });
+
+      if (response.ok) {
+        // Refresh comments to get updated like status
+        await refreshComments();
+      }
+    } catch (error) {
+      console.error('Error liking comment:', error);
+    }
+  };
+
+  const handleReplyToComment = async (commentId: string, content: string) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/gallery/comments/reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          commentId,
+          content,
+          author: {
+            id: user.id,
+            name: user.username,
+            avatar: user.avatar || '/DiceLogo.svg'
+          }
+        })
+      });
+
+      if (response.ok) {
+        // Refresh comments to show the new reply
+        await refreshComments();
+        
+        // Update comment count
+        if (selectedGalleryImage) {
+          setSelectedGalleryImage(prev => prev ? {
+            ...prev,
+            comments: (prev.comments || 0) + 1
+          } : null);
+        }
+      }
+    } catch (error) {
+      console.error('Error replying to comment:', error);
+    }
+  };
+
+  const handleReportComment = async (commentId: string, reason: string, details?: string) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/gallery/comments/report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          commentId,
+          reason,
+          details: details || '',
+          reporterId: user.id
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Report submitted:', data.message);
+      }
+    } catch (error) {
+      console.error('Error reporting comment:', error);
+    }
+  };
+
+  const refreshComments = async () => {
+    if (!selectedGalleryImage || !user) return;
+
+    try {
+      const response = await fetch(`/api/gallery/comments?imageId=${selectedGalleryImage.id}&userId=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setImageComments(data.comments || []);
+      }
+    } catch (error) {
+      console.error('Error refreshing comments:', error);
+    }
+  };
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    if (!selectedGalleryImage) return;
+    
+    const currentIndex = galleryImages.findIndex(img => img.id === selectedGalleryImage.id);
+    if (currentIndex === -1) return;
+    
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : galleryImages.length - 1;
+    } else {
+      newIndex = currentIndex < galleryImages.length - 1 ? currentIndex + 1 : 0;
+    }
+    
+    setSelectedGalleryImage(galleryImages[newIndex]);
+    setSelectedImageIndex(newIndex);
+  };
 
   return (
     <div className="flex flex-col">
@@ -403,7 +660,39 @@ export default function HomePage() {
             </p>
           </div>
           
-          <Feed userId={user?.id} limit={10} />
+          <Feed 
+            userId={user?.id} 
+            limit={10} 
+            featuredDiceThroneId={featuredDiceThrone?.id}
+            featuredKingsCardId={featuredKingsCard?.id}
+            onItemClick={(item) => {
+              // If it's a gallery image, open with ImageModal
+              if (item.type === 'gallery') {
+                // Find the corresponding gallery image
+                const galleryImage = galleryImages.find(img => img.id === item.id);
+                if (galleryImage) {
+                  setSelectedGalleryImage(galleryImage);
+                  setShowGalleryModal(true);
+                  
+                  // Update URL with image parameter
+                  const currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.set('image', galleryImage.id);
+                  window.history.pushState({}, '', currentUrl);
+                  
+                  // Load comments for this image
+                  if (user) {
+                    fetch(`/api/gallery/comments?imageId=${galleryImage.id}&userId=${user.id}`)
+                      .then(response => response.json())
+                      .then(data => setImageComments(data.comments || []))
+                      .catch(error => console.error('Error loading comments:', error));
+                  }
+                }
+              } else if (item.type === 'post') {
+                // For forum posts, navigate to the specific post
+                router.push(`/forums/post/${item.id}`);
+              }
+            }}
+          />
         </div>
       </section>
 
@@ -630,13 +919,56 @@ export default function HomePage() {
               {/* Centered featured tiles - Dice first, Card second */}
               <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
                 <div className="flex justify-center">
-                  <Link href={featuredDiceThrone ? `/community-gallery?image=${featuredDiceThrone.id}` : '/community-gallery'}>
-                    <div className={`relative rounded-lg overflow-hidden ${featuredDiceThrone ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`} style={{ aspectRatio: '1 / 1.1' }}>
+                  <div 
+                    className={`relative rounded-lg overflow-hidden ${featuredDiceThrone ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity group`} 
+                    style={{ aspectRatio: '1 / 1.1' }}
+                    onClick={() => {
+                      if (featuredDiceThrone) {
+                        setSelectedGalleryImage(featuredDiceThrone);
+                        setShowGalleryModal(true);
+                        
+                        // Update URL with image parameter
+                        const currentUrl = new URL(window.location.href);
+                        currentUrl.searchParams.set('image', featuredDiceThrone.id);
+                        window.history.pushState({}, '', currentUrl);
+                        
+                        // Load comments for this image
+                        if (user) {
+                          fetch(`/api/gallery/comments?imageId=${featuredDiceThrone.id}&userId=${user.id}`)
+                            .then(response => response.json())
+                            .then(data => setImageComments(data.comments || []))
+                            .catch(error => console.error('Error loading comments:', error));
+                        }
+                      }
+                    }}
+                  >
                       {featuredDiceThrone ? (
                         <>
                           <div className="absolute inset-0 bottom-8">
-                            <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title} fill className="object-cover" loading="lazy" />
+                            <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title || 'Dice of the Week'} fill className="object-cover" loading="lazy" />
                           </div>
+                          
+                          {/* Instagram-style hover overlay */}
+                          <div className="absolute inset-0 bottom-8 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-4 text-white">
+                              <div className="flex items-center space-x-1">
+                                <Heart className="w-4 h-4" fill={featuredDiceThrone.userVote === 'up' ? '#ef4444' : 'none'} stroke={featuredDiceThrone.userVote === 'up' ? '#ef4444' : '#ffffff'} strokeWidth={1.5} />
+                                <span className="text-sm font-medium text-white">{featuredDiceThrone.votes.upvotes - featuredDiceThrone.votes.downvotes}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <MessageCircle className="w-4 h-4" stroke="#ffffff" />
+                                <span className="text-sm font-medium text-white">{featuredDiceThrone.comments || 0}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Username overlay */}
+                          <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                              {featuredDiceThrone.author.name}
+                            </div>
+                          </div>
+                          
                           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
                             <div className="flex items-center space-x-2 text-white text-sm font-semibold">
                               <Crown className="w-4 h-4" />
@@ -650,17 +982,59 @@ export default function HomePage() {
                         </div>
                       )}
                     </div>
-                  </Link>
                 </div>
 
                 <div className="flex justify-center">
-                  <Link href={featuredKingsCard ? `/community-gallery?image=${featuredKingsCard.id}` : '/community-gallery'}>
-                    <div className={`relative rounded-lg overflow-hidden ${featuredKingsCard ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity`} style={{ aspectRatio: '1 / 1.1' }}>
+                  <div 
+                    className={`relative rounded-lg overflow-hidden ${featuredKingsCard ? 'border-2 border-[#fbae17] shadow-lg' : 'border border-dashed border-gray-300'} bg-white w-64 md:w-80 lg:w-80 cursor-pointer hover:opacity-90 transition-opacity group`} 
+                    style={{ aspectRatio: '1 / 1.1' }}
+                    onClick={() => {
+                      if (featuredKingsCard) {
+                        setSelectedGalleryImage(featuredKingsCard);
+                        setShowGalleryModal(true);
+                        
+                        // Update URL with image parameter
+                        const currentUrl = new URL(window.location.href);
+                        currentUrl.searchParams.set('image', featuredKingsCard.id);
+                        window.history.pushState({}, '', currentUrl);
+                        
+                        // Load comments for this image
+                        if (user) {
+                          fetch(`/api/gallery/comments?imageId=${featuredKingsCard.id}&userId=${user.id}`)
+                            .then(response => response.json())
+                            .then(data => setImageComments(data.comments || []))
+                            .catch(error => console.error('Error loading comments:', error));
+                        }
+                      }
+                    }}
+                  >
                       {featuredKingsCard ? (
                         <>
                           <div className="absolute inset-0 bottom-8">
-                            <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title} fill className="object-cover" loading="lazy" />
+                            <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title || 'Card of the Week'} fill className="object-cover" loading="lazy" />
                           </div>
+                          
+                          {/* Instagram-style hover overlay */}
+                          <div className="absolute inset-0 bottom-8 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-4 text-white">
+                              <div className="flex items-center space-x-1">
+                                <Heart className="w-4 h-4" fill={featuredKingsCard.userVote === 'up' ? '#ef4444' : 'none'} stroke={featuredKingsCard.userVote === 'up' ? '#ef4444' : '#ffffff'} strokeWidth={1.5} />
+                                <span className="text-sm font-medium text-white">{featuredKingsCard.votes.upvotes - featuredKingsCard.votes.downvotes}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <MessageCircle className="w-4 h-4" stroke="#ffffff" />
+                                <span className="text-sm font-medium text-white">{featuredKingsCard.comments || 0}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Username overlay */}
+                          <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                              {featuredKingsCard.author.name}
+                            </div>
+                          </div>
+                          
                           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
                             <div className="flex items-center space-x-2 text-white text-sm font-semibold">
                               <Crown className="w-4 h-4" />
@@ -674,18 +1048,56 @@ export default function HomePage() {
                         </div>
                       )}
                     </div>
-                  </Link>
                 </div>
               </div>
 
               {/* Other images */}
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
                 {otherGallery.slice(0, 4).map(img => (
-                  <Link key={img.id} href={`/community-gallery?image=${img.id}`}>
-                    <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-white aspect-square cursor-pointer hover:opacity-90 transition-opacity">
-                      <Image src={img.thumbnailUrl} alt={img.title} fill className="object-cover" loading="lazy" />
+                  <div 
+                    key={img.id} 
+                    className="relative rounded-lg overflow-hidden border border-gray-200 bg-white aspect-square cursor-pointer hover:opacity-90 transition-opacity group"
+                    onClick={() => {
+                      setSelectedGalleryImage(img);
+                      setShowGalleryModal(true);
+                      
+                      // Update URL with image parameter
+                      const currentUrl = new URL(window.location.href);
+                      currentUrl.searchParams.set('image', img.id);
+                      window.history.pushState({}, '', currentUrl);
+                      
+                      // Load comments for this image
+                      if (user) {
+                        fetch(`/api/gallery/comments?imageId=${img.id}&userId=${user.id}`)
+                          .then(response => response.json())
+                          .then(data => setImageComments(data.comments || []))
+                          .catch(error => console.error('Error loading comments:', error));
+                      }
+                    }}
+                  >
+                    <Image src={img.thumbnailUrl} alt={img.title || 'Gallery image'} fill className="object-cover" loading="lazy" />
+                    
+                    {/* Instagram-style hover overlay */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-4 text-white">
+                        <div className="flex items-center space-x-1">
+                          <Heart className="w-4 h-4" fill={img.userVote === 'up' ? '#ef4444' : 'none'} stroke={img.userVote === 'up' ? '#ef4444' : '#ffffff'} strokeWidth={1.5} />
+                          <span className="text-sm font-medium text-white">{img.votes.upvotes - img.votes.downvotes}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <MessageCircle className="w-4 h-4" stroke="#ffffff" />
+                          <span className="text-sm font-medium text-white">{img.comments || 0}</span>
+                        </div>
+                      </div>
                     </div>
-                  </Link>
+
+                    {/* Username overlay */}
+                    <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                        {img.author.name}
+                      </div>
+                    </div>
+                  </div>
                 ))}
 
                 {/* See More Button */}
@@ -697,15 +1109,15 @@ export default function HomePage() {
                     </div>
                   </div>
                 </Link>
-              </div>
+                  </div>
             </>
-          )}
+                )}
 
-          <div className="text-center mt-8">
-            <Link href="/community-gallery" className="btn-primary">
+              <div className="text-center mt-8">
+                <Link href="/community-gallery" className="btn-primary">
               View All Gallery
-            </Link>
-          </div>
+                </Link>
+              </div>
         </div>
       </section>
 
@@ -723,12 +1135,12 @@ export default function HomePage() {
               </p>
             </div>
             
-            <PixelCanvasPreview />
-            
+                  <PixelCanvasPreview />
+                
             <div className="text-center mt-8">
-              <Link href="/pixel-canvas" className="btn-primary">
+                  <Link href="/pixel-canvas" className="btn-primary">
                 Start Creating
-              </Link>
+                  </Link>
             </div>
           </div>
         </section>
@@ -753,12 +1165,12 @@ export default function HomePage() {
                 Guess the board game! A daily word-guessing game inspired by Wordle, but for board game enthusiasts.
               </p>
             </div>
-
+            
             <div className="bg-gray-50 rounded-lg p-8 max-w-4xl mx-auto">
               {/* Mode Selector */}
               <div className="flex justify-center mb-8">
                 <div className="bg-white rounded-lg p-1 shadow-sm">
-                  <button
+                  <button 
                     onClick={() => setBoardleMode('title')}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                       boardleMode === 'title' 
@@ -768,7 +1180,7 @@ export default function HomePage() {
                   >
                     Title Mode
                   </button>
-                  <button
+                  <button 
                     onClick={() => setBoardleMode('image')}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                       boardleMode === 'image' 
@@ -778,7 +1190,7 @@ export default function HomePage() {
                   >
                     Image Mode
                   </button>
-                  <button
+                  <button 
                     onClick={() => setBoardleMode('card')}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                       boardleMode === 'card' 
@@ -796,252 +1208,252 @@ export default function HomePage() {
                 <div className="text-center text-sm text-gray-500 mb-4">Today's Mystery Game</div>
                 
                 {boardleMode === 'title' && (
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-3 justify-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
-                        1
-                      </div>
-                      <div className="flex gap-1">
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                        <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">O</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 justify-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
-                        2
-                      </div>
-                      <div className="flex gap-1">
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">H</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 justify-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
-                        3
-                      </div>
-                      <div className="flex gap-1">
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 justify-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
-                        4
-                      </div>
-                      <div className="flex gap-1">
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                        <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">N</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
-                        <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">Y</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 justify-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
-                        5
-                      </div>
-                      <div className="flex gap-1">
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">T</div>
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                        <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">N</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 justify-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
-                        6
-                      </div>
-                      <div className="flex gap-1">
-                        {['_', '_', '_', '_', '_'].map((_, i) => (
-                          <div key={i} className="w-8 h-8 border-2 border-gray-300 rounded flex items-center justify-center">
-                            <span className="text-sm text-gray-400">{_}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-3 justify-center">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+                          1
                   </div>
+                        <div className="flex gap-1">
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                          <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">O</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
+                </div>
+                  </div>
+                      <div className="flex items-center gap-3 justify-center">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+                          2
+                </div>
+                        <div className="flex gap-1">
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">H</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                  </div>
+                      </div>
+                      <div className="flex items-center gap-3 justify-center">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+                          3
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                </div>
+            </div>
+                      <div className="flex items-center gap-3 justify-center">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+                          4
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                          <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">N</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
+                          <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">Y</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 justify-center">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+                          5
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">T</div>
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                          <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">N</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 justify-center">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>
+                          6
+                        </div>
+                        <div className="flex gap-1">
+                          {['_', '_', '_', '_', '_'].map((_, i) => (
+                    <div key={i} className="w-8 h-8 border-2 border-gray-300 rounded flex items-center justify-center">
+                      <span className="text-sm text-gray-400">{_}</span>
+                    </div>
+                  ))}
+                        </div>
+                </div>
+              </div>
                 )}
 
-                {boardleMode === 'image' && (
-                  <div className="flex gap-4 sm:gap-6 items-start justify-center">
-                    <div className="w-64 sm:w-80">
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>1</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                            <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">O</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>2</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">H</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>3</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>4</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">N</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">Y</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>5</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">T</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">N</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>6</div>
-                          <div className="flex gap-1">
-                            {['_', '_', '_', '_', '_'].map((_, i) => (
-                              <div key={i} className="w-8 h-8 border-2 border-gray-300 rounded flex items-center justify-center">
-                                <span className="text-sm text-gray-400">{_}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-32 sm:w-48">
-                      <div className="text-center text-xs sm:text-sm text-gray-600 mb-4">
-                        Start with a very<br />
-                        zoomed-in image
-                      </div>
-                      <div className="flex justify-center">
-                        <div className="relative w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
-                          <Image
-                            src="/boardle-images/066-catan.jpg"
-                            alt="Zoomed in game image"
-                            fill
-                            className="object-cover scale-150"
-                            style={{ transform: 'scale(3) translate(20%, 20%)' }}
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                          <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
-                            Guess 1/6
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                                 {boardleMode === 'image' && (
+                     <div className="flex gap-4 sm:gap-6 items-start justify-center">
+                       <div className="w-64 sm:w-80">
+                         <div className="space-y-2 mb-4">
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>1</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                               <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">O</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>2</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">H</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>3</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>4</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">N</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">Y</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>5</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">T</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">N</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>6</div>
+                             <div className="flex gap-1">
+                               {['_', '_', '_', '_', '_'].map((_, i) => (
+                                 <div key={i} className="w-8 h-8 border-2 border-gray-300 rounded flex items-center justify-center">
+                                   <span className="text-sm text-gray-400">{_}</span>
+                                 </div>
+                               ))}
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                       <div className="w-32 sm:w-48">
+                         <div className="text-center text-xs sm:text-sm text-gray-600 mb-4">
+                           Start with a very<br />
+                           zoomed-in image
+                         </div>
+                         <div className="flex justify-center">
+                           <div className="relative w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
+                             <Image
+                               src="/boardle-images/066-catan.jpg"
+                               alt="Zoomed in game image"
+                               fill
+                               className="object-cover scale-150"
+                               style={{ transform: 'scale(3) translate(20%, 20%)' }}
+                             />
+                             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                             <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+                               Guess 1/6
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                 )}
 
-                {boardleMode === 'card' && (
-                  <div className="flex gap-4 sm:gap-6 items-start justify-center">
-                    <div className="w-64 sm:w-80">
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>1</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                            <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">O</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>2</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">H</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>3</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>4</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">N</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
-                            <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">Y</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>5</div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">T</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
-                            <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">N</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-center">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>6</div>
-                          <div className="flex gap-1">
-                            {['_', '_', '_', '_', '_'].map((_, i) => (
-                              <div key={i} className="w-8 h-8 border-2 border-gray-300 rounded flex items-center justify-center">
-                                <span className="text-sm text-gray-400">{_}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-32 sm:w-48">
-                      <div className="flex justify-center">
-                        <div className="relative w-32 h-40 sm:w-48 sm:h-60 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
-                          <Image
-                            src="/boardle-images/cards/002-catan.jpg"
-                            alt="Game card"
-                            fill
-                            className="object-contain scale-90"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                                 {boardleMode === 'card' && (
+                     <div className="flex gap-4 sm:gap-6 items-start justify-center">
+                       <div className="w-64 sm:w-80">
+                         <div className="space-y-2 mb-4">
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>1</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                               <div className="w-8 h-8 bg-yellow-500 text-white border-2 border-yellow-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">O</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>2</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">H</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">E</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>3</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">R</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">S</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>4</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">N</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">D</div>
+                               <div className="w-8 h-8 bg-gray-400 text-white border-2 border-gray-400 rounded flex items-center justify-center text-sm font-bold">Y</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>5</div>
+                             <div className="flex gap-1">
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">C</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">T</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">A</div>
+                               <div className="w-8 h-8 bg-green-500 text-white border-2 border-green-500 rounded flex items-center justify-center text-sm font-bold">N</div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-3 justify-center">
+                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0" style={{ backgroundColor: '#4B86FE' }}>6</div>
+                             <div className="flex gap-1">
+                               {['_', '_', '_', '_', '_'].map((_, i) => (
+                                 <div key={i} className="w-8 h-8 border-2 border-gray-300 rounded flex items-center justify-center">
+                                   <span className="text-sm text-gray-400">{_}</span>
+                                 </div>
+                               ))}
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                       <div className="w-32 sm:w-48">
+                         <div className="flex justify-center">
+                           <div className="relative w-32 h-40 sm:w-48 sm:h-60 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
+                             <Image
+                               src="/boardle-images/cards/002-catan.jpg"
+                               alt="Game card"
+                               fill
+                               className="object-contain scale-90"
+                             />
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                 )}
               </div>
 
               {/* Call to Action */}
@@ -1054,17 +1466,58 @@ export default function HomePage() {
                 </div>
                 <Link href="/boardle" className="btn-primary text-lg px-8 py-3">
                   Play Boardle Now
-                </Link>
-              </div>
+              </Link>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
       </LazySection>
 
       {/* Enhanced Homepage Footer */}
       <div className="mt-auto">
         <HomePageFooter />
       </div>
+
+      {/* Gallery Image Modal */}
+      {showGalleryModal && selectedGalleryImage && (
+        <ImageModal
+          isOpen={showGalleryModal}
+          onClose={closeImageModal}
+          imageUrl={selectedGalleryImage.imageUrl}
+          title={selectedGalleryImage.title}
+          description={selectedGalleryImage.description}
+          author={{
+            name: selectedGalleryImage.author.name,
+            avatar: selectedGalleryImage.author.avatar
+          }}
+          createdAt={selectedGalleryImage.createdAt}
+          category={selectedGalleryImage.category}
+          isFeatured={false}
+          onLike={() => handleLike(selectedGalleryImage.id)}
+          onDelete={() => {}}
+          onReport={() => {}}
+          onEditDescription={() => {}}
+          isLiked={selectedGalleryImage.userVote === 'up'}
+          canDelete={!!(isAuthenticated && user && selectedGalleryImage.author.id === user.id)}
+          canReport={!!(isAuthenticated && user)}
+          canEdit={!!(isAuthenticated && user && selectedGalleryImage.author.id === user.id)}
+          likeCount={selectedGalleryImage.votes?.upvotes || 0}
+          imageId={selectedGalleryImage.id}
+          comments={imageComments}
+          onAddComment={handleAddComment}
+          onDeleteComment={handleDeleteComment}
+          onLikeComment={handleLikeComment}
+          onReplyToComment={handleReplyToComment}
+          onReportComment={handleReportComment}
+          currentUserId={user?.id}
+          isAuthenticated={isAuthenticated}
+          currentUser={user}
+          onRefreshComments={refreshComments}
+          allImages={galleryImages}
+          currentImageIndex={selectedImageIndex}
+          onNavigate={handleNavigate}
+        />
+      )}
     </div>
   );
-}
+} 

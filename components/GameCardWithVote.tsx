@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Users, Clock, Calendar, Package } from 'lucide-react';
 import { useState, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Game {
   id: number;
@@ -20,6 +22,9 @@ interface Game {
   numVotes: number | null;
   userRating?: number | null;
   userVotes?: number;
+  bggRanking?: number | null;
+  bggRating?: number | null;
+  bggVotes?: number | null;
   expansions?: number | null;
   rank?: number; // For ranking badge
 }
@@ -31,7 +36,10 @@ interface GameCardWithVoteProps {
 export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [isVoting, setIsVoting] = useState(false);
   const starButtonRef = useRef<HTMLButtonElement>(null);
+  const { user, isAuthenticated } = useAuth();
+  const { showToast } = useToast();
 
   const formatRating = (rating: number | null) => {
     if (!rating) return 'N/A';
@@ -67,6 +75,41 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
 
   const handleStarMouseLeave = () => {
     setShowTooltip(false);
+  };
+
+  const handleStarClick = async () => {
+    if (!isAuthenticated || !user) {
+      showToast('Please sign in to vote', 'info');
+      return;
+    }
+
+    if (isVoting) return;
+
+    setIsVoting(true);
+    try {
+      const response = await fetch(`/api/games/${game.id}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rating: 8, // Default rating for now - could be made configurable
+          userId: user.id,
+        }),
+      });
+
+      if (response.ok) {
+        showToast('Vote submitted successfully!', 'success');
+      } else {
+        const error = await response.json();
+        showToast(error.error || 'Failed to submit vote', 'error');
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      showToast('Failed to submit vote', 'error');
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   return (
@@ -134,16 +177,18 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
           
           {/* Action Buttons */}
           <div className="flex gap-2 mt-4">
-            <button className="flex-1 text-white text-sm font-medium p-2 rounded transition-colors flex items-center justify-center h-8" style={{ backgroundColor: '#fbae17' }}>
-              {game.ranking ? `#${game.ranking}` : 'N/A'}
-            </button>
+            <Link href={`/game/${game.id}`} className="flex-1 text-white text-sm font-medium p-2 rounded transition-colors flex items-center justify-center h-8 hover:opacity-90" style={{ backgroundColor: '#fbae17' }}>
+              {game.ranking ? `#${game.ranking}` : 'See More'}
+            </Link>
             <div className="relative">
               <button 
                 ref={starButtonRef}
-                className="text-white p-2 rounded transition-colors h-8 w-8" 
+                className="text-white p-2 rounded transition-colors h-8 w-8 hover:opacity-90 disabled:opacity-50" 
                 style={{ backgroundColor: '#fbae17' }}
                 onMouseEnter={handleStarMouseEnter}
                 onMouseLeave={handleStarMouseLeave}
+                onClick={handleStarClick}
+                disabled={isVoting}
               >
                 <Star className="w-4 h-4" />
               </button>
@@ -166,7 +211,7 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
                 >
                   <div className="flex items-center space-x-1">
                     <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                    <span>Rating: {formatRating(combinedRating)}</span>
+                    <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
                   </div>
                 </div>
               )}

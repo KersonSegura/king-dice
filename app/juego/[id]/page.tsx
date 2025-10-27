@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import LogoButton from '@/components/LogoButton';
 import { bggAPI, BGGGame, BGGRules } from '@/lib/bgg-api';
 import { Star, Users, Clock, Calendar, Download, FileText, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function GameDetailPage() {
   const params = useParams();
@@ -14,6 +16,15 @@ export default function GameDetailPage() {
   const [game, setGame] = useState<BGGGame | null>(null);
   const [rules, setRules] = useState<BGGRules[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Ranking button state
+  const [isVoting, setIsVoting] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const starButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Auth and toast hooks
+  const { isAuthenticated, user } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -34,6 +45,42 @@ export default function GameDetailPage() {
       fetchGameData();
     }
   }, [gameId]);
+
+  // Ranking button handlers
+  const handleStarMouseEnter = () => {
+    setShowTooltip(true);
+  };
+
+  const handleStarMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
+  const handleStarClick = async () => {
+    if (!isAuthenticated || !user) {
+      showToast('Please sign in to vote', 'info');
+      return;
+    }
+    if (isVoting) return;
+    setIsVoting(true);
+    try {
+      const response = await fetch(`/api/games/${gameId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: 8, userId: user.id }),
+      });
+      if (response.ok) { 
+        showToast('Vote submitted successfully!', 'success'); 
+      } else { 
+        const error = await response.json(); 
+        showToast(error.error || 'Failed to submit vote', 'error'); 
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      showToast('Failed to submit vote', 'error');
+    } finally { 
+      setIsVoting(false); 
+    }
+  };
 
   if (isLoading) {
     return (
@@ -258,6 +305,46 @@ export default function GameDetailPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Ranking Button */}
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <button 
+                      ref={starButtonRef}
+                      className="text-white p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2" 
+                      style={{ backgroundColor: '#fbae17' }}
+                      onMouseEnter={handleStarMouseEnter}
+                      onMouseLeave={handleStarMouseLeave}
+                      onClick={handleStarClick}
+                      disabled={isVoting}
+                    >
+                      <Star className="w-5 h-5" />
+                      <span className="font-medium">
+                        {isVoting ? 'Voting...' : 'Vote'}
+                      </span>
+                    </button>
+                    
+                    {/* Tooltip */}
+                    {showTooltip && (
+                      <div 
+                        className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg whitespace-nowrap z-50"
+                        style={{
+                          transform: 'translateX(-50%)'
+                        }}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                          <span>Rank #{game.ranking?.rank || 'N/A'} • Rating: {game.rating?.average ? `${formatRating(game.rating.average)}/10` : 'N/A'}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {game.rating?.usersrated && (
+                      <span>Based on {parseInt(game.rating.usersrated).toLocaleString()} votes</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-200">

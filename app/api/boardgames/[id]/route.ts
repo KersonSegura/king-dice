@@ -196,16 +196,26 @@ export async function PUT(
     }
     }
     
-    // Check PDF file size if present
+    // Check PDF file size if present (check actual file size, not base64 length)
     if (updateData.pdfFile) {
-      const pdfSizeKB = Math.round(updateData.pdfFile.length / 1024);
-      console.log(`PDF file size in API: ${pdfSizeKB} KB`);
-      
-      if (pdfSizeKB > 11264) { // 11MB limit
-        return NextResponse.json(
-          { error: 'PDF file too large', message: `PDF file is ${pdfSizeKB} KB, maximum allowed is 11MB` },
-          { status: 400 }
-        );
+      // Extract the actual file size from base64 data
+      // Base64 data format: "data:application/pdf;base64,<base64string>"
+      const base64Data = updateData.pdfFile.split(',')[1];
+      if (base64Data) {
+        // Calculate actual file size from base64 (base64 is ~33% larger than original)
+        const actualFileSizeBytes = Math.round((base64Data.length * 3) / 4);
+        const actualFileSizeKB = Math.round(actualFileSizeBytes / 1024);
+        const actualFileSizeMB = (actualFileSizeKB / 1024).toFixed(2);
+        
+        console.log(`API - Actual PDF file size: ${actualFileSizeKB} KB (${actualFileSizeMB} MB)`);
+        console.log(`API - Base64 string length: ${updateData.pdfFile.length} characters`);
+        
+        if (actualFileSizeKB > 15360) { // 15MB limit
+          return NextResponse.json(
+            { error: 'PDF file too large', message: `PDF file is ${actualFileSizeKB} KB (${actualFileSizeMB} MB), maximum allowed is 15MB` },
+            { status: 400 }
+          );
+        }
       }
     }
 

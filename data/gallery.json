@@ -14,11 +14,23 @@
       },
       "createdAt": "2025-10-07T18:34:51.423Z",
       "votes": {
-        "upvotes": 0,
-        "downvotes": 0,
-        "voters": []
+        "upvotes": 1,
+        "downvotes": 0
       },
-      "comments": []
+      "comments": [],
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W43"
+      },
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-23T18:28:13.452Z",
+          "weekId": "2025-W43"
+        }
+      ]
     },
     {
       "id": "img_1759861186680_7o0wt1jds",
@@ -98,8 +110,8 @@
         "downvotes": 0
       },
       "weeklyLikes": {
-        "likesReceivedThisWeek": 1,
-        "weekId": "2025-W40"
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W43"
       },
       "views": 0,
       "downloads": 0,
@@ -219,7 +231,7 @@
           "replies": []
         }
       ],
-      "userVote": "up",
+      "userVote": null,
       "userVotes": [
         {
           "userId": "cmg88zsa300017kbsvllkpdof",
@@ -327,12 +339,12 @@
       "id": "img_1756957214409_jqw1a4q9m",
       "createdAt": "2025-09-04T03:40:14.409Z",
       "votes": {
-        "upvotes": 2,
+        "upvotes": 3,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W40"
+        "weekId": "2025-W43"
       },
       "views": 0,
       "downloads": 0,
@@ -352,6 +364,12 @@
           "voteType": "up",
           "timestamp": "2025-10-03T08:58:06.022Z",
           "weekId": "2025-W40"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-23T18:28:23.510Z",
+          "weekId": "2025-W43"
         }
       ]
     },
@@ -540,12 +558,12 @@
       "id": "img_1757453634982_2pvm80h1d",
       "createdAt": "2025-09-09T21:33:54.982Z",
       "votes": {
-        "upvotes": 0,
+        "upvotes": 1,
         "downvotes": 0
       },
       "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W37"
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W43"
       },
       "views": 0,
       "downloads": 0,
@@ -582,6 +600,15 @@
           "userLikes": [],
           "replies": []
         }
+      ],
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-23T18:28:20.154Z",
+          "weekId": "2025-W43"
+        }
       ]
     },
     {
@@ -601,12 +628,12 @@
       "id": "img_1757453919868_bkvrvoxwr",
       "createdAt": "2025-09-09T21:38:39.868Z",
       "votes": {
-        "upvotes": 1,
+        "upvotes": 2,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W40"
+        "weekId": "2025-W43"
       },
       "views": 0,
       "downloads": 0,
@@ -620,6 +647,12 @@
           "voteType": "up",
           "timestamp": "2025-10-03T08:40:16.824Z",
           "weekId": "2025-W40"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-23T18:28:17.950Z",
+          "weekId": "2025-W43"
         }
       ]
     }
