@@ -27,6 +27,21 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       if (pdfFile) {
         window.open(`/api/games/${gameId}/pdf`, '_blank');
       } else if (pdfUrl) {
+        // Check if the URL has expired (common for S3 signed URLs)
+        // If it's a signed URL with an expiration, redirect to BGG files page
+        if (pdfUrl.includes('s3.amazonaws.com') || pdfUrl.includes('X-Amz-Expires')) {
+          // Replace the URL with a link to BGG's files page for the game
+          const bggFilesUrl = `https://boardgamegeek.com/boardgame/${gameId}/files`;
+          window.open(bggFilesUrl, '_blank', 'noopener,noreferrer');
+          
+          // Set a helpful error message
+          setError('The direct PDF link has expired. Opening BGG files page where you can find the latest PDF.');
+          
+          // Clear the error after a few seconds
+          setTimeout(() => setError(null), 10000);
+          return;
+        }
+        
         // Extract clean URL if it's wrapped in chrome-extension
         let cleanUrl = pdfUrl;
         if (pdfUrl.includes('chrome-extension://')) {
@@ -41,7 +56,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         window.open(cleanUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (err) {
-      setError('Unable to open PDF. Please try downloading it manually.');
+      setError('Unable to open PDF. Please try the download button or visit the BGG files page.');
     } finally {
       setIsLoading(false);
     }
