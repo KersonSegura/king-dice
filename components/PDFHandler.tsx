@@ -27,15 +27,18 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       if (pdfFile) {
         window.open(`/api/games/${gameId}/pdf`, '_blank');
       } else if (pdfUrl) {
-        // Fallback to external URL
-        if (pdfUrl.toLowerCase().endsWith('.pdf')) {
-          const newWindow = window.open();
-          if (newWindow) {
-            newWindow.location.href = pdfUrl;
+        // Extract clean URL if it's wrapped in chrome-extension
+        let cleanUrl = pdfUrl;
+        if (pdfUrl.includes('chrome-extension://')) {
+          // Extract the actual URL from the chrome-extension wrapper
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          if (urlMatch && urlMatch[1]) {
+            cleanUrl = decodeURIComponent(urlMatch[1]);
           }
-        } else {
-          window.open(pdfUrl, '_blank', 'noopener,noreferrer');
         }
+        
+        // For external PDF URLs, open directly without the chrome extension wrapper
+        window.open(cleanUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (err) {
       setError('Unable to open PDF. Please try downloading it manually.');
@@ -59,9 +62,19 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         link.click();
         document.body.removeChild(link);
       } else if (pdfUrl) {
+        // Extract clean URL if it's wrapped in chrome-extension
+        let cleanUrl = pdfUrl;
+        if (pdfUrl.includes('chrome-extension://')) {
+          // Extract the actual URL from the chrome-extension wrapper
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          if (urlMatch && urlMatch[1]) {
+            cleanUrl = decodeURIComponent(urlMatch[1]);
+          }
+        }
+        
         // Fallback to external URL
         const link = document.createElement('a');
-        link.href = pdfUrl;
+        link.href = cleanUrl;
         link.download = `${gameName}-rules.pdf`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -85,8 +98,8 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       return;
     }
 
-    if (file.size > 11 * 1024 * 1024) {
-      setError('File size must be less than 11MB.');
+    if (file.size > 15 * 1024 * 1024) {
+      setError('File size must be less than 15MB.');
       return;
     }
 
@@ -119,6 +132,8 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
   };
 
   const hasPDF = pdfFile || pdfUrl;
+  const isLocalPDF = !!pdfFile; // We have a local PDF file
+  const isExternalLink = !!pdfUrl && !pdfFile; // We only have an external URL
 
   return (
     <div className="mt-3">
@@ -137,35 +152,87 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
               className="hidden"
               disabled={uploading}
             />
-            <p className="text-xs text-gray-500 mt-1">Max 11MB</p>
+            <p className="text-xs text-gray-500 mt-1">Max 15MB</p>
           </div>
         </div>
       )}
 
-      {/* PDF Viewer */}
+      {/* PDF Content */}
       {hasPDF && (
         <div className="space-y-4">
-          {/* Download Button */}
-          <div className="flex justify-center">
-            <button
-              onClick={handleDownload}
-              disabled={isLoading}
-              className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#e09915] transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
-            </button>
-          </div>
+          {/* For External Links - Only Open Button */}
+          {isExternalLink && (
+            <>
+              <div className="flex justify-center">
+                <button
+                  onClick={handlePDFClick}
+                  disabled={isLoading}
+                  className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#e09915] transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  {isLoading ? 'Opening...' : 'Open PDF Rules'}
+                </button>
+              </div>
+              
+              <p className="text-center text-sm text-gray-600">
+                Click to open the PDF rules in a new tab.
+              </p>
 
-          {/* PDF Embed */}
-          <div className="w-full bg-gray-100 rounded-lg overflow-hidden shadow-lg" style={{ height: '600px' }}>
-            <iframe
-              src={pdfFile ? `/api/games/${gameId}/pdf` : pdfUrl}
-              title={`${gameName} - PDF Rules`}
-              className="w-full h-full border-0"
-              style={{ minHeight: '600px' }}
-            />
-          </div>
+              {/* External Link Info */}
+              <div className="w-full bg-gray-50 rounded-lg p-6 text-center">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">PDF Rules Available</h3>
+                <p className="text-gray-600 mb-4">
+                  The rules are available as an external PDF. Click the button above to open them.
+                </p>
+                <div className="text-sm text-gray-500">
+                  <p>• <strong>Open PDF Rules:</strong> Opens the PDF in a new tab</p>
+                  <p>• <strong>External Link:</strong> You'll be redirected to the PDF source</p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* For Local PDFs - Open + Download Buttons */}
+          {isLocalPDF && (
+            <>
+              <div className="flex justify-center">
+                <button
+                  onClick={handlePDFClick}
+                  disabled={isLoading}
+                  className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#e09915] transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  {isLoading ? 'Opening...' : 'Open PDF Rules'}
+                </button>
+              </div>
+              
+              <p className="text-center text-sm text-gray-600">
+                Click to open the PDF rules in a new tab.
+              </p>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={handleDownload}
+                  disabled={isLoading}
+                  className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#e09915] transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </button>
+              </div>
+
+              {/* PDF Embed - Only for local PDFs */}
+              <div className="w-full bg-gray-100 rounded-lg overflow-hidden shadow-lg" style={{ height: '600px' }}>
+                <iframe
+                  src={`/api/games/${gameId}/pdf`}
+                  title={`${gameName} - PDF Rules`}
+                  className="w-full h-full border-0"
+                  style={{ minHeight: '600px' }}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 
