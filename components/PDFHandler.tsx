@@ -27,44 +27,27 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       if (pdfFile) {
         window.open(`/api/games/${gameId}/pdf`, '_blank');
       } else if (pdfUrl) {
-        // Always fetch fresh URL from BGG to avoid expired links
-        try {
-          const response = await fetch(`/api/games/${gameId}/fetch-pdf`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.pdfUrl) {
-              // Remove chrome-extension wrapper if present
-              let cleanPdfUrl = data.pdfUrl;
-              if (data.pdfUrl.includes('chrome-extension://')) {
-                const urlMatch = data.pdfUrl.match(/chrome-extension:\/\/[^/]+\/(https?:\/\/.+)/);
-                if (urlMatch && urlMatch[1]) {
-                  cleanPdfUrl = urlMatch[1];
-                } else {
-                  const fallbackMatch = data.pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
-                  if (fallbackMatch && fallbackMatch[1]) {
-                    cleanPdfUrl = fallbackMatch[1];
-                  }
-                }
-              }
-              
-              // Open the fresh URL
-              window.open(cleanPdfUrl, '_blank', 'noopener,noreferrer');
-            } else {
-              // No PDF found, redirect to BGG files page
-              const bggFilesUrl = `https://boardgamegeek.com/boardgame/${data.bggId || gameId}/files`;
-              window.open(bggFilesUrl, '_blank', 'noopener,noreferrer');
-            }
+        // Remove chrome-extension wrapper if present
+        let cleanPdfUrl = pdfUrl;
+        if (pdfUrl.includes('chrome-extension://')) {
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(https?:\/\/.+)/);
+          if (urlMatch && urlMatch[1]) {
+            cleanPdfUrl = urlMatch[1];
           } else {
-            throw new Error('Failed to fetch PDF from BGG');
+            const fallbackMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+            if (fallbackMatch && fallbackMatch[1]) {
+              cleanPdfUrl = fallbackMatch[1];
+            }
           }
-        } catch (fetchError) {
-          console.error('Failed to fetch fresh PDF URL:', fetchError);
-          // Fallback to BGG files page
-          window.open(`https://boardgamegeek.com/boardgame/${gameId}/files`, '_blank', 'noopener,noreferrer');
         }
+        
+        // Open the PDF URL directly
+        window.open(cleanPdfUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        setError('No PDF available.');
       }
     } catch (err) {
-      setError('Unable to open PDF. Please try downloading it manually.');
+      setError('Unable to open PDF.');
     } finally {
       setIsLoading(false);
     }
@@ -85,45 +68,31 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         link.click();
         document.body.removeChild(link);
       } else if (pdfUrl) {
-        // Always fetch fresh URL from BGG to avoid expired links
-        try {
-          const response = await fetch(`/api/games/${gameId}/fetch-pdf`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.pdfUrl) {
-              // Remove chrome-extension wrapper if present
-              let cleanPdfUrl = data.pdfUrl;
-              if (data.pdfUrl.includes('chrome-extension://')) {
-                const urlMatch = data.pdfUrl.match(/chrome-extension:\/\/[^/]+\/(https?:\/\/.+)/);
-                if (urlMatch && urlMatch[1]) {
-                  cleanPdfUrl = urlMatch[1];
-                } else {
-                  const fallbackMatch = data.pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
-                  if (fallbackMatch && fallbackMatch[1]) {
-                    cleanPdfUrl = fallbackMatch[1];
-                  }
-                }
-              }
-              
-              // Download the PDF
-              const link = document.createElement('a');
-              link.href = cleanPdfUrl;
-              link.download = `${gameName}-rules.pdf`;
-              link.target = '_blank';
-              link.rel = 'noopener noreferrer';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            } else {
-              setError('No PDF available. Please visit the BGG files page.');
-            }
+        // Remove chrome-extension wrapper if present
+        let cleanPdfUrl = pdfUrl;
+        if (pdfUrl.includes('chrome-extension://')) {
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(https?:\/\/.+)/);
+          if (urlMatch && urlMatch[1]) {
+            cleanPdfUrl = urlMatch[1];
           } else {
-            throw new Error('Failed to fetch PDF from BGG');
+            const fallbackMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+            if (fallbackMatch && fallbackMatch[1]) {
+              cleanPdfUrl = fallbackMatch[1];
+            }
           }
-        } catch (fetchError) {
-          console.error('Failed to fetch fresh PDF URL:', fetchError);
-          setError('Unable to download PDF. Please try the BGG files page.');
         }
+        
+        // Download the PDF directly
+        const link = document.createElement('a');
+        link.href = cleanPdfUrl;
+        link.download = `${gameName}-rules.pdf`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        setError('No PDF available.');
       }
     } catch (err) {
       setError('Unable to download PDF. Please try the direct link.');
