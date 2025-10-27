@@ -65,7 +65,8 @@ export async function GET(
 
     return NextResponse.json({
       pdfUrl: pdfUrls[0] || null,
-      allPdfUrls: pdfUrls
+      allPdfUrls: pdfUrls,
+      bggId: game.bggId // Return BGG ID for fallback
     });
 
   } catch (error) {

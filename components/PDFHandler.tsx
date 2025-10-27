@@ -42,7 +42,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
                 urlToOpen = data.pdfUrl;
               } else {
                 // No PDF found, redirect to BGG files page
-                const bggFilesUrl = `https://boardgamegeek.com/boardgame/${gameId}/files`;
+                const bggFilesUrl = `https://boardgamegeek.com/boardgame/${data.bggId || gameId}/files`;
                 window.open(bggFilesUrl, '_blank', 'noopener,noreferrer');
                 setIsLoading(false);
                 return;
@@ -102,7 +102,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
               if (data.pdfUrl) {
                 urlToDownload = data.pdfUrl;
               } else {
-                setError('No PDF available. Please visit the BGG files page.');
+                setError(`No PDF available. Please visit: https://boardgamegeek.com/boardgame/${data.bggId || gameId}/files`);
                 setIsLoading(false);
                 return;
               }

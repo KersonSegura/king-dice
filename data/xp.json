@@ -796,7 +796,7 @@
   "cmg88zsa300017kbsvllkpdof": {
     "userId": "cmg88zsa300017kbsvllkpdof",
     "username": "kingdice",
-    "xp": 60,
+    "xp": 62,
     "level": 1,
     "levelName": "Commoner",
     "actions": [
@@ -1019,8 +1019,14 @@
         "xp": 2,
         "description": "Daily login",
         "timestamp": "2025-10-27T22:08:19.759Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-27T22:23:08.999Z"
       }
     ],
-    "lastLogin": "2025-10-27T22:08:19.759Z"
+    "lastLogin": "2025-10-27T22:23:08.999Z"
   }
 }
