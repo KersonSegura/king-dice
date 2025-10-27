@@ -30,9 +30,16 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         // Remove chrome-extension wrapper if present
         let cleanPdfUrl = pdfUrl;
         if (pdfUrl.includes('chrome-extension://')) {
-          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          // Match the pattern: chrome-extension://[extension-id]/[actual-url]
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(https?:\/\/.+)/);
           if (urlMatch && urlMatch[1]) {
-            cleanPdfUrl = decodeURIComponent(urlMatch[1]);
+            cleanPdfUrl = urlMatch[1];
+          } else {
+            // Fallback: try to extract everything after the extension ID
+            const fallbackMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+            if (fallbackMatch && fallbackMatch[1]) {
+              cleanPdfUrl = fallbackMatch[1];
+            }
           }
         }
         
@@ -67,9 +74,16 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         // Remove chrome-extension wrapper if present
         let cleanPdfUrl = pdfUrl;
         if (pdfUrl.includes('chrome-extension://')) {
-          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          // Match the pattern: chrome-extension://[extension-id]/[actual-url]
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(https?:\/\/.+)/);
           if (urlMatch && urlMatch[1]) {
-            cleanPdfUrl = decodeURIComponent(urlMatch[1]);
+            cleanPdfUrl = urlMatch[1];
+          } else {
+            // Fallback: try to extract everything after the extension ID
+            const fallbackMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+            if (fallbackMatch && fallbackMatch[1]) {
+              cleanPdfUrl = fallbackMatch[1];
+            }
           }
         }
         
