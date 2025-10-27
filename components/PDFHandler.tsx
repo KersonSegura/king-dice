@@ -27,10 +27,19 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       if (pdfFile) {
         window.open(`/api/games/${gameId}/pdf`, '_blank');
       } else if (pdfUrl) {
-        // Check if URL has expired (has X-Amz-Expires or is s3.amazonaws.com)
-        const hasExpired = pdfUrl.includes('X-Amz-Expires') || pdfUrl.includes('s3.amazonaws.com');
+        // Remove chrome-extension wrapper if present
+        let cleanPdfUrl = pdfUrl;
+        if (pdfUrl.includes('chrome-extension://')) {
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          if (urlMatch && urlMatch[1]) {
+            cleanPdfUrl = decodeURIComponent(urlMatch[1]);
+          }
+        }
         
-        let urlToOpen = pdfUrl;
+        // Check if URL has expired (has X-Amz-Expires or is s3.amazonaws.com)
+        const hasExpired = cleanPdfUrl.includes('X-Amz-Expires') || cleanPdfUrl.includes('s3.amazonaws.com');
+        
+        let urlToOpen = cleanPdfUrl;
         
         if (hasExpired) {
           // Fetch fresh URL from BGG
@@ -53,18 +62,8 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
           }
         }
         
-        // Extract clean URL if it's wrapped in chrome-extension
-        let cleanUrl = urlToOpen;
-        if (urlToOpen.includes('chrome-extension://')) {
-          // Extract the actual URL from the chrome-extension wrapper
-          const urlMatch = urlToOpen.match(/chrome-extension:\/\/[^/]+\/(.+)/);
-          if (urlMatch && urlMatch[1]) {
-            cleanUrl = decodeURIComponent(urlMatch[1]);
-          }
-        }
-        
         // Open the URL in a new tab
-        window.open(cleanUrl, '_blank', 'noopener,noreferrer');
+        window.open(urlToOpen, '_blank', 'noopener,noreferrer');
       }
     } catch (err) {
       setError('Unable to open PDF. Please try downloading it manually.');
@@ -88,10 +87,19 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         link.click();
         document.body.removeChild(link);
       } else if (pdfUrl) {
-        // Check if URL has expired
-        const hasExpired = pdfUrl.includes('X-Amz-Expires') || pdfUrl.includes('s3.amazonaws.com');
+        // Remove chrome-extension wrapper if present
+        let cleanPdfUrl = pdfUrl;
+        if (pdfUrl.includes('chrome-extension://')) {
+          const urlMatch = pdfUrl.match(/chrome-extension:\/\/[^/]+\/(.+)/);
+          if (urlMatch && urlMatch[1]) {
+            cleanPdfUrl = decodeURIComponent(urlMatch[1]);
+          }
+        }
         
-        let urlToDownload = pdfUrl;
+        // Check if URL has expired
+        const hasExpired = cleanPdfUrl.includes('X-Amz-Expires') || cleanPdfUrl.includes('s3.amazonaws.com');
+        
+        let urlToDownload = cleanPdfUrl;
         
         if (hasExpired) {
           // Fetch fresh URL from BGG
@@ -112,19 +120,9 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
           }
         }
         
-        // Extract clean URL if it's wrapped in chrome-extension
-        let cleanUrl = urlToDownload;
-        if (urlToDownload.includes('chrome-extension://')) {
-          // Extract the actual URL from the chrome-extension wrapper
-          const urlMatch = urlToDownload.match(/chrome-extension:\/\/[^/]+\/(.+)/);
-          if (urlMatch && urlMatch[1]) {
-            cleanUrl = decodeURIComponent(urlMatch[1]);
-          }
-        }
-        
         // Download the PDF
         const link = document.createElement('a');
-        link.href = cleanUrl;
+        link.href = urlToDownload;
         link.download = `${gameName}-rules.pdf`;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
