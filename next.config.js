@@ -78,42 +78,6 @@ const nextConfig = {
     'fast-xml-parser',
     'xml2js'
   ],
-  // Reduce bundle size
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Exclude large dependencies from server bundle
-      config.externals = config.externals || [];
-      config.externals.push({
-        'canvas': 'commonjs canvas',
-        'jsdom': 'commonjs jsdom',
-        'sqlite3': 'commonjs sqlite3',
-        'html2canvas': 'commonjs html2canvas',
-        'dom-to-image': 'commonjs dom-to-image',
-        'nodemailer': 'commonjs nodemailer',
-        'bcryptjs': 'commonjs bcryptjs',
-        'jsonwebtoken': 'commonjs jsonwebtoken',
-        'fast-xml-parser': 'commonjs fast-xml-parser',
-        'xml2js': 'commonjs xml2js'
-      });
-    }
-    
-    // Optimize bundle splitting
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      },
-    };
-    
-    return config;
-  },
 }
 
 module.exports = withSentryConfig(nextConfig, {
