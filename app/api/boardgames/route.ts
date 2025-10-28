@@ -171,6 +171,7 @@ export async function POST(request: NextRequest) {
           pdfUrl: body.pdfUrl || null,
           pdfFile: body.pdfFile || null,
           officialWebsite: body.officialWebsite || null,
+          isExpansion: body.isExpansion || false,
           // Legacy fields
           name: body.nameEn || '',
           year: body.yearRelease || null,

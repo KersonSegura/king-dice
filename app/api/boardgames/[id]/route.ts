@@ -155,6 +155,7 @@ export async function PUT(
     if (body.pdfUrl !== undefined) updateData.pdfUrl = body.pdfUrl;
     if (body.pdfFile !== undefined) updateData.pdfFile = body.pdfFile;
     if (body.officialWebsite !== undefined) updateData.officialWebsite = body.officialWebsite;
+    if (body.isExpansion !== undefined) updateData.isExpansion = body.isExpansion;
 
     // Debug: Log the update data
     console.log('Updating game with data:', updateData);

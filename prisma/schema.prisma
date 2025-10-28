@@ -31,12 +31,14 @@ model Game {
   maxPlayTime        Int?
   image              String?
   expansions         Int?              @default(0)
+  isExpansion        Boolean           @default(false)
   category           String            @default("ranked")
   userRating         Float?            @default(0)
   userVotes          Int               @default(0)
   bggRanking         Int?
   bggRating          Float?
   bggVotes           Int?
+  hotnessRank        Int?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   baseGameExpansions Expansion[]       @relation("BaseGameExpansions")

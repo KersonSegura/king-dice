@@ -19,12 +19,16 @@ export async function GET(request: NextRequest) {
         category: 'hotness'
       },
       take: limit,
+      orderBy: {
+        hotnessRank: 'asc'
+      },
       select: {
         id: true,
         bggId: true,
         nameEn: true,
         nameEs: true,
         name: true,
+        hotnessRank: true,
         yearRelease: true,
         year: true,
         minPlayers: true,
@@ -41,6 +45,7 @@ export async function GET(request: NextRequest) {
         bggRating: true,
         bggVotes: true,
         expansions: true,
+        isExpansion: true,
         category: true,
         designer: true,
         developer: true,
@@ -84,6 +89,7 @@ export async function GET(request: NextRequest) {
           bggRating: true,
           bggVotes: true,
           expansions: true,
+          isExpansion: true,
           category: true,
           designer: true,
           developer: true,

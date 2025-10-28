@@ -27,6 +27,7 @@ interface Game {
   pdfUrl?: string;
   pdfFile?: string;
   officialWebsite?: string;
+  isExpansion?: boolean;
   gameCategories: Array<{
     category: {
       id: number;
@@ -100,6 +101,7 @@ interface NewGameForm {
   officialWebsite?: string;
   fullDescription?: string;
   rulesText?: string;
+  isExpansion?: boolean;
 }
 
 function BoardGameDatabaseContent() {
@@ -169,7 +171,8 @@ function BoardGameDatabaseContent() {
     pdfFile: '',
     officialWebsite: '',
     fullDescription: '',
-    rulesText: ''
+    rulesText: '',
+    isExpansion: false
   });
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
@@ -387,7 +390,8 @@ function BoardGameDatabaseContent() {
         videoUrl: game.videoUrl,
         pdfUrl: game.pdfUrl,
         officialWebsite: game.officialWebsite,
-        fullDescription: currentDescription !== 'No description available' ? currentDescription : ''
+        fullDescription: currentDescription !== 'No description available' ? currentDescription : '',
+        isExpansion: game.isExpansion || false
       }
     }));
   };
@@ -506,6 +510,7 @@ function BoardGameDatabaseContent() {
       if (gameData.pdfFile !== undefined) cleanGameData.pdfFile = gameData.pdfFile; // Don't clean base64 data
       if (gameData.officialWebsite !== undefined) cleanGameData.officialWebsite = cleanString(gameData.officialWebsite, true);
       if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
+      if (gameData.isExpansion !== undefined) cleanGameData.isExpansion = gameData.isExpansion;
 
       // Debug: Log the data being sent
       console.log('Sending game data to API:', cleanGameData);
@@ -735,7 +740,8 @@ function BoardGameDatabaseContent() {
           pdfFile: '',
           officialWebsite: '',
           fullDescription: '',
-          rulesText: ''
+          rulesText: '',
+          isExpansion: false
         });
         
         // Clear scraper URLs after successful game addition
@@ -867,7 +873,8 @@ function BoardGameDatabaseContent() {
       imageUrl: '',
       thumbnailUrl: '',
       fullDescription: '',
-      rulesText: ''
+      rulesText: '',
+      isExpansion: false
     });
     setDuplicateCheck({ isChecking: false, isDuplicate: false, existingGame: null });
   };
@@ -1767,6 +1774,20 @@ You can use markdown formatting:
                   />
                 </div>
 
+                {/* Is Expansion Checkbox */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isExpansion"
+                    checked={newGameForm.isExpansion || false}
+                    onChange={(e) => setNewGameForm(prev => ({ ...prev, isExpansion: e.target.checked }))}
+                    className="h-4 w-4 text-[#fbae17] focus:ring-[#fbae17] border-gray-300 rounded"
+                  />
+                  <label htmlFor="isExpansion" className="text-sm font-medium text-gray-700">
+                    This is an expansion (not a base game)
+                  </label>
+                </div>
+
                 {/* Form Actions */}
                 <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
                   <button
@@ -2118,6 +2139,22 @@ You can use markdown formatting:
                                     Remove PDF file
                                   </button>
                                 )}
+                              </div>
+                              {/* Is Expansion Checkbox */}
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`isExpansion-${game.id}`}
+                                  checked={editingGameData[game.id]?.isExpansion || false}
+                                  onChange={(e) => setEditingGameData(prev => ({
+                                    ...prev,
+                                    [game.id]: { ...prev[game.id], isExpansion: e.target.checked }
+                                  }))}
+                                  className="h-4 w-4 text-[#fbae17] focus:ring-[#fbae17] border-gray-300 rounded"
+                                />
+                                <label htmlFor={`isExpansion-${game.id}`} className="text-sm font-medium text-gray-700">
+                                  This is an expansion (not a base game)
+                                </label>
                               </div>
                               <div className="col-span-full">
             <label className="block text-sm font-medium text-gray-700 mb-2">

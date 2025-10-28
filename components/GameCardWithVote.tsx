@@ -26,6 +26,7 @@ interface Game {
   bggRating?: number | null;
   bggVotes?: number | null;
   expansions?: number | null;
+  isExpansion?: boolean;
   rank?: number; // For ranking badge
 }
 
@@ -148,7 +149,7 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
         </div>
         
         {/* Right Section - Game Information (60% width) */}
-        <div className="w-3/5 bg-white p-4 flex flex-col justify-between">
+        <div className="w-3/5 bg-white p-4 flex flex-col justify-between relative">
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
               {game.name}
@@ -168,10 +169,12 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
                 <Calendar className="w-4 h-4" />
                 <span>{game.year || 'N/A'}</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <Package className="w-4 h-4" />
-                <span>{game.expansions ? `${game.expansions} expansion${game.expansions !== 1 ? 's' : ''}` : 'No expansions'}</span>
-              </div>
+              {game.isExpansion && (
+                <div className="flex items-center space-x-1 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                  <Package className="w-3 h-3" />
+                  <span>Expansion</span>
+                </div>
+              )}
             </div>
           </div>
           

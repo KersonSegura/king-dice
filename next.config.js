@@ -57,6 +57,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.dicetower.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // Optimize bundle size for Vercel
