@@ -1,1 +1,15 @@
 scripts/
+public/boardle-images/
+public/gallery/
+public/dice/
+scraped_rules/
+BGG API Repository/
+KingDice.ai
+KingDiceIcons.ai
+MyDiceIcon.svg
+data/canvas-snapshots/
+scraping_log_1755269164649.txt
+DiceLogo.svg
+*.bat
+.env.local.backup
+.env.production
