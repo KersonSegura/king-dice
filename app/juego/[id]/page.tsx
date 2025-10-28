@@ -334,7 +334,7 @@ export default function GameDetailPage() {
                       >
                         <div className="flex items-center space-x-1">
                           <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                          <span>Rank #{game.ranking?.rank || 'N/A'} • Rating: {game.rating?.average ? `${formatRating(game.rating.average)}/10` : 'N/A'}</span>
+                          <span>Rank #{game.statistics?.ratings.ranks?.[0]?.value || 'N/A'} • Rating: {game.rating?.average ? `${formatRating(game.rating.average)}/10` : 'N/A'}</span>
                         </div>
                       </div>
                     )}
