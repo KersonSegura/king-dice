@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import './test.css'
 import Header from '@/components/Header'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { LevelUpProvider } from '@/contexts/LevelUpContext'
