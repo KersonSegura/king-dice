@@ -93,7 +93,8 @@ export async function GET(request: NextRequest) {
           category: true,
           designer: true,
           developer: true,
-          officialWebsite: true
+          officialWebsite: true,
+          hotnessRank: true
         }
       });
     }
