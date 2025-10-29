@@ -50,11 +50,14 @@ export async function GET(request: NextRequest) {
             return `${supabaseUrl}/storage/v1/object/public/rules-images/${rel}`;
           }
           
-          // /uploads/filename -> Supabase uploads bucket
-          if (url.startsWith('/uploads/')) {
-            const filename = url.replace('/uploads/', '');
-            return `${supabaseUrl}/storage/v1/object/public/uploads/${filename}`;
-          }
+              // /uploads/filename -> Supabase uploads bucket
+              // Files are actually stored in uploads/uploads/ subfolder
+              if (url.startsWith('/uploads/')) {
+                const filename = url.replace('/uploads/', '');
+                // Try both paths: uploads/uploads/filename (actual location) and uploads/filename (ideal)
+                // For now, use the actual location where files were stored
+                return `${supabaseUrl}/storage/v1/object/public/uploads/uploads/${filename}`;
+              }
           
           return url;
         };
