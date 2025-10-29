@@ -203,25 +203,8 @@ export async function authenticateUser(identifier: string, password: string): Pr
  */
 export async function registerUser(username: string, email: string, password: string): Promise<AuthResult> {
   try {
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username },
-          { email }
-        ]
-      }
-    });
-
-    if (existingUser) {
-      return {
-        success: false,
-        message: existingUser.username === username 
-          ? 'Username already exists' 
-          : 'Email already exists'
-      };
-    }
-
+    console.log('🔐 registerUser: Starting registration for:', username);
+    
     // Validate input
     if (username.length < 3) {
       return {
@@ -237,38 +220,80 @@ export async function registerUser(username: string, email: string, password: st
       };
     }
 
+    // Check if user already exists
+    const { data: existingUsers, error: checkError } = await supabaseAdmin
+      .from('users')
+      .select('id, username, email')
+      .or(`username.eq.${username},email.eq.${email}`)
+      .limit(1);
+
+    if (checkError) {
+      console.error('❌ registerUser: Error checking existing user:', checkError);
+      return {
+        success: false,
+        message: 'Database connection failed. Please try again.'
+      };
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
+      const existingUser = existingUsers[0];
+      return {
+        success: false,
+        message: existingUser.username === username 
+          ? 'Username already exists' 
+          : 'Email already exists'
+      };
+    }
+
     // Hash password
+    console.log('🔐 registerUser: Hashing password...');
     const passwordHash = await hashPassword(password);
 
-    // Create user
-    const newUser = await prisma.user.create({
-      data: {
+    // Generate default avatar
+    console.log('🎨 registerUser: Generating default avatar...');
+    const defaultAvatar = await generateDefaultAvatar();
+
+    // Create user in Supabase
+    console.log('📝 registerUser: Creating user in database...');
+    const { data: newUser, error: createError } = await supabaseAdmin
+      .from('users')
+      .insert({
         username,
         email,
         passwordHash,
-        avatar: await generateDefaultAvatar(),
+        avatar: defaultAvatar,
         level: 1,
         xp: 0,
         isAdmin: false
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        avatar: true,
-        isAdmin: true,
-        level: true,
-        xp: true
-      }
-    });
+      })
+      .select('id, username, email, avatar, isAdmin, level, xp')
+      .single();
+
+    if (createError || !newUser) {
+      console.error('❌ registerUser: Error creating user:', createError);
+      return {
+        success: false,
+        message: 'Registration failed. Please try again.'
+      };
+    }
+
+    console.log('✅ registerUser: User created:', newUser.username);
 
     // Generate token
     const token = generateToken({
       userId: newUser.id,
       username: newUser.username,
       email: newUser.email,
-      isAdmin: newUser.isAdmin
+      isAdmin: newUser.isAdmin || false
     });
+
+    if (!token) {
+      console.error('❌ registerUser: Failed to generate token');
+      return {
+        success: false,
+        message: 'Registration failed: Token generation error'
+      };
+    }
 
     return {
       success: true,
@@ -277,7 +302,7 @@ export async function registerUser(username: string, email: string, password: st
         username: newUser.username,
         email: newUser.email,
         avatar: newUser.avatar || '/DiceLogo.svg',
-        isAdmin: newUser.isAdmin,
+        isAdmin: newUser.isAdmin || false,
         level: newUser.level || 1,
         xp: newUser.xp || 0
       },
@@ -285,7 +310,8 @@ export async function registerUser(username: string, email: string, password: st
     };
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('❌ registerUser: Registration error:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
     return {
       success: false,
       message: 'Registration failed. Please try again.'
@@ -298,34 +324,42 @@ export async function registerUser(username: string, email: string, password: st
  */
 export async function getUserFromToken(token: string): Promise<AuthResult> {
   try {
+    console.log('🔍 getUserFromToken: Verifying token...');
     const payload = verifyToken(token);
     if (!payload) {
+      console.log('❌ getUserFromToken: Token verification failed');
       return {
         success: false,
         message: 'Invalid or expired token'
       };
     }
 
-    // Get fresh user data from database
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        avatar: true,
-        isAdmin: true,
-        level: true,
-        xp: true
-      }
-    });
+    console.log('✅ getUserFromToken: Token valid, fetching user:', payload.userId);
+
+    // Get fresh user data from Supabase
+    const { data: user, error } = await supabaseAdmin
+      .from('users')
+      .select('id, username, email, avatar, isAdmin, level, xp')
+      .eq('id', payload.userId)
+      .single();
+
+    if (error) {
+      console.error('❌ getUserFromToken: Supabase query error:', error);
+      return {
+        success: false,
+        message: `Database query failed: ${error.message}`
+      };
+    }
 
     if (!user) {
+      console.log('❌ getUserFromToken: User not found');
       return {
         success: false,
         message: 'User not found'
       };
     }
+
+    console.log('✅ getUserFromToken: User found:', user.username);
 
     return {
       success: true,
@@ -341,7 +375,8 @@ export async function getUserFromToken(token: string): Promise<AuthResult> {
     };
 
   } catch (error) {
-    console.error('Token validation error:', error);
+    console.error('❌ getUserFromToken: Token validation error:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
     return {
       success: false,
       message: 'Invalid token'

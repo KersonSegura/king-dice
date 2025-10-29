@@ -1,0 +1,41 @@
+[33mcommit 37d218adb5a55404091649bf682ee1492970f82c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Kerson Segura <kersonseguraarias@gmail.com>
+Date:   Tue Oct 28 17:21:02 2025 -0600
+
+    Keep all assets but increase function size limit in Vercel config
+
+[33mcommit 1b5f62415a2b295b114747f35b6338344e664f3a[m
+Author: Kerson Segura <kersonseguraarias@gmail.com>
+Date:   Tue Oct 28 17:12:22 2025 -0600
+
+    Exclude large assets from Vercel deployment to fix serverless function size limit
+
+[33mcommit 93f0be791d82e62e8447a0ce860192596b42f036[m
+Author: Kerson Segura <kersonseguraarias@gmail.com>
+Date:   Tue Oct 28 17:08:40 2025 -0600
+
+    Add .vercelignore and safelist to fix production CSS
+
+[33mcommit 80c8925b36921b7653581bb46d65eb2ad317240d[m
+Author: Kerson Segura <kersonseguraarias@gmail.com>
+Date:   Wed Oct 22 10:39:26 2025 -0600
+
+    Fix build error: Update .vercelignore to allow test.css
+    
+    - Fixed overly broad *test* pattern that was excluding test.css
+    - Made test file exclusions more specific (only JS/TS/JSON files)
+    - Build now completes successfully with all CSS files included
+
+[33mcommit 3d6df5873ec8ec968c5167b2fbcd78e12416de32[m
+Author: Kerson Segura <kersonseguraarias@gmail.com>
+Date:   Wed Oct 22 10:34:47 2025 -0600
+
+    Optimize bundle size for Vercel Lambda limits
+    
+    - Move large dependencies (canvas, jsdom, sqlite3, etc.) to devDependencies
+    - Add conditional imports for scraping APIs to work in production
+    - Configure Next.js webpack externals to exclude large packages from server bundle
+    - Add .vercelignore to exclude unnecessary files from deployment
+    - Disable Sentry source maps to reduce bundle size
+    - Update Vercel configuration for better function management
+    - Scraping APIs now return 503 in production (dev-only feature)
