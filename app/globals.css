@@ -233,7 +233,7 @@ header {
 /* Force header to be sticky on all pages */
 body {
   position: relative !important;
-  /* padding-top: 4rem !important; */ /* Removed - this was causing the white space */
+  padding-top: 4rem !important; /* Match header height (h-16 = 4rem) */
 }
 
 /* Ensure no parent elements interfere with sticky positioning */
