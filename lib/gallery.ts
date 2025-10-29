@@ -201,26 +201,30 @@ export interface UploadImageData {
 }
 
 export async function uploadImage(data: UploadImageData): Promise<GalleryImage> {
-  // Save the uploaded file to the public directory
+  // Generate unique filename for Supabase Storage
   const timestamp = Date.now();
   const fileExtension = data.file.name.split('.').pop() || 'svg';
   const filename = `gallery-${timestamp}.${fileExtension}`;
   
-  // Create gallery directory if it doesn't exist
-  const galleryDir = path.join(process.cwd(), 'public', 'gallery');
-  if (!fs.existsSync(galleryDir)) {
-    fs.mkdirSync(galleryDir, { recursive: true });
+  // Convert file to buffer
+  const buffer = Buffer.from(await data.file.arrayBuffer());
+  
+  // Upload to Supabase Storage using the utility function
+  const { uploadToStorage, STORAGE_BUCKETS } = await import('./supabase');
+  const result = await uploadToStorage(
+    STORAGE_BUCKETS.GALLERY,
+    filename,
+    buffer,
+    data.file.type
+  );
+  
+  if (result.error) {
+    throw new Error(`Failed to upload to Supabase Storage: ${result.error}`);
   }
   
-  const outputPath = path.join(galleryDir, filename);
-  
-  // Convert file to buffer and save
-  const buffer = Buffer.from(await data.file.arrayBuffer());
-  fs.writeFileSync(outputPath, buffer);
-  
-  // Create public URLs
-  const imageUrl = `/gallery/${filename}`;
-  const thumbnailUrl = imageUrl; // For SVG files, we can use the same URL
+  // Use the public URL from Supabase
+  const imageUrl = result.publicUrl;
+  const thumbnailUrl = imageUrl; // For now, use same URL as thumbnail
   
   const imageData = {
     title: data.title,

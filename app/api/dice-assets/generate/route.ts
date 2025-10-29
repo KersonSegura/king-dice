@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
 import path from 'path';
+import { uploadToStorage, STORAGE_BUCKETS } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,23 +16,33 @@ export async function POST(request: NextRequest) {
     // Generate the composite SVG for crisp avatar display at any size
     const compositeSvg = await generateCompositeSvg(diceConfig);
     
-    // Save the generated SVG
+    // Save the generated SVG to Supabase Storage
     const timestamp = Date.now();
     const filename = `dice-${timestamp}.svg`;
-    const outputPath = path.join(process.cwd(), 'public', 'generated', filename);
+    const filePath = `generated/${filename}`;
     
-    // Ensure the generated directory exists
-    const generatedDir = path.dirname(outputPath);
-    await fs.mkdir(generatedDir, { recursive: true });
+    // Convert SVG to buffer
+    const buffer = Buffer.from(compositeSvg, 'utf-8');
     
-    // Write the SVG file
-    await fs.writeFile(outputPath, compositeSvg);
+    // Upload to Supabase Storage
+    const result = await uploadToStorage(
+      STORAGE_BUCKETS.DICE_DESIGNS,
+      filePath,
+      buffer,
+      'image/svg+xml'
+    );
     
-    const publicUrl = `/generated/${filename}`;
+    if (result.error) {
+      console.error('❌ Error uploading to Supabase:', result.error);
+      return NextResponse.json(
+        { error: 'Failed to save dice image' },
+        { status: 500 }
+      );
+    }
     
     return NextResponse.json({
       success: true,
-      imageUrl: publicUrl,
+      imageUrl: result.publicUrl,
       filename
     });
     
@@ -60,6 +70,7 @@ async function generateCompositeSvg(diceConfig: any): Promise<string> {
       const fullPath = path.join(process.cwd(), 'public', 'dice', decodedPath);
       
       // Load the SVG file
+      const fs = require('fs').promises;
       const svgContent = await fs.readFile(fullPath, 'utf-8');
       
       // Extract the content between <svg> tags (remove the outer svg wrapper)

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { uploadToStorage, STORAGE_BUCKETS } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,29 +30,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save the uploaded file to the public directory
+    // Generate unique filename
     const timestamp = Date.now();
     const fileExtension = file.name.split('.').pop() || 'jpg';
     const filename = `${type}-${timestamp}.${fileExtension}`;
-    
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    
-    const outputPath = path.join(uploadsDir, filename);
-    
-    // Convert file to buffer and save
+    const filePath = filename;
+
+    // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(outputPath, buffer);
-    
-    // Create public URL
-    const url = `/uploads/${filename}`;
+
+    // Upload to Supabase Storage
+    const result = await uploadToStorage(
+      STORAGE_BUCKETS.UPLOADS,
+      filePath,
+      buffer,
+      file.type
+    );
+
+    if (result.error) {
+      console.error('Error uploading to Supabase:', result.error);
+      return NextResponse.json(
+        { error: 'Failed to upload image to storage' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ 
       success: true, 
-      url,
+      url: result.publicUrl,
       message: 'Image uploaded successfully'
     });
   } catch (error) {

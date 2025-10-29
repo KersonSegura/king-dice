@@ -1,1 +1,8 @@
 scripts/
+public/boardle-images/
+data/canvas-snapshots/
+scraped_rules/
+BGG API Repository/
+scraping_log_*.txt
+*.ai
+*.bat
