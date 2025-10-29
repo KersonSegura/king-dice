@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         });
     }
     
-    // Parse the games list and filter for available images
+    // Parse the games list and build Supabase URLs (no local FS check)
     const availableGames = gamesListContent
       .split('\n')
       .filter((line: string) => line.trim())
@@ -56,14 +56,6 @@ export async function GET(request: NextRequest) {
         
         // Extract just the game name without the number prefix (e.g., "017. Abyss" -> "Abyss")
         const gameName = name.replace(/^\d+\.\s*/, '');
-        
-        // Check if the image file exists
-        const imagePath = path.join(process.cwd(), 'public', 'boardle-images', imageFileName);
-        console.log(`🔍 Checking image path: ${imagePath}`);
-        if (!fsSync.existsSync(imagePath)) {
-          console.log(`⚠️ Image not found for "${gameName}": ${imageFileName}`);
-          return null; // Re-enable image check
-        }
         
         // Determine zoom type for this game
         const zoomType = zoomPointsMap.get(imageFileName) || 'middle';

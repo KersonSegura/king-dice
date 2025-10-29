@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
 import path from 'path';
 
 // Force dynamic rendering
@@ -34,32 +33,18 @@ export async function GET(request: NextRequest) {
     }
 
     const game = games[gameIndex];
-    const imagePath = path.join(process.cwd(), 'public', 'boardle-images', game.imageFileName);
-    
-    // Check if image exists
-    if (!fs.existsSync(imagePath)) {
-      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+
+    // Serve from Supabase Storage instead of local filesystem
+    const supabaseUrl = process.env.SUPABASE_URL;
+    if (!supabaseUrl) {
+      return NextResponse.json({ error: 'SUPABASE_URL is not configured' }, { status: 500 });
     }
 
-    // Read the image file
-    const imageBuffer = fs.readFileSync(imagePath);
-    
-    // Determine content type based on file extension
-    const ext = path.extname(game.imageFileName).toLowerCase();
-    let contentType = 'image/jpeg';
-    if (ext === '.png') contentType = 'image/png';
-    else if (ext === '.gif') contentType = 'image/gif';
-    else if (ext === '.webp') contentType = 'image/webp';
+    // Files live in bucket "boardle-images" at path like "<filename>" or "cards/<filename>"
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/${game.imageFileName}`;
 
-    // Return the image with appropriate headers
-    return new NextResponse(imageBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400', // Cache for 1 day
-        'Content-Length': imageBuffer.length.toString(),
-      },
-    });
+    // Redirect the client to the public URL (allows CDN caching)
+    return NextResponse.redirect(publicUrl, { status: 307 });
 
   } catch (error) {
     console.error('Error serving image:', error);

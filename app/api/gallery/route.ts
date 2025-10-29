@@ -16,6 +16,43 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     
     let images = getAllImages();
+
+    // Normalize legacy local URLs to Supabase public URLs
+    const supabaseUrl = process.env.SUPABASE_URL;
+    if (supabaseUrl) {
+      images = images.map(image => {
+        const updated = { ...image } as any;
+        const rewrite = (url: string | undefined): string | undefined => {
+          if (!url) return url;
+          // If already absolute (http), keep as is
+          if (/^https?:\/\//i.test(url)) return url;
+          // /gallery/filename -> Supabase gallery bucket
+          if (url.startsWith('/gallery/')) {
+            const filename = url.split('/').pop();
+            if (filename) return `${supabaseUrl}/storage/v1/object/public/gallery/${filename}`;
+          }
+          // /uploads/rules-images/file -> Supabase rules-images bucket
+          if (url.startsWith('/uploads/rules-images/')) {
+            const rel = url.replace('/uploads/', '');
+            return `${supabaseUrl}/storage/v1/object/public/${rel}`;
+          }
+          // /uploads/filename -> Supabase uploads bucket
+          if (url.startsWith('/uploads/')) {
+            const filename = url.replace('/uploads/', '');
+            return `${supabaseUrl}/storage/v1/object/public/uploads/${filename}`;
+          }
+          return url;
+        };
+
+        updated.imageUrl = rewrite(updated.imageUrl) || updated.imageUrl;
+        updated.thumbnailUrl = rewrite(updated.thumbnailUrl) || updated.thumbnailUrl;
+        // Rewrite author avatar if stored locally
+        if (updated.author && typeof updated.author === 'object') {
+          updated.author.avatar = rewrite(updated.author.avatar) || updated.author.avatar;
+        }
+        return updated;
+      });
+    }
     
     // Filter by category
     if (category && category !== 'all') {
