@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
 import path from 'path';
 
 // Force dynamic rendering
@@ -42,6 +43,10 @@ export async function GET(request: NextRequest) {
 
     // Objects were migrated under key: "boardle-images/cards/<filename>"
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/boardle-images/cards/${game.imageFileName}`;
+    
+    console.log(`🖼️ Boardle card-image: Game ID ${gameId} (${game.name}) -> ${game.imageFileName}`);
+    console.log(`🔗 Redirecting to: ${publicUrl}`);
+    
     return NextResponse.redirect(publicUrl, { status: 307 });
 
   } catch (error) {
