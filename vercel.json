@@ -27,5 +27,5 @@
       "SKIP_ENV_VALIDATION": "true"
     }
   },
-  "installCommand": "npm install && npx prisma generate"
+  "installCommand": "npm install"
 }
