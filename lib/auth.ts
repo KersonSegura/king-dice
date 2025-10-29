@@ -320,9 +320,9 @@ async function generateDefaultAvatar(): Promise<string> {
   try {
     // Default dice configuration: white background, white dice, 1-2-3 pattern, no accessories
     const defaultConfig = {
-      background: '/dice/backgrounds/WhiteBackground.svg',
-      dice: '/dice/dice/WhiteDice.svg',
-      pattern: '/dice/patterns/1-2-3.svg',
+      background: '/dice/Backgrounds/WhiteBackground.svg',
+      dice: '/dice/Dice/WhiteDice.svg',
+      pattern: '/dice/Patterns/1-2-3.svg',
       accessories: null,
       hat: null,
       item: null,
@@ -332,19 +332,30 @@ async function generateDefaultAvatar(): Promise<string> {
     // Generate the composite SVG
     const compositeSvg = await generateCompositeSvg(defaultConfig);
     
-    // Save the generated SVG
+    // Upload to Supabase Storage instead of filesystem
+    const { uploadToStorage, STORAGE_BUCKETS } = await import('./supabase');
     const timestamp = Date.now();
     const filename = `default-avatar-${timestamp}.svg`;
-    const outputPath = path.join(process.cwd(), 'public', 'generated', filename);
+    const filePath = `generated/${filename}`;
     
-    // Ensure the generated directory exists
-    const generatedDir = path.dirname(outputPath);
-    await fs.mkdir(generatedDir, { recursive: true });
+    // Convert SVG to buffer
+    const buffer = Buffer.from(compositeSvg, 'utf-8');
     
-    // Write the SVG file
-    await fs.writeFile(outputPath, compositeSvg);
+    // Upload to Supabase Storage
+    const result = await uploadToStorage(
+      STORAGE_BUCKETS.DICE_DESIGNS,
+      filePath,
+      buffer,
+      'image/svg+xml'
+    );
     
-    return `/generated/${filename}`;
+    if (result.error || !result.publicUrl) {
+      console.error('Error uploading default avatar to Supabase:', result.error);
+      // Fallback to the simple default avatar if upload fails
+      return '/DefaultDiceAvatar.svg';
+    }
+    
+    return result.publicUrl;
     
   } catch (error) {
     console.error('Error generating default avatar:', error);

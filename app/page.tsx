@@ -128,40 +128,57 @@ export default function HomePage() {
   useEffect(() => {
     const fetchGames = async () => {
       try {
+        setLoading(true);
         console.log('🔍 Fetching games...');
         
         // Fetch hot games
         const hotResponse = await fetch(`/api/games/hotness?limit=${currentLimit}`);
-        const hotData = await hotResponse.json();
-        const mappedHotGames = (hotData.games || []).map((game: any) => ({
-          ...game,
-          name: game.name || game.nameEn || 'Unknown Game',
-          year: game.year || game.yearRelease,
-          minPlayTime: game.minPlayTime || game.durationMinutes,
-          maxPlayTime: game.maxPlayTime || game.durationMinutes,
-          image: game.image || game.imageUrl || game.thumbnailUrl,
-          averageRating: game.userRating,
-          numVotes: game.userVotes
-        }));
-        setHotGames(mappedHotGames);
+        if (!hotResponse.ok) {
+          console.error('❌ Hot games API error:', hotResponse.status, await hotResponse.text());
+          setHotGames([]);
+        } else {
+          const hotData = await hotResponse.json();
+          console.log('✅ Hot games response:', { count: hotData.games?.length, total: hotData.total });
+          const mappedHotGames = (hotData.games || []).map((game: any) => ({
+            ...game,
+            name: game.name || game.nameEn || 'Unknown Game',
+            year: game.year || game.yearRelease,
+            minPlayTime: game.minPlayTime || game.durationMinutes,
+            maxPlayTime: game.maxPlayTime || game.durationMinutes,
+            image: game.image || game.imageUrl || game.thumbnailUrl,
+            averageRating: game.userRating,
+            numVotes: game.userVotes
+          }));
+          console.log('📊 Mapped hot games:', mappedHotGames.length);
+          setHotGames(mappedHotGames);
+        }
         
         // Fetch top ranked games
         const rankedResponse = await fetch(`/api/games/most-played?limit=${currentLimit}`);
-        const rankedData = await rankedResponse.json();
-        const mappedRankedGames = (rankedData.games || []).map((game: any) => ({
-          ...game,
-          name: game.name || game.nameEn || 'Unknown Game',
-          year: game.year || game.yearRelease,
-          minPlayTime: game.minPlayTime || game.durationMinutes,
-          maxPlayTime: game.maxPlayTime || game.durationMinutes,
-          image: game.image || game.imageUrl || game.thumbnailUrl,
-          averageRating: game.userRating,
-          numVotes: game.userVotes
-        }));
-        setTopRankedGames(mappedRankedGames);
+        if (!rankedResponse.ok) {
+          console.error('❌ Top ranked games API error:', rankedResponse.status, await rankedResponse.text());
+          setTopRankedGames([]);
+        } else {
+          const rankedData = await rankedResponse.json();
+          console.log('✅ Top ranked games response:', { count: rankedData.games?.length, total: rankedData.total });
+          const mappedRankedGames = (rankedData.games || []).map((game: any) => ({
+            ...game,
+            name: game.name || game.nameEn || 'Unknown Game',
+            year: game.year || game.yearRelease,
+            minPlayTime: game.minPlayTime || game.durationMinutes,
+            maxPlayTime: game.maxPlayTime || game.durationMinutes,
+            image: game.image || game.imageUrl || game.thumbnailUrl,
+            averageRating: game.userRating,
+            numVotes: game.userVotes
+          }));
+          console.log('📊 Mapped ranked games:', mappedRankedGames.length);
+          setTopRankedGames(mappedRankedGames);
+        }
         
       } catch (error) {
         console.error('❌ Error fetching games:', error);
+        setHotGames([]);
+        setTopRankedGames([]);
       } finally {
         setLoading(false);
       }

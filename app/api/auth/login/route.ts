@@ -5,6 +5,8 @@ export async function POST(request: NextRequest) {
   try {
     const { username, password, rememberMe } = await request.json();
 
+    console.log('🔐 Login attempt for:', username);
+
     // Validate input
     if (!username || !password) {
       return NextResponse.json(
@@ -15,6 +17,8 @@ export async function POST(request: NextRequest) {
 
     // Authenticate user using secure authentication
     const authResult = await authenticateUser(username, password);
+    
+    console.log('🔐 Auth result:', { success: authResult.success, requiresTwoFactor: authResult.requiresTwoFactor });
 
     if (!authResult.success) {
       // Check if 2FA is required
