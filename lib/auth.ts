@@ -1,10 +1,8 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import fs from 'fs/promises';
 import path from 'path';
-
-const prisma = new PrismaClient();
 
 // JWT Secret - in production, this should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
