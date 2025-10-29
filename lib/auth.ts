@@ -88,7 +88,7 @@ export async function authenticateUser(identifier: string, password: string): Pr
     // Find user by username or email
     console.log('🔍 Searching for user:', identifier);
     const { data: users, error } = await supabaseAdmin
-      .from('User')
+      .from('users')
       .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled')
       .or(`username.eq.${identifier},email.eq.${identifier}`)
       .limit(1);
