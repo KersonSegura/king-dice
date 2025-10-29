@@ -52,8 +52,17 @@ export async function comparePassword(password: string, hash: string): Promise<b
 /**
  * Generate a JWT token for a user
  */
-export function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+export function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): string | null {
+  try {
+    if (!JWT_SECRET || JWT_SECRET === 'your-super-secret-jwt-key-change-in-production') {
+      console.error('❌ JWT_SECRET is not set or using default value!');
+      return null;
+    }
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  } catch (error) {
+    console.error('❌ Error generating token:', error);
+    return null;
+  }
 }
 
 /**
@@ -74,8 +83,22 @@ export function verifyToken(token: string): TokenPayload | null {
 export async function authenticateUser(identifier: string, password: string): Promise<AuthResult> {
   try {
     console.log('🔐 authenticateUser: Starting authentication for:', identifier);
+    console.log('🔐 Checking Prisma connection...');
+    
+    // Test Prisma connection first
+    try {
+      await prisma.$connect();
+      console.log('✅ Prisma connection successful');
+    } catch (prismaError) {
+      console.error('❌ Prisma connection failed:', prismaError);
+      return {
+        success: false,
+        message: `Database connection failed: ${prismaError instanceof Error ? prismaError.message : 'Unknown error'}`
+      };
+    }
     
     // Find user by username or email
+    console.log('🔍 Searching for user:', identifier);
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -97,30 +120,36 @@ export async function authenticateUser(identifier: string, password: string): Pr
     });
 
     if (!user) {
+      console.log('❌ User not found:', identifier);
       return {
         success: false,
         message: 'Invalid username/email or password'
       };
     }
 
+    console.log('✅ User found:', user.username, 'ID:', user.id);
+    
     // Check if password hash exists (for existing users without hashed passwords)
     if (!user.passwordHash) {
-      // For backward compatibility with existing users
-      // In production, you might want to force password reset
+      console.log('❌ User has no password hash');
       return {
         success: false,
         message: 'Please reset your password to continue'
       };
     }
 
+    console.log('🔍 Verifying password...');
     // Verify password
     const isValidPassword = await comparePassword(password, user.passwordHash);
     if (!isValidPassword) {
+      console.log('❌ Password verification failed');
       return {
         success: false,
         message: 'Invalid username/email or password'
       };
     }
+    
+    console.log('✅ Password verified');
 
     // Check if 2FA is enabled
     if (user.twoFactorEnabled) {
@@ -133,12 +162,23 @@ export async function authenticateUser(identifier: string, password: string): Pr
     }
 
     // Generate token for users without 2FA
+    console.log('🔑 Generating JWT token...');
     const token = generateToken({
       userId: user.id,
       username: user.username,
       email: user.email,
       isAdmin: user.isAdmin || false
     });
+    
+    if (!token) {
+      console.error('❌ Failed to generate token - JWT_SECRET might be missing');
+      return {
+        success: false,
+        message: 'Authentication failed: Token generation error'
+      };
+    }
+    
+    console.log('✅ Token generated successfully');
 
     // Return user data (without password hash)
     return {
