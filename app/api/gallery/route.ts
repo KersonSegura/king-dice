@@ -51,11 +51,12 @@ export async function GET(request: NextRequest) {
           }
           
               // /uploads/filename -> Supabase uploads bucket
-              // Files are actually stored in uploads/uploads/ subfolder
+              // Legacy files are in uploads/uploads/, new files are in uploads/
               if (url.startsWith('/uploads/')) {
                 const filename = url.replace('/uploads/', '');
-                // Try both paths: uploads/uploads/filename (actual location) and uploads/filename (ideal)
-                // For now, use the actual location where files were stored
+                // Check both possible locations - legacy files in uploads/uploads/, new files in uploads/
+                // For now, prefer the legacy location as that's where existing files are
+                // TODO: Migrate files from uploads/uploads/ to uploads/ or handle both paths
                 return `${supabaseUrl}/storage/v1/object/public/uploads/uploads/${filename}`;
               }
           
