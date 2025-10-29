@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,44 +8,30 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const where = search ? {
-      OR: [
-        { game: { name: { contains: search } } },
-        { game: { nameEn: { contains: search } } }
-      ]
-    } : {};
+    const query = supabaseAdmin
+      .from('gameRule')
+      .select(`
+        id, gameId, language, rulesText, rulesHtml, setupInstructions, victoryConditions,
+        game:games(
+          id, name, nameEn, image, year, minPlayers, maxPlayers, durationMinutes
+        )
+      `)
+      .order('name', { ascending: true, referencedTable: 'games' })
+      .range(offset, offset + limit - 1);
 
-    const rules = await prisma.gameRule.findMany({
-      where,
-      include: {
-        game: {
-          select: {
-            id: true,
-            name: true,
-            nameEn: true,
-            image: true,
-            year: true,
-            minPlayers: true,
-            maxPlayers: true,
-            durationMinutes: true
-          }
-        }
-      },
-      orderBy: {
-        game: {
-          name: 'asc'
-        }
-      },
-      take: limit,
-      skip: offset
-    });
+    const { data: rules, error } = search
+      ? await query.ilike('game.name', `%${search}%`)
+      : await query;
+
+    if (error) {
+      console.error('Error querying rules:', error);
+      return NextResponse.json({ error: 'Failed to fetch rules' }, { status: 500 });
+    }
 
     return NextResponse.json(rules);
   } catch (error) {
     console.error('Error fetching rules:', error);
     return NextResponse.json({ error: 'Failed to fetch rules' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -55,39 +39,34 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const newRule = await prisma.gameRule.create({
-      data: {
-        gameId: body.gameId,
-        language: body.language || 'es',
-        rulesText: body.rulesText || '',
-        rulesHtml: body.rulesHtml || '',
-        setupInstructions: body.setupInstructions,
-        victoryConditions: body.victoryConditions,
-      },
-      include: {
-        game: {
-          select: {
-            id: true,
-            name: true,
-            nameEn: true,
-            nameEs: true,
-            year: true,
-            yearRelease: true,
-            image: true,
-            imageUrl: true,
-            minPlayers: true,
-            maxPlayers: true,
-            durationMinutes: true,
-          }
-        }
-      }
-    });
+    const insertPayload = {
+      gameId: body.gameId,
+      language: body.language || 'es',
+      rulesText: body.rulesText || '',
+      rulesHtml: body.rulesHtml || '',
+      setupInstructions: body.setupInstructions ?? null,
+      victoryConditions: body.victoryConditions ?? null,
+    };
 
-    return NextResponse.json(newRule);
+    const { data, error } = await supabaseAdmin
+      .from('gameRule')
+      .insert(insertPayload)
+      .select(`
+        id, gameId, language, rulesText, rulesHtml, setupInstructions, victoryConditions,
+        game:games(
+          id, name, nameEn, nameEs, year, yearRelease, image, imageUrl, minPlayers, maxPlayers, durationMinutes
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Error creating rule:', error);
+      return NextResponse.json({ error: 'Failed to create rule' }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error creating rule:', error);
     return NextResponse.json({ error: 'Failed to create rule' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -18,25 +16,30 @@ export async function GET(
       );
     }
 
-    // Fetch the game with all related data
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      include: {
-        gameCategories: {
-          include: {
-            category: true
-          }
-        },
-        gameMechanics: {
-          include: {
-            mechanic: true
-          }
-        },
-        descriptions: true,
-        rules: true,
-        baseGameExpansions: true,
-      }
-    });
+    // Fetch the game and related data from Supabase
+    const { data: game, error } = await supabaseAdmin
+      .from('games')
+      .select(`
+        id, bggId, name, nameEn, nameEs, year, yearRelease, image, imageUrl, thumbnailUrl,
+        minPlayers, maxPlayers, durationMinutes, minPlayTime, maxPlayTime,
+        userRating, userVotes, bggRanking, bggRating, bggVotes,
+        officialWebsite, expansions, isExpansion,
+        gameCategories:gameCategories(*, category:category(*)),
+        gameMechanics:gameMechanics(*, mechanic:mechanic(*)),
+        descriptions:descriptions(*),
+        rules:rules(*),
+        baseGameExpansions:baseGameExpansions(*)
+      `)
+      .eq('id', gameId)
+      .single();
+
+    if (error) {
+      console.error('Error querying game:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch game' },
+        { status: 500 }
+      );
+    }
 
     if (!game) {
       return NextResponse.json(
@@ -45,10 +48,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ 
-      success: true,
-      game
-    });
+    return NextResponse.json({ success: true, game });
 
   } catch (error) {
     console.error('Error fetching game:', error);

@@ -1,34 +1,21 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const games = await prisma.game.findMany({
-      select: {
-        id: true,
-        name: true,
-        nameEn: true,
-        nameEs: true,
-        year: true,
-        yearRelease: true,
-        image: true,
-        imageUrl: true,
-        minPlayers: true,
-        maxPlayers: true,
-        durationMinutes: true,
-        minPlayTime: true,
-        maxPlayTime: true
-      },
-      orderBy: [
-        { name: 'asc' },
-        { nameEn: 'asc' }
-      ]
-    });
+    const { data: games, error } = await supabaseAdmin
+      .from('games')
+      .select('id, name, nameEn, nameEs, year, yearRelease, image, imageUrl, minPlayers, maxPlayers, durationMinutes, minPlayTime, maxPlayTime')
+      .order('name', { ascending: true })
+      .order('nameEn', { ascending: true });
+
+    if (error) {
+      console.error('Error querying games:', error);
+      return NextResponse.json({ error: 'Failed to fetch games' }, { status: 500 });
+    }
 
     // Normalize the data for consistent frontend usage
-    const normalizedGames = games.map(game => ({
+    const normalizedGames = (games || []).map(game => ({
       id: game.id,
       name: game.name || game.nameEn,
       nameEn: game.nameEn,
@@ -44,7 +31,5 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching games:', error);
     return NextResponse.json({ error: 'Failed to fetch games' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
