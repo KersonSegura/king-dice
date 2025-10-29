@@ -75,6 +75,8 @@ export function verifyToken(token: string): TokenPayload | null {
  */
 export async function authenticateUser(identifier: string, password: string): Promise<AuthResult> {
   try {
+    console.log('🔐 authenticateUser: Starting authentication for:', identifier);
+    
     // Find user by username or email
     const user = await prisma.user.findFirst({
       where: {
@@ -156,10 +158,21 @@ export async function authenticateUser(identifier: string, password: string): Pr
     };
 
   } catch (error) {
-    console.error('Authentication error:', error);
+    console.error('❌ Authentication error:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
+    
+    // Check if it's a Prisma connection error
+    if (error instanceof Error && error.message.includes('Prisma Client')) {
+      return {
+        success: false,
+        message: 'Database connection failed. Please try again in a moment.'
+      };
+    }
+    
     return {
       success: false,
-      message: 'Authentication failed. Please try again.'
+      message: error instanceof Error ? `Authentication error: ${error.message}` : 'Authentication failed. Please try again.'
     };
   }
 }

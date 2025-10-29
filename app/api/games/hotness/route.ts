@@ -114,7 +114,22 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error getting hotness games:', error);
+    console.error('❌ Error getting hotness games:', error);
+    console.error('❌ Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('❌ Error message:', error instanceof Error ? error.message : String(error));
+    
+    // Check if it's a Prisma connection issue
+    if (error instanceof Error && (error.message.includes('Prisma') || error.message.includes('Query Engine'))) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection error', 
+          details: 'Prisma engine not available. Please check deployment configuration.',
+          message: error.message
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
