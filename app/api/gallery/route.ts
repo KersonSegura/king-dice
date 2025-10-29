@@ -25,27 +25,19 @@ export async function GET(request: NextRequest) {
         const rewrite = (url: string | undefined): string | undefined => {
           if (!url) return url;
           
-          // Fix already-absolute Supabase URLs with wrong paths
-          if (url.includes('supabase.co/storage/v1/object/public/gallery/')) {
-            // Current: /storage/v1/object/public/gallery/gallery-xxx.png
-            // Need: /storage/v1/object/public/gallery/gallery/gallery-xxx.png
-            if (!url.includes('/gallery/gallery/')) {
-              // Insert the extra /gallery/ prefix if missing
-              url = url.replace(
-                '/storage/v1/object/public/gallery/',
-                '/storage/v1/object/public/gallery/gallery/'
-              );
-            }
+          // Fix already-absolute Supabase URLs with extra folder: '/gallery/gallery/<file>' -> '/gallery/<file>'
+          if (url.includes('supabase.co/storage/v1/object/public/gallery/gallery/')) {
+            url = url.replace('/storage/v1/object/public/gallery/gallery/', '/storage/v1/object/public/gallery/');
             return url;
           }
           
           // If already absolute (http) but not Supabase, keep as is
           if (/^https?:\/\//i.test(url)) return url;
           
-          // /gallery/filename -> migrated under key "gallery/filename" inside gallery bucket
+          // /gallery/filename -> now stored at root of 'gallery' bucket: '<filename>'
           if (url.startsWith('/gallery/')) {
             const filename = url.split('/').pop();
-            if (filename) return `${supabaseUrl}/storage/v1/object/public/gallery/gallery/${filename}`;
+            if (filename) return `${supabaseUrl}/storage/v1/object/public/gallery/${filename}`;
           }
           // /uploads/rules-images/file -> Supabase rules-images bucket
           if (url.startsWith('/uploads/rules-images/')) {

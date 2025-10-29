@@ -31,7 +31,8 @@
     "db:studio": "prisma studio",
     "db:catan-setup": "prisma db push && prisma generate",
     "setup:storage": "node scripts/setup-supabase-storage.js",
-    "migrate:storage": "node scripts/migrate-to-supabase-storage.js"
+    "migrate:storage": "node scripts/migrate-to-supabase-storage.js",
+    "storage:flatten-gallery": "node scripts/move-supabase-gallery-flatten.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
