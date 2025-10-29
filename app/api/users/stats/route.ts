@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -16,35 +13,45 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's forum posts count
-    const forumPosts = await prisma.post.count({
-      where: { authorId: userId }
-    });
+    const { count: forumPosts, error: postsError } = await supabaseAdmin
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', userId);
 
     // Get user's gallery posts count
-    const galleryPosts = await prisma.galleryImage.count({
-      where: { authorId: userId }
-    });
+    const { count: galleryPosts, error: galleryError } = await supabaseAdmin
+      .from('gallery_images')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', userId);
 
     // Get user's games owned count
-    const gamesOwned = await prisma.userGame.count({
-      where: { userId: userId }
-    });
+    const { count: gamesOwned, error: gamesError } = await supabaseAdmin
+      .from('user_games')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
     // Get user's friends count (accepted friendships)
-    const friends = await prisma.friendship.count({
-      where: {
-        OR: [
-          { userId: userId, status: 'accepted' },
-          { friendId: userId, status: 'accepted' }
-        ]
-      }
-    });
+    const { count: friends1, error: friends1Error } = await supabaseAdmin
+      .from('friendships')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'accepted');
+
+    const { count: friends2, error: friends2Error } = await supabaseAdmin
+      .from('friendships')
+      .select('*', { count: 'exact', head: true })
+      .eq('friend_id', userId)
+      .eq('status', 'accepted');
+
+    if (postsError || galleryError || gamesError || friends1Error || friends2Error) {
+      console.error('Error fetching stats:', { postsError, galleryError, gamesError, friends1Error, friends2Error });
+    }
 
     const stats = {
-      gamesOwned,
-      forumDiscussions: forumPosts,
-      galleryPosts,
-      friends
+      gamesOwned: gamesOwned || 0,
+      forumDiscussions: forumPosts || 0,
+      galleryPosts: galleryPosts || 0,
+      friends: (friends1 || 0) + (friends2 || 0)
     };
 
     return NextResponse.json({ success: true, stats });

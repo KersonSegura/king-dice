@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -17,13 +14,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Find user in database by username or userId
-    const user = await prisma.user.findUnique({
-      where: username ? { username } : { id: userId! }
-    });
+    const { data: users, error: findError } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .or(username ? `username.eq.${username}` : `id.eq.${userId}`)
+      .limit(1)
+      .single();
 
-    if (!user) {
+    if (findError || !users) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    const user = users;
 
     // Calculate level progress
     const levelNames = {
@@ -44,16 +46,16 @@ export async function GET(request: NextRequest) {
         email: user.email,
         avatar: user.avatar,
         bio: user.bio || '',
-        favoriteGames: user.favoriteGames ? JSON.parse(user.favoriteGames) : [],
-        profileColors: user.profileColors ? JSON.parse(user.profileColors) : {
+        favoriteGames: user.favorite_games ? (typeof user.favorite_games === 'string' ? JSON.parse(user.favorite_games) : user.favorite_games) : [],
+        profileColors: user.profile_colors ? (typeof user.profile_colors === 'string' ? JSON.parse(user.profile_colors) : user.profile_colors) : {
           cover: '#fbae17',
           background: '#f5f5f5',
           containers: '#ffffff'
         },
-        gamesList: user.gamesList ? JSON.parse(user.gamesList) : [],
-        collectionPhoto: user.collectionPhoto,
-        favoriteCard: user.favoriteCard,
-        isAdmin: user.isAdmin,
+        gamesList: user.games_list ? (typeof user.games_list === 'string' ? JSON.parse(user.games_list) : user.games_list) : [],
+        collectionPhoto: user.collection_photo,
+        favoriteCard: user.favorite_card,
+        isAdmin: user.is_admin,
         levelProgress: {
           currentLevel,
           currentLevelName: levelNames[currentLevel as keyof typeof levelNames],

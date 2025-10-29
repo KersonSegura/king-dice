@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-});
-
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -23,19 +18,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user profile data
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { 
-        bio: true,
-        favoriteGames: true,
-        profileColors: true,
-        isAdmin: true
-      }
-    });
+    const { data: user, error: findError } = await supabaseAdmin
+      .from('users')
+      .select('bio, favorite_games, profile_colors, is_admin')
+      .eq('id', userId)
+      .single();
 
     console.log('Found user in database:', user);
 
-    if (!user) {
+    if (findError || !user) {
       console.log('User not found, returning defaults');
       // Return default data if user doesn't exist yet
       return NextResponse.json({
@@ -50,9 +41,9 @@ export async function GET(request: NextRequest) {
 
     // Parse favorite games if it's a JSON string
     let favoriteGames = [];
-    if (user.favoriteGames) {
+    if (user.favorite_games) {
       try {
-        favoriteGames = JSON.parse(user.favoriteGames);
+        favoriteGames = typeof user.favorite_games === 'string' ? JSON.parse(user.favorite_games) : user.favorite_games;
         console.log('Parsed favorite games:', favoriteGames);
       } catch (error) {
         console.error('Error parsing favorite games:', error);
@@ -65,7 +56,7 @@ export async function GET(request: NextRequest) {
       profile: {
         bio: user.bio || '',
         favoriteGames: favoriteGames,
-        isAdmin: user.isAdmin || false
+        isAdmin: user.is_admin || false
       }
     };
 
