@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+  // Force Node.js binary engine (avoids Data Proxy prisma:// URLs)
+  engineType = "binary"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
