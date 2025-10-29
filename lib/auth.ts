@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import prisma from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -83,43 +83,25 @@ export function verifyToken(token: string): TokenPayload | null {
 export async function authenticateUser(identifier: string, password: string): Promise<AuthResult> {
   try {
     console.log('🔐 authenticateUser: Starting authentication for:', identifier);
-    console.log('🔐 Checking Prisma connection...');
-    
-    // Test Prisma connection first
-    try {
-      await prisma.$connect();
-      console.log('✅ Prisma connection successful');
-    } catch (prismaError) {
-      console.error('❌ Prisma connection failed:', prismaError);
-      return {
-        success: false,
-        message: `Database connection failed: ${prismaError instanceof Error ? prismaError.message : 'Unknown error'}`
-      };
-    }
+    console.log('🔐 Checking Supabase connection...');
     
     // Find user by username or email
     console.log('🔍 Searching for user:', identifier);
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username: identifier },
-          { email: identifier }
-        ]
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        avatar: true,
-        passwordHash: true,
-        isAdmin: true,
-        level: true,
-        xp: true,
-        twoFactorEnabled: true
-      }
-    });
+    const { data: users, error } = await supabaseAdmin
+      .from('User')
+      .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled')
+      .or(`username.eq.${identifier},email.eq.${identifier}`)
+      .limit(1);
 
-    if (!user) {
+    if (error) {
+      console.error('❌ Supabase query error:', error);
+      return {
+        success: false,
+        message: `Database connection failed: ${error.message}`
+      };
+    }
+
+    if (!users || users.length === 0) {
       console.log('❌ User not found:', identifier);
       return {
         success: false,
@@ -127,6 +109,7 @@ export async function authenticateUser(identifier: string, password: string): Pr
       };
     }
 
+    const user = users[0];
     console.log('✅ User found:', user.username, 'ID:', user.id);
     
     // Check if password hash exists (for existing users without hashed passwords)

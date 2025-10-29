@@ -9,9 +9,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Client for server-side operations (with service role for admin access)
+// Use service role for full database access in API routes
 export const supabaseAdmin = supabaseServiceRoleKey
-  ? createClient(supabaseUrl, supabaseServiceRoleKey)
-  : createClient(supabaseUrl, supabaseAnonKey);
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { persistSession: false }
+    })
+  : createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false }
+    });
+
+// Client for client-side (browser) - uses anon key with row-level security
+export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 // Storage buckets configuration
 export const STORAGE_BUCKETS = {
