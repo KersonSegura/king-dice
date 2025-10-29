@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Files live in bucket "boardle-images" at path like "<filename>" or "cards/<filename>"
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/${game.imageFileName}`;
+    // Objects were migrated under key: "boardle-images/<filename>"
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/boardle-images/${game.imageFileName}`;
 
     // Redirect the client to the public URL (allows CDN caching)
     return NextResponse.redirect(publicUrl, { status: 307 });

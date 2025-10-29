@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'SUPABASE_URL is not configured' }, { status: 500 });
     }
 
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/cards/${game.imageFileName}`;
+    // Objects were migrated under key: "boardle-images/cards/<filename>"
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/boardle-images/cards/${game.imageFileName}`;
     return NextResponse.redirect(publicUrl, { status: 307 });
 
   } catch (error) {
