@@ -25,37 +25,51 @@ export async function GET(request: NextRequest) {
         const rewrite = (url: string | undefined): string | undefined => {
           if (!url) return url;
           
-          // Fix already-absolute Supabase URLs with extra folder: '/gallery/gallery/<file>' -> '/gallery/<file>'
-          if (url.includes('supabase.co/storage/v1/object/public/gallery/gallery/')) {
-            url = url.replace('/storage/v1/object/public/gallery/gallery/', '/storage/v1/object/public/gallery/');
+          // If already absolute Supabase URL, fix path if needed
+          if (url.includes('supabase.co/storage/v1/object/public/')) {
+            // Fix double gallery folder: /gallery/gallery/ -> /gallery/
+            if (url.includes('/gallery/gallery/')) {
+              url = url.replace('/gallery/gallery/', '/gallery/');
+            }
+            // Already a valid Supabase URL, return as is
             return url;
           }
           
           // If already absolute (http) but not Supabase, keep as is
           if (/^https?:\/\//i.test(url)) return url;
           
-          // /gallery/filename -> now stored at root of 'gallery' bucket: '<filename>'
+          // /gallery/filename -> stored at root of 'gallery' bucket
           if (url.startsWith('/gallery/')) {
             const filename = url.split('/').pop();
             if (filename) return `${supabaseUrl}/storage/v1/object/public/gallery/${filename}`;
           }
+          
           // /uploads/rules-images/file -> Supabase rules-images bucket
           if (url.startsWith('/uploads/rules-images/')) {
-            const rel = url.replace('/uploads/', ''); // rel = 'rules-images/...' original expectation
-            // Migrated objects kept original subpath under bucket: 'uploads/rules-images/<file>'
-            const pathWithUploads = `rules-images/uploads/${rel}`; // 'rules-images/uploads/rules-images/<file>'
-            return `${supabaseUrl}/storage/v1/object/public/${pathWithUploads}`;
+            const rel = url.replace('/uploads/', ''); // rel = 'rules-images/...'
+            return `${supabaseUrl}/storage/v1/object/public/rules-images/${rel}`;
           }
+          
           // /uploads/filename -> Supabase uploads bucket
           if (url.startsWith('/uploads/')) {
             const filename = url.replace('/uploads/', '');
             return `${supabaseUrl}/storage/v1/object/public/uploads/${filename}`;
           }
+          
           return url;
         };
 
+        const originalImageUrl = updated.imageUrl;
+        const originalThumbUrl = updated.thumbnailUrl;
+        
         updated.imageUrl = rewrite(updated.imageUrl) || updated.imageUrl;
         updated.thumbnailUrl = rewrite(updated.thumbnailUrl) || updated.thumbnailUrl;
+        
+        // Log URL transformations for debugging
+        if (originalImageUrl && originalImageUrl !== updated.imageUrl) {
+          console.log(`🖼️ Gallery URL rewrite: ${originalImageUrl} -> ${updated.imageUrl}`);
+        }
+        
         // Rewrite author avatar if stored locally
         if (updated.author && typeof updated.author === 'object') {
           updated.author.avatar = rewrite(updated.author.avatar) || updated.author.avatar;
