@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
 import path from 'path';
 
 // Force dynamic rendering
@@ -40,9 +41,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'SUPABASE_URL is not configured' }, { status: 500 });
     }
 
-    // Files live in bucket "boardle-images" at path like "<filename>" or "cards/<filename>"
-    // Objects were migrated under key: "boardle-images/<filename>"
+    // Files live in bucket "boardle-images" at path "boardle-images/<filename>"
+    // Note: Files were migrated with the bucket name as a prefix, so they're at boardle-images/<filename>
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/boardle-images/${game.imageFileName}`;
+
+    console.log(`🖼️ Boardle image-proxy: Game ID ${gameId} (${game.name}) -> ${game.imageFileName}`);
+    console.log(`🔗 Redirecting to: ${publicUrl}`);
 
     // Redirect the client to the public URL (allows CDN caching)
     return NextResponse.redirect(publicUrl, { status: 307 });
