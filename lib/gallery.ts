@@ -227,7 +227,7 @@ export async function uploadImage(data: UploadImageData): Promise<GalleryImage> 
   const thumbnailUrl = imageUrl; // For now, use same URL as thumbnail
   
   const imageData = {
-    title: data.title,
+    title: data.title?.trim() || (data.category === 'Collections' ? 'Collection Photo' : 'Favorite Card'),
     description: data.description || '',
     imageUrl,
     thumbnailUrl,

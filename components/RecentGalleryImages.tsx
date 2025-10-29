@@ -93,6 +93,7 @@ export default function RecentGalleryImages({ limit = 4 }: RecentGalleryImagesPr
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-200"
               loading="lazy"
+              unoptimized={image.thumbnailUrl?.includes('supabase.co')}
             />
           </div>
           <div className="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">

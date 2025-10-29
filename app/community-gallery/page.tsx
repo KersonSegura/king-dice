@@ -1319,6 +1319,7 @@ function CommunityGalleryPageContent() {
                       className="object-cover group-hover:opacity-90 transition-opacity"
                       loading="lazy"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      unoptimized={image.thumbnailUrl?.includes('supabase.co')}
                     />
                   )}
 
@@ -1616,6 +1617,7 @@ function CommunityGalleryPageContent() {
                         className="object-cover rounded-lg group-hover:opacity-90 transition-opacity"
                         loading="lazy"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        unoptimized={image.thumbnailUrl?.includes('supabase.co')}
                       />
                     )}
                   </div>

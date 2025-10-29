@@ -1092,7 +1092,14 @@ export default function HomePage() {
                       }
                     }}
                   >
-                    <Image src={img.thumbnailUrl} alt={img.title || 'Gallery image'} fill className="object-cover" loading="lazy" />
+                    <Image 
+                      src={img.thumbnailUrl} 
+                      alt={img.title || 'Gallery image'} 
+                      fill 
+                      className="object-cover" 
+                      loading="lazy"
+                      unoptimized={img.thumbnailUrl?.includes('supabase.co')}
+                    />
                     
                     {/* Instagram-style hover overlay */}
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
