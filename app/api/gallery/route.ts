@@ -26,15 +26,17 @@ export async function GET(request: NextRequest) {
           if (!url) return url;
           // If already absolute (http), keep as is
           if (/^https?:\/\//i.test(url)) return url;
-          // /gallery/filename -> Supabase gallery bucket
+          // /gallery/filename -> migrated under key "gallery/filename" inside gallery bucket
           if (url.startsWith('/gallery/')) {
             const filename = url.split('/').pop();
-            if (filename) return `${supabaseUrl}/storage/v1/object/public/gallery/${filename}`;
+            if (filename) return `${supabaseUrl}/storage/v1/object/public/gallery/gallery/${filename}`;
           }
           // /uploads/rules-images/file -> Supabase rules-images bucket
           if (url.startsWith('/uploads/rules-images/')) {
-            const rel = url.replace('/uploads/', '');
-            return `${supabaseUrl}/storage/v1/object/public/${rel}`;
+            const rel = url.replace('/uploads/', ''); // rel = 'rules-images/...' original expectation
+            // Migrated objects kept original subpath under bucket: 'uploads/rules-images/<file>'
+            const pathWithUploads = `rules-images/uploads/${rel}`; // 'rules-images/uploads/rules-images/<file>'
+            return `${supabaseUrl}/storage/v1/object/public/${pathWithUploads}`;
           }
           // /uploads/filename -> Supabase uploads bucket
           if (url.startsWith('/uploads/')) {

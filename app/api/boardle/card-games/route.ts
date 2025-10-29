@@ -53,12 +53,7 @@ export async function GET(request: NextRequest) {
         // Extract just the game name without the number prefix (e.g., "017. Abyss" -> "Abyss")
         const gameName = name.replace(/^\d+\.\s*/, '');
         
-        // Check if the image file exists
-        const imagePath = path.join(process.cwd(), 'public', 'boardle-images', 'cards', imageFileName);
-        if (!fsSync.existsSync(imagePath)) {
-          console.log(`⚠️ Image not found for "${gameName}": ${imageFileName}`);
-          return null;
-        }
+        // Do not check local filesystem in production; images are served from Supabase
         
         // Determine zoom type for this game
         const zoomType = zoomPointsMap.get(imageFileName) || 'middle';
