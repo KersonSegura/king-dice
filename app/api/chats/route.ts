@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET - Get user's chats
 
@@ -16,88 +14,140 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const chats = await prisma.chat.findMany({
-      where: {
-        participants: {
-          some: {
-            userId: userId
-          }
+    // Get all chats where user is a participant
+    const { data: participants, error: participantsError } = await supabaseAdmin
+      .from('chat_participants')
+      .select(`
+        chat_id,
+        joined_at,
+        last_read_at,
+        chat:chats!chat_participants_chat_id_fkey (
+          id,
+          name,
+          type,
+          created_by,
+          created_at,
+          updated_at,
+          creator:users!chats_created_by_fkey (
+            id,
+            username,
+            avatar
+          )
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (participantsError) {
+      console.error('Error fetching chat participants:', participantsError);
+      return NextResponse.json({ error: 'Failed to fetch chats' }, { status: 500 });
+    }
+
+    if (!participants || participants.length === 0) {
+      return NextResponse.json({ chats: [] });
+    }
+
+    // Get chat IDs
+    const chatIds = participants.map(p => p.chat_id).filter(Boolean);
+
+    // Get last message for each chat
+    const { data: lastMessages, error: messagesError } = await supabaseAdmin
+      .from('messages')
+      .select(`
+        id,
+        chat_id,
+        content,
+        type,
+        created_at,
+        sender:users!messages_sender_id_fkey (
+          id,
+          username,
+          avatar
+        )
+      `)
+      .in('chat_id', chatIds)
+      .order('created_at', { ascending: false });
+
+    // Group messages by chat_id and get the first (latest) one for each
+    const lastMessageMap = new Map();
+    if (lastMessages) {
+      for (const msg of lastMessages) {
+        if (!lastMessageMap.has(msg.chat_id)) {
+          lastMessageMap.set(msg.chat_id, msg);
         }
-      },
-      include: {
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                avatar: true,
-                isVerified: true,
-                isAdmin: true
-              }
-            }
-          }
-        },
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          include: {
-            sender: {
-              select: {
-                id: true,
-                username: true,
-                avatar: true
-              }
-            }
-          }
-        },
-        creator: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true
-          }
+      }
+    }
+
+    // Get all participants for each chat
+    const { data: allParticipants, error: allParticipantsError } = await supabaseAdmin
+      .from('chat_participants')
+      .select(`
+        chat_id,
+        user_id,
+        joined_at,
+        last_read_at,
+        user:users!chat_participants_user_id_fkey (
+          id,
+          username,
+          avatar,
+          is_verified,
+          is_admin
+        )
+      `)
+      .in('chat_id', chatIds);
+
+    // Group participants by chat_id
+    const participantsMap = new Map();
+    if (allParticipants) {
+      for (const p of allParticipants) {
+        if (!participantsMap.has(p.chat_id)) {
+          participantsMap.set(p.chat_id, []);
         }
-      },
-      orderBy: { updatedAt: 'desc' }
-    });
+        participantsMap.get(p.chat_id).push(p);
+      }
+    }
 
     // Format the response
-    const formattedChats = chats.map(chat => {
-      const otherParticipants = chat.participants
-        .filter(p => p.userId !== userId)
-        .map(p => p.user);
-
-      const lastMessage = chat.messages[0];
+    const formattedChats = participants.map((p: any) => {
+      const chat = p.chat;
+      const chatParticipants = participantsMap.get(chat.id) || [];
+      const lastMessage = lastMessageMap.get(chat.id);
+      const otherParticipants = chatParticipants
+        .filter((cp: any) => cp.user_id !== userId)
+        .map((cp: any) => cp.user);
 
       return {
         id: chat.id,
         name: chat.name || (chat.type === 'direct' ? otherParticipants[0]?.username : 'Group Chat'),
         type: chat.type,
-        participants: chat.participants.map(p => ({
-          id: p.user.id,
-          username: p.user.username,
-          avatar: p.user.avatar,
-          isVerified: p.user.isVerified,
-          isAdmin: p.user.isAdmin,
-          joinedAt: p.joinedAt,
-          lastReadAt: p.lastReadAt
+        participants: chatParticipants.map((cp: any) => ({
+          id: cp.user.id,
+          username: cp.user.username,
+          avatar: cp.user.avatar,
+          isVerified: cp.user.is_verified,
+          isAdmin: cp.user.is_admin,
+          joinedAt: cp.joined_at,
+          lastReadAt: cp.last_read_at
         })),
         lastMessage: lastMessage ? {
           id: lastMessage.id,
           content: lastMessage.content,
           type: lastMessage.type,
-          createdAt: lastMessage.createdAt,
-          sender: {
+          createdAt: lastMessage.created_at,
+          sender: lastMessage.sender ? {
             id: lastMessage.sender.id,
             username: lastMessage.sender.username,
             avatar: lastMessage.sender.avatar
-          }
+          } : null
         } : null,
-        createdAt: chat.createdAt,
-        updatedAt: chat.updatedAt,
+        createdAt: chat.created_at,
+        updatedAt: chat.updated_at,
         createdBy: chat.creator
       };
+    }).sort((a: any, b: any) => {
+      // Sort by updatedAt descending
+      const aTime = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : new Date(a.updatedAt).getTime();
+      const bTime = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : new Date(b.updatedAt).getTime();
+      return bTime - aTime;
     });
 
     return NextResponse.json({ chats: formattedChats });
@@ -122,85 +172,167 @@ export async function POST(request: NextRequest) {
 
     // Check if direct chat already exists between these two users
     if (type === 'direct' && participants.length === 2) {
-      const existingChat = await prisma.chat.findFirst({
-        where: {
-          type: 'direct',
-          participants: {
-            every: {
-              userId: {
-                in: participants
-              }
+      // Get all chats of type 'direct' that have both participants
+      const { data: existingParticipants, error: checkError } = await supabaseAdmin
+        .from('chat_participants')
+        .select('chat_id, user_id, chat:chats!chat_participants_chat_id_fkey (id, type)')
+        .in('user_id', participants)
+        .eq('chat.type', 'direct');
+
+      if (!checkError && existingParticipants) {
+        // Group by chat_id and check if any chat has both users
+        const chatMap = new Map();
+        for (const p of existingParticipants) {
+          if (!chatMap.has(p.chat_id)) {
+            chatMap.set(p.chat_id, new Set());
+          }
+          chatMap.get(p.chat_id).add(p.user_id);
+        }
+
+        // Find a chat with both participants
+        for (const [chatId, userIds] of chatMap.entries()) {
+          if (userIds.size === 2 && participants.every((id: string) => userIds.has(id))) {
+            // Fetch the full chat data
+            const { data: existingChat, error: fetchError } = await supabaseAdmin
+              .from('chats')
+              .select(`
+                *,
+                participants:chat_participants (
+                  user_id,
+                  joined_at,
+                  last_read_at,
+                  user:users!chat_participants_user_id_fkey (
+                    id,
+                    username,
+                    avatar,
+                    is_verified,
+                    is_admin
+                  )
+                ),
+                creator:users!chats_created_by_fkey (
+                  id,
+                  username,
+                  avatar
+                )
+              `)
+              .eq('id', chatId)
+              .single();
+
+            if (!fetchError && existingChat) {
+              return NextResponse.json({ 
+                chat: {
+                  id: existingChat.id,
+                  name: existingChat.name,
+                  type: existingChat.type,
+                  participants: (existingChat.participants || []).map((p: any) => ({
+                    id: p.user.id,
+                    username: p.user.username,
+                    avatar: p.user.avatar,
+                    isVerified: p.user.is_verified,
+                    isAdmin: p.user.is_admin,
+                    joinedAt: p.joined_at,
+                    lastReadAt: p.last_read_at
+                  })),
+                  createdAt: existingChat.created_at,
+                  updatedAt: existingChat.updated_at,
+                  createdBy: existingChat.creator
+                },
+                message: 'Direct chat already exists'
+              });
             }
           }
-        },
-        include: {
-          participants: true
         }
-      });
-
-      if (existingChat && existingChat.participants.length === 2) {
-        return NextResponse.json({ 
-          chat: existingChat,
-          message: 'Direct chat already exists'
-        });
       }
     }
 
-    const chat = await prisma.chat.create({
-      data: {
+    // Create new chat
+    const { data: newChat, error: createError } = await supabaseAdmin
+      .from('chats')
+      .insert({
         type,
         name: type === 'group' ? name : null,
-        createdBy: type === 'group' ? createdBy : null,
-        participants: {
-          create: participants.map((userId: string) => ({
-            userId
-          }))
-        }
-      },
-      include: {
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                avatar: true,
-                isVerified: true,
-                isAdmin: true
-              }
-            }
-          }
-        },
-        creator: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true
-          }
-        }
-      }
-    });
+        created_by: type === 'group' ? createdBy : null
+      })
+      .select()
+      .single();
+
+    if (createError || !newChat) {
+      console.error('Error creating chat:', createError);
+      return NextResponse.json({ error: 'Failed to create chat' }, { status: 500 });
+    }
+
+    // Add participants
+    const participantInserts = participants.map((userId: string) => ({
+      chat_id: newChat.id,
+      user_id: userId,
+      joined_at: new Date().toISOString()
+    }));
+
+    const { error: participantsError } = await supabaseAdmin
+      .from('chat_participants')
+      .insert(participantInserts);
+
+    if (participantsError) {
+      console.error('Error adding participants:', participantsError);
+      // Try to clean up the chat
+      await supabaseAdmin.from('chats').delete().eq('id', newChat.id);
+      return NextResponse.json({ error: 'Failed to add participants' }, { status: 500 });
+    }
+
+    // Fetch the complete chat with participants and creator
+    const { data: completeChat, error: fetchError } = await supabaseAdmin
+      .from('chats')
+      .select(`
+        *,
+        participants:chat_participants (
+          user_id,
+          joined_at,
+          last_read_at,
+          user:users!chat_participants_user_id_fkey (
+            id,
+            username,
+            avatar,
+            is_verified,
+            is_admin
+          )
+        ),
+        creator:users!chats_created_by_fkey (
+          id,
+          username,
+          avatar
+        )
+      `)
+      .eq('id', newChat.id)
+      .single();
+
+    if (fetchError || !completeChat) {
+      console.error('Error fetching created chat:', fetchError);
+      return NextResponse.json({ error: 'Failed to fetch created chat' }, { status: 500 });
+    }
+
+    // Find other participant for direct chats
+    const otherParticipant = (completeChat.participants || []).find((p: any) => p.user_id !== createdBy);
 
     return NextResponse.json({ 
       chat: {
-        id: chat.id,
-        name: chat.name || (chat.type === 'direct' ? 
-          chat.participants.find(p => p.userId !== createdBy)?.user.username : 
+        id: completeChat.id,
+        name: completeChat.name || (completeChat.type === 'direct' ? 
+          otherParticipant?.user?.username : 
           'Group Chat'
         ),
-        type: chat.type,
-        participants: chat.participants.map(p => ({
+        type: completeChat.type,
+        participants: (completeChat.participants || []).map((p: any) => ({
           id: p.user.id,
           username: p.user.username,
           avatar: p.user.avatar,
-          isVerified: p.user.isVerified,
-          isAdmin: p.user.isAdmin,
-          joinedAt: p.joinedAt,
-          lastReadAt: p.lastReadAt
+          isVerified: p.user.is_verified,
+          isAdmin: p.user.is_admin,
+          joinedAt: p.joined_at,
+          lastReadAt: p.last_read_at
         })),
-        createdAt: chat.createdAt,
-        updatedAt: chat.updatedAt,
-        createdBy: chat.creator
+        createdAt: completeChat.created_at,
+        updatedAt: completeChat.updated_at,
+        createdBy: completeChat.creator
       }
     });
   } catch (error) {

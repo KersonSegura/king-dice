@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin } from '@/lib/supabase';
 import { emailService, generateVerificationCode } from '@/lib/email-service';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,24 +17,32 @@ export async function POST(request: NextRequest) {
     const code = generateVerificationCode();
     
     // Set expiration time (10 minutes from now)
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     // Clean up any existing unused codes for this user
-    await prisma.twoFactorCode.deleteMany({
-      where: {
-        userId,
-        used: false
-      }
-    });
+    await supabaseAdmin
+      .from('two_factor_codes')
+      .delete()
+      .eq('user_id', userId)
+      .eq('used', false);
 
     // Save the new verification code
-    await prisma.twoFactorCode.create({
-      data: {
-        userId,
+    const { error: createError } = await supabaseAdmin
+      .from('two_factor_codes')
+      .insert({
+        user_id: userId,
         code,
-        expiresAt
-      }
-    });
+        expires_at: expiresAt,
+        used: false
+      });
+
+    if (createError) {
+      console.error('Error creating verification code:', createError);
+      return NextResponse.json(
+        { error: 'Failed to create verification code' },
+        { status: 500 }
+      );
+    }
 
     // Send verification code via email
     const emailSent = await emailService.sendVerificationCode(email, code, username);

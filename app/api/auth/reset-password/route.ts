@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hashPassword, comparePassword } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,31 +22,38 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username },
-          { email: username }
-        ]
-      }
-    });
+    const { data: users, error: findError } = await supabaseAdmin
+      .from('users')
+      .select('id, username, email, password_hash')
+      .or(`username.eq.${username},email.eq.${username}`)
+      .limit(1);
 
-    if (!user) {
+    if (findError || !users || users.length === 0) {
       return NextResponse.json(
         { message: 'User not found' },
         { status: 404 }
       );
     }
 
+    const user = users[0];
+
     // For users without password hash (migrated users), allow reset with any current password
-    if (!user.passwordHash) {
+    if (!user.password_hash) {
       // Hash the new password
       const newPasswordHash = await hashPassword(newPassword);
       
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { passwordHash: newPasswordHash }
-      });
+      const { error: updateError } = await supabaseAdmin
+        .from('users')
+        .update({ password_hash: newPasswordHash })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Error updating password:', updateError);
+        return NextResponse.json(
+          { message: 'Password reset failed' },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json(
         { message: 'Password reset successfully' },
@@ -57,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await comparePassword(currentPassword, user.passwordHash);
+    const isCurrentPasswordValid = await comparePassword(currentPassword, user.password_hash);
     if (!isCurrentPasswordValid) {
       return NextResponse.json(
         { message: 'Current password is incorrect' },
@@ -69,10 +74,18 @@ export async function POST(request: NextRequest) {
     const newPasswordHash = await hashPassword(newPassword);
 
     // Update password
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: newPasswordHash }
-    });
+    const { error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({ password_hash: newPasswordHash })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Error updating password:', updateError);
+      return NextResponse.json(
+        { message: 'Password reset failed' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       { message: 'Password updated successfully' },

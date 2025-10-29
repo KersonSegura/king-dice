@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,21 +13,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Update user's 2FA status
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { twoFactorEnabled: enabled },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        twoFactorEnabled: true
-      }
-    });
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({ two_factor_enabled: enabled })
+      .eq('id', userId)
+      .select('id, username, email, two_factor_enabled')
+      .single();
+
+    if (updateError || !updatedUser) {
+      console.error('Error updating 2FA status:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update 2FA status' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: `Two-factor authentication ${enabled ? 'enabled' : 'disabled'} successfully`,
-      user: updatedUser
+      user: {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        twoFactorEnabled: updatedUser.two_factor_enabled
+      }
     });
 
   } catch (error) {

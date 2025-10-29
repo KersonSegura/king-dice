@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin } from '@/lib/supabase';
 import { generateToken } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,39 +14,37 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the verification code
-    const verificationCode = await prisma.twoFactorCode.findFirst({
-      where: {
-        userId,
-        code,
-        used: false,
-        expiresAt: {
-          gt: new Date() // Code hasn't expired
-        }
-      },
-      include: {
-        user: true
-      }
-    });
+    const { data: verificationCodes, error: codeError } = await supabaseAdmin
+      .from('two_factor_codes')
+      .select('*, users(*)')
+      .eq('user_id', userId)
+      .eq('code', code)
+      .eq('used', false)
+      .gt('expires_at', new Date().toISOString())
+      .limit(1);
 
-    if (!verificationCode) {
+    if (codeError || !verificationCodes || verificationCodes.length === 0) {
       return NextResponse.json(
         { error: 'Invalid or expired verification code' },
         { status: 400 }
       );
     }
 
+    const verificationCode = verificationCodes[0];
+    const user = verificationCode.users as any;
+
     // Mark the code as used
-    await prisma.twoFactorCode.update({
-      where: { id: verificationCode.id },
-      data: { used: true }
-    });
+    await supabaseAdmin
+      .from('two_factor_codes')
+      .update({ used: true })
+      .eq('id', verificationCode.id);
 
     // Generate JWT token for successful authentication
     const token = generateToken({
-      userId: verificationCode.user.id,
-      username: verificationCode.user.username,
-      email: verificationCode.user.email,
-      isAdmin: verificationCode.user.isAdmin || false
+      userId: user.id,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.is_admin || false
     });
 
     // Create response with user data and token
@@ -56,13 +52,13 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         user: {
-          id: verificationCode.user.id,
-          username: verificationCode.user.username,
-          email: verificationCode.user.email,
-          avatar: verificationCode.user.avatar || '/DefaultDiceAvatar.svg',
-          isAdmin: verificationCode.user.isAdmin || false,
-          level: verificationCode.user.level || 1,
-          xp: verificationCode.user.xp || 0
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          avatar: user.avatar || '/DefaultDiceAvatar.svg',
+          isAdmin: user.is_admin || false,
+          level: user.level || 1,
+          xp: user.xp || 0
         },
         token
       },
