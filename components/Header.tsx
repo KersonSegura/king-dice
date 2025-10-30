@@ -225,11 +225,24 @@ export default function Header() {
                     <div className="absolute right-0 mt-1 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 py-4 z-50 backdrop-blur-sm bg-white/95">
                       {showNotificationsPanel ? (
                         <>
-                          <div className="px-4 pb-2 border-b border-gray-100 flex items-center justify-between">
-                            <button className="text-sm text-gray-600 hover:text-gray-800" onClick={() => setShowNotificationsPanel(false)}>← Back</button>
-                            <span className="text-sm font-medium">Notifications</span>
+                          <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                            <button
+                              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                              onClick={() => setShowNotificationsPanel(false)}
+                              aria-label="Back"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                              <span className="text-sm">Back</span>
+                            </button>
+                            <div className="flex items-center gap-2">
+                              <Image src="/NotificationsIcon.svg" alt="Notifications" width={18} height={18} className="opacity-80" />
+                              <span className="text-sm font-semibold tracking-wide">Notifications</span>
+                              {notifUnread > 0 && (
+                                <span className="ml-1 bg-red-500 text-white text-[10px] leading-4 px-1.5 rounded-full min-w-[16px] text-center">{notifUnread > 99 ? '99+' : notifUnread}</span>
+                              )}
+                            </div>
                             {notifUnread > 0 ? (
-                              <button className="text-xs text-blue-600" onClick={markAllRead}>Mark all read</button>
+                              <button className="text-xs text-blue-600 hover:underline" onClick={markAllRead}>Mark all</button>
                             ) : <span className="text-xs text-gray-400"></span>}
                           </div>
                           <div className="max-h-96 overflow-y-auto">
