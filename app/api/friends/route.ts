@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET - Get user's friends list
 
@@ -17,35 +15,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const friendships = await prisma.friendship.findMany({
-      where: {
-        OR: [
-          { userId, status },
-          { friendId: userId, status }
-        ]
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            isVerified: true,
-            isAdmin: true
-          }
-        },
-        friend: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            isVerified: true,
-            isAdmin: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const { data: friendships, error: fetchErr } = await supabaseAdmin
+      .from('friendships')
+      .select(`
+        id,
+        user_id,
+        friend_id,
+        status,
+        created_at,
+        user:users!friendships_user_id_fkey (id, username, avatar, is_verified, is_admin),
+        friend:users!friendships_friend_id_fkey (id, username, avatar, is_verified, is_admin)
+      `)
+      .or(`and(user_id.eq.${userId},status.eq.${status}),and(friend_id.eq.${userId},status.eq.${status})`)
+      .order('created_at', { ascending: false });
+    if (fetchErr) {
+      console.error('Error fetching friends:', fetchErr);
+      return NextResponse.json({ error: 'Failed to fetch friends' }, { status: 500 });
+    }
 
     // Transform the data to always show the other user
     const friends = friendships.map(friendship => {
@@ -54,7 +40,7 @@ export async function GET(request: NextRequest) {
         id: friendship.id,
         user: isUser ? friendship.friend : friendship.user,
         status: friendship.status,
-        createdAt: friendship.createdAt
+        createdAt: friendship.created_at
       };
     });
 
@@ -81,131 +67,114 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'send_request': {
         // Check if friendship already exists
-        const existingFriendship = await prisma.friendship.findFirst({
-          where: {
-            OR: [
-              { userId, friendId },
-              { userId: friendId, friendId: userId }
-            ]
-          }
-        });
+        const { data: existingFriendship, error: exErr } = await supabaseAdmin
+          .from('friendships')
+          .select('id')
+          .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
+          .maybeSingle();
 
         if (existingFriendship) {
           return NextResponse.json({ error: 'Friendship already exists' }, { status: 400 });
         }
 
-        const friendship = await prisma.friendship.create({
-          data: {
-            userId,
-            friendId,
-            status: 'pending'
-          },
-          include: {
-            friend: {
-              select: {
-                id: true,
-                username: true,
-                avatar: true,
-                isVerified: true,
-                isAdmin: true
-              }
-            }
-          }
-        });
+        const { data: created, error: createErr } = await supabaseAdmin
+          .from('friendships')
+          .insert({ user_id: userId, friend_id: friendId, status: 'pending' })
+          .select(`id, status, created_at, friend:users!friendships_friend_id_fkey (id, username, avatar, is_verified, is_admin)`) 
+          .single();
+        if (createErr) {
+          console.error('Error creating friendship:', createErr);
+          return NextResponse.json({ error: 'Failed to create request' }, { status: 500 });
+        }
 
         return NextResponse.json({ 
           success: true, 
           friendship: {
-            id: friendship.id,
-            user: friendship.friend,
-            status: friendship.status,
-            createdAt: friendship.createdAt
+            id: created.id,
+            user: created.friend,
+            status: created.status,
+            createdAt: created.created_at
           }
         });
       }
 
       case 'accept': {
-        const friendship = await prisma.friendship.findFirst({
-          where: {
-            userId: friendId,
-            friendId: userId,
-            status: 'pending'
-          }
-        });
+        const { data: friendship, error: findErr } = await supabaseAdmin
+          .from('friendships')
+          .select('id')
+          .eq('user_id', friendId)
+          .eq('friend_id', userId)
+          .eq('status', 'pending')
+          .single();
 
         if (!friendship) {
           return NextResponse.json({ error: 'Friend request not found' }, { status: 404 });
         }
 
-        await prisma.friendship.update({
-          where: { id: friendship.id },
-          data: { status: 'accepted' }
-        });
+        const { error: updErr } = await supabaseAdmin
+          .from('friendships')
+          .update({ status: 'accepted' })
+          .eq('id', friendship.id);
+        if (updErr) return NextResponse.json({ error: 'Failed to accept' }, { status: 500 });
 
         return NextResponse.json({ success: true });
       }
 
       case 'decline': {
-        const friendship = await prisma.friendship.findFirst({
-          where: {
-            userId: friendId,
-            friendId: userId,
-            status: 'pending'
-          }
-        });
+        const { data: friendship, error: findErr } = await supabaseAdmin
+          .from('friendships')
+          .select('id')
+          .eq('user_id', friendId)
+          .eq('friend_id', userId)
+          .eq('status', 'pending')
+          .single();
 
         if (!friendship) {
           return NextResponse.json({ error: 'Friend request not found' }, { status: 404 });
         }
 
-        await prisma.friendship.delete({
-          where: { id: friendship.id }
-        });
+        const { error: delErr } = await supabaseAdmin
+          .from('friendships')
+          .delete()
+          .eq('id', friendship.id);
+        if (delErr) return NextResponse.json({ error: 'Failed to decline' }, { status: 500 });
 
         return NextResponse.json({ success: true });
       }
 
       case 'unfriend': {
-        const friendship = await prisma.friendship.findFirst({
-          where: {
-            OR: [
-              { userId, friendId },
-              { userId: friendId, friendId: userId }
-            ],
-            status: 'accepted'
-          }
-        });
+        const { data: friendship, error: findErr } = await supabaseAdmin
+          .from('friendships')
+          .select('id')
+          .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
+          .eq('status', 'accepted')
+          .maybeSingle();
 
         if (!friendship) {
           return NextResponse.json({ error: 'Friendship not found' }, { status: 404 });
         }
 
-        await prisma.friendship.delete({
-          where: { id: friendship.id }
-        });
+        const { error: delErr2 } = await supabaseAdmin
+          .from('friendships')
+          .delete()
+          .eq('id', friendship.id);
+        if (delErr2) return NextResponse.json({ error: 'Failed to unfriend' }, { status: 500 });
 
         return NextResponse.json({ success: true });
       }
 
       case 'block': {
         // Remove existing friendship if any
-        await prisma.friendship.deleteMany({
-          where: {
-            OR: [
-              { userId, friendId },
-              { userId: friendId, friendId: userId }
-            ]
-          }
-        });
+        await supabaseAdmin
+          .from('friendships')
+          .delete()
+          .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`);
 
         // Create blocked relationship
-        await prisma.friendship.create({
-          data: {
-            userId,
-            friendId,
-            status: 'blocked'
-          }
-        });
+        const { error: blockErr } = await supabaseAdmin
+          .from('friendships')
+          .insert({ user_id: userId, friend_id: friendId, status: 'blocked' });
+        if (blockErr) return NextResponse.json({ error: 'Failed to block' }, { status: 500 });
 
         return NextResponse.json({ success: true });
       }

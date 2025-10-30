@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 
 // Force dynamic rendering
@@ -34,14 +32,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already following
-    const existingFollow = await prisma.follow.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: userId,
-          followingId: targetUserId
-        }
-      }
-    });
+    const { data: existingFollow, error: existingErr } = await supabaseAdmin
+      .from('follows')
+      .select('id')
+      .eq('follower_id', userId)
+      .eq('following_id', targetUserId)
+      .maybeSingle();
 
     if (existingFollow) {
       return NextResponse.json(
@@ -51,12 +47,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create follow relationship
-    await prisma.follow.create({
-      data: {
-        followerId: userId,
-        followingId: targetUserId
-      }
-    });
+    const { error: createErr } = await supabaseAdmin
+      .from('follows')
+      .insert({ follower_id: userId, following_id: targetUserId });
+    if (createErr) {
+      console.error('Error creating follow:', createErr);
+      return NextResponse.json({ error: 'Failed to follow user' }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -93,12 +90,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remove follow relationship
-    await prisma.follow.deleteMany({
-      where: {
-        followerId: userId,
-        followingId: targetUserId
-      }
-    });
+    const { error: delErr } = await supabaseAdmin
+      .from('follows')
+      .delete()
+      .eq('follower_id', userId)
+      .eq('following_id', targetUserId);
+    if (delErr) {
+      console.error('Error unfollowing:', delErr);
+      return NextResponse.json({ error: 'Failed to unfollow user' }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,

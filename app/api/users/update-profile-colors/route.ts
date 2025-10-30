@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,32 +21,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update or create user profile colors (store as JSON string)
+    // Update or create user profile colors (store as JSON string in users.profile_colors)
     const colorsJson = JSON.stringify({ cover, background, containers });
-    
-    // First, try to find the user
-    let user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
 
-    if (!user) {
-      // User doesn't exist in database, create a basic user record
-      user = await prisma.user.create({
-        data: {
-          id: userId,
-          username: 'User', // Default username, will be updated when user logs in properly
-          email: 'user@example.com', // Default email
-          profileColors: colorsJson
-        }
-      });
-    } else {
-      // User exists, update their colors
-      user = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          profileColors: colorsJson
-        }
-      });
+    // Try update first
+    const { data: updated, error: updErr } = await supabaseAdmin
+      .from('users')
+      .update({ profile_colors: colorsJson })
+      .eq('id', userId)
+      .select('id, username, email, profile_colors')
+      .single();
+
+    let user = updated;
+    if (updErr && (updErr.code === 'PGRST116' || updErr.message?.includes('0 rows'))) {
+      // Create minimal user row if missing
+      const { data: created, error: createErr } = await supabaseAdmin
+        .from('users')
+        .insert({ id: userId, username: 'User', email: 'user@example.com', profile_colors: colorsJson })
+        .select('id, username, email, profile_colors')
+        .single();
+      if (createErr) {
+        console.error('Error creating user/colors:', createErr);
+        return NextResponse.json({ message: 'Failed to update profile colors' }, { status: 500 });
+      }
+      user = created;
+    } else if (updErr) {
+      console.error('Error updating colors:', updErr);
+      return NextResponse.json({ message: 'Failed to update profile colors' }, { status: 500 });
     }
 
     return NextResponse.json({

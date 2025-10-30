@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -16,32 +14,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Get user's followers only (Instagram-style: only people who follow you)
-    const userRelations = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        followers: {
-          include: {
-            follower: {
-              select: {
-                id: true,
-                username: true,
-                avatar: true,
-                isVerified: true,
-                isAdmin: true
-              }
-            }
-          }
-        }
-      }
-    });
+    // Followers: users who follow the given userId
+    const { data, error } = await supabaseAdmin
+      .from('follows')
+      .select('follower:users!follows_follower_id_fkey (id, username, avatar, is_verified, is_admin)')
+      .eq('following_id', userId);
 
-    if (!userRelations) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (error) {
+      console.error('Error fetching followers:', error);
+      return NextResponse.json({ error: 'Failed to fetch online users' }, { status: 500 });
     }
 
-    // Only show followers (people who follow you)
-    const followers = userRelations.followers.map(f => f.follower);
+    const followers = (data || []).map((r: any) => r.follower).filter(Boolean);
 
     return NextResponse.json({
       connections: followers,
