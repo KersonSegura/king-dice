@@ -181,8 +181,6 @@ export default function Header() {
             >
               {isAuthenticated ? (
                 <>
-                  {/* Notifications bell */}
-                  <NotificationsBell />
                   {/* Avatar Button - Full clickable area */}
                   <div
                     className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer"
@@ -226,6 +224,10 @@ export default function Header() {
                       
                       {/* Menu Items */}
                       <div className="py-2">
+                        {/* Notifications inside menu */}
+                        <div className="px-6 pb-2">
+                          <NotificationsBell />
+                        </div>
                         <Link 
                           href={`/profile/${user?.username}`} 
                           className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
