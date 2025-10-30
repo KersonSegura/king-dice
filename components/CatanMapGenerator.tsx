@@ -2141,7 +2141,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
     // Numbers stay the same for both styles - always use CatanNumber*.svg files
     // Note: We skip number 7 (it doesn't exist in Catan)
     // All numbers use the same file format: CatanNumber{number}.svg
-    return `/CatanMapGenerator/CatanNumber${number}.svg`;
+    return `/CatanMapGenerator/CatanNumber${number}.svg?v=2`;
   };
 
   return (
