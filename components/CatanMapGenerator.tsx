@@ -2346,7 +2346,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
         {/* Map Container - Full width to use all available space */}
         {/* Map Container with mobile-specific padding */}
-        <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '24px', maxWidth: '100%', overflow: 'hidden' }}>
+        <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '24px', maxWidth: isMobile ? '100%' : '950px', width: '100%', overflow: 'hidden' }}>
             {/* Map Display Area - Responsive width for all screen sizes */}
     <div className="relative overflow-hidden bg-white" id="map-container" style={{ 
       width: isMobile ? '100%' : 'min(850px, 100%)', 
@@ -2354,7 +2354,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
       height: isMobile ? (mapType === 'expansion' ? '358px' : '303px') : '532px' 
     }}>
                 {/* Map Content Container - Centered and Contained */}
-                <div className="relative w-full h-full mobile-main-container flex items-center justify-center" style={{ overflow: 'visible', transform: 'translateY(450px) translateX(48px)' }}>
+                <div className="relative w-full h-full mobile-main-container flex items-center justify-center" style={{ overflow: 'visible', transform: isMobile ? 'translateY(450px) translateX(48px)' : 'translateY(450px) translateX(0px)' }}>
             {/* Nomination Buttons - Top Right */}
             {/* Classic Map Nomination Button */}
             {mapType === 'classic' && (
