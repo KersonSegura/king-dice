@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ExternalLink, MessageCircle, Gamepad2, Send, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
-import { supabaseClient } from '@/lib/supabase';
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import LoginModal from '@/components/LoginModal';
 import BackButton from '@/components/BackButton';
 
@@ -333,7 +333,12 @@ export default function DigitalCornerPage() {
   // Supabase Realtime for new messages
   useEffect(() => {
     if (!chatId) return;
-    const channel = supabaseClient
+    let channel: any;
+    let active = true;
+    (async () => {
+      const supabaseClient = await getSupabaseBrowserClient();
+      if (!active) return;
+      channel = supabaseClient
       .channel(`dc-chat-${chatId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, async (payload) => {
         try {
@@ -359,8 +364,9 @@ export default function DigitalCornerPage() {
           }
         } catch {}
       })
-      .subscribe((status) => setRtConnected(status === 'SUBSCRIBED'));
-    return () => { supabaseClient.removeChannel(channel); };
+      .subscribe((status: any) => setRtConnected(status === 'SUBSCRIBED'));
+    })();
+    return () => { active = false; try { channel && (getSupabaseBrowserClient().then(c => c.removeChannel(channel))); } catch {} };
   }, [chatId]);
 
   // Socket event listeners (legacy)
