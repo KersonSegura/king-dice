@@ -102,7 +102,18 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
         : item));
     };
     window.addEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
-    return () => window.removeEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
+    const onCommentsUpdate = (e: any) => {
+      const { imageId, comments } = e.detail || {};
+      if (!imageId) return;
+      setFeedItems(prev => prev.map(item => item.type === 'gallery' && item.id === imageId
+        ? { ...item, engagement: { ...item.engagement, comments } }
+        : item));
+    };
+    window.addEventListener('kd-gallery-comments-updated', onCommentsUpdate as any);
+    return () => {
+      window.removeEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
+      window.removeEventListener('kd-gallery-comments-updated', onCommentsUpdate as any);
+    };
   }, []);
 
   const handleVote = async (itemId: string, voteType: 'up' | 'down') => {
@@ -282,8 +293,8 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-4">
                   <div className="flex items-center space-x-1 text-white">
-                    <Heart className="w-4 h-4" />
-                    <span className="text-sm font-medium">{item.votes.upvotes}</span>
+                    <Heart className="w-4 h-4" fill={item.userVote === 'up' ? '#ef4444' : 'none'} stroke={item.userVote === 'up' ? '#ef4444' : '#ffffff'} strokeWidth={1.5} />
+                    <span className="text-sm font-medium">{item.votes.upvotes - item.votes.downvotes}</span>
                   </div>
                   <div className="flex items-center space-x-1 text-white">
                     <MessageCircle className="w-4 h-4" />

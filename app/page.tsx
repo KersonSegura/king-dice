@@ -432,13 +432,12 @@ export default function HomePage() {
       if (response.ok) {
         const data = await response.json();
         setImageComments(prev => [...prev, data.comment]);
-        
-        // Update comment count
+        // Update comment count in local lists and broadcast to feed
         if (selectedGalleryImage) {
-          setSelectedGalleryImage(prev => prev ? {
-            ...prev,
-            comments: (prev.comments || 0) + 1
-          } : null);
+          const newCount = (selectedGalleryImage.comments || 0) + 1;
+          setSelectedGalleryImage(prev => prev ? { ...prev, comments: newCount } : null);
+          setGalleryImages(prev => prev.map(img => img.id === selectedGalleryImage.id ? { ...img, comments: newCount } as any : img));
+          try { window.dispatchEvent(new CustomEvent('kd-gallery-comments-updated', { detail: { imageId: selectedGalleryImage.id, comments: newCount } })); } catch {}
         }
       }
     } catch (error) {
@@ -456,13 +455,12 @@ export default function HomePage() {
 
       if (response.ok) {
         setImageComments(prev => prev.filter(comment => comment.id !== commentId));
-        
-        // Update comment count
+        // Update comment count and broadcast
         if (selectedGalleryImage) {
-          setSelectedGalleryImage(prev => prev ? {
-            ...prev,
-            comments: Math.max((prev.comments || 0) - 1, 0)
-          } : null);
+          const newCount = Math.max((selectedGalleryImage.comments || 0) - 1, 0);
+          setSelectedGalleryImage(prev => prev ? { ...prev, comments: newCount } : null);
+          setGalleryImages(prev => prev.map(img => img.id === selectedGalleryImage.id ? { ...img, comments: newCount } as any : img));
+          try { window.dispatchEvent(new CustomEvent('kd-gallery-comments-updated', { detail: { imageId: selectedGalleryImage.id, comments: newCount } })); } catch {}
         }
       }
     } catch (error) {
