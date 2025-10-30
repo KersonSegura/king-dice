@@ -11,6 +11,7 @@ import LoginModal from './LoginModal';
 import FeaturesDropdown from './FeaturesDropdown';
 import BoardgamesDropdown from './BoardgamesDropdown';
 import SearchBar from './SearchBar';
+import NotificationsBell from './NotificationsBell';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -180,6 +181,8 @@ export default function Header() {
             >
               {isAuthenticated ? (
                 <>
+                  {/* Notifications bell */}
+                  <NotificationsBell />
                   {/* Avatar Button - Full clickable area */}
                   <div
                     className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer"
