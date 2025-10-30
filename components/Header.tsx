@@ -11,7 +11,7 @@ import LoginModal from './LoginModal';
 import FeaturesDropdown from './FeaturesDropdown';
 import BoardgamesDropdown from './BoardgamesDropdown';
 import SearchBar from './SearchBar';
-import NotificationsBell from './NotificationsBell';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,6 +19,7 @@ export default function Header() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [userStats, setUserStats] = useState({ level: 1, posts: 0 });
   const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { items: notifItems, unread: notifUnread, markAllRead } = useNotifications();
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -181,17 +182,24 @@ export default function Header() {
             >
               {isAuthenticated ? (
                 <>
-                  {/* Avatar Button - Full clickable area */}
-                  <div
-                    className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer"
-                    style={{
-                      backgroundColor: '#ffffff', // Ensure white background
-                      backgroundImage: `url(${user?.avatar || '/DefaultDiceAvatar.svg'})`,
-                      backgroundSize: 'contain',
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat'
-                    }}
-                  />
+                  {/* Avatar Button with notification badge */}
+                  <div className="relative">
+                    <div
+                      className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer"
+                      style={{
+                        backgroundColor: '#ffffff',
+                        backgroundImage: `url(${user?.avatar || '/DefaultDiceAvatar.svg'})`,
+                        backgroundSize: 'contain',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat'
+                      }}
+                    />
+                    {notifUnread > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-4 px-1.5 rounded-full min-w-[16px] text-center">
+                        {notifUnread > 9 ? '9+' : notifUnread}
+                      </span>
+                    )}
+                  </div>
                     
                   {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
@@ -224,10 +232,28 @@ export default function Header() {
                       
                       {/* Menu Items */}
                       <div className="py-2">
-                        {/* Notifications inside menu */}
-                        <div className="px-6 pb-2">
-                          <NotificationsBell />
-                        </div>
+                        {/* Notifications section */}
+                        {notifItems.length > 0 && (
+                          <div className="px-6 pb-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium">Notifications</span>
+                              {notifUnread > 0 && (
+                                <button className="text-xs text-blue-600" onClick={markAllRead}>Mark all read</button>
+                              )}
+                            </div>
+                            <ul className="max-h-56 overflow-y-auto divide-y rounded-lg border border-gray-100">
+                              {notifItems.slice(0, 6).map((n) => (
+                                <li key={n.id} className="p-3 flex items-center gap-3 bg-white hover:bg-gray-50">
+                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0"></div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm text-gray-800 truncate">{n.title}</p>
+                                    <p className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</p>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                         <Link 
                           href={`/profile/${user?.username}`} 
                           className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
