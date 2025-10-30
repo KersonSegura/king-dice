@@ -12,6 +12,7 @@ import FeaturesDropdown from './FeaturesDropdown';
 import BoardgamesDropdown from './BoardgamesDropdown';
 import SearchBar from './SearchBar';
 import { useNotifications } from '@/hooks/useNotifications';
+import DevNotificationTestButton from './DevNotificationTestButton';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -570,6 +571,9 @@ export default function Header() {
           </div>
         )}
       </div>
+
+      {/* Dev-only floating test button */}
+      <DevNotificationTestButton />
       
       {/* Login Modal */}
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
