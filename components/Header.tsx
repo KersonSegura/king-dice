@@ -25,6 +25,7 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
 
   // Simple hover handlers - no delays, just immediate response
   const openMenu = () => {
@@ -32,11 +33,13 @@ export default function Header() {
       clearTimeout(hoverTimeoutRef.current);
     }
     setIsUserMenuOpen(true);
+    setShowNotificationsPanel(false);
   };
 
   const closeMenu = () => {
     hoverTimeoutRef.current = setTimeout(() => {
       setIsUserMenuOpen(false);
+      setShowNotificationsPanel(false);
     }, 100);
   };
 
@@ -205,104 +208,108 @@ export default function Header() {
                   {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-1 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 py-4 z-50 backdrop-blur-sm bg-white/95">
-                      {/* User Info Section */}
-                      <div className="px-6 py-4 border-b border-gray-100">
-                                                 <div className="flex items-center space-x-3">
-                                                       <div 
+                      {showNotificationsPanel ? (
+                        <>
+                          <div className="px-4 pb-2 border-b border-gray-100 flex items-center justify-between">
+                            <button className="text-sm text-gray-600 hover:text-gray-800" onClick={() => setShowNotificationsPanel(false)}>← Back</button>
+                            <span className="text-sm font-medium">Notifications</span>
+                            {notifUnread > 0 ? (
+                              <button className="text-xs text-blue-600" onClick={markAllRead}>Mark all read</button>
+                            ) : <span className="text-xs text-gray-400"></span>}
+                          </div>
+                          <div className="max-h-96 overflow-y-auto">
+                            {notifItems.length === 0 ? (
+                              <div className="p-4 text-sm text-gray-500">No notifications yet</div>
+                            ) : (
+                              <ul className="divide-y">
+                                {notifItems.map((n) => (
+                                  <li key={n.id} className="p-3 flex items-center gap-3 hover:bg-gray-50">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0"></div>
+                                    <div className="min-w-0">
+                                      <p className="text-sm text-gray-800 truncate">{n.title}</p>
+                                      <p className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* User Info Section */}
+                          <div className="px-6 py-4 border-b border-gray-100">
+                            <div className="flex items-center space-x-3">
+                              <div 
                                 className="w-16 h-16 rounded-full border-2 border-black overflow-hidden"
                                 style={{
-                                  backgroundColor: '#ffffff', // Ensure white background
+                                  backgroundColor: '#ffffff',
                                   backgroundImage: `url(${user?.avatar || '/DefaultDiceAvatar.svg'})`,
                                   backgroundSize: 'contain',
                                   backgroundPosition: 'center',
                                   backgroundRepeat: 'no-repeat'
                                 }}
                               />
-                                                     <div className="flex-1 min-w-0 space-y-1">
-                             <p className="text-sm font-semibold text-gray-900 truncate">{user?.username}</p>
-                             <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                             <div className="flex items-center space-x-2">
-                               <span className="text-xs text-gray-600">Level {userStats.level}</span>
-                               <span className="text-xs text-gray-400">•</span>
-                               <span className="text-xs text-gray-600">{userStats.posts} total posts</span>
-                             </div>
-                           </div>
-                          
-                        </div>
-                      </div>
-                      
-                      {/* Menu Items */}
-                      <div className="py-2">
-                        {/* Notifications section */}
-                        {notifItems.length > 0 && (
-                          <div className="px-6 pb-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium">Notifications</span>
-                              {notifUnread > 0 && (
-                                <button className="text-xs text-blue-600" onClick={markAllRead}>Mark all read</button>
-                              )}
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <p className="text-sm font-semibold text-gray-900 truncate">{user?.username}</p>
+                                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-xs text-gray-600">Level {userStats.level}</span>
+                                  <span className="text-xs text-gray-400">•</span>
+                                  <span className="text-xs text-gray-600">{userStats.posts} total posts</span>
+                                </div>
+                              </div>
                             </div>
-                            <ul className="max-h-56 overflow-y-auto divide-y rounded-lg border border-gray-100">
-                              {notifItems.slice(0, 6).map((n) => (
-                                <li key={n.id} className="p-3 flex items-center gap-3 bg-white hover:bg-gray-50">
-                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0"></div>
-                                  <div className="min-w-0">
-                                    <p className="text-sm text-gray-800 truncate">{n.title}</p>
-                                    <p className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</p>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
                           </div>
-                        )}
-                        <Link 
-                          href={`/profile/${user?.username}`} 
-                          className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
-                        >
-                                                     <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                             <Image
-                               src="/ProfileIconOn.svg"
-                               alt="Profile Icon"
-                               width={26}
-                               height={26}
-                               className="w-6 h-6"
-                             />
-                           </div>
-                          <div className="flex-1">
-                            <span className="text-sm font-medium">Profile</span>
-                            <p className="text-xs text-gray-500">View your profile</p>
+                          {/* Menu Items */}
+                          <div className="py-2">
+                            {/* Notifications preview */}
+                            {notifItems.length > 0 && (
+                              <div className="px-6 pb-3">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-sm font-medium">Notifications</span>
+                                  {notifUnread > 0 && (
+                                    <button className="text-xs text-blue-600" onClick={markAllRead}>Mark all read</button>
+                                  )}
+                                </div>
+                                <ul className="max-h-56 overflow-y-auto divide-y rounded-lg border border-gray-100">
+                                  {notifItems.slice(0, 6).map((n) => (
+                                    <li key={n.id} className="p-3 flex items-center gap-3 bg-white hover:bg-gray-50">
+                                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0"></div>
+                                      <div className="min-w-0">
+                                        <p className="text-sm text-gray-800 truncate">{n.title}</p>
+                                        <p className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</p>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            <Link href={`/profile/${user?.username}`} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                                <Image src="/ProfileIconOn.svg" alt="Profile Icon" width={26} height={26} className="w-6 h-6" />
+                              </div>
+                              <div className="flex-1">
+                                <span className="text-sm font-medium">Profile</span>
+                                <p className="text-xs text-gray-500">View your profile</p>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                              </div>
+                            </Link>
+                            <button onClick={() => setShowNotificationsPanel(true)} className="w-full flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center"><Image src="/BellIcon.svg" alt="Notifications Icon" width={24} height={24} className="w-6 h-6" /></div>
+                              <div className="flex-1 text-left"><span className="text-sm font-medium">Notifications</span><p className="text-xs text-gray-500">View all notifications</p></div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                            </button>
+                            <Link href="/settings" className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center"><Image src="/SettingsIcon.svg" alt="Settings Icon" width={26} height={26} className="w-6 h-6" /></div>
+                              <div className="flex-1"><span className="text-sm font-medium">Settings</span><p className="text-xs text-gray-500">Manage your account</p></div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                            </Link>
                           </div>
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </div>
-                        </Link>
-                        
-                        <Link 
-                          href="/settings" 
-                          className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
-                        >
-                                                     <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                             <Image
-                               src="/SettingsIcon.svg"
-                               alt="Settings Icon"
-                               width={26}
-                               height={26}
-                               className="w-6 h-6"
-                             />
-                           </div>
-                          <div className="flex-1">
-                            <span className="text-sm font-medium">Settings</span>
-                            <p className="text-xs text-gray-500">Manage your account</p>
-                          </div>
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </div>
-                        </Link>
-                      </div>
+                        </>
+                      )}
                       
                       {/* Divider */}
                       <div className="border-t border-gray-100 my-2"></div>
