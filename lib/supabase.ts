@@ -1,25 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+// Use public vars in browser, fall back to server vars on server
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  // Avoid hard crash with opaque error; surface clearer message in server logs
+  console.error('Missing Supabase env: SUPABASE_URL/NEXT_PUBLIC_SUPABASE_URL or ANON key');
 }
 
 // Client for server-side operations (with service role for admin access)
 // Use service role for full database access in API routes
-export const supabaseAdmin = supabaseServiceRoleKey
-  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { persistSession: false }
-    })
-  : createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false }
-    });
+export const supabaseAdmin = createClient(
+  supabaseUrl!,
+  supabaseServiceRoleKey || supabaseAnonKey!,
+  { auth: { persistSession: false } }
+);
 
 // Client for client-side (browser) - uses anon key with row-level security
-export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+export const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!);
 
 // Storage buckets configuration
 export const STORAGE_BUCKETS = {
