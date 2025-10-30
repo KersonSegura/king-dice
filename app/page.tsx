@@ -385,7 +385,7 @@ export default function HomePage() {
         },
         body: JSON.stringify({
           imageId,
-          voteType: selectedGalleryImage?.userVote === 'up' ? 'none' : 'up',
+          voteType: selectedGalleryImage?.userVote === 'up' ? null : 'up',
           userId: user.id
         })
       });
