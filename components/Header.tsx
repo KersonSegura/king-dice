@@ -346,37 +346,30 @@ export default function Header() {
                         </>
                       )}
                       
-                      {/* Divider */}
-                      <div className="border-t border-gray-100 my-2"></div>
-                      
-                      {/* Logout Section */}
-                      <div className="py-2">
-                        <button 
-                          className="flex items-center space-x-3 w-full px-6 py-3 text-red-600 hover:bg-red-50 transition-all duration-200 group"
-                          onClick={() => {
-                            logout();
-                          }}
-                        >
-                                                     <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                             <Image
-                               src="/SingOutIcon.svg"
-                               alt="Sign Out Icon"
-                               width={30}
-                               height={30}
-                               className="w-7 h-7 ml-2"
-                             />
-                           </div>
-                          <div className="flex-1 text-left">
-                            <span className="text-sm font-medium">Sign Out</span>
-                            <p className="text-xs text-red-500">Log out of your account</p>
+                      {!showNotificationsPanel && (
+                        <>
+                          {/* Divider */}
+                          <div className="border-t border-gray-100 my-2"></div>
+                          {/* Logout Section */}
+                          <div className="py-2">
+                            <button 
+                              className="flex items-center space-x-3 w-full px-6 py-3 text-red-600 hover:bg-red-50 transition-all duration-200 group"
+                              onClick={() => { logout(); }}
+                            >
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                                <Image src="/SingOutIcon.svg" alt="Sign Out Icon" width={30} height={30} className="w-7 h-7 ml-2" />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <span className="text-sm font-medium">Sign Out</span>
+                                <p className="text-xs text-red-500">Log out of your account</p>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                              </div>
+                            </button>
                           </div>
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </div>
-                        </button>
-                      </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </>
