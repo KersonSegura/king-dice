@@ -1048,7 +1048,7 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
   
   for (const eight of eights) {
     
-    // Find all positions that are not adjacent to any existing 6 or 8
+    // Find all positions that are not adjacent to any existing 6 (8s CAN be adjacent to each other)
     const validPositions = availablePositions.filter(pos => {
       // Check if this position is adjacent to any existing 6 or 8
       const neighbors = EXPANSION_NEIGHBORS[pos] || [];
