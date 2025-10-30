@@ -2349,7 +2349,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '24px', maxWidth: '100%', overflow: 'hidden' }}>
             {/* Map Display Area - Responsive width for all screen sizes */}
     <div className="relative overflow-hidden bg-white" id="map-container" style={{ 
-      width: isMobile ? '100%' : 'min(750px, 100%)', 
+      width: isMobile ? '100%' : 'min(850px, 100%)', 
       maxWidth: '100%', 
       height: isMobile ? (mapType === 'expansion' ? '358px' : '303px') : '532px' 
     }}>
