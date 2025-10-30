@@ -1,1 +1,18 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="71.4" height="71.4" viewBox="0 0 71.4 71.4"><defs><style>.cls-1{fill:#f9e6b7;}.cls-2{font-size:48.8545px;font-family:CoolveticaRg-Regular, Coolvetica;letter-spacing:-0.01em;}</style></defs><circle class="cls-1" cx="35.7" cy="35.7" r="35.7"/><circle cx="31.8832" cy="55.5916" r="2.3982"/><circle cx="39.5168" cy="55.5916" r="2.3982"/><text class="cls-2" transform="translate(21.6307 46.241)">11</text></svg>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="71.4" height="71.4" viewBox="0 0 71.4 71.4">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #f9e6b7;
+      }
+    </style>
+  </defs>
+  <g>
+    <circle class="cls-1" cx="35.7" cy="35.7" r="35.7"/>
+    <circle cx="31.8832" cy="55.5916" r="2.3982"/>
+    <circle cx="39.5168" cy="55.5916" r="2.3982"/>
+    <g>
+      <path d="M504.7705,453.041V430.6167H498.126V426.22a15.2846,15.2846,0,0,0,3.5176-.3418,5.9876,5.9876,0,0,0,2.3208-1.05,4.5276,4.5276,0,0,0,1.3676-1.7588,8.1776,8.1776,0,0,0,.6109-2.4672h5.1787V453.041Z" transform="translate(-476.3 -406.8)"/>
+      <path d="M518.5957,453.041V430.6167h-6.644V426.22a15.2829,15.2829,0,0,0,3.5171-.3418,5.9682,5.9682,0,0,0,2.32-1.05,4.522,4.522,0,0,0,1.3691-1.7588,8.1934,8.1934,0,0,0,.6094-2.4672h5.18V453.041Z" transform="translate(-476.3 -406.8)"/>
+    </g>
+  </g>
+</svg>
