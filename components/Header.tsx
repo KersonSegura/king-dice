@@ -298,7 +298,7 @@ export default function Header() {
                               </div>
                             </Link>
                             <button onClick={() => setShowNotificationsPanel(true)} className="w-full flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
-                              <div className="w-8 h-8 rounded-lg flex items-center justify-center"><Image src="/BellIcon.svg" alt="Notifications Icon" width={24} height={24} className="w-6 h-6" /></div>
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center"><Image src="/NotificationsIcon.svg" alt="Notifications Icon" width={24} height={24} className="w-6 h-6" /></div>
                               <div className="flex-1 text-left"><span className="text-sm font-medium">Notifications</span><p className="text-xs text-gray-500">View all notifications</p></div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                             </button>
