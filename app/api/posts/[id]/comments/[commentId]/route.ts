@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateCommentVotes, deleteComment } from '@/lib/comments';
+import { updateCommentVotes, deleteComment, getCommentById } from '@/lib/comments';
 import { updatePostRepliesCount } from '@/lib/posts';
+import { createNotification } from '@/lib/notifications';
 
 export async function PUT(
   request: NextRequest,
@@ -31,6 +32,24 @@ export async function PUT(
         { error: 'Comment not found' },
         { status: 404 }
       );
+    }
+
+    // Notify comment author on upvote (like)
+    if (voteType === 'upvote') {
+      try {
+        const target = getCommentById(commentId);
+        if (target?.author?.id && target.author.id !== userId) {
+          await createNotification({
+            userId: target.author.id,
+            type: 'like',
+            actorId: userId,
+            entityType: 'comment',
+            entityId: commentId,
+            url: request.nextUrl?.pathname.replace(`/comments/${commentId}`, '') + `#comment-${commentId}`,
+            message: `Someone liked your comment`,
+          });
+        }
+      } catch {}
     }
 
     return NextResponse.json({ 

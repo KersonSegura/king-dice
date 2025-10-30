@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPostById, updatePostRepliesCount } from '@/lib/posts';
 import { getCommentsByPostId, createComment } from '@/lib/comments';
 import { awardXP } from '@/lib/reputation';
+import { createNotification } from '@/lib/notifications';
 import { moderateText } from '@/lib/moderation';
 
 
@@ -98,6 +99,21 @@ export async function POST(
         console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from replying to a discussion!`);
       }
     }
+
+    // Notify post author (if different from commenter)
+    try {
+      if (post?.author?.id && post.author.id !== author.id) {
+        await createNotification({
+          userId: post.author.id,
+          type: 'comment',
+          actorId: author.id,
+          entityType: 'post',
+          entityId: postId,
+          url: `/forums/post/${postId}#comment-${newComment?.id}`,
+          message: `${author.name} commented on your post`,
+        });
+      }
+    } catch {}
     
     return NextResponse.json({ 
       success: true, 
