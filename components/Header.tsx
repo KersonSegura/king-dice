@@ -20,7 +20,7 @@ export default function Header() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [userStats, setUserStats] = useState({ level: 1, posts: 0 });
   const { user, isAuthenticated, logout, isLoading } = useAuth();
-  const { items: notifItems, unread: notifUnread, markAllRead } = useNotifications();
+  const { items: notifItems, unread: notifUnread, markAllRead, markOneRead } = useNotifications();
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -302,7 +302,7 @@ export default function Header() {
                                 </div>
                                 <ul className="max-h-56 overflow-y-auto divide-y rounded-lg border border-gray-100">
                                   {notifItems.slice(0, 6).map((n) => (
-                                    <li key={n.id} className="p-3 flex items-center gap-3 bg-white hover:bg-gray-50">
+                                    <li key={n.id} onMouseEnter={() => markOneRead(n.id)} className="p-3 flex items-center gap-3 bg-white hover:bg-gray-50 cursor-pointer" onClick={() => { if (n.url) window.location.href = n.url; }}>
                                       <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0"></div>
                                       <div className="min-w-0">
                                         <p className="text-sm text-gray-800 truncate">{n.title}</p>

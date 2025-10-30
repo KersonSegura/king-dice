@@ -8,50 +8,46 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const limit = parseInt(searchParams.get('limit') || '20');
+    const unreadOnly = (searchParams.get('unread') || 'true') !== 'false';
     if (!userId) return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
 
-    // Followers (someone followed you)
-    const { data: follows } = await supabaseAdmin
-      .from('follows')
-      .select(`id, follower_id, following_id, created_at,
-               follower:users!follows_follower_id_fkey(id, username, avatar)`) 
-      .eq('following_id', userId)
+    const query = supabaseAdmin
+      .from('notifications')
+      .select(`
+        id, user_id, type, actor_id, entity_type, entity_id, url, message, read, created_at,
+        actor:users!notifications_actor_id_fkey(id, username, avatar)
+      `)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
+    const { data, error } = unreadOnly ? await query.eq('read', false) : await query;
+    if (error) throw error;
 
-    // Follow requests (if using private mode)
-    const { data: followRequests } = await supabaseAdmin
-      .from('follow_requests')
-      .select(`id, requester_id, target_id, status, created_at,
-               requester:users!follow_requests_requester_id_fkey(id, username, avatar)`) 
-      .eq('target_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    const notifications = [
-      ...(follows || []).map((f: any) => ({
-        id: `follow:${f.id}`,
-        type: 'follow' as const,
-        title: `${f.follower?.username || 'Someone'} followed you`,
-        actor: f.follower,
-        createdAt: f.created_at
-      })),
-      ...(followRequests || []).map((r: any) => ({
-        id: `follow_request:${r.id}`,
-        type: 'follow_request' as const,
-        title: `${r.requester?.username || 'Someone'} requested to follow you`,
-        actor: r.requester,
-        createdAt: r.created_at,
-        status: r.status
-      }))
-    ]
-    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, limit);
+    const notifications = (data || []).map((n: any) => ({
+      id: n.id,
+      type: n.type,
+      title: n.message || inferTitle(n),
+      actor: n.actor,
+      url: n.url,
+      createdAt: n.created_at,
+      read: n.read
+    }));
 
     return NextResponse.json({ notifications });
   } catch (e) {
     console.error('Error fetching notifications:', e);
     return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
+  }
+}
+
+function inferTitle(n: any): string {
+  switch (n.type) {
+    case 'follow': return `${n.actor?.username || 'Someone'} followed you`;
+    case 'follow_request': return `${n.actor?.username || 'Someone'} requested to follow you`;
+    case 'comment': return `${n.actor?.username || 'Someone'} commented on your post`;
+    case 'reply': return `${n.actor?.username || 'Someone'} replied to your comment`;
+    case 'like': return `${n.actor?.username || 'Someone'} liked your post`;
+    default: return 'New notification';
   }
 }
 

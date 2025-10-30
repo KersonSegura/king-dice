@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { createNotification } from '@/lib/notifications';
 
 
 // Force dynamic rendering
@@ -54,6 +55,16 @@ export async function POST(request: NextRequest) {
       console.error('Error creating follow:', createErr);
       return NextResponse.json({ error: 'Failed to follow user' }, { status: 500 });
     }
+
+    // Create notification for the target user
+    await createNotification({
+      userId: targetUserId,
+      type: 'follow',
+      actorId: userId,
+      entityType: 'profile',
+      entityId: userId,
+      url: `/profile/${userId}`,
+    });
 
     return NextResponse.json({
       success: true,

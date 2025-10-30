@@ -24,7 +24,7 @@ export function useNotifications() {
 
     const load = async () => {
       try {
-        const res = await fetch(`/api/notifications?userId=${user.id}&limit=20`);
+        const res = await fetch(`/api/notifications?userId=${user.id}&limit=20&unread=true`);
         const json = await res.json();
         if (!isActive) return;
         const list: NotificationItem[] = json.notifications || [];
@@ -36,28 +36,16 @@ export function useNotifications() {
 
     (async () => {
       const supabase = await getSupabaseBrowserClient();
-      const ch1 = supabase
-        .channel(`notif-follows-${user!.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'follows', filter: `following_id=eq.${user!.id}` }, (payload) => {
+      const ch = supabase
+        .channel(`notif-${user!.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user!.id}` }, (payload) => {
           const row: any = payload.new;
           setUnread((u) => u + 1);
-          setItems((prev) => [{ id: `follow:${row.id}`, type: 'follow', title: 'Someone followed you', actor: null, createdAt: row.created_at }, ...prev]);
+          setItems((prev) => [{ id: row.id, type: row.type, title: row.message || 'New notification', actor: null, createdAt: row.created_at }, ...prev]);
         })
         .subscribe();
 
-      const ch2 = supabase
-        .channel(`notif-requests-${user!.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'follow_requests', filter: `target_id=eq.${user!.id}` }, (payload) => {
-          const row: any = payload.new;
-          setUnread((u) => u + 1);
-          setItems((prev) => [{ id: `follow_request:${row.id}`, type: 'follow_request', title: 'New follow request', actor: null, createdAt: row.created_at }, ...prev]);
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(ch1);
-        supabase.removeChannel(ch2);
-      };
+      return () => { supabase.removeChannel(ch); };
     })();
 
     // Listen to local dev test events to bump badge immediately
@@ -67,9 +55,23 @@ export function useNotifications() {
     return () => { isActive = false; window.removeEventListener('kd-notif-test', onDevTest); };
   }, [isAuthenticated, user]);
 
-  const markAllRead = () => setUnread(0);
+  const markAllRead = async () => {
+    try {
+      if (items.length === 0) return;
+      await fetch('/api/notifications/mark-read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: items.map(i => i.id) }) });
+    } finally {
+      setItems([]);
+      setUnread(0);
+    }
+  };
 
-  return { items, unread, markAllRead };
+  const markOneRead = async (id: string) => {
+    try { await fetch('/api/notifications/mark-read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id] }) }); } catch {}
+    setItems((prev) => prev.filter(i => i.id !== id));
+    setUnread((u) => Math.max(0, u - 1));
+  };
+
+  return { items, unread, markAllRead, markOneRead };
 }
 
 
