@@ -200,7 +200,7 @@ export default function Header() {
                     />
                     {!isUserMenuOpen && notifUnread > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-4 px-1.5 rounded-full min-w-[16px] text-center">
-                        {notifUnread > 9 ? '9+' : notifUnread}
+                        {notifUnread > 99 ? '99+' : notifUnread}
                       </span>
                     )}
                   </div>
@@ -302,7 +302,7 @@ export default function Header() {
                                 <Image src="/NotificationsIcon.svg" alt="Notifications Icon" width={24} height={24} className="w-6 h-6" />
                                 {isUserMenuOpen && notifUnread > 0 && (
                                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-4 px-1 rounded-full min-w-[14px] text-center">
-                                    {notifUnread > 9 ? '9+' : notifUnread}
+                                    {notifUnread > 99 ? '99+' : notifUnread}
                                   </span>
                                 )}
                               </div>
