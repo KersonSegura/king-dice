@@ -991,65 +991,80 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
 // This ensures that no 6-8 adjacency violations can ever occur.
 function placeNumbersSmartly(desertPositions: number[], customRules: any): (number | null)[] {
   
-
-  
   // Official 5-6 player expansion numbers (28 total + 2 deserts = 30)
   const expansionNumbers = [
     2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12
   ];
   
-  // Initialize board with nulls
-  const numbers: (number | null)[] = new Array(30).fill(null);
+  // Try multiple times to find a valid placement
+  const maxAttempts = 100;
   
-  // Place deserts first (no numbers)
-  desertPositions.forEach(pos => {
-    numbers[pos] = null;
-  });
-  
-  // Get all available positions (non-desert)
-  const availablePositions = Array.from({ length: 30 }, (_, i) => i)
-    .filter(i => !desertPositions.includes(i));
-  
-  // Step 1: Place the 6s first in random positions (6s CAN be adjacent to each other, but not to 8s)
-  const sixes = expansionNumbers.filter(n => n === 6);
-  const sixPositions: number[] = [];
-  
-  for (const six of sixes) {
-    
-    // Find all positions that are valid (6s can be adjacent to each other - that's fine!)
-    // The only constraint is that 6s and 8s cannot be adjacent to each other (handled in step 2)
-    const validPositions = availablePositions.filter(pos => {
-      // Any position is valid for a 6 (as long as it's not a desert, which is already filtered)
-      // The constraint with 8s will be enforced when placing 8s
-      return true;
-    });
-    
-    if (validPositions.length === 0) {
-      console.error('🚫 No valid positions for 6 - this should never happen!');
-      throw new Error('Cannot place 6s without adjacency violations');
-    }
-    
-    // Choose a random valid position
-    const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-    numbers[chosenPos] = six;
-    sixPositions.push(chosenPos);
-    
-    // Remove this position from available positions
-    const index = availablePositions.indexOf(chosenPos);
-    if (index !== -1) {
-      availablePositions.splice(index, 1);
-    }
-    
-  }
-  
-  // Step 2: Place the 8s in random non-adjacent positions (also not adjacent to 6s)
-  const eights = expansionNumbers.filter(n => n === 8);
-  const eightPositions: number[] = [];
-  
-  for (const eight of eights) {
-    
-    // Find all positions that are not adjacent to any existing 6 (8s CAN be adjacent to each other)
-    const validPositions = availablePositions.filter(pos => {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      // Initialize board with nulls
+      const numbers: (number | null)[] = new Array(30).fill(null);
+      
+      // Place deserts first (no numbers)
+      desertPositions.forEach(pos => {
+        numbers[pos] = null;
+      });
+      
+      // Get all available positions (non-desert)
+      const availablePositions = Array.from({ length: 30 }, (_, i) => i)
+        .filter(i => !desertPositions.includes(i));
+      
+      // Step 1: Place the 6s first in random non-adjacent positions
+      const sixes = expansionNumbers.filter(n => n === 6);
+      const sixPositions: number[] = [];
+      
+      for (const six of sixes) {
+        // Find all positions that are not adjacent to any existing 6
+        const validPositions = availablePositions.filter(pos => {
+          // Check if this position is adjacent to any existing 6
+          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+          const isAdjacentToSix = neighbors.some(neighbor => sixPositions.includes(neighbor));
+          
+          // Also check if any existing 6s are adjacent to this position
+          const isAdjacentToExistingSixes = sixPositions.some(sixPos => {
+            const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
+            return sixNeighbors.includes(pos);
+          });
+          
+          // CRITICAL: Check if placing a 6 here would make any existing 6s adjacent to each other
+          const wouldCreateAdjacentSixes = sixPositions.some(existingSixPos => {
+            const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
+            return existingSixNeighbors.includes(pos);
+          });
+          
+          const isValid = !isAdjacentToSix && !isAdjacentToExistingSixes && !wouldCreateAdjacentSixes;
+          
+          return isValid;
+        });
+        
+        if (validPositions.length === 0) {
+          // If we can't place a 6, restart the attempt
+          throw new Error('RETRY_PLACEMENT');
+        }
+        
+        // Choose a random valid position
+        const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+        numbers[chosenPos] = six;
+        sixPositions.push(chosenPos);
+        
+        // Remove this position from available positions
+        const index = availablePositions.indexOf(chosenPos);
+        if (index !== -1) {
+          availablePositions.splice(index, 1);
+        }
+      }
+      
+      // Step 2: Place the 8s in random non-adjacent positions (also not adjacent to 6s)
+      const eights = expansionNumbers.filter(n => n === 8);
+      const eightPositions: number[] = [];
+      
+      for (const eight of eights) {
+        // Find all positions that are not adjacent to any existing 6 or 8
+        const validPositions = availablePositions.filter(pos => {
       // Check if this position is adjacent to any existing 6 or 8
       const neighbors = EXPANSION_NEIGHBORS[pos] || [];
       const isAdjacentToSixOrEight = neighbors.some(neighbor => 
@@ -1077,52 +1092,90 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         return existingSixNeighbors.includes(pos);
       });
       
-      // Only prevent 6-8 adjacency, not 8-8 or 6-6 adjacency
-      // 8s CAN be adjacent to each other, and 6s CAN be adjacent to each other
-      // The ONLY constraint is: 6s and 8s cannot be adjacent to each other
-      const isValid = !isAdjacentToSix && !isAdjacentToExistingSixes;
+          const isValid = !isAdjacentToSixOrEight && !isAdjacentToExistingHotNumbers && !wouldCreateAdjacentEights && !wouldCreateAdjacentSixes;
+          
+          return isValid;
+        });
+        
+        if (validPositions.length === 0) {
+          // If we can't place an 8, restart the attempt
+          throw new Error('RETRY_PLACEMENT');
+        }
+        
+        // Choose a random valid position
+        const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+        numbers[chosenPos] = eight;
+        eightPositions.push(chosenPos);
+        
+        // Remove this position from available positions
+        const index = availablePositions.indexOf(chosenPos);
+        if (index !== -1) {
+          availablePositions.splice(index, 1);
+        }
+      }
+  
+      // Step 3: Place all remaining numbers randomly in remaining positions
+      const remainingNumbers = expansionNumbers.filter(n => n !== 6 && n !== 8);
+      const shuffledRemaining = shuffleInPlace([...remainingNumbers]);
       
-      return isValid;
-    });
-    
-    if (validPositions.length === 0) {
-      console.error('🚫 No valid positions for 8 - this should never happen!');
-      throw new Error('Cannot place 8s without adjacency violations');
+      for (let i = 0; i < shuffledRemaining.length && i < availablePositions.length; i++) {
+        const number = shuffledRemaining[i];
+        const position = availablePositions[i];
+        numbers[position] = number;
+      }
+      
+      // Final validation to ensure no adjacency violations
+      if (!noHotAdjacencyExpansion(numbers, customRules)) {
+        // If validation fails, restart the attempt
+        throw new Error('RETRY_PLACEMENT');
+      }
+      
+      // Success! Return the valid placement
+      return numbers;
+      
+    } catch (error) {
+      // If this was a retry signal, continue to next attempt
+      if (error instanceof Error && error.message === 'RETRY_PLACEMENT') {
+        continue;
+      }
+      // Otherwise, re-throw the error
+      throw error;
     }
-    
-    // Choose a random valid position
-    const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-    numbers[chosenPos] = eight;
-    eightPositions.push(chosenPos);
-    
-    // Remove this position from available positions
-    const index = availablePositions.indexOf(chosenPos);
-    if (index !== -1) {
-      availablePositions.splice(index, 1);
-    }
-    
   }
   
-  // Step 3: Place all remaining numbers randomly in remaining positions
-  const remainingNumbers = expansionNumbers.filter(n => n !== 6 && n !== 8);
-  const shuffledRemaining = shuffleInPlace([...remainingNumbers]);
+  // If we exhausted all attempts, fall back to a more permissive placement
+  console.warn('⚠️ Could not find valid placement after ' + maxAttempts + ' attempts, using fallback...');
   
-  for (let i = 0; i < shuffledRemaining.length && i < availablePositions.length; i++) {
-    const number = shuffledRemaining[i];
-    const position = availablePositions[i];
-    numbers[position] = number;
+  // Initialize board with nulls
+  const numbers: (number | null)[] = new Array(30).fill(null);
+  
+  // Place deserts first (no numbers)
+  desertPositions.forEach(pos => {
+    numbers[pos] = null;
+  });
+  
+  // Get all available positions (non-desert)
+  const availablePositions = Array.from({ length: 30 }, (_, i) => i)
+    .filter(i => !desertPositions.includes(i));
+  
+  // Shuffle all numbers and place them in available positions
+  const shuffledNumbers = shuffleInPlace([...expansionNumbers]);
+  let numIndex = 0;
+  
+  for (let i = 0; i < availablePositions.length && numIndex < shuffledNumbers.length; i++) {
+    numbers[availablePositions[i]] = shuffledNumbers[numIndex];
+    numIndex++;
   }
   
-  // Final validation to ensure no adjacency violations
+  // Try to repair any violations
+  const repaired = repairExpansionAdjacency(numbers, customRules);
   
-
-  
-  if (!noHotAdjacencyExpansion(numbers, customRules)) {
-    console.error('🚫 Smart placement failed validation - this should never happen!');
-    throw new Error('Smart placement failed to prevent adjacency violations');
+  // If repair failed, at least return something rather than crashing
+  if (!noHotAdjacencyExpansion(repaired, customRules)) {
+    console.error('🚫 Fallback placement also has violations - returning anyway');
   }
   
-  return numbers;
+  return repaired;
 }
 
 // Generate spiral order for expansion board (similar to classic but for 30 tiles)
