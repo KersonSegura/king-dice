@@ -401,6 +401,8 @@ export default function HomePage() {
             img.id === imageId ? result.image : img
           )
         );
+        // Notify other components (e.g., Feed) to update counters live
+        try { window.dispatchEvent(new CustomEvent('kd-gallery-image-updated', { detail: { image: result.image } })); } catch {}
       }
     } catch (error) {
       console.error('Error liking image:', error);

@@ -92,6 +92,19 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
     }
   };
 
+  // Listen for gallery image updates from elsewhere (e.g., ImageModal)
+  useEffect(() => {
+    const onGalleryUpdate = (e: any) => {
+      const updated = e.detail?.image;
+      if (!updated) return;
+      setFeedItems(prev => prev.map(item => item.type === 'gallery' && item.id === updated.id
+        ? { ...item, votes: updated.votes, userVote: updated.userVote }
+        : item));
+    };
+    window.addEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
+    return () => window.removeEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
+  }, []);
+
   const handleVote = async (itemId: string, voteType: 'up' | 'down') => {
     if (!isAuthenticated) {
       showToast('Please log in to vote', 'error');
