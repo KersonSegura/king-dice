@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
+import { createNotification } from '@/lib/notifications';
 import path from 'path';
 
 const dataDir = path.join(process.cwd(), 'data');
@@ -179,6 +180,23 @@ export async function POST(request: NextRequest) {
       console.error('Error awarding XP for gallery comment:', xpError);
       // Don't fail the comment creation if XP awarding fails
     }
+
+    // Create notification for image author (if different from commenter)
+    try {
+      const image = galleryData.images[imageIndex];
+      const receiverId = image?.author?.id;
+      if (receiverId && receiverId !== author.id) {
+        await createNotification({
+          userId: receiverId,
+          type: 'comment',
+          actorId: author.id,
+          entityType: 'gallery_image',
+          entityId: imageId,
+          url: `/community-gallery?imageId=${imageId}#comment-${newComment.id}`,
+          message: `${author.name} commented on your image`,
+        });
+      }
+    } catch {}
 
     return NextResponse.json({ 
       comment: newComment,

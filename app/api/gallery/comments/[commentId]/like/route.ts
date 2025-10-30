@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createNotification } from '@/lib/notifications';
 import fs from 'fs';
 import path from 'path';
 
@@ -125,6 +126,20 @@ export async function POST(
       // Add like
       targetComment.userLikes.push(userId);
       targetComment.likes += 1;
+      // Notify comment author (avoid self)
+      try {
+        if (targetComment.author?.id && targetComment.author.id !== userId) {
+          await createNotification({
+            userId: targetComment.author.id,
+            type: 'like',
+            actorId: userId,
+            entityType: 'comment',
+            entityId: targetComment.id,
+            url: `/community-gallery?imageId=${targetImage!.id}#comment-${targetComment.id}`,
+            message: `Someone liked your comment`,
+          });
+        }
+      } catch {}
     }
 
     // Save updated data
