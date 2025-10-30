@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin } from '@/lib/supabase';
 import { isUserAdmin } from '@/lib/admin-utils';
-
-const prisma = new PrismaClient();
 
 export async function PUT(request: NextRequest) {
   try {
@@ -46,11 +44,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get current user or create if doesn't exist
-    let currentUser = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+    const { data: currentUser, error: findError } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-    if (!currentUser) {
+    if (findError || !currentUser) {
       // Check if username contains KingDice variations to set admin status
       const containsKingDiceVariation = (username: string) => {
         const variations = ['kingdice', 'king dice', 'king-dice', 'king_dice'];
@@ -62,23 +62,33 @@ export async function PUT(request: NextRequest) {
       const isAdmin = containsKingDiceVariation(username);
 
       // User doesn't exist in database, create a basic user record
-      currentUser = await prisma.user.create({
-        data: {
+      const { data: newUser, error: createError } = await supabaseAdmin
+        .from('users')
+        .insert({
           id: userId,
           username: username,
           email: email,
-          passwordHash: '', // Empty password for now
-          isAdmin: isAdmin,
+          password_hash: '', // Empty password for now
+          is_admin: isAdmin,
           bio: bio || null,
-          favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
-          collectionPhoto: collectionPhoto || null,
-          favoriteCard: favoriteCard || null
-        }
-      });
-      
+          favorite_games: favoriteGames ? JSON.stringify(favoriteGames) : null,
+          collection_photo: collectionPhoto || null,
+          favorite_card: favoriteCard || null
+        })
+        .select()
+        .single();
+
+      if (createError || !newUser) {
+        console.error('Error creating user:', createError);
+        return NextResponse.json(
+          { message: 'Failed to create profile' },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json({
         success: true,
-        user: currentUser,
+        user: newUser,
         message: 'Profile created successfully'
       });
     }
@@ -90,10 +100,14 @@ export async function PUT(request: NextRequest) {
     // Only check for existing usernames/emails if user is not admin
     if (!isAdmin) {
       // Check if username already exists (excluding current user)
-      const existingUserByUsername = await prisma.user.findUnique({
-        where: { username: username }
-      });
-      if (existingUserByUsername && existingUserByUsername.id !== userId) {
+      const { data: existingUserByUsername } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .neq('id', userId)
+        .single();
+
+      if (existingUserByUsername) {
         return NextResponse.json(
           { message: 'Username already exists' },
           { status: 400 }
@@ -101,10 +115,14 @@ export async function PUT(request: NextRequest) {
       }
 
       // Check if email already exists (excluding current user)
-      const existingUserByEmail = await prisma.user.findUnique({
-        where: { email: email }
-      });
-      if (existingUserByEmail && existingUserByEmail.id !== userId) {
+      const { data: existingUserByEmail } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .neq('id', userId)
+        .single();
+
+      if (existingUserByEmail) {
         return NextResponse.json(
           { message: 'Email already exists' },
           { status: 400 }
@@ -112,11 +130,11 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Prepare update data
+    // Prepare update data with snake_case field names
     const updateData: any = {
       username,
       email,
-      isAdmin: isAdmin // Update admin status
+      is_admin: isAdmin // Update admin status
     };
 
     // Add bio if provided
@@ -126,63 +144,79 @@ export async function PUT(request: NextRequest) {
 
     // Add favorite games if provided (store as JSON string)
     if (favoriteGames !== undefined) {
-      updateData.favoriteGames = JSON.stringify(favoriteGames);
+      updateData.favorite_games = JSON.stringify(favoriteGames);
     }
 
     // Add profile colors if provided (store as JSON string)
     if (profileColors !== undefined) {
-      updateData.profileColors = JSON.stringify(profileColors);
+      updateData.profile_colors = JSON.stringify(profileColors);
     }
 
     // Add collection photo if provided
     if (collectionPhoto !== undefined) {
-      updateData.collectionPhoto = collectionPhoto;
+      updateData.collection_photo = collectionPhoto;
     }
 
     // Add favorite card if provided
     if (favoriteCard !== undefined) {
-      updateData.favoriteCard = favoriteCard;
+      updateData.favorite_card = favoriteCard;
     }
 
     // Add games list if provided (store as JSON string)
     if (gamesList !== undefined) {
-      updateData.gamesList = JSON.stringify(gamesList);
+      updateData.games_list = JSON.stringify(gamesList);
     }
 
-    // Update or create user profile
+    // Update user profile
     let updatedUser;
     try {
       console.log('Attempting to update user:', userId, 'with data:', updateData);
-      updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: updateData
-      });
-      console.log('User updated successfully:', updatedUser);
-    } catch (error) {
-      console.error('Update failed, error:', error);
-      // If update fails, try to create the user
-      if (error instanceof Error && error.message.includes('Record to update not found')) {
-        console.log('User not found, creating new user...');
-        updatedUser = await prisma.user.create({
-          data: {
-            id: userId,
-            username,
-            email,
-            passwordHash: '', // Empty password for now
-            isAdmin: isAdmin,
-            bio: bio || null,
-            favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
-            profileColors: profileColors ? JSON.stringify(profileColors) : null,
-            collectionPhoto: collectionPhoto || null,
-            favoriteCard: favoriteCard || null,
-            gamesList: gamesList ? JSON.stringify(gamesList) : null
+      const { data: updated, error: updateError } = await supabaseAdmin
+        .from('users')
+        .update(updateData)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Update failed, error:', updateError);
+        // If update fails (user not found), try to create the user
+        if (updateError.message.includes('0 rows') || updateError.code === 'PGRST116') {
+          console.log('User not found, creating new user...');
+          const { data: created, error: createError } = await supabaseAdmin
+            .from('users')
+            .insert({
+              id: userId,
+              username,
+              email,
+              password_hash: '', // Empty password for now
+              is_admin: isAdmin,
+              bio: bio || null,
+              favorite_games: favoriteGames ? JSON.stringify(favoriteGames) : null,
+              profile_colors: profileColors ? JSON.stringify(profileColors) : null,
+              collection_photo: collectionPhoto || null,
+              favorite_card: favoriteCard || null,
+              games_list: gamesList ? JSON.stringify(gamesList) : null
+            })
+            .select()
+            .single();
+
+          if (createError || !created) {
+            console.error('Create failed:', createError);
+            throw createError || new Error('Failed to create user');
           }
-        });
-        console.log('User created successfully:', updatedUser);
+          updatedUser = created;
+          console.log('User created successfully:', updatedUser);
+        } else {
+          throw updateError;
+        }
       } else {
-        console.error('Update failed with error:', error);
-        throw error; // Re-throw if it's a different error
+        updatedUser = updated;
+        console.log('User updated successfully:', updatedUser);
       }
+    } catch (error) {
+      console.error('Error in update/create:', error);
+      throw error; // Re-throw for outer catch
     }
 
     return NextResponse.json({
@@ -198,9 +232,9 @@ export async function PUT(request: NextRequest) {
     let errorMessage = 'Failed to update profile';
     
     if (error instanceof Error) {
-      if (error.message.includes('Unique constraint')) {
+      if (error.message.includes('duplicate key') || error.message.includes('unique constraint')) {
         errorMessage = 'Username or email already exists';
-      } else if (error.message.includes('Record to update not found')) {
+      } else if (error.message.includes('0 rows') || error.message.includes('PGRST116')) {
         errorMessage = 'User not found in database';
       } else {
         errorMessage = `Database error: ${error.message}`;
