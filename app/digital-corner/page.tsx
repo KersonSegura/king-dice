@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ExternalLink, MessageCircle, Gamepad2, Send, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
+import { supabaseClient } from '@/lib/supabase';
 import LoginModal from '@/components/LoginModal';
 import BackButton from '@/components/BackButton';
 
@@ -87,7 +88,6 @@ export default function DigitalCornerPage() {
   const { socket, isConnected } = useSocket();
   const [chatId, setChatId] = useState<string | null>(null);
   const [rtConnected, setRtConnected] = useState(false);
-  const { supabaseClient } = require('@/lib/supabase');
 
   // Load games from the updated Steam-games-list.txt format
   useEffect(() => {
