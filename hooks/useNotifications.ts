@@ -60,7 +60,11 @@ export function useNotifications() {
       };
     })();
 
-    return () => { isActive = false; };
+    // Listen to local dev test events to bump badge immediately
+    const onDevTest = () => setUnread((u) => u + 1);
+    window.addEventListener('kd-notif-test', onDevTest);
+
+    return () => { isActive = false; window.removeEventListener('kd-notif-test', onDevTest); };
   }, [isAuthenticated, user]);
 
   const markAllRead = () => setUnread(0);

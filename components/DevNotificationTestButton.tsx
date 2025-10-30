@@ -19,6 +19,8 @@ export default function DevNotificationTestButton() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, kind: 'follow' })
       });
+      // Nudge local badge instantly in dev
+      window.dispatchEvent(new CustomEvent('kd-notif-test'));
     } finally {
       setBusy(false);
     }
