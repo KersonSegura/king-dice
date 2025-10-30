@@ -37,10 +37,8 @@ export default function Header() {
   };
 
   const closeMenu = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsUserMenuOpen(false);
-      setShowNotificationsPanel(false);
-    }, 100);
+    setIsUserMenuOpen(false);
+    setShowNotificationsPanel(false);
   };
 
   // Cleanup timeout on unmount
@@ -70,6 +68,25 @@ export default function Header() {
       document.removeEventListener('touchstart', handleClickOutside as any);
     };
   }, [isMenuOpen]);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        closeMenu();
+      }
+    }
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside as any);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside as any);
+    };
+  }, [isUserMenuOpen]);
 
   // Fetch user stats when authenticated
   useEffect(() => {
@@ -181,13 +198,11 @@ export default function Header() {
             <div 
               className="relative"
               ref={userMenuRef}
-              onMouseEnter={openMenu}
-              onMouseLeave={closeMenu}
             >
               {isAuthenticated ? (
                 <>
                   {/* Avatar Button with notification badge */}
-                  <div className="relative">
+                  <div className="relative" onClick={() => setIsUserMenuOpen(v => !v)}>
                     <div
                       className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer"
                       style={{
