@@ -85,6 +85,9 @@ export default function DigitalCornerPage() {
   
   const { user, isAuthenticated } = useAuth();
   const { socket, isConnected } = useSocket();
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [rtConnected, setRtConnected] = useState(false);
+  const { supabaseClient } = require('@/lib/supabase');
 
   // Load games from the updated Steam-games-list.txt format
   useEffect(() => {
@@ -297,6 +300,7 @@ export default function DigitalCornerPage() {
           console.log('💬 Messages:', data.chat.messages?.length || 0);
           setChatMessages(data.chat.messages || []);
           setOnlineUsers(data.chat.participants?.length || 0);
+          setChatId(data.chat.id);
           
           // Join the chat if authenticated
           if (isAuthenticated && user && socket) {
@@ -312,9 +316,8 @@ export default function DigitalCornerPage() {
             const joinData = await joinResponse.json();
             console.log('📝 Join response:', joinData);
             
-            // Join socket room
-            console.log('🔌 Emitting join-chat for digital-corner-public');
-            socket.emit('join-chat', 'digital-corner-public');
+            // Optional legacy socket join (no-op if missing)
+            try { socket.emit && socket.emit('join-chat', 'digital-corner-public'); } catch {}
           } else {
             console.log('❌ Cannot join chat - Auth:', isAuthenticated, 'User:', !!user, 'Socket:', !!socket);
           }
@@ -327,7 +330,40 @@ export default function DigitalCornerPage() {
     initializeChat();
   }, [isAuthenticated, user, socket]);
 
-  // Socket event listeners
+  // Supabase Realtime for new messages
+  useEffect(() => {
+    if (!chatId) return;
+    const channel = supabaseClient
+      .channel(`dc-chat-${chatId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, async (payload) => {
+        try {
+          const { data: m } = await supabaseClient
+            .from('messages')
+            .select(`id, content, type, created_at, sender:users!messages_sender_id_fkey(id, username, avatar, is_verified, is_admin)`) 
+            .eq('id', payload.new.id)
+            .single();
+          if (m) {
+            setChatMessages(prev => [...prev, {
+              id: m.id,
+              content: m.content,
+              createdAt: m.created_at,
+              sender: {
+                id: m.sender?.id,
+                username: m.sender?.username,
+                avatar: m.sender?.avatar,
+                title: m.sender?.is_admin ? 'Admin' : m.sender?.is_verified ? 'Verified' : undefined,
+                isVerified: m.sender?.is_verified,
+                isAdmin: m.sender?.is_admin
+              }
+            }]);
+          }
+        } catch {}
+      })
+      .subscribe((status) => setRtConnected(status === 'SUBSCRIBED'));
+    return () => { supabaseClient.removeChannel(channel); };
+  }, [chatId]);
+
+  // Socket event listeners (legacy)
   useEffect(() => {
     if (!socket) return;
 
@@ -462,32 +498,25 @@ export default function DigitalCornerPage() {
   }, [steamGames, sortBy]);
 
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!isAuthenticated || !user) {
       setShowLoginModal(true);
       return;
     }
 
-    if (!socket || !isConnected) {
-      alert('Chat is not connected. Please try again.');
-      return;
-    }
-
     if (newMessage.trim()) {
-      socket.emit('send-message', {
-        chatId: 'digital-corner-public',
-        content: newMessage.trim(),
-        senderId: user.id,
-        type: 'text'
-      });
+      try {
+        if (!chatId) return;
+        await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId, senderId: user.id, content: newMessage.trim(), type: 'text' })
+        });
+      } catch {}
       setNewMessage('');
       
       // Stop typing indicator
       if (isTyping) {
-        socket.emit('typing-stop', {
-          chatId: 'digital-corner-public',
-          userId: user.id
-        });
         setIsTyping(false);
       }
     }
@@ -503,24 +532,15 @@ export default function DigitalCornerPage() {
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
     
-    if (!isAuthenticated || !user || !socket) return;
+    if (!isAuthenticated || !user) return;
 
     // Start typing indicator
     if (!isTyping && e.target.value.length > 0) {
-      socket.emit('typing-start', {
-        chatId: 'digital-corner-public',
-        userId: user.id,
-        username: user.username
-      });
       setIsTyping(true);
     }
 
     // Stop typing indicator if message is empty
     if (isTyping && e.target.value.length === 0) {
-      socket.emit('typing-stop', {
-        chatId: 'digital-corner-public',
-        userId: user.id
-      });
       setIsTyping(false);
     }
   };

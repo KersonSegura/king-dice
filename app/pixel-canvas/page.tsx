@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
+import { supabaseClient } from '@/lib/supabase';
 import { Send, Users, MessageCircle } from 'lucide-react';
 import PixelCanvas from '@/components/PixelCanvas';
 import LoginModal from '@/components/LoginModal';
@@ -38,6 +39,8 @@ export default function PixelCanvasPage() {
   const { socket, isConnected } = useSocket();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [rtConnected, setRtConnected] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [onlineUsers, setOnlineUsers] = useState<number>(0);
   const [isTyping, setIsTyping] = useState(false);
@@ -73,6 +76,7 @@ export default function PixelCanvasPage() {
         if (data.success && data.chat) {
           setChatMessages(data.chat.messages || []);
           setOnlineUsers(data.chat.participants?.length || 0);
+          setChatId(data.chat.id);
           
           // Join the chat if authenticated
           if (isAuthenticated && user && socket) {
@@ -83,8 +87,8 @@ export default function PixelCanvasPage() {
               body: JSON.stringify({ userId: user.id })
             });
             
-            // Join socket room
-            socket.emit('join-chat', 'pixel-canvas-public');
+            // optional legacy socket join (no-op if socket server not present)
+            try { socket.emit && socket.emit('join-chat', 'pixel-canvas-public'); } catch {}
           }
         }
       } catch (error) {
@@ -95,7 +99,43 @@ export default function PixelCanvasPage() {
     initializeChat();
   }, [isAuthenticated, user, socket]);
 
-  // Socket event listeners
+  // Supabase Realtime subscription for new messages
+  useEffect(() => {
+    if (!chatId) return;
+    const channel = supabaseClient
+      .channel(`pc-chat-${chatId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, async (payload) => {
+        try {
+          const { data: m } = await supabaseClient
+            .from('messages')
+            .select(`
+              id, content, type, created_at,
+              sender:users!messages_sender_id_fkey(id, username, avatar, is_verified, is_admin)
+            `)
+            .eq('id', payload.new.id)
+            .single();
+          if (m) {
+            setChatMessages(prev => [...prev, {
+              id: m.id,
+              content: m.content,
+              createdAt: m.created_at,
+              sender: {
+                id: m.sender?.id,
+                username: m.sender?.username,
+                avatar: m.sender?.avatar,
+                title: m.sender?.is_admin ? 'Admin' : m.sender?.is_verified ? 'Verified' : undefined,
+                isVerified: m.sender?.is_verified,
+                isAdmin: m.sender?.is_admin
+              }
+            } as ChatMessage]);
+          }
+        } catch {}
+      })
+      .subscribe((status) => { setRtConnected(status === 'SUBSCRIBED'); });
+    return () => { supabaseClient.removeChannel(channel); };
+  }, [chatId]);
+
+  // Socket event listeners (legacy)
   useEffect(() => {
     if (!socket) return;
 
@@ -189,34 +229,25 @@ export default function PixelCanvasPage() {
     return () => clearInterval(resetTimer);
   }, []);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!isAuthenticated || !user) {
       setShowLoginModal(true);
       return;
     }
 
-    if (!socket || !isConnected) {
-      alert('Chat is not connected. Please try again.');
-      return;
-    }
-
     if (newMessage.trim()) {
-      socket.emit('send-message', {
-        chatId: 'pixel-canvas-public',
-        content: newMessage.trim(),
-        senderId: user.id,
-        type: 'text'
-      });
+      try {
+        if (!chatId) return;
+        await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId, senderId: user.id, content: newMessage.trim(), type: 'text' })
+        });
+      } catch {}
       setNewMessage('');
       
       // Stop typing indicator
-      if (isTyping) {
-        socket.emit('typing-stop', {
-          chatId: 'pixel-canvas-public',
-          userId: user.id
-        });
-        setIsTyping(false);
-      }
+      setIsTyping(false);
     }
   };
 
@@ -230,24 +261,15 @@ export default function PixelCanvasPage() {
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
     
-    if (!isAuthenticated || !user || !socket) return;
+    if (!isAuthenticated || !user) return;
 
     // Start typing indicator
     if (!isTyping && e.target.value.length > 0) {
-      socket.emit('typing-start', {
-        chatId: 'pixel-canvas-public',
-        userId: user.id,
-        username: user.username
-      });
       setIsTyping(true);
     }
 
     // Stop typing indicator if message is empty
     if (isTyping && e.target.value.length === 0) {
-      socket.emit('typing-stop', {
-        chatId: 'pixel-canvas-public',
-        userId: user.id
-      });
       setIsTyping(false);
     }
   };

@@ -4,14 +4,13 @@ import { supabaseAdmin } from '@/lib/supabase';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-// GET - Get or create Pixel Canvas public chat
+// GET - Get or create Digital Corner public chat
 export async function GET(request: NextRequest) {
   try {
-    // Ensure chat exists
     const { data: existing } = await supabaseAdmin
       .from('chats')
       .select('*')
-      .eq('name', 'Pixel Canvas Public Chat')
+      .eq('name', 'Digital Corner Public Chat')
       .eq('type', 'public')
       .maybeSingle();
 
@@ -19,19 +18,17 @@ export async function GET(request: NextRequest) {
     if (!chat) {
       const { data: created } = await supabaseAdmin
         .from('chats')
-        .insert({ name: 'Pixel Canvas Public Chat', type: 'public', created_by: null })
+        .insert({ name: 'Digital Corner Public Chat', type: 'public', created_by: null })
         .select('*')
         .single();
       chat = created || null;
     }
 
-    // Load participants
     const { data: participants } = await supabaseAdmin
       .from('chat_participants')
       .select('user:users!chat_participants_user_id_fkey(id,username,avatar,is_verified,is_admin), joined_at, last_read_at')
       .eq('chat_id', chat!.id);
 
-    // Load last 50 messages
     const { data: messages } = await supabaseAdmin
       .from('messages')
       .select(`
@@ -86,12 +83,12 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error fetching Pixel Canvas chat:', error);
+    console.error('Error fetching Digital Corner chat:', error);
     return NextResponse.json({ error: 'Failed to fetch chat' }, { status: 500 });
   }
 }
 
-// POST - Join user to Pixel Canvas chat
+// POST - Join user to Digital Corner chat
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await request.json();
@@ -100,11 +97,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Get or create Pixel Canvas public chat
     const { data: existing } = await supabaseAdmin
       .from('chats')
       .select('*')
-      .eq('name', 'Pixel Canvas Public Chat')
+      .eq('name', 'Digital Corner Public Chat')
       .eq('type', 'public')
       .maybeSingle();
 
@@ -112,13 +108,12 @@ export async function POST(request: NextRequest) {
     if (!chat) {
       const { data: created } = await supabaseAdmin
         .from('chats')
-        .insert({ name: 'Pixel Canvas Public Chat', type: 'public', created_by: null })
+        .insert({ name: 'Digital Corner Public Chat', type: 'public', created_by: null })
         .select('*')
         .single();
       chat = created || null;
     }
 
-    // Ensure participant exists
     const { data: existingParticipant } = await supabaseAdmin
       .from('chat_participants')
       .select('id')
@@ -132,13 +127,15 @@ export async function POST(request: NextRequest) {
         .insert({ chat_id: chat!.id, user_id: userId, joined_at: new Date().toISOString() });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'User joined Pixel Canvas chat',
+    return NextResponse.json({
+      success: true,
+      message: 'User joined Digital Corner chat',
       chatId: chat!.id
     });
   } catch (error) {
-    console.error('Error joining Pixel Canvas chat:', error);
+    console.error('Error joining Digital Corner chat:', error);
     return NextResponse.json({ error: 'Failed to join chat' }, { status: 500 });
   }
 }
+
+
