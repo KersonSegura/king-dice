@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
 
     console.log(`🎯 Getting MOST PLAYED GAMES (limit: ${limit})`);
 
-    // Get the most played games from BGG curated list
+    // Get the most played games from BGG curated list - use select('*') to handle both naming conventions
     let { data: games, error } = await supabaseAdmin
       .from('games')
-      .select('id, bggId, nameEn, nameEs, name, hotnessRank, yearRelease, year, minPlayers, maxPlayers, durationMinutes, minPlayTime, maxPlayTime, imageUrl, image, thumbnailUrl, userRating, userVotes, bggRanking, bggRating, bggVotes, expansions, isExpansion, category, designer, developer, officialWebsite')
+      .select('*')
       .eq('category', 'most-played')
       .order('hotnessRank', { ascending: true })
       .limit(limit);
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       console.log('No most-played games found, using fallback games with images');
       const fallbackResult = await supabaseAdmin
         .from('games')
-        .select('id, bggId, nameEn, nameEs, name, hotnessRank, yearRelease, year, minPlayers, maxPlayers, durationMinutes, minPlayTime, maxPlayTime, imageUrl, image, thumbnailUrl, userRating, userVotes, bggRanking, bggRating, bggVotes, expansions, isExpansion, category, designer, developer, officialWebsite, hotnessRank')
+        .select('*')
         .or('image.not.is.null,imageUrl.not.is.null')
         .order('userRating', { ascending: false })
         .limit(limit);

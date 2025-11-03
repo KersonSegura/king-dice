@@ -148,7 +148,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
   const isExternalLink = !!pdfUrl && !pdfFile; // We only have an external URL
 
   return (
-    <div className="mt-3">
+    <div className="mt-3 w-full" style={{ width: '100%', minWidth: '100%' }}>
       {/* PDF Upload Button (Admin only) */}
       {isAdmin && !pdfFile && (
         <div className="flex justify-center mb-4">
@@ -171,7 +171,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
 
       {/* PDF Content */}
       {hasPDF && (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           {/* For External Links - Only Open Button */}
           {isExternalLink && (
             <>

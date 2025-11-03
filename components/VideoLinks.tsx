@@ -17,9 +17,9 @@ export default function VideoLinks({ videoUrls, gameName }: VideoLinksProps) {
   }
   
   return (
-    <div className="mt-3">
+    <div className="mt-3 w-full" style={{ width: '100%', minWidth: '100%' }}>
       {videos.map((video, index) => (
-        <div key={index} className="mb-6">
+        <div key={index} className="mb-6 w-full" style={{ width: '100%', minWidth: '100%' }}>
           {/* Video Link Button - Centered */}
           <div className="flex justify-center mb-3">
             <a
@@ -34,9 +34,9 @@ export default function VideoLinks({ videoUrls, gameName }: VideoLinksProps) {
             </a>
           </div>
           
-          {/* Embedded Video Player - Centered */}
-          <div className="flex justify-center">
-            <div className="w-full max-w-4xl aspect-video bg-gray-100 rounded-lg overflow-hidden shadow-lg">
+          {/* Embedded Video Player - Full Width */}
+          <div className="w-full">
+            <div className="w-full aspect-video bg-gray-100 rounded-lg overflow-hidden shadow-lg">
               <iframe
                 src={video.embedUrl}
                 title={`${gameName} - Video Tutorial ${index + 1}`}

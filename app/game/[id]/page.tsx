@@ -375,6 +375,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [showAllPublishers, setShowAllPublishers] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf'>('rules');
+  const [isDesktop, setIsDesktop] = useState(false);
   
   // Ranking button state
   const [isVoting, setIsVoting] = useState(false);
@@ -384,6 +385,20 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   // Auth and toast hooks
   const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
+
+  // Check if desktop view and calculate available width
+  useEffect(() => {
+    const checkDesktop = () => {
+      const isDesktopView = window.innerWidth >= 768;
+      // Only enforce min-width if viewport is actually wide enough
+      // Account for padding (px-4 sm:px-6 lg:px-8 = roughly 32-64px total)
+      const availableWidth = window.innerWidth - 128; // Conservative padding estimate
+      setIsDesktop(isDesktopView && availableWidth >= 1000);
+    };
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
 
   // Helper function to clean up URL for display
   const getCleanUrlDisplay = (url: string): string => {
@@ -539,7 +554,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       {/* Header with back button */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -553,13 +568,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full overflow-x-hidden">
         {/* Game Header */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div className="md:flex">
             {/* Game Image */}
-            <div className="md:w-1/3 lg:w-1/4">
-              <div className="aspect-square relative bg-gray-100">
+            <div className="w-full max-w-[300px] mx-auto md:w-1/3 md:max-w-none lg:w-1/4" style={{ minWidth: isDesktop ? '304.01px' : '0' }}>
+              <div className="aspect-square relative bg-gray-100" style={{ minWidth: isDesktop ? '304.01px' : '0', minHeight: isDesktop ? '311.89px' : '0' }}>
                 {game.imageUrl || game.thumbnailUrl ? (
                   <Image
                     src={game.imageUrl || game.thumbnailUrl || ''}
@@ -789,7 +804,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
         {/* Description Section */}
         {description?.fullDescription && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
               <Star className="w-6 h-6 mr-2 text-[#fbae17]" />
               About This Game
@@ -824,14 +839,14 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
         {/* Game Resources Section with Tabs */}
         {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile) && (
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Tab Headers */}
             <div className="border-b border-gray-200">
               <nav className="flex space-x-8 px-8 pt-6" aria-label="Tabs">
                 {rules?.rulesText && (
                   <button
                     onClick={() => setActiveTab('rules')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
                       activeTab === 'rules'
                         ? 'border-[#fbae17] text-[#fbae17]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -845,7 +860,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 {game?.videoUrl && (
                   <button
                     onClick={() => setActiveTab('video')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
                       activeTab === 'video'
                         ? 'border-[#fbae17] text-[#fbae17]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -859,7 +874,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 {(game?.pdfUrl || game?.pdfFile) && (
                   <button
                     onClick={() => setActiveTab('pdf')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
                       activeTab === 'pdf'
                         ? 'border-[#fbae17] text-[#fbae17]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -873,15 +888,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             {/* Tab Content */}
-            <div className="p-8">
+            <div className="p-8 w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
               {activeTab === 'rules' && rules?.rulesText && (
-                <div>
+                <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <FileText className="w-6 h-6 mr-2 text-[#fbae17]" />
                     Game Rules
                   </h2>
-                  <div className="prose max-w-none">
-                    <div className="text-gray-700 leading-relaxed">
+                  <div className="prose max-w-none w-full">
+                    <div className="text-gray-700 leading-relaxed w-full">
                       {renderRulesWithImages(cleanHtmlEntities(rules.rulesText))}
                     </div>
                   </div>
@@ -889,32 +904,39 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               )}
 
               {activeTab === 'video' && game?.videoUrl && (
-                <div>
+                <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <Play className="w-6 h-6 mr-2 text-[#fbae17]" />
                     Video Tutorials
                   </h2>
-                  <VideoLinks 
-                    videoUrls={game.videoUrl} 
-                    gameName={game.nameEn}
-                  />
+                  <div className="prose max-w-none w-full">
+                    <div className="text-gray-700 leading-relaxed w-full">
+                      <VideoLinks 
+                        videoUrls={game.videoUrl} 
+                        gameName={game.nameEn}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'pdf' && (game?.pdfUrl || game?.pdfFile) && (
-                <div>
+                <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <Download className="w-6 h-6 mr-2 text-[#fbae17]" />
                     PDF Rules
                   </h2>
-                  
-                  <PDFHandler 
-                    pdfUrl={game.pdfUrl}
-                    pdfFile={game.pdfFile}
-                    gameName={game.nameEn}
-                    gameId={game.id}
-                    isAdmin={false}
-                  />
+                  <div className="prose max-w-none w-full">
+                    <div className="text-gray-700 leading-relaxed w-full">
+                      <PDFHandler 
+                        pdfUrl={game.pdfUrl}
+                        pdfFile={game.pdfFile}
+                        gameName={game.nameEn}
+                        gameId={game.id}
+                        isAdmin={false}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
