@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateCommentVotes, deleteComment, getCommentById } from '@/lib/comments';
+import { updateCommentVotes, deleteComment, getCommentsByPostId } from '@/lib/comments';
 import { updatePostRepliesCount } from '@/lib/posts';
 import { createNotification } from '@/lib/notifications';
 
@@ -8,7 +8,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
-    const { commentId } = await params;
+    const { id: postId, commentId } = await params;
     const { voteType, userId } = await request.json();
     
     if (!voteType || !userId) {
@@ -37,7 +37,15 @@ export async function PUT(
     // Notify comment author on upvote (like)
     if (voteType === 'upvote') {
       try {
-        const target = getCommentById(commentId);
+        // Find the target comment under the post
+        const list = getCommentsByPostId(postId) || [];
+        const stack: any[] = [...list];
+        let target: any = null;
+        while (stack.length) {
+          const c = stack.shift();
+          if (c?.id === commentId) { target = c; break; }
+          if (c?.replies) stack.push(...c.replies);
+        }
         if (target?.author?.id && target.author.id !== userId) {
           await createNotification({
             userId: target.author.id,

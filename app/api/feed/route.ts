@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllImages, getAllPosts, getUserVote } from '@/lib/gallery';
+import { getAllImages, getUserVote } from '@/lib/gallery';
+import { getAllPosts } from '@/lib/posts';
 import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
