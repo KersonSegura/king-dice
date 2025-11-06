@@ -16,37 +16,64 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Image ID is required' }, { status: 400 });
     }
 
-    // Read gallery data
-    if (!fs.existsSync(galleryFile)) {
-      return NextResponse.json({ comments: [] });
-    }
+    // Check if gallery image exists
+    const galleryImage = await prisma.galleryImage.findUnique({
+      where: { id: imageId }
+    });
 
-    const galleryData = JSON.parse(fs.readFileSync(galleryFile, 'utf8'));
-    const image = galleryData.images.find((img: any) => img.id === imageId);
-
-    if (!image) {
+    if (!galleryImage) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Process comments to add userLiked state
-    const processComments = (comments: any[]): any[] => {
-      return comments.map(comment => ({
-        ...comment,
-        userLiked: userId ? (comment.userLikes || []).includes(userId) : false,
-        likes: comment.likes || 0,
-        replies: comment.replies ? processComments(comment.replies) : []
-      }));
-    };
+    // Get comments from database
+    const comments = await prisma.comment.findMany({
+      where: {
+        galleryImageId: imageId,
+        parentId: null // Only get top-level comments (not replies)
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            title: true,
+            isVerified: true,
+            isAdmin: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
 
-    const processedComments = processComments(image.commentsList || []);
+    // Format comments to match expected structure
+    const formattedComments = comments.map(comment => ({
+      id: comment.id,
+      content: comment.content,
+      author: {
+        id: comment.author.id,
+        name: comment.author.username,
+        avatar: comment.author.avatar,
+        title: comment.author.title
+      },
+      createdAt: comment.createdAt.toISOString(),
+      likes: 0, // TODO: Add likes functionality later
+      userLiked: false,
+      replies: []
+    }));
 
     return NextResponse.json({ 
-      comments: processedComments,
-      totalComments: image.comments || 0
+      comments: formattedComments,
+      totalComments: galleryImage.comments || 0
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
-    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to fetch comments', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
   }
 }
 
@@ -173,8 +200,7 @@ export async function POST(request: NextRequest) {
 
     // Create notification for image author (if different from commenter)
     try {
-      const image = galleryData.images[imageIndex];
-      const receiverId = image?.author?.id;
+      const receiverId = galleryImage.authorId;
       if (receiverId && receiverId !== author.id) {
         await createNotification({
           userId: receiverId,
@@ -188,9 +214,23 @@ export async function POST(request: NextRequest) {
       }
     } catch {}
 
+    // Get updated comment count
+    const updatedImage = await prisma.galleryImage.findUnique({
+      where: { id: imageId },
+      select: { comments: true }
+    });
+
     return NextResponse.json({ 
-      comment: newComment,
-      totalComments: galleryData.images[imageIndex].comments,
+      comment: {
+        ...newComment,
+        author: {
+          id: newComment.author.id,
+          name: newComment.author.username,
+          avatar: newComment.author.avatar,
+          title: newComment.author.title
+        }
+      },
+      totalComments: updatedImage?.comments || 0,
       moderationResult: {
         isAppropriate: true,
         confidence: moderationResult.confidence
