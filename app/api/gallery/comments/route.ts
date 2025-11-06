@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createNotification } from '@/lib/notifications';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET /api/gallery/comments?imageId=xxx - Get comments for an image
 
@@ -10,63 +10,76 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const imageId = searchParams.get('imageId');
-    const userId = searchParams.get('userId');
 
     if (!imageId) {
       return NextResponse.json({ error: 'Image ID is required' }, { status: 400 });
     }
 
-    // Check if gallery image exists
-    const galleryImage = await prisma.galleryImage.findUnique({
-      where: { id: imageId }
-    });
+    // Check if gallery image exists (Supabase)
+    const { data: galleryImage, error: galleryError } = await supabaseAdmin
+      .from('gallery_images')
+      .select('id, comments')
+      .eq('id', imageId)
+      .maybeSingle();
+
+    if (galleryError) {
+      console.error('Error fetching gallery image:', galleryError);
+    }
 
     if (!galleryImage) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Get comments from database
-    const comments = await prisma.comment.findMany({
-      where: {
-        galleryImageId: imageId,
-        parentId: null // Only get top-level comments (not replies)
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            title: true,
-            isVerified: true,
-            isAdmin: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    // Get comments from Supabase
+    const { data: commentsData, error: commentsError } = await supabaseAdmin
+      .from('comments')
+      .select(`
+        id,
+        content,
+        galleryImageId,
+        authorId,
+        createdAt,
+        parentId,
+        author:users!comments_authorId_fkey(
+          id,
+          username,
+          avatar,
+          title
+        )
+      `)
+      .eq('galleryImageId', imageId)
+      .is('parentId', null)
+      .order('createdAt', { ascending: false });
+
+    if (commentsError) {
+      console.error('Error fetching gallery comments:', commentsError);
+      return NextResponse.json(
+        { error: 'Failed to fetch comments', details: commentsError.message },
+        { status: 500 }
+      );
+    }
 
     // Format comments to match expected structure
-    const formattedComments = comments.map(comment => ({
+    const formattedComments = (commentsData || []).map((comment: any) => ({
       id: comment.id,
       content: comment.content,
       author: {
-        id: comment.author.id,
-        name: comment.author.username,
-        avatar: comment.author.avatar,
-        title: comment.author.title
+        id: comment.author?.id || comment.authorId,
+        name: comment.author?.username || 'Unknown',
+        avatar: comment.author?.avatar || null,
+        title: comment.author?.title || null
       },
-      createdAt: comment.createdAt.toISOString(),
-      likes: 0, // TODO: Add likes functionality later
+      createdAt: typeof comment.createdAt === 'string'
+        ? comment.createdAt
+        : comment.createdAt?.toISOString?.() || new Date().toISOString(),
+      likes: 0,
       userLiked: false,
       replies: []
     }));
 
     return NextResponse.json({ 
       comments: formattedComments,
-      totalComments: galleryImage.comments || 0
+      totalComments: galleryImage.comments ?? formattedComments.length
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
@@ -113,42 +126,70 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if gallery image exists
-    const galleryImage = await prisma.galleryImage.findUnique({
-      where: { id: imageId }
-    });
+    const { data: galleryImage, error: galleryError } = await supabaseAdmin
+      .from('gallery_images')
+      .select('id, authorId, comments')
+      .eq('id', imageId)
+      .maybeSingle();
+
+    if (galleryError) {
+      console.error('Error fetching gallery image:', galleryError);
+    }
 
     if (!galleryImage) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Create new comment in database
-    const newComment = await prisma.comment.create({
-      data: {
+    // Generate ID for comment
+    const timestampCuid = Date.now().toString(36);
+    const counter = Math.floor(Math.random() * 36).toString(36);
+    const fingerprint = Math.floor(Math.random() * 36).toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    const generatedId = `c${timestampCuid}${counter}${fingerprint}${random}`.substring(0, 25);
+    const now = new Date().toISOString();
+
+    // Create new comment in Supabase
+    const { data: newComment, error: createError } = await supabaseAdmin
+      .from('comments')
+      .insert({
+        id: generatedId,
         content: content.trim(),
         authorId: author.id,
-        galleryImageId: imageId
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            title: true
-          }
-        }
-      }
-    });
+        galleryImageId: imageId,
+        parentId: null,
+        createdAt: now,
+        updatedAt: now
+      })
+      .select(`
+        id,
+        content,
+        galleryImageId,
+        authorId,
+        createdAt,
+        author:users!comments_authorId_fkey(
+          id,
+          username,
+          avatar,
+          title
+        )
+      `)
+      .single();
+
+    if (createError || !newComment) {
+      console.error('Error creating gallery comment:', createError);
+      return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });
+    }
 
     // Update gallery image comment count
-    await prisma.galleryImage.update({
-      where: { id: imageId },
-      data: {
-        comments: {
-          increment: 1
-        }
-      }
-    });
+    const newCommentCount = (galleryImage.comments || 0) + 1;
+    const { error: updateError } = await supabaseAdmin
+      .from('gallery_images')
+      .update({ comments: newCommentCount })
+      .eq('id', imageId);
+
+    if (updateError) {
+      console.error('Error updating gallery comment count:', updateError);
+    }
 
     // Award XP for commenting on gallery image
     try {
@@ -214,23 +255,20 @@ export async function POST(request: NextRequest) {
       }
     } catch {}
 
-    // Get updated comment count
-    const updatedImage = await prisma.galleryImage.findUnique({
-      where: { id: imageId },
-      select: { comments: true }
-    });
-
     return NextResponse.json({ 
       comment: {
-        ...newComment,
+        id: newComment.id,
+        content: newComment.content,
+        galleryImageId: newComment.galleryImageId,
         author: {
-          id: newComment.author.id,
-          name: newComment.author.username,
-          avatar: newComment.author.avatar,
-          title: newComment.author.title
-        }
+          id: newComment.author?.id || author.id,
+          name: newComment.author?.username || author.name,
+          avatar: newComment.author?.avatar || author.avatar || null,
+          title: newComment.author?.title || null
+        },
+        createdAt: newComment.createdAt
       },
-      totalComments: updatedImage?.comments || 0,
+      totalComments: newCommentCount,
       moderationResult: {
         isAppropriate: true,
         confidence: moderationResult.confidence
