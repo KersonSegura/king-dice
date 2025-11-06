@@ -3,11 +3,12 @@ generator client {
   // Use library engine to avoid Data Proxy prisma:// requirement
   engineType = "library"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  url       = env("DIRECT_URL")
   directUrl = env("DIRECT_URL")
 }
 
