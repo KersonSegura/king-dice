@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllCategories } from '@/lib/gallery';
 import { supabaseAdmin } from '@/lib/supabase';
 import { prisma } from '@/lib/prisma';
 
