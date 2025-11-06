@@ -143,11 +143,11 @@ export async function PUT(request: NextRequest) {
       }
     }
     
-    // Generate a scaled-down preview image (faster, smaller file)
-    // Scale down to 200x200 max for preview (1:1 if canvas is smaller)
-    const previewScale = Math.min(1, 200 / Math.max(width, height));
-    const previewWidth = Math.floor(width * previewScale);
-    const previewHeight = Math.floor(height * previewScale);
+    // Generate full-size canvas image (your canvas is 200x200, perfect size!)
+    // No scaling needed - use actual canvas dimensions
+    const previewScale = 1;
+    const previewWidth = width;
+    const previewHeight = height;
     
     // Build preview grid (sample pixels)
     const previewGrid: string[][] = [];
