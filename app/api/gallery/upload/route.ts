@@ -99,17 +99,18 @@ export async function POST(request: NextRequest) {
     }
     
     // Create image in database using Supabase directly (to avoid Prisma connection issues)
+    // Try both camelCase and snake_case for column names
     const { data: imageData, error: createError } = await supabaseAdmin
       .from('gallery_images')
       .insert({
         title: title?.trim() || (category === 'collections' ? 'Collection Photo' : 'Favorite Card'),
         description: description || '',
-        image_url: uploadResult.publicUrl,
-        thumbnail_url: uploadResult.publicUrl,
+        imageUrl: uploadResult.publicUrl,
+        thumbnailUrl: uploadResult.publicUrl,
         category,
-        author_id: author.id
+        authorId: author.id
       })
-      .select('id, title, description, image_url, thumbnail_url, category, votes, comments, created_at, author_id')
+      .select('id, title, description, imageUrl, thumbnailUrl, category, votes, comments, createdAt, authorId')
       .single();
 
     if (createError || !imageData) {
@@ -142,8 +143,8 @@ export async function POST(request: NextRequest) {
       id: imageData.id,
       title: imageData.title,
       description: imageData.description,
-      imageUrl: imageData.image_url,
-      thumbnailUrl: imageData.thumbnail_url,
+      imageUrl: imageData.imageUrl,
+      thumbnailUrl: imageData.thumbnailUrl,
       category: imageData.category,
       author: {
         id: author.id,
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
         avatar: author.avatar,
         reputation: author.reputation || 0
       },
-      createdAt: imageData.created_at,
+      createdAt: imageData.createdAt,
       votes: (() => {
         try {
           return JSON.parse(imageData.votes);
