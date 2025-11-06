@@ -75,7 +75,9 @@ export async function GET(request: NextRequest) {
       console.log(`✅ Fetched ${dbImages.length} images from Supabase`);
     } catch (dbError) {
       console.error('❌ Supabase query error:', dbError);
-      console.error('Error details:', dbError instanceof Error ? dbError.message : String(dbError));
+      console.error('Error details:', JSON.stringify(dbError, null, 2));
+      console.error('Error message:', dbError instanceof Error ? dbError.message : String(dbError));
+      console.error('Error stack:', dbError instanceof Error ? dbError.stack : 'No stack');
       
       // Return empty gallery if database fails
       const categories = [

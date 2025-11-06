@@ -143,10 +143,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ posts: paginatedPosts, cached: false });
   } catch (error) {
     console.error('Error fetching posts:', error);
+    console.error('Error JSON:', JSON.stringify(error, null, 2));
     console.error('Error details:', error instanceof Error ? error.message : String(error));
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
     return NextResponse.json(
-      { error: 'Failed to fetch posts', details: error instanceof Error ? error.message : String(error) },
+      { 
+        error: 'Failed to fetch posts', 
+        details: error instanceof Error ? error.message : JSON.stringify(error)
+      },
       { status: 500 }
     );
   }
