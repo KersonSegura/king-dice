@@ -33,32 +33,41 @@ export async function GET(request: NextRequest) {
     });
 
     // Format to match expected structure
-    let images = dbImages.map(img => ({
-      id: img.id,
-      title: img.title,
-      description: img.description || '',
-      imageUrl: img.imageUrl,
-      thumbnailUrl: img.thumbnailUrl,
-      category: img.category,
-      author: {
-        id: img.author.id,
-        name: img.author.username,
-        avatar: img.author.avatar,
-        reputation: img.author.reputation,
-        title: img.author.title
-      },
-      createdAt: img.createdAt.toISOString(),
-      votes: JSON.parse(img.votes),
-      views: img.views,
-      downloads: img.downloads,
-      comments: img.comments,
-      isModerated: true,
-      tags: [],
-      weeklyLikes: {
-        likesReceivedThisWeek: 0,
-        weekId: ''
+    let images = dbImages.map(img => {
+      let votes = { upvotes: 0, downvotes: 0 };
+      try {
+        votes = JSON.parse(img.votes);
+      } catch (e) {
+        console.error('Error parsing votes for image:', img.id, e);
       }
-    }));
+
+      return {
+        id: img.id,
+        title: img.title,
+        description: img.description || '',
+        imageUrl: img.imageUrl,
+        thumbnailUrl: img.thumbnailUrl,
+        category: img.category,
+        author: {
+          id: img.author.id,
+          name: img.author.username,
+          avatar: img.author.avatar,
+          reputation: img.author.reputation,
+          title: img.author.title
+        },
+        createdAt: img.createdAt.toISOString(),
+        votes,
+        views: img.views,
+        downloads: img.downloads,
+        comments: img.comments,
+        isModerated: true,
+        tags: [],
+        weeklyLikes: {
+          likesReceivedThisWeek: 0,
+          weekId: ''
+        }
+      };
+    });
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 
@@ -240,7 +249,13 @@ export async function POST(request: NextRequest) {
         reputation: newImage.author.reputation
       },
       createdAt: newImage.createdAt.toISOString(),
-      votes: JSON.parse(newImage.votes),
+      votes: (() => {
+        try {
+          return JSON.parse(newImage.votes);
+        } catch (e) {
+          return { upvotes: 0, downvotes: 0 };
+        }
+      })(),
       comments: newImage.comments
     };
 
