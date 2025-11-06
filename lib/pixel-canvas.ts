@@ -57,12 +57,13 @@ async function loadCanvas(): Promise<PixelCanvas> {
     }
 
     // Get all pixels - using .range() to fetch beyond default 1000 limit
+    // Note: We MUST use .range() as Supabase defaults to max 1000 rows
     const { data: pixelsData, error: pixelsError, count } = await supabaseAdmin
       .from('pixel_placements')
-      .select('*', { count: 'exact' })
+      .select('*', { count: 'exact', head: false })
       .eq('canvas_id', CANVAS_ID)
       .order('placed_at', { ascending: false })
-      .range(0, 49999); // Fetch up to 50,000 pixels (database has ~7,749)
+      .range(0, 50000); // Explicitly fetch 0-50000 (inclusive = 50,001 rows max)
 
     // Check if table doesn't exist (PGRST205)
     if (pixelsError && pixelsError.code === 'PGRST205') {
