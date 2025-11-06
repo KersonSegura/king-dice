@@ -100,20 +100,21 @@ export async function POST(
       );
     }
 
-    // Verify post exists
-    const post = await prisma.post.findUnique({
-      where: { id: postId },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true
-          }
-        }
-      }
-    });
+    // Verify post exists in Supabase
+    const { data: post, error: postError } = await supabaseAdmin
+      .from('posts')
+      .select(`
+        id,
+        authorId,
+        author:users!posts_authorId_fkey(
+          id,
+          username
+        )
+      `)
+      .eq('id', postId)
+      .single();
     
-    if (!post) {
+    if (postError || !post) {
       return NextResponse.json(
         { error: 'Post not found' },
         { status: 404 }
@@ -133,35 +134,57 @@ export async function POST(
       );
     }
 
-    // Create comment in database
-    const newComment = await prisma.comment.create({
-      data: {
+    // Generate CUID for comment
+    const timestampCuid = Date.now().toString(36);
+    const counter = Math.floor(Math.random() * 36).toString(36);
+    const fingerprint = Math.floor(Math.random() * 36).toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    const generatedId = `c${timestampCuid}${counter}${fingerprint}${random}`.substring(0, 25);
+    
+    const now = new Date().toISOString();
+    
+    // Create comment in Supabase
+    const { data: newComment, error: createError } = await supabaseAdmin
+      .from('comments')
+      .insert({
+        id: generatedId,
         content: content.trim(),
         authorId: author.id,
-        postId
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        }
-      }
-    });
+        postId,
+        createdAt: now,
+        updatedAt: now
+      })
+      .select(`
+        id,
+        content,
+        postId,
+        authorId,
+        createdAt,
+        author:users!comments_authorId_fkey(
+          id,
+          username,
+          avatar,
+          reputation,
+          title
+        )
+      `)
+      .single();
     
-    // Update post's replies count
-    await prisma.post.update({
-      where: { id: postId },
-      data: {
-        replies: {
-          increment: 1
-        }
-      }
-    });
+    if (createError || !newComment) {
+      throw new Error(`Failed to create comment: ${createError?.message || 'Unknown error'}`);
+    }
+    
+    // Update post's replies count in Supabase
+    const { data: currentPost } = await supabaseAdmin
+      .from('posts')
+      .select('replies')
+      .eq('id', postId)
+      .single();
+    
+    await supabaseAdmin
+      .from('posts')
+      .update({ replies: (currentPost?.replies || 0) + 1 })
+      .eq('id', postId);
     
     // Award XP for replying to a discussion
     if (newComment) {
