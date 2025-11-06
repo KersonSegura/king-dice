@@ -38,6 +38,27 @@ export async function GET(request: NextRequest) {
       console.log(`Fetched ${dbImages.length} images from database`);
     } catch (dbError) {
       console.error('Database query error:', dbError);
+      console.error('Error details:', dbError instanceof Error ? dbError.message : String(dbError));
+      console.error('Error stack:', dbError instanceof Error ? dbError.stack : 'No stack');
+      
+      // Try fetching directly from Supabase as fallback
+      console.log('Trying direct Supabase query as fallback...');
+      try {
+        const { data: supabaseImages, error: supabaseError } = await supabaseAdmin
+          .from('gallery_images')
+          .select('*')
+          .order('createdAt', { ascending: false });
+        
+        if (!supabaseError && supabaseImages) {
+          console.log(`Supabase direct query found ${supabaseImages.length} images`);
+          console.log('Sample image columns:', supabaseImages[0] ? Object.keys(supabaseImages[0]) : 'none');
+        } else {
+          console.error('Supabase direct query error:', supabaseError);
+        }
+      } catch (supabaseFallbackError) {
+        console.error('Supabase fallback also failed:', supabaseFallbackError);
+      }
+      
       // Return empty gallery if database fails
       const categories = [
         {
