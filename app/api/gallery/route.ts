@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllImages, getAllCategories } from '@/lib/gallery';
-import fs from 'fs';
-import path from 'path';
+import { getAllCategories } from '@/lib/gallery';
 import { supabaseAdmin } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -14,7 +13,53 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || '';
     const userId = searchParams.get('userId') || '';
 
-    let images = getAllImages();
+    // Get images from database
+    const dbImages = await prisma.galleryImage.findMany({
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true,
+            isVerified: true,
+            isAdmin: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Format to match expected structure
+    let images = dbImages.map(img => ({
+      id: img.id,
+      title: img.title,
+      description: img.description || '',
+      imageUrl: img.imageUrl,
+      thumbnailUrl: img.thumbnailUrl,
+      category: img.category,
+      author: {
+        id: img.author.id,
+        name: img.author.username,
+        avatar: img.author.avatar,
+        reputation: img.author.reputation,
+        title: img.author.title
+      },
+      createdAt: img.createdAt.toISOString(),
+      votes: JSON.parse(img.votes),
+      views: img.views,
+      downloads: img.downloads,
+      comments: img.comments,
+      isModerated: true,
+      tags: [],
+      weeklyLikes: {
+        likesReceivedThisWeek: 0,
+        weekId: ''
+      }
+    }));
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 
