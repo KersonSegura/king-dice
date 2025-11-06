@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateCommentVotes, deleteComment, getCommentsByPostId } from '@/lib/comments';
+import { updateCommentVotes, getCommentsByPostId } from '@/lib/comments';
 import { updatePostRepliesCount } from '@/lib/posts';
 import { createNotification } from '@/lib/notifications';
+import { prisma } from '@/lib/prisma';
 
 export async function PUT(
   request: NextRequest,
@@ -89,17 +90,35 @@ export async function DELETE(
       );
     }
 
-    const success = deleteComment(commentId, userId);
+    // Find the comment in database
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId }
+    });
     
-    if (!success) {
+    if (!comment) {
       return NextResponse.json(
-        { error: 'Comment not found or unauthorized' },
+        { error: 'Comment not found' },
         { status: 404 }
       );
     }
 
+    // Only allow deletion by the comment author
+    if (comment.authorId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized to delete this comment' },
+        { status: 403 }
+      );
+    }
+
+    // Delete the comment
+    await prisma.comment.delete({
+      where: { id: commentId }
+    });
+
     // Update the post's replies count after deletion
     updatePostRepliesCount(postId);
+
+    console.log(`Forum comment deleted: ${commentId} by user ${userId}`);
 
     return NextResponse.json({ 
       success: true,
@@ -108,7 +127,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Error deleting comment:', error);
     return NextResponse.json(
-      { error: 'Failed to delete comment' },
+      { error: 'Failed to delete comment', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

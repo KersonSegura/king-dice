@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllPosts } from '@/lib/posts';
 import { supabaseAdmin } from '@/lib/supabase';
-import fs from 'fs';
-import path from 'path';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,8 +44,6 @@ export async function GET(
   }
 }
 
-const dataFilePath = path.join(process.cwd(), 'data', 'posts.json');
-
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -55,34 +52,38 @@ export async function DELETE(
     const { id } = await params;
     const { authorId } = await request.json();
 
-    // Read current posts - the file contains an array directly
-    const posts = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
-
-    // Find the post
-    const postIndex = posts.findIndex((post: any) => post.id === id);
+    // Find the post in database
+    const post = await prisma.post.findUnique({
+      where: { id }
+    });
     
-    if (postIndex === -1) {
+    if (!post) {
       return NextResponse.json(
         { message: 'Post not found' },
         { status: 404 }
       );
     }
 
-    const post = posts[postIndex];
-
     // Check if the user is the author of the post
-    if (post.author.id !== authorId) {
+    if (post.authorId !== authorId) {
       return NextResponse.json(
         { message: 'You can only delete your own posts' },
         { status: 403 }
       );
     }
 
-    // Remove the post
-    posts.splice(postIndex, 1);
+    // Delete the post (comments will be deleted automatically due to onDelete: Cascade)
+    await prisma.post.delete({
+      where: { id }
+    });
 
-    // Save updated posts - save as array directly
-    fs.writeFileSync(dataFilePath, JSON.stringify(posts, null, 2));
+    // Also delete votes from Supabase
+    await supabaseAdmin
+      .from('post_votes')
+      .delete()
+      .eq('post_id', id);
+
+    console.log(`Forum post deleted: ${id} by user ${authorId}`);
 
     return NextResponse.json(
       { message: 'Post deleted successfully' },
@@ -91,7 +92,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Error deleting post:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
