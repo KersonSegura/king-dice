@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllImages, getUserVote } from '@/lib/gallery';
 import { getAllPosts } from '@/lib/posts';
 import { supabaseAdmin } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -14,10 +14,58 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit;
 
-    // 1. Fetch items as before
+    // 1. Fetch items from database
     let followingIds: string[] = [];
     const posts = getAllPosts();
-    const galleryImages = getAllImages();
+    
+    // Get gallery images from database
+    const dbGalleryImages = await prisma.galleryImage.findMany({
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Format gallery images to match expected structure
+    const galleryImages = dbGalleryImages.map(img => {
+      let votes = { upvotes: 0, downvotes: 0 };
+      try {
+        votes = JSON.parse(img.votes);
+      } catch (e) {
+        console.error('Error parsing votes for image:', img.id);
+      }
+
+      return {
+        id: img.id,
+        title: img.title,
+        description: img.description || '',
+        imageUrl: img.imageUrl,
+        thumbnailUrl: img.thumbnailUrl,
+        category: img.category,
+        author: {
+          id: img.author.id,
+          name: img.author.username,
+          avatar: img.author.avatar,
+          reputation: img.author.reputation,
+          title: img.author.title
+        },
+        createdAt: img.createdAt.toISOString(),
+        votes,
+        views: img.views,
+        downloads: img.downloads,
+        comments: img.comments
+      };
+    });
 
     // 2. Build feed items array
     const allItems = [
@@ -104,16 +152,7 @@ export async function GET(request: NextRequest) {
             userVotesMap[`gallery:${v.gallery_image_id}`] = { vote_type: v.vote_type };
           }
         }
-        // Fallback for legacy likes in local JSON if no Supabase vote exists
-        for (const gid of galleryIds) {
-          const key = `gallery:${gid}`;
-          if (!userVotesMap[key]) {
-            const legacy = getUserVote(gid, userId as string);
-            if (legacy) {
-              userVotesMap[key] = { vote_type: legacy } as any;
-            }
-          }
-        }
+        // No more fallback needed - all votes are in Supabase
       }
     }
 
