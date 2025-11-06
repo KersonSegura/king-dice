@@ -85,37 +85,46 @@ export async function PUT(request: NextRequest) {
     
     console.log('📸 Weekly snapshot trigger activated');
     
-    // Get canvas grid data (already computed, fast!)
-    const canvasResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/pixel-canvas`, {
-      next: { revalidate: 0 } // Don't cache
-    });
+    // Get canvas metadata and pixels directly from Supabase (fast!)
+    const { data: canvasMetadata } = await supabaseAdmin
+      .from('pixel_canvas')
+      .select('*')
+      .eq('id', 'main-canvas')
+      .maybeSingle();
     
-    if (!canvasResponse.ok) {
-      throw new Error('Failed to fetch canvas data');
+    const width = canvasMetadata?.width || 200;
+    const height = canvasMetadata?.height || 200;
+    const totalPixels = canvasMetadata?.total_pixels || 0;
+    const uniqueUsers = canvasMetadata?.unique_users || 0;
+    
+    // Fetch only pixel coordinates and colors (lightweight)
+    const { data: pixels } = await supabaseAdmin
+      .from('pixel_placements')
+      .select('x, y, color')
+      .eq('canvas_id', 'main-canvas');
+    
+    // Build grid efficiently
+    const grid: string[][] = [];
+    for (let y = 0; y < height; y++) {
+      grid[y] = Array(width).fill('#FFFFFF'); // White background
     }
     
-    const canvasData = await canvasResponse.json();
-    
-    if (!canvasData.success || !canvasData.canvas || !canvasData.canvas.grid) {
-      throw new Error('Invalid canvas data');
+    // Fill grid with pixels
+    if (pixels) {
+      for (const pixel of pixels) {
+        if (pixel.x >= 0 && pixel.x < width && pixel.y >= 0 && pixel.y < height) {
+          grid[pixel.y][pixel.x] = pixel.color;
+        }
+      }
     }
     
-    const grid = canvasData.canvas.grid;
-    const width = canvasData.canvas.width || 200;
-    const height = canvasData.canvas.height || 200;
-    const totalPixels = canvasData.stats?.totalPixels || 0;
-    const uniqueUsers = canvasData.stats?.uniqueUsers || 0;
-    
-    // Generate actual canvas image from grid (efficient - only non-white pixels)
+    // Generate SVG image from grid (only non-white pixels for efficiency)
     let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated;">`;
-    
-    // White background
     svgContent += `<rect width="${width}" height="${height}" fill="#ffffff"/>`;
     
-    // Add pixels (only non-white ones to keep SVG small)
     let pixelCount = 0;
-    for (let y = 0; y < height && y < grid.length; y++) {
-      for (let x = 0; x < width && x < grid[y].length; x++) {
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
         const color = grid[y][x];
         if (color && color !== '#ffffff' && color !== '#FFFFFF') {
           svgContent += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
@@ -136,7 +145,7 @@ export async function PUT(request: NextRequest) {
       height,
       totalPixels,
       uniqueUsers,
-      lastUpdated: canvasData.stats?.lastUpdated || new Date().toISOString(),
+      lastUpdated: canvasMetadata?.last_updated || new Date().toISOString(),
       canvasSize: `${width}x${height}`
     };
     
