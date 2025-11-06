@@ -39,8 +39,8 @@ export default function WeeklyCanvasSnapshot() {
   const constrainPan = (newPanX: number, newPanY: number, currentZoomLevel = zoomLevel) => {
     if (!containerRef.current) return { x: newPanX, y: newPanY };
     
-    // Calculate actual canvas dimensions at current zoom (assuming 300x300 base size)
-    const baseCanvasSize = 300;
+    // Calculate actual canvas dimensions at current zoom (600x600 display size)
+    const baseCanvasSize = 600;
     const canvasWidth = baseCanvasSize * currentZoomLevel;
     const canvasHeight = baseCanvasSize * currentZoomLevel;
     
@@ -346,8 +346,8 @@ export default function WeeklyCanvasSnapshot() {
               className="rounded border border-gray-300"
               style={{ 
                 imageRendering: 'pixelated',
-                width: '300px',
-                height: '300px',
+                width: '600px',
+                height: '600px',
                 objectFit: 'contain'
               }}
             />
