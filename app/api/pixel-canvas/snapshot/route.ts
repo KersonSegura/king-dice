@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLatestSnapshot, saveWeeklySnapshot, getCurrentWeekId } from '@/lib/canvas-snapshot-supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Get weekly snapshot (returns the previous week's snapshot, or current week if no previous exists)
 export async function GET(request: NextRequest) {
@@ -84,14 +85,15 @@ export async function PUT(request: NextRequest) {
     
     console.log('📸 Weekly snapshot trigger activated');
     
-    // Fetch current canvas stats (lightweight - no full pixel data)
-    const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/pixel-canvas`);
+    // Get stats directly from Supabase (no API route - avoids timeout)
+    const { data: canvasMetadata } = await supabaseAdmin
+      .from('pixel_canvas')
+      .select('*')
+      .eq('id', 'main-canvas')
+      .maybeSingle();
     
-    if (!statsResponse.ok) {
-      throw new Error('Failed to fetch canvas stats');
-    }
-    
-    const statsData = await statsResponse.json();
+    const totalPixels = canvasMetadata?.total_pixels || 0;
+    const uniqueUsers = canvasMetadata?.unique_users || 0;
     
     // Use a simple placeholder image - we'll display the live canvas instead
     const imageData = 'data:image/svg+xml;base64,' + Buffer.from(
@@ -101,19 +103,19 @@ export async function PUT(request: NextRequest) {
           Canvas Snapshot
         </text>
         <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#9ca3af">
-          ${statsData.stats?.totalPixels || 0} pixels
+          ${totalPixels} pixels
         </text>
       </svg>`
     ).toString('base64');
     
     // Create a lightweight snapshot object
     const snapshotData = {
-      width: statsData.canvas?.width || 200,
-      height: statsData.canvas?.height || 200,
-      totalPixels: statsData.stats?.totalPixels || 0,
-      uniqueUsers: statsData.stats?.uniqueUsers || 0,
-      lastUpdated: statsData.stats?.lastUpdated || new Date().toISOString(),
-      canvasSize: statsData.stats?.canvasSize || '200x200'
+      width: canvasMetadata?.width || 200,
+      height: canvasMetadata?.height || 200,
+      totalPixels,
+      uniqueUsers,
+      lastUpdated: canvasMetadata?.last_updated || new Date().toISOString(),
+      canvasSize: `${canvasMetadata?.width || 200}x${canvasMetadata?.height || 200}`
     };
     
     // Save the snapshot to Supabase
