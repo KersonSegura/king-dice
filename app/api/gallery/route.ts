@@ -169,59 +169,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch user data to get actual username and avatar
-    let authorName = 'User';
-    let authorAvatar = '/default-avatar.png';
-
-    try {
-      const userResponse = await fetch(`${request.nextUrl.origin}/api/users/profile?userId=${authorId}`);
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        authorName = userData.user?.username || 'User';
-        authorAvatar = userData.user?.avatar || '/default-avatar.png';
+    // Create new image in database
+    const newImage = await prisma.galleryImage.create({
+      data: {
+        title: category === 'Collections' ? 'Collection Photo' : 'Favorite Card',
+        description,
+        imageUrl,
+        thumbnailUrl: imageUrl,
+        category,
+        authorId
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        }
       }
-    } catch (error) {
-      console.error('Error fetching user data for gallery post:', error);
-    }
+    });
 
-    // Read existing gallery data
-    const galleryPath = path.join(process.cwd(), 'data', 'gallery.json');
-    let galleryData: { images: any[] } = { images: [] };
-
-    if (fs.existsSync(galleryPath)) {
-      const fileContent = fs.readFileSync(galleryPath, 'utf8');
-      galleryData = JSON.parse(fileContent);
-    }
-
-    // Create new image entry
-    const newImage = {
-      id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      imageUrl,
-      thumbnailUrl: imageUrl,
-      title: category === 'Collections' ? 'Collection Photo' : 'Favorite Card',
-      description,
-      category,
+    // Format response
+    const formattedImage = {
+      id: newImage.id,
+      imageUrl: newImage.imageUrl,
+      thumbnailUrl: newImage.thumbnailUrl,
+      title: newImage.title,
+      description: newImage.description,
+      category: newImage.category,
       author: {
-        id: authorId,
-        name: authorName,
-        avatar: authorAvatar
+        id: newImage.author.id,
+        name: newImage.author.username,
+        avatar: newImage.author.avatar,
+        reputation: newImage.author.reputation
       },
-      createdAt: new Date().toISOString(),
-      votes: {
-        upvotes: 0,
-        downvotes: 0,
-        voters: []
-      },
-      comments: []
+      createdAt: newImage.createdAt.toISOString(),
+      votes: JSON.parse(newImage.votes),
+      comments: newImage.comments
     };
 
-    // Add to gallery
-    galleryData.images.unshift(newImage);
+    console.log(`Gallery image created: ${newImage.id} by ${newImage.author.username}`);
 
-    // Write back to file
-    fs.writeFileSync(galleryPath, JSON.stringify(galleryData, null, 2));
-
-    return NextResponse.json({ image: newImage });
+    return NextResponse.json({ image: formattedImage });
   } catch (error) {
     console.error('Error creating gallery image:', error);
     return NextResponse.json(
