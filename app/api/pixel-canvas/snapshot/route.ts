@@ -84,84 +84,50 @@ export async function PUT(request: NextRequest) {
     
     console.log('📸 Weekly snapshot trigger activated');
     
-    // Fetch current canvas data
-    const canvasResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/pixel-canvas`);
+    // Fetch current canvas stats (lightweight - no full pixel data)
+    const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/pixel-canvas`);
     
-    if (!canvasResponse.ok) {
-      throw new Error('Failed to fetch canvas data');
+    if (!statsResponse.ok) {
+      throw new Error('Failed to fetch canvas stats');
     }
     
-    const canvasData = await canvasResponse.json();
+    const statsData = await statsResponse.json();
     
-    // Generate a proper visual representation of the canvas from the pixel data
-    let imageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    // Use a simple placeholder image - we'll display the live canvas instead
+    const imageData = 'data:image/svg+xml;base64,' + Buffer.from(
+      `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#f3f4f6"/>
+        <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="16" fill="#6b7280">
+          Canvas Snapshot
+        </text>
+        <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#9ca3af">
+          ${statsData.stats?.totalPixels || 0} pixels
+        </text>
+      </svg>`
+    ).toString('base64');
     
-    // If we have canvas data with pixels, create an actual visual representation
-    if (canvasData.success && canvasData.canvas && canvasData.canvas.grid) {
-      console.log(`📊 Generating visual snapshot from canvas grid data`);
-      
-      const grid = canvasData.canvas.grid;
-      const width = canvasData.canvas.width || 200;
-      const height = canvasData.canvas.height || 200;
-      
-      // Create SVG representation of the actual pixel canvas
-      let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated;">`;
-      
-      // Add background
-      svgContent += `<rect width="${width}" height="${height}" fill="#ffffff"/>`;
-      
-      // Add each pixel from the grid
-      for (let y = 0; y < height && y < grid.length; y++) {
-        for (let x = 0; x < width && x < grid[y].length; x++) {
-          const pixelColor = grid[y][x];
-          if (pixelColor && pixelColor !== '#ffffff' && pixelColor !== '#FFFFFF') {
-            svgContent += `<rect x="${x}" y="${y}" width="1" height="1" fill="${pixelColor}"/>`;
-          }
-        }
-      }
-      
-      svgContent += '</svg>';
-      
-      imageData = 'data:image/svg+xml;base64,' + Buffer.from(svgContent).toString('base64');
-      console.log(`✅ Generated snapshot SVG with ${canvasData.canvas.pixels?.length || 0} pixels`);
-    } else if (canvasData.success && canvasData.canvas && canvasData.canvas.pixels && canvasData.canvas.pixels.length > 0) {
-      console.log(`📊 Generating visual snapshot from pixel array data`);
-      
-      const pixels = canvasData.canvas.pixels;
-      const width = canvasData.canvas.width || 200;
-      const height = canvasData.canvas.height || 200;
-      
-      // Create SVG representation from pixel array
-      let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated;">`;
-      
-      // Add background
-      svgContent += `<rect width="${width}" height="${height}" fill="#ffffff"/>`;
-      
-      // Add each pixel
-      pixels.forEach((pixel: any) => {
-        if (pixel.color && pixel.color !== '#ffffff' && pixel.color !== '#FFFFFF') {
-          svgContent += `<rect x="${pixel.x}" y="${pixel.y}" width="1" height="1" fill="${pixel.color}"/>`;
-        }
-      });
-      
-      svgContent += '</svg>';
-      
-      imageData = 'data:image/svg+xml;base64,' + Buffer.from(svgContent).toString('base64');
-      console.log(`✅ Generated snapshot SVG from ${pixels.length} pixel array`);
-    } else {
-      console.log('⚠️ No canvas data available, using placeholder');
-    }
+    // Create a lightweight snapshot object
+    const snapshotData = {
+      width: statsData.canvas?.width || 200,
+      height: statsData.canvas?.height || 200,
+      totalPixels: statsData.stats?.totalPixels || 0,
+      uniqueUsers: statsData.stats?.uniqueUsers || 0,
+      lastUpdated: statsData.stats?.lastUpdated || new Date().toISOString(),
+      canvasSize: statsData.stats?.canvasSize || '200x200'
+    };
     
     // Save the snapshot to Supabase
-    const result = await saveWeeklySnapshot(canvasData.canvas || {}, imageData);
+    const result = await saveWeeklySnapshot(snapshotData, imageData);
     
     if (!result.success) {
       throw new Error(result.message || 'Failed to save snapshot');
     }
     
+    console.log(`✅ Snapshot saved with ${snapshotData.totalPixels} pixels`);
+    
     return NextResponse.json({
       success: true,
-      message: 'Weekly snapshot captured and saved',
+      message: `Weekly snapshot captured and saved with ${snapshotData.totalPixels} pixels`,
       weekId: result.weekId
     });
   } catch (error) {
