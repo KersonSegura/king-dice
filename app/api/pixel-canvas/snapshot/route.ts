@@ -85,37 +85,59 @@ export async function PUT(request: NextRequest) {
     
     console.log('📸 Weekly snapshot trigger activated');
     
-    // Get stats directly from Supabase (no API route - avoids timeout)
-    const { data: canvasMetadata } = await supabaseAdmin
-      .from('pixel_canvas')
-      .select('*')
-      .eq('id', 'main-canvas')
-      .maybeSingle();
+    // Get canvas grid data (already computed, fast!)
+    const canvasResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/pixel-canvas`, {
+      next: { revalidate: 0 } // Don't cache
+    });
     
-    const totalPixels = canvasMetadata?.total_pixels || 0;
-    const uniqueUsers = canvasMetadata?.unique_users || 0;
+    if (!canvasResponse.ok) {
+      throw new Error('Failed to fetch canvas data');
+    }
     
-    // Use a simple placeholder image - we'll display the live canvas instead
-    const imageData = 'data:image/svg+xml;base64,' + Buffer.from(
-      `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="200" fill="#f3f4f6"/>
-        <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="16" fill="#6b7280">
-          Canvas Snapshot
-        </text>
-        <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#9ca3af">
-          ${totalPixels} pixels
-        </text>
-      </svg>`
-    ).toString('base64');
+    const canvasData = await canvasResponse.json();
     
-    // Create a lightweight snapshot object
+    if (!canvasData.success || !canvasData.canvas || !canvasData.canvas.grid) {
+      throw new Error('Invalid canvas data');
+    }
+    
+    const grid = canvasData.canvas.grid;
+    const width = canvasData.canvas.width || 200;
+    const height = canvasData.canvas.height || 200;
+    const totalPixels = canvasData.stats?.totalPixels || 0;
+    const uniqueUsers = canvasData.stats?.uniqueUsers || 0;
+    
+    // Generate actual canvas image from grid (efficient - only non-white pixels)
+    let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated;">`;
+    
+    // White background
+    svgContent += `<rect width="${width}" height="${height}" fill="#ffffff"/>`;
+    
+    // Add pixels (only non-white ones to keep SVG small)
+    let pixelCount = 0;
+    for (let y = 0; y < height && y < grid.length; y++) {
+      for (let x = 0; x < width && x < grid[y].length; x++) {
+        const color = grid[y][x];
+        if (color && color !== '#ffffff' && color !== '#FFFFFF') {
+          svgContent += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
+          pixelCount++;
+        }
+      }
+    }
+    
+    svgContent += '</svg>';
+    
+    const imageData = 'data:image/svg+xml;base64,' + Buffer.from(svgContent).toString('base64');
+    
+    console.log(`✅ Generated canvas image with ${pixelCount} colored pixels`);
+    
+    // Create snapshot object
     const snapshotData = {
-      width: canvasMetadata?.width || 200,
-      height: canvasMetadata?.height || 200,
+      width,
+      height,
       totalPixels,
       uniqueUsers,
-      lastUpdated: canvasMetadata?.last_updated || new Date().toISOString(),
-      canvasSize: `${canvasMetadata?.width || 200}x${canvasMetadata?.height || 200}`
+      lastUpdated: canvasData.stats?.lastUpdated || new Date().toISOString(),
+      canvasSize: `${width}x${height}`
     };
     
     // Save the snapshot to Supabase
