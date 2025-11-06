@@ -143,14 +143,31 @@ export async function PUT(request: NextRequest) {
       }
     }
     
-    // Generate SVG image from grid (only non-white pixels for efficiency)
-    let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated;">`;
-    svgContent += `<rect width="${width}" height="${height}" fill="#ffffff"/>`;
+    // Generate a scaled-down preview image (faster, smaller file)
+    // Scale down to 200x200 max for preview (1:1 if canvas is smaller)
+    const previewScale = Math.min(1, 200 / Math.max(width, height));
+    const previewWidth = Math.floor(width * previewScale);
+    const previewHeight = Math.floor(height * previewScale);
+    
+    // Build preview grid (sample pixels)
+    const previewGrid: string[][] = [];
+    for (let py = 0; py < previewHeight; py++) {
+      previewGrid[py] = [];
+      for (let px = 0; px < previewWidth; px++) {
+        const sourceX = Math.floor(px / previewScale);
+        const sourceY = Math.floor(py / previewScale);
+        previewGrid[py][px] = grid[sourceY]?.[sourceX] || '#FFFFFF';
+      }
+    }
+    
+    // Generate compact SVG (group by color rows for efficiency)
+    let svgContent = `<svg width="${previewWidth}" height="${previewHeight}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated;">`;
+    svgContent += `<rect width="${previewWidth}" height="${previewHeight}" fill="#ffffff"/>`;
     
     let pixelCount = 0;
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const color = grid[y][x];
+    for (let y = 0; y < previewHeight; y++) {
+      for (let x = 0; x < previewWidth; x++) {
+        const color = previewGrid[y][x];
         if (color && color !== '#ffffff' && color !== '#FFFFFF') {
           svgContent += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
           pixelCount++;
@@ -162,7 +179,7 @@ export async function PUT(request: NextRequest) {
     
     const imageData = 'data:image/svg+xml;base64,' + Buffer.from(svgContent).toString('base64');
     
-    console.log(`✅ Generated canvas image with ${pixelCount} colored pixels`);
+    console.log(`✅ Generated ${previewWidth}x${previewHeight} preview image with ${pixelCount} colored pixels`);
     
     // Create snapshot object
     const snapshotData = {
