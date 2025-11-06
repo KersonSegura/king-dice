@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { awardXP } from '@/lib/reputation';
 import { createNotification } from '@/lib/notifications';
 import { moderateText } from '@/lib/moderation';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -16,50 +16,58 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get('sortBy') as 'newest' | 'best' | 'top' || 'best';
     
-    // Verify post exists
-    const post = await prisma.post.findUnique({
-      where: { id: postId }
-    });
+    // Verify post exists in Supabase
+    const { data: post, error: postError } = await supabaseAdmin
+      .from('posts')
+      .select('id')
+      .eq('id', postId)
+      .single();
     
-    if (!post) {
+    if (postError || !post) {
       return NextResponse.json(
         { error: 'Post not found' },
         { status: 404 }
       );
     }
 
-    // Get comments from database
-    const comments = await prisma.comment.findMany({
-      where: { postId },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        }
-      },
-      orderBy: sortBy === 'newest' 
-        ? { createdAt: 'desc' }
-        : { createdAt: 'asc' } // For 'best' and 'top', we'll sort by votes client-side
-    });
+    // Get comments from Supabase
+    const { data: comments, error: commentsError } = await supabaseAdmin
+      .from('comments')
+      .select(`
+        id,
+        content,
+        postId,
+        authorId,
+        createdAt,
+        updatedAt,
+        author:users!comments_authorId_fkey(
+          id,
+          username,
+          avatar,
+          reputation,
+          title
+        )
+      `)
+      .eq('postId', postId)
+      .order('createdAt', { ascending: sortBy !== 'newest' });
+    
+    if (commentsError) {
+      throw commentsError;
+    }
 
     // Format comments
-    const formattedComments = comments.map(comment => ({
+    const formattedComments = (comments || []).map((comment: any) => ({
       id: comment.id,
       content: comment.content,
       postId: comment.postId,
       author: {
-        id: comment.author.id,
-        name: comment.author.username,
-        avatar: comment.author.avatar,
-        reputation: comment.author.reputation,
-        title: comment.author.title
+        id: comment.author?.id || comment.authorId,
+        name: comment.author?.username || 'Unknown',
+        avatar: comment.author?.avatar || null,
+        reputation: comment.author?.reputation || 0,
+        title: comment.author?.title || null
       },
-      createdAt: comment.createdAt.toISOString(),
+      createdAt: typeof comment.createdAt === 'string' ? comment.createdAt : comment.createdAt.toISOString(),
       votes: { upvotes: 0, downvotes: 0 }, // Will be loaded from Supabase
       userVote: null,
       isModerated: true
