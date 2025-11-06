@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPost, getAllPosts } from '@/lib/posts';
 import { moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
-// import { CacheService } from '@/lib/redis';
+import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic so likes/replies reflect immediately when navigating back
 export const dynamic = 'force-dynamic';
@@ -14,23 +14,66 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const userId = searchParams.get('userId') || '';
     
-    // Always fetch fresh (disable Redis cache for live counters)
-    
-    let posts = getAllPosts();
-    
-    // Filter by author if authorId is provided
-    if (authorId) {
-      posts = posts.filter(post => post.author.id === authorId);
-    }
+    // Get posts from database
+    const dbPosts = await prisma.post.findMany({
+      where: authorId ? { authorId } : undefined,
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        },
+        _count: {
+          select: {
+            comments: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Format posts to match expected structure
+    let posts = dbPosts.map(post => {
+      let votes = { upvotes: 0, downvotes: 0 };
+      try {
+        votes = JSON.parse(post.votes);
+      } catch (e) {
+        console.error('Error parsing votes for post:', post.id);
+      }
+
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        category: post.category,
+        author: {
+          id: post.author.id,
+          name: post.author.username,
+          avatar: post.author.avatar,
+          reputation: post.author.reputation,
+          title: post.author.title
+        },
+        createdAt: post.createdAt.toISOString(),
+        votes,
+        replies: post._count.comments,
+        userVote: null,
+        isModerated: true
+      };
+    });
     
     // Apply pagination
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     let paginatedPosts = posts.slice(startIndex, endIndex);
 
-    // Overlay live vote counts and userVote from Supabase
+    // Get vote counts and user votes from Supabase
     try {
-      const { supabaseAdmin } = await import('@/lib/supabase');
       const ids = paginatedPosts.map(p => p.id);
       if (ids.length > 0) {
         // Initialize all post IDs with 0 counts
@@ -138,36 +181,69 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Content approved, creating post...');
-    // Create post
-    const newPost = createPost({
-      title: title.trim(),
-      content: content.trim(),
-      category,
-      author
+    
+    // Create post in database
+    const newPost = await prisma.post.create({
+      data: {
+        title: title.trim(),
+        content: content.trim(),
+        category,
+        authorId: author.id
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        }
+      }
     });
-    console.log('Post created:', newPost);
+    
+    // Format response
+    const formattedPost = {
+      id: newPost.id,
+      title: newPost.title,
+      content: newPost.content,
+      category: newPost.category,
+      author: {
+        id: newPost.author.id,
+        name: newPost.author.username,
+        avatar: newPost.author.avatar,
+        reputation: newPost.author.reputation,
+        title: newPost.author.title
+      },
+      createdAt: newPost.createdAt.toISOString(),
+      votes: { upvotes: 0, downvotes: 0 },
+      replies: 0,
+      userVote: null,
+      isModerated: true
+    };
+    
+    console.log('Post created:', formattedPost);
 
     // Award XP for creating a discussion
-    if (newPost) {
-      console.log('Awarding XP...');
-      try {
-        awardXP(
-          author.id,
-          author.name,
-          'CREATE_DISCUSSION',
-          newPost.id
-        );
-        console.log('XP awarded successfully');
-      } catch (xpError) {
-        console.error('Error awarding XP:', xpError);
-        // Don't fail the post creation if XP awarding fails
-      }
+    console.log('Awarding XP...');
+    try {
+      awardXP(
+        author.id,
+        author.name,
+        'CREATE_DISCUSSION',
+        formattedPost.id
+      );
+      console.log('XP awarded successfully');
+    } catch (xpError) {
+      console.error('Error awarding XP:', xpError);
+      // Don't fail the post creation if XP awarding fails
     }
 
     console.log('Returning success response');
     return NextResponse.json({ 
       success: true, 
-      post: newPost,
+      post: formattedPost,
       message: 'Post created successfully'
     });
   } catch (error) {
