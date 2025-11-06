@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadImage } from '@/lib/gallery';
 import { moderateImage, moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
+import { uploadToStorage, STORAGE_BUCKETS } from '@/lib/supabase';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,42 +80,93 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload image
-    const imageData = await uploadImage({
-      file,
-      title: title?.trim() || '',
-      category,
-      author,
-      description: formData.get('description') as string || '',
-      tags: (formData.get('tags') as string || '').split(',').map(tag => tag.trim()).filter(tag => tag)
+    // Upload to Supabase Storage
+    const timestamp = Date.now();
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const filename = `gallery-${timestamp}.${fileExtension}`;
+    
+    // Convert file to buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    const uploadResult = await uploadToStorage(
+      STORAGE_BUCKETS.GALLERY,
+      filename,
+      buffer,
+      file.type
+    );
+    
+    if (uploadResult.error) {
+      throw new Error(`Failed to upload to Supabase Storage: ${uploadResult.error}`);
+    }
+    
+    // Create image in database
+    const imageData = await prisma.galleryImage.create({
+      data: {
+        title: title?.trim() || (category === 'collections' ? 'Collection Photo' : 'Favorite Card'),
+        description: description || '',
+        imageUrl: uploadResult.publicUrl,
+        thumbnailUrl: uploadResult.publicUrl,
+        category,
+        authorId: author.id
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        }
+      }
     });
 
     // Award XP for uploading an image (optional - don't fail upload if XP fails)
-    if (imageData) {
-      try {
-        // Check if it's a dice design upload (Dice Throne category)
-        const isDiceDesign = category === 'Dice Throne';
-        
-        const xpResult = awardXP(
-          author.id,
-          author.name,
-          isDiceDesign ? 'UPLOAD_DIE_DESIGN' : 'UPLOAD_IMAGE',
-          imageData.id
-        );
-        
-        // Log level up if it occurred (server-side)
-        if (xpResult.leveledUp) {
-          console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from uploading an image!`);
-        }
-      } catch (xpError) {
-        console.error('Error awarding XP (non-critical):', xpError);
-        // Don't fail the upload if XP awarding fails
+    try {
+      // Check if it's a dice design upload (Dice Throne category)
+      const isDiceDesign = category === 'dice-throne';
+      
+      const xpResult = awardXP(
+        author.id,
+        author.name,
+        isDiceDesign ? 'UPLOAD_DIE_DESIGN' : 'UPLOAD_IMAGE',
+        imageData.id
+      );
+      
+      // Log level up if it occurred (server-side)
+      if (xpResult.leveledUp) {
+        console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from uploading an image!`);
       }
+    } catch (xpError) {
+      console.error('Error awarding XP (non-critical):', xpError);
+      // Don't fail the upload if XP awarding fails
     }
+
+    // Format response
+    const formattedImage = {
+      id: imageData.id,
+      title: imageData.title,
+      description: imageData.description,
+      imageUrl: imageData.imageUrl,
+      thumbnailUrl: imageData.thumbnailUrl,
+      category: imageData.category,
+      author: {
+        id: imageData.author.id,
+        name: imageData.author.username,
+        avatar: imageData.author.avatar,
+        reputation: imageData.author.reputation
+      },
+      createdAt: imageData.createdAt.toISOString(),
+      votes: JSON.parse(imageData.votes),
+      comments: imageData.comments
+    };
+
+    console.log(`Gallery image uploaded: ${imageData.id} by ${imageData.author.username}`);
 
     return NextResponse.json({ 
       success: true, 
-      image: imageData,
+      image: formattedImage,
       message: 'Image uploaded successfully'
     });
   } catch (error) {

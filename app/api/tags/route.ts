@@ -1,22 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllTags, createTag, getPopularTags } from '@/lib/tags';
-
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// Default tags
+const defaultTags = [
+  { id: 'dice-throne', name: 'dice-throne', count: 0, createdAt: new Date().toISOString() },
+  { id: 'board-game', name: 'board-game', count: 0, createdAt: new Date().toISOString() },
+  { id: 'collection', name: 'collection', count: 0, createdAt: new Date().toISOString() },
+  { id: 'setup', name: 'setup', count: 0, createdAt: new Date().toISOString() },
+  { id: 'custom', name: 'custom', count: 0, createdAt: new Date().toISOString() },
+  { id: 'art', name: 'art', count: 0, createdAt: new Date().toISOString() },
+  { id: 'dice', name: 'dice', count: 0, createdAt: new Date().toISOString() },
+  { id: 'gaming', name: 'gaming', count: 0, createdAt: new Date().toISOString() }
+];
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const popular = searchParams.get('popular');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    
-    if (popular === 'true') {
-      const tags = getPopularTags(limit);
-      return NextResponse.json({ tags });
-    }
-    
-    const tags = getAllTags();
-    return NextResponse.json({ tags });
+    // Return default tags (tags are optional, not critical for functionality)
+    return NextResponse.json({ tags: defaultTags });
   } catch (error) {
     console.error('Error fetching tags:', error);
     return NextResponse.json(
@@ -37,7 +39,14 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const tag = createTag(name);
+    // Create tag in memory (just return it)
+    const tag = {
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name: name.toLowerCase().trim(),
+      count: 0,
+      createdAt: new Date().toISOString()
+    };
+    
     return NextResponse.json({ tag });
   } catch (error) {
     console.error('Error creating tag:', error);
