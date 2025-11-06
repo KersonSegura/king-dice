@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllPosts } from '@/lib/posts';
 import { supabaseAdmin } from '@/lib/supabase';
 import { prisma } from '@/lib/prisma';
 
@@ -14,12 +13,32 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || '';
 
-    const base = getAllPosts().find(p => p.id === id) || null;
-    if (!base) {
+    // Get post from database
+    const dbPost = await prisma.post.findUnique({
+      where: { id },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        },
+        _count: {
+          select: {
+            comments: true
+          }
+        }
+      }
+    });
+
+    if (!dbPost) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Overlay counts and user vote from Supabase
+    // Get vote counts from Supabase
     const [{ count: upvotes }, { count: downvotes }, { data: meVote }] = await Promise.all([
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: id, vote_type: 'up' }),
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: id, vote_type: 'down' }),
@@ -28,14 +47,28 @@ export async function GET(
         : Promise.resolve({ data: null } as any),
     ]);
 
+    // Format post
     const post = {
-      ...base,
-      votes: {
-        upvotes: upvotes ?? base.votes?.upvotes ?? 0,
-        downvotes: downvotes ?? base.votes?.downvotes ?? 0,
+      id: dbPost.id,
+      title: dbPost.title,
+      content: dbPost.content,
+      category: dbPost.category,
+      author: {
+        id: dbPost.author.id,
+        name: dbPost.author.username,
+        avatar: dbPost.author.avatar,
+        reputation: dbPost.author.reputation,
+        title: dbPost.author.title
       },
+      createdAt: dbPost.createdAt.toISOString(),
+      votes: {
+        upvotes: upvotes ?? 0,
+        downvotes: downvotes ?? 0,
+      },
+      replies: dbPost._count.comments,
       userVote: meVote?.vote_type ?? null,
-    } as any;
+      isModerated: true
+    };
 
     return NextResponse.json({ post });
   } catch (error) {
