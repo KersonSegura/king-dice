@@ -21,7 +21,15 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(limit);
     const { data, error } = unreadOnly ? await query.eq('read', false) : await query;
-    if (error) throw error;
+    
+    // Handle missing notifications table gracefully
+    if (error) {
+      if (error.code === 'PGRST205') {
+        // Table doesn't exist - return empty array
+        return NextResponse.json({ notifications: [] });
+      }
+      throw error;
+    }
 
     const notifications = (data || []).map((n: any) => ({
       id: n.id,

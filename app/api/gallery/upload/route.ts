@@ -98,17 +98,32 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to upload to Supabase Storage: ${uploadResult.error}`);
     }
     
+    // Generate CUID for image ID (database doesn't auto-generate)
+    const timestamp = Date.now().toString(36);
+    const counter = Math.floor(Math.random() * 36).toString(36);
+    const fingerprint = Math.floor(Math.random() * 36).toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    const generatedId = `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+    
+    const now = new Date().toISOString();
+    
     // Create image in database using Supabase directly (to avoid Prisma connection issues)
-    // Try both camelCase and snake_case for column names
+    // Use camelCase column names to match Prisma schema
     const { data: imageData, error: createError } = await supabaseAdmin
       .from('gallery_images')
       .insert({
+        id: generatedId,
         title: title?.trim() || (category === 'collections' ? 'Collection Photo' : 'Favorite Card'),
         description: description || '',
         imageUrl: uploadResult.publicUrl,
         thumbnailUrl: uploadResult.publicUrl,
         category,
-        authorId: author.id
+        authorId: author.id,
+        votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
+        comments: 0,
+        views: 0,
+        createdAt: now,
+        updatedAt: now
       })
       .select('id, title, description, imageUrl, thumbnailUrl, category, votes, comments, createdAt, authorId')
       .single();
