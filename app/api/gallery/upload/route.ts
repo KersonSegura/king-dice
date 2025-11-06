@@ -109,24 +109,7 @@ export async function POST(request: NextRequest) {
         category,
         author_id: author.id
       })
-      .select(`
-        id,
-        title,
-        description,
-        image_url,
-        thumbnail_url,
-        category,
-        votes,
-        comments,
-        created_at,
-        author:users!gallery_images_author_id_fkey (
-          id,
-          username,
-          avatar,
-          reputation,
-          title
-        )
-      `)
+      .select('id, title, description, image_url, thumbnail_url, category, votes, comments, created_at, author_id')
       .single();
 
     if (createError || !imageData) {
@@ -163,10 +146,10 @@ export async function POST(request: NextRequest) {
       thumbnailUrl: imageData.thumbnail_url,
       category: imageData.category,
       author: {
-        id: imageData.author.id,
-        name: imageData.author.username,
-        avatar: imageData.author.avatar,
-        reputation: imageData.author.reputation
+        id: author.id,
+        name: author.name,
+        avatar: author.avatar,
+        reputation: author.reputation || 0
       },
       createdAt: imageData.created_at,
       votes: (() => {
@@ -179,7 +162,7 @@ export async function POST(request: NextRequest) {
       comments: imageData.comments
     };
 
-    console.log(`Gallery image uploaded: ${imageData.id} by ${imageData.author.username}`);
+    console.log(`Gallery image uploaded: ${imageData.id} by ${author.name}`);
 
     return NextResponse.json({ 
       success: true, 
