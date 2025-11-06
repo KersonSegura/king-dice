@@ -99,11 +99,11 @@ export async function POST(request: NextRequest) {
     }
     
     // Generate CUID for image ID (database doesn't auto-generate)
-    const timestamp = Date.now().toString(36);
+    const timestampCuid = Date.now().toString(36);
     const counter = Math.floor(Math.random() * 36).toString(36);
     const fingerprint = Math.floor(Math.random() * 36).toString(36);
     const random = Math.random().toString(36).substring(2, 15);
-    const generatedId = `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+    const generatedId = `c${timestampCuid}${counter}${fingerprint}${random}`.substring(0, 25);
     
     const now = new Date().toISOString();
     
