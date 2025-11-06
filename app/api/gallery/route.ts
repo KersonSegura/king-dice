@@ -12,25 +12,72 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || '';
     const userId = searchParams.get('userId') || '';
 
+    console.log('Fetching gallery images from database...');
+
     // Get images from database
-    const dbImages = await prisma.galleryImage.findMany({
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true,
-            isVerified: true,
-            isAdmin: true
+    let dbImages;
+    try {
+      dbImages = await prisma.galleryImage.findMany({
+        include: {
+          author: {
+            select: {
+              id: true,
+              username: true,
+              avatar: true,
+              reputation: true,
+              title: true,
+              isVerified: true,
+              isAdmin: true
+            }
           }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+      });
+      console.log(`Fetched ${dbImages.length} images from database`);
+    } catch (dbError) {
+      console.error('Database query error:', dbError);
+      // Return empty gallery if database fails
+      const categories = [
+        {
+          id: 'dice-throne',
+          name: 'Dice Throne',
+          description: 'This is where legends roll. Showcase your custom die and claim your place in the Dice Throne.',
+          icon: 'ThroneIcon.svg',
+          color: 'bg-red-100 text-red-600',
+          imageCount: 0
+        },
+        {
+          id: 'the-kings-card',
+          name: "The King's Card",
+          description: 'Present your relic to the court. Each week, one card ascends to the King\'s side.',
+          icon: 'KingsCard.svg',
+          color: 'bg-pink-100 text-pink-600',
+          imageCount: 0
+        },
+        {
+          id: 'collections',
+          name: 'Game Collections',
+          description: 'Display your realm. Show your collection and inspire fellow collectors.',
+          icon: 'GameCollection.svg',
+          color: 'bg-blue-100 text-blue-600',
+          imageCount: 0
+        },
+        {
+          id: 'game-nights',
+          name: 'Game Nights',
+          description: 'Capture the moments. Share your game nights and adventures.',
+          icon: 'GameNight.svg',
+          color: 'bg-green-100 text-green-600',
+          imageCount: 0
+        }
+      ];
+      return NextResponse.json({
+        images: [],
+        categories
+      });
+    }
 
     // Format to match expected structure
     let images = dbImages.map(img => {
