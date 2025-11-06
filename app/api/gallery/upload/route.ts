@@ -108,8 +108,12 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
     
     // Create image in database using Supabase directly (to avoid Prisma connection issues)
-    // Use camelCase column names to match Prisma schema
-    const { data: imageData, error: createError } = await supabaseAdmin
+    // Try camelCase first (matches Prisma schema), then snake_case as fallback
+    let imageData: any = null;
+    let createError: any = null;
+    
+    // Try camelCase first
+    const { data: dataCamel, error: errorCamel } = await supabaseAdmin
       .from('gallery_images')
       .insert({
         id: generatedId,
@@ -127,6 +131,49 @@ export async function POST(request: NextRequest) {
       })
       .select('id, title, description, imageUrl, thumbnailUrl, category, votes, comments, createdAt, authorId')
       .single();
+    
+    if (!errorCamel && dataCamel) {
+      imageData = dataCamel;
+    } else {
+      // Try snake_case as fallback
+      console.log('CamelCase insert failed, trying snake_case:', errorCamel);
+      const { data: dataSnake, error: errorSnake } = await supabaseAdmin
+        .from('gallery_images')
+        .insert({
+          id: generatedId,
+          title: title?.trim() || (category === 'collections' ? 'Collection Photo' : 'Favorite Card'),
+          description: description || '',
+          image_url: uploadResult.publicUrl,
+          thumbnail_url: uploadResult.publicUrl,
+          category,
+          author_id: author.id,
+          votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
+          comments: 0,
+          views: 0,
+          created_at: now,
+          updated_at: now
+        })
+        .select('id, title, description, image_url, thumbnail_url, category, votes, comments, created_at, author_id')
+        .single();
+      
+      if (!errorSnake && dataSnake) {
+        // Map snake_case response to camelCase
+        imageData = {
+          id: dataSnake.id,
+          title: dataSnake.title,
+          description: dataSnake.description,
+          imageUrl: dataSnake.image_url,
+          thumbnailUrl: dataSnake.thumbnail_url,
+          category: dataSnake.category,
+          votes: dataSnake.votes,
+          comments: dataSnake.comments,
+          createdAt: dataSnake.created_at,
+          authorId: dataSnake.author_id
+        };
+      } else {
+        createError = errorSnake || errorCamel;
+      }
+    }
 
     if (createError || !imageData) {
       throw new Error(`Failed to create image in database: ${createError?.message || 'Unknown error'}`);
