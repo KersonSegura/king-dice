@@ -14,32 +14,40 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const userId = searchParams.get('userId') || '';
     
-    // Get posts from database
-    const dbPosts = await prisma.post.findMany({
-      where: authorId ? { authorId } : undefined,
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        },
-        _count: {
-          select: {
-            comments: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    // Get posts from Supabase (bypassing Prisma cache issue)
+    const { data: dbPosts, error: postsError } = await supabaseAdmin
+      .from('posts')
+      .select(`
+        id,
+        title,
+        content,
+        category,
+        authorId,
+        votes,
+        replies,
+        createdAt,
+        updatedAt,
+        author:users!posts_authorId_fkey(
+          id,
+          username,
+          avatar,
+          reputation,
+          title
+        )
+      `)
+      .eq(authorId ? 'authorId' : '__skip__', authorId || '__skip__')
+      .order('createdAt', { ascending: false });
+    
+    if (postsError) {
+      throw postsError;
+    }
+    
+    if (!dbPosts) {
+      return NextResponse.json({ posts: [], cached: false });
+    }
 
     // Format posts to match expected structure
-    let posts = dbPosts.map(post => {
+    let posts = dbPosts.map((post: any) => {
       let votes = { upvotes: 0, downvotes: 0 };
       try {
         votes = JSON.parse(post.votes);
@@ -53,15 +61,15 @@ export async function GET(request: NextRequest) {
         content: post.content,
         category: post.category,
         author: {
-          id: post.author.id,
-          name: post.author.username,
-          avatar: post.author.avatar,
-          reputation: post.author.reputation,
-          title: post.author.title
+          id: post.author?.id || post.authorId,
+          name: post.author?.username || 'Unknown',
+          avatar: post.author?.avatar || null,
+          reputation: post.author?.reputation || 0,
+          title: post.author?.title || null
         },
-        createdAt: post.createdAt.toISOString(),
+        createdAt: typeof post.createdAt === 'string' ? post.createdAt : post.createdAt.toISOString(),
         votes,
-        replies: post._count.comments,
+        replies: post.replies || 0,
         userVote: null,
         isModerated: true
       };
@@ -184,26 +192,51 @@ export async function POST(request: NextRequest) {
 
     console.log('Content approved, creating post...');
     
-    // Create post in database
-    const newPost = await prisma.post.create({
-      data: {
+    // Generate CUID for post
+    const timestampCuid = Date.now().toString(36);
+    const counter = Math.floor(Math.random() * 36).toString(36);
+    const fingerprint = Math.floor(Math.random() * 36).toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    const generatedId = `c${timestampCuid}${counter}${fingerprint}${random}`.substring(0, 25);
+    
+    const now = new Date().toISOString();
+    
+    // Create post in Supabase
+    const { data: newPost, error: createError } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        id: generatedId,
         title: title.trim(),
         content: content.trim(),
         category,
-        authorId: author.id
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        }
-      }
-    });
+        authorId: author.id,
+        votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
+        replies: 0,
+        createdAt: now,
+        updatedAt: now
+      })
+      .select(`
+        id,
+        title,
+        content,
+        category,
+        authorId,
+        votes,
+        replies,
+        createdAt,
+        author:users!posts_authorId_fkey(
+          id,
+          username,
+          avatar,
+          reputation,
+          title
+        )
+      `)
+      .single();
+    
+    if (createError || !newPost) {
+      throw new Error(`Failed to create post: ${createError?.message || 'Unknown error'}`);
+    }
     
     // Format response
     const formattedPost = {
@@ -212,13 +245,13 @@ export async function POST(request: NextRequest) {
       content: newPost.content,
       category: newPost.category,
       author: {
-        id: newPost.author.id,
-        name: newPost.author.username,
-        avatar: newPost.author.avatar,
-        reputation: newPost.author.reputation,
-        title: newPost.author.title
+        id: newPost.author?.id || author.id,
+        name: newPost.author?.username || author.name,
+        avatar: newPost.author?.avatar || author.avatar,
+        reputation: newPost.author?.reputation || author.reputation || 0,
+        title: newPost.author?.title || author.title || null
       },
-      createdAt: newPost.createdAt.toISOString(),
+      createdAt: newPost.createdAt,
       votes: { upvotes: 0, downvotes: 0 },
       replies: 0,
       userVote: null,

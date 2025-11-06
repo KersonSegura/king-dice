@@ -13,28 +13,31 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || '';
 
-    // Get post from database
-    const dbPost = await prisma.post.findUnique({
-      where: { id },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        },
-        _count: {
-          select: {
-            comments: true
-          }
-        }
-      }
-    });
+    // Get post from Supabase (bypassing Prisma)
+    const { data: dbPost, error: postError } = await supabaseAdmin
+      .from('posts')
+      .select(`
+        id,
+        title,
+        content,
+        category,
+        authorId,
+        votes,
+        replies,
+        createdAt,
+        updatedAt,
+        author:users!posts_authorId_fkey(
+          id,
+          username,
+          avatar,
+          reputation,
+          title
+        )
+      `)
+      .eq('id', id)
+      .single();
 
-    if (!dbPost) {
+    if (postError || !dbPost) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
@@ -54,18 +57,18 @@ export async function GET(
       content: dbPost.content,
       category: dbPost.category,
       author: {
-        id: dbPost.author.id,
-        name: dbPost.author.username,
-        avatar: dbPost.author.avatar,
-        reputation: dbPost.author.reputation,
-        title: dbPost.author.title
+        id: dbPost.author?.id || dbPost.authorId,
+        name: dbPost.author?.username || 'Unknown',
+        avatar: dbPost.author?.avatar || null,
+        reputation: dbPost.author?.reputation || 0,
+        title: dbPost.author?.title || null
       },
-      createdAt: dbPost.createdAt.toISOString(),
+      createdAt: typeof dbPost.createdAt === 'string' ? dbPost.createdAt : dbPost.createdAt.toISOString(),
       votes: {
         upvotes: upvotes ?? 0,
         downvotes: downvotes ?? 0,
       },
-      replies: dbPost._count.comments,
+      replies: dbPost.replies || 0,
       userVote: meVote?.vote_type ?? null,
       isModerated: true
     };
@@ -85,12 +88,14 @@ export async function DELETE(
     const { id } = await params;
     const { authorId } = await request.json();
 
-    // Find the post in database
-    const post = await prisma.post.findUnique({
-      where: { id }
-    });
+    // Find the post in Supabase
+    const { data: post, error: findError } = await supabaseAdmin
+      .from('posts')
+      .select('id, authorId')
+      .eq('id', id)
+      .single();
     
-    if (!post) {
+    if (findError || !post) {
       return NextResponse.json(
         { message: 'Post not found' },
         { status: 404 }
@@ -105,10 +110,15 @@ export async function DELETE(
       );
     }
 
-    // Delete the post (comments will be deleted automatically due to onDelete: Cascade)
-    await prisma.post.delete({
-      where: { id }
-    });
+    // Delete the post from Supabase (comments will be deleted automatically due to CASCADE)
+    const { error: deleteError } = await supabaseAdmin
+      .from('posts')
+      .delete()
+      .eq('id', id);
+    
+    if (deleteError) {
+      throw deleteError;
+    }
 
     // Also delete votes from Supabase
     await supabaseAdmin
