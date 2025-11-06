@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal, ThumbsUp, ThumbsDown, Eye, Download, Calendar, User, Crown, Star, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -55,32 +55,53 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
 
-
-  // Fetch feed data
+  // 1. Determine when we have a stable userId/auth state
+  const [delayedUserId, setDelayedUserId] = useState<string | undefined>(userId);
   useEffect(() => {
-    fetchFeedData();
-  }, [page, userId]);
+    if (isAuthenticated) {
+      // Wait until user is available after login
+      if (user && user.id) setDelayedUserId(user.id);
+    } else {
+      setDelayedUserId(undefined);
+    }
+  }, [isAuthenticated, user?.id]);
 
+  // Helper: fetch first page of feed
+  const refetchFeedFirstPage = useCallback(() => {
+    setPage(1);
+    setTimeout(fetchFeedData, 0);
+  }, [delayedUserId, isAuthenticated]);
+
+  // 2. Fetch feed data only when delayedUserId is set (or auth known to be unauthenticated)
+  useEffect(() => {
+    // Only fetch after initial auth resolves
+    if ((isAuthenticated && delayedUserId) || (!isAuthenticated && delayedUserId === undefined)) {
+      fetchFeedData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, delayedUserId, isAuthenticated]);
+
+  // 1. Debug log fetch results
   const fetchFeedData = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        ...(userId && { userId })
+        ...(delayedUserId && { userId: delayedUserId })
       });
-
       const response = await fetch(`/api/feed?${params}`);
-      
       if (response.ok) {
         const data = await response.json();
-        
-        if (page === 1) {
-          setFeedItems(data.items);
-        } else {
-          setFeedItems(prev => [...prev, ...data.items]);
-        }
+        if (page === 1) setFeedItems(data.items);
+        else setFeedItems(prev => [...prev, ...data.items]);
         setHasMore(data.hasMore);
+        // LOG
+        if (typeof window !== 'undefined') {
+          console.log('[FeedDebug] Feed fetch items:', data.items.map(i => ({
+            id: i.id, type: i.type, userVote: i.userVote, title: i.title, author: i.author?.username
+          })));
+        }
       } else {
         showToast('Failed to load feed', 'error');
       }
@@ -92,14 +113,20 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
     }
   };
 
-  // Listen for gallery image updates from elsewhere (e.g., ImageModal)
+  // Refetch feed on login ready, force for accurate like/following state
+  useEffect(() => {
+    if (isAuthenticated && user?.id && page !== 1) {
+      setPage(1);
+    } else if (isAuthenticated && user?.id) {
+      fetchFeedData();
+    }
+  }, [isAuthenticated, user?.id]);
+
+  // 3. Listen for gallery modal vote updates and refetch first page
   useEffect(() => {
     const onGalleryUpdate = (e: any) => {
-      const updated = e.detail?.image;
-      if (!updated) return;
-      setFeedItems(prev => prev.map(item => item.type === 'gallery' && item.id === updated.id
-        ? { ...item, votes: updated.votes, userVote: updated.userVote }
-        : item));
+      // On like/unlike from modal, refetch feed (first page)
+      refetchFeedFirstPage();
     };
     window.addEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
     const onCommentsUpdate = (e: any) => {
@@ -113,6 +140,21 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
     return () => {
       window.removeEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
       window.removeEventListener('kd-gallery-comments-updated', onCommentsUpdate as any);
+    };
+  }, [refetchFeedFirstPage]);
+
+  // Keep in-place updates from modal (do not refetch and reset pagination)
+  useEffect(() => {
+    const onGalleryUpdate = (e: any) => {
+      const updated = e.detail?.image;
+      if (!updated) return;
+      setFeedItems(prev => prev.map(item => item.type === 'gallery' && item.id === updated.id
+        ? { ...item, votes: updated.votes, userVote: updated.userVote }
+        : item));
+    };
+    window.addEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
+    return () => {
+      window.removeEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
     };
   }, []);
 

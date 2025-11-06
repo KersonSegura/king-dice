@@ -81,7 +81,7 @@ export default function DigitalCornerPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [nextResetTime, setNextResetTime] = useState<string | null>(null);
+  const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   const { user, isAuthenticated } = useAuth();
@@ -101,8 +101,6 @@ export default function DigitalCornerPage() {
         const text = await response.text();
         const lines = text.trim().split('\n');
         
-        console.log('Loading games from Steam-games-list.txt, found', lines.length, 'games');
-        
         const games: SteamGame[] = [];
         
         for (let i = 0; i < lines.length; i++) {
@@ -114,7 +112,6 @@ export default function DigitalCornerPage() {
           const parts = line.split(' - ');
           
           if (parts.length < 3) {
-            console.warn(`Skipping malformed line: ${line}`);
             continue;
           }
           
@@ -126,7 +123,6 @@ export default function DigitalCornerPage() {
           // Extract App ID from "AppID/ImageFilename" format
           const appIdMatch = appIdAndFilename.match(/^(\d+)\//);
           if (!appIdMatch) {
-            console.warn(`Could not extract App ID from: ${appIdAndFilename}`);
             continue;
           }
           
@@ -182,14 +178,9 @@ export default function DigitalCornerPage() {
           // Update progress for parsing
           const progress = Math.round(((i + 1) / lines.length) * 40); // 40% for parsing
           setLoadingProgress(progress);
-          
-          console.log(`Parsed: ${gameName} (${appId}) -> ${game.header_image}`);
         }
         
-        console.log('Parsed', games.length, 'games from list');
-        
          // Fetch real Steam pricing data
-         console.log('Loading real Steam pricing data...');
         setLoadingProgress(50);
         
         let gamesWithPricing = games; // Default to games without pricing
@@ -201,8 +192,6 @@ export default function DigitalCornerPage() {
            const steamData = await steamResponse.json();
            
            if (steamData.success && steamData.games) {
-             console.log(`✅ Loaded real Steam data for ${steamData.games.length} games`);
-            
             // Create a price lookup map for quick access
              const steamMap = new Map<number, any>();
              steamData.games.forEach((item: any) => {
@@ -223,13 +212,10 @@ export default function DigitalCornerPage() {
                return game; // Keep default if no Steam data
             });
             
-             console.log(`📊 Applied real Steam pricing to ${gamesWithPricing.length} games`);
             setLoadingProgress(80);
-            } else {
-             console.warn('❌ Failed to load Steam data, using generated prices');
-          }
+            }
         } catch (error) {
-           console.error('❌ Error loading Steam data:', error);
+          // Silent error handling
          }
         
          // Add fallback player data only for games without real Steam data
@@ -272,10 +258,9 @@ export default function DigitalCornerPage() {
         
         setLoadingProgress(100);
         setSteamGames(finalGames);
-        console.log('Successfully loaded', finalGames.length, 'games with live pricing and local images');
         
       } catch (error) {
-        console.error('Error loading games:', error);
+        // Silent error handling
       } finally {
         setLoading(false);
       }
@@ -295,79 +280,250 @@ export default function DigitalCornerPage() {
         const data = await response.json();
         
         if (data.success && data.chat) {
-          console.log('🔍 Digital Corner chat loaded:', data.chat);
-          console.log('📊 Participants:', data.chat.participants?.length || 0);
-          console.log('💬 Messages:', data.chat.messages?.length || 0);
-          setChatMessages(data.chat.messages || []);
-          setOnlineUsers(data.chat.participants?.length || 0);
+          const messages = data.chat.messages || [];
+          
+          setChatMessages(messages);
+          // Don't set onlineUsers from participants - that's historical data, not current viewers
           setChatId(data.chat.id);
           
           // Join the chat if authenticated
-          if (isAuthenticated && user && socket) {
-            console.log('👤 Joining Digital Corner chat as:', user.username);
-            
+          if (isAuthenticated && user) {
             // Join user to chat room
-            const joinResponse = await fetch('/api/digital-corner/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: user.id })
-            });
+            try {
+              await fetch('/api/digital-corner/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id })
+              });
+            } catch (joinError) {
+              // Silent error handling
+            }
             
-            const joinData = await joinResponse.json();
-            console.log('📝 Join response:', joinData);
-            
-            // Optional legacy socket join (no-op if missing)
-            try { socket.emit && socket.emit('join-chat', 'digital-corner-public'); } catch {}
-          } else {
-            console.log('❌ Cannot join chat - Auth:', isAuthenticated, 'User:', !!user, 'Socket:', !!socket);
+            // optional legacy socket join (no-op if socket server not present)
+            if (socket) {
+              try { socket.emit && socket.emit('join-chat', 'digital-corner-public'); } catch {}
+            }
           }
         }
       } catch (error) {
-        console.error('Error initializing chat:', error);
+        // Silent error handling
       }
     };
 
     initializeChat();
   }, [isAuthenticated, user, socket]);
 
-  // Supabase Realtime for new messages
+  // Supabase Realtime subscription for new messages and presence tracking
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId) {
+      setRtConnected(false);
+      return;
+    }
     let channel: any;
     let active = true;
+    
     (async () => {
-      const supabaseClient = await getSupabaseBrowserClient();
-      if (!active) return;
-      channel = supabaseClient
-      .channel(`dc-chat-${chatId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, async (payload) => {
+      try {
+        const supabaseClient = await getSupabaseBrowserClient();
+        if (!active) return;
+        
+        // Store channel reference for cleanup
+        const channelName = `dc-chat-${chatId}`;
+        
+        // Try to remove any existing channel with the same name
+        // (This handles React Strict Mode double-mounting in development)
         try {
-          const { data: m } = await supabaseClient
-            .from('messages')
-            .select(`id, content, type, created_at, sender:users!messages_sender_id_fkey(id, username, avatar, is_verified, is_admin)`) 
-            .eq('id', payload.new.id)
-            .single();
-          if (m) {
-            setChatMessages(prev => [...prev, {
-              id: m.id,
-              content: m.content,
-              createdAt: m.created_at,
-              sender: {
-                id: m.sender?.id,
-                username: m.sender?.username,
-                avatar: m.sender?.avatar,
-                title: m.sender?.is_admin ? 'Admin' : m.sender?.is_verified ? 'Verified' : undefined,
-                isVerified: m.sender?.is_verified,
-                isAdmin: m.sender?.is_admin
+          const existingChannel = supabaseClient.channel(channelName);
+          await existingChannel.unsubscribe();
+          await supabaseClient.removeChannel(existingChannel);
+        } catch (e) {
+          // Channel doesn't exist yet, that's fine
+        }
+        
+        // Track presence for online users
+        const presenceState = {
+          userId: user?.id || 'anonymous',
+          username: user?.username || 'Anonymous',
+          joinedAt: new Date().toISOString()
+        };
+        
+        // Use a stable presence key - use user ID if authenticated, otherwise use a session-based key
+        const presenceKey = user?.id || `anon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        channel = supabaseClient
+          .channel(channelName, {
+            config: {
+              broadcast: { self: false }, // Don't broadcast to self to avoid duplicates
+              presence: { key: presenceKey }
+            }
+          })
+          .on('presence', { event: 'sync' }, () => {
+            if (!active) return;
+            const state = channel.presenceState();
+            const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+            setOnlineUsers(onlineCount);
+          })
+          .on('presence', { event: 'join' }, () => {
+            if (!active) return;
+            const state = channel.presenceState();
+            const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+            setOnlineUsers(onlineCount);
+          })
+          .on('presence', { event: 'leave' }, () => {
+            if (!active) return;
+            const state = channel.presenceState();
+            const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+            setOnlineUsers(onlineCount);
+          })
+          .on('postgres_changes', {
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'messages', 
+            filter: `chatId=eq.${chatId}` 
+          }, async (payload) => {
+            if (!active) return;
+            try {
+              // Fetch sender information separately since relationship name might be wrong
+              const messageData = payload.new;
+              let senderData = null;
+              
+              // Try both camelCase and snake_case for senderId
+              const senderId = messageData.senderId || messageData.sender_id;
+              
+              if (senderId) {
+                // Fetch sender from users table - try both column naming conventions
+                let sender = null;
+                let senderError = null;
+                
+                // Try snake_case first (most common in Supabase)
+                const { data: senderSnake, error: errorSnake } = await supabaseClient
+                  .from('users')
+                  .select('id, username, avatar, is_verified, is_admin')
+                  .eq('id', senderId)
+                  .single();
+                
+                if (!errorSnake && senderSnake) {
+                  sender = senderSnake;
+                } else {
+                  // Try camelCase as fallback
+                  const { data: senderCamel, error: errorCamel } = await supabaseClient
+                    .from('users')
+                    .select('id, username, avatar, isVerified, isAdmin')
+                    .eq('id', senderId)
+                    .single();
+                  
+                  if (!errorCamel && senderCamel) {
+                    sender = senderCamel;
+                  } else {
+                    senderError = errorCamel || errorSnake;
+                  }
+                }
+                
+                if (!senderError && sender) {
+                  senderData = sender;
+                }
               }
-            }]);
-          }
-        } catch {}
-      })
-      .subscribe((status: any) => setRtConnected(status === 'SUBSCRIBED'));
+              
+              // Use message data from Realtime payload
+              // If sender data wasn't fetched, use current user info as fallback
+              const newMessage: ChatMessage = {
+                id: messageData.id,
+                content: messageData.content,
+                createdAt: messageData.createdAt || messageData.created_at,
+                sender: senderData ? {
+                  id: senderData.id,
+                  username: senderData.username,
+                  avatar: senderData.avatar,
+                  title: (('isAdmin' in senderData && senderData.isAdmin) || ('is_admin' in senderData && senderData.is_admin)) ? 'Admin' : (('isVerified' in senderData && senderData.isVerified) || ('is_verified' in senderData && senderData.is_verified)) ? 'Verified' : undefined,
+                  isVerified: ('isVerified' in senderData && senderData.isVerified !== undefined) ? senderData.isVerified : ('is_verified' in senderData && senderData.is_verified !== undefined) ? senderData.is_verified : false,
+                  isAdmin: ('isAdmin' in senderData && senderData.isAdmin !== undefined) ? senderData.isAdmin : ('is_admin' in senderData && senderData.is_admin !== undefined) ? senderData.is_admin : false
+                } : (user && senderId === user.id) ? {
+                  // Fallback to current user if it's their own message
+                  id: user.id,
+                  username: user.username,
+                  avatar: user.avatar || '',
+                  isVerified: user.isVerified || false,
+                  isAdmin: user.isAdmin || false
+                } : {
+                  id: senderId || 'unknown',
+                  username: 'Unknown',
+                  avatar: '',
+                  isVerified: false,
+                  isAdmin: false
+                }
+              };
+              
+              setChatMessages(prev => {
+                // Check if message already exists to avoid duplicates
+                if (prev.some(msg => msg.id === newMessage.id)) {
+                  return prev;
+                }
+                const updated = [...prev, newMessage];
+                // Auto-scroll to bottom after state update
+                setTimeout(() => {
+                  chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+                return updated;
+              });
+            } catch (err) {
+              // Silent error handling
+            }
+          })
+          .subscribe(async (status) => {
+            if (active) {
+              setRtConnected(status === 'SUBSCRIBED');
+              
+              // Track presence once subscribed
+              if (status === 'SUBSCRIBED') {
+                try {
+                  await channel.track(presenceState);
+                  
+                  // Get initial presence count after a brief delay to allow sync
+                  setTimeout(() => {
+                    if (!active) return;
+                    const state = channel.presenceState();
+                    const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+                    setOnlineUsers(onlineCount);
+                  }, 500);
+                } catch (presenceError) {
+                  // Silent error handling
+                }
+              }
+            }
+          });
+      } catch (err) {
+        if (active) {
+          setRtConnected(false);
+        }
+      }
     })();
-    return () => { active = false; try { channel && (getSupabaseBrowserClient().then(c => c.removeChannel(channel))); } catch {} };
-  }, [chatId]);
+    
+    return () => { 
+      active = false;
+      if (channel) {
+        (async () => {
+          try {
+            // Untrack presence before leaving
+            await channel.untrack();
+            
+            // Unsubscribe from channel
+            await channel.unsubscribe();
+            
+            const supabaseClient = await getSupabaseBrowserClient();
+            await supabaseClient.removeChannel(channel);
+            
+            // Reset count to 0 when cleaning up
+            setOnlineUsers(0);
+          } catch (err) {
+            // Silent error handling
+          }
+        })();
+      } else {
+        // Reset count if no channel exists
+        setOnlineUsers(0);
+      }
+    };
+  }, [chatId, user?.id]); // Only re-run if chatId or user.id changes
 
   // Socket event listeners (legacy)
   useEffect(() => {
@@ -402,10 +558,7 @@ export default function DigitalCornerPage() {
     };
 
     const handleChatUserCount = (data: { chatId: string; userCount: number }) => {
-      if (data.chatId === 'digital-corner-public') {
-        console.log('🔄 Digital Corner user count updated:', data.userCount);
-        setOnlineUsers(data.userCount);
-      }
+      // Presence tracking handles this now
     };
 
     socket.on('new-message', handleNewMessage);
@@ -430,31 +583,58 @@ export default function DigitalCornerPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  // Calculate and set next reset time (midnight UTC)
+  useEffect(() => {
+    const calculateNextReset = () => {
+      const now = new Date();
+      
+      // Get next midnight UTC
+      const nextMidnightUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1, // Tomorrow
+        0, 0, 0, 0 // 00:00:00
+      ));
+      
+      setNextResetTime(nextMidnightUTC);
+    };
+    
+    calculateNextReset();
+    // Recalculate every minute to keep it accurate
+    const interval = setInterval(calculateNextReset, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatResetTime = (utcDate: Date | null) => {
+    if (!utcDate) return 'Calculating...';
+    
+    // Convert UTC time to user's local timezone
+    const localTime = utcDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    // Get timezone offset (getTimezoneOffset returns minutes, positive for timezones behind UTC)
+    const offsetMinutes = utcDate.getTimezoneOffset();
+    const offsetHours = -offsetMinutes / 60; // Negate to get correct sign (UTC-6 means 6 hours behind)
+    const timezoneLabel = offsetHours >= 0 
+      ? `UTC+${offsetHours}` 
+      : `UTC${offsetHours}`;
+    
+    return `${localTime} ${timezoneLabel}`;
+  };
+
   // Check for daily reset and set up midnight reset timer
   useEffect(() => {
-    const fetchResetInfo = async () => {
-      try {
-        const response = await fetch('/api/digital-corner/chat/reset');
-        const data = await response.json();
-        if (data.success) {
-          setNextResetTime(data.nextResetTime);
-        }
-      } catch (error) {
-        console.error('Error fetching reset info:', error);
-      }
-    };
-
-    fetchResetInfo();
-
-    // Set up a timer to check for midnight reset
+    // Check if it's midnight UTC (when server resets)
     const checkForReset = () => {
       const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
+      const utcHours = now.getUTCHours();
+      const utcMinutes = now.getUTCMinutes();
       
-      // If it's midnight (00:00), trigger a chat refresh
-      if (hours === 0 && minutes === 0) {
-        console.log('🕐 Midnight detected - refreshing chat messages');
+      // If it's midnight UTC (00:00), trigger a chat refresh
+      if (utcHours === 0 && utcMinutes === 0) {
         // Clear local messages and refetch
         setChatMessages([]);
         
@@ -467,9 +647,9 @@ export default function DigitalCornerPage() {
               setChatMessages(data.chat.messages || []);
             }
           } catch (error) {
-            console.error('Error refreshing chat after reset:', error);
+            // Silent error handling for chat refresh
           }
-        }, 1000); // Wait 1 second after midnight
+        }, 1000); // Wait 1 second after midnight UTC
       }
     };
 
@@ -481,7 +661,6 @@ export default function DigitalCornerPage() {
 
   // Filter and sort games based on selected criteria
   useEffect(() => {
-    console.log('Filtering games, steamGames length:', steamGames.length);
     let sortedGames = [...steamGames];
     
     switch (sortBy) {
@@ -498,7 +677,6 @@ export default function DigitalCornerPage() {
         break;
     }
     
-    console.log('Filtered games length:', sortedGames.length);
     setFilteredGames(sortedGames);
     setDisplayedGames(steamGames.length); // Show all games when sorting changes
   }, [steamGames, sortBy]);
@@ -510,20 +688,64 @@ export default function DigitalCornerPage() {
       return;
     }
 
-    if (newMessage.trim()) {
+    if (newMessage.trim() && chatId) {
+      const messageContent = newMessage.trim();
+      setNewMessage('');
+      setIsTyping(false);
+      
       try {
-        if (!chatId) return;
-        await fetch('/api/messages', {
+        const response = await fetch('/api/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chatId, senderId: user.id, content: newMessage.trim(), type: 'text' })
+          body: JSON.stringify({ chatId, senderId: user.id, content: messageContent, type: 'text' })
         });
-      } catch {}
-      setNewMessage('');
-      
-      // Stop typing indicator
-      if (isTyping) {
-        setIsTyping(false);
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          // Restore message on error
+          setNewMessage(messageContent);
+        } else {
+          // Add message to local state immediately (optimistic update)
+          if (data.message) {
+            const sentMessage: ChatMessage = {
+              id: data.message.id,
+              content: data.message.content,
+              createdAt: data.message.createdAt || data.message.created_at,
+              sender: data.message.sender ? {
+                id: data.message.sender.id,
+                username: data.message.sender.username,
+                avatar: data.message.sender.avatar || '',
+                title: data.message.sender.isAdmin ? 'Admin' : data.message.sender.isVerified ? 'Verified' : undefined,
+                isVerified: data.message.sender.isVerified || false,
+                isAdmin: data.message.sender.isAdmin || false
+              } : {
+                // Fallback to current user if sender info not provided
+                id: user.id,
+                username: user.username,
+                avatar: user.avatar || '',
+                isVerified: user.isVerified || false,
+                isAdmin: user.isAdmin || false
+              }
+            };
+            
+            setChatMessages(prev => {
+              // Check if message already exists to avoid duplicates
+              if (prev.some(msg => msg.id === sentMessage.id)) {
+                return prev;
+              }
+              const updated = [...prev, sentMessage];
+              // Auto-scroll to bottom after state update
+              setTimeout(() => {
+                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+              return updated;
+            });
+          }
+        }
+      } catch (error) {
+        // Restore message on error
+        setNewMessage(messageContent);
       }
     }
   };
@@ -552,8 +774,34 @@ export default function DigitalCornerPage() {
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!dateString) return 'Invalid date';
+    
+    // Parse the date string - Supabase stores timestamps in UTC
+    let date: Date;
+    
+    // Check if the string has timezone info
+    const hasTimezone = dateString.includes('Z') || dateString.includes('+') || 
+                       (dateString.includes('-') && dateString.match(/[+-]\d{2}:\d{2}$/));
+    
+    if (!hasTimezone && dateString.includes('T')) {
+      // No timezone info but has 'T' separator - assume UTC from database
+      // Append 'Z' to indicate UTC
+      date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+    } else {
+      date = new Date(dateString);
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
+    // toLocaleTimeString automatically converts from UTC to local timezone
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true // Use 12-hour format (2:47 PM instead of 14:47)
+    });
   };
 
   return (
@@ -651,10 +899,6 @@ export default function DigitalCornerPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {(() => {
-                      console.log('Rendering games, filteredGames length:', filteredGames.length, 'displayedGames:', displayedGames);
-                      return null;
-                    })()}
                     {filteredGames.slice(0, displayedGames).map((game, index) => (
                       <div key={`${game.appid}-${index}`} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
                          <div className="flex flex-col lg:flex-row lg:items-start lg:space-x-4">
@@ -757,16 +1001,10 @@ export default function DigitalCornerPage() {
                             <Users className="w-4 h-4" />
                             <span>{onlineUsers} online</span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <MessageCircle className="w-4 h-4" />
-                            <span>{chatMessages.length} messages</span>
+                          <div className="flex items-center space-x-1 text-xs text-gray-400">
+                            <span>🕐</span>
+                            <span>Resets at midnight</span>
                           </div>
-                          {nextResetTime && (
-                            <div className="flex items-center space-x-1 text-xs text-gray-400">
-                              <span>🕐</span>
-                              <span>Resets at midnight</span>
-                            </div>
-                          )}
                         </div>
               </div>
               

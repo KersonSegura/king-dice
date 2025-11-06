@@ -15,10 +15,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all chats where the user is a participant
-    const { data: userChats, error: participantsError } = await supabaseAdmin
+    // Try camelCase first, fallback to snake_case
+    let { data: userChats, error: participantsError } = await supabaseAdmin
       .from('chat_participants')
-      .select('chat_id, last_read_at')
-      .eq('user_id', userId);
+      .select('chatId, lastReadAt')
+      .eq('userId', userId);
+    
+    // If camelCase failed, try snake_case
+    if (participantsError && (participantsError.code === '42703' || participantsError.code === 'PGRST116')) {
+      console.log('[UNREAD API] Trying snake_case column names...');
+      const altResult = await supabaseAdmin
+        .from('chat_participants')
+        .select('chat_id, last_read_at')
+        .eq('user_id', userId);
+      
+      if (!altResult.error) {
+        userChats = altResult.data;
+        participantsError = null;
+      }
+    }
 
     if (participantsError) {
       console.error('Error fetching chat participants:', participantsError);
@@ -36,22 +51,41 @@ export async function GET(request: NextRequest) {
 
     // For each chat, count unread messages
     for (const participant of userChats) {
-      const { chat_id, last_read_at } = participant;
+      const chatId = participant.chatId || participant.chat_id;
+      const last_read_at = participant.lastReadAt || participant.last_read_at;
+      
+      if (!chatId) continue;
       
       // If user has never read messages in this chat, count all messages
       // Convert last_read_at to ISO string for comparison, or use epoch 0
       const cutoffDate = last_read_at ? new Date(last_read_at).toISOString() : new Date(0).toISOString();
       
       // Count messages in this chat that are newer than lastReadAt and not from the user
-      const { count, error: countError } = await supabaseAdmin
+      // Try camelCase first, then snake_case
+      let { count, error: countError } = await supabaseAdmin
         .from('messages')
         .select('*', { count: 'exact', head: true })
-        .eq('chat_id', chat_id)
-        .gt('created_at', cutoffDate)
-        .neq('sender_id', userId);
+        .eq('chatId', chatId)
+        .gt('createdAt', cutoffDate)
+        .neq('senderId', userId);
+      
+      // If camelCase failed, try snake_case
+      if (countError && countError.code === '42703') {
+        const altCountResult = await supabaseAdmin
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('chat_id', chatId)
+          .gt('created_at', cutoffDate)
+          .neq('sender_id', userId);
+        
+        if (!altCountResult.error) {
+          count = altCountResult.count;
+          countError = null;
+        }
+      }
 
       if (countError) {
-        console.error(`Error counting messages for chat ${chat_id}:`, countError);
+        console.error(`Error counting messages for chat ${chatId}:`, countError);
         continue; // Skip this chat if there's an error
       }
       
@@ -84,13 +118,30 @@ export async function POST(request: NextRequest) {
 
     // Update the lastReadAt timestamp for this user in this chat
     const now = new Date().toISOString();
-    const { data: updatedParticipant, error: updateError } = await supabaseAdmin
+    // Try camelCase first
+    let { data: updatedParticipant, error: updateError } = await supabaseAdmin
       .from('chat_participants')
-      .update({ last_read_at: now })
-      .eq('chat_id', chatId)
-      .eq('user_id', userId)
-      .select('last_read_at')
+      .update({ lastReadAt: now })
+      .eq('chatId', chatId)
+      .eq('userId', userId)
+      .select('lastReadAt')
       .single();
+    
+    // If camelCase failed, try snake_case
+    if (updateError && updateError.code === '42703') {
+      const altUpdateResult = await supabaseAdmin
+        .from('chat_participants')
+        .update({ last_read_at: now })
+        .eq('chat_id', chatId)
+        .eq('user_id', userId)
+        .select('last_read_at')
+        .single();
+      
+      if (!altUpdateResult.error) {
+        updatedParticipant = altUpdateResult.data;
+        updateError = null;
+      }
+    }
 
     if (updateError) {
       console.error('Error updating lastReadAt:', updateError);
@@ -104,7 +155,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true,
-      lastReadAt: updatedParticipant?.last_read_at || now
+      lastReadAt: updatedParticipant?.lastReadAt || updatedParticipant?.last_read_at || now
     });
   } catch (error) {
     console.error('Error marking messages as read:', error);

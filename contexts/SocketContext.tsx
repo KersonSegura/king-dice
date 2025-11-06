@@ -30,7 +30,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     // Temporarily disabled Socket.IO to prevent connection errors
     // TODO: Re-implement Socket.IO with proper App Router support
-    console.log('Socket.IO temporarily disabled');
     
     // if (isAuthenticated && user) {
     //   const newSocket = io(process.env.NODE_ENV === 'production' 

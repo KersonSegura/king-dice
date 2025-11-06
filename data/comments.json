@@ -1,5 +1,26 @@
 [
   {
+    "id": "comment_1761872045215_8uhrrg1r1",
+    "postId": "post_1754553037821_te2m8z2xh",
+    "content": "Test",
+    "author": {
+      "id": "cmg88zsa300017kbsvllkpdof",
+      "name": "kingdice",
+      "avatar": "/generated/dice-1759344526558.svg"
+    },
+    "createdAt": "2025-10-31T00:54:05.215Z",
+    "votes": {
+      "upvotes": 1,
+      "downvotes": 0
+    },
+    "userVote": "upvote",
+    "isModerated": true,
+    "moderationResult": {
+      "isAppropriate": true,
+      "flags": []
+    }
+  },
+  {
     "id": "comment_1754555308292_vafv4mkkr",
     "postId": "post_1754553037821_te2m8z2xh",
     "content": "I don't know",
@@ -11,10 +32,10 @@
     },
     "createdAt": "2025-08-07T08:28:28.292Z",
     "votes": {
-      "upvotes": 1,
-      "downvotes": 0
+      "upvotes": 0,
+      "downvotes": 1
     },
-    "userVote": "upvote",
+    "userVote": "downvote",
     "isModerated": true,
     "moderationResult": {
       "isAppropriate": true,

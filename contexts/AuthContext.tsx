@@ -62,35 +62,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.user) {
-          console.log(`🎉 Daily login XP awarded! Level: ${result.user.levelName} (${result.user.xp} XP)`);
-          
           // Show level-up notification if user leveled up
           if (result.leveledUp && result.newLevel) {
-            console.log(`🎊 Level up notification triggered for level ${result.newLevel}`);
             showLevelUp(result.newLevel);
           }
         }
       }
     } catch (error) {
-      console.error('Error awarding daily login XP:', error);
+      // Silent error handling
     }
   };
 
   // Verify authentication on app start
   const verifyAuth = async () => {
-    console.log('🔍 AuthContext: Starting auth verification...');
     try {
       const response = await fetch('/api/auth/verify', {
         method: 'GET',
         credentials: 'include'
       });
 
-      console.log('📡 AuthContext: Response status:', response.status);
-      console.log('📡 AuthContext: Response headers:', Object.fromEntries(response.headers.entries()));
-
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ AuthContext: Auth successful, user:', data.user?.username);
         setUser(data.user);
         
         // Award daily login XP if user hasn't logged in today
@@ -99,13 +91,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } else {
         // Token is invalid or expired
-        console.log('❌ AuthContext: Auth failed, status:', response.status);
-        const errorText = await response.text();
-        console.log('❌ AuthContext: Error response:', errorText);
         setUser(null);
       }
     } catch (error) {
-      console.error('💥 AuthContext: Error verifying authentication:', error);
+      // Silent error handling
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -133,7 +122,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         credentials: 'include'
       });
     } catch (error) {
-      console.error('Error during logout:', error);
+      // Silent error handling
     } finally {
       // Clear local state regardless of API call result
       setUser(null);
@@ -141,21 +130,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const updateAvatar = (avatarUrl: string) => {
-    console.log('🔄 AuthContext: Updating avatar from', user?.avatar, 'to', avatarUrl);
     if (user) {
       const updatedUser = { ...user, avatar: avatarUrl };
       setUser(updatedUser);
-      console.log('✅ AuthContext: Avatar updated successfully to', avatarUrl);
-    } else {
-      console.log('❌ AuthContext: No user found, cannot update avatar');
     }
   };
 
   const syncUserData = (serverUser: any) => {
-    console.log('🔄 AuthContext: Syncing user data from server:', serverUser);
     if (serverUser) {
       setUser(serverUser);
-      console.log('✅ AuthContext: User data synced successfully');
     }
   };
 

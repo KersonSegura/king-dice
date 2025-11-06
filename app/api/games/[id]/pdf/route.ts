@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(
   request: NextRequest,
@@ -19,11 +17,13 @@ export async function POST(
     }
 
     // Check if game exists
-    const game = await prisma.game.findUnique({
-      where: { id: gameId }
-    });
+    const { data: game, error: gameError } = await supabaseAdmin
+      .from('games')
+      .select('id')
+      .eq('id', gameId)
+      .single();
 
-    if (!game) {
+    if (gameError || !game) {
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
@@ -63,21 +63,31 @@ export async function POST(
     const pdfData = `data:application/pdf;base64,${base64}`;
 
     // Update game with PDF file
-    const updatedGame = await prisma.game.update({
-      where: { id: gameId },
-      data: {
-        pdfFile: pdfData,
-        pdfUrl: null // Clear external URL since we now have the file
-      }
-    });
+    const { data: updatedGame, error: updateError } = await supabaseAdmin
+      .from('games')
+      .update({
+        pdf_file: pdfData,
+        pdf_url: null // Clear external URL since we now have the file
+      })
+      .eq('id', gameId)
+      .select('id, name_en, pdf_file')
+      .single();
+
+    if (updateError || !updatedGame) {
+      console.error('Error updating game with PDF:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update game with PDF' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: 'PDF uploaded successfully',
       game: {
         id: updatedGame.id,
-        nameEn: updatedGame.nameEn,
-        hasPdfFile: !!updatedGame.pdfFile
+        nameEn: updatedGame.name_en,
+        hasPdfFile: !!updatedGame.pdf_file
       }
     });
 
@@ -87,8 +97,6 @@ export async function POST(
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -107,45 +115,71 @@ export async function GET(
       );
     }
 
-    // Get the game with PDF file
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: {
-        id: true,
-        nameEn: true,
-        pdfFile: true
-      }
-    });
+    // Get the game with PDF file - select all columns to handle both naming conventions
+    const { data: game, error: gameError } = await supabaseAdmin
+      .from('games')
+      .select('*')
+      .eq('id', gameId)
+      .single();
 
-    if (!game || !game.pdfFile) {
+    if (gameError || !game) {
+      console.error('[PDF API] Error fetching game:', gameError);
       return NextResponse.json(
-        { error: 'PDF not found' },
+        { error: 'Game not found' },
         { status: 404 }
       );
     }
 
-    // Convert base64 back to buffer
-    const base64Data = game.pdfFile.replace(/^data:application\/pdf;base64,/, '');
-    const pdfBuffer = Buffer.from(base64Data, 'base64');
-
-    // Return PDF with proper headers
-    return new NextResponse(pdfBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${game.nameEn}-rules.pdf"`,
-        'Content-Length': pdfBuffer.length.toString(),
-        'Cache-Control': 'public, max-age=3600'
-      }
+    // Handle both naming conventions for PDF fields
+    const pdfFile = (game as any).pdfFile ?? (game as any).pdf_file;
+    const pdfUrl = (game as any).pdfUrl ?? (game as any).pdf_url;
+    
+    console.log('[PDF API] PDF fields:', {
+      gameId,
+      hasPdfFile: !!pdfFile,
+      hasPdfUrl: !!pdfUrl,
+      pdfFileLength: pdfFile ? pdfFile.length : 0,
+      pdfUrlValue: pdfUrl
     });
 
-  } catch (error) {
-    console.error('Error serving PDF:', error);
+    // If we have a PDF file (base64), serve it
+    if (pdfFile) {
+      // Convert base64 back to buffer
+      const base64Data = pdfFile.replace(/^data:application\/pdf;base64,/, '');
+      const pdfBuffer = Buffer.from(base64Data, 'base64');
+
+      // Get game name for filename - handle both naming conventions
+      const gameName = ((game as any).nameEn ?? (game as any).name_en ?? (game as any).name) || 'game';
+
+      // Return PDF with proper headers
+      return new NextResponse(pdfBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${gameName}-rules.pdf"`,
+          'Content-Length': pdfBuffer.length.toString(),
+          'Cache-Control': 'public, max-age=3600'
+        }
+      });
+    }
+    
+    // If we have a PDF URL, redirect to it
+    if (pdfUrl) {
+      return NextResponse.redirect(pdfUrl);
+    }
+    
+    // No PDF found
+    console.warn('[PDF API] No PDF file or URL found for game ID:', gameId);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'PDF not found' },
+      { status: 404 }
+    );
+
+  } catch (error) {
+    console.error('[PDF API] Error serving PDF:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

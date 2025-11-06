@@ -54,15 +54,22 @@ export default function PostDetailPage() {
   const [votingPost, setVotingPost] = useState(false);
   const [votingComments, setVotingComments] = useState<Set<string>>(new Set());
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  // Local user vote for immediate UI feedback
+  const [localUserVote, setLocalUserVote] = useState<'up' | 'down' | null>(null);
+
+  // Sync local vote whenever post changes
+  useEffect(() => {
+    setLocalUserVote((post as any)?.userVote ?? null);
+  }, [post?.id, (post as any)?.userVote]);
 
   // Load post, comments, and similar posts
   useEffect(() => {
     const loadPost = async () => {
       try {
-        const response = await fetch('/api/posts');
+        const response = await fetch(`/api/posts/${postId}${isAuthenticated && user ? `?userId=${user.id}` : ''}`, { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
-          const foundPost = data.posts.find((p: ForumPost) => p.id === postId);
+          const foundPost = data.post;
           if (foundPost) {
             setPost(foundPost);
             
@@ -70,14 +77,21 @@ export default function PostDetailPage() {
             const commentsResponse = await fetch(`/api/posts/${postId}/comments?sortBy=${commentSortBy}`);
             if (commentsResponse.ok) {
               const commentsData = await commentsResponse.json();
-              setComments(commentsData.comments);
+              setComments(commentsData.comments || []);
             }
             
-            // Find similar posts (same category, excluding current post)
-            const similar = data.posts
-              .filter((p: ForumPost) => p.id !== postId && p.category === foundPost.category)
-              .slice(0, 3); // Show max 3 similar posts
-            setSimilarPosts(similar);
+            // Load list to compute similar posts
+            try {
+              const listRes = await fetch('/api/posts?page=1&limit=50', { cache: 'no-store' });
+              if (listRes.ok) {
+                const list = await listRes.json();
+                const all = list.posts || [];
+                const similar = all
+                  .filter((p: ForumPost) => p.id !== postId && p.category === foundPost.category)
+                  .slice(0, 3);
+                setSimilarPosts(similar);
+              }
+            } catch {}
           } else {
             // Post not found, redirect to forums
             router.push('/forums');
@@ -93,7 +107,8 @@ export default function PostDetailPage() {
     if (postId) {
       loadPost();
     }
-  }, [postId, router, commentSortBy]);
+    // Re-run when auth/user resolves so we fetch with userId and get userVote
+  }, [postId, router, commentSortBy, isAuthenticated, user?.id]);
 
   // Reload comments when sort changes
   const reloadComments = async () => {
@@ -126,6 +141,23 @@ export default function PostDetailPage() {
     try {
       if (contentType === 'post') {
         // Post voting
+        // Determine toggle/swap semantics locally so server gets intent
+        const current = localUserVote;
+        const effectiveVote = current === voteType ? null : voteType;
+
+        // Optimistic UI: set local user vote immediately
+        setLocalUserVote(effectiveVote);
+        // Optimistic counter update
+        setPost(prev => {
+          if (!prev) return prev;
+          const prevNet = (prev.votes?.upvotes || 0) - (prev.votes?.downvotes || 0);
+          let up = prev.votes?.upvotes || 0;
+          let down = prev.votes?.downvotes || 0;
+          if (current === 'up') up -= 1; else if (current === 'down') down -= 1;
+          if (effectiveVote === 'up') up += 1; else if (effectiveVote === 'down') down += 1;
+          return { ...(prev as any), votes: { upvotes: Math.max(0, up), downvotes: Math.max(0, down) } } as any;
+        });
+
         const response = await fetch('/api/posts/vote', {
           method: 'POST',
           headers: {
@@ -133,14 +165,61 @@ export default function PostDetailPage() {
           },
           body: JSON.stringify({ 
             postId: contentId,
-            voteType,
+            voteType: effectiveVote,
             userId: user.id
           }),
         });
 
         if (response.ok) {
           const result = await response.json();
-          setPost(result.post);
+          console.log('[POST VOTE] API Response:', { result, post: result.post, votes: result.post?.votes, userVote: result.post?.userVote });
+          if (result.post) {
+            setPost(result.post);
+            setLocalUserVote(result.post?.userVote ?? null);
+          } else {
+            console.error('[POST VOTE] No post in response!', result);
+            // Revert optimistic update on malformed response
+            setLocalUserVote((post as any)?.userVote ?? null);
+          }
+          try {
+            // Notify forums list to patch the post in place when navigating back
+            if (result.post) {
+              window.dispatchEvent(new CustomEvent('kd-forum-post-updated', { detail: { post: result.post } }));
+            }
+          } catch {}
+        } else {
+          // Log the error details - read as text first, then parse
+          let errorData: any = { error: 'Unknown error' };
+          try {
+            const errorText = await response.text();
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              errorData = { error: errorText };
+            }
+          } catch (e) {
+            console.error('[POST VOTE] Failed to read error response:', e);
+          }
+          
+          console.error('[POST VOTE] API Error Response:', { 
+            status: response.status, 
+            statusText: response.statusText,
+            error: errorData 
+          });
+          
+          // Revert local vote on error
+          setLocalUserVote((post as any)?.userVote ?? null);
+          // Re-fetch post snapshot to correct counts
+          try {
+            const snap = await fetch(`/api/posts${isAuthenticated && user ? `?userId=${user.id}` : ''}`, { cache: 'no-store' });
+            if (snap.ok) {
+              const d = await snap.json();
+              const found = (d.posts || []).find((p: any) => p.id === postId);
+              if (found) setPost(found);
+            }
+          } catch {}
+          
+          showToast(errorData?.details || errorData?.error || 'Failed to update vote', 'error');
         }
       } else {
         // Comment voting
@@ -469,7 +548,7 @@ export default function PostDetailPage() {
                           onClick={() => handleVote(post.id, 'up', 'post')}
                           disabled={votingPost}
                           className={`p-1 rounded-full transition-colors ${
-                            post.userVotes?.find(vote => vote.userId === user?.id)?.voteType === 'up'
+                            localUserVote === 'up'
                               ? 'bg-green-100 text-green-600' 
                               : 'hover:bg-gray-100 text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -481,7 +560,7 @@ export default function PostDetailPage() {
                           onClick={() => handleVote(post.id, 'down', 'post')}
                           disabled={votingPost}
                           className={`p-1 rounded-full transition-colors ${
-                            post.userVotes?.find(vote => vote.userId === user?.id)?.voteType === 'down'
+                            localUserVote === 'down'
                               ? 'bg-red-100 text-red-600' 
                               : 'hover:bg-gray-100 text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -509,7 +588,7 @@ export default function PostDetailPage() {
                      onClick={() => handleVote(post.id, 'up', 'post')}
                      disabled={votingPost}
                      className={`p-2 rounded-full transition-colors ${
-                       post.userVotes?.find(vote => vote.userId === user?.id)?.voteType === 'up'
+                       localUserVote === 'up'
                          ? 'bg-green-100 text-green-600' 
                          : 'hover:bg-gray-100 text-gray-400'
                      } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -523,7 +602,7 @@ export default function PostDetailPage() {
                      onClick={() => handleVote(post.id, 'down', 'post')}
                      disabled={votingPost}
                      className={`p-2 rounded-full transition-colors ${
-                       post.userVotes?.find(vote => vote.userId === user?.id)?.voteType === 'down'
+                       localUserVote === 'down'
                          ? 'bg-red-100 text-red-600' 
                          : 'hover:bg-gray-100 text-gray-400'
                      } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}

@@ -796,9 +796,9 @@
   "cmg88zsa300017kbsvllkpdof": {
     "userId": "cmg88zsa300017kbsvllkpdof",
     "username": "kingdice",
-    "xp": 92,
-    "level": 1,
-    "levelName": "Commoner",
+    "xp": 250,
+    "level": 3,
+    "levelName": "Knight",
     "actions": [
       {
         "action": "DAILY_LOGIN",
@@ -1115,8 +1115,706 @@
         "xp": 2,
         "description": "Daily login",
         "timestamp": "2025-10-28T19:27:31.010Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T05:48:55.296Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T06:02:11.663Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T06:03:36.375Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T06:05:59.205Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T06:07:34.084Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T06:10:31.406Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T06:24:02.753Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T06:24:09.154Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T07:01:58.347Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T07:42:05.712Z"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:31:56.411Z",
+        "relatedId": "img_1759861186680_7o0wt1jds"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:32:12.423Z",
+        "relatedId": "img_1756955532048_7yxzldeb3"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:33:29.522Z",
+        "relatedId": "img_1757453919868_bkvrvoxwr"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:33:40.210Z",
+        "relatedId": "img_1756956170436_lth3rabwq"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:41:29.108Z",
+        "relatedId": "img_1757453634982_2pvm80h1d"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:41:36.758Z",
+        "relatedId": "img_1757453634982_2pvm80h1d"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:42:01.574Z",
+        "relatedId": "img_1757453919868_bkvrvoxwr"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:42:08.859Z",
+        "relatedId": "img_1756957214409_jqw1a4q9m"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:42:14.527Z",
+        "relatedId": "img_1756957214409_jqw1a4q9m"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:42:22.307Z",
+        "relatedId": "img_1756955532048_7yxzldeb3"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:49:39.726Z",
+        "relatedId": "img_1756955365184_eyyx1h7xx"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:49:45.346Z",
+        "relatedId": "img_1757453634982_2pvm80h1d"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:57:10.323Z",
+        "relatedId": "img_1757453634982_2pvm80h1d"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T08:57:22.458Z",
+        "relatedId": "img_1756955365184_eyyx1h7xx"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-30T09:17:38.359Z"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T09:17:51.507Z",
+        "relatedId": "img_1756955365184_eyyx1h7xx"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T09:39:34.767Z",
+        "relatedId": "img_1756955365184_eyyx1h7xx"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T09:46:23.138Z",
+        "relatedId": "img_1757408720334_vnzcj76sd"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:10:47.464Z",
+        "relatedId": "post_1757435751590_slptzu3pm"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:10:56.695Z",
+        "relatedId": "post_1757435751590_slptzu3pm"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:11:03.631Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:11:10.466Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:11:15.852Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:11:20.876Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:11:28.850Z",
+        "relatedId": "post_1757435751590_slptzu3pm"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:20:43.292Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:20:48.965Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:48:24.729Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:48:37.766Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:55:46.724Z",
+        "relatedId": "post_1754538346874_fh3ns89f7"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:57:50.024Z",
+        "relatedId": "post_1754538346874_fh3ns89f7"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T18:58:15.595Z",
+        "relatedId": "post_1754538346874_fh3ns89f7"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:27:21.401Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:27:32.532Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:28:07.099Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:31:57.208Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:34:16.092Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:34:29.816Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:39:25.404Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:40:14.968Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:40:25.560Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:42:21.248Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:42:27.856Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:47:03.489Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:47:11.906Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T19:47:19.534Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T20:13:36.341Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T20:17:12.068Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T20:21:44.575Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T20:23:05.348Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T20:36:43.107Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T20:45:46.941Z",
+        "relatedId": "post_1757436115449_8hspkoa3u"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-30T20:45:55.742Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-31T00:53:37.754Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-31T00:53:44.633Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "REPLY_DISCUSSION",
+        "xp": 1,
+        "description": "Reply to a discussion",
+        "timestamp": "2025-10-31T00:54:05.218Z",
+        "relatedId": "comment_1761872045215_8uhrrg1r1"
+      },
+      {
+        "action": "POST_GETS_LIKE",
+        "xp": 1,
+        "description": "Like received on your post",
+        "timestamp": "2025-10-31T00:54:24.274Z",
+        "relatedId": "post_1754553037821_te2m8z2xh"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T08:25:57.940Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T08:31:34.543Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T18:36:08.742Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T18:40:49.861Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T18:45:47.640Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T18:51:55.816Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T18:55:19.058Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T19:03:42.200Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T19:06:07.153Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-10-31T19:09:15.236Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T20:56:15.636Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T21:01:03.949Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T21:07:33.299Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T21:24:23.382Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T21:26:24.266Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T21:36:14.076Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T22:19:52.715Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T22:24:14.524Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T22:37:51.963Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-03T23:33:38.777Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:10:17.510Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:15:11.664Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:19:15.869Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:28:36.024Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:29:05.697Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:40:04.885Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:41:02.618Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:46:09.748Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:53:11.739Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-04T06:54:03.213Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T07:10:55.921Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T07:25:47.853Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T08:20:30.366Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T08:25:52.612Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T17:57:44.513Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T17:59:16.380Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T19:15:00.902Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T19:17:56.841Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T19:31:00.739Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-05T19:51:22.192Z"
       }
     ],
-    "lastLogin": "2025-10-28T19:27:31.010Z"
+    "lastLogin": "2025-11-05T19:51:22.192Z"
   }
 }

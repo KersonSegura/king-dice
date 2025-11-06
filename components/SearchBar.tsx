@@ -63,28 +63,34 @@ export default function SearchBar() {
     const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=all&limit=8`);
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=all&limit=20`);
         
         if (response.ok) {
           const data = await response.json();
+          console.log('[SearchBar] API response:', data);
+          console.log('[SearchBar] Users:', data.users?.length || 0);
+          console.log('[SearchBar] Games:', data.games?.length || 0);
           
           // Format results
           const formattedResults: SearchResult[] = [
-            ...data.users.map((user: any) => ({
+            ...(data.users || []).map((user: any) => ({
               ...user,
               type: 'user' as const
             })),
-            ...data.games.map((game: any) => ({
+            ...(data.games || []).map((game: any) => ({
               ...game,
               type: 'game' as const
             }))
           ];
           
+          console.log('[SearchBar] Formatted results:', formattedResults.length);
           setResults(formattedResults);
           setHasSearched(true);
         } else {
-          console.error('Search API error:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('Search API error:', response.status, response.statusText, errorText);
           setResults([]);
+          setHasSearched(true);
         }
       } catch (error) {
         console.error('Search error:', error);

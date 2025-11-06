@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -19,12 +17,13 @@ export async function GET(
     }
 
     // Get the game to find the bggId
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: { bggId: true, nameEn: true }
-    });
+    const { data: game, error: gameError } = await supabaseAdmin
+      .from('games')
+      .select('bgg_id, name_en')
+      .eq('id', gameId)
+      .single();
 
-    if (!game || !game.bggId) {
+    if (gameError || !game || !game.bgg_id) {
       return NextResponse.json(
         { error: 'Game not found or missing BGG ID' },
         { status: 404 }
@@ -32,7 +31,7 @@ export async function GET(
     }
 
     // Fetch the BGG files page to get the latest PDF URL
-    const response = await fetch(`https://boardgamegeek.com/boardgame/${game.bggId}/files`, {
+    const response = await fetch(`https://boardgamegeek.com/boardgame/${game.bgg_id}/files`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
@@ -66,7 +65,7 @@ export async function GET(
     return NextResponse.json({
       pdfUrl: pdfUrls[0] || null,
       allPdfUrls: pdfUrls,
-      bggId: game.bggId // Return BGG ID for fallback
+      bggId: game.bgg_id // Return BGG ID for fallback
     });
 
   } catch (error) {
@@ -75,8 +74,6 @@ export async function GET(
       { error: 'Failed to fetch PDF URL from BGG' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

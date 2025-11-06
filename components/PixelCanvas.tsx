@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Palette, Clock, Users, Square, RefreshCw, ZoomIn, ZoomOut, RotateCcw, Pipette } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { saveWeeklySnapshot, shouldTakeWeeklySnapshot, markWeeklySnapshotTaken } from '@/lib/canvas-snapshot';
@@ -53,6 +54,7 @@ export default function PixelCanvas({
   const { showToast } = useToast();
   const [canvasData, setCanvasData] = useState<CanvasData | null>(null);
   const [stats, setStats] = useState<CanvasStats | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<number>(0); // Real-time online users viewing the canvas
   const [selectedColor, setSelectedColor] = useState('#000000');
   const [isPlacing, setIsPlacing] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
@@ -110,6 +112,102 @@ export default function PixelCanvas({
       setIsLoading(false);
     }
   }, []);
+
+  // Real-time presence tracking for canvas viewers
+  useEffect(() => {
+    let channel: any;
+    let active = true;
+    
+    (async () => {
+      try {
+        const supabaseClient = await getSupabaseBrowserClient();
+        if (!active) return;
+        
+        // Clean up any existing channel
+        const channelName = 'pixel-canvas-viewers';
+        try {
+          const existingChannel = supabaseClient.channel(channelName);
+          await existingChannel.unsubscribe();
+          await supabaseClient.removeChannel(existingChannel);
+        } catch (e) {
+          // Channel doesn't exist yet, that's fine
+        }
+        
+        // Track presence for canvas viewers
+        const presenceState = {
+          userId: user?.id || 'anonymous',
+          username: user?.username || 'Anonymous',
+          joinedAt: new Date().toISOString()
+        };
+        
+        const presenceKey = user?.id || `anon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        channel = supabaseClient
+          .channel(channelName, {
+            config: {
+              broadcast: { self: false },
+              presence: { key: presenceKey }
+            }
+          })
+          .on('presence', { event: 'sync' }, () => {
+            if (!active) return;
+            const state = channel.presenceState();
+            const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+            setOnlineUsers(onlineCount);
+          })
+          .on('presence', { event: 'join' }, () => {
+            if (!active) return;
+            const state = channel.presenceState();
+            const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+            setOnlineUsers(onlineCount);
+          })
+          .on('presence', { event: 'leave' }, () => {
+            if (!active) return;
+            const state = channel.presenceState();
+            const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+            setOnlineUsers(onlineCount);
+          })
+          .subscribe(async (status) => {
+            if (active && status === 'SUBSCRIBED') {
+              try {
+                await channel.track(presenceState);
+                
+                // Get initial presence count
+                setTimeout(() => {
+                  if (!active) return;
+                  const state = channel.presenceState();
+                  const onlineCount = Object.keys(state).filter(key => key !== 'anonymous').length;
+                  setOnlineUsers(onlineCount);
+                }, 500);
+              } catch (presenceError) {
+                // Silent error handling
+              }
+            }
+          });
+      } catch (err) {
+        // Silent error handling
+      }
+    })();
+    
+    return () => {
+      active = false;
+      if (channel) {
+        (async () => {
+          try {
+            await channel.untrack();
+            await channel.unsubscribe();
+            const supabaseClient = await getSupabaseBrowserClient();
+            await supabaseClient.removeChannel(channel);
+            setOnlineUsers(0);
+          } catch (err) {
+            // Silent error handling
+          }
+        })();
+      } else {
+        setOnlineUsers(0);
+      }
+    };
+  }, [user?.id]);
 
   // Check user cooldown
   const checkCooldown = useCallback(async () => {
@@ -882,7 +980,7 @@ export default function PixelCanvas({
             </div>
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
-              <span>{stats.uniqueUsers} users</span>
+              <span>{onlineUsers > 0 ? onlineUsers : (stats?.uniqueUsers || 0)} users</span>
             </div>
           </div>
         )}

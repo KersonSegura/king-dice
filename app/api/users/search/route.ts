@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET - Search for users by username
 
@@ -17,25 +15,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [] });
     }
 
-    const users = await prisma.user.findMany({
-      where: {
-        username: {
-          contains: query
-        }
-      },
-      select: {
-        id: true,
-        username: true,
-        avatar: true,
-        isVerified: true,
-        isAdmin: true,
-        joinDate: true
-      },
-      take: limit,
-      orderBy: {
-        username: 'asc'
-      }
-    });
+    const searchQuery = query.trim();
+
+    const { data: dbUsers, error } = await supabaseAdmin
+      .from('users')
+      .select('id, username, avatar, is_verified, is_admin, created_at')
+      .ilike('username', `%${searchQuery}%`)
+      .limit(limit)
+      .order('username', { ascending: true, nullsFirst: false });
+
+    if (error) {
+      console.error('Error searching users:', error);
+      return NextResponse.json({ error: 'Failed to search users' }, { status: 500 });
+    }
+
+    const users = (dbUsers || []).map((user: any) => ({
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar,
+      isVerified: user.is_verified || false,
+      isAdmin: user.is_admin || false,
+      joinDate: user.created_at
+    }));
 
     return NextResponse.json({ users });
   } catch (error) {

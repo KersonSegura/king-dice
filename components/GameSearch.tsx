@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Loader2, Calendar, Users, Clock } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,6 +21,7 @@ export default function GameSearch() {
   const [results, setResults] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const searchGames = async () => {
@@ -54,13 +55,30 @@ export default function GameSearch() {
     return () => clearTimeout(debounceTimer);
   }, [query]);
 
+  // Close results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
+    };
+
+    if (showResults) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showResults]);
+
   const handleResultClick = () => {
     setShowResults(false);
     setQuery('');
   };
 
   return (
-    <div className="relative max-w-2xl mx-auto">
+    <div ref={searchRef} className="relative max-w-2xl mx-auto">
       <div className="relative">
                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
            <Search className="h-5 w-5 text-dark-400" />

@@ -19,10 +19,10 @@
       },
       "comments": [],
       "weeklyLikes": {
-        "likesReceivedThisWeek": 1,
-        "weekId": "2025-W43"
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W44"
       },
-      "userVote": "up",
+      "userVote": null,
       "userVotes": [
         {
           "userId": "cmg88zsa300017kbsvllkpdof",
@@ -47,10 +47,15 @@
       "createdAt": "2025-10-07T18:19:46.680Z",
       "votes": {
         "upvotes": 0,
-        "downvotes": 0,
-        "voters": []
+        "downvotes": 0
       },
-      "comments": []
+      "comments": [],
+      "weeklyLikes": {
+        "likesReceivedThisWeek": 0,
+        "weekId": "2025-W44"
+      },
+      "userVote": null,
+      "userVotes": []
     },
     {
       "title": "Dice 000002",
@@ -68,25 +73,31 @@
       "id": "img_1756955365184_eyyx1h7xx",
       "createdAt": "2025-09-04T03:09:25.184Z",
       "votes": {
-        "upvotes": 1,
+        "upvotes": 2,
         "downvotes": 0
       },
       "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W37"
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
       "comments": 0,
       "isModerated": false,
       "isDraft": false,
-      "userVote": null,
+      "userVote": "up",
       "userVotes": [
         {
           "userId": "cmg88zsa300017kbsvllkpdof",
           "voteType": "up",
           "timestamp": "2025-09-04T04:24:48.649Z",
           "weekId": "2025-W36"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T09:39:34.762Z",
+          "weekId": "2025-W44"
         }
       ]
     },
@@ -106,12 +117,12 @@
       "id": "img_1756955532048_7yxzldeb3",
       "createdAt": "2025-09-04T03:12:12.048Z",
       "votes": {
-        "upvotes": 3,
+        "upvotes": 4,
         "downvotes": 0
       },
       "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W43"
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
@@ -231,7 +242,7 @@
           "replies": []
         }
       ],
-      "userVote": null,
+      "userVote": "up",
       "userVotes": [
         {
           "userId": "cmg88zsa300017kbsvllkpdof",
@@ -250,6 +261,12 @@
           "voteType": "up",
           "timestamp": "2025-10-03T08:40:15.630Z",
           "weekId": "2025-W40"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T08:42:22.305Z",
+          "weekId": "2025-W44"
         }
       ]
     },
@@ -300,12 +317,12 @@
       "id": "img_1756956170436_lth3rabwq",
       "createdAt": "2025-09-04T03:22:50.436Z",
       "votes": {
-        "upvotes": 1,
+        "upvotes": 2,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W37"
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
@@ -319,6 +336,12 @@
           "voteType": "up",
           "timestamp": "2025-09-09T08:39:34.301Z",
           "weekId": "2025-W37"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T08:57:25.552Z",
+          "weekId": "2025-W44"
         }
       ]
     },
@@ -339,12 +362,12 @@
       "id": "img_1756957214409_jqw1a4q9m",
       "createdAt": "2025-09-04T03:40:14.409Z",
       "votes": {
-        "upvotes": 3,
+        "upvotes": 4,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W43"
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
@@ -370,6 +393,12 @@
           "voteType": "up",
           "timestamp": "2025-10-23T18:28:23.510Z",
           "weekId": "2025-W43"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T08:42:14.523Z",
+          "weekId": "2025-W44"
         }
       ]
     },
@@ -390,18 +419,27 @@
       "id": "img_1756957252860_zp3kl40by",
       "createdAt": "2025-09-04T03:40:52.860Z",
       "votes": {
-        "upvotes": 0,
+        "upvotes": 1,
         "downvotes": 0
       },
       "weeklyLikes": {
-        "likesReceivedThisWeek": 0,
-        "weekId": "2025-W36"
+        "likesReceivedThisWeek": 1,
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
       "comments": 0,
       "isModerated": false,
-      "isDraft": false
+      "isDraft": false,
+      "userVote": "up",
+      "userVotes": [
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T08:33:41.173Z",
+          "weekId": "2025-W44"
+        }
+      ]
     },
     {
       "title": "tretet",
@@ -450,12 +488,12 @@
       "id": "img_1757408720334_vnzcj76sd",
       "createdAt": "2025-09-09T09:05:20.334Z",
       "votes": {
-        "upvotes": 1,
+        "upvotes": 2,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W37"
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
@@ -538,6 +576,12 @@
           "voteType": "up",
           "timestamp": "2025-09-09T21:36:47.685Z",
           "weekId": "2025-W37"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T09:46:23.134Z",
+          "weekId": "2025-W44"
         }
       ]
     },
@@ -558,12 +602,12 @@
       "id": "img_1757453634982_2pvm80h1d",
       "createdAt": "2025-09-09T21:33:54.982Z",
       "votes": {
-        "upvotes": 1,
+        "upvotes": 2,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W43"
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
@@ -608,6 +652,12 @@
           "voteType": "up",
           "timestamp": "2025-10-23T18:28:20.154Z",
           "weekId": "2025-W43"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T08:57:10.321Z",
+          "weekId": "2025-W44"
         }
       ]
     },
@@ -628,12 +678,12 @@
       "id": "img_1757453919868_bkvrvoxwr",
       "createdAt": "2025-09-09T21:38:39.868Z",
       "votes": {
-        "upvotes": 2,
+        "upvotes": 3,
         "downvotes": 0
       },
       "weeklyLikes": {
         "likesReceivedThisWeek": 1,
-        "weekId": "2025-W43"
+        "weekId": "2025-W44"
       },
       "views": 0,
       "downloads": 0,
@@ -653,6 +703,12 @@
           "voteType": "up",
           "timestamp": "2025-10-23T18:28:17.950Z",
           "weekId": "2025-W43"
+        },
+        {
+          "userId": "cmg88zsa300017kbsvllkpdof",
+          "voteType": "up",
+          "timestamp": "2025-10-30T08:42:01.572Z",
+          "weekId": "2025-W44"
         }
       ]
     }

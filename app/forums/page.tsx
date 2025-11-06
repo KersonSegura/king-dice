@@ -63,7 +63,7 @@ function ForumsPageContent() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const response = await fetch('/api/posts?page=1&limit=20');
+        const response = await fetch(`/api/posts?page=1&limit=20${isAuthenticated && user ? `&userId=${user.id}` : ''}`, { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           setPosts(data.posts);
@@ -126,7 +126,7 @@ function ForumsPageContent() {
     setIsLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      const response = await fetch(`/api/posts?page=${nextPage}&limit=20`);
+      const response = await fetch(`/api/posts?page=${nextPage}&limit=20${isAuthenticated && user ? `&userId=${user.id}` : ''}`, { cache: 'no-store' });
       
       if (response.ok) {
         const data = await response.json();
@@ -146,6 +146,17 @@ function ForumsPageContent() {
       setIsLoadingMore(false);
     }
   };
+
+  // Listen for post updates (votes/replies) and patch in place
+  useEffect(() => {
+    const onForumPostUpdated = (e: any) => {
+      const updated = e.detail?.post;
+      if (!updated) return;
+      setPosts(prev => prev.map(p => p.id === updated.id ? { ...p, votes: updated.votes, replies: updated.replies, userVote: updated.userVote } as any : p));
+    };
+    window.addEventListener('kd-forum-post-updated', onForumPostUpdated as any);
+    return () => window.removeEventListener('kd-forum-post-updated', onForumPostUpdated as any);
+  }, []);
 
 
   const handleCreatePost = async () => {

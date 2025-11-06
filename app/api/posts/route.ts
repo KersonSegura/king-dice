@@ -2,33 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createPost, getAllPosts } from '@/lib/posts';
 import { moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
-import { CacheService } from '@/lib/redis';
+// import { CacheService } from '@/lib/redis';
 
+// Force dynamic so likes/replies reflect immediately when navigating back
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const authorId = searchParams.get('author') || searchParams.get('authorId');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
+    const userId = searchParams.get('userId') || '';
     
-    // Check cache first
-    const cacheKey = `posts:${authorId || 'all'}:${page}:${limit}`;
-    const cachedPosts = await CacheService.getCachedForumPosts(cacheKey);
-    
-    if (cachedPosts) {
-      console.log(`✅ Cache hit for posts - Author: ${authorId || 'all'}, Page: ${page}`);
-      return NextResponse.json({ 
-        posts: cachedPosts,
-        cached: true
-      }, {
-        headers: {
-          'Cache-Control': 'public, max-age=60',
-          'CDN-Cache-Control': 'public, max-age=60'
-        }
-      });
-    }
-
-    console.log(`❌ Cache miss for posts - Author: ${authorId || 'all'}, Page: ${page}, fetching from database`);
+    // Always fetch fresh (disable Redis cache for live counters)
     
     let posts = getAllPosts();
     
@@ -40,20 +26,70 @@ export async function GET(request: NextRequest) {
     // Apply pagination
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    const paginatedPosts = posts.slice(startIndex, endIndex);
-    
-    // Cache the results for 15 minutes
-    await CacheService.cacheForumPosts(cacheKey, paginatedPosts, 900);
-    
-    return NextResponse.json({ 
-      posts: paginatedPosts,
-      cached: false
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=60', // Cache for 1 minute (posts change more frequently)
-        'CDN-Cache-Control': 'public, max-age=60'
+    let paginatedPosts = posts.slice(startIndex, endIndex);
+
+    // Overlay live vote counts and userVote from Supabase
+    try {
+      const { supabaseAdmin } = await import('@/lib/supabase');
+      const ids = paginatedPosts.map(p => p.id);
+      if (ids.length > 0) {
+        // Initialize all post IDs with 0 counts
+        const upCount: Record<string, number> = {};
+        const downCount: Record<string, number> = {};
+        ids.forEach(id => {
+          upCount[id] = 0;
+          downCount[id] = 0;
+        });
+
+        // Fetch votes from Supabase
+        const [{ data: up, error: upError }, { data: down, error: downError }] = await Promise.all([
+          supabaseAdmin.from('post_votes').select('post_id').in('post_id', ids).eq('vote_type', 'up'),
+          supabaseAdmin.from('post_votes').select('post_id').in('post_id', ids).eq('vote_type', 'down'),
+        ]);
+
+        // Count votes - increment for each vote found
+        if (!upError && up) {
+          up.forEach(r => { 
+            if (r.post_id && upCount[r.post_id] !== undefined) {
+              upCount[r.post_id] = (upCount[r.post_id] || 0) + 1; 
+            }
+          });
+        }
+        if (!downError && down) {
+          down.forEach(r => { 
+            if (r.post_id && downCount[r.post_id] !== undefined) {
+              downCount[r.post_id] = (downCount[r.post_id] || 0) + 1; 
+            }
+          });
+        }
+
+        let userVotes: Record<string, string> = {};
+        if (userId) {
+          const { data: uv, error: uvError } = await supabaseAdmin
+            .from('post_votes')
+            .select('post_id, vote_type')
+            .in('post_id', ids)
+            .eq('user_id', userId);
+          if (!uvError && uv) {
+            uv.forEach(v => { userVotes[v.post_id] = v.vote_type; });
+          }
+        }
+
+        // Always use Supabase counts (which are initialized to 0 if no votes exist)
+        paginatedPosts = paginatedPosts.map(p => ({
+          ...p,
+          votes: { 
+            upvotes: upCount[p.id] ?? 0, 
+            downvotes: downCount[p.id] ?? 0
+          },
+          userVote: (userVotes[p.id] as any) || null,
+        }));
       }
-    });
+    } catch (e) {
+      console.warn('Failed to overlay Supabase votes on posts list:', e);
+    }
+    
+    return NextResponse.json({ posts: paginatedPosts, cached: false });
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json(

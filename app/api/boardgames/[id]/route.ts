@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin } from '@/lib/supabase';
 
-const prisma = new PrismaClient();
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
@@ -19,35 +20,57 @@ export async function GET(
     }
 
     // Get the game with all related data
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      include: {
-        gameCategories: {
-          include: {
-            category: true
-          }
-        },
-        gameMechanics: {
-          include: {
-            mechanic: true
-          }
-        },
-        descriptions: true,
-        rules: true,
-        baseGameExpansions: true,
-      }
-    });
+    const { data: game, error: gameError } = await supabaseAdmin
+      .from('games')
+      .select('*')
+      .eq('id', gameId)
+      .single();
 
-    if (!game) {
+    if (gameError || !game) {
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
       );
     }
 
+    // Fetch related data - use camelCase (gameId, baseGameId)
+    const [
+      { data: categories },
+      { data: mechanics },
+      { data: descriptions },
+      { data: rules },
+      { data: expansions }
+    ] = await Promise.all([
+      supabaseAdmin.from('game_categories').select('*, category:categories(*)').eq('gameId', gameId),
+      supabaseAdmin.from('game_mechanics').select('*, mechanic:mechanics(*)').eq('gameId', gameId),
+      supabaseAdmin.from('game_descriptions').select('*').eq('gameId', gameId),
+      supabaseAdmin.from('game_rules').select('*').eq('gameId', gameId),
+      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId)
+    ]);
+
+    // Transform to match expected format
+    const transformedGame = {
+      ...game,
+      gameCategories: (categories || []).map((gc: any) => ({
+        id: gc.id,
+        gameId: gc.game_id,
+        categoryId: gc.category_id,
+        category: Array.isArray(gc.category) ? gc.category[0] : gc.category
+      })),
+      gameMechanics: (mechanics || []).map((gm: any) => ({
+        id: gm.id,
+        gameId: gm.game_id,
+        mechanicId: gm.mechanic_id,
+        mechanic: Array.isArray(gm.mechanic) ? gm.mechanic[0] : gm.mechanic
+      })),
+      descriptions: descriptions || [],
+      rules: rules || [],
+      baseGameExpansions: expansions || []
+    };
+
     return NextResponse.json({ 
       success: true, 
-      game
+      game: transformedGame
     });
 
   } catch (error) {
@@ -79,11 +102,13 @@ export async function PUT(
     }
 
     // Check if game exists
-    const existingGame = await prisma.game.findUnique({
-      where: { id: gameId }
-    });
+    const { data: existingGame, error: existingGameError } = await supabaseAdmin
+      .from('games')
+      .select('*')
+      .eq('id', gameId)
+      .single();
 
-    if (!existingGame) {
+    if (existingGameError || !existingGame) {
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
@@ -92,31 +117,31 @@ export async function PUT(
 
     // Check for duplicate names (excluding current game)
     if (body.nameEn || body.nameEs) {
-      const duplicateGame = await prisma.game.findFirst({
-        where: {
-          AND: [
-            { id: { not: gameId } }, // Exclude current game
-            {
-              OR: [
-                { nameEn: { equals: body.nameEn } },
-                { nameEs: { equals: body.nameEs } },
-                { name: { equals: body.nameEn } }
-              ]
-            }
-          ]
-        }
-      });
+      let duplicateQuery = supabaseAdmin
+        .from('games')
+        .select('id, nameEn, name_en, nameEs, name_es, name, yearRelease, year_release')
+        .neq('id', gameId);
+      
+      if (body.nameEn) {
+        duplicateQuery = duplicateQuery.or(`nameEn.eq.${body.nameEn},name_en.eq.${body.nameEn},name.eq.${body.nameEn}`);
+      }
+      if (body.nameEs) {
+        duplicateQuery = duplicateQuery.or(`nameEs.eq.${body.nameEs},name_es.eq.${body.nameEs}`);
+      }
+      
+      const { data: duplicateGames } = await duplicateQuery.limit(1);
 
-      if (duplicateGame) {
+      if (duplicateGames && duplicateGames.length > 0) {
+        const duplicateGame = duplicateGames[0];
         return NextResponse.json(
           { 
             error: 'Duplicate game name', 
-            message: `A game with the name "${duplicateGame.nameEn || duplicateGame.name}" already exists.`,
+            message: `A game with the name "${duplicateGame.nameEn || duplicateGame.name_en || duplicateGame.name}" already exists.`,
             existingGame: {
               id: duplicateGame.id,
-              nameEn: duplicateGame.nameEn,
-              nameEs: duplicateGame.nameEs,
-              yearRelease: duplicateGame.yearRelease
+              nameEn: duplicateGame.nameEn || duplicateGame.name_en,
+              nameEs: duplicateGame.nameEs || duplicateGame.name_es,
+              yearRelease: duplicateGame.yearRelease || duplicateGame.year_release
             }
           },
           { status: 409 }
@@ -124,10 +149,10 @@ export async function PUT(
       }
     }
 
-    // Prepare update data
+    // Prepare update data - try camelCase first (matches database schema)
     const updateData: any = {};
     
-    // Only update provided fields
+    // Only update provided fields - use camelCase to match database
     if (body.nameEn !== undefined) {
       updateData.nameEn = body.nameEn;
       updateData.name = body.nameEn; // Update legacy field
@@ -221,84 +246,128 @@ export async function PUT(
     }
 
     // Update the game
-    console.log('Attempting Prisma update with data:', updateData);
+    console.log('Attempting Supabase update with data:', updateData);
     
-    const updatedGame = await prisma.game.update({
-      where: { id: gameId },
-      data: updateData,
-      include: {
-        gameCategories: {
-          include: {
-            category: true
-          }
-        },
-        gameMechanics: {
-          include: {
-            mechanic: true
-          }
-        },
-        descriptions: true,
-        rules: true,
-        baseGameExpansions: true,
-      }
-    });
+    const { data: updatedGame, error: updateError } = await supabaseAdmin
+      .from('games')
+      .update(updateData)
+      .eq('id', gameId)
+      .select('*')
+      .single();
     
-    console.log('Prisma update successful');
+    if (updateError) {
+      console.error('Supabase update error:', updateError);
+      throw new Error(`Failed to update game: ${updateError.message}`);
+    }
+    
+    console.log('Supabase update successful');
+    
+    // Fetch related data - use camelCase (gameId, baseGameId)
+    const [
+      { data: categories },
+      { data: mechanics },
+      { data: descriptions },
+      { data: rules },
+      { data: expansions }
+    ] = await Promise.all([
+      supabaseAdmin.from('game_categories').select('*, category:categories(*)').eq('gameId', gameId),
+      supabaseAdmin.from('game_mechanics').select('*, mechanic:mechanics(*)').eq('gameId', gameId),
+      supabaseAdmin.from('game_descriptions').select('*').eq('gameId', gameId),
+      supabaseAdmin.from('game_rules').select('*').eq('gameId', gameId),
+      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId)
+    ]);
+
+    // Transform to match expected format
+    const transformedGame = {
+      ...updatedGame,
+      gameCategories: (categories || []).map((gc: any) => ({
+        id: gc.id,
+        gameId: gc.game_id,
+        categoryId: gc.category_id,
+        category: Array.isArray(gc.category) ? gc.category[0] : gc.category
+      })),
+      gameMechanics: (mechanics || []).map((gm: any) => ({
+        id: gm.id,
+        gameId: gm.game_id,
+        mechanicId: gm.mechanic_id,
+        mechanic: Array.isArray(gm.mechanic) ? gm.mechanic[0] : gm.mechanic
+      })),
+      descriptions: descriptions || [],
+      rules: rules || [],
+      baseGameExpansions: expansions || []
+    };
 
     // Update description if provided
     if (body.fullDescription !== undefined) {
-      // Find existing English description
-      const existingEnDescription = updatedGame.descriptions.find(d => d.language === 'en');
+      const shortDescription = body.fullDescription.substring(0, 200) + (body.fullDescription.length > 200 ? '...' : '');
+      
+      // Find existing English description - use camelCase (gameId)
+      const { data: existingEnDescriptions } = await supabaseAdmin
+        .from('game_descriptions')
+        .select('*')
+        .eq('gameId', gameId)
+        .eq('language', 'en')
+        .limit(1);
+      
+      const existingEnDescription = existingEnDescriptions?.[0];
       
       if (existingEnDescription) {
-        // Update existing description
-        await prisma.gameDescription.update({
-          where: { id: existingEnDescription.id },
-          data: {
+        // Update existing description - use camelCase
+        await supabaseAdmin
+          .from('game_descriptions')
+          .update({
             fullDescription: body.fullDescription,
-            shortDescription: body.fullDescription.substring(0, 200) + (body.fullDescription.length > 200 ? '...' : '')
-          }
-        });
+            shortDescription: shortDescription
+          })
+          .eq('id', existingEnDescription.id);
       } else {
-        // Create new description
-        await prisma.gameDescription.create({
-          data: {
+        // Create new description - use camelCase (gameId)
+        await supabaseAdmin
+          .from('game_descriptions')
+          .insert({
             gameId: gameId,
             language: 'en',
             fullDescription: body.fullDescription,
-            shortDescription: body.fullDescription.substring(0, 200) + (body.fullDescription.length > 200 ? '...' : '')
-          }
-        });
+            shortDescription: shortDescription
+          });
       }
 
       // Also update Spanish description if game has Spanish name
-      if (updatedGame.nameEs) {
-        const existingEsDescription = updatedGame.descriptions.find(d => d.language === 'es');
+      const nameEs = updatedGame.name_es || updatedGame.nameEs;
+      if (nameEs) {
+        const { data: existingEsDescriptions } = await supabaseAdmin
+          .from('game_descriptions')
+          .select('*')
+          .eq('gameId', gameId)
+          .eq('language', 'es')
+          .limit(1);
+        
+        const existingEsDescription = existingEsDescriptions?.[0];
         
         if (existingEsDescription) {
-          await prisma.gameDescription.update({
-            where: { id: existingEsDescription.id },
-            data: {
+          await supabaseAdmin
+            .from('game_descriptions')
+            .update({
               fullDescription: body.fullDescription,
-              shortDescription: body.fullDescription.substring(0, 200) + (body.fullDescription.length > 200 ? '...' : '')
-            }
-          });
+              shortDescription: shortDescription
+            })
+            .eq('id', existingEsDescription.id);
         } else {
-          await prisma.gameDescription.create({
-            data: {
+          await supabaseAdmin
+            .from('game_descriptions')
+            .insert({
               gameId: gameId,
               language: 'es',
               fullDescription: body.fullDescription,
-              shortDescription: body.fullDescription.substring(0, 200) + (body.fullDescription.length > 200 ? '...' : '')
-            }
-          });
+              shortDescription: shortDescription
+            });
         }
       }
     }
 
     return NextResponse.json({ 
       success: true, 
-      game: updatedGame,
+      game: transformedGame,
       message: 'Game updated successfully'
     });
 
@@ -377,11 +446,13 @@ export async function DELETE(
     }
 
     // Check if game exists
-    const existingGame = await prisma.game.findUnique({
-      where: { id: gameId }
-    });
+    const { data: existingGame, error: existingGameError } = await supabaseAdmin
+      .from('games')
+      .select('id')
+      .eq('id', gameId)
+      .single();
 
-    if (!existingGame) {
+    if (existingGameError || !existingGame) {
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
@@ -389,9 +460,14 @@ export async function DELETE(
     }
 
     // Delete the game (this will cascade to related records due to foreign key constraints)
-    await prisma.game.delete({
-      where: { id: gameId }
-    });
+    const { error: deleteError } = await supabaseAdmin
+      .from('games')
+      .delete()
+      .eq('id', gameId);
+
+    if (deleteError) {
+      throw new Error(`Failed to delete game: ${deleteError.message}`);
+    }
 
     return NextResponse.json({ 
       success: true, 
