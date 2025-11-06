@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { moderateImage, moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
-import { uploadToStorage, STORAGE_BUCKETS } from '@/lib/supabase';
-import { prisma } from '@/lib/prisma';
+import { uploadToStorage, STORAGE_BUCKETS, supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,28 +98,40 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to upload to Supabase Storage: ${uploadResult.error}`);
     }
     
-    // Create image in database
-    const imageData = await prisma.galleryImage.create({
-      data: {
+    // Create image in database using Supabase directly (to avoid Prisma connection issues)
+    const { data: imageData, error: createError } = await supabaseAdmin
+      .from('gallery_images')
+      .insert({
         title: title?.trim() || (category === 'collections' ? 'Collection Photo' : 'Favorite Card'),
         description: description || '',
-        imageUrl: uploadResult.publicUrl,
-        thumbnailUrl: uploadResult.publicUrl,
+        image_url: uploadResult.publicUrl,
+        thumbnail_url: uploadResult.publicUrl,
         category,
-        authorId: author.id
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        }
-      }
-    });
+        author_id: author.id
+      })
+      .select(`
+        id,
+        title,
+        description,
+        image_url,
+        thumbnail_url,
+        category,
+        votes,
+        comments,
+        created_at,
+        author:users!gallery_images_author_id_fkey (
+          id,
+          username,
+          avatar,
+          reputation,
+          title
+        )
+      `)
+      .single();
+
+    if (createError || !imageData) {
+      throw new Error(`Failed to create image in database: ${createError?.message || 'Unknown error'}`);
+    }
 
     // Award XP for uploading an image (optional - don't fail upload if XP fails)
     try {
@@ -148,8 +159,8 @@ export async function POST(request: NextRequest) {
       id: imageData.id,
       title: imageData.title,
       description: imageData.description,
-      imageUrl: imageData.imageUrl,
-      thumbnailUrl: imageData.thumbnailUrl,
+      imageUrl: imageData.image_url,
+      thumbnailUrl: imageData.thumbnail_url,
       category: imageData.category,
       author: {
         id: imageData.author.id,
@@ -157,8 +168,14 @@ export async function POST(request: NextRequest) {
         avatar: imageData.author.avatar,
         reputation: imageData.author.reputation
       },
-      createdAt: imageData.createdAt.toISOString(),
-      votes: JSON.parse(imageData.votes),
+      createdAt: imageData.created_at,
+      votes: (() => {
+        try {
+          return JSON.parse(imageData.votes);
+        } catch (e) {
+          return { upvotes: 0, downvotes: 0 };
+        }
+      })(),
       comments: imageData.comments
     };
 
