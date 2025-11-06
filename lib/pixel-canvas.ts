@@ -56,12 +56,13 @@ async function loadCanvas(): Promise<PixelCanvas> {
       console.error('Error loading canvas metadata:', canvasError);
     }
 
-    // Get all pixels
+    // Get all pixels (remove default 1000 row limit)
     const { data: pixelsData, error: pixelsError } = await supabaseAdmin
       .from('pixel_placements')
       .select('*')
       .eq('canvas_id', CANVAS_ID)
-      .order('placed_at', { ascending: false });
+      .order('placed_at', { ascending: false })
+      .limit(50000); // Set high limit to get all pixels
 
     // Check if table doesn't exist (PGRST205)
     if (pixelsError && pixelsError.code === 'PGRST205') {
