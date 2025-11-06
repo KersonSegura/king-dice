@@ -23,14 +23,8 @@
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "PRISMA_GENERATE_DATAPROXY": "false",
-      "PRISMA_CLIENT_ENGINE_TYPE": "library",
       "SKIP_ENV_VALIDATION": "true"
     }
-  },
-  "env": {
-    "PRISMA_CLIENT_ENGINE_TYPE": "library",
-    "PRISMA_GENERATE_DATAPROXY": "false"
   },
   "installCommand": "npm install"
 }
