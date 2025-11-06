@@ -6,8 +6,11 @@ export async function GET(request: NextRequest) {
     // Verify this is a legitimate cron request
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET || 'default-cron-secret';
+    const isVercelCron = request.headers.get('user-agent')?.includes('vercel-cron') || 
+                         process.env.VERCEL === '1';
+    const isAuthorizedExternal = authHeader === `Bearer ${cronSecret}`;
     
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    if (!isVercelCron && !isAuthorizedExternal) {
       console.log('Unauthorized weekly snapshot cron request attempt');
       return NextResponse.json(
         { error: 'Unauthorized' },

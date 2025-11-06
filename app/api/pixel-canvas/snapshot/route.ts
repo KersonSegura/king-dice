@@ -1,87 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const SNAPSHOTS_DIR = path.join(process.cwd(), 'data', 'canvas-snapshots');
-const CURRENT_SNAPSHOT_FILE = path.join(SNAPSHOTS_DIR, 'current-week.json');
-
-interface CanvasSnapshot {
-  id: string;
-  week: string;
-  imageData: string;
-  timestamp: string;
-  canvasData?: any;
-}
-
-// Ensure snapshots directory exists
-function ensureSnapshotsDir() {
-  if (!fs.existsSync(SNAPSHOTS_DIR)) {
-    fs.mkdirSync(SNAPSHOTS_DIR, { recursive: true });
-  }
-}
-
-// Get the current week identifier (e.g., "2025-W38")
-function getCurrentWeekId(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const startOfYear = new Date(year, 0, 1);
-  const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-  return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
-}
-
-// Get the previous week identifier
-function getPreviousWeekId(): string {
-  const now = new Date();
-  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const year = lastWeek.getFullYear();
-  const startOfYear = new Date(year, 0, 1);
-  const days = Math.floor((lastWeek.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-  return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
-}
+import { getLatestSnapshot, saveWeeklySnapshot, getCurrentWeekId } from '@/lib/canvas-snapshot-supabase';
 
 // Get weekly snapshot (returns the previous week's snapshot, or current week if no previous exists)
 export async function GET(request: NextRequest) {
   try {
-    ensureSnapshotsDir();
+    const result = await getLatestSnapshot();
     
-    const previousWeekId = getPreviousWeekId();
-    const currentWeekId = getCurrentWeekId();
-    
-    // First, try to get previous week's snapshot
-    let snapshotFile = path.join(SNAPSHOTS_DIR, `${previousWeekId}.json`);
-    
-    if (fs.existsSync(snapshotFile)) {
-      const snapshotData = JSON.parse(fs.readFileSync(snapshotFile, 'utf-8'));
+    if (!result.success) {
       return NextResponse.json({
-        success: true,
-        snapshot: snapshotData
-      });
-    } else {
-      // If no previous week snapshot, try current week as fallback
-      snapshotFile = path.join(SNAPSHOTS_DIR, `${currentWeekId}.json`);
-      
-      if (fs.existsSync(snapshotFile)) {
-        const snapshotData = JSON.parse(fs.readFileSync(snapshotFile, 'utf-8'));
-        return NextResponse.json({
-          success: true,
-          snapshot: snapshotData,
-          message: `Showing current week snapshot (${currentWeekId}) - no previous week available`
-        });
-      } else {
-        // No snapshot available at all
-        return NextResponse.json({
-          success: true,
-          snapshot: null,
-          message: `No snapshot available for week ${previousWeekId} or ${currentWeekId}`
-        });
-      }
+        success: false,
+        snapshot: null,
+        message: result.message || 'Failed to fetch snapshot'
+      }, { status: 500 });
     }
+
+    return NextResponse.json({
+      success: true,
+      snapshot: result.snapshot,
+      message: result.message,
+      currentWeek: getCurrentWeekId()
+    });
   } catch (error) {
-    console.error('Error getting weekly snapshot:', error);
+    console.error('Error fetching snapshot:', error);
     return NextResponse.json(
-      { error: 'Failed to get weekly snapshot' },
+      { error: 'Failed to fetch snapshot', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -92,39 +34,33 @@ export async function POST(request: NextRequest) {
   try {
     const { imageData, canvasData } = await request.json();
     
-    if (!imageData) {
+    if (!canvasData) {
       return NextResponse.json(
-        { error: 'Image data is required' },
+        { error: 'Canvas data is required' },
         { status: 400 }
       );
     }
     
-    ensureSnapshotsDir();
+    const result = await saveWeeklySnapshot(canvasData, imageData);
     
-    const currentWeekId = getCurrentWeekId();
-    const snapshot: CanvasSnapshot = {
-      id: `snapshot-${currentWeekId}`,
-      week: currentWeekId,
-      imageData: imageData,
-      timestamp: new Date().toISOString(),
-      canvasData: canvasData
-    };
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        message: result.message || 'Failed to save snapshot'
+      }, { status: 500 });
+    }
     
-    // Save snapshot for current week
-    const snapshotFile = path.join(SNAPSHOTS_DIR, `${currentWeekId}.json`);
-    fs.writeFileSync(snapshotFile, JSON.stringify(snapshot, null, 2));
-    
-    console.log(`📸 Weekly canvas snapshot saved for week ${currentWeekId}`);
+    console.log(`📸 Weekly canvas snapshot saved for week ${result.weekId}`);
     
     return NextResponse.json({
       success: true,
-      message: `Weekly snapshot saved for week ${currentWeekId}`,
-      snapshot: snapshot
+      message: `Weekly snapshot saved for week ${result.weekId}`,
+      weekId: result.weekId
     });
   } catch (error) {
     console.error('Error saving weekly snapshot:', error);
     return NextResponse.json(
-      { error: 'Failed to save weekly snapshot' },
+      { error: 'Failed to save weekly snapshot', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -135,7 +71,11 @@ export async function PUT(request: NextRequest) {
   try {
     // Verify this is an authorized request
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== 'Bearer internal-snapshot-trigger') {
+    const isVercelCron = request.headers.get('user-agent')?.includes('vercel-cron') || 
+                         process.env.VERCEL === '1';
+    const isInternalTrigger = authHeader === 'Bearer internal-snapshot-trigger';
+    
+    if (!isVercelCron && !isInternalTrigger) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -212,33 +152,22 @@ export async function PUT(request: NextRequest) {
       console.log('⚠️ No canvas data available, using placeholder');
     }
     
-    // Save the snapshot
-    const saveResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/pixel-canvas/snapshot`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        imageData: imageData,
-        canvasData: canvasData
-      })
-    });
+    // Save the snapshot to Supabase
+    const result = await saveWeeklySnapshot(canvasData.canvas || {}, imageData);
     
-    if (!saveResponse.ok) {
-      throw new Error('Failed to save snapshot');
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to save snapshot');
     }
-    
-    const saveResult = await saveResponse.json();
     
     return NextResponse.json({
       success: true,
       message: 'Weekly snapshot captured and saved',
-      result: saveResult
+      weekId: result.weekId
     });
   } catch (error) {
     console.error('Error triggering weekly snapshot:', error);
     return NextResponse.json(
-      { error: 'Failed to trigger weekly snapshot' },
+      { error: 'Failed to trigger weekly snapshot', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

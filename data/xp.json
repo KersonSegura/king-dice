@@ -796,7 +796,7 @@
   "cmg88zsa300017kbsvllkpdof": {
     "userId": "cmg88zsa300017kbsvllkpdof",
     "username": "kingdice",
-    "xp": 262,
+    "xp": 270,
     "level": 3,
     "levelName": "Knight",
     "actions": [
@@ -1849,8 +1849,32 @@
         "xp": 2,
         "description": "Daily login",
         "timestamp": "2025-11-06T07:02:27.679Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-06T08:06:34.453Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-06T08:10:27.751Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-06T08:24:13.437Z"
+      },
+      {
+        "action": "DAILY_LOGIN",
+        "xp": 2,
+        "description": "Daily login",
+        "timestamp": "2025-11-06T08:27:26.937Z"
       }
     ],
-    "lastLogin": "2025-11-06T07:02:27.679Z"
+    "lastLogin": "2025-11-06T08:27:26.937Z"
   }
 }
