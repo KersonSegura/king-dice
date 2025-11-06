@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
 import { createNotification } from '@/lib/notifications';
-import path from 'path';
-
-const dataDir = path.join(process.cwd(), 'data');
-const galleryFile = path.join(dataDir, 'gallery.json');
+import { prisma } from '@/lib/prisma';
 
 // GET /api/gallery/comments?imageId=xxx - Get comments for an image
 
@@ -89,49 +85,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read gallery data
-    if (!fs.existsSync(galleryFile)) {
-      return NextResponse.json({ error: 'Gallery data not found' }, { status: 404 });
-    }
+    // Check if gallery image exists
+    const galleryImage = await prisma.galleryImage.findUnique({
+      where: { id: imageId }
+    });
 
-    const galleryData = JSON.parse(fs.readFileSync(galleryFile, 'utf8'));
-    const imageIndex = galleryData.images.findIndex((img: any) => img.id === imageId);
-
-    if (imageIndex === -1) {
+    if (!galleryImage) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Create new comment
-    const newComment = {
-      id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      author: {
-        id: author.id,
-        name: author.name,
-        avatar: author.avatar,
-        title: author.title
+    // Create new comment in database
+    const newComment = await prisma.comment.create({
+      data: {
+        content: content.trim(),
+        authorId: author.id,
+        galleryImageId: imageId
       },
-      content: content.trim(),
-      createdAt: new Date().toISOString(),
-      isEdited: false,
-      likes: 0,
-      userLikes: [],
-      replies: []
-    };
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            title: true
+          }
+        }
+      }
+    });
 
-    // Add comment to image
-    if (!galleryData.images[imageIndex].commentsList) {
-      galleryData.images[imageIndex].commentsList = [];
-    }
-    galleryData.images[imageIndex].commentsList.push(newComment);
-    
-    // Calculate total comments including replies
-    const totalComments = galleryData.images[imageIndex].commentsList.reduce((total: number, comment: any) => {
-      return total + 1 + (comment.replies ? comment.replies.length : 0);
-    }, 0);
-    galleryData.images[imageIndex].comments = totalComments;
-
-    // Save updated data
-    fs.writeFileSync(galleryFile, JSON.stringify(galleryData, null, 2));
+    // Update gallery image comment count
+    await prisma.galleryImage.update({
+      where: { id: imageId },
+      data: {
+        comments: {
+          increment: 1
+        }
+      }
+    });
 
     // Award XP for commenting on gallery image
     try {
