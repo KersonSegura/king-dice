@@ -5,8 +5,11 @@ export async function POST(request: NextRequest) {
   try {
     const { x, y, color, userId, username } = await request.json();
     
+    console.log('[PIXEL CANVAS API] Received pixel placement:', { x, y, color, userId, username });
+    
     // Validate required fields
     if (typeof x !== 'number' || typeof y !== 'number' || !color || !userId || !username) {
+      console.log('[PIXEL CANVAS API] Validation failed:', { x, y, color, userId, username });
       return NextResponse.json(
         { error: 'Missing required fields: x, y, color, userId, username' },
         { status: 400 }
@@ -15,16 +18,19 @@ export async function POST(request: NextRequest) {
     
     // Check if user can place a pixel - 30 seconds cooldown
     const cooldownStatus = getUserCooldownStatus(userId);
+    console.log('[PIXEL CANVAS API] Cooldown status:', cooldownStatus);
     if (!cooldownStatus.canPlace) {
       return NextResponse.json({
         success: false,
-        message: `Please wait ${cooldownStatus.remainingMinutes} more minute(s) before placing another pixel`,
+        message: `Please wait ${cooldownStatus.remainingSeconds || cooldownStatus.remainingMinutes} more second(s) before placing another pixel`,
         cooldownRemaining: cooldownStatus.remainingMinutes
       }, { status: 429 }); // Too Many Requests
     }
     
     // Place the pixel
+    console.log('[PIXEL CANVAS API] Calling placePixel...');
     const result = placePixel(x, y, color, userId, username);
+    console.log('[PIXEL CANVAS API] placePixel result:', result);
     
     if (result.success) {
       return NextResponse.json({
@@ -39,9 +45,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
   } catch (error) {
-    console.error('Error placing pixel:', error);
+    console.error('[PIXEL CANVAS API] Error placing pixel:', error);
     return NextResponse.json(
-      { error: 'Failed to place pixel' },
+      { error: 'Failed to place pixel', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

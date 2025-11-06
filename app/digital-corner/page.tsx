@@ -83,11 +83,29 @@ export default function DigitalCornerPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const isInitialLoadRef = useRef(true);
   
   const { user, isAuthenticated } = useAuth();
   const { socket, isConnected } = useSocket();
   const [chatId, setChatId] = useState<string | null>(null);
   const [rtConnected, setRtConnected] = useState(false);
+
+  // Scroll to top when page loads and keep it there
+  useEffect(() => {
+    // Immediate scroll to top
+    window.scrollTo(0, 0);
+    // Also scroll after a short delay to override any other scroll behavior
+    const scrollTimeout = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 100);
+    const scrollTimeout2 = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 500);
+    return () => {
+      clearTimeout(scrollTimeout);
+      clearTimeout(scrollTimeout2);
+    };
+  }, []);
 
   // Load games from the updated Steam-games-list.txt format
   useEffect(() => {
@@ -286,6 +304,11 @@ export default function DigitalCornerPage() {
           // Don't set onlineUsers from participants - that's historical data, not current viewers
           setChatId(data.chat.id);
           
+          // Mark initial load as complete after messages are loaded (longer delay to prevent scroll)
+          setTimeout(() => {
+            isInitialLoadRef.current = false;
+          }, 2000);
+          
           // Join the chat if authenticated
           if (isAuthenticated && user) {
             // Join user to chat room
@@ -459,10 +482,12 @@ export default function DigitalCornerPage() {
                   return prev;
                 }
                 const updated = [...prev, newMessage];
-                // Auto-scroll to bottom after state update
-                setTimeout(() => {
-                  chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
+                // Auto-scroll to bottom after state update (only after initial load)
+                if (!isInitialLoadRef.current) {
+                  setTimeout(() => {
+                    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }
                 return updated;
               });
             } catch (err) {
@@ -578,9 +603,11 @@ export default function DigitalCornerPage() {
     };
   }, [socket]);
 
-  // Auto-scroll chat to bottom
+  // Auto-scroll chat to bottom (only after initial load)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isInitialLoadRef.current) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [chatMessages]);
 
   // Calculate and set next reset time (midnight UTC)
@@ -735,10 +762,12 @@ export default function DigitalCornerPage() {
                 return prev;
               }
               const updated = [...prev, sentMessage];
-              // Auto-scroll to bottom after state update
-              setTimeout(() => {
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
+              // Auto-scroll to bottom after state update (only after initial load)
+              if (!isInitialLoadRef.current) {
+                setTimeout(() => {
+                  chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }
               return updated;
             });
           }

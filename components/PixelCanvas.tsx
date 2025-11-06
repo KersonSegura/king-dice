@@ -83,6 +83,8 @@ export default function PixelCanvas({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
+  const [isMouseDown, setIsMouseDown] = useState(false);
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false);
   const [isEditingColor, setIsEditingColor] = useState(false);
   const [tempColorCode, setTempColorCode] = useState('');
@@ -259,34 +261,43 @@ export default function PixelCanvas({
 
   // Place a pixel
   const placePixel = async (x: number, y: number) => {
+    console.log('[PIXEL CANVAS] placePixel called:', { x, y, isAuthenticated, hasUser: !!user, isPlacing });
+    
     if (!isAuthenticated || !user || isPlacing) {
+      console.log('[PIXEL CANVAS] placePixel blocked:', { isAuthenticated, hasUser: !!user, isPlacing });
       return;
     }
 
     setIsPlacing(true);
 
     try {
+      const payload = {
+        x,
+        y,
+        color: selectedColor,
+        userId: user.id,
+        username: user.username
+      };
+      
+      console.log('[PIXEL CANVAS] Sending pixel placement request:', payload);
+      
       const response = await fetch('/api/pixel-canvas/place', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          x,
-          y,
-          color: selectedColor,
-          userId: user.id,
-          username: user.username
-        }),
+        body: JSON.stringify(payload),
       });
 
+      console.log('[PIXEL CANVAS] API response status:', response.status);
       const data = await response.json();
+      console.log('[PIXEL CANVAS] API response data:', data);
 
       if (data.success) {
         showToast(data.message, 'success', 3000);
         await fetchCanvasData();
-        // Start 30-second countdown immediately
-        setCountdownTimer(30);
+        // Start 10-second countdown immediately
+        setCountdownTimer(10);
         // Also check server-side cooldown to ensure sync
         await checkCooldown();
       } else {
@@ -296,7 +307,7 @@ export default function PixelCanvas({
         }
       }
     } catch (error) {
-      console.error('Error placing pixel:', error);
+      console.error('[PIXEL CANVAS] Error placing pixel:', error);
       showToast('Failed to place pixel', 'error');
     } finally {
       setIsPlacing(false);
@@ -305,6 +316,8 @@ export default function PixelCanvas({
 
   // Handle pixel click
   const handlePixelClick = (x: number, y: number) => {
+    console.log('[PIXEL CANVAS] handlePixelClick called:', { x, y, isAuthenticated, hasUser: !!user, countdownTimer });
+    
     if (!isAuthenticated || !user) {
       showToast('Please sign in to place pixels', 'error');
       return;
@@ -315,6 +328,7 @@ export default function PixelCanvas({
       return;
     }
 
+    console.log('[PIXEL CANVAS] Calling placePixel with:', { x, y, color: selectedColor, userId: user.id });
     placePixel(x, y);
   };
 
@@ -629,18 +643,41 @@ export default function PixelCanvas({
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button === 0) { // Left click
       e.preventDefault();
-        setIsDragging(true);
+      setIsMouseDown(true);
+      setMouseDownPos({ x: e.clientX, y: e.clientY });
+      setIsDragging(false); // Start as false, only set to true if mouse moves
       setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
-      }
+    }
   };
     
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
+    // Only handle dragging if mouse button is actually down
+    if (!isMouseDown) {
+      return;
+    }
+    
+    // Check if mouse moved significantly (more than 5 pixels) to distinguish drag from click
+    const moveDistance = Math.sqrt(
+      Math.pow(e.clientX - mouseDownPos.x, 2) + Math.pow(e.clientY - mouseDownPos.y, 2)
+    );
+    
+    const hasDragged = moveDistance > 5;
+    
+    if (hasDragged) {
+      setIsDragging(true);
       e.preventDefault();
       const newPanX = e.clientX - dragStart.x;
       const newPanY = e.clientY - dragStart.y;
       const constrained = constrainPan(newPanX, newPanY);
       
+      setPanX(constrained.x);
+      setPanY(constrained.y);
+    } else if (isDragging) {
+      // Continue dragging if already dragging
+      e.preventDefault();
+      const newPanX = e.clientX - dragStart.x;
+      const newPanY = e.clientY - dragStart.y;
+      const constrained = constrainPan(newPanX, newPanY);
       
       setPanX(constrained.x);
       setPanY(constrained.y);
@@ -675,10 +712,12 @@ export default function PixelCanvas({
     // e.preventDefault(); // Removed to avoid passive event listener error
     
     if (e.touches.length === 1) {
-      // Single touch - start drag
+      // Single touch - prepare for drag or click
       const touch = e.touches[0];
-      setIsDragging(true);
+      setMouseDownPos({ x: touch.clientX, y: touch.clientY });
+      setIsDragging(false); // Start as false, only set to true if finger moves
       setDragStart({ x: touch.clientX - panX, y: touch.clientY - panY });
+      setIsMouseDown(true);
     } else if (e.touches.length === 2) {
       // Two touches - start pinch zoom
       const distance = getTouchDistance(e.touches);
@@ -687,22 +726,39 @@ export default function PixelCanvas({
         setLastTouchDistance(distance);
         setLastTouchCenter(center);
       }
+      setIsMouseDown(false); // Cancel click if two fingers
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     // e.preventDefault(); // Removed to avoid passive event listener error
     
-    if (e.touches.length === 1 && isDragging) {
-      // Single touch drag
+    if (e.touches.length === 1 && isMouseDown) {
+      // Check if finger moved significantly (more than 5 pixels) to distinguish drag from tap
       const touch = e.touches[0];
-      const newPanX = touch.clientX - dragStart.x;
-      const newPanY = touch.clientY - dragStart.y;
-      const constrained = constrainPan(newPanX, newPanY);
+      const moveDistance = Math.sqrt(
+        Math.pow(touch.clientX - mouseDownPos.x, 2) + Math.pow(touch.clientY - mouseDownPos.y, 2)
+      );
       
+      const hasDragged = moveDistance > 5;
       
-      setPanX(constrained.x);
-      setPanY(constrained.y);
+      if (hasDragged) {
+        setIsDragging(true);
+        const newPanX = touch.clientX - dragStart.x;
+        const newPanY = touch.clientY - dragStart.y;
+        const constrained = constrainPan(newPanX, newPanY);
+        
+        setPanX(constrained.x);
+        setPanY(constrained.y);
+      } else if (isDragging) {
+        // Continue dragging if already dragging
+        const newPanX = touch.clientX - dragStart.x;
+        const newPanY = touch.clientY - dragStart.y;
+        const constrained = constrainPan(newPanX, newPanY);
+        
+        setPanX(constrained.x);
+        setPanY(constrained.y);
+      }
     } else if (e.touches.length === 2 && lastTouchDistance && lastTouchCenter) {
       // Two finger pinch zoom
       const currentDistance = getTouchDistance(e.touches);
@@ -741,31 +797,117 @@ export default function PixelCanvas({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-      e.preventDefault();
-      
+    e.preventDefault();
+    
     if (e.touches.length === 0) {
       // All touches ended
+      const wasDragging = isDragging;
       setIsDragging(false);
       setLastTouchDistance(null);
       setLastTouchCenter(null);
+      
+      // Handle pixel placement on tap (if single touch and no drag)
+      if (!wasDragging && isMouseDown && e.changedTouches.length === 1 && canvasData && containerRef.current) {
+        const touch = e.changedTouches[0];
+        const moveDistance = Math.sqrt(
+          Math.pow(touch.clientX - mouseDownPos.x, 2) + Math.pow(touch.clientY - mouseDownPos.y, 2)
+        );
+        
+        if (moveDistance <= 5) {
+          // Handle pixel placement on tap
+          const canvas = canvasRef.current;
+          const canvasRect = canvas.getBoundingClientRect();
+          
+          // Get touch position relative to the canvas element (getBoundingClientRect accounts for transform)
+          // But we need to account for the canvas border (1px on each side)
+          const borderWidth = 1; // border-gray-300 is 1px
+          const touchX = touch.clientX - canvasRect.left - borderWidth;
+          const touchY = touch.clientY - canvasRect.top - borderWidth;
+          
+          // Canvas actual size (accounting for zoom)
+          const scaledCanvasWidth = canvasRect.width - (borderWidth * 2);
+          const scaledCanvasHeight = canvasRect.height - (borderWidth * 2);
+          
+          // Convert to canvas internal coordinates (canvas.width/height are the actual pixel dimensions)
+          // The canvas is scaled, so we need to scale the coordinates back
+          const scaleX = canvas.width / scaledCanvasWidth;
+          const scaleY = canvas.height / scaledCanvasHeight;
+          
+          const x = Math.round(touchX * scaleX / pixelSize);
+          const y = Math.round(touchY * scaleY / pixelSize);
+          
+          console.log('[PIXEL CANVAS] Touch tap detected:', { 
+            touchX, touchY,
+            canvasRect: { width: canvasRect.width, height: canvasRect.height },
+            canvasInternal: { width: canvas.width, height: canvas.height },
+            scaleX, scaleY,
+            x, y,
+            pixelSize
+          });
+          
+          if (x >= 0 && x < canvasData.width && y >= 0 && y < canvasData.height) {
+            console.log('[PIXEL CANVAS] Calling handlePixelClick from touch with:', { x, y });
+            handlePixelClick(x, y);
+          } else {
+            console.log('[PIXEL CANVAS] Touch coordinates out of bounds:', { x, y, width: canvasData.width, height: canvasData.height });
+          }
+        }
+      }
+      
+      setIsMouseDown(false);
     }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (!isDragging) {
+    if (!isMouseDown) {
+      return;
+    }
+    
+    const wasDragging = isDragging;
+    setIsMouseDown(false);
+    
+    // Check if this was a click (no significant movement) vs a drag
+    const moveDistance = Math.sqrt(
+      Math.pow(e.clientX - mouseDownPos.x, 2) + Math.pow(e.clientY - mouseDownPos.y, 2)
+    );
+    
+    if (!wasDragging && moveDistance <= 5 && canvasData && canvasRef.current && containerRef.current) {
       // Handle pixel placement on click
-      if (canvasData && canvasRef.current) {
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        
-        const x = Math.floor((e.clientX - rect.left) * scaleX / pixelSize);
-        const y = Math.floor((e.clientY - rect.top) * scaleY / pixelSize);
-        
-        if (x >= 0 && x < canvasData.width && y >= 0 && y < canvasData.height) {
-          handlePixelClick(x, y);
-        }
+      const canvas = canvasRef.current;
+      const canvasRect = canvas.getBoundingClientRect();
+      
+      // Get mouse position relative to the canvas element (getBoundingClientRect accounts for transform)
+      // But we need to account for the canvas border (1px on each side)
+      const borderWidth = 1; // border-gray-300 is 1px
+      const mouseX = e.clientX - canvasRect.left - borderWidth;
+      const mouseY = e.clientY - canvasRect.top - borderWidth;
+      
+      // Canvas actual size (accounting for zoom)
+      const scaledCanvasWidth = canvasRect.width - (borderWidth * 2);
+      const scaledCanvasHeight = canvasRect.height - (borderWidth * 2);
+      
+      // Convert to canvas internal coordinates (canvas.width/height are the actual pixel dimensions)
+      // The canvas is scaled, so we need to scale the coordinates back
+      const scaleX = canvas.width / scaledCanvasWidth;
+      const scaleY = canvas.height / scaledCanvasHeight;
+      
+      const x = Math.round(mouseX * scaleX / pixelSize);
+      const y = Math.round(mouseY * scaleY / pixelSize);
+      
+      console.log('[PIXEL CANVAS] Click detected:', { 
+        mouseX, mouseY,
+        canvasRect: { width: canvasRect.width, height: canvasRect.height },
+        canvasInternal: { width: canvas.width, height: canvas.height },
+        scaleX, scaleY,
+        x, y,
+        pixelSize
+      });
+      
+      if (x >= 0 && x < canvasData.width && y >= 0 && y < canvasData.height) {
+        console.log('[PIXEL CANVAS] Calling handlePixelClick with:', { x, y });
+        handlePixelClick(x, y);
+      } else {
+        console.log('[PIXEL CANVAS] Coordinates out of bounds:', { x, y, width: canvasData.width, height: canvasData.height });
       }
     }
     setIsDragging(false);
@@ -896,6 +1038,20 @@ export default function PixelCanvas({
       setIsInitialized(true);
     }
   }, [canvasData, isInitialized]);
+
+  // Document-level mouseup handler to reset mouse state if released outside canvas
+  useEffect(() => {
+    const handleDocumentMouseUp = () => {
+      setIsMouseDown(false);
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mouseup', handleDocumentMouseUp);
+    
+    return () => {
+      document.removeEventListener('mouseup', handleDocumentMouseUp);
+    };
+  }, []);
 
   // Document-level wheel listener to properly prevent default
   useEffect(() => {
@@ -1219,7 +1375,7 @@ export default function PixelCanvas({
             <div className="text-sm text-blue-800">
               <p className="font-medium mb-2">Hints:</p>
                               <ul className="space-y-1">
-                  <li>• The cooldown to paint a new pixel is<br /><strong>30 seconds.</strong></li>
+                  <li>• The cooldown to paint a new pixel is<br /><strong>10 seconds.</strong></li>
                   <li>• Single click on any pixel to place your color.</li>
                   <li>• Click and drag to move the camera around.</li>
                   <li className="bg-yellow-100 border border-yellow-300 rounded-lg p-2 mt-2">

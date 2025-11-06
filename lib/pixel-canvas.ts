@@ -124,14 +124,21 @@ export function placePixel(
     return { success: false, message: 'Invalid coordinates' };
   }
   
-  // Validate color (hex format)
-  if (!/^#[0-9A-F]{6}$/i.test(color)) {
+  // Validate color (hex format) - accept both 3 and 6 digit hex
+  // Normalize to 6 digits if needed
+  let normalizedColor = color;
+  if (/^#[0-9A-F]{3}$/i.test(color)) {
+    // Convert 3-digit hex to 6-digit (e.g., #000 -> #000000)
+    normalizedColor = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+  }
+  if (!/^#[0-9A-F]{6}$/i.test(normalizedColor)) {
     return { success: false, message: 'Invalid color format' };
   }
+  color = normalizedColor;
   
-  // Check cooldown - 30 seconds
+  // Check cooldown - 10 seconds
   const userCooldown = cooldowns.find(c => c.userId === userId);
-  const cooldownSeconds = 30; // 30 seconds cooldown
+  const cooldownSeconds = 10; // 10 seconds cooldown
   
   if (userCooldown) {
     const lastPixelTime = new Date(userCooldown.lastPixelTime);
@@ -182,14 +189,14 @@ export function placePixel(
   // Save canvas
   saveCanvas(canvas);
   
-  // Update user cooldown - 30 seconds
+  // Update user cooldown - 10 seconds
   if (userCooldown) {
     userCooldown.lastPixelTime = new Date().toISOString();
   } else {
     cooldowns.push({
       userId,
       lastPixelTime: new Date().toISOString(),
-      cooldownMinutes: 0.5 // 30 seconds = 0.5 minutes
+      cooldownMinutes: 0.167 // 10 seconds = ~0.167 minutes
     });
   }
   saveCooldowns(cooldowns);
@@ -210,7 +217,7 @@ export function getUserCooldownStatus(userId: string): { canPlace: boolean; rema
   const now = new Date();
   const timeDiff = now.getTime() - lastPixelTime.getTime();
   const secondsPassed = timeDiff / 1000;
-  const cooldownSeconds = 30;
+  const cooldownSeconds = 10;
   
   if (secondsPassed >= cooldownSeconds) {
     return { canPlace: true };

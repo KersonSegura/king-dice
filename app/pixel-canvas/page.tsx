@@ -47,10 +47,23 @@ export default function PixelCanvasPage() {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [nextResetTime, setNextResetTime] = useState<Date | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const isInitialLoadRef = useRef(true);
 
-  // Scroll to top when page loads
+  // Scroll to top when page loads and keep it there
   useEffect(() => {
+    // Immediate scroll to top
     window.scrollTo(0, 0);
+    // Also scroll after a short delay to override any other scroll behavior
+    const scrollTimeout = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 100);
+    const scrollTimeout2 = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 500);
+    return () => {
+      clearTimeout(scrollTimeout);
+      clearTimeout(scrollTimeout2);
+    };
   }, []);
 
   // Redirect to login if not authenticated (but wait for auth to load)
@@ -80,6 +93,11 @@ export default function PixelCanvasPage() {
           setChatMessages(messages);
           // Don't set onlineUsers from participants - that's historical data, not current viewers
           setChatId(data.chat.id);
+          
+          // Mark initial load as complete after messages are loaded (longer delay to prevent scroll)
+          setTimeout(() => {
+            isInitialLoadRef.current = false;
+          }, 2000);
           
           // Join the chat if authenticated
           if (isAuthenticated && user) {
@@ -255,10 +273,12 @@ export default function PixelCanvasPage() {
                   return prev;
                 }
                 const updated = [...prev, newMessage];
-                // Auto-scroll to bottom after state update
-                setTimeout(() => {
-                  chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
+                // Auto-scroll to bottom after state update (only after initial load)
+                if (!isInitialLoadRef.current) {
+                  setTimeout(() => {
+                    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }
                 return updated;
               });
             } catch (err) {
@@ -399,9 +419,11 @@ export default function PixelCanvasPage() {
     };
   }, [socket]);
 
-  // Auto-scroll chat to bottom
+  // Auto-scroll chat to bottom (only after initial load)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isInitialLoadRef.current) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [chatMessages]);
 
   // Calculate and set next reset time (midnight UTC)
@@ -533,10 +555,12 @@ export default function PixelCanvasPage() {
                 return prev;
               }
               const updated = [...prev, sentMessage];
-              // Auto-scroll to bottom after state update
-              setTimeout(() => {
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
+              // Auto-scroll to bottom after state update (only after initial load)
+              if (!isInitialLoadRef.current) {
+                setTimeout(() => {
+                  chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }
               return updated;
             });
           }
