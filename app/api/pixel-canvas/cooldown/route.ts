@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    const cooldownStatus = getUserCooldownStatus(userId);
+    const cooldownStatus = await getUserCooldownStatus(userId);
     
     return NextResponse.json({
       success: true,

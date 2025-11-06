@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import { supabaseAdmin } from './supabase';
 
 export interface Pixel {
   x: number;
@@ -26,44 +25,114 @@ export interface UserPixelCooldown {
   cooldownMinutes: number;
 }
 
-// File paths
-const dataDir = path.join(process.cwd(), 'data');
-const canvasFile = path.join(dataDir, 'pixel-canvas.json');
-const cooldownsFile = path.join(dataDir, 'pixel-cooldowns.json');
+const CANVAS_ID = 'main-canvas';
 
-// Ensure data directory exists
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-// Initialize canvas if it doesn't exist
-if (!fs.existsSync(canvasFile)) {
-  const initialCanvas: PixelCanvas = {
-    id: 'main-canvas',
-    width: 200,
-    height: 200,
-    pixels: [],
-    lastUpdated: new Date().toISOString(),
-    totalPixels: 0,
-    uniqueUsers: 0
-  };
-  fs.writeFileSync(canvasFile, JSON.stringify(initialCanvas, null, 2));
-}
-
-// Initialize cooldowns file if it doesn't exist
-if (!fs.existsSync(cooldownsFile)) {
-  fs.writeFileSync(cooldownsFile, JSON.stringify([], null, 2));
-}
-
-// Load canvas data
-function loadCanvas(): PixelCanvas {
+// Load canvas data from Supabase
+async function loadCanvas(): Promise<PixelCanvas> {
   try {
-    const data = fs.readFileSync(canvasFile, 'utf8');
-    return JSON.parse(data);
+    // Get canvas metadata
+    const { data: canvasData, error: canvasError } = await supabaseAdmin
+      .from('pixel_canvas')
+      .select('*')
+      .eq('id', CANVAS_ID)
+      .maybeSingle();
+
+    // Check if table doesn't exist (PGRST205)
+    if (canvasError && canvasError.code === 'PGRST205') {
+      console.error('⚠️ Pixel canvas tables not found. Please run the SQL migration in Supabase.');
+      // Return empty canvas as fallback
+      return {
+        id: CANVAS_ID,
+        width: 200,
+        height: 200,
+        pixels: [],
+        lastUpdated: new Date().toISOString(),
+        totalPixels: 0,
+        uniqueUsers: 0
+      };
+    }
+
+    if (canvasError && canvasError.code !== 'PGRST116') {
+      console.error('Error loading canvas metadata:', canvasError);
+    }
+
+    // Get all pixels
+    const { data: pixelsData, error: pixelsError } = await supabaseAdmin
+      .from('pixel_placements')
+      .select('*')
+      .eq('canvas_id', CANVAS_ID)
+      .order('placed_at', { ascending: false });
+
+    // Check if table doesn't exist (PGRST205)
+    if (pixelsError && pixelsError.code === 'PGRST205') {
+      console.error('⚠️ Pixel canvas tables not found. Please run the SQL migration in Supabase.');
+      // Return empty canvas as fallback
+      return {
+        id: CANVAS_ID,
+        width: 200,
+        height: 200,
+        pixels: [],
+        lastUpdated: new Date().toISOString(),
+        totalPixels: 0,
+        uniqueUsers: 0
+      };
+    }
+
+    if (pixelsError) {
+      console.error('Error loading pixels:', pixelsError);
+    }
+
+    // Initialize canvas if it doesn't exist
+    if (!canvasData) {
+      const { data: newCanvas } = await supabaseAdmin
+        .from('pixel_canvas')
+        .insert({
+          id: CANVAS_ID,
+          width: 200,
+          height: 200,
+          total_pixels: 0,
+          unique_users: 0
+        })
+        .select()
+        .single();
+
+      if (newCanvas) {
+        return {
+          id: CANVAS_ID,
+          width: newCanvas.width,
+          height: newCanvas.height,
+          pixels: [],
+          lastUpdated: newCanvas.last_updated || new Date().toISOString(),
+          totalPixels: 0,
+          uniqueUsers: 0
+        };
+      }
+    }
+
+    const pixels: Pixel[] = (pixelsData || []).map((p: any) => ({
+      x: p.x,
+      y: p.y,
+      color: p.color,
+      userId: p.user_id,
+      username: p.username,
+      timestamp: p.placed_at || p.created_at
+    }));
+
+    const uniqueUsers = new Set(pixels.map(p => p.userId)).size;
+
+    return {
+      id: canvasData?.id || CANVAS_ID,
+      width: canvasData?.width || 200,
+      height: canvasData?.height || 200,
+      pixels,
+      lastUpdated: canvasData?.last_updated || new Date().toISOString(),
+      totalPixels: pixels.length,
+      uniqueUsers
+    };
   } catch (error) {
     console.error('Error loading canvas:', error);
     return {
-      id: 'main-canvas',
+      id: CANVAS_ID,
       width: 200,
       height: 200,
       pixels: [],
@@ -74,163 +143,253 @@ function loadCanvas(): PixelCanvas {
   }
 }
 
-// Save canvas data
-function saveCanvas(canvas: PixelCanvas): void {
+// Save canvas metadata to Supabase
+async function saveCanvas(canvas: PixelCanvas): Promise<void> {
   try {
-    fs.writeFileSync(canvasFile, JSON.stringify(canvas, null, 2));
+    await supabaseAdmin
+      .from('pixel_canvas')
+      .upsert({
+        id: canvas.id,
+        width: canvas.width,
+        height: canvas.height,
+        last_updated: canvas.lastUpdated,
+        total_pixels: canvas.totalPixels,
+        unique_users: canvas.uniqueUsers,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
+      });
   } catch (error) {
     console.error('Error saving canvas:', error);
   }
 }
 
-// Load user cooldowns
-function loadCooldowns(): UserPixelCooldown[] {
+// Load user cooldowns from Supabase
+async function loadCooldowns(): Promise<UserPixelCooldown[]> {
   try {
-    const data = fs.readFileSync(cooldownsFile, 'utf8');
-    return JSON.parse(data);
+    const { data, error } = await supabaseAdmin
+      .from('pixel_cooldowns')
+      .select('*');
+
+    // Check if table doesn't exist (PGRST205) - return empty array
+    if (error && error.code === 'PGRST205') {
+      return [];
+    }
+
+    if (error) {
+      console.error('Error loading cooldowns:', error);
+      return [];
+    }
+
+    return (data || []).map((c: any) => ({
+      userId: c.user_id,
+      lastPixelTime: c.last_pixel_time,
+      cooldownMinutes: c.cooldown_minutes
+    }));
   } catch (error) {
     console.error('Error loading cooldowns:', error);
     return [];
   }
 }
 
-// Save user cooldowns
-function saveCooldowns(cooldowns: UserPixelCooldown[]): void {
+// Save user cooldown to Supabase
+async function saveCooldown(cooldown: UserPixelCooldown): Promise<void> {
   try {
-    fs.writeFileSync(cooldownsFile, JSON.stringify(cooldowns, null, 2));
+    await supabaseAdmin
+      .from('pixel_cooldowns')
+      .upsert({
+        id: `cd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user_id: cooldown.userId,
+        last_pixel_time: cooldown.lastPixelTime,
+        cooldown_minutes: cooldown.cooldownMinutes,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      });
   } catch (error) {
-    console.error('Error saving cooldowns:', error);
+    console.error('Error saving cooldown:', error);
   }
 }
 
 // Get canvas data
-export function getCanvas(): PixelCanvas {
-  return loadCanvas();
+export async function getCanvas(): Promise<PixelCanvas> {
+  return await loadCanvas();
 }
 
 // Place a pixel
-export function placePixel(
+export async function placePixel(
   x: number,
   y: number,
   color: string,
   userId: string,
   username: string
-): { success: boolean; message: string; cooldownRemaining?: number } {
-  const canvas = loadCanvas();
-  const cooldowns = loadCooldowns();
-  
-  // Validate coordinates
-  if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) {
-    return { success: false, message: 'Invalid coordinates' };
-  }
-  
-  // Validate color (hex format) - accept both 3 and 6 digit hex
-  // Normalize to 6 digits if needed
-  let normalizedColor = color;
-  if (/^#[0-9A-F]{3}$/i.test(color)) {
-    // Convert 3-digit hex to 6-digit (e.g., #000 -> #000000)
-    normalizedColor = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
-  }
-  if (!/^#[0-9A-F]{6}$/i.test(normalizedColor)) {
-    return { success: false, message: 'Invalid color format' };
-  }
-  color = normalizedColor;
-  
-  // Check cooldown - 10 seconds
-  const userCooldown = cooldowns.find(c => c.userId === userId);
-  const cooldownSeconds = 10; // 10 seconds cooldown
-  
-  if (userCooldown) {
-    const lastPixelTime = new Date(userCooldown.lastPixelTime);
-    const now = new Date();
-    const timeDiff = now.getTime() - lastPixelTime.getTime();
-    const secondsPassed = timeDiff / 1000;
+): Promise<{ success: boolean; message: string; cooldownRemaining?: number }> {
+  try {
+    const canvas = await loadCanvas();
+    const cooldowns = await loadCooldowns();
     
-    if (secondsPassed < cooldownSeconds) {
-      const remainingSeconds = Math.ceil(cooldownSeconds - secondsPassed);
-      return { 
-        success: false, 
-        message: `Please wait ${remainingSeconds} more second(s) before placing another pixel`,
-        cooldownRemaining: Math.ceil(remainingSeconds / 60) // Convert to minutes for display
-      };
+    // Validate coordinates
+    if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) {
+      return { success: false, message: 'Invalid coordinates' };
     }
-  }
-  
-  // Find existing pixel at this position
-  const existingPixelIndex = canvas.pixels.findIndex(p => p.x === x && p.y === y);
-  
-  if (existingPixelIndex !== -1) {
-    // Update existing pixel
-    canvas.pixels[existingPixelIndex] = {
-      x,
-      y,
-      color,
-      userId,
-      username,
-      timestamp: new Date().toISOString()
-    };
-  } else {
-    // Add new pixel
-    canvas.pixels.push({
-      x,
-      y,
-      color,
-      userId,
-      username,
-      timestamp: new Date().toISOString()
+    
+    // Validate color (hex format) - accept both 3 and 6 digit hex
+    // Normalize to 6 digits if needed
+    let normalizedColor = color;
+    if (/^#[0-9A-F]{3}$/i.test(color)) {
+      // Convert 3-digit hex to 6-digit (e.g., #000 -> #000000)
+      normalizedColor = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+    }
+    if (!/^#[0-9A-F]{6}$/i.test(normalizedColor)) {
+      return { success: false, message: 'Invalid color format' };
+    }
+    color = normalizedColor;
+    
+    // Check cooldown - 10 seconds
+    const userCooldown = cooldowns.find(c => c.userId === userId);
+    const cooldownSeconds = 10; // 10 seconds cooldown
+    
+    if (userCooldown) {
+      const lastPixelTime = new Date(userCooldown.lastPixelTime);
+      const now = new Date();
+      const timeDiff = now.getTime() - lastPixelTime.getTime();
+      const secondsPassed = timeDiff / 1000;
+      
+      if (secondsPassed < cooldownSeconds) {
+        const remainingSeconds = Math.ceil(cooldownSeconds - secondsPassed);
+        return { 
+          success: false, 
+          message: `Please wait ${remainingSeconds} more second(s) before placing another pixel`,
+          cooldownRemaining: Math.ceil(remainingSeconds / 60) // Convert to minutes for display
+        };
+      }
+    }
+    
+    // Check if pixel already exists at this position
+    const { data: existingPixel, error: checkError } = await supabaseAdmin
+      .from('pixel_placements')
+      .select('id')
+      .eq('canvas_id', CANVAS_ID)
+      .eq('x', x)
+      .eq('y', y)
+      .maybeSingle();
+
+    // Check if table doesn't exist
+    if (checkError && checkError.code === 'PGRST205') {
+      return { success: false, message: 'Pixel canvas database tables not found. Please run the SQL migration in Supabase.' };
+    }
+
+    // Generate ID if needed (use timestamp + random for uniqueness)
+    const pixelId = existingPixel?.id || `px_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const now = new Date().toISOString();
+
+    // Upsert pixel placement
+    const { error: pixelError } = await supabaseAdmin
+      .from('pixel_placements')
+      .upsert({
+        id: pixelId,
+        canvas_id: CANVAS_ID,
+        x,
+        y,
+        color,
+        user_id: userId,
+        username,
+        placed_at: now,
+        updated_at: now
+      }, {
+        onConflict: 'canvas_id,x,y'
+      });
+
+    if (pixelError) {
+      if (pixelError.code === 'PGRST205') {
+        return { success: false, message: 'Pixel canvas database tables not found. Please run the SQL migration in Supabase.' };
+      }
+      console.error('Error placing pixel:', pixelError);
+      return { success: false, message: 'Failed to place pixel' };
+    }
+
+    // Recalculate canvas stats
+    const { data: allPixels } = await supabaseAdmin
+      .from('pixel_placements')
+      .select('user_id')
+      .eq('canvas_id', CANVAS_ID);
+
+    const totalPixels = allPixels?.length || 0;
+    const uniqueUsers = new Set(allPixels?.map((p: any) => p.user_id) || []).size;
+
+    // Update canvas metadata
+    await saveCanvas({
+      ...canvas,
+      lastUpdated: now,
+      totalPixels,
+      uniqueUsers
     });
+    
+    // Update user cooldown - 10 seconds (ignore errors if table doesn't exist)
+    try {
+      await saveCooldown({
+        userId,
+        lastPixelTime: now,
+        cooldownMinutes: 0.167 // 10 seconds = ~0.167 minutes
+      });
+    } catch (cooldownError: any) {
+      // Silently ignore if table doesn't exist - cooldown isn't critical
+      if (cooldownError?.code !== 'PGRST205') {
+        console.error('Error saving cooldown:', cooldownError);
+      }
+    }
+    
+    return { success: true, message: 'Pixel placed successfully!' };
+  } catch (error) {
+    console.error('Error in placePixel:', error);
+    return { success: false, message: 'Failed to place pixel' };
   }
-  
-  // Update canvas stats
-  canvas.lastUpdated = new Date().toISOString();
-  canvas.totalPixels = canvas.pixels.length;
-  canvas.uniqueUsers = new Set(canvas.pixels.map(p => p.userId)).size;
-  
-  // Save canvas
-  saveCanvas(canvas);
-  
-  // Update user cooldown - 10 seconds
-  if (userCooldown) {
-    userCooldown.lastPixelTime = new Date().toISOString();
-  } else {
-    cooldowns.push({
-      userId,
-      lastPixelTime: new Date().toISOString(),
-      cooldownMinutes: 0.167 // 10 seconds = ~0.167 minutes
-    });
-  }
-  saveCooldowns(cooldowns);
-  
-  return { success: true, message: 'Pixel placed successfully!' };
 }
 
 // Get user's cooldown status
-export function getUserCooldownStatus(userId: string): { canPlace: boolean; remainingMinutes?: number; remainingSeconds?: number } {
-  const cooldowns = loadCooldowns();
-  const userCooldown = cooldowns.find(c => c.userId === userId);
-  
-  if (!userCooldown) {
+export async function getUserCooldownStatus(userId: string): Promise<{ canPlace: boolean; remainingMinutes?: number; remainingSeconds?: number }> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('pixel_cooldowns')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    // Check if table doesn't exist (PGRST205) - allow placing
+    if (error && error.code === 'PGRST205') {
+      return { canPlace: true };
+    }
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error loading cooldown:', error);
+    }
+
+    if (!data) {
+      return { canPlace: true };
+    }
+
+    const lastPixelTime = new Date(data.last_pixel_time);
+    const now = new Date();
+    const timeDiff = now.getTime() - lastPixelTime.getTime();
+    const secondsPassed = timeDiff / 1000;
+    const cooldownSeconds = 10;
+    
+    if (secondsPassed >= cooldownSeconds) {
+      return { canPlace: true };
+    }
+    
+    const remainingSeconds = Math.ceil(cooldownSeconds - secondsPassed);
+    const remainingMinutes = Math.ceil(remainingSeconds / 60);
+    return { canPlace: false, remainingMinutes, remainingSeconds };
+  } catch (error) {
+    console.error('Error in getUserCooldownStatus:', error);
     return { canPlace: true };
   }
-  
-  const lastPixelTime = new Date(userCooldown.lastPixelTime);
-  const now = new Date();
-  const timeDiff = now.getTime() - lastPixelTime.getTime();
-  const secondsPassed = timeDiff / 1000;
-  const cooldownSeconds = 10;
-  
-  if (secondsPassed >= cooldownSeconds) {
-    return { canPlace: true };
-  }
-  
-  const remainingSeconds = Math.ceil(cooldownSeconds - secondsPassed);
-  const remainingMinutes = Math.ceil(remainingSeconds / 60);
-  return { canPlace: false, remainingMinutes, remainingSeconds };
 }
 
 // Get canvas as 2D array for easier rendering
-export function getCanvasAsGrid(): string[][] {
-  const canvas = loadCanvas();
+export async function getCanvasAsGrid(): Promise<string[][]> {
+  const canvas = await loadCanvas();
   const grid: string[][] = [];
   
   // Initialize grid with white background
@@ -252,23 +411,35 @@ export function getCanvasAsGrid(): string[][] {
 }
 
 // Clear canvas (admin function)
-export function clearCanvas(): void {
-  const canvas = loadCanvas();
-  canvas.pixels = [];
-  canvas.lastUpdated = new Date().toISOString();
-  canvas.totalPixels = 0;
-  canvas.uniqueUsers = 0;
-  saveCanvas(canvas);
+export async function clearCanvas(): Promise<void> {
+  try {
+    await supabaseAdmin
+      .from('pixel_placements')
+      .delete()
+      .eq('canvas_id', CANVAS_ID);
+
+    await supabaseAdmin
+      .from('pixel_canvas')
+      .update({
+        total_pixels: 0,
+        unique_users: 0,
+        last_updated: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', CANVAS_ID);
+  } catch (error) {
+    console.error('Error clearing canvas:', error);
+  }
 }
 
 // Get canvas statistics
-export function getCanvasStats(): {
+export async function getCanvasStats(): Promise<{
   totalPixels: number;
   uniqueUsers: number;
   lastUpdated: string;
   canvasSize: string;
-} {
-  const canvas = loadCanvas();
+}> {
+  const canvas = await loadCanvas();
   return {
     totalPixels: canvas.totalPixels,
     uniqueUsers: canvas.uniqueUsers,

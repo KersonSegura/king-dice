@@ -3,9 +3,9 @@ import { getCanvas, getCanvasAsGrid, getCanvasStats } from '@/lib/pixel-canvas';
 
 export async function GET() {
   try {
-    const canvas = getCanvas();
-    const grid = getCanvasAsGrid();
-    const stats = getCanvasStats();
+    const canvas = await getCanvas();
+    const grid = await getCanvasAsGrid();
+    const stats = await getCanvasStats();
     
     return NextResponse.json({
       success: true,

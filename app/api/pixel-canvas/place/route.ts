@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if user can place a pixel - 30 seconds cooldown
-    const cooldownStatus = getUserCooldownStatus(userId);
+    // Check if user can place a pixel - 10 seconds cooldown
+    const cooldownStatus = await getUserCooldownStatus(userId);
     console.log('[PIXEL CANVAS API] Cooldown status:', cooldownStatus);
     if (!cooldownStatus.canPlace) {
       return NextResponse.json({
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     
     // Place the pixel
     console.log('[PIXEL CANVAS API] Calling placePixel...');
-    const result = placePixel(x, y, color, userId, username);
+    const result = await placePixel(x, y, color, userId, username);
     console.log('[PIXEL CANVAS API] placePixel result:', result);
     
     if (result.success) {

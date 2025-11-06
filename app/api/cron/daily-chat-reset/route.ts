@@ -4,11 +4,21 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     // Verify this is a legitimate cron request
+    // Vercel Cron automatically authenticates requests from vercel.json config
+    // For external cron services, require Authorization header
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET || 'default-cron-secret';
+    const isVercelCron = request.headers.get('user-agent')?.includes('vercel-cron') || 
+                         process.env.VERCEL === '1';
+    const isAuthorizedExternal = authHeader === `Bearer ${cronSecret}`;
     
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.log('Unauthorized cron request attempt');
+    // Allow Vercel Cron (automatically authenticated) or external cron with secret
+    if (!isVercelCron && !isAuthorizedExternal) {
+      console.log('Unauthorized cron request attempt', { 
+        hasAuth: !!authHeader, 
+        vercel: process.env.VERCEL,
+        userAgent: request.headers.get('user-agent')
+      });
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

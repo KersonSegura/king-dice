@@ -14734,10 +14734,10 @@
     {
       "x": 65,
       "y": 33,
-      "color": "#11aeea",
-      "userId": "user_1754498606845_aoutcys27",
-      "username": "KingDiceKSA",
-      "timestamp": "2025-09-04T23:05:13.575Z"
+      "color": "#000000",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T03:45:58.905Z"
     },
     {
       "x": 65,
@@ -61882,9 +61882,73 @@
       "userId": "cmg88zsa300017kbsvllkpdof",
       "username": "kingdice",
       "timestamp": "2025-10-04T02:45:22.240Z"
+    },
+    {
+      "x": 15,
+      "y": 5,
+      "color": "#000000",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T03:00:35.957Z"
+    },
+    {
+      "x": 11,
+      "y": 2,
+      "color": "#FF0000",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T03:33:35.293Z"
+    },
+    {
+      "x": 17,
+      "y": 13,
+      "color": "#00ff00",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T03:46:42.329Z"
+    },
+    {
+      "x": 93,
+      "y": 107,
+      "color": "#FFFF00",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T03:55:53.266Z"
+    },
+    {
+      "x": 100,
+      "y": 101,
+      "color": "#000080",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T04:10:08.832Z"
+    },
+    {
+      "x": 134,
+      "y": 104,
+      "color": "#000000",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T04:17:16.991Z"
+    },
+    {
+      "x": 135,
+      "y": 104,
+      "color": "#808080",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T04:18:00.142Z"
+    },
+    {
+      "x": 143,
+      "y": 82,
+      "color": "#808080",
+      "userId": "cmg88zsa300017kbsvllkpdof",
+      "username": "kingdice",
+      "timestamp": "2025-11-06T04:20:15.291Z"
     }
   ],
-  "lastUpdated": "2025-10-04T02:45:22.240Z",
-  "totalPixels": 7735,
+  "lastUpdated": "2025-11-06T04:20:15.291Z",
+  "totalPixels": 7743,
   "uniqueUsers": 2
 }

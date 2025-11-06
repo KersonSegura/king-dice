@@ -833,8 +833,8 @@ export default function PixelCanvas({
           const scaleX = canvas.width / scaledCanvasWidth;
           const scaleY = canvas.height / scaledCanvasHeight;
           
-          const x = Math.round(touchX * scaleX / pixelSize);
-          const y = Math.round(touchY * scaleY / pixelSize);
+          const x = Math.floor(touchX * scaleX / pixelSize);
+          const y = Math.floor(touchY * scaleY / pixelSize);
           
           console.log('[PIXEL CANVAS] Touch tap detected:', { 
             touchX, touchY,
@@ -891,8 +891,8 @@ export default function PixelCanvas({
       const scaleX = canvas.width / scaledCanvasWidth;
       const scaleY = canvas.height / scaledCanvasHeight;
       
-      const x = Math.round(mouseX * scaleX / pixelSize);
-      const y = Math.round(mouseY * scaleY / pixelSize);
+      const x = Math.floor(mouseX * scaleX / pixelSize);
+      const y = Math.floor(mouseY * scaleY / pixelSize);
       
       console.log('[PIXEL CANVAS] Click detected:', { 
         mouseX, mouseY,
