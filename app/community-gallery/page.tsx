@@ -1294,18 +1294,22 @@ function CommunityGalleryPageContent() {
               ? 'grid-cols-1'
               : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'
           }`}>
-            {filteredImages.map(image => (
+            {filteredImages.map(image => {
+              const displayUrl = image.imageUrl || image.thumbnailUrl || '';
+              const thumbUrl = image.thumbnailUrl || image.imageUrl || 'https://via.placeholder.com/600?text=Image+Unavailable';
+              
+              return (
               <div 
                 key={image.id} 
                 className={`${viewMode === 'explore' ? 'bg-white overflow-hidden transition-shadow cursor-pointer group' : 'bg-white rounded-lg overflow-hidden transition-shadow cursor-pointer group'} ${featuredIds.has(image.id) ? 'border-2 border-[#fbae17] shadow-lg' : viewMode === 'explore' ? '' : 'shadow-sm border border-gray-200 hover:shadow-md'}`}
                 onClick={() => handleImageClick(image)}
               >
                 <div className="relative aspect-square">
-                  {image.imageUrl.includes('/gallery/') ? (
+                  {displayUrl && displayUrl.includes('/gallery/') ? (
                     <div 
                       className="w-full h-full group-hover:opacity-90 transition-opacity"
                       style={{
-                        backgroundImage: `url(${image.imageUrl})`,
+                        backgroundImage: `url(${displayUrl})`,
                         backgroundSize: 'contain',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat'
@@ -1313,13 +1317,13 @@ function CommunityGalleryPageContent() {
                     />
                   ) : (
                     <Image
-                      src={image.thumbnailUrl}
+                      src={thumbUrl}
                       alt={image.title}
                       fill
                       className="object-cover group-hover:opacity-90 transition-opacity"
                       loading="lazy"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      unoptimized={image.thumbnailUrl?.includes('supabase.co')}
+                      unoptimized={thumbUrl.includes('supabase.co')}
                     />
                   )}
 
@@ -1587,7 +1591,8 @@ function CommunityGalleryPageContent() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-4">
