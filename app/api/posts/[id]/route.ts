@@ -30,7 +30,7 @@ export async function GET(
           id,
           username,
           avatar,
-          reputation,
+          xp,
           title
         )
       `)
@@ -60,7 +60,7 @@ export async function GET(
         id: dbPost.author?.id || dbPost.authorId,
         name: dbPost.author?.username || 'Unknown',
         avatar: dbPost.author?.avatar || null,
-        reputation: dbPost.author?.reputation || 0,
+        reputation: dbPost.author?.xp ?? 0,
         title: dbPost.author?.title || null
       },
       createdAt: typeof dbPost.createdAt === 'string' ? dbPost.createdAt : dbPost.createdAt.toISOString(),

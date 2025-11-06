@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
             id,
             username,
             avatar,
-            reputation,
+            xp,
             title,
             isVerified,
             isAdmin
@@ -61,7 +61,10 @@ export async function GET(request: NextRequest) {
         comments: img.comments,
         createdAt: new Date(img.createdAt),
         updatedAt: new Date(img.updatedAt),
-        author: img.author || {
+        author: img.author ? {
+          ...img.author,
+          reputation: img.author?.xp ?? 0
+        } : {
           id: img.authorId,
           username: 'Unknown',
           avatar: null,

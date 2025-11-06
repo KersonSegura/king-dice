@@ -44,7 +44,7 @@ export async function GET(
           id,
           username,
           avatar,
-          reputation,
+          xp,
           title
         )
       `)
@@ -64,7 +64,7 @@ export async function GET(
         id: comment.author?.id || comment.authorId,
         name: comment.author?.username || 'Unknown',
         avatar: comment.author?.avatar || null,
-        reputation: comment.author?.reputation || 0,
+        reputation: comment.author?.xp ?? 0,
         title: comment.author?.title || null
       },
       createdAt: typeof comment.createdAt === 'string' ? comment.createdAt : comment.createdAt.toISOString(),
@@ -164,7 +164,7 @@ export async function POST(
           id,
           username,
           avatar,
-          reputation,
+          xp,
           title
         )
       `)
@@ -225,7 +225,7 @@ export async function POST(
         id: newComment.author.id,
         name: newComment.author.username,
         avatar: newComment.author.avatar,
-        reputation: newComment.author.reputation,
+        reputation: newComment.author?.xp ?? 0,
         title: newComment.author.title
       },
       createdAt: newComment.createdAt.toISOString(),

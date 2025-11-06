@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           id,
           username,
           avatar,
-          reputation,
+          xp,
           title
         )
       `)
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
           id: post.author?.id || post.authorId,
           name: post.author?.username || 'Unknown',
           avatar: post.author?.avatar || null,
-          reputation: post.author?.reputation || 0,
+          reputation: post.author?.xp ?? 0,
           title: post.author?.title || null
         },
         createdAt: typeof post.createdAt === 'string' ? post.createdAt : post.createdAt.toISOString(),
