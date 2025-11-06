@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPostById, updatePostRepliesCount } from '@/lib/posts';
-import { getCommentsByPostId, createComment } from '@/lib/comments';
 import { awardXP } from '@/lib/reputation';
 import { createNotification } from '@/lib/notifications';
 import { moderateText } from '@/lib/moderation';
-
+import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -19,7 +17,10 @@ export async function GET(
     const sortBy = searchParams.get('sortBy') as 'newest' | 'best' | 'top' || 'best';
     
     // Verify post exists
-    const post = getPostById(postId);
+    const post = await prisma.post.findUnique({
+      where: { id: postId }
+    });
+    
     if (!post) {
       return NextResponse.json(
         { error: 'Post not found' },
@@ -27,10 +28,44 @@ export async function GET(
       );
     }
 
-    // Get comments for this post with sorting
-    const postComments = getCommentsByPostId(postId, sortBy);
+    // Get comments from database
+    const comments = await prisma.comment.findMany({
+      where: { postId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        }
+      },
+      orderBy: sortBy === 'newest' 
+        ? { createdAt: 'desc' }
+        : { createdAt: 'asc' } // For 'best' and 'top', we'll sort by votes client-side
+    });
+
+    // Format comments
+    const formattedComments = comments.map(comment => ({
+      id: comment.id,
+      content: comment.content,
+      postId: comment.postId,
+      author: {
+        id: comment.author.id,
+        name: comment.author.username,
+        avatar: comment.author.avatar,
+        reputation: comment.author.reputation,
+        title: comment.author.title
+      },
+      createdAt: comment.createdAt.toISOString(),
+      votes: { upvotes: 0, downvotes: 0 }, // Will be loaded from Supabase
+      userVote: null,
+      isModerated: true
+    }));
     
-    return NextResponse.json({ comments: postComments });
+    return NextResponse.json({ comments: formattedComments });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return NextResponse.json(
@@ -58,7 +93,18 @@ export async function POST(
     }
 
     // Verify post exists
-    const post = getPostById(postId);
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
+    });
+    
     if (!post) {
       return NextResponse.json(
         { error: 'Post not found' },
@@ -79,11 +125,35 @@ export async function POST(
       );
     }
 
-    // Create new comment using persistent storage
-    const newComment = createComment(postId, { content, author });
+    // Create comment in database
+    const newComment = await prisma.comment.create({
+      data: {
+        content: content.trim(),
+        authorId: author.id,
+        postId
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        }
+      }
+    });
     
-    // Update the post's replies count
-    updatePostRepliesCount(postId);
+    // Update post's replies count
+    await prisma.post.update({
+      where: { id: postId },
+      data: {
+        replies: {
+          increment: 1
+        }
+      }
+    });
     
     // Award XP for replying to a discussion
     if (newComment) {
@@ -102,22 +172,40 @@ export async function POST(
 
     // Notify post author (if different from commenter)
     try {
-      if (post?.author?.id && post.author.id !== author.id) {
+      if (post.author.id !== author.id) {
         await createNotification({
           userId: post.author.id,
           type: 'comment',
           actorId: author.id,
           entityType: 'post',
           entityId: postId,
-          url: `/forums/post/${postId}#comment-${newComment?.id}`,
+          url: `/forums/post/${postId}#comment-${newComment.id}`,
           message: `${author.name} commented on your post`,
         });
       }
     } catch {}
     
+    // Format response
+    const formattedComment = {
+      id: newComment.id,
+      content: newComment.content,
+      postId: newComment.postId,
+      author: {
+        id: newComment.author.id,
+        name: newComment.author.username,
+        avatar: newComment.author.avatar,
+        reputation: newComment.author.reputation,
+        title: newComment.author.title
+      },
+      createdAt: newComment.createdAt.toISOString(),
+      votes: { upvotes: 0, downvotes: 0 },
+      userVote: null,
+      isModerated: true
+    };
+    
     return NextResponse.json({ 
       success: true, 
-      comment: newComment,
+      comment: formattedComment,
       message: 'Comment created successfully'
     });
   } catch (error) {
