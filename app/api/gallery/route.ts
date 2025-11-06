@@ -143,7 +143,41 @@ export async function GET(request: NextRequest) {
     // Sort by creation date (newest first)
     images.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const categories = getAllCategories();
+    // Define categories (static data)
+    const categories = [
+      {
+        id: 'dice-throne',
+        name: 'Dice Throne',
+        description: 'This is where legends roll. Showcase your custom die and claim your place in the Dice Throne.',
+        icon: 'ThroneIcon.svg',
+        color: 'bg-red-100 text-red-600',
+        imageCount: images.filter(img => img.category === 'dice-throne').length
+      },
+      {
+        id: 'the-kings-card',
+        name: "The King's Card",
+        description: 'Present your relic to the court. Each week, one card ascends to the King\'s side.',
+        icon: 'KingsCard.svg',
+        color: 'bg-pink-100 text-pink-600',
+        imageCount: images.filter(img => img.category === 'the-kings-card').length
+      },
+      {
+        id: 'collections',
+        name: 'Game Collections',
+        description: 'Display your realm. Show your collection and inspire fellow collectors.',
+        icon: 'GameCollection.svg',
+        color: 'bg-blue-100 text-blue-600',
+        imageCount: images.filter(img => img.category === 'collections').length
+      },
+      {
+        id: 'game-nights',
+        name: 'Game Nights',
+        description: 'Capture the moments. Share your game nights and adventures.',
+        icon: 'GameNight.svg',
+        color: 'bg-green-100 text-green-600',
+        imageCount: images.filter(img => img.category === 'game-nights').length
+      }
+    ];
 
     return NextResponse.json({
       images,
