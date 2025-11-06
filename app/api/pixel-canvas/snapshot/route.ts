@@ -97,11 +97,36 @@ export async function PUT(request: NextRequest) {
     const totalPixels = canvasMetadata?.total_pixels || 0;
     const uniqueUsers = canvasMetadata?.unique_users || 0;
     
-    // Fetch only pixel coordinates and colors (lightweight)
-    const { data: pixels } = await supabaseAdmin
-      .from('pixel_placements')
-      .select('x, y, color')
-      .eq('canvas_id', 'main-canvas');
+    // Fetch all pixel coordinates and colors in batches (Supabase 1000 row limit)
+    let allPixels: any[] = [];
+    let currentPage = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    
+    while (hasMore) {
+      const { data: pageData, error } = await supabaseAdmin
+        .from('pixel_placements')
+        .select('x, y, color')
+        .eq('canvas_id', 'main-canvas')
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      
+      if (error) {
+        console.error(`Error fetching pixels page ${currentPage}:`, error);
+        break;
+      }
+      
+      if (pageData && pageData.length > 0) {
+        allPixels = allPixels.concat(pageData);
+        currentPage++;
+        if (pageData.length < pageSize) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
+    
+    const pixels = allPixels;
     
     // Build grid efficiently
     const grid: string[][] = [];
