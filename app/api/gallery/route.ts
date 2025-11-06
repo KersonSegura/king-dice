@@ -59,17 +59,25 @@ export async function GET(request: NextRequest) {
         {
           id: 'collections',
           name: 'Game Collections',
-          description: 'Display your realm. Show your collection and inspire fellow collectors.',
-          icon: 'GameCollection.svg',
+          description: 'Show off your board game collections',
+          icon: 'CollectionIcon.svg',
           color: 'bg-blue-100 text-blue-600',
           imageCount: 0
         },
         {
-          id: 'game-nights',
-          name: 'Game Nights',
-          description: 'Capture the moments. Share your game nights and adventures.',
-          icon: 'GameNight.svg',
+          id: 'setups',
+          name: 'Game Setups',
+          description: 'Share your table layouts and game setups before the action begins',
+          icon: 'SetupsIcon.svg',
           color: 'bg-green-100 text-green-600',
+          imageCount: 0
+        },
+        {
+          id: 'events',
+          name: 'Game Events',
+          description: 'Board game events and meetups',
+          icon: 'EventsIcon.svg',
+          color: 'bg-purple-100 text-purple-600',
           imageCount: 0
         }
       ];
@@ -219,18 +227,26 @@ export async function GET(request: NextRequest) {
       {
         id: 'collections',
         name: 'Game Collections',
-        description: 'Display your realm. Show your collection and inspire fellow collectors.',
-        icon: 'GameCollection.svg',
+        description: 'Show off your board game collections',
+        icon: 'CollectionIcon.svg',
         color: 'bg-blue-100 text-blue-600',
         imageCount: images.filter(img => img.category === 'collections').length
       },
       {
-        id: 'game-nights',
-        name: 'Game Nights',
-        description: 'Capture the moments. Share your game nights and adventures.',
-        icon: 'GameNight.svg',
+        id: 'setups',
+        name: 'Game Setups',
+        description: 'Share your table layouts and game setups before the action begins',
+        icon: 'SetupsIcon.svg',
         color: 'bg-green-100 text-green-600',
-        imageCount: images.filter(img => img.category === 'game-nights').length
+        imageCount: images.filter(img => img.category === 'setups').length
+      },
+      {
+        id: 'events',
+        name: 'Game Events',
+        description: 'Board game events and meetups',
+        icon: 'EventsIcon.svg',
+        color: 'bg-purple-100 text-purple-600',
+        imageCount: images.filter(img => img.category === 'events').length
       }
     ];
 
