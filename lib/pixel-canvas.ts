@@ -56,33 +56,55 @@ async function loadCanvas(): Promise<PixelCanvas> {
       console.error('Error loading canvas metadata:', canvasError);
     }
 
-    // Get all pixels - using .range() to fetch beyond default 1000 limit
-    // Note: We MUST use .range() as Supabase defaults to max 1000 rows
-    const { data: pixelsData, error: pixelsError, count } = await supabaseAdmin
-      .from('pixel_placements')
-      .select('*', { count: 'exact', head: false })
-      .eq('canvas_id', CANVAS_ID)
-      .order('placed_at', { ascending: false })
-      .range(0, 50000); // Explicitly fetch 0-50000 (inclusive = 50,001 rows max)
+    // Fetch all pixels in batches (Supabase has server-side 1000 row limit)
+    // We need to paginate to get all pixels
+    let allPixels: any[] = [];
+    let currentPage = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-    // Check if table doesn't exist (PGRST205)
-    if (pixelsError && pixelsError.code === 'PGRST205') {
-      console.error('⚠️ Pixel canvas tables not found. Please run the SQL migration in Supabase.');
-      // Return empty canvas as fallback
-      return {
-        id: CANVAS_ID,
-        width: 200,
-        height: 200,
-        pixels: [],
-        lastUpdated: new Date().toISOString(),
-        totalPixels: 0,
-        uniqueUsers: 0
-      };
+    while (hasMore) {
+      const { data: pageData, error: pageError } = await supabaseAdmin
+        .from('pixel_placements')
+        .select('*')
+        .eq('canvas_id', CANVAS_ID)
+        .order('placed_at', { ascending: false })
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+
+      // Check if table doesn't exist (PGRST205)
+      if (pageError && pageError.code === 'PGRST205') {
+        console.error('⚠️ Pixel canvas tables not found. Please run the SQL migration in Supabase.');
+        // Return empty canvas as fallback
+        return {
+          id: CANVAS_ID,
+          width: 200,
+          height: 200,
+          pixels: [],
+          lastUpdated: new Date().toISOString(),
+          totalPixels: 0,
+          uniqueUsers: 0
+        };
+      }
+
+      if (pageError) {
+        console.error(`Error loading pixels page ${currentPage}:`, pageError);
+        break;
+      }
+
+      if (pageData && pageData.length > 0) {
+        allPixels = allPixels.concat(pageData);
+        currentPage++;
+        // If we got less than pageSize, we've reached the end
+        if (pageData.length < pageSize) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
     }
 
-    if (pixelsError) {
-      console.error('Error loading pixels:', pixelsError);
-    }
+    const pixelsData = allPixels;
+    const count = allPixels.length;
 
     // Initialize canvas if it doesn't exist
     if (!canvasData) {
