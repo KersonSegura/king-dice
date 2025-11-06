@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllPosts } from '@/lib/posts';
 import { supabaseAdmin } from '@/lib/supabase';
 import { prisma } from '@/lib/prisma';
 
@@ -16,7 +15,56 @@ export async function GET(request: NextRequest) {
 
     // 1. Fetch items from database
     let followingIds: string[] = [];
-    const posts = getAllPosts();
+    
+    // Get forum posts from database
+    const dbPosts = await prisma.post.findMany({
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            reputation: true,
+            title: true
+          }
+        },
+        _count: {
+          select: {
+            comments: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Format posts
+    const posts = dbPosts.map(post => {
+      let votes = { upvotes: 0, downvotes: 0 };
+      try {
+        votes = JSON.parse(post.votes);
+      } catch (e) {
+        console.error('Error parsing votes for post:', post.id);
+      }
+
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        category: post.category,
+        author: {
+          id: post.author.id,
+          name: post.author.username,
+          avatar: post.author.avatar,
+          reputation: post.author.reputation,
+          title: post.author.title
+        },
+        createdAt: post.createdAt.toISOString(),
+        votes,
+        replies: post._count.comments
+      };
+    });
     
     // Get gallery images from database
     const dbGalleryImages = await prisma.galleryImage.findMany({
