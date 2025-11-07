@@ -25,7 +25,7 @@ interface GalleryImage {
   description: string;
   imageUrl: string;
   thumbnailUrl: string;
-  author: {
+  author?: {
     id: string;
     name: string;
     avatar: string;
@@ -58,7 +58,7 @@ interface GalleryImage {
 
 interface Comment {
   id: string;
-  author: {
+  author?: {
     id: string;
     name: string;
     avatar: string;
@@ -952,7 +952,7 @@ function CommunityGalleryPageContent() {
   
   // Include drafts for the current user
   if (user) {
-    const userDrafts = displayedImages.filter(image => image.isDraft && image.author.id === user.id);
+    const userDrafts = displayedImages.filter(image => image.isDraft && image.author?.id === user.id);
     filteredImages = [...filteredImages, ...userDrafts];
   }
   
@@ -963,14 +963,14 @@ function CommunityGalleryPageContent() {
   
   // Filter by author
   if (selectedAuthor) {
-    filteredImages = filteredImages.filter(image => image.author.name === selectedAuthor);
+    filteredImages = filteredImages.filter(image => image.author?.name === selectedAuthor);
   }
   
   // Filter by search query (username or photo description)
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase().trim();
     filteredImages = filteredImages.filter(image => 
-      image.author.name.toLowerCase().includes(query) ||
+      image.author?.name?.toLowerCase().includes(query) ||
       image.description.toLowerCase().includes(query)
     );
   }
@@ -1360,7 +1360,7 @@ function CommunityGalleryPageContent() {
                   {/* Username overlay for all view modes */}
                   <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
-                      {image.author.name}
+                      {image.author?.name ?? 'Unknown Artist'}
                     </div>
                   </div>
                 </div>
@@ -1428,11 +1428,11 @@ function CommunityGalleryPageContent() {
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <div className="flex items-center space-x-1">
                             <User className="w-3 h-3" />
-                            <span>{image.author.name}</span>
+                            <span>{image.author?.name ?? 'Unknown Artist'}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             {/* Action buttons - only show for image owner */}
-                            {isAuthenticated && user && image.author.id === user.id && (
+                            {isAuthenticated && user && image.author?.id === user.id && (
                               <div className="flex items-center gap-1">
                                 {/* Publish button - only show for drafts by the current user */}
                                 {image.isDraft && (
@@ -1534,13 +1534,13 @@ function CommunityGalleryPageContent() {
                         
                         {/* Fourth line: Author and Action buttons */}
                         <div className="flex items-center justify-between text-xs text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <User className="w-3 h-3" />
-                            <span>{image.author.name}</span>
+                        <div className="flex items-center space-x-1">
+                          <User className="w-3 h-3" />
+                          <span>{image.author?.name ?? 'Unknown Artist'}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             {/* Action buttons - only show for image owner */}
-                            {isAuthenticated && user && image.author.id === user.id && (
+                          {isAuthenticated && user && image.author?.id === user.id && (
                               <>
                                 {/* Publish button - only show for drafts by the current user */}
                                 {image.isDraft && (
@@ -1660,8 +1660,8 @@ function CommunityGalleryPageContent() {
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <div className="flex items-center space-x-1">
                           <User className="w-4 h-4" />
-                          <span>{image.author.name}</span>
-                          <span className="text-xs">({image.author.reputation} rep)</span>
+                          <span>{image.author?.name ?? 'Unknown Artist'}</span>
+                          <span className="text-xs">({image.author?.reputation ?? 0} rep)</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />
@@ -1709,7 +1709,7 @@ function CommunityGalleryPageContent() {
                         </ModernTooltip>
                         
                         {/* Action buttons on the right - only show for image owner */}
-                        {isAuthenticated && user && image.author.id === user.id && (
+                        {isAuthenticated && user && image.author?.id === user.id && (
                           <div className="flex items-center gap-1">
                             {/* Publish button - only show for drafts by the current user */}
                             {image.isDraft && (
