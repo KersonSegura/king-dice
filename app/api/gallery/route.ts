@@ -14,7 +14,7 @@ async function detectCamelCase(): Promise<boolean> {
   } catch (error) {
     console.error('Error detecting gallery_images casing:', error);
   }
-  return true;
+  return false;
 }
 
 function parseVotes(value: any): { upvotes: number; downvotes: number } {
@@ -215,13 +215,9 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || '';
     const userId = searchParams.get('userId') || '';
 
-    const useCamelCase = await detectCamelCase();
-    const orderColumn = useCamelCase ? 'createdAt' : 'created_at';
-
     const { data: galleryRows, error: galleryError } = await supabaseAdmin
       .from('gallery_images')
-      .select('*')
-      .order(orderColumn, { ascending: false });
+      .select('*');
 
     if (galleryError) {
       console.error('Supabase gallery query error:', galleryError);
@@ -324,7 +320,7 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
     const id = generateCuid();
 
-    const insertPayload = buildInsertPayload(useCamelCase, {
+    const payload = {
       id,
       title: title || (category === 'collections' ? 'Collection Photo' : 'Gallery Image'),
       description: description || '',
@@ -333,15 +329,47 @@ export async function POST(request: NextRequest) {
       category,
       authorId,
       now
-    });
+    };
 
-    const { data: insertedRow, error: insertError } = await supabaseAdmin
-      .from('gallery_images')
-      .insert(insertPayload)
-      .select(selectColumns(useCamelCase))
-      .maybeSingle();
+    const camelPayload = buildInsertPayload(true, payload);
+    const snakePayload = buildInsertPayload(false, payload);
 
-    if (insertError || !insertedRow) {
+    let insertedRow: GalleryRow | null = null;
+    let insertError: any = null;
+    let usedCamel = useCamelCase;
+
+    const tryInsert = async (useCamel: boolean) => {
+      const payloadToUse = useCamel ? camelPayload : snakePayload;
+      const columns = selectColumns(useCamel);
+      return supabaseAdmin
+        .from('gallery_images')
+        .insert(payloadToUse)
+        .select(columns)
+        .maybeSingle();
+    };
+
+    if (useCamelCase) {
+      const { data, error } = await tryInsert(true);
+      insertedRow = data ?? null;
+      insertError = error ?? null;
+      usedCamel = !error;
+    }
+
+    if (!insertedRow || insertError) {
+      const shouldRetry = !insertedRow && insertError && insertError.code === '42703';
+      if (!useCamelCase || shouldRetry) {
+        const { data, error } = await tryInsert(false);
+        if (!error && data) {
+          insertedRow = data;
+          insertError = null;
+          usedCamel = false;
+        } else {
+          insertError = error;
+        }
+      }
+    }
+
+    if (!insertedRow || insertError) {
       console.error('Error inserting gallery image:', insertError);
       return NextResponse.json({ error: 'Failed to create gallery image' }, { status: 500 });
     }
