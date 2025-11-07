@@ -12,24 +12,23 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || '';
 
-    // Get post from Supabase (bypassing Prisma)
     const { data: dbPost, error: postError } = await supabaseAdmin
       .from('posts')
-      .select('id, title, content, category, authorId, votes, replies, createdAt, updatedAt')
+      .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (postError || !dbPost) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Fetch post author
     let postAuthor: any = null;
-    if (dbPost.authorId) {
+    const authorId = dbPost.authorId ?? dbPost.author_id ?? null;
+    if (authorId) {
       const { data: authorData, error: authorError } = await supabaseAdmin
         .from('users')
         .select('id, username, avatar, xp, title')
-        .eq('id', dbPost.authorId)
+        .eq('id', authorId)
         .maybeSingle();
 
       if (authorError) {
@@ -39,7 +38,6 @@ export async function GET(
       }
     }
 
-    // Get vote counts from Supabase
     const [{ count: upvotes }, { count: downvotes }, { data: meVote }] = await Promise.all([
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: id, vote_type: 'up' }),
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: id, vote_type: 'down' }),
@@ -48,26 +46,27 @@ export async function GET(
         : Promise.resolve({ data: null } as any),
     ]);
 
-    // Format post
+    const createdAtRaw = dbPost.createdAt ?? dbPost.created_at ?? new Date().toISOString();
+
     const post = {
       id: dbPost.id,
       title: dbPost.title,
       content: dbPost.content,
       category: dbPost.category,
       author: {
-        id: dbPost.authorId,
+        id: authorId,
         name: postAuthor?.username || 'Unknown',
         avatar: postAuthor?.avatar || null,
         reputation: postAuthor?.xp ?? 0,
         title: postAuthor?.title || null
       },
-      createdAt: typeof dbPost.createdAt === 'string' ? dbPost.createdAt : dbPost.createdAt.toISOString(),
+      createdAt: typeof createdAtRaw === 'string' ? createdAtRaw : new Date(createdAtRaw).toISOString(),
       votes: {
         upvotes: upvotes ?? 0,
         downvotes: downvotes ?? 0,
       },
-      replies: dbPost.replies || 0,
-      userVote: meVote?.vote_type ?? null,
+      replies: dbPost.replies ?? dbPost.replies_count ?? 0,
+      userVote: (meVote as any)?.vote_type ?? null,
       isModerated: true
     };
 
@@ -86,13 +85,12 @@ export async function DELETE(
     const { id } = await params;
     const { authorId } = await request.json();
 
-    // Find the post in Supabase
     const { data: post, error: findError } = await supabaseAdmin
       .from('posts')
-      .select('id, authorId')
+      .select('id, author_id, authorId')
       .eq('id', id)
-      .single();
-    
+      .maybeSingle();
+
     if (findError || !post) {
       return NextResponse.json(
         { message: 'Post not found' },
@@ -100,25 +98,24 @@ export async function DELETE(
       );
     }
 
-    // Check if the user is the author of the post
-    if (post.authorId !== authorId) {
+    const postAuthorId = post.author_id ?? post.authorId;
+
+    if (postAuthorId !== authorId) {
       return NextResponse.json(
         { message: 'You can only delete your own posts' },
         { status: 403 }
       );
     }
 
-    // Delete the post from Supabase (comments will be deleted automatically due to CASCADE)
     const { error: deleteError } = await supabaseAdmin
       .from('posts')
       .delete()
       .eq('id', id);
-    
+
     if (deleteError) {
       throw deleteError;
     }
 
-    // Also delete votes from Supabase
     await supabaseAdmin
       .from('post_votes')
       .delete()

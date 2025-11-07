@@ -4,6 +4,21 @@ import { createNotification } from '@/lib/notifications';
 import { moderateText } from '@/lib/moderation';
 import { supabaseAdmin } from '@/lib/supabase';
 
+async function detectCommentCasing() {
+  try {
+    const { data } = await supabaseAdmin
+      .from('comments')
+      .select('*')
+      .limit(1);
+    if (data && data.length > 0) {
+      return Object.prototype.hasOwnProperty.call(data[0], 'postId');
+    }
+  } catch (error) {
+    console.error('detectCommentCasing (posts) error:', error);
+  }
+  return false;
+}
+
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export async function GET(
@@ -15,14 +30,13 @@ export async function GET(
     const postId = idString;
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get('sortBy') as 'newest' | 'best' | 'top' || 'best';
-    
-    // Verify post exists in Supabase
+
     const { data: post, error: postError } = await supabaseAdmin
       .from('posts')
       .select('id')
       .eq('id', postId)
-      .single();
-    
+      .maybeSingle();
+
     if (postError || !post) {
       return NextResponse.json(
         { error: 'Post not found' },
@@ -30,19 +44,17 @@ export async function GET(
       );
     }
 
-    // Get comments from Supabase
     const { data: comments, error: commentsError } = await supabaseAdmin
       .from('comments')
-      .select('id, content, postId, authorId, createdAt, updatedAt')
-      .eq('postId', postId)
-      .order('createdAt', { ascending: sortBy !== 'newest' });
-    
+      .select('*')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: sortBy !== 'newest' });
+
     if (commentsError) {
       throw commentsError;
     }
 
-    // Format comments
-    const commentAuthorIds = Array.from(new Set((comments || []).map((c: any) => c.authorId).filter(Boolean)));
+    const commentAuthorIds = Array.from(new Set((comments || []).map((c: any) => c.author_id ?? c.authorId).filter(Boolean)));
     let commentAuthorMap = new Map<string, any>();
     if (commentAuthorIds.length > 0) {
       const { data: commentAuthors, error: commentAuthorsError } = await supabaseAdmin
@@ -57,23 +69,27 @@ export async function GET(
       }
     }
 
-    const formattedComments = (comments || []).map((comment: any) => ({
-      id: comment.id,
-      content: comment.content,
-      postId: comment.postId,
-      author: {
-        id: comment.authorId,
-        name: commentAuthorMap.get(comment.authorId)?.username || 'Unknown',
-        avatar: commentAuthorMap.get(comment.authorId)?.avatar || null,
-        reputation: commentAuthorMap.get(comment.authorId)?.xp ?? 0,
-        title: commentAuthorMap.get(comment.authorId)?.title || null
-      },
-      createdAt: typeof comment.createdAt === 'string' ? comment.createdAt : comment.createdAt.toISOString(),
-      votes: { upvotes: 0, downvotes: 0 }, // Will be loaded from Supabase
-      userVote: null,
-      isModerated: true
-    }));
-    
+    const formattedComments = (comments || []).map((comment: any) => {
+      const authorId = comment.author_id ?? comment.authorId;
+      const createdAtRaw = comment.created_at ?? comment.createdAt ?? new Date().toISOString();
+      return {
+        id: comment.id,
+        content: comment.content,
+        postId: comment.post_id ?? comment.postId,
+        author: {
+          id: authorId,
+          name: commentAuthorMap.get(authorId)?.username || 'Unknown',
+          avatar: commentAuthorMap.get(authorId)?.avatar || null,
+          reputation: commentAuthorMap.get(authorId)?.xp ?? 0,
+          title: commentAuthorMap.get(authorId)?.title || null
+        },
+        createdAt: typeof createdAtRaw === 'string' ? createdAtRaw : new Date(createdAtRaw).toISOString(),
+        votes: { upvotes: 0, downvotes: 0 },
+        userVote: null,
+        isModerated: true
+      };
+    });
+
     return NextResponse.json({ comments: formattedComments });
   } catch (error) {
     console.error('Error fetching comments:', error);
@@ -92,8 +108,7 @@ export async function POST(
     const { id: idString } = await params;
     const postId = idString;
     const { content, author } = await request.json();
-    
-    // Validate required fields
+
     if (!content?.trim() || !author) {
       return NextResponse.json(
         { error: 'Content and author are required' },
@@ -101,13 +116,12 @@ export async function POST(
       );
     }
 
-    // Verify post exists in Supabase
     const { data: post, error: postError } = await supabaseAdmin
       .from('posts')
-      .select('id, authorId')
+      .select('id, author_id, authorId')
       .eq('id', postId)
-      .single();
-    
+      .maybeSingle();
+
     if (postError || !post) {
       return NextResponse.json(
         { error: 'Post not found' },
@@ -115,77 +129,86 @@ export async function POST(
       );
     }
 
-    // Moderate comment content
     const moderationResult = await moderateText(content);
-    
+
     if (!moderationResult.isAppropriate) {
       return NextResponse.json(
-        { 
+        {
           error: 'Comment was flagged as inappropriate',
-          flags: moderationResult.flags 
+          flags: moderationResult.flags
         },
         { status: 400 }
       );
     }
 
-    // Generate CUID for comment
     const timestampCuid = Date.now().toString(36);
     const counter = Math.floor(Math.random() * 36).toString(36);
     const fingerprint = Math.floor(Math.random() * 36).toString(36);
     const random = Math.random().toString(36).substring(2, 15);
     const generatedId = `c${timestampCuid}${counter}${fingerprint}${random}`.substring(0, 25);
-    
+
     const now = new Date().toISOString();
-    
-    // Create comment in Supabase
-    const { data: newComment, error: createError } = await supabaseAdmin
-      .from('comments')
-      .insert({
-        id: generatedId,
-        content: content.trim(),
-        authorId: author.id,
-        postId,
-        createdAt: now,
-        updatedAt: now
-      })
-      .select('id, content, postId, authorId, createdAt')
-      .single();
-    
+
+    const insertCamel = {
+      id: generatedId,
+      content: content.trim(),
+      authorId: author.id,
+      postId,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const insertSnake = {
+      id: generatedId,
+      content: content.trim(),
+      author_id: author.id,
+      post_id: postId,
+      created_at: now,
+      updated_at: now
+    };
+
+    const selectCamel = 'id, content, postId, authorId, createdAt';
+    const selectSnake = 'id, content, post_id, author_id, created_at';
+
+    const useCamelCase = await detectCommentCasing();
+
+    const runInsert = async (useCamel: boolean) =>
+      supabaseAdmin
+        .from('comments')
+        .insert(useCamel ? insertCamel : insertSnake)
+        .select(useCamel ? selectCamel : selectSnake)
+        .single();
+
+    let insertResult = await runInsert(useCamelCase);
+    if (
+      insertResult.error &&
+      (insertResult.error.code === '42703' || insertResult.error.code === 'PGRST204')
+    ) {
+      insertResult = await runInsert(!useCamelCase);
+    }
+
+    const { data: newComment, error: createError } = insertResult;
+
     if (createError || !newComment) {
       throw new Error(`Failed to create comment: ${createError?.message || 'Unknown error'}`);
     }
-    
-    // Update post's replies count in Supabase
+
     const { data: currentPost } = await supabaseAdmin
       .from('posts')
-      .select('replies')
+      .select('replies, replies_count')
       .eq('id', postId)
-      .single();
-    
+      .maybeSingle();
+
+    const currentReplies = currentPost?.replies ?? currentPost?.replies_count ?? 0;
+
     await supabaseAdmin
       .from('posts')
-      .update({ replies: (currentPost?.replies || 0) + 1 })
+      .update({ replies: currentReplies + 1 })
       .eq('id', postId);
-    
-    // Award XP for replying to a discussion
-    if (newComment) {
-      const xpResult = await awardXP(
-        author.id,
-        author.name,
-        'REPLY_DISCUSSION',
-        newComment.id
-      );
-      
-      // Log level up if it occurred (server-side)
-      if (xpResult?.leveledUp) {
-        console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from replying to a discussion!`);
-      }
-    }
 
-    // Notify post author (if different from commenter)
-    try {
-      const postAuthorId = post.authorId;
-      if (postAuthorId && postAuthorId !== author.id) {
+    const postAuthorId = post.author_id ?? post.authorId;
+    if (postAuthorId && postAuthorId !== author.id) {
+      try {
         await createNotification({
           userId: postAuthorId,
           type: 'comment',
@@ -195,14 +218,29 @@ export async function POST(
           url: `/forums/post/${postId}#comment-${newComment.id}`,
           message: `${author.name} commented on your post`,
         });
+      } catch (notifyError) {
+        console.error('Error sending post comment notification:', notifyError);
       }
-    } catch {}
-    
-    // Format response
+    }
+
+    try {
+      const xpResult = await awardXP(
+        author.id,
+        author.name,
+        'REPLY_DISCUSSION',
+        newComment.id
+      );
+      if (xpResult?.leveledUp) {
+        console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from replying to a discussion!`);
+      }
+    } catch (xpError) {
+      console.error('Error awarding XP for post comment:', xpError);
+    }
+
     const formattedComment = {
       id: newComment.id,
       content: newComment.content,
-      postId: newComment.postId,
+      postId: newComment.postId ?? newComment.post_id ?? postId,
       author: {
         id: author.id,
         name: author.name,
@@ -210,14 +248,14 @@ export async function POST(
         reputation: author.reputation || 0,
         title: author.title || null
       },
-      createdAt: typeof newComment.createdAt === 'string' ? newComment.createdAt : newComment.createdAt?.toISOString?.() || now,
+      createdAt: newComment.createdAt ?? newComment.created_at ?? now,
       votes: { upvotes: 0, downvotes: 0 },
       userVote: null,
       isModerated: true
     };
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       comment: formattedComment,
       message: 'Comment created successfully'
     });
