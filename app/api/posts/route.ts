@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
-import { prisma } from '@/lib/prisma';
 import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic so likes/replies reflect immediately when navigating back
@@ -15,19 +14,19 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId') || '';
     
     // Get posts from Supabase (bypassing Prisma cache issue)
-    const { data: dbPosts, error: postsError } = await supabaseAdmin
+    let postsQuery = supabaseAdmin
       .from('posts')
       .select(`
         id,
         title,
         content,
         category,
-        authorId,
+        author_id,
         votes,
         replies,
-        createdAt,
-        updatedAt,
-        author:users!posts_authorId_fkey(
+        created_at,
+        updated_at,
+        author:users!posts_author_id_fkey(
           id,
           username,
           avatar,
@@ -35,8 +34,13 @@ export async function GET(request: NextRequest) {
           title
         )
       `)
-      .eq(authorId ? 'authorId' : '__skip__', authorId || '__skip__')
-      .order('createdAt', { ascending: false });
+      .order('created_at', { ascending: false });
+
+    if (authorId) {
+      postsQuery = postsQuery.eq('author_id', authorId);
+    }
+
+    const { data: dbPosts, error: postsError } = await postsQuery;
     
     if (postsError) {
       throw postsError;
@@ -61,13 +65,13 @@ export async function GET(request: NextRequest) {
         content: post.content,
         category: post.category,
         author: {
-          id: post.author?.id || post.authorId,
+          id: post.author?.id || post.author_id,
           name: post.author?.username || 'Unknown',
           avatar: post.author?.avatar || null,
           reputation: post.author?.xp ?? 0,
           title: post.author?.title || null
         },
-        createdAt: typeof post.createdAt === 'string' ? post.createdAt : post.createdAt.toISOString(),
+        createdAt: typeof post.created_at === 'string' ? post.created_at : post.created_at?.toISOString?.() || new Date().toISOString(),
         votes,
         replies: post.replies || 0,
         userVote: null,
@@ -213,26 +217,26 @@ export async function POST(request: NextRequest) {
         title: title.trim(),
         content: content.trim(),
         category,
-        authorId: author.id,
+        author_id: author.id,
         votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
         replies: 0,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       })
       .select(`
         id,
         title,
         content,
         category,
-        authorId,
+        author_id,
         votes,
         replies,
-        createdAt,
-        author:users!posts_authorId_fkey(
+        created_at,
+        author:users!posts_author_id_fkey(
           id,
           username,
           avatar,
-          reputation,
+          xp,
           title
         )
       `)
@@ -252,10 +256,10 @@ export async function POST(request: NextRequest) {
         id: newPost.author?.id || author.id,
         name: newPost.author?.username || author.name,
         avatar: newPost.author?.avatar || author.avatar,
-        reputation: newPost.author?.reputation || author.reputation || 0,
+        reputation: newPost.author?.xp ?? author.reputation || 0,
         title: newPost.author?.title || author.title || null
       },
-      createdAt: newPost.createdAt,
+      createdAt: newPost.created_at,
       votes: { upvotes: 0, downvotes: 0 },
       replies: 0,
       userVote: null,

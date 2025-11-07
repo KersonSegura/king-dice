@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +20,12 @@ export async function GET(
         title,
         content,
         category,
-        authorId,
+        author_id,
         votes,
         replies,
-        createdAt,
-        updatedAt,
-        author:users!posts_authorId_fkey(
+        created_at,
+        updated_at,
+        author:users!posts_author_id_fkey(
           id,
           username,
           avatar,
@@ -57,13 +56,13 @@ export async function GET(
       content: dbPost.content,
       category: dbPost.category,
       author: {
-        id: dbPost.author?.id || dbPost.authorId,
+        id: dbPost.author?.id || dbPost.author_id,
         name: dbPost.author?.username || 'Unknown',
         avatar: dbPost.author?.avatar || null,
         reputation: dbPost.author?.xp ?? 0,
         title: dbPost.author?.title || null
       },
-      createdAt: typeof dbPost.createdAt === 'string' ? dbPost.createdAt : dbPost.createdAt.toISOString(),
+      createdAt: typeof dbPost.created_at === 'string' ? dbPost.created_at : dbPost.created_at?.toISOString?.() || new Date().toISOString(),
       votes: {
         upvotes: upvotes ?? 0,
         downvotes: downvotes ?? 0,
@@ -91,7 +90,7 @@ export async function DELETE(
     // Find the post in Supabase
     const { data: post, error: findError } = await supabaseAdmin
       .from('posts')
-      .select('id, authorId')
+      .select('id, author_id')
       .eq('id', id)
       .single();
     
@@ -103,7 +102,7 @@ export async function DELETE(
     }
 
     // Check if the user is the author of the post
-    if (post.authorId !== authorId) {
+    if (post.author_id !== authorId) {
       return NextResponse.json(
         { message: 'You can only delete your own posts' },
         { status: 403 }
