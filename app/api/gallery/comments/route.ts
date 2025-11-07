@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 import { createNotification } from '@/lib/notifications';
 import { supabaseAdmin } from '@/lib/supabase';
 
@@ -68,6 +70,34 @@ async function fetchCommentAuthors(authorIds: string[]) {
     console.error('Unexpected error fetching comment authors:', err);
     return new Map();
   }
+}
+
+const dataDir = path.join(process.cwd(), 'data');
+const legacyGalleryFile = path.join(dataDir, 'gallery.json');
+
+function mapLegacyComment(comment: any, supabaseUrl: string | undefined) {
+  const base = {
+    id: comment.id,
+    content: comment.content ?? '',
+    author: {
+      id: comment.author?.id ?? null,
+      name: comment.author?.name || 'Unknown Artist',
+      avatar: rewriteStorageUrl(supabaseUrl, comment.author?.avatar) ?? null,
+      reputation: comment.author?.reputation ?? 0,
+      title: comment.author?.title ?? null
+    },
+    createdAt: comment.createdAt ?? new Date().toISOString(),
+    isEdited: comment.isEdited ?? false,
+    likes: comment.likes ?? 0,
+    userLiked: false,
+    replies: [] as any[]
+  };
+
+  if (Array.isArray(comment.replies)) {
+    base.replies = comment.replies.map((reply: any) => mapLegacyComment(reply, supabaseUrl));
+  }
+
+  return base;
 }
 
 export async function GET(request: NextRequest) {
@@ -194,9 +224,32 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const totalComments = rows.length;
+    let totalComments = rows.length;
+    let responseComments = topLevelComments;
 
-    return NextResponse.json({ comments: topLevelComments, totalComments });
+    if (rows.length > 0) {
+      totalComments = topLevelComments.reduce((total: number, comment: any) => {
+        const repliesCount = Array.isArray(comment.replies) ? comment.replies.length : 0;
+        return total + 1 + repliesCount;
+      }, 0);
+    }
+
+    if (rows.length === 0 && fs.existsSync(legacyGalleryFile)) {
+      try {
+        const legacyData = JSON.parse(fs.readFileSync(legacyGalleryFile, 'utf8'));
+        const legacyImage = legacyData.images?.find((img: any) => img.id === imageId);
+        if (legacyImage?.commentsList) {
+          responseComments = legacyImage.commentsList.map((comment: any) => mapLegacyComment(comment, supabaseUrl));
+          totalComments = responseComments.reduce((total: number, comment: any) => {
+            return total + 1 + (comment.replies ? comment.replies.length : 0);
+          }, 0);
+        }
+      } catch (legacyError) {
+        console.error('Error loading legacy gallery comments:', legacyError);
+      }
+    }
+
+    return NextResponse.json({ comments: responseComments, totalComments });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return NextResponse.json({ comments: [], totalComments: 0 }, { status: 200 });
