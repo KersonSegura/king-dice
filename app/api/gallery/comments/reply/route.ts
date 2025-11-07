@@ -22,6 +22,21 @@ function rewriteStorageUrl(origin: string | undefined, url?: string | null) {
   return url;
 }
 
+async function detectCommentCasing() {
+  try {
+    const { data } = await supabaseAdmin
+      .from('comments')
+      .select('*')
+      .limit(1);
+    if (data && data.length > 0) {
+      return Object.prototype.hasOwnProperty.call(data[0], 'galleryImageId');
+    }
+  } catch (error) {
+    console.error('detectCommentCasing error:', error);
+  }
+  return false;
+}
+
 // POST /api/gallery/comments/reply - Reply to a comment
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const { data: parentComment, error: parentError } = await supabaseAdmin
       .from('comments')
-      .select('id, gallery_image_id, author_id')
+      .select('*')
       .eq('id', commentId)
       .maybeSingle();
 
@@ -50,7 +65,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const imageId = parentComment.gallery_image_id;
+    const imageId = parentComment.gallery_image_id ?? parentComment.galleryImageId;
 
     if (!imageId) {
       return NextResponse.json({ error: 'Parent comment is missing gallery image association' }, { status: 400 });
@@ -90,9 +105,14 @@ export async function POST(request: NextRequest) {
         .select(useCamel ? 'id, content, authorId, galleryImageId, parentId, createdAt' : 'id, content, author_id, gallery_image_id, parent_id, created_at')
         .single();
 
-    let insertResult = await runInsert(true);
-    if (insertResult.error && insertResult.error.code === '42703') {
-      insertResult = await runInsert(false);
+    const useCamelCase = await detectCommentCasing();
+
+    let insertResult = await runInsert(useCamelCase);
+    if (
+      insertResult.error &&
+      (insertResult.error.code === '42703' || insertResult.error.code === 'PGRST204')
+    ) {
+      insertResult = await runInsert(!useCamelCase);
     }
 
     const { data: replyRow, error: insertError } = insertResult;
@@ -118,7 +138,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const parentAuthorId = parentComment.author_id;
+      const parentAuthorId = parentComment.author_id ?? parentComment.authorId;
       if (parentAuthorId && parentAuthorId !== author.id) {
         await createNotification({
           userId: parentAuthorId,
