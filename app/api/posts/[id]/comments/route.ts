@@ -226,7 +226,7 @@ export async function POST(
         id: newComment.author?.id || author.id,
         name: newComment.author?.username || author.name,
         avatar: newComment.author?.avatar || author.avatar || null,
-        reputation: newComment.author?.xp ?? 0,
+        reputation: (newComment.author?.xp ?? 0) || 0,
         title: newComment.author?.title || null
       },
       createdAt: typeof newComment.created_at === 'string' ? newComment.created_at : newComment.created_at?.toISOString?.() || now,

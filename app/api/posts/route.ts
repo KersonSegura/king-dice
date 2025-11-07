@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
           id: post.author?.id || post.author_id,
           name: post.author?.username || 'Unknown',
           avatar: post.author?.avatar || null,
-          reputation: post.author?.xp ?? 0,
+        reputation: (post.author?.xp ?? 0) || 0,
           title: post.author?.title || null
         },
         createdAt: typeof post.created_at === 'string' ? post.created_at : post.created_at?.toISOString?.() || new Date().toISOString(),
@@ -256,7 +256,7 @@ export async function POST(request: NextRequest) {
         id: newPost.author?.id || author.id,
         name: newPost.author?.username || author.name,
         avatar: newPost.author?.avatar || author.avatar,
-        reputation: newPost.author?.xp ?? author.reputation || 0,
+        reputation: (newPost.author?.xp ?? author.reputation) || 0,
         title: newPost.author?.title || author.title || null
       },
       createdAt: newPost.created_at,
