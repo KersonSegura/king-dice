@@ -51,16 +51,21 @@
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/uuid": "^10.0.0",
     "@upstash/redis": "^1.35.4",
+    "autoprefixer": "^10.0.1",
     "axios": "^1.6.2",
     "bcryptjs": "^3.0.2",
     "cheerio": "^1.1.2",
     "clsx": "^2.0.0",
     "dotenv": "^17.2.1",
     "gsap": "^3.13.0",
+    "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.294.0",
     "next": "^16.0.0",
+    "nodemailer": "^7.0.10",
     "openai": "^5.20.1",
+    "postcss": "^8",
+    "prisma": "^5.22.0",
     "react": "^18",
     "react-beautiful-dnd": "^13.1.1",
     "react-color": "^2.19.3",
@@ -69,14 +74,9 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.0.0",
-    "uuid": "^13.0.0",
     "tailwindcss": "^3.3.0",
-    "nodemailer": "^7.0.10",
-    "html2canvas": "^1.4.1",
-    "prisma": "^5.22.0",
-    "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "typescript": "^5"
+    "typescript": "^5",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/html2canvas": "^0.5.35",
@@ -90,6 +90,8 @@
     "fast-xml-parser": "^5.2.5",
     "jsdom": "^27.0.0",
     "sqlite3": "^5.1.7",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "xml2js": "^0.6.2"
   }
 }
