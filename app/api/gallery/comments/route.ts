@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Check if gallery image exists (Supabase)
     const { data: galleryImage, error: galleryError } = await supabaseAdmin
       .from('gallery_images')
-      .select('id, authorId, comments')
+      .select('id, author_id, comments')
       .eq('id', imageId)
       .maybeSingle();
 
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
     try {
       const { data, error: commentsError } = await supabaseAdmin
         .from('comments')
-        .select('id, content, galleryImageId, authorId, createdAt, parentId')
-        .eq('galleryImageId', imageId)
-        .is('parentId', null)
-        .order('createdAt', { ascending: false });
+        .select('id, content, gallery_image_id, author_id, created_at, parent_id')
+        .eq('gallery_image_id', imageId)
+        .is('parent_id', null)
+        .order('created_at', { ascending: false });
 
       if (commentsError) {
         console.error('Error fetching gallery comments:', commentsError);
@@ -46,11 +46,10 @@ export async function GET(request: NextRequest) {
       }
     } catch (err) {
       console.error('Unexpected error fetching gallery comments:', err);
-      // commentsData stays empty so the UI still renders
     }
 
     // Fetch author info in a separate query
-    const authorIds = Array.from(new Set((commentsData || []).map((c: any) => c.authorId).filter(Boolean)));
+    const authorIds = Array.from(new Set((commentsData || []).map((c: any) => c.author_id).filter(Boolean)));
     let authorMap = new Map<string, any>();
     if (authorIds.length > 0) {
       const { data: authors, error: authorsError } = await supabaseAdmin
@@ -70,29 +69,30 @@ export async function GET(request: NextRequest) {
       id: comment.id,
       content: comment.content,
       author: {
-        id: comment.authorId,
-        name: authorMap.get(comment.authorId)?.username || 'Unknown',
-        avatar: authorMap.get(comment.authorId)?.avatar || null,
-        title: authorMap.get(comment.authorId)?.title || null
+        id: comment.author_id,
+        name: authorMap.get(comment.author_id)?.username || 'Unknown',
+        avatar: authorMap.get(comment.author_id)?.avatar || null,
+        title: authorMap.get(comment.author_id)?.title || null
       },
-      createdAt: typeof comment.createdAt === 'string'
-        ? comment.createdAt
-        : comment.createdAt?.toISOString?.() || new Date().toISOString(),
+      createdAt: typeof comment.created_at === 'string'
+        ? comment.created_at
+        : comment.created_at?.toISOString?.() || new Date().toISOString(),
       likes: 0,
       userLiked: false,
       replies: []
     }));
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       comments: formattedComments,
       totalComments: galleryImage.comments ?? formattedComments.length
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
-    return NextResponse.json({ 
-      error: 'Failed to fetch comments', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
-    }, { status: 500 });
+    return NextResponse.json({
+      comments: [],
+      totalComments: 0,
+      error: 'Failed to fetch comments'
+    }, { status: 200 });
   }
 }
 
@@ -117,12 +117,12 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: content })
     });
-    
+
     const moderationResult = await moderationResponse.json();
-    
+
     if (!moderationResult.isAppropriate) {
       return NextResponse.json(
-        { 
+        {
           error: 'Content was flagged as inappropriate',
           flags: moderationResult.flags,
           reason: moderationResult.reason
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     // Check if gallery image exists
     const { data: galleryImage, error: galleryError } = await supabaseAdmin
       .from('gallery_images')
-      .select('id, authorId, comments')
+      .select('id, author_id, comments')
       .eq('id', imageId)
       .maybeSingle();
 
@@ -160,13 +160,13 @@ export async function POST(request: NextRequest) {
       .insert({
         id: generatedId,
         content: content.trim(),
-        authorId: author.id,
-        galleryImageId: imageId,
-        parentId: null,
-        createdAt: now,
-        updatedAt: now
+        author_id: author.id,
+        gallery_image_id: imageId,
+        parent_id: null,
+        created_at: now,
+        updated_at: now
       })
-      .select('id, content, galleryImageId, authorId, createdAt')
+      .select('id, content, gallery_image_id, author_id, created_at')
       .single();
 
     if (createError || !newComment) {
@@ -197,25 +197,24 @@ export async function POST(request: NextRequest) {
           contentId: newComment.id
         })
       });
-      
+
       if (xpResponse.ok) {
         const xpResult = await xpResponse.json();
-        
-        // Check for restrictions
+
         if (xpResult.dailyLimitReached) {
           return NextResponse.json(
             { error: 'Daily comment limit reached. Try again tomorrow.' },
             { status: 429 }
           );
         }
-        
+
         if (xpResult.spamBlocked) {
           return NextResponse.json(
             { error: 'Please wait before commenting again.' },
             { status: 429 }
           );
         }
-        
+
         if (xpResult.leveledUp) {
           console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from commenting on gallery!`);
         }
@@ -230,12 +229,11 @@ export async function POST(request: NextRequest) {
       }
     } catch (xpError) {
       console.error('Error awarding XP for gallery comment:', xpError);
-      // Don't fail the comment creation if XP awarding fails
     }
 
     // Create notification for image author (if different from commenter)
     try {
-      const receiverId = galleryImage.authorId;
+      const receiverId = galleryImage.author_id;
       if (receiverId && receiverId !== author.id) {
         await createNotification({
           userId: receiverId,
@@ -249,18 +247,18 @@ export async function POST(request: NextRequest) {
       }
     } catch {}
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       comment: {
         id: newComment.id,
         content: newComment.content,
-        galleryImageId: newComment.galleryImageId,
+        galleryImageId: newComment.gallery_image_id,
         author: {
           id: author.id,
           name: author.name,
           avatar: author.avatar || null,
           title: author.title || null
         },
-        createdAt: newComment.createdAt
+        createdAt: newComment.created_at
       },
       totalComments: newCommentCount,
       moderationResult: {
