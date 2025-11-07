@@ -20,28 +20,28 @@ export async function GET(request: NextRequest) {
 
     if (action === 'top') {
       const limit = parseInt(searchParams.get('limit') || '10');
-      const topUsers = getTopUsersByXP(limit);
+      const topUsers = await getTopUsersByXP(limit);
       return NextResponse.json({ users: topUsers });
     }
 
     if (action === 'history' && userId) {
       const limit = parseInt(searchParams.get('limit') || '50');
-      const history = getUserXPHistory(userId, limit);
+      const history = await getUserXPHistory(userId, limit);
       return NextResponse.json({ history });
     }
 
     if (action === 'progress' && userId) {
-      const progress = getLevelProgress(userId);
+      const progress = await getLevelProgress(userId);
       return NextResponse.json({ progress });
     }
 
     if (action === 'canLogin' && userId) {
-      const canLogin = canPerformDailyLogin(userId);
+      const canLogin = await canPerformDailyLogin(userId);
       return NextResponse.json({ canLogin });
     }
 
     if (userId) {
-      const userXP = getUserXP(userId);
+      const userXP = await getUserXP(userId);
       if (!userXP) {
         return NextResponse.json(
           { error: 'User not found' },
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return all users if no specific user requested
-    const allUsers = getAllUsersXP();
+    const allUsers = await getAllUsersXP();
     return NextResponse.json({ users: allUsers });
   } catch (error) {
     console.error('Error fetching XP data:', error);
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = awardXP(userId, username, action, relatedId);
+    const result = await awardXP(userId, username, action, relatedId);
     
     if (!result.userXP) {
       return NextResponse.json(

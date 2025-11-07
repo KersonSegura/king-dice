@@ -254,12 +254,15 @@ export async function POST(request: NextRequest) {
     // Award XP for creating a discussion
     console.log('Awarding XP...');
     try {
-      awardXP(
+      const xpResult = await awardXP(
         author.id,
         author.name,
         'CREATE_DISCUSSION',
         formattedPost.id
       );
+      if (xpResult?.leveledUp) {
+        console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from creating a discussion!`);
+      }
       console.log('XP awarded successfully');
     } catch (xpError) {
       console.error('Error awarding XP:', xpError);

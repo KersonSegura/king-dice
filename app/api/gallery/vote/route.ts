@@ -101,13 +101,13 @@ export async function POST(request: NextRequest) {
     // 4) Award XP to the image author for receiving a like (best-effort)
     if (userVote === 'up' && updatedImage.author?.id) {
       try {
-        const xpResult = awardXP(
+        const xpResult = await awardXP(
           updatedImage.author.id,
           updatedImage.author.name,
           'IMAGE_GETS_LIKE',
           imageId
         );
-        if (xpResult.leveledUp) {
+        if (xpResult?.leveledUp) {
           console.log(`🎉 ${updatedImage.author.name} leveled up to level ${xpResult.newLevel} from receiving a like on their image!`);
         }
       } catch (xpError) {

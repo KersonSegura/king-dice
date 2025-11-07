@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
       // Check if it's a dice design upload (Dice Throne category)
       const isDiceDesign = category === 'dice-throne';
       
-      const xpResult = awardXP(
+      const xpResult = await awardXP(
         author.id,
         author.name,
         isDiceDesign ? 'UPLOAD_DIE_DESIGN' : 'UPLOAD_IMAGE',
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
       );
       
       // Log level up if it occurred (server-side)
-      if (xpResult.leveledUp) {
+      if (xpResult?.leveledUp) {
         console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from uploading an image!`);
       }
     } catch (xpError) {

@@ -45,7 +45,7 @@ export async function POST(
 
     // Award XP for voting (we need username, but we'll use userId as fallback)
     try {
-      awardXP(userId, userId, 'VOTE_GAME', gameId.toString());
+      await awardXP(userId, userId, 'VOTE_GAME', gameId.toString());
     } catch (error) {
       console.error('Error awarding XP for game vote:', error);
     }

@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Award XP for voting (if voteType is not null and it's an upvote)
     if (voteType === 'up' && updatedPost.author?.id) {
       try {
-        const xpResult = awardXP(
+        const xpResult = await awardXP(
           updatedPost.author.id,
           updatedPost.author.name,
           'POST_GETS_LIKE',
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         );
         
         // Log level up if it occurred (server-side)
-        if (xpResult.leveledUp) {
+        if (xpResult?.leveledUp) {
           console.log(`🎉 ${updatedPost.author.name} leveled up to level ${xpResult.newLevel} from receiving a like!`);
         }
       } catch (xpError) {

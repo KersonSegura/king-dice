@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Award XP for publishing an image
-    const xpResult = awardXP(
+    const xpResult = await awardXP(
       authorId,
       authorName,
       publishedImage.category === 'dice-throne' ? 'UPLOAD_DIE_DESIGN' : 'UPLOAD_IMAGE',
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     );
     
     // Log level up if it occurred (server-side)
-    if (xpResult.leveledUp) {
+    if (xpResult?.leveledUp) {
       console.log(`🎉 ${authorName} leveled up to level ${xpResult.newLevel} from publishing an image!`);
     }
 

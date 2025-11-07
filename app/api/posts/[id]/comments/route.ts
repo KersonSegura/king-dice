@@ -169,7 +169,7 @@ export async function POST(
     
     // Award XP for replying to a discussion
     if (newComment) {
-      const xpResult = awardXP(
+      const xpResult = await awardXP(
         author.id,
         author.name,
         'REPLY_DISCUSSION',
@@ -177,7 +177,7 @@ export async function POST(
       );
       
       // Log level up if it occurred (server-side)
-      if (xpResult.leveledUp) {
+      if (xpResult?.leveledUp) {
         console.log(`🎉 ${author.name} leveled up to level ${xpResult.newLevel} from replying to a discussion!`);
       }
     }
