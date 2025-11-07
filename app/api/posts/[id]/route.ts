@@ -15,29 +15,28 @@ export async function GET(
     // Get post from Supabase (bypassing Prisma)
     const { data: dbPost, error: postError } = await supabaseAdmin
       .from('posts')
-      .select(`
-        id,
-        title,
-        content,
-        category,
-        authorId,
-        votes,
-        replies,
-        createdAt,
-        updatedAt,
-        author:users!posts_authorId_fkey(
-          id,
-          username,
-          avatar,
-          xp,
-          title
-        )
-      `)
+      .select('id, title, content, category, authorId, votes, replies, createdAt, updatedAt')
       .eq('id', id)
       .single();
 
     if (postError || !dbPost) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    // Fetch post author
+    let postAuthor: any = null;
+    if (dbPost.authorId) {
+      const { data: authorData, error: authorError } = await supabaseAdmin
+        .from('users')
+        .select('id, username, avatar, xp, title')
+        .eq('id', dbPost.authorId)
+        .maybeSingle();
+
+      if (authorError) {
+        console.error('Error fetching post author:', authorError);
+      } else {
+        postAuthor = authorData;
+      }
     }
 
     // Get vote counts from Supabase
@@ -56,11 +55,11 @@ export async function GET(
       content: dbPost.content,
       category: dbPost.category,
       author: {
-        id: dbPost.author?.id || dbPost.authorId,
-        name: dbPost.author?.username || 'Unknown',
-        avatar: dbPost.author?.avatar || null,
-        reputation: dbPost.author?.xp ?? 0,
-        title: dbPost.author?.title || null
+        id: dbPost.authorId,
+        name: postAuthor?.username || 'Unknown',
+        avatar: postAuthor?.avatar || null,
+        reputation: postAuthor?.xp ?? 0,
+        title: postAuthor?.title || null
       },
       createdAt: typeof dbPost.createdAt === 'string' ? dbPost.createdAt : dbPost.createdAt.toISOString(),
       votes: {

@@ -33,20 +33,7 @@ export async function GET(request: NextRequest) {
     // Get comments from Supabase
     const { data: commentsData, error: commentsError } = await supabaseAdmin
       .from('comments')
-      .select(`
-        id,
-        content,
-        galleryImageId,
-        authorId,
-        createdAt,
-        parentId,
-        author:users!comments_authorId_fkey(
-          id,
-          username,
-          avatar,
-          title
-        )
-      `)
+      .select('id, content, galleryImageId, authorId, createdAt, parentId')
       .eq('galleryImageId', imageId)
       .is('parentId', null)
       .order('createdAt', { ascending: false });
@@ -59,15 +46,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Fetch author info in a separate query
+    const authorIds = Array.from(new Set((commentsData || []).map((c: any) => c.authorId).filter(Boolean)));
+    let authorMap = new Map<string, any>();
+    if (authorIds.length > 0) {
+      const { data: authors, error: authorsError } = await supabaseAdmin
+        .from('users')
+        .select('id, username, avatar, title')
+        .in('id', authorIds);
+
+      if (authorsError) {
+        console.error('Error fetching gallery comment authors:', authorsError);
+      } else if (authors) {
+        authorMap = new Map(authors.map((u: any) => [u.id, u]));
+      }
+    }
+
     // Format comments to match expected structure
     const formattedComments = (commentsData || []).map((comment: any) => ({
       id: comment.id,
       content: comment.content,
       author: {
-        id: comment.author?.id || comment.authorId,
-        name: comment.author?.username || 'Unknown',
-        avatar: comment.author?.avatar || null,
-        title: comment.author?.title || null
+        id: comment.authorId,
+        name: authorMap.get(comment.authorId)?.username || 'Unknown',
+        avatar: authorMap.get(comment.authorId)?.avatar || null,
+        title: authorMap.get(comment.authorId)?.title || null
       },
       createdAt: typeof comment.createdAt === 'string'
         ? comment.createdAt
@@ -160,19 +163,7 @@ export async function POST(request: NextRequest) {
         createdAt: now,
         updatedAt: now
       })
-      .select(`
-        id,
-        content,
-        galleryImageId,
-        authorId,
-        createdAt,
-        author:users!comments_authorId_fkey(
-          id,
-          username,
-          avatar,
-          title
-        )
-      `)
+      .select('id, content, galleryImageId, authorId, createdAt')
       .single();
 
     if (createError || !newComment) {
@@ -261,10 +252,10 @@ export async function POST(request: NextRequest) {
         content: newComment.content,
         galleryImageId: newComment.galleryImageId,
         author: {
-          id: newComment.author?.id || author.id,
-          name: newComment.author?.username || author.name,
-          avatar: newComment.author?.avatar || author.avatar || null,
-          title: newComment.author?.title || null
+          id: author.id,
+          name: author.name,
+          avatar: author.avatar || null,
+          title: author.title || null
         },
         createdAt: newComment.createdAt
       },

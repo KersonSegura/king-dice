@@ -16,24 +16,7 @@ export async function GET(request: NextRequest) {
     // Get posts from Supabase (bypassing Prisma cache issue)
     let postsQuery = supabaseAdmin
       .from('posts')
-      .select(`
-        id,
-        title,
-        content,
-        category,
-        authorId,
-        votes,
-        replies,
-        createdAt,
-        updatedAt,
-        author:users!posts_authorId_fkey(
-          id,
-          username,
-          avatar,
-          xp,
-          title
-        )
-      `)
+      .select('id, title, content, category, authorId, votes, replies, createdAt, updatedAt')
       .order('createdAt', { ascending: false });
 
     if (authorId) {
@@ -48,6 +31,22 @@ export async function GET(request: NextRequest) {
     
     if (!dbPosts) {
       return NextResponse.json({ posts: [], cached: false });
+    }
+
+    // Fetch author info separately
+    const authorIds = Array.from(new Set(dbPosts.map((p: any) => p.authorId).filter(Boolean)));
+    let authorMap = new Map<string, any>();
+    if (authorIds.length > 0) {
+      const { data: authors, error: authorsError } = await supabaseAdmin
+        .from('users')
+        .select('id, username, avatar, xp, title')
+        .in('id', authorIds);
+
+      if (authorsError) {
+        console.error('Error fetching post authors:', authorsError);
+      } else if (authors) {
+        authorMap = new Map(authors.map((u: any) => [u.id, u]));
+      }
     }
 
     // Format posts to match expected structure
@@ -65,11 +64,11 @@ export async function GET(request: NextRequest) {
         content: post.content,
         category: post.category,
         author: {
-          id: post.author?.id || post.authorId,
-          name: post.author?.username || 'Unknown',
-          avatar: post.author?.avatar || null,
-          reputation: post.author?.xp ?? 0,
-          title: post.author?.title || null
+          id: post.authorId,
+          name: authorMap.get(post.authorId)?.username || 'Unknown',
+          avatar: authorMap.get(post.authorId)?.avatar || null,
+          reputation: authorMap.get(post.authorId)?.xp ?? 0,
+          title: authorMap.get(post.authorId)?.title || null
         },
         createdAt: typeof post.createdAt === 'string' ? post.createdAt : post.createdAt.toISOString(),
         votes,
@@ -223,23 +222,7 @@ export async function POST(request: NextRequest) {
         createdAt: now,
         updatedAt: now
       })
-      .select(`
-        id,
-        title,
-        content,
-        category,
-        authorId,
-        votes,
-        replies,
-        createdAt,
-        author:users!posts_authorId_fkey(
-          id,
-          username,
-          avatar,
-          xp,
-          title
-        )
-      `)
+      .select('id, title, content, category, authorId, votes, replies, createdAt')
       .single();
     
     if (createError || !newPost) {
@@ -253,11 +236,11 @@ export async function POST(request: NextRequest) {
       content: newPost.content,
       category: newPost.category,
       author: {
-        id: newPost.author?.id || author.id,
-        name: newPost.author?.username || author.name,
-        avatar: newPost.author?.avatar || author.avatar,
-        reputation: newPost.author?.xp ?? author.reputation || 0,
-        title: newPost.author?.title || author.title || null
+        id: author.id,
+        name: author.name,
+        avatar: author.avatar || null,
+        reputation: author.reputation || 0,
+        title: author.title || null
       },
       createdAt: newPost.createdAt,
       votes: { upvotes: 0, downvotes: 0 },

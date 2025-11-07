@@ -33,21 +33,7 @@ export async function GET(
     // Get comments from Supabase
     const { data: comments, error: commentsError } = await supabaseAdmin
       .from('comments')
-      .select(`
-        id,
-        content,
-        postId,
-        authorId,
-        createdAt,
-        updatedAt,
-        author:users!comments_authorId_fkey(
-          id,
-          username,
-          avatar,
-          xp,
-          title
-        )
-      `)
+      .select('id, content, postId, authorId, createdAt, updatedAt')
       .eq('postId', postId)
       .order('createdAt', { ascending: sortBy !== 'newest' });
     
@@ -56,16 +42,31 @@ export async function GET(
     }
 
     // Format comments
+    const commentAuthorIds = Array.from(new Set((comments || []).map((c: any) => c.authorId).filter(Boolean)));
+    let commentAuthorMap = new Map<string, any>();
+    if (commentAuthorIds.length > 0) {
+      const { data: commentAuthors, error: commentAuthorsError } = await supabaseAdmin
+        .from('users')
+        .select('id, username, avatar, xp, title')
+        .in('id', commentAuthorIds);
+
+      if (commentAuthorsError) {
+        console.error('Error fetching comment authors:', commentAuthorsError);
+      } else if (commentAuthors) {
+        commentAuthorMap = new Map(commentAuthors.map((u: any) => [u.id, u]));
+      }
+    }
+
     const formattedComments = (comments || []).map((comment: any) => ({
       id: comment.id,
       content: comment.content,
       postId: comment.postId,
       author: {
-        id: comment.author?.id || comment.authorId,
-        name: comment.author?.username || 'Unknown',
-        avatar: comment.author?.avatar || null,
-        reputation: comment.author?.xp ?? 0,
-        title: comment.author?.title || null
+        id: comment.authorId,
+        name: commentAuthorMap.get(comment.authorId)?.username || 'Unknown',
+        avatar: commentAuthorMap.get(comment.authorId)?.avatar || null,
+        reputation: commentAuthorMap.get(comment.authorId)?.xp ?? 0,
+        title: commentAuthorMap.get(comment.authorId)?.title || null
       },
       createdAt: typeof comment.createdAt === 'string' ? comment.createdAt : comment.createdAt.toISOString(),
       votes: { upvotes: 0, downvotes: 0 }, // Will be loaded from Supabase
@@ -103,14 +104,7 @@ export async function POST(
     // Verify post exists in Supabase
     const { data: post, error: postError } = await supabaseAdmin
       .from('posts')
-      .select(`
-        id,
-        authorId,
-        author:users!posts_authorId_fkey(
-          id,
-          username
-        )
-      `)
+      .select('id, authorId')
       .eq('id', postId)
       .single();
     
@@ -154,20 +148,7 @@ export async function POST(
         createdAt: now,
         updatedAt: now
       })
-      .select(`
-        id,
-        content,
-        postId,
-        authorId,
-        createdAt,
-        author:users!comments_authorId_fkey(
-          id,
-          username,
-          avatar,
-          xp,
-          title
-        )
-      `)
+      .select('id, content, postId, authorId, createdAt')
       .single();
     
     if (createError || !newComment) {
@@ -203,7 +184,7 @@ export async function POST(
 
     // Notify post author (if different from commenter)
     try {
-      const postAuthorId = post.author?.id || post.authorId;
+      const postAuthorId = post.authorId;
       if (postAuthorId && postAuthorId !== author.id) {
         await createNotification({
           userId: postAuthorId,
@@ -223,11 +204,11 @@ export async function POST(
       content: newComment.content,
       postId: newComment.postId,
       author: {
-        id: newComment.author?.id || author.id,
-        name: newComment.author?.username || author.name,
-        avatar: newComment.author?.avatar || author.avatar || null,
-        reputation: newComment.author?.xp ?? 0,
-        title: newComment.author?.title || null
+        id: author.id,
+        name: author.name,
+        avatar: author.avatar || null,
+        reputation: author.reputation || 0,
+        title: author.title || null
       },
       createdAt: typeof newComment.createdAt === 'string' ? newComment.createdAt : newComment.createdAt?.toISOString?.() || now,
       votes: { upvotes: 0, downvotes: 0 },
