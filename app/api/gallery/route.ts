@@ -1,9 +1,212 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { prisma } from '@/lib/prisma';
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+type GalleryRow = Record<string, any>;
+
+async function detectCamelCase(): Promise<boolean> {
+  try {
+    const { data } = await supabaseAdmin.from('gallery_images').select('*').limit(1);
+    if (data && data.length > 0) {
+      return Object.prototype.hasOwnProperty.call(data[0], 'imageUrl');
+    }
+  } catch (error) {
+    console.error('Error detecting gallery_images casing:', error);
+  }
+  return true;
+}
+
+function parseVotes(value: any): { upvotes: number; downvotes: number } {
+  if (!value) {
+    return { upvotes: 0, downvotes: 0 };
+  }
+  if (typeof value === 'object') {
+    const upvotes = Number(value.upvotes) || 0;
+    const downvotes = Number(value.downvotes) || 0;
+    return { upvotes, downvotes };
+  }
+  try {
+    const parsed = JSON.parse(String(value));
+    return {
+      upvotes: Number(parsed?.upvotes) || 0,
+      downvotes: Number(parsed?.downvotes) || 0
+    };
+  } catch (error) {
+    console.error('Error parsing votes payload:', error);
+    return { upvotes: 0, downvotes: 0 };
+  }
+}
+
+function rewriteStorageUrl(origin: string | undefined, url: string | null | undefined): string | null | undefined {
+  if (!url) return url;
+  if (!origin) return url;
+
+  if (url.startsWith('http') && url.includes('.supabase.co')) {
+    return url;
+  }
+
+  if (url.startsWith('/gallery/')) {
+    const rel = url.replace('/gallery/', '');
+    return `${origin}/storage/v1/object/public/gallery/${rel}`;
+  }
+
+  if (url.startsWith('/rules-images/')) {
+    const rel = url.replace('/rules-images/', '');
+    return `${origin}/storage/v1/object/public/rules-images/${rel}`;
+  }
+
+  if (url.startsWith('/uploads/')) {
+    const filename = url.replace('/uploads/', '');
+    return `${origin}/storage/v1/object/public/uploads/uploads/${filename}`;
+  }
+
+  return url;
+}
+
+function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
+  const authorId = row.authorId ?? row.author_id ?? row.userId ?? row.user_id ?? null;
+  const authorData = authorMap.get(authorId || '') || {};
+
+  const createdAt = row.createdAt ?? row.created_at ?? new Date().toISOString();
+  const updatedAt = row.updatedAt ?? row.updated_at ?? createdAt;
+
+  const imageUrl = row.imageUrl ?? row.image_url ?? null;
+  const thumbnailUrl = row.thumbnailUrl ?? row.thumbnail_url ?? imageUrl;
+  const category = row.category ?? 'uncategorized';
+  const title = row.title ?? (category === 'collections' ? 'Collection Photo' : 'Gallery Image');
+
+  return {
+    id: row.id,
+    title,
+    description: row.description ?? '',
+    imageUrl,
+    thumbnailUrl,
+    category,
+    author: {
+      id: authorId,
+      name: authorData.username || authorData.name || 'Unknown',
+      avatar: authorData.avatar ?? null,
+      reputation: authorData.xp ?? authorData.reputation ?? 0,
+      title: authorData.title ?? null,
+      isVerified: authorData.isVerified ?? authorData.is_verified ?? false,
+      isAdmin: authorData.isAdmin ?? authorData.is_admin ?? false
+    },
+    createdAt: typeof createdAt === 'string' ? createdAt : new Date(createdAt).toISOString(),
+    votes: parseVotes(row.votes),
+    views: row.views ?? row.views_count ?? 0,
+    downloads: row.downloads ?? row.downloads_count ?? 0,
+    comments: row.comments ?? row.comments_count ?? 0,
+    isModerated: true,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    weeklyLikes: {
+      likesReceivedThisWeek: 0,
+      weekId: ''
+    }
+  };
+}
+
+function buildCategories(images: any[]) {
+  return [
+    {
+      id: 'dice-throne',
+      name: 'Dice Throne',
+      description: 'This is where legends roll. Showcase your custom die and claim your place in the Dice Throne.',
+      icon: 'ThroneIcon.svg',
+      color: 'bg-red-100 text-red-600',
+      imageCount: images.filter(img => img.category === 'dice-throne').length
+    },
+    {
+      id: 'the-kings-card',
+      name: "The King's Card",
+      description: 'Present your relic to the court. Each week, one card ascends to the King\'s side.',
+      icon: 'KingsCard.svg',
+      color: 'bg-pink-100 text-pink-600',
+      imageCount: images.filter(img => img.category === 'the-kings-card').length
+    },
+    {
+      id: 'collections',
+      name: 'Game Collections',
+      description: 'Show off your board game collections',
+      icon: 'CollectionIcon.svg',
+      color: 'bg-blue-100 text-blue-600',
+      imageCount: images.filter(img => img.category === 'collections').length
+    },
+    {
+      id: 'setups',
+      name: 'Game Setups',
+      description: 'Share your table layouts and game setups before the action begins',
+      icon: 'SetupsIcon.svg',
+      color: 'bg-green-100 text-green-600',
+      imageCount: images.filter(img => img.category === 'setups').length
+    },
+    {
+      id: 'events',
+      name: 'Game Events',
+      description: 'Board game events and meetups',
+      icon: 'EventsIcon.svg',
+      color: 'bg-purple-100 text-purple-600',
+      imageCount: images.filter(img => img.category === 'events').length
+    }
+  ];
+}
+
+function generateCuid(): string {
+  const timestamp = Date.now().toString(36);
+  const counter = Math.floor(Math.random() * 36).toString(36);
+  const fingerprint = Math.floor(Math.random() * 36).toString(36);
+  const random = Math.random().toString(36).substring(2, 15);
+  return `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+}
+
+function buildInsertPayload(useCamelCase: boolean, payload: {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  thumbnailUrl: string;
+  category: string;
+  authorId: string;
+  now: string;
+}): Record<string, any> {
+  const base = {
+    id: payload.id,
+    title: payload.title,
+    description: payload.description,
+    votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
+    comments: 0,
+    views: 0,
+    downloads: 0,
+    category: payload.category
+  };
+
+  if (useCamelCase) {
+    return {
+      ...base,
+      imageUrl: payload.imageUrl,
+      thumbnailUrl: payload.thumbnailUrl,
+      authorId: payload.authorId,
+      createdAt: payload.now,
+      updatedAt: payload.now
+    };
+  }
+
+  return {
+    ...base,
+    image_url: payload.imageUrl,
+    thumbnail_url: payload.thumbnailUrl,
+    author_id: payload.authorId,
+    created_at: payload.now,
+    updated_at: payload.now
+  };
+}
+
+function selectColumns(useCamelCase: boolean): string {
+  if (useCamelCase) {
+    return 'id, title, description, imageUrl, thumbnailUrl, category, authorId, votes, comments, views, downloads, createdAt, updatedAt';
+  }
+  return 'id, title, description, image_url, thumbnail_url, category, author_id, votes, comments, views, downloads, views_count, downloads_count, comments_count, created_at, updated_at';
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,291 +215,93 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || '';
     const userId = searchParams.get('userId') || '';
 
-    console.log('Fetching gallery images from Supabase (bypassing Prisma due to cache issues)...');
+    const useCamelCase = await detectCamelCase();
+    const orderColumn = useCamelCase ? 'createdAt' : 'created_at';
 
-    // Fetch directly from Supabase instead of using Prisma
-    let dbImages;
-    try {
-      const { data: supabaseImages, error: supabaseError } = await supabaseAdmin
-        .from('gallery_images')
-        .select(`
-          id,
-          title,
-          description,
-          imageUrl,
-          thumbnailUrl,
-          category,
-          authorId,
-          votes,
-          views,
-          comments,
-          createdAt,
-          updatedAt,
-          author:users!gallery_images_authorId_fkey(
-            id,
-            username,
-            avatar,
-            xp,
-            title,
-            isVerified,
-            isAdmin
-          )
-        `)
-        .order('createdAt', { ascending: false });
-      
-      if (supabaseError) {
-        throw supabaseError;
-      }
-      
-      // Map Supabase response to expected format
-      dbImages = (supabaseImages || []).map((img: any) => ({
-        id: img.id,
-        title: img.title,
-        description: img.description,
-        imageUrl: img.imageUrl,
-        thumbnailUrl: img.thumbnailUrl,
-        category: img.category,
-        votes: img.votes,
-        views: img.views,
-        comments: img.comments,
-        createdAt: new Date(img.createdAt),
-        updatedAt: new Date(img.updatedAt),
-        author: img.author ? {
-          ...img.author,
-          reputation: img.author?.xp ?? 0
-        } : {
-          id: img.authorId,
-          username: 'Unknown',
-          avatar: null,
-          reputation: 0,
-          title: null,
-          isVerified: false,
-          isAdmin: false
-        }
-      }));
-      
-      console.log(`✅ Fetched ${dbImages.length} images from Supabase`);
-    } catch (dbError) {
-      console.error('❌ Supabase query error:', dbError);
-      console.error('Error details:', JSON.stringify(dbError, null, 2));
-      console.error('Error message:', dbError instanceof Error ? dbError.message : String(dbError));
-      console.error('Error stack:', dbError instanceof Error ? dbError.stack : 'No stack');
-      
-      // Return empty gallery if database fails
-      const categories = [
-        {
-          id: 'dice-throne',
-          name: 'Dice Throne',
-          description: 'This is where legends roll. Showcase your custom die and claim your place in the Dice Throne.',
-          icon: 'ThroneIcon.svg',
-          color: 'bg-red-100 text-red-600',
-          imageCount: 0
-        },
-        {
-          id: 'the-kings-card',
-          name: "The King's Card",
-          description: 'Present your relic to the court. Each week, one card ascends to the King\'s side.',
-          icon: 'KingsCard.svg',
-          color: 'bg-pink-100 text-pink-600',
-          imageCount: 0
-        },
-        {
-          id: 'collections',
-          name: 'Game Collections',
-          description: 'Show off your board game collections',
-          icon: 'CollectionIcon.svg',
-          color: 'bg-blue-100 text-blue-600',
-          imageCount: 0
-        },
-        {
-          id: 'setups',
-          name: 'Game Setups',
-          description: 'Share your table layouts and game setups before the action begins',
-          icon: 'SetupsIcon.svg',
-          color: 'bg-green-100 text-green-600',
-          imageCount: 0
-        },
-        {
-          id: 'events',
-          name: 'Game Events',
-          description: 'Board game events and meetups',
-          icon: 'EventsIcon.svg',
-          color: 'bg-purple-100 text-purple-600',
-          imageCount: 0
-        }
-      ];
-      return NextResponse.json({
-        images: [],
-        categories
-      });
+    const { data: galleryRows, error: galleryError } = await supabaseAdmin
+      .from('gallery_images')
+      .select('*')
+      .order(orderColumn, { ascending: false });
+
+    if (galleryError) {
+      console.error('Supabase gallery query error:', galleryError);
+      return NextResponse.json({ images: [], categories: buildCategories([]) });
     }
 
-    // Format to match expected structure
-    let images = dbImages.map(img => {
-      let votes = { upvotes: 0, downvotes: 0 };
-      try {
-        votes = JSON.parse(img.votes);
-      } catch (e) {
-        console.error('Error parsing votes for image:', img.id, e);
-      }
+    const data = galleryRows || [];
+    const authorIds = Array.from(new Set(
+      data
+        .map(row => row.authorId ?? row.author_id ?? row.userId ?? row.user_id)
+        .filter(Boolean)
+    ));
 
-      return {
-        id: img.id,
-        title: img.title,
-        description: img.description || '',
-        imageUrl: img.imageUrl,
-        thumbnailUrl: img.thumbnailUrl,
-        category: img.category,
-        author: {
-          id: img.author.id,
-          name: img.author.username,
-          avatar: img.author.avatar,
-          reputation: img.author.reputation,
-          title: img.author.title
-        },
-        createdAt: img.createdAt.toISOString(),
-        votes,
-        views: img.views,
-        downloads: img.downloads,
-        comments: img.comments,
-        isModerated: true,
-        tags: [],
-        weeklyLikes: {
-          likesReceivedThisWeek: 0,
-          weekId: ''
+    let authorMap = new Map<string, any>();
+    if (authorIds.length > 0) {
+      try {
+        const { data: authors, error: authorError } = await supabaseAdmin
+          .from('users')
+          .select('id, username, avatar, xp, title, isVerified, isAdmin')
+          .in('id', authorIds as string[]);
+        if (authorError) {
+          console.error('Error fetching gallery authors:', authorError);
+        } else if (authors) {
+          authorMap = new Map(authors.map(author => [author.id, author]));
         }
-      };
-    });
+      } catch (error) {
+        console.error('Unexpected error fetching gallery authors:', error);
+      }
+    }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 
-    if (supabaseUrl) {
-      images = images.map(image => {
-        const updated = { ...image } as any;
-        const rewrite = (url: string | undefined): string | undefined => {
-          if (!url) return url;
-
-          // If already absolute Supabase URL, fix path if needed
-          if (url.startsWith('http') && url.includes('.supabase.co')) {
-            return url;
-          }
-
-          // /gallery/filename -> Supabase gallery bucket
-          if (url.startsWith('/gallery/')) {
-            const rel = url.replace('/gallery/', '');
-            return `${supabaseUrl}/storage/v1/object/public/gallery/${rel}`;
-          }
-
-          // /rules-images/file -> Supabase rules-images bucket
-          if (url.startsWith('/rules-images/')) {
-            const rel = url.replace('/rules-images/', '');
-            return `${supabaseUrl}/storage/v1/object/public/rules-images/${rel}`;
-          }
-
-          // /uploads/filename -> Supabase uploads bucket (legacy nested path)
-          if (url.startsWith('/uploads/')) {
-            const filename = url.replace('/uploads/', '');
-            return `${supabaseUrl}/storage/v1/object/public/uploads/uploads/${filename}`;
-          }
-
-          return url;
-        };
-
-        const originalImageUrl = updated.imageUrl;
-        const originalThumbUrl = updated.thumbnailUrl;
-
-        updated.imageUrl = rewrite(updated.imageUrl) || updated.imageUrl;
-        updated.thumbnailUrl = rewrite(updated.thumbnailUrl) || updated.thumbnailUrl;
-
-        // Rewrite author avatar if stored locally
-        if (updated.author && typeof updated.author === 'object') {
-          updated.author.avatar = rewrite(updated.author.avatar) || updated.author.avatar;
+    let images = data
+      .map(row => mapGalleryRow(row, authorMap))
+      .map(image => {
+        const rewritten = { ...image };
+        rewritten.imageUrl = rewriteStorageUrl(supabaseUrl, image.imageUrl);
+        rewritten.thumbnailUrl = rewriteStorageUrl(supabaseUrl, image.thumbnailUrl);
+        if (rewritten.author) {
+          rewritten.author.avatar = rewriteStorageUrl(supabaseUrl, rewritten.author.avatar) || rewritten.author.avatar;
         }
-        return updated;
+        return rewritten;
       });
-    }
 
-    // Filter by category
     if (category && category !== 'all') {
       images = images.filter(image => image.category === category);
     }
 
-    // Filter by author
     if (author) {
       images = images.filter(image => image.author.id === author || image.author.name === author);
     }
 
-    // Add user vote information from Supabase if userId is provided
-    if (userId) {
+    if (userId && images.length > 0) {
       const imageIds = images.map(img => img.id);
-      if (imageIds.length > 0) {
+      try {
         const { data: votes, error } = await supabaseAdmin
           .from('gallery_votes')
           .select('gallery_image_id, vote_type')
           .eq('user_id', userId)
           .in('gallery_image_id', imageIds);
-        if (error) {
-          console.error('Error fetching user gallery votes:', error);
+        if (!error && votes) {
+          const idToVote = new Map<string, string>();
+          votes.forEach(vote => idToVote.set(vote.gallery_image_id, vote.vote_type));
+          images = images.map(image => ({
+            ...image,
+            userVote: idToVote.get(image.id) ?? null
+          }));
+        } else if (error) {
+          console.error('Error fetching gallery votes for user:', error);
         }
-        const idToVote = new Map<string, string>();
-        (votes || []).forEach(v => idToVote.set(v.gallery_image_id, v.vote_type));
-        images = images.map(img => ({
-          ...img,
-          userVote: (idToVote.get(img.id) as any) || null
-        }));
+      } catch (error) {
+        console.error('Unexpected error fetching gallery votes:', error);
       }
     }
 
-    // Sort by creation date (newest first)
     images.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    // Define categories (static data)
-    const categories = [
-      {
-        id: 'dice-throne',
-        name: 'Dice Throne',
-        description: 'This is where legends roll. Showcase your custom die and claim your place in the Dice Throne.',
-        icon: 'ThroneIcon.svg',
-        color: 'bg-red-100 text-red-600',
-        imageCount: images.filter(img => img.category === 'dice-throne').length
-      },
-      {
-        id: 'the-kings-card',
-        name: "The King's Card",
-        description: 'Present your relic to the court. Each week, one card ascends to the King\'s side.',
-        icon: 'KingsCard.svg',
-        color: 'bg-pink-100 text-pink-600',
-        imageCount: images.filter(img => img.category === 'the-kings-card').length
-      },
-      {
-        id: 'collections',
-        name: 'Game Collections',
-        description: 'Show off your board game collections',
-        icon: 'CollectionIcon.svg',
-        color: 'bg-blue-100 text-blue-600',
-        imageCount: images.filter(img => img.category === 'collections').length
-      },
-      {
-        id: 'setups',
-        name: 'Game Setups',
-        description: 'Share your table layouts and game setups before the action begins',
-        icon: 'SetupsIcon.svg',
-        color: 'bg-green-100 text-green-600',
-        imageCount: images.filter(img => img.category === 'setups').length
-      },
-      {
-        id: 'events',
-        name: 'Game Events',
-        description: 'Board game events and meetups',
-        icon: 'EventsIcon.svg',
-        color: 'bg-purple-100 text-purple-600',
-        imageCount: images.filter(img => img.category === 'events').length
-      }
-    ];
 
     return NextResponse.json({
       images,
-      categories
+      categories: buildCategories(images)
     });
   } catch (error) {
     console.error('Error fetching gallery images:', error);
@@ -309,66 +314,61 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { imageUrl, category, description, authorId } = await request.json();
+    const { imageUrl, category, description, authorId, title } = await request.json();
 
     if (!imageUrl || !category || !description || !authorId) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Create new image in database
-    const newImage = await prisma.galleryImage.create({
-      data: {
-        title: category === 'Collections' ? 'Collection Photo' : 'Favorite Card',
-        description,
-        imageUrl,
-        thumbnailUrl: imageUrl,
-        category,
-        authorId
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        }
-      }
+    const useCamelCase = await detectCamelCase();
+    const now = new Date().toISOString();
+    const id = generateCuid();
+
+    const insertPayload = buildInsertPayload(useCamelCase, {
+      id,
+      title: title || (category === 'collections' ? 'Collection Photo' : 'Gallery Image'),
+      description: description || '',
+      imageUrl,
+      thumbnailUrl: imageUrl,
+      category,
+      authorId,
+      now
     });
 
-    // Format response
-    const formattedImage = {
-      id: newImage.id,
-      imageUrl: newImage.imageUrl,
-      thumbnailUrl: newImage.thumbnailUrl,
-      title: newImage.title,
-      description: newImage.description,
-      category: newImage.category,
-      author: {
-        id: newImage.author.id,
-        name: newImage.author.username,
-        avatar: newImage.author.avatar,
-        reputation: newImage.author.reputation
-      },
-      createdAt: newImage.createdAt.toISOString(),
-      votes: (() => {
-        try {
-          return JSON.parse(newImage.votes);
-        } catch (e) {
-          return { upvotes: 0, downvotes: 0 };
-        }
-      })(),
-      comments: newImage.comments
-    };
+    const { data: insertedRow, error: insertError } = await supabaseAdmin
+      .from('gallery_images')
+      .insert(insertPayload)
+      .select(selectColumns(useCamelCase))
+      .maybeSingle();
 
-    console.log(`Gallery image created: ${newImage.id} by ${newImage.author.username}`);
+    if (insertError || !insertedRow) {
+      console.error('Error inserting gallery image:', insertError);
+      return NextResponse.json({ error: 'Failed to create gallery image' }, { status: 500 });
+    }
 
-    return NextResponse.json({ image: formattedImage });
+    const authorIds = [authorId];
+    let authorMap = new Map<string, any>();
+    try {
+      const { data: authors } = await supabaseAdmin
+        .from('users')
+        .select('id, username, avatar, xp, title, isVerified, isAdmin')
+        .in('id', authorIds);
+      if (authors) {
+        authorMap = new Map(authors.map(author => [author.id, author]));
+      }
+    } catch (error) {
+      console.error('Error fetching author for gallery insert:', error);
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const mapped = mapGalleryRow(insertedRow, authorMap);
+    mapped.imageUrl = rewriteStorageUrl(supabaseUrl, mapped.imageUrl);
+    mapped.thumbnailUrl = rewriteStorageUrl(supabaseUrl, mapped.thumbnailUrl);
+    if (mapped.author) {
+      mapped.author.avatar = rewriteStorageUrl(supabaseUrl, mapped.author.avatar) || mapped.author.avatar;
+    }
+
+    return NextResponse.json({ image: mapped });
   } catch (error) {
     console.error('Error creating gallery image:', error);
     return NextResponse.json(
