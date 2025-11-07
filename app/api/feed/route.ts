@@ -4,6 +4,100 @@ import { supabaseAdmin } from '@/lib/supabase';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+type AnyRow = Record<string, any>;
+
+function parseVotes(votes: any) {
+  if (!votes) return { upvotes: 0, downvotes: 0 };
+  if (typeof votes === 'object') {
+    return {
+      upvotes: Number(votes.upvotes) || 0,
+      downvotes: Number(votes.downvotes) || 0
+    };
+  }
+  try {
+    const parsed = JSON.parse(String(votes));
+    return {
+      upvotes: Number(parsed?.upvotes) || 0,
+      downvotes: Number(parsed?.downvotes) || 0
+    };
+  } catch {
+    return { upvotes: 0, downvotes: 0 };
+  }
+}
+
+function rewriteStorageUrl(origin: string | undefined, url: string | null | undefined) {
+  if (!url) return url;
+  if (!origin) return url;
+  if (url.startsWith('http') && url.includes('.supabase.co')) return url;
+  if (url.startsWith('/gallery/')) {
+    const rel = url.replace('/gallery/', '');
+    return `${origin}/storage/v1/object/public/gallery/${rel}`;
+  }
+  if (url.startsWith('/rules-images/')) {
+    const rel = url.replace('/rules-images/', '');
+    return `${origin}/storage/v1/object/public/rules-images/${rel}`;
+  }
+  if (url.startsWith('/uploads/')) {
+    const filename = url.replace('/uploads/', '');
+    return `${origin}/storage/v1/object/public/uploads/uploads/${filename}`;
+  }
+  return url;
+}
+
+function mapPostRow(row: AnyRow, authorMap: Map<string, any>) {
+  const authorId = row.authorId ?? row.author_id ?? null;
+  const createdAt = row.createdAt ?? row.created_at ?? new Date().toISOString();
+  const votes = parseVotes(row.votes);
+  const author = authorMap.get(authorId || '') || {};
+
+  return {
+    id: row.id,
+    title: row.title ?? '',
+    content: row.content ?? '',
+    category: row.category ?? 'general',
+    author: {
+      id: authorId,
+      name: author.username || author.name || 'Unknown',
+      avatar: author.avatar || null,
+      reputation: author.xp ?? author.reputation ?? 0,
+      title: author.title ?? null
+    },
+    createdAt: typeof createdAt === 'string' ? createdAt : new Date(createdAt).toISOString(),
+    votes,
+    replies: row.replies ?? row.replies_count ?? 0
+  };
+}
+
+function mapGalleryRow(row: AnyRow, authorMap: Map<string, any>, origin: string | undefined) {
+  const authorId = row.authorId ?? row.author_id ?? null;
+  const createdAt = row.createdAt ?? row.created_at ?? new Date().toISOString();
+  const imageUrl = rewriteStorageUrl(origin, row.imageUrl ?? row.image_url ?? null);
+  const thumbnailUrl = rewriteStorageUrl(origin, row.thumbnailUrl ?? row.thumbnail_url ?? imageUrl);
+  const votes = parseVotes(row.votes);
+  const author = authorMap.get(authorId || '') || {};
+
+  return {
+    id: row.id,
+    title: row.title ?? '',
+    description: row.description ?? '',
+    imageUrl,
+    thumbnailUrl,
+    category: row.category ?? 'uncategorized',
+    author: {
+      id: authorId,
+      name: author.username || author.name || 'Unknown',
+      avatar: author.avatar || null,
+      reputation: author.xp ?? author.reputation ?? 0,
+      title: author.title ?? null
+    },
+    createdAt: typeof createdAt === 'string' ? createdAt : new Date(createdAt).toISOString(),
+    votes,
+    views: row.views ?? row.views_count ?? 0,
+    downloads: row.downloads ?? row.downloads_count ?? 0,
+    comments: row.comments ?? row.comments_count ?? 0
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -15,125 +109,66 @@ export async function GET(request: NextRequest) {
 
     let followingIds: string[] = [];
 
-    // Fetch posts from Supabase
-    let postsData: any[] = [];
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+
+    let postsRows: AnyRow[] = [];
+    let galleryRows: AnyRow[] = [];
+
     try {
-      const { data, error } = await supabaseAdmin
-        .from('posts')
-        .select('id, title, content, category, authorId, votes, replies, createdAt')
-        .order('createdAt', { ascending: false });
+      const { data, error } = await supabaseAdmin.from('posts').select('*');
       if (error) {
         console.error('Error fetching posts for feed:', error);
       } else if (data) {
-        postsData = data;
+        postsRows = data;
       }
     } catch (err) {
       console.error('Unexpected error fetching posts for feed:', err);
     }
 
-    // Fetch gallery images from Supabase
-    let galleryData: any[] = [];
     try {
-      const { data, error } = await supabaseAdmin
-        .from('gallery_images')
-        .select('id, title, description, imageUrl, thumbnailUrl, category, authorId, votes, views, downloads, comments, createdAt')
-        .order('createdAt', { ascending: false });
+      const { data, error } = await supabaseAdmin.from('gallery_images').select('*');
       if (error) {
         console.error('Error fetching gallery images for feed:', error);
       } else if (data) {
-        galleryData = data;
+        galleryRows = data;
       }
     } catch (err) {
       console.error('Unexpected error fetching gallery images for feed:', err);
     }
 
-    // Load author information for all unique authorIds
     const authorIds = Array.from(new Set([
-      ...postsData.map((p: any) => p.authorId).filter(Boolean),
-      ...galleryData.map((g: any) => g.authorId).filter(Boolean)
-    ]));
+      ...postsRows.map(row => row.authorId ?? row.author_id).filter(Boolean),
+      ...galleryRows.map(row => row.authorId ?? row.author_id).filter(Boolean)
+    ] as string[]));
+
     let authorMap = new Map<string, any>();
     if (authorIds.length > 0) {
       try {
         const { data: authors, error: authorsError } = await supabaseAdmin
           .from('users')
-          .select('id, username, avatar, xp, title')
-          .in('id', authorIds);
+          .select('id, username, avatar, xp, title');
         if (authorsError) {
           console.error('Error fetching feed authors:', authorsError);
         } else if (authors) {
-          authorMap = new Map(authors.map((u: any) => [u.id, u]));
+          authorMap = new Map(authors.map(author => [author.id, author]));
         }
       } catch (err) {
         console.error('Unexpected error fetching feed authors:', err);
       }
     }
 
-    // Format posts
-    const posts = postsData.map(post => {
-      let votes = { upvotes: 0, downvotes: 0 };
-      try {
-        votes = JSON.parse(post.votes || '{}');
-      } catch (e) {
-        console.error('Error parsing votes for post:', post.id);
-      }
-      const author = authorMap.get(post.authorId) || {};
+    const posts = postsRows
+      .map(row => mapPostRow(row, authorMap))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-      return {
-        id: post.id,
-        title: post.title,
-        content: post.content,
-        category: post.category,
-        author: {
-          id: post.authorId,
-          name: author.username || 'Unknown',
-          avatar: author.avatar || null,
-          reputation: author.xp ?? author.reputation ?? 0,
-          title: author.title || null
-        },
-        createdAt: typeof post.createdAt === 'string' ? post.createdAt : post.createdAt?.toISOString?.() || new Date().toISOString(),
-        votes,
-        replies: post.replies || 0
-      };
-    });
+    const galleryImages = galleryRows
+      .map(row => mapGalleryRow(row, authorMap, supabaseUrl))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    // Format gallery images
-    const galleryImages = galleryData.map(img => {
-      let votes = { upvotes: 0, downvotes: 0 };
-      try {
-        votes = JSON.parse(img.votes || '{}');
-      } catch (e) {
-        console.error('Error parsing votes for image:', img.id);
-      }
-      const author = authorMap.get(img.authorId) || {};
-
-      return {
-        id: img.id,
-        title: img.title,
-        description: img.description || '',
-        imageUrl: img.imageUrl,
-        thumbnailUrl: img.thumbnailUrl,
-        category: img.category,
-        author: {
-          id: img.authorId,
-          name: author.username || 'Unknown',
-          avatar: author.avatar || null,
-          reputation: author.xp ?? author.reputation ?? 0,
-          title: author.title || null
-        },
-        createdAt: typeof img.createdAt === 'string' ? img.createdAt : img.createdAt?.toISOString?.() || new Date().toISOString(),
-        votes,
-        views: img.views || 0,
-        downloads: img.downloads || 0,
-        comments: img.comments || 0
-      };
-    });
-
-    // Merge feed items
     const allItems = [
       ...posts.map(post => ({
         id: post.id,
-        type: 'post',
+        type: 'post' as const,
         title: post.title,
         content: post.content,
         author: {
@@ -154,7 +189,7 @@ export async function GET(request: NextRequest) {
       })),
       ...galleryImages.map(image => ({
         id: image.id,
-        type: 'gallery',
+        type: 'gallery' as const,
         title: image.title,
         content: image.description,
         imageUrl: image.imageUrl,
@@ -187,7 +222,6 @@ export async function GET(request: NextRequest) {
       })
       .slice(offset, offset + limit);
 
-    // User votes lookups (if authenticated)
     let userVotesMap: Record<string, { vote_type: string }> = {};
     if (userId) {
       const postIds = sortedItems.filter(i => i.type === 'post').map(i => i.id);

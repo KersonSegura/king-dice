@@ -13,8 +13,10 @@ async function detectCommentCasing() {
     if (data && data.length > 0) {
       return Object.prototype.hasOwnProperty.call(data[0], 'galleryImageId');
     }
-  } catch {}
-  return true; // default to camelCase if unsure
+  } catch (error) {
+    console.error('detectCommentCasing error:', error);
+  }
+  return false; // default to snake_case if unsure
 }
 
 function mapCommentRow(row: any) {
@@ -65,17 +67,36 @@ export async function GET(request: NextRequest) {
 
     // Determine column casing
     const useCamelCase = await detectCommentCasing();
-    const selectColumns = useCamelCase
-      ? 'id, content, galleryImageId, authorId, createdAt'
-      : 'id, content, gallery_image_id, author_id, created_at';
-    const filterColumn = useCamelCase ? 'galleryImageId' : 'gallery_image_id';
-    const orderColumn = useCamelCase ? 'createdAt' : 'created_at';
+    const selectColumnsCamel = 'id, content, galleryImageId, authorId, createdAt';
+    const selectColumnsSnake = 'id, content, gallery_image_id, author_id, created_at';
+    const filterColumnCamel = 'galleryImageId';
+    const filterColumnSnake = 'gallery_image_id';
+    const orderColumnCamel = 'createdAt';
+    const orderColumnSnake = 'created_at';
 
-    const { data: commentsData, error: commentsError } = await supabaseAdmin
-      .from('comments')
-      .select(selectColumns)
-      .eq(filterColumn, imageId)
-      .order(orderColumn, { ascending: false });
+    const runQuery = async (useCamel: boolean) => {
+      const selectColumns = useCamel ? selectColumnsCamel : selectColumnsSnake;
+      const filterColumn = useCamel ? filterColumnCamel : filterColumnSnake;
+      const orderColumn = useCamel ? orderColumnCamel : orderColumnSnake;
+      return supabaseAdmin
+        .from('comments')
+        .select(selectColumns)
+        .eq(filterColumn, imageId)
+        .order(orderColumn, { ascending: false });
+    };
+
+    let commentsData: any[] | null = null;
+    let commentsError: any = null;
+
+    const initial = await runQuery(useCamelCase);
+    commentsData = initial.data || null;
+    commentsError = initial.error || null;
+
+    if (commentsError && commentsError.code === '42703') {
+      const fallback = await runQuery(false);
+      commentsData = fallback.data || null;
+      commentsError = fallback.error || null;
+    }
 
     if (commentsError) {
       console.error('Error fetching gallery comments:', commentsError);
@@ -144,36 +165,41 @@ export async function POST(request: NextRequest) {
     const random = Math.random().toString(36).substring(2, 15);
     const generatedId = `c${timestampCuid}${counter}${fingerprint}${random}`.substring(0, 25);
 
-    const insertPayload = useCamelCase
-      ? {
-          id: generatedId,
-          content: content.trim(),
-          authorId: author.id,
-          galleryImageId: imageId,
-          parentId: null,
-          createdAt: now,
-          updatedAt: now
-        }
-      : {
-          id: generatedId,
-          content: content.trim(),
-          author_id: author.id,
-          gallery_image_id: imageId,
-          parent_id: null,
-          created_at: now,
-          updated_at: now
-        };
+    const insertCamel = {
+      id: generatedId,
+      content: content.trim(),
+      authorId: author.id,
+      galleryImageId: imageId,
+      parentId: null,
+      createdAt: now,
+      updatedAt: now
+    };
+    const insertSnake = {
+      id: generatedId,
+      content: content.trim(),
+      author_id: author.id,
+      gallery_image_id: imageId,
+      parent_id: null,
+      created_at: now,
+      updated_at: now
+    };
 
-    const selectColumns = useCamelCase
-      ? 'id, content, galleryImageId, authorId, createdAt'
-      : 'id, content, gallery_image_id, author_id, created_at';
+    const selectColumnsCamel = 'id, content, galleryImageId, authorId, createdAt';
+    const selectColumnsSnake = 'id, content, gallery_image_id, author_id, created_at';
 
-    const { data: newComment, error: insertError } = await supabaseAdmin
-      .from('comments')
-      .insert(insertPayload)
-      .select(selectColumns)
-      .single();
+    const runInsert = async (useCamel: boolean) =>
+      supabaseAdmin
+        .from('comments')
+        .insert(useCamel ? insertCamel : insertSnake)
+        .select(useCamel ? selectColumnsCamel : selectColumnsSnake)
+        .single();
 
+    let insertResult = await runInsert(useCamelCase);
+    if (insertResult.error && insertResult.error.code === '42703') {
+      insertResult = await runInsert(false);
+    }
+
+    const { data: newComment, error: insertError } = insertResult;
     if (insertError || !newComment) {
       console.error('Error creating gallery comment:', insertError);
       return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });
