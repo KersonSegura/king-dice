@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -13,40 +13,71 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit;
 
-    // 1. Fetch items from database
     let followingIds: string[] = [];
-    
-    // Get forum posts from database
-    const dbPosts = await prisma.post.findMany({
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        },
-        _count: {
-          select: {
-            comments: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
+
+    // Fetch posts from Supabase
+    let postsData: any[] = [];
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('posts')
+        .select('id, title, content, category, authorId, votes, replies, createdAt')
+        .order('createdAt', { ascending: false });
+      if (error) {
+        console.error('Error fetching posts for feed:', error);
+      } else if (data) {
+        postsData = data;
       }
-    });
+    } catch (err) {
+      console.error('Unexpected error fetching posts for feed:', err);
+    }
+
+    // Fetch gallery images from Supabase
+    let galleryData: any[] = [];
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('gallery_images')
+        .select('id, title, description, imageUrl, thumbnailUrl, category, authorId, votes, views, downloads, comments, createdAt')
+        .order('createdAt', { ascending: false });
+      if (error) {
+        console.error('Error fetching gallery images for feed:', error);
+      } else if (data) {
+        galleryData = data;
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching gallery images for feed:', err);
+    }
+
+    // Load author information for all unique authorIds
+    const authorIds = Array.from(new Set([
+      ...postsData.map((p: any) => p.authorId).filter(Boolean),
+      ...galleryData.map((g: any) => g.authorId).filter(Boolean)
+    ]));
+    let authorMap = new Map<string, any>();
+    if (authorIds.length > 0) {
+      try {
+        const { data: authors, error: authorsError } = await supabaseAdmin
+          .from('users')
+          .select('id, username, avatar, xp, title')
+          .in('id', authorIds);
+        if (authorsError) {
+          console.error('Error fetching feed authors:', authorsError);
+        } else if (authors) {
+          authorMap = new Map(authors.map((u: any) => [u.id, u]));
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching feed authors:', err);
+      }
+    }
 
     // Format posts
-    const posts = dbPosts.map(post => {
+    const posts = postsData.map(post => {
       let votes = { upvotes: 0, downvotes: 0 };
       try {
-        votes = JSON.parse(post.votes);
+        votes = JSON.parse(post.votes || '{}');
       } catch (e) {
         console.error('Error parsing votes for post:', post.id);
       }
+      const author = authorMap.get(post.authorId) || {};
 
       return {
         id: post.id,
@@ -54,44 +85,27 @@ export async function GET(request: NextRequest) {
         content: post.content,
         category: post.category,
         author: {
-          id: post.author.id,
-          name: post.author.username,
-          avatar: post.author.avatar,
-          reputation: post.author.reputation,
-          title: post.author.title
+          id: post.authorId,
+          name: author.username || 'Unknown',
+          avatar: author.avatar || null,
+          reputation: author.xp ?? author.reputation ?? 0,
+          title: author.title || null
         },
-        createdAt: post.createdAt.toISOString(),
+        createdAt: typeof post.createdAt === 'string' ? post.createdAt : post.createdAt?.toISOString?.() || new Date().toISOString(),
         votes,
-        replies: post._count.comments
+        replies: post.replies || 0
       };
     });
-    
-    // Get gallery images from database
-    const dbGalleryImages = await prisma.galleryImage.findMany({
-      include: {
-        author: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            reputation: true,
-            title: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
 
-    // Format gallery images to match expected structure
-    const galleryImages = dbGalleryImages.map(img => {
+    // Format gallery images
+    const galleryImages = galleryData.map(img => {
       let votes = { upvotes: 0, downvotes: 0 };
       try {
-        votes = JSON.parse(img.votes);
+        votes = JSON.parse(img.votes || '{}');
       } catch (e) {
         console.error('Error parsing votes for image:', img.id);
       }
+      const author = authorMap.get(img.authorId) || {};
 
       return {
         id: img.id,
@@ -101,21 +115,21 @@ export async function GET(request: NextRequest) {
         thumbnailUrl: img.thumbnailUrl,
         category: img.category,
         author: {
-          id: img.author.id,
-          name: img.author.username,
-          avatar: img.author.avatar,
-          reputation: img.author.reputation,
-          title: img.author.title
+          id: img.authorId,
+          name: author.username || 'Unknown',
+          avatar: author.avatar || null,
+          reputation: author.xp ?? author.reputation ?? 0,
+          title: author.title || null
         },
-        createdAt: img.createdAt.toISOString(),
+        createdAt: typeof img.createdAt === 'string' ? img.createdAt : img.createdAt?.toISOString?.() || new Date().toISOString(),
         votes,
-        views: img.views,
-        downloads: img.downloads,
-        comments: img.comments
+        views: img.views || 0,
+        downloads: img.downloads || 0,
+        comments: img.comments || 0
       };
     });
 
-    // 2. Build feed items array
+    // Merge feed items
     const allItems = [
       ...posts.map(post => ({
         id: post.id,
@@ -124,7 +138,7 @@ export async function GET(request: NextRequest) {
         content: post.content,
         author: {
           ...post.author,
-          username: post.author.name, // Map name to username for consistency
+          username: post.author.name,
           reputation: 0
         },
         category: post.category,
@@ -147,7 +161,7 @@ export async function GET(request: NextRequest) {
         thumbnailUrl: image.thumbnailUrl,
         author: {
           ...image.author,
-          username: image.author.name, // Map name to username for consistency
+          username: image.author.name,
           reputation: 0
         },
         category: image.category,
@@ -165,7 +179,6 @@ export async function GET(request: NextRequest) {
       }))
     ];
 
-    // 3. Pagination
     const sortedItems = allItems
       .sort((a, b) => {
         if (a.isFollowing && !b.isFollowing) return -1;
@@ -174,13 +187,14 @@ export async function GET(request: NextRequest) {
       })
       .slice(offset, offset + limit);
 
-    // 4. User votes lookups (if authenticated)
-    let userVotesMap: Record<string, {vote_type: string}> = {};
+    // User votes lookups (if authenticated)
+    let userVotesMap: Record<string, { vote_type: string }> = {};
     if (userId) {
       const postIds = sortedItems.filter(i => i.type === 'post').map(i => i.id);
       const galleryIds = sortedItems.filter(i => i.type === 'gallery').map(i => i.id);
       if (postIds.length > 0) {
-        const { data: postVotes } = await supabaseAdmin.from('post_votes')
+        const { data: postVotes } = await supabaseAdmin
+          .from('post_votes')
           .select('post_id, vote_type')
           .in('post_id', postIds)
           .eq('user_id', userId);
@@ -191,7 +205,8 @@ export async function GET(request: NextRequest) {
         }
       }
       if (galleryIds.length > 0) {
-        const { data: galleryVotes } = await supabaseAdmin.from('gallery_votes')
+        const { data: galleryVotes } = await supabaseAdmin
+          .from('gallery_votes')
           .select('gallery_image_id, vote_type')
           .in('gallery_image_id', galleryIds)
           .eq('user_id', userId);
@@ -200,11 +215,9 @@ export async function GET(request: NextRequest) {
             userVotesMap[`gallery:${v.gallery_image_id}`] = { vote_type: v.vote_type };
           }
         }
-        // No more fallback needed - all votes are in Supabase
       }
     }
 
-    // 5. Patch userVote per item according to user's real vote
     const feedItems = sortedItems.map(item => {
       const voteInfo = userVotesMap[`${item.type}:${item.id}`];
       return {
