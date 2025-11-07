@@ -30,21 +30,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Get comments from Supabase
-    const { data: commentsData, error: commentsError } = await supabaseAdmin
-      .from('comments')
-      .select('id, content, gallery_image_id:galleryImageId, author_id:authorId, created_at:createdAt, parent_id:parentId')
-      .eq('gallery_image_id', imageId)
-      .is('parent_id', null)
-      .order('created_at', { ascending: false });
+    let commentsData: any[] = [];
+    try {
+      const { data, error: commentsError } = await supabaseAdmin
+        .from('comments')
+        .select('id, content, gallery_image_id:galleryImageId, author_id:authorId, created_at:createdAt, parent_id:parentId')
+        .eq('gallery_image_id', imageId)
+        .is('parent_id', null)
+        .order('created_at', { ascending: false });
 
-    if (commentsError) {
-      console.error('Error fetching gallery comments:', commentsError);
-      return NextResponse.json(
-        { error: 'Failed to fetch comments', details: commentsError.message },
-        { status: 500 }
-      );
+      if (commentsError) {
+        console.error('Error fetching gallery comments:', commentsError);
+      } else if (data) {
+        commentsData = data;
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching gallery comments:', err);
     }
+
+    // Even if commentsData is empty due to an error, continue with empty list to keep UI responsive
 
     // Fetch author info in a separate query
     const authorIds = Array.from(new Set((commentsData || []).map((c: any) => c.authorId).filter(Boolean)));
