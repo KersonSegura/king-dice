@@ -125,8 +125,8 @@ export async function GET(request: NextRequest) {
 
     // Determine column casing
     const useCamelCase = await detectCommentCasing();
-    const selectColumnsCamel = 'id, content, galleryImageId, authorId, createdAt';
-    const selectColumnsSnake = 'id, content, gallery_image_id, author_id, created_at';
+    const selectColumnsCamel = 'id, content, galleryImageId, authorId, parentId, createdAt';
+    const selectColumnsSnake = 'id, content, gallery_image_id, author_id, parent_id, created_at';
     const filterColumnCamel = 'galleryImageId';
     const filterColumnSnake = 'gallery_image_id';
     const orderColumnCamel = 'createdAt';
@@ -309,8 +309,8 @@ export async function POST(request: NextRequest) {
       updated_at: now
     };
 
-    const selectColumnsCamel = 'id, content, galleryImageId, authorId, createdAt';
-    const selectColumnsSnake = 'id, content, gallery_image_id, author_id, created_at';
+    const selectColumnsCamel = 'id, content, galleryImageId, authorId, parentId, createdAt';
+    const selectColumnsSnake = 'id, content, gallery_image_id, author_id, parent_id, created_at';
 
     const runInsert = async (useCamel: boolean) =>
       supabaseAdmin
