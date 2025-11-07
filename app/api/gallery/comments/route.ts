@@ -4,37 +4,51 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-async function detectCommentCasing() {
-  try {
-    const { data } = await supabaseAdmin
-      .from('comments')
-      .select('*')
-      .limit(1);
-    if (data && data.length > 0) {
-      return Object.prototype.hasOwnProperty.call(data[0], 'galleryImageId');
-    }
-  } catch (error) {
-    console.error('detectCommentCasing error:', error);
+function rewriteStorageUrl(origin: string | undefined, url?: string | null) {
+  if (!url) return url ?? null;
+  if (!origin) return url;
+  if (url.startsWith('http') && url.includes('.supabase.co')) return url;
+  if (url.startsWith('/gallery/')) {
+    const rel = url.replace('/gallery/', '');
+    return `${origin}/storage/v1/object/public/gallery/${rel}`;
   }
-  return false; // default to snake_case if unsure
+  if (url.startsWith('/rules-images/')) {
+    const rel = url.replace('/rules-images/', '');
+    return `${origin}/storage/v1/object/public/rules-images/${rel}`;
+  }
+  if (url.startsWith('/uploads/')) {
+    const filename = url.replace('/uploads/', '');
+    return `${origin}/storage/v1/object/public/uploads/uploads/${filename}`;
+  }
+  return url;
 }
 
-function mapCommentRow(row: any) {
+function buildCommentObject(
+  row: any,
+  author: any,
+  likes: number,
+  userLiked: boolean,
+  supabaseUrl: string | undefined
+) {
   const authorId = row.authorId ?? row.author_id ?? null;
-  const createdAt = row.createdAt ?? row.created_at ?? new Date().toISOString();
+  const createdAtRaw = row.createdAt ?? row.created_at ?? new Date().toISOString();
+  const createdAt = typeof createdAtRaw === 'string' ? createdAtRaw : new Date(createdAtRaw).toISOString();
+
   return {
     id: row.id,
-    content: row.content,
+    content: row.content ?? '',
     author: {
       id: authorId,
-      name: row.author?.username || row.author?.name || 'Unknown',
-      avatar: row.author?.avatar || null,
-      title: row.author?.title || null
+      name: author?.username || author?.name || 'Unknown Artist',
+      avatar: rewriteStorageUrl(supabaseUrl, author?.avatar) ?? null,
+      reputation: author?.xp ?? author?.reputation ?? 0,
+      title: author?.title ?? null
     },
     createdAt,
-    likes: 0,
-    userLiked: false,
-    replies: []
+    isEdited: false,
+    likes,
+    userLiked,
+    replies: [] as any[]
   };
 }
 
@@ -43,7 +57,7 @@ async function fetchCommentAuthors(authorIds: string[]) {
   try {
     const { data, error } = await supabaseAdmin
       .from('users')
-      .select('id, username, avatar, title')
+      .select('id, username, avatar, xp, title')
       .in('id', authorIds);
     if (error) {
       console.error('Error fetching comment authors:', error);
@@ -60,6 +74,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const imageId = searchParams.get('imageId');
+    const userIdParam = searchParams.get('userId');
 
     if (!imageId) {
       return NextResponse.json({ error: 'Image ID is required' }, { status: 400 });
@@ -103,41 +118,85 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ comments: [], totalComments: 0 }, { status: 200 });
     }
 
+    const rows = commentsData || [];
+
+    const commentIds = rows.map(row => row.id);
     const authorIds = Array.from(new Set(
-      (commentsData || []).map(row => row.authorId ?? row.author_id).filter(Boolean)
+      rows.map(row => row.authorId ?? row.author_id).filter(Boolean)
     )) as string[];
     const authorMap = await fetchCommentAuthors(authorIds);
 
-    const formattedComments = (commentsData || []).map(row => {
+    const likeCounts = new Map<string, number>();
+    const userLikedSet = new Set<string>();
+
+    if (commentIds.length > 0) {
+      try {
+        const { data: likesData, error: likesError } = await supabaseAdmin
+          .from('comment_likes')
+          .select('comment_id, user_id, vote_type')
+          .in('comment_id', commentIds);
+
+        if (likesError) {
+          console.error('Error fetching comment likes:', likesError);
+        } else {
+          (likesData || []).forEach(like => {
+            if (like.vote_type === 'upvote') {
+              likeCounts.set(like.comment_id, (likeCounts.get(like.comment_id) || 0) + 1);
+              if (userIdParam && like.user_id === userIdParam) {
+                userLikedSet.add(like.comment_id);
+              }
+            }
+          });
+        }
+      } catch (likeError) {
+        console.error('Unexpected error fetching comment likes:', likeError);
+      }
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+
+    const commentObjects = new Map<string, any>();
+    rows.forEach(row => {
+      const likes = likeCounts.get(row.id) ?? 0;
+      const userLiked = userLikedSet.has(row.id);
       const authorId = row.authorId ?? row.author_id ?? null;
-      const createdAt = row.createdAt ?? row.created_at ?? new Date().toISOString();
-      const author = authorMap.get(authorId || '') || {};
-      return {
-        id: row.id,
-        content: row.content,
-        author: {
-          id: authorId,
-          name: author.username || author.name || 'Unknown',
-          avatar: author.avatar || null,
-          title: author.title || null
-        },
-        createdAt,
-        likes: 0,
-        userLiked: false,
-        replies: []
-      };
+      const author = authorId ? authorMap.get(authorId) : null;
+      const comment = buildCommentObject(row, author, likes, userLiked, supabaseUrl);
+      commentObjects.set(row.id, comment);
     });
 
-    // Fetch gallery image for comment count
-    const { data: galleryImage } = await supabaseAdmin
-      .from('gallery_images')
-      .select('comments')
-      .eq('id', imageId)
-      .maybeSingle();
+    const topLevelComments: any[] = [];
+    rows.forEach(row => {
+      const parentId = row.parentId ?? row.parent_id ?? null;
+      const comment = commentObjects.get(row.id);
+      if (!comment) {
+        return;
+      }
 
-    const totalComments = galleryImage?.comments ?? formattedComments.length;
+      if (parentId && commentObjects.has(parentId)) {
+        const parent = commentObjects.get(parentId);
+        if (parent) {
+          parent.replies = parent.replies || [];
+          parent.replies.push(comment);
+        }
+      } else if (!parentId) {
+        topLevelComments.push(comment);
+      }
+    });
 
-    return NextResponse.json({ comments: formattedComments, totalComments });
+    const sortByCreatedDesc = (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    const sortByCreatedAsc = (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+
+    topLevelComments.sort(sortByCreatedDesc);
+    commentObjects.forEach(comment => {
+      if (comment.replies && comment.replies.length > 0) {
+        comment.replies.sort(sortByCreatedAsc);
+      }
+    });
+
+    const totalComments = rows.length;
+
+    return NextResponse.json({ comments: topLevelComments, totalComments });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return NextResponse.json({ comments: [], totalComments: 0 }, { status: 200 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // DELETE /api/gallery/comments/[commentId] - Delete a comment
 
@@ -18,40 +18,82 @@ export async function DELETE(
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Find the comment in database
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId }
-    });
-    
-    if (!comment) {
+    const { data: commentRow, error: commentError } = await supabaseAdmin
+      .from('comments')
+      .select('id, authorId, author_id, galleryImageId, gallery_image_id')
+      .eq('id', commentId)
+      .maybeSingle();
+
+    if (commentError) {
+      console.error('Error fetching comment for deletion:', commentError);
+      return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
+    }
+
+    if (!commentRow) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    // Check if user is the author of the comment
-    if (comment.authorId !== userId) {
+    const commentAuthorId = commentRow.authorId ?? commentRow.author_id;
+
+    if (commentAuthorId !== userId) {
       return NextResponse.json({ error: 'Unauthorized to delete this comment' }, { status: 403 });
     }
 
-    // Delete comment from database
-    await prisma.comment.delete({
-      where: { id: commentId }
-    });
+    const { data: replyRows, error: repliesError } = await supabaseAdmin
+      .from('comments')
+      .select('id')
+      .eq('parent_id', commentId);
 
-    // Update gallery image comment count
-    if (comment.galleryImageId) {
-      await prisma.galleryImage.update({
-        where: { id: comment.galleryImageId },
-        data: {
-          comments: {
-            decrement: 1
-          }
-        }
-      });
+    if (repliesError) {
+      console.error('Error fetching comment replies for deletion:', repliesError);
+      return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
+    }
+
+    const deleteIds = [commentId, ...((replyRows || []).map(reply => reply.id))];
+
+    if (deleteIds.length > 0) {
+      const { error: likeDeleteError } = await supabaseAdmin
+        .from('comment_likes')
+        .delete()
+        .in('comment_id', deleteIds);
+
+      if (likeDeleteError) {
+        console.error('Error deleting comment likes:', likeDeleteError);
+      }
+
+      const { error: commentsDeleteError } = await supabaseAdmin
+        .from('comments')
+        .delete()
+        .in('id', deleteIds);
+
+      if (commentsDeleteError) {
+        console.error('Error deleting comments:', commentsDeleteError);
+        return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
+      }
+    }
+
+    const imageId = commentRow.galleryImageId ?? commentRow.gallery_image_id;
+    if (imageId) {
+      try {
+        const { data: galleryRow } = await supabaseAdmin
+          .from('gallery_images')
+          .select('comments')
+          .eq('id', imageId)
+          .maybeSingle();
+        const currentCount = galleryRow?.comments ?? 0;
+        const nextCount = Math.max(0, currentCount - deleteIds.length);
+        await supabaseAdmin
+          .from('gallery_images')
+          .update({ comments: nextCount })
+          .eq('id', imageId);
+      } catch (countError) {
+        console.error('Error updating gallery comment count after delete:', countError);
+      }
     }
 
     console.log(`Gallery comment deleted: ${commentId} by user ${userId}`);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       message: 'Comment deleted successfully'
     });

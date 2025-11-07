@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const dataDir = path.join(process.cwd(), 'data');
-const galleryFile = path.join(dataDir, 'gallery.json');
+import { supabaseAdmin } from '@/lib/supabase';
 
 // POST /api/gallery/comments/like - Like/unlike a comment
 export async function POST(request: NextRequest) {
@@ -14,103 +10,74 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Comment ID and User ID are required' }, { status: 400 });
     }
 
-    // Read gallery data
-    if (!fs.existsSync(galleryFile)) {
-      return NextResponse.json({ error: 'Gallery data not found' }, { status: 404 });
+    const { data: commentRow, error: commentError } = await supabaseAdmin
+      .from('comments')
+      .select('id, parentId, parent_id')
+      .eq('id', commentId)
+      .maybeSingle();
+
+    if (commentError) {
+      console.error('Error fetching comment for like:', commentError);
+      return NextResponse.json({ error: 'Failed to like comment' }, { status: 500 });
     }
 
-    const galleryData = JSON.parse(fs.readFileSync(galleryFile, 'utf8'));
-    
-    // Find the comment or reply in all images
-    let itemFound = false;
-    let imageIndex = -1;
-    let commentIndex = -1;
-    let replyIndex = -1;
-    let isReply = false;
+    if (!commentRow) {
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
+    }
 
-    for (let i = 0; i < galleryData.images.length; i++) {
-      const image = galleryData.images[i];
-      if (image.commentsList) {
-        // First check main comments
-        const commentIdx = image.commentsList.findIndex((comment: any) => comment.id === commentId);
-        if (commentIdx !== -1) {
-          itemFound = true;
-          imageIndex = i;
-          commentIndex = commentIdx;
-          isReply = false;
-          break;
-        }
-        
-        // Then check replies within comments
-        for (let j = 0; j < image.commentsList.length; j++) {
-          const comment = image.commentsList[j];
-          if (comment.replies) {
-            const replyIdx = comment.replies.findIndex((reply: any) => reply.id === commentId);
-            if (replyIdx !== -1) {
-              itemFound = true;
-              imageIndex = i;
-              commentIndex = j;
-              replyIndex = replyIdx;
-              isReply = true;
-              break;
-            }
-          }
-        }
-        if (itemFound) break;
+    const parentId = commentRow.parentId ?? commentRow.parent_id ?? null;
+
+    const { data: existingLike, error: existingError } = await supabaseAdmin
+      .from('comment_likes')
+      .select('id, vote_type')
+      .eq('comment_id', commentId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error('Error checking existing comment like:', existingError);
+      return NextResponse.json({ error: 'Failed to like comment' }, { status: 500 });
+    }
+
+    let isLiked = false;
+
+    if (existingLike) {
+      await supabaseAdmin
+        .from('comment_likes')
+        .delete()
+        .eq('id', existingLike.id);
+      isLiked = false;
+    } else {
+      const { error: insertError } = await supabaseAdmin
+        .from('comment_likes')
+        .insert({
+          user_id: userId,
+          comment_id: commentId,
+          vote_type: 'upvote'
+        });
+      if (insertError) {
+        console.error('Error inserting comment like:', insertError);
+        return NextResponse.json({ error: 'Failed to like comment' }, { status: 500 });
       }
+      isLiked = true;
     }
 
-    if (!itemFound) {
-      return NextResponse.json({ error: 'Comment or reply not found' }, { status: 404 });
+    const { count: likeCount, error: countError } = await supabaseAdmin
+      .from('comment_likes')
+      .select('*', { count: 'exact', head: true })
+      .match({ comment_id: commentId, vote_type: 'upvote' });
+
+    if (countError) {
+      console.error('Error counting comment likes:', countError);
+      return NextResponse.json({ error: 'Failed to like comment' }, { status: 500 });
     }
 
-    // Get the item (comment or reply) to like
-    let item;
-    if (isReply) {
-      item = galleryData.images[imageIndex].commentsList[commentIndex].replies[replyIndex];
-    } else {
-      item = galleryData.images[imageIndex].commentsList[commentIndex];
-    }
-    
-    // Initialize likes arrays if they don't exist
-    if (!item.userLikes) {
-      item.userLikes = [];
-    }
-    if (!item.likes) {
-      item.likes = 0;
-    }
-
-    // Check if user already liked the item
-    const userLikedIndex = item.userLikes.indexOf(userId);
-    const isCurrentlyLiked = userLikedIndex !== -1;
-
-    if (isCurrentlyLiked) {
-      // Unlike: remove user from likes array and decrease count
-      item.userLikes.splice(userLikedIndex, 1);
-      item.likes = Math.max(0, item.likes - 1);
-    } else {
-      // Like: add user to likes array and increase count
-      item.userLikes.push(userId);
-      item.likes = item.likes + 1;
-    }
-
-    // Update the item in the gallery data
-    if (isReply) {
-      galleryData.images[imageIndex].commentsList[commentIndex].replies[replyIndex] = item;
-    } else {
-      galleryData.images[imageIndex].commentsList[commentIndex] = item;
-    }
-
-    // Save updated data
-    fs.writeFileSync(galleryFile, JSON.stringify(galleryData, null, 2));
-
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      item: item,
-      isLiked: !isCurrentlyLiked, // Return the new like status
-      isReply: isReply
+      likes: likeCount || 0,
+      isLiked,
+      isReply: Boolean(parentId)
     });
-
   } catch (error) {
     console.error('Error liking comment:', error);
     return NextResponse.json({ error: 'Failed to like comment' }, { status: 500 });
