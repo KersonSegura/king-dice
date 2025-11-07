@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Check if gallery image exists (Supabase)
     const { data: galleryImage, error: galleryError } = await supabaseAdmin
       .from('gallery_images')
-      .select('id, author_id:authorId, comments')
+      .select('id, authorId, comments')
       .eq('id', imageId)
       .maybeSingle();
 
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
     try {
       const { data, error: commentsError } = await supabaseAdmin
         .from('comments')
-        .select('id, content, gallery_image_id:galleryImageId, author_id:authorId, created_at:createdAt, parent_id:parentId')
-        .eq('gallery_image_id', imageId)
-        .is('parent_id', null)
-        .order('created_at', { ascending: false });
+        .select('id, content, galleryImageId, authorId, createdAt, parentId')
+        .eq('galleryImageId', imageId)
+        .is('parentId', null)
+        .order('createdAt', { ascending: false });
 
       if (commentsError) {
         console.error('Error fetching gallery comments:', commentsError);
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     // Check if gallery image exists
     const { data: galleryImage, error: galleryError } = await supabaseAdmin
       .from('gallery_images')
-      .select('id, author_id:authorId, comments')
+      .select('id, authorId, comments')
       .eq('id', imageId)
       .maybeSingle();
 
@@ -160,13 +160,13 @@ export async function POST(request: NextRequest) {
       .insert({
         id: generatedId,
         content: content.trim(),
-        author_id: author.id,
-        gallery_image_id: imageId,
-        parent_id: null,
-        created_at: now,
-        updated_at: now
+        authorId: author.id,
+        galleryImageId: imageId,
+        parentId: null,
+        createdAt: now,
+        updatedAt: now
       })
-      .select('id, content, gallery_image_id:galleryImageId, author_id:authorId, created_at:createdAt')
+      .select('id, content, galleryImageId, authorId, createdAt')
       .single();
 
     if (createError || !newComment) {
