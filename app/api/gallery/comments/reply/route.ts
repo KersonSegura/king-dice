@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const { data: parentComment, error: parentError } = await supabaseAdmin
       .from('comments')
-      .select('id, galleryImageId, gallery_image_id, authorId, author_id')
+      .select('id, gallery_image_id, author_id')
       .eq('id', commentId)
       .maybeSingle();
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const imageId = parentComment.galleryImageId ?? parentComment.gallery_image_id;
+    const imageId = parentComment.gallery_image_id;
 
     if (!imageId) {
       return NextResponse.json({ error: 'Parent comment is missing gallery image association' }, { status: 400 });
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const parentAuthorId = parentComment.authorId ?? parentComment.author_id;
+      const parentAuthorId = parentComment.author_id;
       if (parentAuthorId && parentAuthorId !== author.id) {
         await createNotification({
           userId: parentAuthorId,

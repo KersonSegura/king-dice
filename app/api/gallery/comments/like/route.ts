@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     const { data: commentRow, error: commentError } = await supabaseAdmin
       .from('comments')
-      .select('id, parentId, parent_id')
+      .select('id, parent_id')
       .eq('id', commentId)
       .maybeSingle();
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const parentId = commentRow.parentId ?? commentRow.parent_id ?? null;
+    const parentId = commentRow.parent_id ?? null;
 
     const { data: existingLike, error: existingError } = await supabaseAdmin
       .from('comment_likes')

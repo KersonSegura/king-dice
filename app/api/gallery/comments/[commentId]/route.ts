@@ -20,7 +20,7 @@ export async function DELETE(
 
     const { data: commentRow, error: commentError } = await supabaseAdmin
       .from('comments')
-      .select('id, authorId, author_id, galleryImageId, gallery_image_id')
+      .select('id, author_id, gallery_image_id')
       .eq('id', commentId)
       .maybeSingle();
 
@@ -33,7 +33,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const commentAuthorId = commentRow.authorId ?? commentRow.author_id;
+    const commentAuthorId = commentRow.author_id;
 
     if (commentAuthorId !== userId) {
       return NextResponse.json({ error: 'Unauthorized to delete this comment' }, { status: 403 });
@@ -72,7 +72,7 @@ export async function DELETE(
       }
     }
 
-    const imageId = commentRow.galleryImageId ?? commentRow.gallery_image_id;
+    const imageId = commentRow.gallery_image_id;
     if (imageId) {
       try {
         const { data: galleryRow } = await supabaseAdmin
