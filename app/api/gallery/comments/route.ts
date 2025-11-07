@@ -6,6 +6,21 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+async function detectCommentCasing() {
+  try {
+    const { data } = await supabaseAdmin
+      .from('comments')
+      .select('*')
+      .limit(1);
+    if (data && data.length > 0) {
+      return Object.prototype.hasOwnProperty.call(data[0], 'galleryImageId');
+    }
+  } catch (error) {
+    console.error('detectCommentCasing error:', error);
+  }
+  return false;
+}
+
 function rewriteStorageUrl(origin: string | undefined, url?: string | null) {
   if (!url) return url ?? null;
   if (!origin) return url;
