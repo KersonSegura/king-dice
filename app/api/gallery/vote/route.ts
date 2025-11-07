@@ -139,6 +139,16 @@ export async function POST(request: NextRequest) {
 
     const userVote = meVote?.vote_type ?? null;
 
+    const updatedVotesJson = JSON.stringify({ upvotes: upvotes || 0, downvotes: downvotes || 0 });
+    try {
+      await supabaseAdmin
+        .from('gallery_images')
+        .update({ votes: updatedVotesJson })
+        .eq('id', imageId);
+    } catch (updateError) {
+      console.error('Error updating gallery vote counts:', updateError);
+    }
+
     const { data: imageRow, error: imageError } = await supabaseAdmin
       .from('gallery_images')
       .select('*')
