@@ -76,7 +76,11 @@ const dataDir = path.join(process.cwd(), 'data');
 const legacyGalleryFile = path.join(dataDir, 'gallery.json');
 
 function mapLegacyComment(comment: any, supabaseUrl: string | undefined) {
-  const base = {
+  const mappedReplies = Array.isArray(comment.replies)
+    ? comment.replies.map((reply: any) => mapLegacyComment(reply, supabaseUrl))
+    : [];
+
+  return {
     id: comment.id,
     content: comment.content ?? '',
     author: {
@@ -90,14 +94,8 @@ function mapLegacyComment(comment: any, supabaseUrl: string | undefined) {
     isEdited: comment.isEdited ?? false,
     likes: comment.likes ?? 0,
     userLiked: false,
-    replies: [] as any[]
+    replies: mappedReplies
   };
-
-  if (Array.isArray(comment.replies)) {
-    base.replies = comment.replies.map((reply: any) => mapLegacyComment(reply, supabaseUrl));
-  }
-
-  return base;
 }
 
 export async function GET(request: NextRequest) {
