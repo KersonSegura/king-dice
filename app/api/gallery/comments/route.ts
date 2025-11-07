@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Check if gallery image exists (Supabase)
     const { data: galleryImage, error: galleryError } = await supabaseAdmin
       .from('gallery_images')
-      .select('id, comments')
+      .select('id, author_id:authorId, comments')
       .eq('id', imageId)
       .maybeSingle();
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Get comments from Supabase
     const { data: commentsData, error: commentsError } = await supabaseAdmin
       .from('comments')
-      .select('id, content, gallery_image_id, author_id, created_at, parent_id')
+      .select('id, content, gallery_image_id:galleryImageId, author_id:authorId, created_at:createdAt, parent_id:parentId')
       .eq('gallery_image_id', imageId)
       .is('parent_id', null)
       .order('created_at', { ascending: false });
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch author info in a separate query
-    const authorIds = Array.from(new Set((commentsData || []).map((c: any) => c.author_id).filter(Boolean)));
+    const authorIds = Array.from(new Set((commentsData || []).map((c: any) => c.authorId).filter(Boolean)));
     let authorMap = new Map<string, any>();
     if (authorIds.length > 0) {
       const { data: authors, error: authorsError } = await supabaseAdmin
@@ -63,25 +63,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Format comments to match expected structure
-    const formattedComments = (commentsData || []).map((comment: any) => {
-      const author = authorMap.get(comment.author_id);
-      return {
-        id: comment.id,
-        content: comment.content,
-        author: {
-          id: comment.author_id,
-          name: author?.username || 'Unknown',
-          avatar: author?.avatar || null,
-          title: author?.title || null
-        },
-        createdAt: typeof comment.created_at === 'string'
-          ? comment.created_at
-          : comment.created_at?.toISOString?.() || new Date().toISOString(),
-        likes: 0,
-        userLiked: false,
-        replies: []
-      };
-    });
+    const formattedComments = (commentsData || []).map((comment: any) => ({
+      id: comment.id,
+      content: comment.content,
+      author: {
+        id: comment.authorId,
+        name: authorMap.get(comment.authorId)?.username || 'Unknown',
+        avatar: authorMap.get(comment.authorId)?.avatar || null,
+        title: authorMap.get(comment.authorId)?.title || null
+      },
+      createdAt: typeof comment.createdAt === 'string'
+        ? comment.createdAt
+        : comment.createdAt?.toISOString?.() || new Date().toISOString(),
+      likes: 0,
+      userLiked: false,
+      replies: []
+    }));
 
     return NextResponse.json({ 
       comments: formattedComments,
@@ -134,7 +131,7 @@ export async function POST(request: NextRequest) {
     // Check if gallery image exists
     const { data: galleryImage, error: galleryError } = await supabaseAdmin
       .from('gallery_images')
-      .select('id, author_id, comments')
+      .select('id, author_id:authorId, comments')
       .eq('id', imageId)
       .maybeSingle();
 
@@ -166,7 +163,7 @@ export async function POST(request: NextRequest) {
         created_at: now,
         updated_at: now
       })
-      .select('id, content, gallery_image_id, author_id, created_at')
+      .select('id, content, gallery_image_id:galleryImageId, author_id:authorId, created_at:createdAt')
       .single();
 
     if (createError || !newComment) {
@@ -235,7 +232,7 @@ export async function POST(request: NextRequest) {
 
     // Create notification for image author (if different from commenter)
     try {
-      const receiverId = galleryImage.author_id;
+      const receiverId = galleryImage.authorId;
       if (receiverId && receiverId !== author.id) {
         await createNotification({
           userId: receiverId,
@@ -253,14 +250,14 @@ export async function POST(request: NextRequest) {
       comment: {
         id: newComment.id,
         content: newComment.content,
-        galleryImageId: newComment.gallery_image_id,
+        galleryImageId: newComment.galleryImageId,
         author: {
           id: author.id,
           name: author.name,
           avatar: author.avatar || null,
           title: author.title || null
         },
-        createdAt: newComment.created_at
+        createdAt: newComment.createdAt
       },
       totalComments: newCommentCount,
       moderationResult: {
