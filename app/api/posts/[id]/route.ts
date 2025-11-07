@@ -20,12 +20,12 @@ export async function GET(
         title,
         content,
         category,
-        author_id,
+        authorId,
         votes,
         replies,
-        created_at,
-        updated_at,
-        author:users!posts_author_id_fkey(
+        createdAt,
+        updatedAt,
+        author:users!posts_authorId_fkey(
           id,
           username,
           avatar,
@@ -56,13 +56,13 @@ export async function GET(
       content: dbPost.content,
       category: dbPost.category,
       author: {
-        id: dbPost.author?.id || dbPost.author_id,
+        id: dbPost.author?.id || dbPost.authorId,
         name: dbPost.author?.username || 'Unknown',
         avatar: dbPost.author?.avatar || null,
         reputation: dbPost.author?.xp ?? 0,
         title: dbPost.author?.title || null
       },
-      createdAt: typeof dbPost.created_at === 'string' ? dbPost.created_at : dbPost.created_at?.toISOString?.() || new Date().toISOString(),
+      createdAt: typeof dbPost.createdAt === 'string' ? dbPost.createdAt : dbPost.createdAt.toISOString(),
       votes: {
         upvotes: upvotes ?? 0,
         downvotes: downvotes ?? 0,
@@ -90,7 +90,7 @@ export async function DELETE(
     // Find the post in Supabase
     const { data: post, error: findError } = await supabaseAdmin
       .from('posts')
-      .select('id, author_id')
+      .select('id, authorId')
       .eq('id', id)
       .single();
     
@@ -102,7 +102,7 @@ export async function DELETE(
     }
 
     // Check if the user is the author of the post
-    if (post.author_id !== authorId) {
+    if (post.authorId !== authorId) {
       return NextResponse.json(
         { message: 'You can only delete your own posts' },
         { status: 403 }

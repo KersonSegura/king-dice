@@ -36,11 +36,11 @@ export async function GET(
       .select(`
         id,
         content,
-        post_id,
-        author_id,
-        created_at,
-        updated_at,
-        author:users!comments_author_id_fkey(
+        postId,
+        authorId,
+        createdAt,
+        updatedAt,
+        author:users!comments_authorId_fkey(
           id,
           username,
           avatar,
@@ -48,8 +48,8 @@ export async function GET(
           title
         )
       `)
-      .eq('post_id', postId)
-      .order('created_at', { ascending: sortBy !== 'newest' });
+      .eq('postId', postId)
+      .order('createdAt', { ascending: sortBy !== 'newest' });
     
     if (commentsError) {
       throw commentsError;
@@ -59,15 +59,15 @@ export async function GET(
     const formattedComments = (comments || []).map((comment: any) => ({
       id: comment.id,
       content: comment.content,
-      postId: comment.post_id,
+      postId: comment.postId,
       author: {
-        id: comment.author?.id || comment.author_id,
+        id: comment.author?.id || comment.authorId,
         name: comment.author?.username || 'Unknown',
         avatar: comment.author?.avatar || null,
         reputation: comment.author?.xp ?? 0,
         title: comment.author?.title || null
       },
-      createdAt: typeof comment.created_at === 'string' ? comment.created_at : comment.created_at?.toISOString?.() || new Date().toISOString(),
+      createdAt: typeof comment.createdAt === 'string' ? comment.createdAt : comment.createdAt.toISOString(),
       votes: { upvotes: 0, downvotes: 0 }, // Will be loaded from Supabase
       userVote: null,
       isModerated: true
@@ -105,8 +105,8 @@ export async function POST(
       .from('posts')
       .select(`
         id,
-        author_id,
-        author:users!posts_author_id_fkey(
+        authorId,
+        author:users!posts_authorId_fkey(
           id,
           username
         )
@@ -149,18 +149,18 @@ export async function POST(
       .insert({
         id: generatedId,
         content: content.trim(),
-        author_id: author.id,
-        post_id: postId,
-        created_at: now,
-        updated_at: now
+        authorId: author.id,
+        postId,
+        createdAt: now,
+        updatedAt: now
       })
       .select(`
         id,
         content,
-        post_id,
-        author_id,
-        created_at,
-        author:users!comments_author_id_fkey(
+        postId,
+        authorId,
+        createdAt,
+        author:users!comments_authorId_fkey(
           id,
           username,
           avatar,
@@ -203,7 +203,7 @@ export async function POST(
 
     // Notify post author (if different from commenter)
     try {
-      const postAuthorId = post.author?.id || post.author_id;
+      const postAuthorId = post.author?.id || post.authorId;
       if (postAuthorId && postAuthorId !== author.id) {
         await createNotification({
           userId: postAuthorId,
@@ -221,15 +221,15 @@ export async function POST(
     const formattedComment = {
       id: newComment.id,
       content: newComment.content,
-      postId: newComment.post_id,
+      postId: newComment.postId,
       author: {
         id: newComment.author?.id || author.id,
         name: newComment.author?.username || author.name,
         avatar: newComment.author?.avatar || author.avatar || null,
-        reputation: (newComment.author?.xp ?? 0) || 0,
+        reputation: newComment.author?.xp ?? 0,
         title: newComment.author?.title || null
       },
-      createdAt: typeof newComment.created_at === 'string' ? newComment.created_at : newComment.created_at?.toISOString?.() || now,
+      createdAt: typeof newComment.createdAt === 'string' ? newComment.createdAt : newComment.createdAt?.toISOString?.() || now,
       votes: { upvotes: 0, downvotes: 0 },
       userVote: null,
       isModerated: true

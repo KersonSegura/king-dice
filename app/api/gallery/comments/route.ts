@@ -36,20 +36,20 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         content,
-        gallery_image_id,
-        author_id,
-        created_at,
-        parent_id,
-        author:users!comments_author_id_fkey(
+        galleryImageId,
+        authorId,
+        createdAt,
+        parentId,
+        author:users!comments_authorId_fkey(
           id,
           username,
           avatar,
           title
         )
       `)
-      .eq('gallery_image_id', imageId)
-      .is('parent_id', null)
-      .order('created_at', { ascending: false });
+      .eq('galleryImageId', imageId)
+      .is('parentId', null)
+      .order('createdAt', { ascending: false });
 
     if (commentsError) {
       console.error('Error fetching gallery comments:', commentsError);
@@ -64,14 +64,14 @@ export async function GET(request: NextRequest) {
       id: comment.id,
       content: comment.content,
       author: {
-        id: comment.author?.id || comment.author_id,
+        id: comment.author?.id || comment.authorId,
         name: comment.author?.username || 'Unknown',
         avatar: comment.author?.avatar || null,
         title: comment.author?.title || null
       },
-      createdAt: typeof comment.created_at === 'string'
-        ? comment.created_at
-        : comment.created_at?.toISOString?.() || new Date().toISOString(),
+      createdAt: typeof comment.createdAt === 'string'
+        ? comment.createdAt
+        : comment.createdAt?.toISOString?.() || new Date().toISOString(),
       likes: 0,
       userLiked: false,
       replies: []
@@ -154,19 +154,19 @@ export async function POST(request: NextRequest) {
       .insert({
         id: generatedId,
         content: content.trim(),
-        author_id: author.id,
-        gallery_image_id: imageId,
-        parent_id: null,
-        created_at: now,
-        updated_at: now
+        authorId: author.id,
+        galleryImageId: imageId,
+        parentId: null,
+        createdAt: now,
+        updatedAt: now
       })
       .select(`
         id,
         content,
-        gallery_image_id,
-        author_id,
-        created_at,
-        author:users!comments_author_id_fkey(
+        galleryImageId,
+        authorId,
+        createdAt,
+        author:users!comments_authorId_fkey(
           id,
           username,
           avatar,
@@ -259,14 +259,14 @@ export async function POST(request: NextRequest) {
       comment: {
         id: newComment.id,
         content: newComment.content,
-        galleryImageId: newComment.gallery_image_id,
+        galleryImageId: newComment.galleryImageId,
         author: {
           id: newComment.author?.id || author.id,
           name: newComment.author?.username || author.name,
           avatar: newComment.author?.avatar || author.avatar || null,
           title: newComment.author?.title || null
         },
-        createdAt: newComment.created_at
+        createdAt: newComment.createdAt
       },
       totalComments: newCommentCount,
       moderationResult: {

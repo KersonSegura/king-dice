@@ -21,12 +21,12 @@ export async function GET(request: NextRequest) {
         title,
         content,
         category,
-        author_id,
+        authorId,
         votes,
         replies,
-        created_at,
-        updated_at,
-        author:users!posts_author_id_fkey(
+        createdAt,
+        updatedAt,
+        author:users!posts_authorId_fkey(
           id,
           username,
           avatar,
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
           title
         )
       `)
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
 
     if (authorId) {
-      postsQuery = postsQuery.eq('author_id', authorId);
+      postsQuery = postsQuery.eq('authorId', authorId);
     }
 
     const { data: dbPosts, error: postsError } = await postsQuery;
@@ -65,13 +65,13 @@ export async function GET(request: NextRequest) {
         content: post.content,
         category: post.category,
         author: {
-          id: post.author?.id || post.author_id,
+          id: post.author?.id || post.authorId,
           name: post.author?.username || 'Unknown',
           avatar: post.author?.avatar || null,
-        reputation: (post.author?.xp ?? 0) || 0,
+          reputation: post.author?.xp ?? 0,
           title: post.author?.title || null
         },
-        createdAt: typeof post.created_at === 'string' ? post.created_at : post.created_at?.toISOString?.() || new Date().toISOString(),
+        createdAt: typeof post.createdAt === 'string' ? post.createdAt : post.createdAt.toISOString(),
         votes,
         replies: post.replies || 0,
         userVote: null,
@@ -217,22 +217,22 @@ export async function POST(request: NextRequest) {
         title: title.trim(),
         content: content.trim(),
         category,
-        author_id: author.id,
+        authorId: author.id,
         votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
         replies: 0,
-        created_at: now,
-        updated_at: now
+        createdAt: now,
+        updatedAt: now
       })
       .select(`
         id,
         title,
         content,
         category,
-        author_id,
+        authorId,
         votes,
         replies,
-        created_at,
-        author:users!posts_author_id_fkey(
+        createdAt,
+        author:users!posts_authorId_fkey(
           id,
           username,
           avatar,
@@ -256,10 +256,10 @@ export async function POST(request: NextRequest) {
         id: newPost.author?.id || author.id,
         name: newPost.author?.username || author.name,
         avatar: newPost.author?.avatar || author.avatar,
-        reputation: (newPost.author?.xp ?? author.reputation) || 0,
+        reputation: newPost.author?.xp ?? author.reputation || 0,
         title: newPost.author?.title || author.title || null
       },
-      createdAt: newPost.created_at,
+      createdAt: newPost.createdAt,
       votes: { upvotes: 0, downvotes: 0 },
       replies: 0,
       userVote: null,
