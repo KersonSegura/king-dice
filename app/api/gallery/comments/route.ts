@@ -46,9 +46,8 @@ export async function GET(request: NextRequest) {
       }
     } catch (err) {
       console.error('Unexpected error fetching gallery comments:', err);
+      // commentsData stays empty so the UI still renders
     }
-
-    // Even if commentsData is empty due to an error, continue with empty list to keep UI responsive
 
     // Fetch author info in a separate query
     const authorIds = Array.from(new Set((commentsData || []).map((c: any) => c.authorId).filter(Boolean)));
