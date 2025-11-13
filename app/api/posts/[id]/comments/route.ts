@@ -34,6 +34,7 @@ export async function GET(
     const postId = idString;
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get('sortBy') as 'newest' | 'best' | 'top' || 'best';
+    const userId = searchParams.get('userId') || '';
 
     const { data: post, error: postError } = await supabaseAdmin
       .from('posts')
@@ -58,6 +59,65 @@ export async function GET(
       throw commentsError;
     }
 
+    const commentIds = (comments || []).map((c: any) => c.id);
+    const upCounts: Record<string, number> = {};
+    const downCounts: Record<string, number> = {};
+    const userVotes: Record<string, 'upvote' | 'downvote'> = {};
+
+    if (commentIds.length > 0) {
+      const votePromises = [
+        supabaseAdmin
+          .from('comment_likes')
+          .select('comment_id')
+          .in('comment_id', commentIds)
+          .eq('vote_type', 'upvote'),
+        supabaseAdmin
+          .from('comment_likes')
+          .select('comment_id')
+          .in('comment_id', commentIds)
+          .eq('vote_type', 'downvote')
+      ];
+
+      if (userId) {
+        votePromises.push(
+          supabaseAdmin
+            .from('comment_likes')
+            .select('comment_id, vote_type')
+            .in('comment_id', commentIds)
+            .eq('user_id', userId)
+        );
+      }
+
+      const [upRes, downRes, userRes] = await Promise.all(votePromises);
+
+      if ('error' in upRes && upRes.error) {
+        console.error('Error fetching comment upvotes:', upRes.error);
+      } else {
+        (upRes.data || []).forEach((row: any) => {
+          if (!row?.comment_id) return;
+          upCounts[row.comment_id] = (upCounts[row.comment_id] || 0) + 1;
+        });
+      }
+
+      if ('error' in downRes && downRes.error) {
+        console.error('Error fetching comment downvotes:', downRes.error);
+      } else {
+        (downRes.data || []).forEach((row: any) => {
+          if (!row?.comment_id) return;
+          downCounts[row.comment_id] = (downCounts[row.comment_id] || 0) + 1;
+        });
+      }
+
+      if (userId && userRes && 'error' in userRes && userRes.error) {
+        console.error('Error fetching user comment votes:', userRes.error);
+      } else if (userId && userRes && 'data' in userRes) {
+        (userRes.data || []).forEach((row: any) => {
+          if (!row?.comment_id || !row?.vote_type) return;
+          userVotes[row.comment_id] = row.vote_type;
+        });
+      }
+    }
+
     const commentAuthorIds = Array.from(new Set((comments || []).map((c: any) => c.author_id ?? c.authorId).filter(Boolean)));
     let commentAuthorMap = new Map<string, any>();
     if (commentAuthorIds.length > 0) {
@@ -76,8 +136,9 @@ export async function GET(
     const formattedComments = (comments || []).map((comment: any) => {
       const authorId = comment.author_id ?? comment.authorId;
       const createdAtRaw = comment.created_at ?? comment.createdAt ?? new Date().toISOString();
+      const id = comment.id;
       return {
-        id: comment.id,
+        id,
         content: comment.content,
         postId: comment.post_id ?? comment.postId,
         author: {
@@ -88,8 +149,11 @@ export async function GET(
           title: commentAuthorMap.get(authorId)?.title || null
         },
         createdAt: typeof createdAtRaw === 'string' ? createdAtRaw : new Date(createdAtRaw).toISOString(),
-        votes: { upvotes: 0, downvotes: 0 },
-        userVote: null,
+        votes: {
+          upvotes: upCounts[id] ?? 0,
+          downvotes: downCounts[id] ?? 0
+        },
+        userVote: userVotes[id] ?? null,
         isModerated: true
       };
     });
