@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ModerationAlert from '@/components/ModerationAlert';
 import ReportContent from '@/components/ReportContent';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { ForumPost } from '@/types/forum';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -56,6 +57,9 @@ export default function PostDetailPage() {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   // Local user vote for immediate UI feedback
   const [localUserVote, setLocalUserVote] = useState<'up' | 'down' | null>(null);
+  const [showDeletePostConfirm, setShowDeletePostConfirm] = useState(false);
+  const [showDeleteCommentConfirm, setShowDeleteCommentConfirm] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   // Sync local vote whenever post changes
   useEffect(() => {
@@ -339,12 +343,17 @@ export default function PostDetailPage() {
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
+    setCommentToDelete(commentId);
+    setShowDeleteCommentConfirm(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!isAuthenticated || !user || !commentToDelete) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+      const response = await fetch(`/api/posts/${postId}/comments/${commentToDelete}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -356,7 +365,7 @@ export default function PostDetailPage() {
 
       if (response.ok) {
         // Remove comment from state
-        setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+        setComments(prevComments => prevComments.filter(comment => comment.id !== commentToDelete));
         showToast('Comment deleted successfully', 'success');
 
         try {
@@ -375,6 +384,9 @@ export default function PostDetailPage() {
     } catch (error) {
       console.error('Error deleting comment:', error);
       showToast('Error deleting comment. Please try again.', 'error');
+    } finally {
+      setShowDeleteCommentConfirm(false);
+      setCommentToDelete(null);
     }
   };
 
@@ -383,12 +395,16 @@ export default function PostDetailPage() {
     setShowReport(true);
   };
 
-  const handleDeletePost = async () => {
+  const handleDeletePost = () => {
     if (!isAuthenticated || !user || !post) {
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+    setShowDeletePostConfirm(true);
+  };
+
+  const confirmDeletePost = async () => {
+    if (!isAuthenticated || !user || !post) {
       return;
     }
 
@@ -414,6 +430,8 @@ export default function PostDetailPage() {
     } catch (error) {
       console.error('Error deleting post:', error);
       showToast('Error deleting post. Please try again.', 'error');
+    } finally {
+      setShowDeletePostConfirm(false);
     }
   };
 
@@ -1035,6 +1053,33 @@ export default function PostDetailPage() {
             }}
           />
         )}
+
+        {/* Delete Post Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={showDeletePostConfirm}
+          onClose={() => setShowDeletePostConfirm(false)}
+          onConfirm={confirmDeletePost}
+          title="Delete Post"
+          message="Are you sure you want to delete this post? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          type="danger"
+        />
+
+        {/* Delete Comment Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={showDeleteCommentConfirm}
+          onClose={() => {
+            setShowDeleteCommentConfirm(false);
+            setCommentToDelete(null);
+          }}
+          onConfirm={confirmDeleteComment}
+          title="Delete Comment"
+          message="Are you sure you want to delete this comment? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          type="danger"
+        />
       </div>
     </div>
   );
