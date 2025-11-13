@@ -358,6 +358,16 @@ export default function PostDetailPage() {
         // Remove comment from state
         setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
         showToast('Comment deleted successfully', 'success');
+
+        try {
+          const refreshed = await fetch(`/api/posts/${postId}/comments?sortBy=${commentSortBy}${isAuthenticated && user ? `&userId=${user.id}` : ''}`);
+          if (refreshed.ok) {
+            const refreshedData = await refreshed.json();
+            setComments(refreshedData.comments || []);
+          }
+        } catch (refreshError) {
+          console.error('Error refreshing comments after delete:', refreshError);
+        }
       } else {
         const error = await response.json();
         showToast(error.message || 'Failed to delete comment. You can only delete your own comments.', 'error');
