@@ -19,6 +19,10 @@ async function detectCommentCasing() {
   return false;
 }
 
+function hasColumn(row: Record<string, any> | null | undefined, column: string) {
+  return !!row && Object.prototype.hasOwnProperty.call(row, column);
+}
+
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export async function GET(
@@ -118,7 +122,7 @@ export async function POST(
 
     const { data: post, error: postError } = await supabaseAdmin
       .from('posts')
-      .select('id, author_id, authorId')
+      .select('*')
       .eq('id', postId)
       .maybeSingle();
 
@@ -193,18 +197,26 @@ export async function POST(
       throw new Error(`Failed to create comment: ${createError?.message || 'Unknown error'}`);
     }
 
-    const { data: currentPost } = await supabaseAdmin
-      .from('posts')
-      .select('replies, replies_count')
-      .eq('id', postId)
-      .maybeSingle();
+    const currentReplies = (post.replies ?? post.replies_count ?? 0) + 1;
+    const updatePayload: Record<string, number> = {};
+    if (hasColumn(post, 'replies')) {
+      updatePayload.replies = currentReplies;
+    }
+    if (hasColumn(post, 'replies_count')) {
+      updatePayload.replies_count = currentReplies;
+    }
+    if (Object.keys(updatePayload).length === 0) {
+      updatePayload.replies = currentReplies;
+    }
 
-    const currentReplies = currentPost?.replies ?? currentPost?.replies_count ?? 0;
-
-    await supabaseAdmin
+    const { error: updateRepliesError } = await supabaseAdmin
       .from('posts')
-      .update({ replies: currentReplies + 1 })
+      .update(updatePayload)
       .eq('id', postId);
+
+    if (updateRepliesError) {
+      console.error('Error updating replies count for post:', updateRepliesError);
+    }
 
     const postAuthorId = post.author_id ?? post.authorId;
     if (postAuthorId && postAuthorId !== author.id) {
