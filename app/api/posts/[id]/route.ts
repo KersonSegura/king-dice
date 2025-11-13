@@ -38,15 +38,22 @@ export async function GET(
       }
     }
 
-    const [{ count: upvotes }, { count: downvotes }, { data: meVote }] = await Promise.all([
+    const [{ count: upvotes }, { count: downvotes }, meVoteResult] = await Promise.all([
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: id, vote_type: 'up' }),
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: id, vote_type: 'down' }),
       userId
-        ? supabaseAdmin.from('post_votes').select('vote_type').match({ post_id: id, user_id: userId }).maybeSingle()
-        : Promise.resolve({ data: null } as any),
+        ? supabaseAdmin
+            .from('post_votes')
+            .select('vote_type')
+            .match({ post_id: id, user_id: userId })
+            .order('created_at', { ascending: false })
+            .limit(1)
+        : Promise.resolve({ data: [] as any[], error: null } as any),
     ]);
 
+    const meVote = Array.isArray((meVoteResult as any).data) ? (meVoteResult as any).data[0] : null;
     const createdAtRaw = dbPost.createdAt ?? dbPost.created_at ?? new Date().toISOString();
+    const createdAt = typeof createdAtRaw === 'string' ? createdAtRaw : new Date(createdAtRaw).toISOString();
 
     const post = {
       id: dbPost.id,
@@ -60,13 +67,13 @@ export async function GET(
         reputation: postAuthor?.xp ?? 0,
         title: postAuthor?.title || null
       },
-      createdAt: typeof createdAtRaw === 'string' ? createdAtRaw : new Date(createdAtRaw).toISOString(),
+      createdAt,
       votes: {
         upvotes: upvotes ?? 0,
         downvotes: downvotes ?? 0,
       },
       replies: dbPost.replies ?? dbPost.replies_count ?? 0,
-      userVote: (meVote as any)?.vote_type ?? null,
+      userVote: meVote?.vote_type ?? null,
       isModerated: true
     };
 

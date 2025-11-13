@@ -15,16 +15,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: existing, error: existingError } = await supabaseAdmin
+    const { data: existingRows, error: existingError } = await supabaseAdmin
       .from('post_votes')
       .select('id, vote_type')
       .match({ user_id: userId, post_id: postId })
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1);
 
     if (existingError) {
       console.error('[POST VOTE API] Error checking existing vote:', existingError);
       return NextResponse.json({ error: 'Failed to check existing vote', details: existingError.message }, { status: 500 });
     }
+
+    const existing = existingRows?.[0] ?? null;
 
     let action = 'none';
 
@@ -63,12 +66,17 @@ export async function POST(request: NextRequest) {
     const [upResult, downResult, meVoteResult] = await Promise.all([
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: postId, vote_type: 'up' }),
       supabaseAdmin.from('post_votes').select('*', { count: 'exact', head: true }).match({ post_id: postId, vote_type: 'down' }),
-      supabaseAdmin.from('post_votes').select('vote_type').match({ post_id: postId, user_id: userId }).maybeSingle(),
+      supabaseAdmin
+        .from('post_votes')
+        .select('vote_type')
+        .match({ post_id: postId, user_id: userId })
+        .order('created_at', { ascending: false })
+        .limit(1),
     ]);
 
     const upvotes = upResult.error ? 0 : upResult.count ?? 0;
     const downvotes = downResult.error ? 0 : downResult.count ?? 0;
-    const meVote = meVoteResult.error ? null : meVoteResult.data;
+    const meVote = meVoteResult.error ? null : (meVoteResult.data?.[0] ?? null);
 
     if (upResult.error) console.error('[POST VOTE API] Upvote count error:', upResult.error);
     if (downResult.error) console.error('[POST VOTE API] Downvote count error:', downResult.error);
