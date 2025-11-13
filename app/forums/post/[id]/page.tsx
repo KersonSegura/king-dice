@@ -74,7 +74,8 @@ export default function PostDetailPage() {
             setPost(foundPost);
             
             // Load comments for this post
-            const commentsResponse = await fetch(`/api/posts/${postId}/comments?sortBy=${commentSortBy}`);
+            const commentsUrl = `/api/posts/${postId}/comments?sortBy=${commentSortBy}${isAuthenticated && user ? `&userId=${user.id}` : ''}`;
+            const commentsResponse = await fetch(commentsUrl);
             if (commentsResponse.ok) {
               const commentsData = await commentsResponse.json();
               setComments(commentsData.comments || []);
@@ -113,7 +114,7 @@ export default function PostDetailPage() {
   // Reload comments when sort changes
   const reloadComments = async () => {
     try {
-      const commentsResponse = await fetch(`/api/posts/${postId}/comments?sortBy=${commentSortBy}`);
+      const commentsResponse = await fetch(`/api/posts/${postId}/comments?sortBy=${commentSortBy}${isAuthenticated && user ? `&userId=${user.id}` : ''}`);
       if (commentsResponse.ok) {
         const commentsData = await commentsResponse.json();
         setComments(commentsData.comments);
