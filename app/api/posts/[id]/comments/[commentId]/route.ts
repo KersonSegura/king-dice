@@ -240,14 +240,26 @@ export async function DELETE(
       console.error('Error counting remaining replies:', repliesError);
     }
 
+    const { data: postRow, error: postError } = await supabaseAdmin
+      .from('posts')
+      .select('*')
+      .eq('id', postId)
+      .maybeSingle();
+
+    if (postError) {
+      console.error('Error fetching post for replies update:', postError);
+    }
+
     const updatePayload: Record<string, number> = {};
     const replyTotal = repliesCount ?? 0;
 
-    if (hasColumn(commentRow, 'replies')) {
+    if (hasColumn(postRow, 'replies')) {
       updatePayload.replies = replyTotal;
-    } else if (hasColumn(commentRow, 'replies_count')) {
+    }
+    if (hasColumn(postRow, 'replies_count')) {
       updatePayload.replies_count = replyTotal;
-    } else {
+    }
+    if (Object.keys(updatePayload).length === 0) {
       updatePayload.replies = replyTotal;
     }
 
