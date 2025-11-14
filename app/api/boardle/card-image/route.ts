@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Objects were migrated under key: "boardle-images/cards/<filename>"
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/boardle-images/cards/${game.imageFileName}`;
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/cards/${game.imageFileName}`;
     
     console.log(`🖼️ Boardle card-image: Game ID ${gameId} (${game.name}) -> ${game.imageFileName}`);
     console.log(`🔗 Redirecting to: ${publicUrl}`);
@@ -57,3 +57,4 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
+

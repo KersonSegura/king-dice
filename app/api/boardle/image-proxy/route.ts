@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Files live in bucket "boardle-images" at path "boardle-images/<filename>"
     // Note: Files were migrated with the bucket name as a prefix, so they're at boardle-images/<filename>
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/boardle-images/${game.imageFileName}`;
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/boardle-images/${game.imageFileName}`;
 
     console.log(`🖼️ Boardle image-proxy: Game ID ${gameId} (${game.name}) -> ${game.imageFileName}`);
     console.log(`🔗 Redirecting to: ${publicUrl}`);
@@ -59,3 +59,4 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
