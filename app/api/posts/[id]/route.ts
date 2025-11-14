@@ -114,19 +114,73 @@ export async function DELETE(
       );
     }
 
-    const { error: deleteError } = await supabaseAdmin
+    const { data: commentRows, error: commentFetchError } = await supabaseAdmin
+      .from('comments')
+      .select('id')
+      .eq('post_id', id);
+
+    if (commentFetchError) {
+      console.error('Error fetching comments before deleting post:', commentFetchError);
+      return NextResponse.json(
+        { message: 'Failed to delete post', details: commentFetchError.message },
+        { status: 500 }
+      );
+    }
+
+    const commentIds = (commentRows || []).map((row) => row.id);
+    if (commentIds.length > 0) {
+      const { error: deleteCommentLikesError } = await supabaseAdmin
+        .from('comment_likes')
+        .delete()
+        .in('comment_id', commentIds);
+
+      if (deleteCommentLikesError) {
+        console.error('Error deleting comment likes for post:', deleteCommentLikesError);
+        return NextResponse.json(
+          { message: 'Failed to delete post', details: deleteCommentLikesError.message },
+          { status: 500 }
+        );
+      }
+
+      const { error: deleteCommentsError } = await supabaseAdmin
+        .from('comments')
+        .delete()
+        .in('id', commentIds);
+
+      if (deleteCommentsError) {
+        console.error('Error deleting comments for post:', deleteCommentsError);
+        return NextResponse.json(
+          { message: 'Failed to delete post', details: deleteCommentsError.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    const { error: deleteVotesError } = await supabaseAdmin
+      .from('post_votes')
+      .delete()
+      .eq('post_id', id);
+
+    if (deleteVotesError) {
+      console.error('Error deleting post votes:', deleteVotesError);
+      return NextResponse.json(
+        { message: 'Failed to delete post', details: deleteVotesError.message },
+        { status: 500 }
+      );
+    }
+
+    const { error: deletePostError } = await supabaseAdmin
       .from('posts')
       .delete()
       .eq('id', id);
 
-    if (deleteError) {
-      throw deleteError;
+    if (deletePostError) {
+      console.error('Error deleting post:', deletePostError);
+      return NextResponse.json(
+        { message: 'Failed to delete post', details: deletePostError.message },
+        { status: 500 }
+      );
     }
-
-    await supabaseAdmin
-      .from('post_votes')
-      .delete()
-      .eq('post_id', id);
 
     console.log(`Forum post deleted: ${id} by user ${authorId}`);
 
