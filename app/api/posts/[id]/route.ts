@@ -94,7 +94,7 @@ export async function DELETE(
 
     const { data: post, error: findError } = await supabaseAdmin
       .from('posts')
-      .select('id, author_id, authorId')
+      .select('*')
       .eq('id', id)
       .maybeSingle();
 
@@ -105,9 +105,9 @@ export async function DELETE(
       );
     }
 
-    const postAuthorId = post.author_id ?? post.authorId;
+    const postAuthorId = post.authorId ?? post.author_id ?? post.authorid ?? null;
 
-    if (postAuthorId !== authorId) {
+    if (!postAuthorId || postAuthorId !== authorId) {
       return NextResponse.json(
         { message: 'You can only delete your own posts' },
         { status: 403 }
