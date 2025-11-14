@@ -17,6 +17,14 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 
+const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const boardleImagePreview = SUPABASE_PUBLIC_URL
+  ? `${SUPABASE_PUBLIC_URL}/storage/v1/object/public/boardle-images/066-catan.jpg`
+  : '/boardle-images/066-catan.jpg';
+const boardleCardPreview = SUPABASE_PUBLIC_URL
+  ? `${SUPABASE_PUBLIC_URL}/storage/v1/object/public/boardle-images/cards/002-catan.jpg`
+  : '/boardle-images/cards/002-catan.jpg';
+
 // Custom hook for intersection observer
 function useIntersectionObserver(options = {}) {
   const [isIntersecting, setIsIntersecting] = useState(false);
@@ -1382,7 +1390,7 @@ export default function HomePage() {
                          <div className="flex justify-center">
                            <div className="relative w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
                              <Image
-                               src="/boardle-images/066-catan.jpg"
+                               src={boardleImagePreview}
                                alt="Zoomed in game image"
                                fill
                                className="object-cover scale-150"
@@ -1468,7 +1476,7 @@ export default function HomePage() {
                          <div className="flex justify-center">
                            <div className="relative w-32 h-40 sm:w-48 sm:h-60 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
                              <Image
-                               src="/boardle-images/cards/002-catan.jpg"
+                               src={boardleCardPreview}
                                alt="Game card"
                                fill
                                className="object-contain scale-90"
@@ -1545,4 +1553,9 @@ export default function HomePage() {
     </div>
   );
 } 
+
+
+
+
+
 
