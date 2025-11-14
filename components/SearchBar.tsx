@@ -57,12 +57,13 @@ export default function SearchBar() {
 
     const parentRect = searchRef.current.getBoundingClientRect();
     const desiredWidth = Math.min(384, viewportWidth - 24);
-    const calculatedLeft = Math.max((viewportWidth - desiredWidth) / 2 - parentRect.left, 0);
+    const targetLeft = (viewportWidth - desiredWidth) / 2 - parentRect.left;
+    const minLeft = -parentRect.left;
+    const maxLeft = viewportWidth - desiredWidth - parentRect.left;
+    const calculatedLeft = Math.min(Math.max(targetLeft, minLeft), maxLeft);
 
     setDropdownMetrics({ left: calculatedLeft, width: desiredWidth });
   }, []);
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -334,4 +335,6 @@ export default function SearchBar() {
     </div>
   );
 }
+
+
 
