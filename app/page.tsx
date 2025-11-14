@@ -1193,10 +1193,10 @@ export default function HomePage() {
             <div className="bg-gray-50 rounded-lg p-8 max-w-4xl mx-auto">
               {/* Mode Selector */}
               <div className="flex justify-center mb-8">
-                <div className="bg-white rounded-lg p-1 shadow-sm">
+                <div className="bg-white rounded-lg p-1 shadow-sm flex items-center space-x-2 overflow-x-auto">
                   <button 
                     onClick={() => setBoardleMode('title')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                       boardleMode === 'title' 
                         ? 'bg-[#fbae17] text-white' 
                         : 'text-gray-600 hover:text-gray-900'
@@ -1206,7 +1206,7 @@ export default function HomePage() {
                   </button>
                   <button 
                     onClick={() => setBoardleMode('image')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                       boardleMode === 'image' 
                         ? 'bg-[#fbae17] text-white' 
                         : 'text-gray-600 hover:text-gray-900'
@@ -1216,7 +1216,7 @@ export default function HomePage() {
                   </button>
                   <button 
                     onClick={() => setBoardleMode('card')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                       boardleMode === 'card' 
                         ? 'bg-[#fbae17] text-white' 
                         : 'text-gray-600 hover:text-gray-900'
@@ -1545,3 +1545,4 @@ export default function HomePage() {
     </div>
   );
 } 
+
