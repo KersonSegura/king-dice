@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 
 const BOARDLE_ASSET_BASE =
-  'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images';
+  'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images/boardle-images';
 const boardleImagePreview = `${BOARDLE_ASSET_BASE}/066-catan.jpg`;
 const boardleCardPreview = `${BOARDLE_ASSET_BASE}/cards/002-catan.jpg`;
 
