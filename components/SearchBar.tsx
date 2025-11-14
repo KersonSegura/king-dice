@@ -138,7 +138,7 @@ export default function SearchBar() {
   };
 
   return (
-    <div className="relative flex-1 max-w-md mx-2 sm:mx-4" ref={searchRef}>
+    <div className="relative flex-1 w-full sm:max-w-md mx-2 sm:mx-4" ref={searchRef}>
       {/* Search Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -167,7 +167,7 @@ export default function SearchBar() {
 
       {/* Search Results Dropdown */}
       {isOpen && query.length >= 2 && (
-        <div className="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
+        <div className="absolute z-50 mt-1 left-1/2 -translate-x-1/2 w-[min(24rem,calc(100vw-1.5rem))] sm:left-0 sm:translate-x-0 sm:w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
           {loading ? (
             <div className="px-4 py-3 text-center text-gray-500">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
@@ -216,7 +216,7 @@ export default function SearchBar() {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
                         {result.type === 'user' ? result.username : result.name}
                       </p>
                       {result.type === 'user' && result.isVerified && (
