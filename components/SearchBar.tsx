@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, X, User, Dice6, Clock, Plus } from 'lucide-react';
@@ -30,10 +30,37 @@ export default function SearchBar() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [dropdownMetrics, setDropdownMetrics] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+
+  const updateDropdownPosition = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const viewportWidth = window.innerWidth;
+    const mobile = viewportWidth < 640;
+    setIsMobileLayout(mobile);
+
+    if (!mobile) {
+      setDropdownMetrics({ left: 0, width: 0 });
+      return;
+    }
+
+    if (!searchRef.current) {
+      return;
+    }
+
+    const parentRect = searchRef.current.getBoundingClientRect();
+    const desiredWidth = Math.min(384, viewportWidth - 24);
+    const calculatedLeft = Math.max((viewportWidth - desiredWidth) / 2 - parentRect.left, 0);
+
+    setDropdownMetrics({ left: calculatedLeft, width: desiredWidth });
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -51,6 +78,19 @@ export default function SearchBar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    updateDropdownPosition();
+    window.addEventListener('resize', updateDropdownPosition);
+    return () => window.removeEventListener('resize', updateDropdownPosition);
+  }, [updateDropdownPosition]);
+
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+    }
+  }, [isOpen, updateDropdownPosition]);
+
 
   // Search function with debouncing
   useEffect(() => {
@@ -137,6 +177,10 @@ export default function SearchBar() {
     return date.toLocaleDateString();
   };
 
+  const dropdownStyle = isMobileLayout && dropdownMetrics.width
+    ? { width: `${dropdownMetrics.width}px`, left: `${dropdownMetrics.left}px` }
+    : undefined;
+
   return (
     <div className="relative flex-1 w-full sm:max-w-md mx-2 sm:mx-4" ref={searchRef}>
       {/* Search Input */}
@@ -167,7 +211,7 @@ export default function SearchBar() {
 
       {/* Search Results Dropdown */}
       {isOpen && query.length >= 2 && (
-        <div className="absolute z-50 mt-1 left-1/2 -translate-x-1/2 w-[min(24rem,calc(100vw-1.5rem))] sm:left-0 sm:translate-x-0 sm:w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
+        <div className="absolute z-50 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto sm:left-0 sm:w-full" style={dropdownStyle}>
           {loading ? (
             <div className="px-4 py-3 text-center text-gray-500">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
@@ -290,3 +334,4 @@ export default function SearchBar() {
     </div>
   );
 }
+
