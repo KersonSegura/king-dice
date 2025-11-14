@@ -17,7 +17,7 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 
-const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? \"https://yoedvavdopxhehpxsvlt.supabase.co\";
+const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://yoedvavdopxhehpxsvlt.supabase.co";
 const boardleImagePreview = SUPABASE_PUBLIC_URL
   ? `${SUPABASE_PUBLIC_URL}/storage/v1/object/public/boardle-images/066-catan.jpg`
   : '/boardle-images/066-catan.jpg';
@@ -1553,6 +1553,8 @@ export default function HomePage() {
     </div>
   );
 } 
+
+
 
 
 
