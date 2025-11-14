@@ -17,13 +17,10 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 
-const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://yoedvavdopxhehpxsvlt.supabase.co";
-const boardleImagePreview = SUPABASE_PUBLIC_URL
-  ? `${SUPABASE_PUBLIC_URL}/storage/v1/object/public/boardle-images/066-catan.jpg`
-  : '/boardle-images/066-catan.jpg';
-const boardleCardPreview = SUPABASE_PUBLIC_URL
-  ? `${SUPABASE_PUBLIC_URL}/storage/v1/object/public/boardle-images/cards/002-catan.jpg`
-  : '/boardle-images/cards/002-catan.jpg';
+const BOARDLE_ASSET_BASE =
+  'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images';
+const boardleImagePreview = `${BOARDLE_ASSET_BASE}/066-catan.jpg`;
+const boardleCardPreview = `${BOARDLE_ASSET_BASE}/cards/002-catan.jpg`;
 
 // Custom hook for intersection observer
 function useIntersectionObserver(options = {}) {
