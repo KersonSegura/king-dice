@@ -1390,6 +1390,7 @@ export default function HomePage() {
                                src={boardleImagePreview}
                                alt="Zoomed in game image"
                                fill
+                               unoptimized
                                className="object-cover scale-150"
                                style={{ transform: 'scale(3) translate(20%, 20%)' }}
                              />
@@ -1476,6 +1477,7 @@ export default function HomePage() {
                                src={boardleCardPreview}
                                alt="Game card"
                                fill
+                               unoptimized
                                className="object-contain scale-90"
                              />
                            </div>
