@@ -69,6 +69,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'yoedvavdopxhehpxsvlt.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/boardle-images/**',
+      },
     ],
   },
   // Optimize bundle size for Vercel
