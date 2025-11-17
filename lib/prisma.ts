@@ -48,7 +48,6 @@ try {
     if (fs.existsSync(generatedSchemaPath)) {
       const generatedSchema = fs.readFileSync(generatedSchemaPath, 'utf8');
       console.log('📄 Found generated schema at:', generatedSchemaPath);
-      console.log('📄 Schema preview (first 500 chars):', generatedSchema.substring(0, 500));
       
       // Check for engineType (with flexible spacing)
       if (generatedSchema.includes('engineType') && generatedSchema.includes('library')) {
@@ -60,41 +59,70 @@ try {
         console.error('❌ This will cause P6001 errors. Prisma Client needs to be regenerated.');
         found = true;
         break;
-      } else {
-        console.warn('⚠️ Could not find engineType in generated schema');
-        console.warn('⚠️ Schema content:', generatedSchema.substring(0, 1000));
       }
     }
   }
   
-  if (!found) {
-    console.warn('⚠️ Generated Prisma Client schema not found at any of these paths:');
-    possiblePaths.forEach(p => console.warn('  -', p));
+  // Check for Prisma Client binary files
+  const binaryPaths = [
+    path.join(process.cwd(), 'node_modules', '.prisma', 'client'),
+    path.join(__dirname, '..', 'node_modules', '.prisma', 'client'),
+  ];
+  
+  for (const binaryPath of binaryPaths) {
+    if (fs.existsSync(binaryPath)) {
+      const files = fs.readdirSync(binaryPath);
+      console.log('📦 Prisma Client binary directory contents:', files.slice(0, 10).join(', '));
+      break;
+    }
   }
 } catch (e) {
   console.warn('⚠️ Could not verify Prisma Client generation:', e);
-  console.warn('⚠️ Error details:', e.message);
 }
 
-// Check for any environment variables that might force Data Proxy
+// CRITICAL: Check for environment variables that force Data Proxy
+// These MUST be removed from Vercel environment variables!
 if (process.env.PRISMA_CLIENT_ENGINE_TYPE) {
-  console.warn('⚠️ PRISMA_CLIENT_ENGINE_TYPE is set to:', process.env.PRISMA_CLIENT_ENGINE_TYPE);
+  console.error('❌ PRISMA_CLIENT_ENGINE_TYPE is set to:', process.env.PRISMA_CLIENT_ENGINE_TYPE);
+  console.error('❌ This environment variable is FORCING Data Proxy mode!');
+  console.error('❌ ACTION REQUIRED: Remove PRISMA_CLIENT_ENGINE_TYPE from Vercel environment variables');
+  // Note: Can't delete here as Prisma Client already initialized, but we log it
 }
 if (process.env.PRISMA_ACCELERATE_DATABASE_URL) {
-  console.warn('⚠️ PRISMA_ACCELERATE_DATABASE_URL is set (this forces Data Proxy mode!)');
+  console.error('❌ PRISMA_ACCELERATE_DATABASE_URL is set (this forces Data Proxy mode!)');
+  console.error('❌ ACTION REQUIRED: Remove PRISMA_ACCELERATE_DATABASE_URL from Vercel environment variables');
+}
+
+// Ensure we're using direct connection URL
+const dbUrl = process.env.DATABASE_URL;
+if (dbUrl && (dbUrl.startsWith('prisma://') || dbUrl.startsWith('prisma+postgres://'))) {
+  console.error('❌ DATABASE_URL is using Prisma Data Proxy format!');
+  console.error('❌ This will cause P6001 errors. Use direct PostgreSQL connection string.');
+  throw new Error('DATABASE_URL must be a direct PostgreSQL connection, not Prisma Data Proxy');
+}
+
+// Workaround for Prisma P6001 bug: Prisma Client is checking URL format before engineType
+// We need to ensure the connection URL doesn't trigger Data Proxy detection
+let prismaClientConfig: any = {
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+};
+
+// Try to explicitly prevent Data Proxy mode
+// Note: This is a workaround for a Prisma bug where it checks URL format before engineType
+try {
+  // Force Prisma to use library engine by ensuring no Data Proxy indicators
+  const dbUrl = process.env.DATABASE_URL || '';
+  if (dbUrl && !dbUrl.startsWith('prisma://') && !dbUrl.startsWith('prisma+')) {
+    // URL is correct format for direct connection
+    console.log('✅ Using direct PostgreSQL connection URL');
+  }
+} catch (e) {
+  console.warn('⚠️ Error checking connection URL:', e);
 }
 
 export const prisma =
   globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-    // Explicitly set datasource to ensure we're using direct connection
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-  });
+  new PrismaClient(prismaClientConfig);
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
