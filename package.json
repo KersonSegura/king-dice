@@ -7,7 +7,7 @@
     "build": "rm -rf node_modules/.prisma && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "rm -rf node_modules/.prisma && prisma generate",
+    "postinstall": "echo 'Prisma Client will be generated during build'",
     "db:seed": "node scripts/seed-database.js",
     "db:seed-enhanced": "node scripts/seed-database-enhanced.js",
     "db:seed-massive": "node scripts/seed-massive.js",
