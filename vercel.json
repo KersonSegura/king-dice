@@ -27,5 +27,5 @@
     }
   },
   "installCommand": "npm install",
-  "buildCommand": "prisma generate && next build"
+  "buildCommand": "rm -rf node_modules/.prisma && prisma generate && next build"
 }
