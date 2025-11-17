@@ -16,7 +16,10 @@ if (!process.env.DATABASE_URL.startsWith('postgresql://') && !process.env.DATABA
 
 // Log connection type for debugging (without exposing credentials)
 const dbUrlStart = process.env.DATABASE_URL.substring(0, 20);
-console.log('🔌 Database connection type:', dbUrlStart.includes('prisma://') ? 'Data Proxy' : 'Direct PostgreSQL');
+const directUrlStart = process.env.DIRECT_URL?.substring(0, 20) || 'not set';
+console.log('🔌 DATABASE_URL type:', dbUrlStart.includes('prisma://') ? 'Data Proxy' : 'Direct PostgreSQL');
+console.log('🔌 DIRECT_URL type:', directUrlStart.includes('prisma://') ? 'Data Proxy' : directUrlStart.includes('postgres') ? 'Direct PostgreSQL' : 'Not set');
+console.log('🔌 Prisma engineType from schema: library (direct connection)');
 
 // Singleton pattern for Prisma Client in serverless environments
 // Prevents multiple instances and connection pool exhaustion
@@ -26,6 +29,18 @@ const globalForPrisma = globalThis as unknown as {
 
 // Use DIRECT_URL if available (for direct connection), otherwise use DATABASE_URL
 const connectionUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
+// Verify Prisma Client configuration
+try {
+  const prismaClientPath = require.resolve('@prisma/client');
+  console.log('🔍 Prisma Client path:', prismaClientPath);
+  
+  // Check if Prisma Client was generated with Data Proxy
+  const generatedClientPath = require.resolve('.prisma/client', { paths: [process.cwd()] });
+  console.log('🔍 Generated Prisma Client path:', generatedClientPath);
+} catch (e) {
+  console.warn('⚠️ Could not verify Prisma Client paths:', e);
+}
 
 export const prisma =
   globalForPrisma.prisma ??

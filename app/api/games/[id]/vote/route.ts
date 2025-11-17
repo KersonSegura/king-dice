@@ -161,9 +161,18 @@ export async function POST(
     console.error('[VOTE API] Error instanceof Error:', error instanceof Error);
     
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('[VOTE API] Prisma error code:', error.code);
-      console.error('[VOTE API] Prisma error message:', error.message);
-      console.error('[VOTE API] Prisma error meta:', JSON.stringify(error.meta, null, 2));
+      console.error('[VOTE API] ========== PRISMA ERROR DETAILS ==========');
+      console.error('[VOTE API] Error code:', error.code);
+      console.error('[VOTE API] Error message:', error.message);
+      console.error('[VOTE API] Error name:', error.name);
+      console.error('[VOTE API] Error meta:', JSON.stringify(error.meta, null, 2));
+      console.error('[VOTE API] Full error:', JSON.stringify({
+        code: error.code,
+        message: error.message,
+        meta: error.meta,
+        clientVersion: error.clientVersion
+      }, null, 2));
+      console.error('[VOTE API] ===========================================');
       
       // Provide more specific error messages based on error code
       if (error.code === 'P2002') {
