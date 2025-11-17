@@ -202,7 +202,7 @@ model UserVote {
   id        Int      @id @default(autoincrement())
   gameId    Int
   userId    String
-  rating    Int
+  rating    Float
   createdAt DateTime @default(now())
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 

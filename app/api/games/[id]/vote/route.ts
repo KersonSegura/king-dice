@@ -137,7 +137,32 @@ export async function POST(
     console.error('Error procesando voto:', error);
     
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Prisma error code:', error.code, error.meta);
+      console.error('Prisma error code:', error.code);
+      console.error('Prisma error meta:', JSON.stringify(error.meta, null, 2));
+      
+      // Provide more specific error messages based on error code
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'You have already voted for this game. You can update your rating.' },
+          { status: 400 }
+        );
+      }
+      
+      if (error.code === 'P2003') {
+        return NextResponse.json(
+          { error: 'Invalid game or user reference.' },
+          { status: 400 }
+        );
+      }
+      
+      if (error.code === 'P2025') {
+        return NextResponse.json(
+          { error: 'Game not found.' },
+          { status: 404 }
+        );
+      }
+      
+      // For other Prisma errors, return the actual error message
       return NextResponse.json(
         { error: `Database error: ${error.message}` },
         { status: 500 }
@@ -146,7 +171,17 @@ export async function POST(
     
     // Log the full error for debugging
     if (error instanceof Error) {
-      console.error('Error details:', error.message, error.stack);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      // Check if it's a connection error
+      if (error.message.includes('connect') || error.message.includes('connection') || error.message.includes('timeout')) {
+        return NextResponse.json(
+          { error: 'Database connection issue. Please try again later.' },
+          { status: 500 }
+        );
+      }
+      
       return NextResponse.json(
         { error: error.message || 'Internal server error' },
         { status: 500 }
