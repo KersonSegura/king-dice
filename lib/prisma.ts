@@ -32,14 +32,26 @@ const connectionUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
 
 // Verify Prisma Client configuration
 try {
-  const prismaClientPath = require.resolve('@prisma/client');
-  console.log('🔍 Prisma Client path:', prismaClientPath);
+  const fs = require('fs');
+  const path = require('path');
   
-  // Check if Prisma Client was generated with Data Proxy
-  const generatedClientPath = require.resolve('.prisma/client', { paths: [process.cwd()] });
-  console.log('🔍 Generated Prisma Client path:', generatedClientPath);
+  // Try to read the generated Prisma Client schema to verify engine type
+  const generatedSchemaPath = path.join(process.cwd(), 'node_modules', '.prisma', 'client', 'schema.prisma');
+  if (fs.existsSync(generatedSchemaPath)) {
+    const generatedSchema = fs.readFileSync(generatedSchemaPath, 'utf8');
+    if (generatedSchema.includes('engineType = "library"')) {
+      console.log('✅ Generated Prisma Client has engineType = "library"');
+    } else if (generatedSchema.includes('engineType = "dataproxy"')) {
+      console.error('❌ Generated Prisma Client has engineType = "dataproxy" (WRONG!)');
+      console.error('❌ This will cause P6001 errors. Prisma Client needs to be regenerated.');
+    } else {
+      console.warn('⚠️ Could not determine engine type from generated schema');
+    }
+  } else {
+    console.warn('⚠️ Generated Prisma Client schema not found at:', generatedSchemaPath);
+  }
 } catch (e) {
-  console.warn('⚠️ Could not verify Prisma Client paths:', e);
+  console.warn('⚠️ Could not verify Prisma Client generation:', e);
 }
 
 export const prisma =

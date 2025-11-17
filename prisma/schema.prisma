@@ -1,11 +1,9 @@
 generator client {
   provider = "prisma-client-js"
   // Force library engine for direct PostgreSQL connection (no Data Proxy)
+  // In Prisma 6, this should prevent Data Proxy mode
   engineType = "library"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
-  previewFeatures = ["driverAdapters"]
-  // Explicitly disable Data Proxy
-  noEngine = false
 }
 
 datasource db {
