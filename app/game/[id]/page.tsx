@@ -3,7 +3,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe, X } from 'lucide-react';
 import VideoLinks from '@/components/VideoLinks';
 import PDFHandler from '@/components/PDFHandler';
 import { useState, useEffect, use, useRef } from 'react';
@@ -378,9 +378,19 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [isDesktop, setIsDesktop] = useState(false);
   
   // Ranking button state
-  const [isVoting, setIsVoting] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const starButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Rating modal state
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [isSubmittingVote, setIsSubmittingVote] = useState(false);
+  const [selectedStars, setSelectedStars] = useState(0);
+  const [existingUserRatingStars, setExistingUserRatingStars] = useState<number | null>(null);
+  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
+  const [localUserRating, setLocalUserRating] = useState<number | null>(game?.userRating ?? null);
+  const [localUserVotes, setLocalUserVotes] = useState<number>(game?.userVotes ?? 0);
+  const [modalError, setModalError] = useState<string | null>(null);
   
   // Auth and toast hooks
   const { isAuthenticated, user } = useAuth();
@@ -418,41 +428,203 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     }
   };
 
+  // Calculate combined rating (BGG + users)
+  const combinedRating = game?.bggRating && localUserRating 
+    ? ((game.bggRating * (game.bggVotes || 0)) + (localUserRating * (localUserVotes || 0))) / 
+      ((game.bggVotes || 0) + (localUserVotes || 0))
+    : game?.bggRating || (localUserRating ? localUserRating : null);
+
   // Ranking button handlers
   const handleStarMouseEnter = () => {
-    setShowTooltip(true);
+    if (starButtonRef.current) {
+      const rect = starButtonRef.current.getBoundingClientRect();
+      setShowTooltip(true);
+    }
   };
 
   const handleStarMouseLeave = () => {
     setShowTooltip(false);
   };
 
-  const handleStarClick = async () => {
+  const closeRatingModal = () => {
+    setIsRatingModalOpen(false);
+    setHoveredRating(null);
+    if (existingUserRatingStars) {
+      setSelectedStars(existingUserRatingStars);
+    } else {
+      setSelectedStars(0);
+    }
+  };
+
+  const openRatingModal = async () => {
+    if (!game) return;
+    console.log('Opening rating modal for game:', game.id);
+    setIsRatingModalOpen(true);
+    setModalLoading(true);
+    setModalError(null);
+
+    const queryParam = user ? `?userId=${user.id}` : '';
+
+    try {
+      const response = await fetch(`/api/games/${game.id}/vote${queryParam}`);
+      
+      if (!response.ok) {
+        console.warn('Could not load previous vote data, continuing without it');
+        setExistingUserRatingStars(null);
+        setSelectedStars(0);
+        setModalLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      const previousRating =
+        typeof data.userRatingStars === 'number' ? data.userRatingStars : null;
+      setExistingUserRatingStars(previousRating);
+      setSelectedStars(previousRating ?? 0);
+
+      if (typeof data.averageUserRatingRaw === 'number') {
+        setLocalUserRating(data.averageUserRatingRaw);
+      }
+
+      if (typeof data.totalVotes === 'number') {
+        setLocalUserVotes(data.totalVotes);
+      }
+    } catch (error) {
+      console.error('Error loading rating modal data:', error);
+      setExistingUserRatingStars(null);
+      setSelectedStars(0);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const submitRating = async () => {
+    if (!game) return;
+    
+    console.log('submitRating called with selectedStars:', selectedStars);
+    
+    if (!selectedStars || selectedStars < 0.5 || selectedStars > 5.0) {
+      console.warn('Invalid rating selected:', selectedStars);
+      showToast('Please select a star rating to vote', 'info');
+      return;
+    }
+
     if (!isAuthenticated || !user) {
       showToast('Please sign in to vote', 'info');
       return;
     }
-    if (isVoting) return;
-    setIsVoting(true);
+    
+    if (!user.id) {
+      console.error('User ID is missing');
+      showToast('User authentication error. Please try again.', 'error');
+      return;
+    }
+
+    setIsSubmittingVote(true);
+    setModalError(null);
+
     try {
-      const response = await fetch(`/api/games/${game?.id}/vote`, {
+      const response = await fetch(`/api/games/${game.id}/vote`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: 8, userId: user.id }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rating: selectedStars,
+          userId: user.id,
+        }),
       });
-      if (response.ok) { 
-        showToast('Vote submitted successfully!', 'success'); 
-      } else { 
-        const error = await response.json(); 
-        showToast(error.error || 'Failed to submit vote', 'error'); 
+
+      if (!response.ok) {
+        let errorMessage = 'An unexpected error occurred. Please try again later.';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const error = await response.json();
+            errorMessage = error.error || errorMessage;
+          }
+        } catch (parseError) {
+          errorMessage = 'An unexpected error occurred. Please try again later.';
+        }
+        throw new Error(errorMessage);
       }
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        throw new Error('An unexpected error occurred. Please try again later.');
+      }
+
+      setLocalUserRating(result.userRating ?? localUserRating);
+      setLocalUserVotes(result.userVotes ?? localUserVotes);
+      setExistingUserRatingStars(selectedStars);
+      const successMessage = result.message || (result.isNewVote ? 'Thanks for your vote!' : 'Rating updated!');
+      showToast(successMessage, 'success');
+      closeRatingModal();
     } catch (error) {
       console.error('Error voting:', error);
+      const userFriendlyMessage = error instanceof Error 
+        ? (error.message.includes('Unexpected token') || error.message.includes('<!DOCTYPE')
+          ? 'An unexpected error occurred. Please try again later.'
+          : error.message.includes('Database error')
+          ? 'Database connection issue. Please try again later.'
+          : error.message)
+        : 'An unexpected error occurred. Please try again later.';
+      setModalError(userFriendlyMessage);
       showToast('Failed to submit vote', 'error');
-    } finally { 
-      setIsVoting(false); 
+    } finally {
+      setIsSubmittingVote(false);
     }
   };
+
+  const handleStarClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Star button clicked, opening modal...');
+    openRatingModal();
+  };
+
+  const getDisplayRating = () => {
+    if (hoveredRating !== null) return hoveredRating;
+    return selectedStars;
+  };
+
+  const displayRating = getDisplayRating();
+
+  const handleRatingStarClick = (starIndex: number, isLeftHalf: boolean) => {
+    const rating = starIndex + (isLeftHalf ? 0.5 : 1.0);
+    setSelectedStars(rating);
+    setHoveredRating(null);
+  };
+
+  const handleStarHover = (starIndex: number, isLeftHalf: boolean) => {
+    const rating = starIndex + (isLeftHalf ? 0.5 : 1.0);
+    setHoveredRating(rating);
+  };
+
+  // Update local rating state when game data changes
+  useEffect(() => {
+    if (game) {
+      setLocalUserRating(game.userRating ?? null);
+      setLocalUserVotes(game.userVotes ?? 0);
+    }
+  }, [game?.id, game?.userRating, game?.userVotes]);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isRatingModalOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeRatingModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isRatingModalOpen]);
 
   // Fetch game data
   useEffect(() => {
@@ -553,8 +725,150 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     return showFullDescription ? cleanDesc : truncateDescription(cleanDesc);
   };
 
+  // Star rating UI
+  const starButtons = (
+    <div className="flex flex-col items-center gap-3 py-4">
+      <div className="flex items-center justify-center gap-2">
+        {[0, 1, 2, 3, 4].map((starIndex) => {
+          const fullRating = starIndex + 1;
+          const halfRating = starIndex + 0.5;
+          const isHalfFilled = displayRating >= halfRating && displayRating < fullRating;
+          const isFilled = displayRating >= fullRating;
+          
+          return (
+            <div
+              key={starIndex}
+              className="relative cursor-pointer"
+              onMouseLeave={() => setHoveredRating(null)}
+            >
+              <div className="relative w-10 h-10">
+                {/* Left half (0.5) */}
+                <div
+                  className="absolute left-0 top-0 w-1/2 h-full z-10"
+                  onMouseEnter={() => handleStarHover(starIndex, true)}
+                  onClick={() => handleRatingStarClick(starIndex, true)}
+                  title={`${halfRating} stars`}
+                />
+                {/* Right half (1.0) */}
+                <div
+                  className="absolute right-0 top-0 w-1/2 h-full z-10"
+                  onMouseEnter={() => handleStarHover(starIndex, false)}
+                  onClick={() => handleRatingStarClick(starIndex, false)}
+                  title={`${fullRating} star${fullRating === 1 ? '' : 's'}`}
+                />
+                {/* Star icon */}
+                <div className="relative w-full h-full">
+                  {/* Background star (always visible) */}
+                  <Star
+                    className="w-10 h-10 absolute"
+                    fill="none"
+                    stroke="#cbd5e1"
+                    strokeWidth={2}
+                  />
+                  {/* Filled portion */}
+                  {isFilled ? (
+                    <Star
+                      className="w-10 h-10 absolute"
+                      fill="#fbae17"
+                      stroke="#fbae17"
+                      strokeWidth={2}
+                    />
+                  ) : isHalfFilled ? (
+                    <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+                      <Star
+                        className="w-10 h-10"
+                        fill="#fbae17"
+                        stroke="#fbae17"
+                        strokeWidth={2}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="text-center mt-2">
+        <p className="text-sm font-medium text-gray-700">
+          {displayRating > 0 ? `${displayRating.toFixed(1)} / 5.0` : 'Select your rating'}
+        </p>
+      </div>
+    </div>
+  );
+
+  // Rating modal
+  const ratingModal = !isRatingModalOpen || !game ? null : (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+      onClick={closeRatingModal}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl relative"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+          onClick={closeRatingModal}
+          aria-label="Close rating modal"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="text-center mb-4">
+          <h3 className="text-xl font-semibold text-gray-900">Rate {game.nameEn}</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {existingUserRatingStars 
+              ? `Your current rating: ${existingUserRatingStars.toFixed(1)}/5. You can change it.`
+              : 'Share your rating with the community'}
+          </p>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 mb-4 text-center">
+          <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Overall Rating</p>
+          <p className="text-2xl font-bold text-gray-900 mb-1">
+            {combinedRating ? `${combinedRating.toFixed(1)}/10` : 'N/A'}
+          </p>
+          <p className="text-sm text-gray-600">
+            {((game.bggVotes || 0) + (localUserVotes || 0)) > 0 
+              ? `${((game.bggVotes || 0) + (localUserVotes || 0)).toLocaleString()} vote${((game.bggVotes || 0) + (localUserVotes || 0)) === 1 ? '' : 's'}`
+              : 'No votes yet'}
+          </p>
+        </div>
+
+        {modalLoading ? (
+          <div className="py-8 text-center text-gray-500">Loading…</div>
+        ) : (
+          <>
+            {starButtons}
+            {!isAuthenticated && (
+              <p className="text-sm text-gray-500 text-center">
+                Sign in to save your rating.
+              </p>
+            )}
+            {modalError && <p className="text-sm text-red-500 text-center">{modalError}</p>}
+            <button
+              type="button"
+              onClick={submitRating}
+              disabled={isSubmittingVote || !isAuthenticated || !selectedStars}
+              className="mt-4 w-full rounded-xl bg-[#fbae17] py-3 text-white font-semibold hover:opacity-90 disabled:opacity-60"
+            >
+              {isSubmittingVote 
+                ? 'Saving...' 
+                : selectedStars 
+                  ? `${existingUserRatingStars ? 'Update' : 'Submit'} ${selectedStars.toFixed(1)} ★` 
+                  : 'Select a star'}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
+      {ratingModal}
       {/* Header with back button */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -639,18 +953,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     <div className="flex items-center space-x-3">
                       <div className="relative">
                         <button 
+                          type="button"
                           ref={starButtonRef}
                           className="text-white p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2" 
                           style={{ backgroundColor: '#fbae17' }}
                           onMouseEnter={handleStarMouseEnter}
                           onMouseLeave={handleStarMouseLeave}
                           onClick={handleStarClick}
-                          disabled={isVoting}
                         >
                           <Star className="w-5 h-5" />
-                          <span className="font-medium">
-                            {isVoting ? 'Voting...' : 'Vote'}
-                          </span>
+                          <span className="font-medium">Vote</span>
                         </button>
                         
                         {/* Tooltip */}
