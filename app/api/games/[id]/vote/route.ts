@@ -32,21 +32,28 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log('[VOTE API] Starting vote submission...');
     const { id: idString } = await params;
     const gameId = Number.parseInt(idString, 10);
+    console.log('[VOTE API] Game ID:', gameId);
 
     if (Number.isNaN(gameId)) {
+      console.error('[VOTE API] Invalid game ID:', idString);
       return NextResponse.json({ error: 'Invalid game ID' }, { status: 400 });
     }
 
-    const { rating, userId } = await request.json();
+    const body = await request.json();
+    console.log('[VOTE API] Request body:', { rating: body.rating, userId: body.userId });
+    const { rating, userId } = body;
 
     if (!userId) {
+      console.error('[VOTE API] Missing userId');
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
     // Accept decimal ratings from 0.5 to 5.0 in 0.5 increments
     if (typeof rating !== 'number' || isNaN(rating) || rating < 0.5 || rating > 5.0) {
+      console.error('[VOTE API] Invalid rating:', rating);
       return NextResponse.json(
         { error: 'Rating must be between 0.5 and 5.0 stars' },
         { status: 400 }
@@ -56,24 +63,30 @@ export async function POST(
     // Validate it's a valid 0.5 increment
     const validIncrement = Math.abs(rating % 0.5) < 0.01 || Math.abs(rating % 0.5 - 0.5) < 0.01;
     if (!validIncrement) {
+      console.error('[VOTE API] Invalid rating increment:', rating);
       return NextResponse.json(
         { error: 'Rating must be a multiple of 0.5 (e.g., 1.0, 1.5, 2.0, etc.)' },
         { status: 400 }
       );
     }
 
+    console.log('[VOTE API] Finding game...');
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: { id: true, userVotes: true, userRating: true },
     });
+    console.log('[VOTE API] Game found:', !!game);
 
     if (!game) {
+      console.error('[VOTE API] Game not found for ID:', gameId);
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
     const normalizedRating = normalizeStarRating(rating);
+    console.log('[VOTE API] Normalized rating:', normalizedRating, '(from', rating, 'stars)');
 
     // Determine if this is a new vote or an update
+    console.log('[VOTE API] Checking for existing vote...');
     const existingVote = await prisma.userVote.findUnique({
       where: {
         gameId_userId: {
@@ -82,7 +95,9 @@ export async function POST(
         },
       },
     });
+    console.log('[VOTE API] Existing vote found:', !!existingVote);
 
+    console.log('[VOTE API] Upserting vote...');
     await prisma.userVote.upsert({
       where: {
         gameId_userId: {
@@ -97,16 +112,21 @@ export async function POST(
         rating: normalizedRating,
       },
     });
+    console.log('[VOTE API] Vote upserted successfully');
 
+    console.log('[VOTE API] Aggregating votes...');
     const aggregate = await prisma.userVote.aggregate({
       where: { gameId },
       _avg: { rating: true },
       _count: { rating: true },
     });
+    console.log('[VOTE API] Aggregate result:', aggregate);
 
     const averageUserRating = toNumber(aggregate._avg.rating) ?? 0;
     const totalUserVotes = aggregate._count.rating ?? 0;
+    console.log('[VOTE API] Calculated average:', averageUserRating, 'Total votes:', totalUserVotes);
 
+    console.log('[VOTE API] Updating game...');
     await prisma.game.update({
       where: { id: gameId },
       data: {
@@ -114,6 +134,7 @@ export async function POST(
         userVotes: totalUserVotes,
       },
     });
+    console.log('[VOTE API] Game updated successfully');
 
     const isNewVote = !existingVote;
     
@@ -134,11 +155,15 @@ export async function POST(
       message: isNewVote ? 'Vote submitted successfully!' : 'Rating updated successfully!',
     });
   } catch (error) {
-    console.error('Error procesando voto:', error);
+    console.error('[VOTE API] ERROR CAUGHT:', error);
+    console.error('[VOTE API] Error type:', error?.constructor?.name);
+    console.error('[VOTE API] Error instanceof Prisma.PrismaClientKnownRequestError:', error instanceof Prisma.PrismaClientKnownRequestError);
+    console.error('[VOTE API] Error instanceof Error:', error instanceof Error);
     
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Prisma error code:', error.code);
-      console.error('Prisma error meta:', JSON.stringify(error.meta, null, 2));
+      console.error('[VOTE API] Prisma error code:', error.code);
+      console.error('[VOTE API] Prisma error message:', error.message);
+      console.error('[VOTE API] Prisma error meta:', JSON.stringify(error.meta, null, 2));
       
       // Provide more specific error messages based on error code
       if (error.code === 'P2002') {
@@ -171,11 +196,19 @@ export async function POST(
     
     // Log the full error for debugging
     if (error instanceof Error) {
-      console.error('Error details:', error.message);
-      console.error('Error stack:', error.stack);
+      console.error('[VOTE API] Error message:', error.message);
+      console.error('[VOTE API] Error stack:', error.stack);
+      console.error('[VOTE API] Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
       
       // Check if it's a connection error
-      if (error.message.includes('connect') || error.message.includes('connection') || error.message.includes('timeout')) {
+      const errorMessageLower = error.message.toLowerCase();
+      if (errorMessageLower.includes('connect') || 
+          errorMessageLower.includes('connection') || 
+          errorMessageLower.includes('timeout') ||
+          errorMessageLower.includes('econnrefused') ||
+          errorMessageLower.includes('enotfound') ||
+          errorMessageLower.includes('prisma') && errorMessageLower.includes('error')) {
+        console.error('[VOTE API] Detected as connection/database error');
         return NextResponse.json(
           { error: 'Database connection issue. Please try again later.' },
           { status: 500 }
@@ -188,6 +221,7 @@ export async function POST(
       );
     }
     
+    console.error('[VOTE API] Unknown error type:', typeof error, error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
