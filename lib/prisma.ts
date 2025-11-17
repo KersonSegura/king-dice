@@ -50,11 +50,12 @@ try {
       console.log('📄 Found generated schema at:', generatedSchemaPath);
       console.log('📄 Schema preview (first 500 chars):', generatedSchema.substring(0, 500));
       
-      if (generatedSchema.includes('engineType = "library"')) {
+      // Check for engineType (with flexible spacing)
+      if (generatedSchema.includes('engineType') && generatedSchema.includes('library')) {
         console.log('✅ Generated Prisma Client has engineType = "library"');
         found = true;
         break;
-      } else if (generatedSchema.includes('engineType = "dataproxy"')) {
+      } else if (generatedSchema.includes('engineType') && generatedSchema.includes('dataproxy')) {
         console.error('❌ Generated Prisma Client has engineType = "dataproxy" (WRONG!)');
         console.error('❌ This will cause P6001 errors. Prisma Client needs to be regenerated.');
         found = true;
@@ -75,10 +76,24 @@ try {
   console.warn('⚠️ Error details:', e.message);
 }
 
+// Check for any environment variables that might force Data Proxy
+if (process.env.PRISMA_CLIENT_ENGINE_TYPE) {
+  console.warn('⚠️ PRISMA_CLIENT_ENGINE_TYPE is set to:', process.env.PRISMA_CLIENT_ENGINE_TYPE);
+}
+if (process.env.PRISMA_ACCELERATE_DATABASE_URL) {
+  console.warn('⚠️ PRISMA_ACCELERATE_DATABASE_URL is set (this forces Data Proxy mode!)');
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    // Explicitly set datasource to ensure we're using direct connection
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
   });
 
 if (process.env.NODE_ENV !== 'production') {
