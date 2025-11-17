@@ -56,6 +56,10 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
   }, [game.id, game.userRating, game.userVotes]);
 
   useEffect(() => {
+    console.log('Modal state changed:', isRatingModalOpen);
+  }, [isRatingModalOpen]);
+
+  useEffect(() => {
     if (!isRatingModalOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -148,13 +152,22 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
   };
 
   const submitRating = async () => {
-    if (!selectedStars || selectedStars < 0.5) {
+    console.log('submitRating called with selectedStars:', selectedStars);
+    
+    if (!selectedStars || selectedStars < 0.5 || selectedStars > 5.0) {
+      console.warn('Invalid rating selected:', selectedStars);
       showToast('Please select a star rating to vote', 'info');
       return;
     }
 
     if (!isAuthenticated || !user) {
       showToast('Please sign in to vote', 'info');
+      return;
+    }
+    
+    if (!user.id) {
+      console.error('User ID is missing');
+      showToast('User authentication error. Please try again.', 'error');
       return;
     }
 
@@ -248,6 +261,7 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
   const handleStarClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log('Star button clicked, opening modal...');
     openRatingModal();
   };
 
@@ -390,6 +404,7 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
             )}
             {modalError && <p className="text-sm text-red-500 text-center">{modalError}</p>}
             <button
+              type="button"
               onClick={submitRating}
               disabled={isSubmittingVote || !isAuthenticated || !selectedStars}
               className="mt-4 w-full rounded-xl bg-[#fbae17] py-3 text-white font-semibold hover:opacity-90 disabled:opacity-60"
@@ -479,6 +494,7 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
             </Link>
             <div className="relative">
               <button 
+                type="button"
                 ref={starButtonRef}
                 className="text-white p-2 rounded transition-colors h-8 w-8 hover:opacity-90" 
                 style={{ backgroundColor: '#fbae17' }}
