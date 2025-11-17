@@ -26,5 +26,6 @@
       "SKIP_ENV_VALIDATION": "true"
     }
   },
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "buildCommand": "prisma generate && next build"
 }
