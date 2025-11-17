@@ -35,23 +35,44 @@ try {
   const fs = require('fs');
   const path = require('path');
   
-  // Try to read the generated Prisma Client schema to verify engine type
-  const generatedSchemaPath = path.join(process.cwd(), 'node_modules', '.prisma', 'client', 'schema.prisma');
-  if (fs.existsSync(generatedSchemaPath)) {
-    const generatedSchema = fs.readFileSync(generatedSchemaPath, 'utf8');
-    if (generatedSchema.includes('engineType = "library"')) {
-      console.log('✅ Generated Prisma Client has engineType = "library"');
-    } else if (generatedSchema.includes('engineType = "dataproxy"')) {
-      console.error('❌ Generated Prisma Client has engineType = "dataproxy" (WRONG!)');
-      console.error('❌ This will cause P6001 errors. Prisma Client needs to be regenerated.');
-    } else {
-      console.warn('⚠️ Could not determine engine type from generated schema');
+  // Try multiple possible paths for the generated schema
+  const possiblePaths = [
+    path.join(process.cwd(), 'node_modules', '.prisma', 'client', 'schema.prisma'),
+    path.join(process.cwd(), 'node_modules', '@prisma', 'client', 'schema.prisma'),
+    path.join(__dirname, '..', 'node_modules', '.prisma', 'client', 'schema.prisma'),
+    path.join(__dirname, '..', 'node_modules', '@prisma', 'client', 'schema.prisma'),
+  ];
+  
+  let found = false;
+  for (const generatedSchemaPath of possiblePaths) {
+    if (fs.existsSync(generatedSchemaPath)) {
+      const generatedSchema = fs.readFileSync(generatedSchemaPath, 'utf8');
+      console.log('📄 Found generated schema at:', generatedSchemaPath);
+      console.log('📄 Schema preview (first 500 chars):', generatedSchema.substring(0, 500));
+      
+      if (generatedSchema.includes('engineType = "library"')) {
+        console.log('✅ Generated Prisma Client has engineType = "library"');
+        found = true;
+        break;
+      } else if (generatedSchema.includes('engineType = "dataproxy"')) {
+        console.error('❌ Generated Prisma Client has engineType = "dataproxy" (WRONG!)');
+        console.error('❌ This will cause P6001 errors. Prisma Client needs to be regenerated.');
+        found = true;
+        break;
+      } else {
+        console.warn('⚠️ Could not find engineType in generated schema');
+        console.warn('⚠️ Schema content:', generatedSchema.substring(0, 1000));
+      }
     }
-  } else {
-    console.warn('⚠️ Generated Prisma Client schema not found at:', generatedSchemaPath);
+  }
+  
+  if (!found) {
+    console.warn('⚠️ Generated Prisma Client schema not found at any of these paths:');
+    possiblePaths.forEach(p => console.warn('  -', p));
   }
 } catch (e) {
   console.warn('⚠️ Could not verify Prisma Client generation:', e);
+  console.warn('⚠️ Error details:', e.message);
 }
 
 export const prisma =
