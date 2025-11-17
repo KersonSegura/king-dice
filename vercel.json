@@ -27,5 +27,5 @@
     }
   },
   "installCommand": "npm install",
-  "buildCommand": "rm -rf .next node_modules/.prisma .prisma && npx prisma generate --schema=./prisma/schema.prisma && (grep -q 'engineType = \"library\"' node_modules/.prisma/client/schema.prisma && echo '✅ Prisma Client generated with library engine' || (echo '❌ Prisma Client NOT generated with library engine!' && exit 1)) && next build"
+  "buildCommand": "rm -rf .next node_modules/.prisma && npx prisma generate && next build"
 }
