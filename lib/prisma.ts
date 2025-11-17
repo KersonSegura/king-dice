@@ -14,11 +14,18 @@ if (!process.env.DATABASE_URL.startsWith('postgresql://') && !process.env.DATABA
   throw new Error('DATABASE_URL must be a valid PostgreSQL connection string starting with postgresql:// or postgres://');
 }
 
+// Log connection type for debugging (without exposing credentials)
+const dbUrlStart = process.env.DATABASE_URL.substring(0, 20);
+console.log('🔌 Database connection type:', dbUrlStart.includes('prisma://') ? 'Data Proxy' : 'Direct PostgreSQL');
+
 // Singleton pattern for Prisma Client in serverless environments
 // Prevents multiple instances and connection pool exhaustion
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
+
+// Use DIRECT_URL if available (for direct connection), otherwise use DATABASE_URL
+const connectionUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
 
 export const prisma =
   globalForPrisma.prisma ??
