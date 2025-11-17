@@ -4,6 +4,8 @@ generator client {
   engineType = "library"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
   previewFeatures = ["driverAdapters"]
+  // Explicitly disable Data Proxy
+  noEngine = false
 }
 
 datasource db {
