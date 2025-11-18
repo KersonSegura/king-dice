@@ -26,11 +26,11 @@ async function migratePDFsToStorage() {
 
   try {
     // Find all games with pdfFile (base64) but no pdfUrl
+    // Use camelCase column names (nameEn, pdfFile, pdfUrl)
     const { data: games, error: fetchError } = await supabase
       .from('games')
-      .select('id, name_en, nameEn, name, pdf_file, pdfFile, pdf_url, pdfUrl')
-      .or('pdf_file.not.is.null,pdfFile.not.is.null')
-      .is('pdf_url', null)
+      .select('id, nameEn, name, pdfFile, pdfUrl')
+      .not('pdfFile', 'is', null)
       .is('pdfUrl', null);
 
     if (fetchError) {
@@ -51,8 +51,8 @@ async function migratePDFsToStorage() {
     for (let i = 0; i < games.length; i++) {
       const game = games[i];
       const gameId = game.id;
-      const gameName = game.name_en || game.nameEn || game.name || `game-${gameId}`;
-      const pdfFile = game.pdf_file || game.pdfFile;
+      const gameName = game.nameEn || game.name || `game-${gameId}`;
+      const pdfFile = game.pdfFile;
 
       if (!pdfFile) {
         console.log(`⏭️  [${i + 1}/${games.length}] Skipping game ${gameId} (${gameName}): No PDF file found`);
@@ -110,8 +110,8 @@ async function migratePDFsToStorage() {
         const { error: updateError } = await supabase
           .from('games')
           .update({
-            pdf_url: publicUrl,
-            pdf_file: null, // Clear base64 to free up space
+            pdfUrl: publicUrl,
+            pdfFile: null, // Clear base64 to free up space
           })
           .eq('id', gameId);
 
