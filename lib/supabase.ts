@@ -30,6 +30,7 @@ export const STORAGE_BUCKETS = {
   UPLOADS: 'uploads',
   BOARDLE_IMAGES: 'boardle-images',
   DICE_DESIGNS: 'dice-designs',
+  PDFS: 'pdfs', // For game PDF rulebooks
 } as const;
 
 export type StorageBucket = typeof STORAGE_BUCKETS[keyof typeof STORAGE_BUCKETS];

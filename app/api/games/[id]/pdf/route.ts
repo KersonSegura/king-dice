@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, uploadToStorage, STORAGE_BUCKETS } from '@/lib/supabase';
 
 export async function POST(
   request: NextRequest,
@@ -49,28 +49,48 @@ export async function POST(
       );
     }
 
-    // Validate file size (max 15MB)
-    if (file.size > 15 * 1024 * 1024) {
+    // Validate file size (max 50MB - Supabase Storage limit, much higher than Vercel)
+    if (file.size > 50 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'File size must be less than 15MB' },
+        { error: 'File size must be less than 50MB' },
         { status: 400 }
       );
     }
 
-    // Convert file to base64 for storage
+    // Upload to Supabase Storage instead of base64
+    const timestamp = Date.now();
+    const filename = `game-${gameId}-${timestamp}.pdf`;
+    const filePath = `pdfs/${filename}`;
+    
+    // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    const pdfData = `data:application/pdf;base64,${base64}`;
+    const buffer = Buffer.from(arrayBuffer);
 
-    // Update game with PDF file
+    // Upload to Supabase Storage
+    const uploadResult = await uploadToStorage(
+      STORAGE_BUCKETS.PDFS,
+      filePath,
+      buffer,
+      'application/pdf'
+    );
+
+    if (uploadResult.error) {
+      console.error('Error uploading PDF to Supabase Storage:', uploadResult.error);
+      return NextResponse.json(
+        { error: 'Failed to upload PDF to storage', details: uploadResult.error },
+        { status: 500 }
+      );
+    }
+
+    // Update game with PDF URL (from Supabase Storage)
     const { data: updatedGame, error: updateError } = await supabaseAdmin
       .from('games')
       .update({
-        pdf_file: pdfData,
-        pdf_url: null // Clear external URL since we now have the file
+        pdf_url: uploadResult.publicUrl, // Store the Supabase Storage URL
+        pdf_file: null // Clear base64 file if it exists
       })
       .eq('id', gameId)
-      .select('id, name_en, pdf_file')
+      .select('id, name_en, pdf_url')
       .single();
 
     if (updateError || !updatedGame) {
@@ -87,7 +107,7 @@ export async function POST(
       game: {
         id: updatedGame.id,
         nameEn: updatedGame.name_en,
-        hasPdfFile: !!updatedGame.pdf_file
+        pdfUrl: updatedGame.pdf_url
       }
     });
 
@@ -142,7 +162,13 @@ export async function GET(
       pdfUrlValue: pdfUrl
     });
 
-    // If we have a PDF file (base64), serve it
+    // Priority: PDF URL (Supabase Storage or external) > base64 file
+    if (pdfUrl) {
+      // If it's a Supabase Storage URL or external URL, redirect to it
+      return NextResponse.redirect(pdfUrl);
+    }
+    
+    // Fallback: If we have a PDF file (base64), serve it (legacy support)
     if (pdfFile) {
       // Convert base64 back to buffer
       const base64Data = pdfFile.replace(/^data:application\/pdf;base64,/, '');
@@ -161,11 +187,6 @@ export async function GET(
           'Cache-Control': 'public, max-age=3600'
         }
       });
-    }
-    
-    // If we have a PDF URL, redirect to it
-    if (pdfUrl) {
-      return NextResponse.redirect(pdfUrl);
     }
     
     // No PDF found

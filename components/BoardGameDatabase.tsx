@@ -565,33 +565,51 @@ function BoardGameDatabaseContent() {
       if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
       if (gameData.isExpansion !== undefined) cleanGameData.isExpansion = gameData.isExpansion;
 
-      // Debug: Log the data being sent
-      console.log('Sending game data to API:', cleanGameData);
-      
-      // Check if PDF file is too large (check actual file size, not base64 length)
+      // If there's a PDF file (base64), upload it to Supabase Storage first
       if (cleanGameData.pdfFile) {
-        // Extract the actual file size from base64 data
-        // Base64 data format: "data:application/pdf;base64,<base64string>"
-        const base64Data = cleanGameData.pdfFile.split(',')[1];
-        if (base64Data) {
-          // Calculate actual file size from base64 (base64 is ~33% larger than original)
-          const actualFileSizeBytes = Math.round((base64Data.length * 3) / 4);
-          const actualFileSizeKB = Math.round(actualFileSizeBytes / 1024);
-          const actualFileSizeMB = (actualFileSizeKB / 1024).toFixed(2);
-          
-          console.log(`Actual PDF file size: ${actualFileSizeKB} KB (${actualFileSizeMB} MB)`);
-          console.log(`Base64 string length: ${cleanGameData.pdfFile.length} characters`);
-          
-          // Vercel has a 4.5MB body size limit for serverless functions
-          // Base64 encoding increases size by ~33%, so we limit to ~3.3MB raw file size
-          // to stay under the 4.5MB limit after base64 encoding
-          const maxFileSizeKB = 3.3 * 1024; // ~3.3MB in KB
-          if (actualFileSizeKB > maxFileSizeKB) {
-            alert(`PDF file is too large (${actualFileSizeKB} KB / ${actualFileSizeMB} MB). Vercel has a 4.5MB limit. Please use a PDF URL instead for files larger than ~3MB.`);
-            return;
+        try {
+          // Convert base64 to File/Blob for upload
+          const base64Data = cleanGameData.pdfFile.split(',')[1];
+          if (base64Data) {
+            // Convert base64 to blob
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const file = new File([blob], `game-${gameId}.pdf`, { type: 'application/pdf' });
+
+            // Upload to Supabase Storage via the PDF upload endpoint
+            const formData = new FormData();
+            formData.append('pdf', file);
+
+            const uploadResponse = await fetch(`/api/games/${gameId}/pdf`, {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!uploadResponse.ok) {
+              const uploadError = await parseApiResponse(uploadResponse);
+              throw new Error(uploadError.error || 'Failed to upload PDF');
+            }
+
+            const uploadResult = await uploadResponse.json();
+            
+            // Replace pdfFile with pdfUrl from Supabase Storage
+            cleanGameData.pdfUrl = uploadResult.game?.pdfUrl || uploadResult.pdfUrl;
+            delete cleanGameData.pdfFile; // Remove base64 data
           }
+        } catch (uploadError) {
+          console.error('Error uploading PDF to storage:', uploadError);
+          alert(`Error uploading PDF: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}. Please try using a PDF URL instead.`);
+          return;
         }
       }
+
+      // Debug: Log the data being sent
+      console.log('Sending game data to API:', cleanGameData);
 
       const response = await fetch(`/api/boardgames/${gameId}`, {
         method: 'PUT',
@@ -1752,8 +1770,8 @@ function BoardGameDatabaseContent() {
                                 showToast('Please select a PDF file', 'error');
                                 return;
                               }
-                              if (file.size > 15 * 1024 * 1024) {
-                                showToast('File size must be less than 15MB', 'error');
+                              if (file.size > 50 * 1024 * 1024) {
+                                showToast('File size must be less than 50MB', 'error');
                                 return;
                               }
                               

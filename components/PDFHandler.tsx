@@ -110,14 +110,12 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       return;
     }
 
-    // Check file size - Vercel has a 4.5MB body size limit for serverless functions
-    // Base64 encoding increases size by ~33%, so we limit to ~3.3MB raw file size
-    // to stay under the 4.5MB limit after base64 encoding
-    const maxFileSize = 3.3 * 1024 * 1024; // ~3.3MB to account for base64 encoding
+    // Check file size - now using Supabase Storage, so we can allow up to 50MB
+    const maxFileSize = 50 * 1024 * 1024; // 50MB (Supabase Storage limit)
     
     if (file.size > maxFileSize) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`File size (${fileSizeMB}MB) is too large. Vercel has a 4.5MB limit. Please use a PDF URL instead for files larger than ~3MB.`);
+      setError(`File size (${fileSizeMB}MB) is too large. Maximum allowed is 50MB.`);
       return;
     }
 
@@ -145,7 +143,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
         
         // Check status code first
         if (response.status === 413 || textResponse.includes('Request Entity Too Large')) {
-          errorMessage = 'File is too large. Vercel has a 4.5MB limit. Please use a PDF URL instead.';
+          errorMessage = 'File is too large. Maximum allowed is 50MB.';
         } else {
           // Try to parse as JSON
           const contentType = response.headers.get('content-type');
@@ -194,7 +192,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
               className="hidden"
               disabled={uploading}
             />
-            <p className="text-xs text-gray-500 mt-1">Max ~3MB (use PDF URL for larger files)</p>
+            <p className="text-xs text-gray-500 mt-1">Max 50MB</p>
           </div>
         </div>
       )}

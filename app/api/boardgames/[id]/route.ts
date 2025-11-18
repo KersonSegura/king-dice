@@ -222,26 +222,23 @@ export async function PUT(
     }
     }
     
-    // Check PDF file size if present (check actual file size, not base64 length)
+    // Note: PDF files should now be uploaded to Supabase Storage first via /api/games/[id]/pdf
+    // This endpoint should only receive pdfUrl, not pdfFile (base64)
+    // Legacy support: If pdfFile is provided, it will be rejected if too large
     if (updateData.pdfFile) {
+      console.warn('⚠️ PDF file (base64) provided directly. This should be uploaded to Supabase Storage first.');
       // Extract the actual file size from base64 data
-      // Base64 data format: "data:application/pdf;base64,<base64string>"
       const base64Data = updateData.pdfFile.split(',')[1];
       if (base64Data) {
-        // Calculate actual file size from base64 (base64 is ~33% larger than original)
         const actualFileSizeBytes = Math.round((base64Data.length * 3) / 4);
         const actualFileSizeKB = Math.round(actualFileSizeBytes / 1024);
         const actualFileSizeMB = (actualFileSizeKB / 1024).toFixed(2);
         
-        console.log(`API - Actual PDF file size: ${actualFileSizeKB} KB (${actualFileSizeMB} MB)`);
-        console.log(`API - Base64 string length: ${updateData.pdfFile.length} characters`);
-        
-        // Vercel has a 4.5MB body size limit for serverless functions
-        // Base64 encoding increases size by ~33%, so we limit to ~3.3MB raw file size
+        // Vercel has a 4.5MB body size limit - reject if too large
         const maxFileSizeKB = 3.3 * 1024; // ~3.3MB in KB
         if (actualFileSizeKB > maxFileSizeKB) {
           return NextResponse.json(
-            { error: 'PDF file too large', message: `PDF file is ${actualFileSizeKB} KB (${actualFileSizeMB} MB). Vercel has a 4.5MB limit. Please use a PDF URL instead for files larger than ~3MB.` },
+            { error: 'PDF file too large', message: `PDF file is ${actualFileSizeKB} KB (${actualFileSizeMB} MB). Please upload PDFs via the PDF upload button or use a PDF URL.` },
             { status: 400 }
           );
         }
