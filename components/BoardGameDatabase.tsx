@@ -591,8 +591,32 @@ function BoardGameDatabaseContent() {
             });
 
             if (!uploadResponse.ok) {
-              const uploadError = await parseApiResponse(uploadResponse);
-              throw new Error(uploadError.error || 'Failed to upload PDF');
+              // Try to get a more specific error message
+              const textResponse = await uploadResponse.text();
+              let errorMessage = 'Failed to upload PDF';
+              
+              // Check for specific error types
+              if (uploadResponse.status === 413 || textResponse.includes('Request Entity Too Large')) {
+                errorMessage = 'PDF file is too large for upload. Vercel has a 4.5MB limit for uploads. For files larger than ~3MB, please use a PDF URL instead of uploading the file directly.';
+              } else if (uploadResponse.status === 400) {
+                // Try to parse JSON error
+                try {
+                  const errorData = JSON.parse(textResponse);
+                  errorMessage = errorData.error || errorData.message || errorMessage;
+                } catch {
+                  errorMessage = textResponse.substring(0, 200) || errorMessage;
+                }
+              } else {
+                // Try to parse JSON error
+                try {
+                  const errorData = JSON.parse(textResponse);
+                  errorMessage = errorData.error || errorData.message || errorMessage;
+                } catch {
+                  errorMessage = `Upload failed (${uploadResponse.status}). ${textResponse.substring(0, 100)}`;
+                }
+              }
+              
+              throw new Error(errorMessage);
             }
 
             const uploadResult = await uploadResponse.json();
@@ -1755,7 +1779,8 @@ function BoardGameDatabaseContent() {
                           <p className="text-sm text-gray-600 mb-1">
                             <span className="font-medium text-[#fbae17]">Click to upload PDF</span> or drag and drop
                           </p>
-                          <p className="text-xs text-gray-500">PDF files only (max 15MB)</p>
+                          <p className="text-xs text-gray-500">PDF files only (max 3MB for upload)</p>
+                          <p className="text-xs text-gray-400 mt-0.5">(Use URL for larger files)</p>
                           {newGameForm.pdfFile && (
                             <p className="text-xs text-green-600 mt-1">✓ PDF file ready to upload</p>
                           )}
@@ -1770,8 +1795,10 @@ function BoardGameDatabaseContent() {
                                 showToast('Please select a PDF file', 'error');
                                 return;
                               }
-                              if (file.size > 50 * 1024 * 1024) {
-                                showToast('File size must be less than 50MB', 'error');
+                              // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
+                              // (base64 encoding adds ~33% overhead, so 3MB file = ~4MB base64)
+                              if (file.size > 3 * 1024 * 1024) {
+                                showToast('Files larger than 3MB cannot be uploaded directly due to Vercel limits. Please use a PDF URL instead.', 'error');
                                 return;
                               }
                               
@@ -2144,7 +2171,8 @@ You can use markdown formatting:
                                       <p className="text-xs text-gray-600 mb-1">
                                         <span className="font-medium text-[#fbae17]">Upload PDF</span> or drag
                                       </p>
-                                      <p className="text-xs text-gray-500">Max 15MB</p>
+                                      <p className="text-xs text-gray-500">Max 3MB for upload</p>
+                                      <p className="text-xs text-gray-400 mt-0.5">(Use URL for larger files)</p>
                                       {editingGameData[game.id]?.pdfFile && (
                                         <p className="text-xs text-green-600 mt-1">✓ PDF ready</p>
                                       )}
@@ -2159,8 +2187,10 @@ You can use markdown formatting:
                                             showToast('Please select a PDF file', 'error');
                                             return;
                                           }
-                                          if (file.size > 15 * 1024 * 1024) {
-                                            showToast('File size must be less than 15MB', 'error');
+                                          // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
+                                          // (base64 encoding adds ~33% overhead, so 3MB file = ~4MB base64)
+                                          if (file.size > 3 * 1024 * 1024) {
+                                            showToast('Files larger than 3MB cannot be uploaded directly due to Vercel limits. Please use a PDF URL instead.', 'error');
                                             return;
                                           }
                                           

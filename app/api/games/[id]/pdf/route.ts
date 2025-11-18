@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, uploadToStorage, STORAGE_BUCKETS } from '@/lib/supabase';
 
+// Configure for longer execution time and larger body size
+export const maxDuration = 60; // 60 seconds for large file uploads
+export const runtime = 'nodejs';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -31,7 +35,23 @@ export async function POST(
     }
 
     // Get the uploaded file
-    const formData = await request.formData();
+    let formData;
+    try {
+      formData = await request.formData();
+    } catch (formDataError) {
+      console.error('Error parsing FormData:', formDataError);
+      // Check if it's a size-related error
+      if (formDataError instanceof Error && formDataError.message.includes('size')) {
+        return NextResponse.json(
+          { error: 'File is too large. Maximum allowed is 50MB. Please try a smaller file or use a PDF URL instead.' },
+          { status: 413 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'Failed to parse form data. Please try again.' },
+        { status: 400 }
+      );
+    }
     const file = formData.get('pdf') as File;
 
     if (!file) {
