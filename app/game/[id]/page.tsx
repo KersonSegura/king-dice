@@ -1027,9 +1027,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                               transform: 'translateX(-50%)'
                             }}
                           >
-                            <div className="flex items-center space-x-1">
-                              <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                              <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                            <div className="flex flex-col items-start space-y-1">
+                              <div className="flex items-center space-x-1">
+                                <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                                <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                              </div>
+                              {hasUserVoted && userVoteStars && (
+                                <div className="text-xs text-green-300">
+                                  Your vote: {userVoteStars.toFixed(1)}/5 ⭐
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
