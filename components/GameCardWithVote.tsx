@@ -542,20 +542,18 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
               <button 
                 type="button"
                 ref={starButtonRef}
-                className={`p-2 rounded transition-colors h-8 w-8 hover:opacity-90 flex items-center justify-center ${
-                  hasUserVoted 
-                    ? 'bg-white border-2 border-[#fbae17]' 
-                    : 'text-white'
-                }`}
-                style={hasUserVoted ? {} : { backgroundColor: '#fbae17' }}
+                className="p-2 rounded transition-colors h-8 w-8 hover:opacity-90 flex items-center justify-center text-white"
+                style={{ backgroundColor: '#fbae17' }}
                 onMouseEnter={handleStarMouseEnter}
                 onMouseLeave={handleStarMouseLeave}
                 onClick={handleStarClick}
                 title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
               >
                 <Star 
-                  className={`w-4 h-4 ${hasUserVoted ? 'text-[#fbae17] fill-[#fbae17]' : 'text-white'}`} 
-                  fill={hasUserVoted ? 'currentColor' : 'none'}
+                  className={`w-4 h-4 ${hasUserVoted ? 'text-white' : 'text-white'}`} 
+                  fill={hasUserVoted ? 'white' : 'none'}
+                  stroke="white"
+                  strokeWidth={1}
                 />
               </button>
               

@@ -1001,22 +1001,20 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         <button 
                           type="button"
                           ref={starButtonRef}
-                          className={`p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2 ${
-                            hasUserVoted 
-                              ? 'bg-white border-2 border-[#fbae17]' 
-                              : 'text-white'
-                          }`}
-                          style={hasUserVoted ? {} : { backgroundColor: '#fbae17' }}
+                          className="p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2 text-white"
+                          style={{ backgroundColor: '#fbae17' }}
                           onMouseEnter={handleStarMouseEnter}
                           onMouseLeave={handleStarMouseLeave}
                           onClick={handleStarClick}
                           title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
                         >
                           <Star 
-                            className={`w-5 h-5 ${hasUserVoted ? 'text-[#fbae17] fill-[#fbae17]' : 'text-white'}`} 
-                            fill={hasUserVoted ? 'currentColor' : 'none'}
+                            className={`w-5 h-5 text-white`} 
+                            fill={hasUserVoted ? 'white' : 'none'}
+                            stroke="white"
+                            strokeWidth={1}
                           />
-                          <span className={`font-medium ${hasUserVoted ? 'text-[#fbae17]' : 'text-white'}`}>
+                          <span className="font-medium text-white">
                             {hasUserVoted ? 'Update Vote' : 'Vote'}
                           </span>
                         </button>
