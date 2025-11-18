@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Download, ExternalLink, FileText, AlertCircle, Upload } from 'lucide-react';
-import { STORAGE_BUCKETS } from '@/lib/supabase';
 
 interface PDFHandlerProps {
   pdfUrl?: string;
@@ -111,12 +110,13 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       return;
     }
 
-    // Supabase Storage supports up to 50MB
-    const maxFileSize = 50 * 1024 * 1024; // 50MB (Supabase Storage limit)
+    // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
+    // (base64 encoding adds ~33% overhead, so 3MB file = ~4MB base64)
+    const maxFileSize = 3 * 1024 * 1024; // 3MB (Vercel limit)
     
     if (file.size > maxFileSize) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`File size (${fileSizeMB}MB) is too large. Maximum allowed is 50MB.`);
+      setError(`File size (${fileSizeMB}MB) is too large. Maximum allowed is 3MB. Please use a PDF URL for larger files.`);
       return;
     }
 
@@ -124,97 +124,49 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
     setError(null);
 
     try {
-      // Try direct client-side upload first (bypasses Vercel's body size limit)
-      try {
-        // Lazy import to avoid issues during page load
-        const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser');
-        const supabase = await getSupabaseBrowserClient();
-        
-        const timestamp = Date.now();
-        const filename = `game-${gameId}-${timestamp}.pdf`;
-        const filePath = `PDFs/${filename}`;
+      const formData = new FormData();
+      formData.append('pdf', file);
 
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from(STORAGE_BUCKETS.PDFS)
-          .upload(filePath, file, {
-            contentType: 'application/pdf',
-            upsert: false, // Don't overwrite if exists
-          });
+      const response = await fetch(`/api/games/${gameId}/pdf`, {
+        method: 'POST',
+        body: formData
+      });
 
-        if (uploadError) {
-          // If client-side upload fails (e.g., RLS policy), fall back to server-side
-          throw new Error(`Client upload failed: ${uploadError.message}`);
-        }
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from(STORAGE_BUCKETS.PDFS)
-          .getPublicUrl(uploadData.path);
-
-        const publicUrl = urlData.publicUrl;
-
-        // Update the game record with the PDF URL via API
-        const updateResponse = await fetch(`/api/games/${gameId}/pdf`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pdfUrl: publicUrl })
-        });
-
-        if (!updateResponse.ok) {
-          const errorData = await updateResponse.json().catch(() => ({ error: 'Failed to update game record' }));
-          throw new Error(errorData.error || 'Failed to update game record');
-        }
-
+      if (response.ok) {
         setError(null);
         if (onPDFUploaded) {
           onPDFUploaded();
         }
-        return; // Success, exit early
-      } catch (clientError) {
-        // Fallback to server-side upload if client-side fails
-        console.warn('Client-side upload failed, falling back to server-side:', clientError);
+      } else {
+        // Handle error response - might not be JSON
+        const textResponse = await response.text();
+        let errorMessage = 'Failed to upload PDF';
         
-        // For files under 3MB, use server-side upload
-        if (file.size <= 3 * 1024 * 1024) {
-          const formData = new FormData();
-          formData.append('pdf', file);
-
-          const response = await fetch(`/api/games/${gameId}/pdf`, {
-            method: 'POST',
-            body: formData
-          });
-
-          if (response.ok) {
-            setError(null);
-            if (onPDFUploaded) {
-              onPDFUploaded();
-            }
-            return; // Success
-          } else {
-            const textResponse = await response.text();
-            let errorMessage = 'Failed to upload PDF';
-            
-            if (response.status === 413 || textResponse.includes('Request Entity Too Large')) {
-              errorMessage = 'File is too large. Maximum allowed is 3MB for server uploads.';
-            } else {
-              try {
-                const errorData = JSON.parse(textResponse);
-                errorMessage = errorData.error || errorMessage;
-              } catch {
-                errorMessage = textResponse.substring(0, 200) || errorMessage;
+        // Check status code first
+        if (response.status === 413 || textResponse.includes('Request Entity Too Large')) {
+          errorMessage = 'File is too large. Maximum allowed is 3MB.';
+        } else {
+          // Try to parse as JSON
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              const errorData = JSON.parse(textResponse);
+              errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+              // If JSON parsing fails, use text response
+              if (textResponse.trim().length > 0) {
+                errorMessage = textResponse.substring(0, 200);
               }
             }
-            throw new Error(errorMessage);
+          } else if (textResponse.trim().length > 0) {
+            errorMessage = textResponse.substring(0, 200);
           }
-        } else {
-          // File too large for server-side, and client-side failed
-          throw new Error('Upload failed. The PDFs bucket may not allow public uploads. Please configure RLS policies or use a PDF URL instead.');
         }
+        
+        setError(errorMessage);
       }
     } catch (err) {
-      console.error('Error uploading PDF:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload PDF. Please try again.');
+      setError('Failed to upload PDF. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -241,7 +193,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
               className="hidden"
               disabled={uploading}
             />
-            <p className="text-xs text-gray-500 mt-1">Max 50MB</p>
+            <p className="text-xs text-gray-500 mt-1">Max 3MB (use URL for larger)</p>
           </div>
         </div>
       )}
