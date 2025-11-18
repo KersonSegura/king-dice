@@ -69,9 +69,8 @@ export async function GET(request: NextRequest) {
     const foundGames: any[] = [];
     const missingGames: string[] = [];
 
-    // Simple approach: Query each game individually by exact name match
-    // This is more reliable than complex batch queries
-    for (const gameName of gamesToFind) {
+    // Query all games in parallel for maximum speed
+    const gameQueries = gamesToFind.map(async (gameName) => {
       try {
         // Try exact match first (case-insensitive)
         const { data: exactMatch, error: exactError } = await supabaseAdmin
@@ -87,8 +86,7 @@ export async function GET(request: NextRequest) {
           if (exactMatch.nameEn?.toLowerCase() === lowerName ||
               exactMatch.nameEs?.toLowerCase() === lowerName ||
               exactMatch.name?.toLowerCase() === lowerName) {
-            foundGames.push(exactMatch);
-            continue;
+            return { gameName, game: exactMatch };
           }
         }
 
@@ -101,12 +99,24 @@ export async function GET(request: NextRequest) {
           .maybeSingle();
 
         if (partialMatch && !partialError) {
-          foundGames.push(partialMatch);
-        } else {
-          missingGames.push(gameName);
+          return { gameName, game: partialMatch };
         }
+        
+        return { gameName, game: null };
       } catch (error) {
         console.error(`Error fetching game "${gameName}":`, error);
+        return { gameName, game: null };
+      }
+    });
+
+    // Wait for all queries to complete in parallel
+    const results = await Promise.all(gameQueries);
+    
+    // Build results array in the correct order
+    for (const { gameName, game } of results) {
+      if (game) {
+        foundGames.push(game);
+      } else {
         missingGames.push(gameName);
       }
     }
