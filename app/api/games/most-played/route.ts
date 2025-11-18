@@ -41,116 +41,53 @@ export async function GET(request: NextRequest) {
     console.log(`🎯 Getting MOST PLAYED GAMES from hardcoded list (limit: ${limit})`);
 
     const gamesToFind = topRankedGames.slice(0, limit);
-    const foundGamesMap = new Map<number, any>();
+    const foundGames: any[] = [];
     const missingGames: string[] = [];
 
-    // Step 1: Try to fetch all games in parallel using batch queries
-    // Build OR conditions for all game names (escape special characters)
-    const escapeName = (name: string) => name.replace(/'/g, "''");
-    const nameEnConditions = gamesToFind.map(g => `nameEn.eq.${escapeName(g.name)}`).join(',');
-    const nameEsConditions = gamesToFind.map(g => `nameEs.eq.${escapeName(g.name)}`).join(',');
-    const nameConditions = gamesToFind.map(g => `name.eq.${escapeName(g.name)}`).join(',');
-
-    // Execute batch queries in parallel (with error handling)
-    try {
-      const [nameEnResults, nameEsResults, nameResults] = await Promise.all([
-        supabaseAdmin.from('games').select('*').or(nameEnConditions),
-        supabaseAdmin.from('games').select('*').or(nameEsConditions),
-        supabaseAdmin.from('games').select('*').or(nameConditions)
-      ]);
-
-      // Combine results and deduplicate by ID
-      [nameEnResults.data, nameEsResults.data, nameResults.data].forEach((games: any[]) => {
-        if (games) {
-          games.forEach((game: any) => {
-            if (!foundGamesMap.has(game.id)) {
-              foundGamesMap.set(game.id, game);
-            }
-          });
-        }
-      });
-    } catch (error) {
-      console.warn('Batch query failed, will use individual queries:', error);
-    }
-
-    // Step 2: Find which games are still missing
-    const foundGameNames = new Set(
-      Array.from(foundGamesMap.values()).flatMap(game => [
-        game.nameEn?.toLowerCase(),
-        game.nameEs?.toLowerCase(),
-        game.name?.toLowerCase()
-      ].filter(Boolean))
-    );
-
-    const stillMissing = gamesToFind.filter(gameInfo => {
-      const lowerName = gameInfo.name.toLowerCase();
-      return !foundGameNames.has(lowerName);
-    });
-
-    // Step 3: For missing games, try case-insensitive and partial matches in parallel
-    if (stillMissing.length > 0) {
-      const missingQueries = stillMissing.map(gameInfo => 
-        Promise.all([
-          supabaseAdmin.from('games').select('*').ilike('nameEn', gameInfo.name).limit(1),
-          supabaseAdmin.from('games').select('*').ilike('nameEs', gameInfo.name).limit(1),
-          supabaseAdmin.from('games').select('*').ilike('name', gameInfo.name).limit(1),
-          (() => {
-            let query = supabaseAdmin.from('games').select('*').or(`nameEn.ilike.%${gameInfo.name}%,nameEs.ilike.%${gameInfo.name}%,name.ilike.%${gameInfo.name}%`);
-            if (gameInfo.year) {
-              query = query.eq('yearRelease', gameInfo.year);
-            }
-            return query.limit(1);
-          })()
-        ]).then(([r1, r2, r3, r4]) => {
-          const results = [r1.data?.[0], r2.data?.[0], r3.data?.[0], r4.data?.[0]].filter(Boolean);
-          return { gameInfo, result: results[0] || null };
-        })
-      );
-
-      const missingResults = await Promise.all(missingQueries);
-      
-      missingResults.forEach(({ gameInfo, result }) => {
-        if (result && !foundGamesMap.has(result.id)) {
-          foundGamesMap.set(result.id, result);
-        } else if (!result) {
-          missingGames.push(gameInfo.name);
-        }
-      });
-    }
-
-    // Step 4: Verify year matches and find correct games
-    const foundGames: any[] = [];
+    // Simple approach: Query each game individually by exact name match
+    // This is more reliable than complex batch queries
     for (const gameInfo of gamesToFind) {
-      // Find the game that matches this name
-      let matchingGame = Array.from(foundGamesMap.values()).find(game => {
-        const lowerName = gameInfo.name.toLowerCase();
-        return game.nameEn?.toLowerCase() === lowerName ||
-               game.nameEs?.toLowerCase() === lowerName ||
-               game.name?.toLowerCase() === lowerName;
-      });
+      try {
+        // Try exact match first (case-insensitive)
+        let query = supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(`nameEn.ilike.${gameInfo.name},nameEs.ilike.${gameInfo.name},name.ilike.${gameInfo.name}`);
 
-      // If year is provided, prefer a game with matching year
-      if (matchingGame && gameInfo.year) {
-        if (matchingGame.yearRelease !== gameInfo.year && matchingGame.year !== gameInfo.year) {
-          // Year doesn't match, try to find another match with the correct year
-          const yearMatched = Array.from(foundGamesMap.values()).find(game => {
-            const lowerName = gameInfo.name.toLowerCase();
-            const nameMatches = game.nameEn?.toLowerCase() === lowerName ||
-                               game.nameEs?.toLowerCase() === lowerName ||
-                               game.name?.toLowerCase() === lowerName;
-            const yearMatches = game.yearRelease === gameInfo.year || game.year === gameInfo.year;
-            return nameMatches && yearMatches;
-          });
-          
-          if (yearMatched) {
-            matchingGame = yearMatched;
+        // If year is provided, also filter by year
+        if (gameInfo.year) {
+          query = query.eq('yearRelease', gameInfo.year);
+        }
+
+        const { data: exactMatch, error: exactError } = await query.limit(1).maybeSingle();
+
+        if (exactMatch && !exactError) {
+          // Verify it's an exact match (case-insensitive)
+          const lowerName = gameInfo.name.toLowerCase();
+          if (exactMatch.nameEn?.toLowerCase() === lowerName ||
+              exactMatch.nameEs?.toLowerCase() === lowerName ||
+              exactMatch.name?.toLowerCase() === lowerName) {
+            foundGames.push(exactMatch);
+            continue;
           }
         }
-      }
 
-      if (matchingGame) {
-        foundGames.push(matchingGame);
-        foundGamesMap.delete(matchingGame.id); // Remove to avoid duplicates
+        // If no exact match, try partial match (without year filter first)
+        const { data: partialMatch, error: partialError } = await supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(`nameEn.ilike.%${gameInfo.name}%,nameEs.ilike.%${gameInfo.name}%,name.ilike.%${gameInfo.name}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (partialMatch && !partialError) {
+          foundGames.push(partialMatch);
+        } else {
+          missingGames.push(gameInfo.name);
+        }
+      } catch (error) {
+        console.error(`Error fetching game "${gameInfo.name}":`, error);
+        missingGames.push(gameInfo.name);
       }
     }
 

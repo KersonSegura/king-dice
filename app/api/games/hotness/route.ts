@@ -66,92 +66,48 @@ export async function GET(request: NextRequest) {
     console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
 
     const gamesToFind = hotnessGames.slice(0, limit);
-    const foundGamesMap = new Map<number, any>();
+    const foundGames: any[] = [];
     const missingGames: string[] = [];
 
-    // Step 1: Try to fetch all games in parallel using batch queries
-    // Build OR conditions for all game names (escape special characters)
-    const escapeName = (name: string) => name.replace(/'/g, "''");
-    const nameEnConditions = gamesToFind.map(name => `nameEn.eq.${escapeName(name)}`).join(',');
-    const nameEsConditions = gamesToFind.map(name => `nameEs.eq.${escapeName(name)}`).join(',');
-    const nameConditions = gamesToFind.map(name => `name.eq.${escapeName(name)}`).join(',');
+    // Simple approach: Query each game individually by exact name match
+    // This is more reliable than complex batch queries
+    for (const gameName of gamesToFind) {
+      try {
+        // Try exact match first (case-insensitive)
+        const { data: exactMatch, error: exactError } = await supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
+          .limit(1)
+          .maybeSingle();
 
-    // Execute batch queries in parallel (with error handling)
-    try {
-      const [nameEnResults, nameEsResults, nameResults] = await Promise.all([
-        supabaseAdmin.from('games').select('*').or(nameEnConditions),
-        supabaseAdmin.from('games').select('*').or(nameEsConditions),
-        supabaseAdmin.from('games').select('*').or(nameConditions)
-      ]);
-
-      // Combine results and deduplicate by ID
-      [nameEnResults.data, nameEsResults.data, nameResults.data].forEach((games: any[]) => {
-        if (games) {
-          games.forEach((game: any) => {
-            if (!foundGamesMap.has(game.id)) {
-              foundGamesMap.set(game.id, game);
-            }
-          });
+        if (exactMatch && !exactError) {
+          // Verify it's an exact match (case-insensitive)
+          const lowerName = gameName.toLowerCase();
+          if (exactMatch.nameEn?.toLowerCase() === lowerName ||
+              exactMatch.nameEs?.toLowerCase() === lowerName ||
+              exactMatch.name?.toLowerCase() === lowerName) {
+            foundGames.push(exactMatch);
+            continue;
+          }
         }
-      });
-    } catch (error) {
-      console.warn('Batch query failed, will use individual queries:', error);
-      batchSuccess = false;
-    }
 
-    // Step 2: Find which games are still missing
-    const foundGameNames = new Set(
-      Array.from(foundGamesMap.values()).flatMap(game => [
-        game.nameEn?.toLowerCase(),
-        game.nameEs?.toLowerCase(),
-        game.name?.toLowerCase()
-      ].filter(Boolean))
-    );
+        // If no exact match, try partial match
+        const { data: partialMatch, error: partialError } = await supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
+          .limit(1)
+          .maybeSingle();
 
-    const stillMissing = gamesToFind.filter(gameName => {
-      const lowerName = gameName.toLowerCase();
-      return !foundGameNames.has(lowerName);
-    });
-
-    // Step 3: For missing games, try case-insensitive and partial matches in parallel
-    if (stillMissing.length > 0) {
-      const missingQueries = stillMissing.map(gameName => 
-        Promise.all([
-          supabaseAdmin.from('games').select('*').ilike('nameEn', gameName).limit(1),
-          supabaseAdmin.from('games').select('*').ilike('nameEs', gameName).limit(1),
-          supabaseAdmin.from('games').select('*').ilike('name', gameName).limit(1),
-          supabaseAdmin.from('games').select('*').or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`).limit(1)
-        ]).then(([r1, r2, r3, r4]) => {
-          const results = [r1.data?.[0], r2.data?.[0], r3.data?.[0], r4.data?.[0]].filter(Boolean);
-          return { gameName, result: results[0] || null };
-        })
-      );
-
-      const missingResults = await Promise.all(missingQueries);
-      
-      missingResults.forEach(({ gameName, result }) => {
-        if (result && !foundGamesMap.has(result.id)) {
-          foundGamesMap.set(result.id, result);
-        } else if (!result) {
+        if (partialMatch && !partialError) {
+          foundGames.push(partialMatch);
+        } else {
           missingGames.push(gameName);
         }
-      });
-    }
-
-    // Step 4: Build final array in the correct order
-    const foundGames: any[] = [];
-    for (const gameName of gamesToFind) {
-      // Find the game that matches this name
-      const matchingGame = Array.from(foundGamesMap.values()).find(game => {
-        const lowerName = gameName.toLowerCase();
-        return game.nameEn?.toLowerCase() === lowerName ||
-               game.nameEs?.toLowerCase() === lowerName ||
-               game.name?.toLowerCase() === lowerName;
-      });
-
-      if (matchingGame) {
-        foundGames.push(matchingGame);
-        foundGamesMap.delete(matchingGame.id); // Remove to avoid duplicates
+      } catch (error) {
+        console.error(`Error fetching game "${gameName}":`, error);
+        missingGames.push(gameName);
       }
     }
 
