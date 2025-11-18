@@ -32,6 +32,7 @@
     "db:catan-setup": "npx prisma db push && npx prisma generate",
     "setup:storage": "node scripts/setup-supabase-storage.js",
     "migrate:storage": "node scripts/migrate-to-supabase-storage.js",
+    "migrate:pdfs": "node scripts/migrate-pdfs-to-storage.js",
     "storage:flatten-gallery": "node scripts/move-supabase-gallery-flatten.js"
   },
   "dependencies": {
