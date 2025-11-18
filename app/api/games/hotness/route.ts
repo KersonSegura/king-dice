@@ -70,12 +70,86 @@ export async function GET(request: NextRequest) {
 
     // Find each game by name in the database
     for (const gameName of gamesToFind) {
-      // Try to find the game by name (checking nameEn, nameEs, and name fields)
-      const { data: gameResults, error: searchError } = await supabaseAdmin
+      // Try exact match on each field separately
+      // First try case-sensitive exact match with .eq()
+      let gameResults = null;
+      
+      // Try nameEn exact match (case-sensitive)
+      let { data: results } = await supabaseAdmin
         .from('games')
         .select('*')
-        .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
+        .eq('nameEn', gameName)
         .limit(1);
+      
+      if (results && results.length > 0) {
+        gameResults = results;
+      } else {
+        // Try nameEs exact match (case-sensitive)
+        ({ data: results } = await supabaseAdmin
+          .from('games')
+          .select('*')
+          .eq('nameEs', gameName)
+          .limit(1));
+        
+        if (results && results.length > 0) {
+          gameResults = results;
+        } else {
+          // Try name exact match (case-sensitive)
+          ({ data: results } = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .eq('name', gameName)
+            .limit(1));
+          
+          if (results && results.length > 0) {
+            gameResults = results;
+          } else {
+            // Try case-insensitive exact match with .ilike() (no wildcards)
+            // Try nameEn
+            ({ data: results } = await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEn', gameName)
+              .limit(1));
+            
+            if (results && results.length > 0) {
+              gameResults = results;
+            } else {
+              // Try nameEs
+              ({ data: results } = await supabaseAdmin
+                .from('games')
+                .select('*')
+                .ilike('nameEs', gameName)
+                .limit(1));
+              
+              if (results && results.length > 0) {
+                gameResults = results;
+              } else {
+                // Try name
+                ({ data: results } = await supabaseAdmin
+                  .from('games')
+                  .select('*')
+                  .ilike('name', gameName)
+                  .limit(1));
+                
+                if (results && results.length > 0) {
+                  gameResults = results;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // If still not found, try partial match as last resort (with wildcards)
+      if (!gameResults || gameResults.length === 0) {
+        const { data: partialResults } = await supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
+          .limit(1);
+        gameResults = partialResults;
+      }
 
       if (gameResults && gameResults.length > 0) {
         foundGames.push(gameResults[0]);

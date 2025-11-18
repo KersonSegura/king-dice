@@ -45,36 +45,134 @@ export async function GET(request: NextRequest) {
 
     // Find each game by name (and optionally year) in the database
     for (const gameInfo of gamesToFind) {
-      // First try to find by name and year if year is provided
-      let found = false;
+      // Try exact match on each field separately
+      // First try case-sensitive exact match with .eq()
+      let gameResults = null;
       
-      if (gameInfo.year) {
-        const { data: gameResultsWithYear } = await supabaseAdmin
+      // Try nameEn exact match (case-sensitive)
+      let { data: results } = await supabaseAdmin
+        .from('games')
+        .select('*')
+        .eq('nameEn', gameInfo.name)
+        .limit(1);
+      
+      if (results && results.length > 0) {
+        gameResults = results;
+      } else {
+        // Try nameEs exact match (case-sensitive)
+        ({ data: results } = await supabaseAdmin
           .from('games')
           .select('*')
-          .or(`nameEn.ilike.%${gameInfo.name}%,nameEs.ilike.%${gameInfo.name}%,name.ilike.%${gameInfo.name}%`)
-          .eq('yearRelease', gameInfo.year)
-          .limit(1);
+          .eq('nameEs', gameInfo.name)
+          .limit(1));
         
-        if (gameResultsWithYear && gameResultsWithYear.length > 0) {
-          foundGames.push(gameResultsWithYear[0]);
-          found = true;
+        if (results && results.length > 0) {
+          gameResults = results;
+        } else {
+          // Try name exact match (case-sensitive)
+          ({ data: results } = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .eq('name', gameInfo.name)
+            .limit(1));
+          
+          if (results && results.length > 0) {
+            gameResults = results;
+          } else {
+            // Try case-insensitive exact match with .ilike() (no wildcards)
+            // Try nameEn
+            ({ data: results } = await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEn', gameInfo.name)
+              .limit(1));
+            
+            if (results && results.length > 0) {
+              gameResults = results;
+            } else {
+              // Try nameEs
+              ({ data: results } = await supabaseAdmin
+                .from('games')
+                .select('*')
+                .ilike('nameEs', gameInfo.name)
+                .limit(1));
+              
+              if (results && results.length > 0) {
+                gameResults = results;
+              } else {
+                // Try name
+                ({ data: results } = await supabaseAdmin
+                  .from('games')
+                  .select('*')
+                  .ilike('name', gameInfo.name)
+                  .limit(1));
+                
+                if (results && results.length > 0) {
+                  gameResults = results;
+                }
+              }
+            }
+          }
         }
       }
-      
-      // If not found with year, try without year
-      if (!found) {
-        const { data: gameResults } = await supabaseAdmin
+
+      // If year is provided and we found a game, verify the year matches
+      if (gameResults && gameResults.length > 0 && gameInfo.year) {
+        if (gameResults[0].yearRelease !== gameInfo.year && gameResults[0].year !== gameInfo.year) {
+          // Year doesn't match, try to find another match with the correct year
+          // Try nameEn with year
+          let { data: yearMatchedResults } = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .eq('nameEn', gameInfo.name)
+            .eq('yearRelease', gameInfo.year)
+            .limit(1);
+          
+          if (!yearMatchedResults || yearMatchedResults.length === 0) {
+            // Try nameEs with year
+            ({ data: yearMatchedResults } = await supabaseAdmin
+              .from('games')
+              .select('*')
+              .eq('nameEs', gameInfo.name)
+              .eq('yearRelease', gameInfo.year)
+              .limit(1));
+          }
+          
+          if (!yearMatchedResults || yearMatchedResults.length === 0) {
+            // Try name with year
+            ({ data: yearMatchedResults } = await supabaseAdmin
+              .from('games')
+              .select('*')
+              .eq('name', gameInfo.name)
+              .eq('yearRelease', gameInfo.year)
+              .limit(1));
+          }
+          
+          if (yearMatchedResults && yearMatchedResults.length > 0) {
+            gameResults = yearMatchedResults;
+          }
+        }
+      }
+
+      // If still not found, try partial match as last resort (with wildcards)
+      if (!gameResults || gameResults.length === 0) {
+        let partialQuery = supabaseAdmin
           .from('games')
           .select('*')
-          .or(`nameEn.ilike.%${gameInfo.name}%,nameEs.ilike.%${gameInfo.name}%,name.ilike.%${gameInfo.name}%`)
-          .limit(1);
+          .or(`nameEn.ilike.%${gameInfo.name}%,nameEs.ilike.%${gameInfo.name}%,name.ilike.%${gameInfo.name}%`);
         
-        if (gameResults && gameResults.length > 0) {
-          foundGames.push(gameResults[0]);
-        } else {
-          console.warn(`⚠️ Game not found: ${gameInfo.name}${gameInfo.year ? ` (${gameInfo.year})` : ''}`);
+        if (gameInfo.year) {
+          partialQuery = partialQuery.eq('yearRelease', gameInfo.year);
         }
+        
+        const { data: partialResults } = await partialQuery.limit(1);
+        gameResults = partialResults;
+      }
+
+      if (gameResults && gameResults.length > 0) {
+        foundGames.push(gameResults[0]);
+      } else {
+        console.warn(`⚠️ Game not found: ${gameInfo.name}${gameInfo.year ? ` (${gameInfo.year})` : ''}`);
       }
     }
 
