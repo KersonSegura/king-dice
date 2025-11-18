@@ -110,13 +110,14 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       return;
     }
 
-    // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
-    // (base64 encoding adds ~33% overhead, so 3MB file = ~4MB base64)
-    const maxFileSize = 3 * 1024 * 1024; // 3MB (Vercel limit)
+    // Check if we're in production (Vercel) or local
+    const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+    const maxFileSize = isProduction ? 3 * 1024 * 1024 : 15 * 1024 * 1024; // 3MB on Vercel, 15MB locally
     
     if (file.size > maxFileSize) {
+      const maxSizeMB = isProduction ? 3 : 15;
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`File size (${fileSizeMB}MB) is too large. Maximum allowed is 3MB. Please use a PDF URL for larger files.`);
+      setError(`File size (${fileSizeMB}MB) is too large. Maximum allowed is ${maxSizeMB}MB. Please use a PDF URL for larger files.`);
       return;
     }
 
@@ -193,7 +194,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
               className="hidden"
               disabled={uploading}
             />
-            <p className="text-xs text-gray-500 mt-1">Max 3MB (use URL for larger)</p>
+            <p className="text-xs text-gray-500 mt-1">Max 15MB locally, 3MB on production</p>
           </div>
         </div>
       )}

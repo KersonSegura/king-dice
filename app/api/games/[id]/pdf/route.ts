@@ -69,12 +69,17 @@ export async function POST(
       );
     }
 
-    // Vercel has a 4.5MB body size limit for serverless functions
-    // So we limit uploads to ~3MB (base64 encoding adds ~33% overhead)
-    // For larger files, users should upload locally and use the PDF URL field
-    if (file.size > 3 * 1024 * 1024) {
+    // Validate file size
+    // Locally: 15MB limit (no Vercel restrictions)
+    // On Vercel: 4.5MB body size limit, so ~3MB files work
+    // Supabase Storage: 50MB limit
+    const isProduction = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
+    const maxFileSize = isProduction ? 3 * 1024 * 1024 : 15 * 1024 * 1024; // 3MB on Vercel, 15MB locally
+    
+    if (file.size > maxFileSize) {
+      const maxSizeMB = isProduction ? 3 : 15;
       return NextResponse.json(
-        { error: 'File size must be less than 3MB. For larger files, please upload locally and use the PDF URL field instead.' },
+        { error: `File size must be less than ${maxSizeMB}MB. For larger files, please use the PDF URL field instead.` },
         { status: 400 }
       );
     }

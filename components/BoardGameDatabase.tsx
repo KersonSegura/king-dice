@@ -1771,7 +1771,7 @@ function BoardGameDatabaseContent() {
                           <p className="text-sm text-gray-600 mb-1">
                             <span className="font-medium text-[#fbae17]">Click to upload PDF</span> or drag and drop
                           </p>
-                          <p className="text-xs text-gray-500">PDF files only (max 3MB, use URL for larger)</p>
+                          <p className="text-xs text-gray-500">PDF files only (max 15MB locally, 3MB on production)</p>
                           {newGameForm.pdfFile && (
                             <p className="text-xs text-green-600 mt-1">✓ PDF file ready to upload</p>
                           )}
@@ -1786,9 +1786,13 @@ function BoardGameDatabaseContent() {
                                 showToast('Please select a PDF file', 'error');
                                 return;
                               }
-                              // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
-                              if (file.size > 3 * 1024 * 1024) {
-                                showToast('File size must be less than 3MB. Please use a PDF URL for larger files.', 'error');
+                              // Check if we're in production (Vercel) or local
+                              const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+                              const maxFileSize = isProduction ? 3 * 1024 * 1024 : 15 * 1024 * 1024; // 3MB on Vercel, 15MB locally
+                              
+                              if (file.size > maxFileSize) {
+                                const maxSizeMB = isProduction ? 3 : 15;
+                                showToast(`File size must be less than ${maxSizeMB}MB. Please use a PDF URL for larger files.`, 'error');
                                 return;
                               }
                               
@@ -2161,7 +2165,7 @@ You can use markdown formatting:
                                       <p className="text-xs text-gray-600 mb-1">
                                         <span className="font-medium text-[#fbae17]">Upload PDF</span> or drag
                                       </p>
-                                      <p className="text-xs text-gray-500">Max 3MB (use URL for larger)</p>
+                                      <p className="text-xs text-gray-500">Max 15MB locally, 3MB on production</p>
                                       {editingGameData[game.id]?.pdfFile && (
                                         <p className="text-xs text-green-600 mt-1">✓ PDF ready</p>
                                       )}
@@ -2176,9 +2180,13 @@ You can use markdown formatting:
                                             showToast('Please select a PDF file', 'error');
                                             return;
                                           }
-                                          // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
-                                          if (file.size > 3 * 1024 * 1024) {
-                                            showToast('File size must be less than 3MB. Please use a PDF URL for larger files.', 'error');
+                                          // Check if we're in production (Vercel) or local
+                                          const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+                                          const maxFileSize = isProduction ? 3 * 1024 * 1024 : 15 * 1024 * 1024; // 3MB on Vercel, 15MB locally
+                                          
+                                          if (file.size > maxFileSize) {
+                                            const maxSizeMB = isProduction ? 3 : 15;
+                                            showToast(`File size must be less than ${maxSizeMB}MB. Please use a PDF URL for larger files.`, 'error');
                                             return;
                                           }
                                           
