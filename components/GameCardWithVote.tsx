@@ -46,6 +46,8 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
   const [localUserRating, setLocalUserRating] = useState<number | null>(game.userRating ?? null);
   const [localUserVotes, setLocalUserVotes] = useState<number>(game.userVotes ?? 0);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [hasUserVoted, setHasUserVoted] = useState<boolean>(false);
+  const [userVoteStars, setUserVoteStars] = useState<number | null>(null);
   const starButtonRef = useRef<HTMLButtonElement>(null);
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -54,6 +56,31 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
     setLocalUserRating(game.userRating ?? null);
     setLocalUserVotes(game.userVotes ?? 0);
   }, [game.id, game.userRating, game.userVotes]);
+
+  // Check if user has voted when component mounts or user changes
+  useEffect(() => {
+    const checkUserVote = async () => {
+      if (!isAuthenticated || !user?.id) {
+        setHasUserVoted(false);
+        setUserVoteStars(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/games/${game.id}/vote?userId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setHasUserVoted(data.hasVoted || false);
+          setUserVoteStars(data.userRatingStars || null);
+        }
+      } catch (error) {
+        // Silently fail - we'll check when modal opens
+        console.error('Error checking user vote:', error);
+      }
+    };
+
+    checkUserVote();
+  }, [game.id, user?.id, isAuthenticated]);
 
   useEffect(() => {
     console.log('Modal state changed:', isRatingModalOpen);
@@ -132,6 +159,10 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
         typeof data.userRatingStars === 'number' ? data.userRatingStars : null;
       setExistingUserRatingStars(previousRating);
       setSelectedStars(previousRating ?? 0);
+      
+      // Track if user has voted
+      setHasUserVoted(data.hasVoted || false);
+      setUserVoteStars(previousRating);
 
       if (typeof data.averageUserRatingRaw === 'number') {
         setLocalUserRating(data.averageUserRatingRaw);
@@ -217,6 +248,8 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
       setLocalUserRating(result.userRating ?? localUserRating);
       setLocalUserVotes(result.userVotes ?? localUserVotes);
       setExistingUserRatingStars(selectedStars);
+      setHasUserVoted(true);
+      setUserVoteStars(selectedStars);
       const successMessage = result.message || (result.isNewVote ? 'Thanks for your vote!' : 'Rating updated!');
       showToast(successMessage, 'success');
       closeRatingModal();
@@ -496,13 +529,21 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
               <button 
                 type="button"
                 ref={starButtonRef}
-                className="text-white p-2 rounded transition-colors h-8 w-8 hover:opacity-90" 
-                style={{ backgroundColor: '#fbae17' }}
+                className={`p-2 rounded transition-colors h-8 w-8 hover:opacity-90 flex items-center justify-center ${
+                  hasUserVoted 
+                    ? 'bg-white border-2 border-[#fbae17]' 
+                    : 'text-white'
+                }`}
+                style={hasUserVoted ? {} : { backgroundColor: '#fbae17' }}
                 onMouseEnter={handleStarMouseEnter}
                 onMouseLeave={handleStarMouseLeave}
                 onClick={handleStarClick}
+                title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
               >
-                <Star className="w-4 h-4" />
+                <Star 
+                  className={`w-4 h-4 ${hasUserVoted ? 'text-[#fbae17] fill-[#fbae17]' : 'text-white'}`} 
+                  fill={hasUserVoted ? 'currentColor' : 'none'}
+                />
               </button>
               
               {/* Tooltip for star button */}
@@ -521,9 +562,23 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
                     transform: 'translateX(-50%)'
                   }}
                 >
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                    <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                  <div className="flex flex-col items-start space-y-1">
+                    <div className="flex items-center space-x-1">
+                      <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                      <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                    </div>
+                    <div className="text-xs text-gray-300">
+                      {localUserVotes > 0 ? (
+                        <span>Community: {localUserVotes} vote{localUserVotes === 1 ? '' : 's'} • Avg: {localUserRating ? (localUserRating / 2).toFixed(1) : '0'}/5</span>
+                      ) : (
+                        <span>No community votes yet</span>
+                      )}
+                    </div>
+                    {hasUserVoted && userVoteStars && (
+                      <div className="text-xs text-green-300">
+                        Your vote: {userVoteStars.toFixed(1)}/5 ⭐
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
