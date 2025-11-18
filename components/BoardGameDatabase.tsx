@@ -8,7 +8,6 @@ import Footer from './Footer';
 import LazyList from './LazyList';
 import VideoLinks from './VideoLinks';
 import PDFHandler from './PDFHandler';
-import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { STORAGE_BUCKETS } from '@/lib/supabase';
 // import BackToTopButton from './BackToTopButton'; // Removed - using global one from layout
 
@@ -584,6 +583,8 @@ function BoardGameDatabaseContent() {
             const file = new File([blob], `game-${gameId}.pdf`, { type: 'application/pdf' });
 
             // Upload directly to Supabase Storage from the client (bypasses Vercel's body size limit)
+            // Lazy import to avoid issues during page load
+            const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser');
             const supabase = await getSupabaseBrowserClient();
             
             const timestamp = Date.now();
@@ -814,6 +815,8 @@ function BoardGameDatabaseContent() {
             const file = new File([blob], `new-game-${Date.now()}.pdf`, { type: 'application/pdf' });
 
             // Upload directly to Supabase Storage from the client (bypasses Vercel's body size limit)
+            // Lazy import to avoid issues during page load
+            const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser');
             const supabase = await getSupabaseBrowserClient();
             
             const timestamp = Date.now();

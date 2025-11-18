@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Download, ExternalLink, FileText, AlertCircle, Upload } from 'lucide-react';
-import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { STORAGE_BUCKETS } from '@/lib/supabase';
 
 interface PDFHandlerProps {
@@ -125,47 +124,93 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
     setError(null);
 
     try {
-      // Upload directly to Supabase Storage from the client (bypasses Vercel's body size limit)
-      const supabase = await getSupabaseBrowserClient();
-      
-      const timestamp = Date.now();
-      const filename = `game-${gameId}-${timestamp}.pdf`;
-      const filePath = `PDFs/${filename}`;
+      // Try direct client-side upload first (bypasses Vercel's body size limit)
+      try {
+        // Lazy import to avoid issues during page load
+        const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser');
+        const supabase = await getSupabaseBrowserClient();
+        
+        const timestamp = Date.now();
+        const filename = `game-${gameId}-${timestamp}.pdf`;
+        const filePath = `PDFs/${filename}`;
 
-      // Upload to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(STORAGE_BUCKETS.PDFS)
-        .upload(filePath, file, {
-          contentType: 'application/pdf',
-          upsert: false, // Don't overwrite if exists
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from(STORAGE_BUCKETS.PDFS)
+          .upload(filePath, file, {
+            contentType: 'application/pdf',
+            upsert: false, // Don't overwrite if exists
+          });
+
+        if (uploadError) {
+          // If client-side upload fails (e.g., RLS policy), fall back to server-side
+          throw new Error(`Client upload failed: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from(STORAGE_BUCKETS.PDFS)
+          .getPublicUrl(uploadData.path);
+
+        const publicUrl = urlData.publicUrl;
+
+        // Update the game record with the PDF URL via API
+        const updateResponse = await fetch(`/api/games/${gameId}/pdf`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdfUrl: publicUrl })
         });
 
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json().catch(() => ({ error: 'Failed to update game record' }));
+          throw new Error(errorData.error || 'Failed to update game record');
+        }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(STORAGE_BUCKETS.PDFS)
-        .getPublicUrl(uploadData.path);
+        setError(null);
+        if (onPDFUploaded) {
+          onPDFUploaded();
+        }
+        return; // Success, exit early
+      } catch (clientError) {
+        // Fallback to server-side upload if client-side fails
+        console.warn('Client-side upload failed, falling back to server-side:', clientError);
+        
+        // For files under 3MB, use server-side upload
+        if (file.size <= 3 * 1024 * 1024) {
+          const formData = new FormData();
+          formData.append('pdf', file);
 
-      const publicUrl = urlData.publicUrl;
+          const response = await fetch(`/api/games/${gameId}/pdf`, {
+            method: 'POST',
+            body: formData
+          });
 
-      // Update the game record with the PDF URL via API
-      const updateResponse = await fetch(`/api/games/${gameId}/pdf`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdfUrl: publicUrl })
-      });
-
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.json().catch(() => ({ error: 'Failed to update game record' }));
-        throw new Error(errorData.error || 'Failed to update game record');
-      }
-
-      setError(null);
-      if (onPDFUploaded) {
-        onPDFUploaded();
+          if (response.ok) {
+            setError(null);
+            if (onPDFUploaded) {
+              onPDFUploaded();
+            }
+            return; // Success
+          } else {
+            const textResponse = await response.text();
+            let errorMessage = 'Failed to upload PDF';
+            
+            if (response.status === 413 || textResponse.includes('Request Entity Too Large')) {
+              errorMessage = 'File is too large. Maximum allowed is 3MB for server uploads.';
+            } else {
+              try {
+                const errorData = JSON.parse(textResponse);
+                errorMessage = errorData.error || errorMessage;
+              } catch {
+                errorMessage = textResponse.substring(0, 200) || errorMessage;
+              }
+            }
+            throw new Error(errorMessage);
+          }
+        } else {
+          // File too large for server-side, and client-side failed
+          throw new Error('Upload failed. The PDFs bucket may not allow public uploads. Please configure RLS policies or use a PDF URL instead.');
+        }
       }
     } catch (err) {
       console.error('Error uploading PDF:', err);
