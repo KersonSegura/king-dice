@@ -550,10 +550,10 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
                 title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
               >
                 <Star 
-                  className={`w-4 h-4 ${hasUserVoted ? 'text-white' : 'text-white'}`} 
+                  className={`w-4 h-4 text-white`} 
                   fill={hasUserVoted ? 'white' : 'none'}
                   stroke="white"
-                  strokeWidth={1}
+                  strokeWidth={hasUserVoted ? 1 : 2}
                 />
               </button>
               

@@ -1012,7 +1012,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             className={`w-5 h-5 text-white`} 
                             fill={hasUserVoted ? 'white' : 'none'}
                             stroke="white"
-                            strokeWidth={1}
+                            strokeWidth={hasUserVoted ? 1 : 2}
                           />
                           <span className="font-medium text-white">
                             {hasUserVoted ? 'Update Vote' : 'Vote'}
