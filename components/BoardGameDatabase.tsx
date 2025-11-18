@@ -401,6 +401,40 @@ function BoardGameDatabaseContent() {
     setEditingGameData(prev => ({ ...prev, [gameId]: {} }));
   };
 
+  // Helper function to safely parse API responses (handles both JSON and non-JSON)
+  const parseApiResponse = async (response: Response): Promise<any> => {
+    const textResponse = await response.text();
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        return JSON.parse(textResponse);
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', textResponse);
+        throw new Error('El servidor devolvió una respuesta inválida. Intenta nuevamente.');
+      }
+    } else {
+      // If not JSON, extract error message from text
+      console.error('Non-JSON response:', textResponse);
+      
+      let errorMessage = 'Error desconocido del servidor';
+      if (response.status === 413) {
+        errorMessage = 'El archivo o datos son demasiado grandes. Intenta usar una URL en lugar de subir un archivo.';
+      } else if (response.status === 504 || response.status === 408) {
+        errorMessage = 'La solicitud tardó demasiado. Intenta nuevamente o reduce el tamaño de los datos.';
+      } else if (textResponse.includes('Request Entity Too Large')) {
+        errorMessage = 'Los datos son demasiado grandes. Intenta usar URLs en lugar de subir archivos grandes.';
+      } else if (textResponse.includes('timeout') || textResponse.includes('Timeout')) {
+        errorMessage = 'La solicitud tardó demasiado. Intenta nuevamente.';
+      } else if (textResponse.trim().length > 0) {
+        const snippet = textResponse.substring(0, 200);
+        errorMessage = `Error del servidor: ${snippet}${textResponse.length > 200 ? '...' : ''}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+  };
+
   const saveGameProperties = async (gameId: number) => {
     setSavingGame(prev => ({ ...prev, [gameId]: true }));
     
@@ -542,7 +576,8 @@ function BoardGameDatabaseContent() {
         body: JSON.stringify(cleanGameData)
       });
       
-      const responseData = await response.json();
+      // Use helper to safely parse response
+      const responseData = await parseApiResponse(response);
       
       if (!response.ok) {
         if (response.status === 409) {
@@ -720,7 +755,7 @@ function BoardGameDatabaseContent() {
       });
 
       if (response.ok) {
-        const newGame = await response.json();
+        const newGame = await parseApiResponse(response);
         showToast(`Game "${newGame.game.nameEn}" added successfully!`, 'success');
         
         // Reset form
@@ -755,7 +790,7 @@ function BoardGameDatabaseContent() {
         // Refresh games list
         await fetchGames(pagination.page, searchTerm, showOnlyWithoutRules);
       } else {
-        const error = await response.json();
+        const error = await parseApiResponse(response);
         
         // Handle duplicate game error specifically
         if (response.status === 409) {
