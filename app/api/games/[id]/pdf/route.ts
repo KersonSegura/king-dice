@@ -69,10 +69,12 @@ export async function POST(
       );
     }
 
-    // Validate file size (max 50MB - Supabase Storage limit, much higher than Vercel)
-    if (file.size > 50 * 1024 * 1024) {
+    // Vercel has a 4.5MB body size limit for serverless functions
+    // So we limit uploads to ~3MB (base64 encoding adds ~33% overhead)
+    // For larger files, users should upload locally and use the PDF URL field
+    if (file.size > 3 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'File size must be less than 50MB' },
+        { error: 'File size must be less than 3MB. For larger files, please upload locally and use the PDF URL field instead.' },
         { status: 400 }
       );
     }
@@ -103,14 +105,15 @@ export async function POST(
     }
 
     // Update game with PDF URL (from Supabase Storage)
+    // Use camelCase column names (pdfUrl, pdfFile)
     const { data: updatedGame, error: updateError } = await supabaseAdmin
       .from('games')
       .update({
-        pdf_url: uploadResult.publicUrl, // Store the Supabase Storage URL
-        pdf_file: null // Clear base64 file if it exists
+        pdfUrl: uploadResult.publicUrl, // Store the Supabase Storage URL
+        pdfFile: null // Clear base64 file if it exists
       })
       .eq('id', gameId)
-      .select('id, name_en, pdf_url')
+      .select('id, nameEn, pdfUrl')
       .single();
 
     if (updateError || !updatedGame) {
@@ -123,11 +126,11 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: 'PDF uploaded successfully',
+      message: 'PDF uploaded successfully to Supabase Storage',
       game: {
         id: updatedGame.id,
-        nameEn: updatedGame.name_en,
-        pdfUrl: updatedGame.pdf_url
+        nameEn: updatedGame.nameEn,
+        pdfUrl: updatedGame.pdfUrl
       }
     });
 
