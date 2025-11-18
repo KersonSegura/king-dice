@@ -573,23 +573,9 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
                     transform: 'translateX(-50%)'
                   }}
                 >
-                  <div className="flex flex-col items-start space-y-1">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                      <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
-                    </div>
-                    <div className="text-xs text-gray-300">
-                      {localUserVotes > 0 ? (
-                        <span>Community: {localUserVotes} vote{localUserVotes === 1 ? '' : 's'} • Avg: {localUserRating ? (localUserRating / 2).toFixed(1) : '0'}/5</span>
-                      ) : (
-                        <span>No community votes yet</span>
-                      )}
-                    </div>
-                    {hasUserVoted && userVoteStars && (
-                      <div className="text-xs text-green-300">
-                        Your vote: {userVoteStars.toFixed(1)}/5 ⭐
-                      </div>
-                    )}
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                    <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
                   </div>
                 </div>
               )}
