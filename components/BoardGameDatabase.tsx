@@ -8,6 +8,8 @@ import Footer from './Footer';
 import LazyList from './LazyList';
 import VideoLinks from './VideoLinks';
 import PDFHandler from './PDFHandler';
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { STORAGE_BUCKETS } from '@/lib/supabase';
 // import BackToTopButton from './BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -565,7 +567,7 @@ function BoardGameDatabaseContent() {
       if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
       if (gameData.isExpansion !== undefined) cleanGameData.isExpansion = gameData.isExpansion;
 
-      // If there's a PDF file (base64), upload it to Supabase Storage first
+      // If there's a PDF file (base64), upload it directly to Supabase Storage from client
       if (cleanGameData.pdfFile) {
         try {
           // Convert base64 to File/Blob for upload
@@ -581,53 +583,39 @@ function BoardGameDatabaseContent() {
             const blob = new Blob([byteArray], { type: 'application/pdf' });
             const file = new File([blob], `game-${gameId}.pdf`, { type: 'application/pdf' });
 
-            // Upload to Supabase Storage via the PDF upload endpoint
-            const formData = new FormData();
-            formData.append('pdf', file);
+            // Upload directly to Supabase Storage from the client (bypasses Vercel's body size limit)
+            const supabase = await getSupabaseBrowserClient();
+            
+            const timestamp = Date.now();
+            const filename = `game-${gameId}-${timestamp}.pdf`;
+            const filePath = `PDFs/${filename}`;
 
-            const uploadResponse = await fetch(`/api/games/${gameId}/pdf`, {
-              method: 'POST',
-              body: formData
-            });
+            // Upload to Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from(STORAGE_BUCKETS.PDFS)
+              .upload(filePath, file, {
+                contentType: 'application/pdf',
+                upsert: false, // Don't overwrite if exists
+              });
 
-            if (!uploadResponse.ok) {
-              // Try to get a more specific error message
-              const textResponse = await uploadResponse.text();
-              let errorMessage = 'Failed to upload PDF';
-              
-              // Check for specific error types
-              if (uploadResponse.status === 413 || textResponse.includes('Request Entity Too Large')) {
-                errorMessage = 'PDF file is too large for upload. Vercel has a 4.5MB limit for uploads. For files larger than ~3MB, please use a PDF URL instead of uploading the file directly.';
-              } else if (uploadResponse.status === 400) {
-                // Try to parse JSON error
-                try {
-                  const errorData = JSON.parse(textResponse);
-                  errorMessage = errorData.error || errorData.message || errorMessage;
-                } catch {
-                  errorMessage = textResponse.substring(0, 200) || errorMessage;
-                }
-              } else {
-                // Try to parse JSON error
-                try {
-                  const errorData = JSON.parse(textResponse);
-                  errorMessage = errorData.error || errorData.message || errorMessage;
-                } catch {
-                  errorMessage = `Upload failed (${uploadResponse.status}). ${textResponse.substring(0, 100)}`;
-                }
-              }
-              
-              throw new Error(errorMessage);
+            if (uploadError) {
+              throw new Error(uploadError.message);
             }
 
-            const uploadResult = await uploadResponse.json();
-            
+            // Get public URL
+            const { data: urlData } = supabase.storage
+              .from(STORAGE_BUCKETS.PDFS)
+              .getPublicUrl(uploadData.path);
+
+            const publicUrl = urlData.publicUrl;
+
             // Replace pdfFile with pdfUrl from Supabase Storage
-            cleanGameData.pdfUrl = uploadResult.game?.pdfUrl || uploadResult.pdfUrl;
+            cleanGameData.pdfUrl = publicUrl;
             delete cleanGameData.pdfFile; // Remove base64 data
           }
         } catch (uploadError) {
           console.error('Error uploading PDF to storage:', uploadError);
-          alert(`Error uploading PDF: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}. Please try using a PDF URL instead.`);
+          alert(`Error uploading PDF: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}. Please try again.`);
           return;
         }
       }
@@ -808,8 +796,61 @@ function BoardGameDatabaseContent() {
         processedRulesText = content;
       }
       
+      // If there's a PDF file, upload it directly to Supabase Storage first
+      let pdfUrl = newGameForm.pdfUrl;
+      if (newGameForm.pdfFile && !pdfUrl) {
+        try {
+          // Convert base64 to File/Blob for upload
+          const base64Data = newGameForm.pdfFile.split(',')[1];
+          if (base64Data) {
+            // Convert base64 to blob
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const file = new File([blob], `new-game-${Date.now()}.pdf`, { type: 'application/pdf' });
+
+            // Upload directly to Supabase Storage from the client (bypasses Vercel's body size limit)
+            const supabase = await getSupabaseBrowserClient();
+            
+            const timestamp = Date.now();
+            const filename = `new-game-${timestamp}.pdf`;
+            const filePath = `PDFs/${filename}`;
+
+            // Upload to Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from(STORAGE_BUCKETS.PDFS)
+              .upload(filePath, file, {
+                contentType: 'application/pdf',
+                upsert: false, // Don't overwrite if exists
+              });
+
+            if (uploadError) {
+              throw new Error(uploadError.message);
+            }
+
+            // Get public URL
+            const { data: urlData } = supabase.storage
+              .from(STORAGE_BUCKETS.PDFS)
+              .getPublicUrl(uploadData.path);
+
+            pdfUrl = urlData.publicUrl;
+          }
+        } catch (uploadError) {
+          console.error('Error uploading PDF to storage:', uploadError);
+          showToast(`Error uploading PDF: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}. Please try again.`, 'error');
+          setAddingGame(false);
+          return;
+        }
+      }
+      
       const gameData = {
         ...newGameForm,
+        pdfUrl: pdfUrl, // Use uploaded URL or existing URL
+        pdfFile: undefined, // Don't send base64 data
         rulesText: processedRulesText
       };
 
@@ -1779,8 +1820,7 @@ function BoardGameDatabaseContent() {
                           <p className="text-sm text-gray-600 mb-1">
                             <span className="font-medium text-[#fbae17]">Click to upload PDF</span> or drag and drop
                           </p>
-                          <p className="text-xs text-gray-500">PDF files only (max 3MB for upload)</p>
-                          <p className="text-xs text-gray-400 mt-0.5">(Use URL for larger files)</p>
+                          <p className="text-xs text-gray-500">PDF files only (max 50MB)</p>
                           {newGameForm.pdfFile && (
                             <p className="text-xs text-green-600 mt-1">✓ PDF file ready to upload</p>
                           )}
@@ -1795,10 +1835,9 @@ function BoardGameDatabaseContent() {
                                 showToast('Please select a PDF file', 'error');
                                 return;
                               }
-                              // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
-                              // (base64 encoding adds ~33% overhead, so 3MB file = ~4MB base64)
-                              if (file.size > 3 * 1024 * 1024) {
-                                showToast('Files larger than 3MB cannot be uploaded directly due to Vercel limits. Please use a PDF URL instead.', 'error');
+                              // Supabase Storage supports up to 50MB
+                              if (file.size > 50 * 1024 * 1024) {
+                                showToast('File size must be less than 50MB', 'error');
                                 return;
                               }
                               
@@ -2171,8 +2210,7 @@ You can use markdown formatting:
                                       <p className="text-xs text-gray-600 mb-1">
                                         <span className="font-medium text-[#fbae17]">Upload PDF</span> or drag
                                       </p>
-                                      <p className="text-xs text-gray-500">Max 3MB for upload</p>
-                                      <p className="text-xs text-gray-400 mt-0.5">(Use URL for larger files)</p>
+                                      <p className="text-xs text-gray-500">Max 50MB</p>
                                       {editingGameData[game.id]?.pdfFile && (
                                         <p className="text-xs text-green-600 mt-1">✓ PDF ready</p>
                                       )}
@@ -2187,10 +2225,9 @@ You can use markdown formatting:
                                             showToast('Please select a PDF file', 'error');
                                             return;
                                           }
-                                          // Vercel has a 4.5MB body size limit, so we limit uploads to ~3MB
-                                          // (base64 encoding adds ~33% overhead, so 3MB file = ~4MB base64)
-                                          if (file.size > 3 * 1024 * 1024) {
-                                            showToast('Files larger than 3MB cannot be uploaded directly due to Vercel limits. Please use a PDF URL instead.', 'error');
+                                          // Supabase Storage supports up to 50MB
+                                          if (file.size > 50 * 1024 * 1024) {
+                                            showToast('File size must be less than 50MB', 'error');
                                             return;
                                           }
                                           

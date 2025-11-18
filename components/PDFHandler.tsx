@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Download, ExternalLink, FileText, AlertCircle, Upload } from 'lucide-react';
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { STORAGE_BUCKETS } from '@/lib/supabase';
 
 interface PDFHandlerProps {
   pdfUrl?: string;
@@ -110,7 +112,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       return;
     }
 
-    // Check file size - now using Supabase Storage, so we can allow up to 50MB
+    // Supabase Storage supports up to 50MB
     const maxFileSize = 50 * 1024 * 1024; // 50MB (Supabase Storage limit)
     
     if (file.size > maxFileSize) {
@@ -123,49 +125,51 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('pdf', file);
+      // Upload directly to Supabase Storage from the client (bypasses Vercel's body size limit)
+      const supabase = await getSupabaseBrowserClient();
+      
+      const timestamp = Date.now();
+      const filename = `game-${gameId}-${timestamp}.pdf`;
+      const filePath = `PDFs/${filename}`;
 
-      const response = await fetch(`/api/games/${gameId}/pdf`, {
-        method: 'POST',
-        body: formData
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKETS.PDFS)
+        .upload(filePath, file, {
+          contentType: 'application/pdf',
+          upsert: false, // Don't overwrite if exists
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from(STORAGE_BUCKETS.PDFS)
+        .getPublicUrl(uploadData.path);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Update the game record with the PDF URL via API
+      const updateResponse = await fetch(`/api/games/${gameId}/pdf`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pdfUrl: publicUrl })
       });
 
-      if (response.ok) {
-        setError(null);
-        if (onPDFUploaded) {
-          onPDFUploaded();
-        }
-      } else {
-        // Handle error response - might not be JSON
-        const textResponse = await response.text();
-        let errorMessage = 'Failed to upload PDF';
-        
-        // Check status code first
-        if (response.status === 413 || textResponse.includes('Request Entity Too Large')) {
-          errorMessage = 'File is too large. Maximum allowed is 50MB.';
-        } else {
-          // Try to parse as JSON
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            try {
-              const errorData = JSON.parse(textResponse);
-              errorMessage = errorData.error || errorMessage;
-            } catch (e) {
-              // If JSON parsing fails, use text response
-              if (textResponse.trim().length > 0) {
-                errorMessage = textResponse.substring(0, 200);
-              }
-            }
-          } else if (textResponse.trim().length > 0) {
-            errorMessage = textResponse.substring(0, 200);
-          }
-        }
-        
-        setError(errorMessage);
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json().catch(() => ({ error: 'Failed to update game record' }));
+        throw new Error(errorData.error || 'Failed to update game record');
+      }
+
+      setError(null);
+      if (onPDFUploaded) {
+        onPDFUploaded();
       }
     } catch (err) {
-      setError('Failed to upload PDF. Please try again.');
+      console.error('Error uploading PDF:', err);
+      setError(err instanceof Error ? err.message : 'Failed to upload PDF. Please try again.');
     } finally {
       setUploading(false);
     }

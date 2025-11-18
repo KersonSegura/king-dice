@@ -140,6 +140,68 @@ export async function POST(
   }
 }
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: idString } = await params;
+    const gameId = parseInt(idString);
+    
+    if (isNaN(gameId)) {
+      return NextResponse.json(
+        { error: 'Invalid game ID' },
+        { status: 400 }
+      );
+    }
+
+    const { pdfUrl } = await request.json();
+
+    if (!pdfUrl || typeof pdfUrl !== 'string') {
+      return NextResponse.json(
+        { error: 'PDF URL is required' },
+        { status: 400 }
+      );
+    }
+
+    // Update game with PDF URL
+    const { data: updatedGame, error: updateError } = await supabaseAdmin
+      .from('games')
+      .update({
+        pdfUrl: pdfUrl,
+        pdfFile: null // Clear base64 file if it exists
+      })
+      .eq('id', gameId)
+      .select('id, nameEn, pdfUrl')
+      .single();
+
+    if (updateError || !updatedGame) {
+      console.error('Error updating game with PDF:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update game with PDF' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'PDF URL updated successfully',
+      game: {
+        id: updatedGame.id,
+        nameEn: updatedGame.nameEn,
+        pdfUrl: updatedGame.pdfUrl
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating PDF URL:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
