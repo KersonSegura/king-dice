@@ -80,12 +80,12 @@ async function migratePDFsToStorage() {
         // Generate filename
         const timestamp = Date.now();
         const filename = `game-${gameId}-${timestamp}.pdf`;
-        const filePath = `pdfs/${filename}`;
+        const filePath = `PDFs/${filename}`;
 
         // Upload to Supabase Storage
         console.log(`   📤 Uploading to Supabase Storage...`);
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('pdfs')
+          .from('PDFs')
           .upload(filePath, buffer, {
             contentType: 'application/pdf',
             upsert: false, // Don't overwrite if exists
@@ -99,7 +99,7 @@ async function migratePDFsToStorage() {
 
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from('pdfs')
+          .from('PDFs')
           .getPublicUrl(uploadData.path);
 
         const publicUrl = urlData.publicUrl;

@@ -14,18 +14,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bucketExists = existingBuckets?.find(b => b.name === 'pdfs');
+    const bucketExists = existingBuckets?.find(b => b.name === 'PDFs');
 
     if (bucketExists) {
       return NextResponse.json({
         success: true,
-        message: 'Bucket "pdfs" already exists',
+        message: 'Bucket "PDFs" already exists',
         bucket: bucketExists
       });
     }
 
     // Create the bucket
-    const { data, error } = await supabaseAdmin.storage.createBucket('pdfs', {
+    const { data, error } = await supabaseAdmin.storage.createBucket('PDFs', {
       public: true,
       allowedMimeTypes: ['application/pdf'],
       fileSizeLimit: 52428800, // 50 MB
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Bucket "pdfs" created successfully',
+      message: 'Bucket "PDFs" created successfully',
       bucket: data
     });
   } catch (error) {

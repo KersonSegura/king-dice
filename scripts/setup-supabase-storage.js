@@ -23,7 +23,7 @@ const buckets = [
   { name: 'uploads', public: true },
   { name: 'boardle-images', public: true },
   { name: 'dice-designs', public: true },
-  { name: 'pdfs', public: true }, // For game PDF rulebooks
+  { name: 'PDFs', public: true }, // For game PDF rulebooks
 ];
 
 async function setupBuckets() {

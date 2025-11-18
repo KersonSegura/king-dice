@@ -60,7 +60,7 @@ export async function POST(
     // Upload to Supabase Storage instead of base64
     const timestamp = Date.now();
     const filename = `game-${gameId}-${timestamp}.pdf`;
-    const filePath = `pdfs/${filename}`;
+    const filePath = `PDFs/${filename}`;
     
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
