@@ -37,7 +37,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      // If JSON parsing fails, it might be due to body size limit
+      console.error('Error parsing JSON in rules POST:', jsonError);
+      return NextResponse.json(
+        { error: 'Request body is too large or invalid. Vercel has a 4.5MB limit. Please reduce the size of the rules text.' },
+        { status: 413 }
+      );
+    }
 
     const insertPayload = {
       gameId: body.gameId,
@@ -61,12 +71,28 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating rule:', error);
-      return NextResponse.json({ error: 'Failed to create rule' }, { status: 500 });
+      const errorMessage = error.message || 'Failed to create rule';
+      // Check for specific error types
+      if (error.message?.includes('too large') || error.message?.includes('size')) {
+        return NextResponse.json(
+          { error: 'Rules text is too large. Vercel has a 4.5MB limit. Please reduce the size of the rules text.' },
+          { status: 413 }
+        );
+      }
+      return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error creating rule:', error);
-    return NextResponse.json({ error: 'Failed to create rule' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create rule';
+    // Check if it's a body size issue
+    if (errorMessage.includes('too large') || errorMessage.includes('Request Entity Too Large')) {
+      return NextResponse.json(
+        { error: 'Rules text is too large. Vercel has a 4.5MB limit. Please reduce the size of the rules text.' },
+        { status: 413 }
+      );
+    }
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

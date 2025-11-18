@@ -236,9 +236,12 @@ export async function PUT(
         console.log(`API - Actual PDF file size: ${actualFileSizeKB} KB (${actualFileSizeMB} MB)`);
         console.log(`API - Base64 string length: ${updateData.pdfFile.length} characters`);
         
-        if (actualFileSizeKB > 15360) { // 15MB limit
+        // Vercel has a 4.5MB body size limit for serverless functions
+        // Base64 encoding increases size by ~33%, so we limit to ~3.3MB raw file size
+        const maxFileSizeKB = 3.3 * 1024; // ~3.3MB in KB
+        if (actualFileSizeKB > maxFileSizeKB) {
           return NextResponse.json(
-            { error: 'PDF file too large', message: `PDF file is ${actualFileSizeKB} KB (${actualFileSizeMB} MB), maximum allowed is 15MB` },
+            { error: 'PDF file too large', message: `PDF file is ${actualFileSizeKB} KB (${actualFileSizeMB} MB). Vercel has a 4.5MB limit. Please use a PDF URL instead for files larger than ~3MB.` },
             { status: 400 }
           );
         }

@@ -582,8 +582,12 @@ function BoardGameDatabaseContent() {
           console.log(`Actual PDF file size: ${actualFileSizeKB} KB (${actualFileSizeMB} MB)`);
           console.log(`Base64 string length: ${cleanGameData.pdfFile.length} characters`);
           
-          if (actualFileSizeKB > 15360) { // 15MB limit
-            alert(`PDF file is too large (${actualFileSizeKB} KB / ${actualFileSizeMB} MB). Please use a smaller file or PDF URL instead.`);
+          // Vercel has a 4.5MB body size limit for serverless functions
+          // Base64 encoding increases size by ~33%, so we limit to ~3.3MB raw file size
+          // to stay under the 4.5MB limit after base64 encoding
+          const maxFileSizeKB = 3.3 * 1024; // ~3.3MB in KB
+          if (actualFileSizeKB > maxFileSizeKB) {
+            alert(`PDF file is too large (${actualFileSizeKB} KB / ${actualFileSizeMB} MB). Vercel has a 4.5MB limit. Please use a PDF URL instead for files larger than ~3MB.`);
             return;
           }
         }
