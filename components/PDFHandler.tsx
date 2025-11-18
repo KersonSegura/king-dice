@@ -110,8 +110,14 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
       return;
     }
 
-    if (file.size > 15 * 1024 * 1024) {
-      setError('File size must be less than 15MB.');
+    // Check file size - Vercel has a 4.5MB body size limit for serverless functions
+    // Base64 encoding increases size by ~33%, so we limit to ~3.3MB raw file size
+    // to stay under the 4.5MB limit after base64 encoding
+    const maxFileSize = 3.3 * 1024 * 1024; // ~3.3MB to account for base64 encoding
+    
+    if (file.size > maxFileSize) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      setError(`File size (${fileSizeMB}MB) is too large. Vercel has a 4.5MB limit. Please use a PDF URL instead for files larger than ~3MB.`);
       return;
     }
 
@@ -133,8 +139,32 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
           onPDFUploaded();
         }
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to upload PDF');
+        // Handle error response - might not be JSON
+        const textResponse = await response.text();
+        let errorMessage = 'Failed to upload PDF';
+        
+        // Check status code first
+        if (response.status === 413 || textResponse.includes('Request Entity Too Large')) {
+          errorMessage = 'File is too large. Vercel has a 4.5MB limit. Please use a PDF URL instead.';
+        } else {
+          // Try to parse as JSON
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              const errorData = JSON.parse(textResponse);
+              errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+              // If JSON parsing fails, use text response
+              if (textResponse.trim().length > 0) {
+                errorMessage = textResponse.substring(0, 200);
+              }
+            }
+          } else if (textResponse.trim().length > 0) {
+            errorMessage = textResponse.substring(0, 200);
+          }
+        }
+        
+        setError(errorMessage);
       }
     } catch (err) {
       setError('Failed to upload PDF. Please try again.');
@@ -164,7 +194,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
               className="hidden"
               disabled={uploading}
             />
-            <p className="text-xs text-gray-500 mt-1">Max 15MB</p>
+            <p className="text-xs text-gray-500 mt-1">Max ~3MB (use PDF URL for larger files)</p>
           </div>
         </div>
       )}

@@ -317,7 +317,16 @@ function BoardGameDatabaseContent() {
           })
         });
         
-        if (!response.ok) throw new Error('Failed to update rule');
+        if (!response.ok) {
+          // Use helper to safely parse error response
+          try {
+            const errorData = await parseApiResponse(response);
+            throw new Error(errorData.error || 'Failed to update rule');
+          } catch (parseError) {
+            // If parseApiResponse throws, use its error message
+            throw parseError;
+          }
+        }
       } else {
         // Create new rule
         const response = await fetch('/api/rules', {
@@ -331,7 +340,16 @@ function BoardGameDatabaseContent() {
           })
         });
         
-        if (!response.ok) throw new Error('Failed to create rule');
+        if (!response.ok) {
+          // Use helper to safely parse error response
+          try {
+            const errorData = await parseApiResponse(response);
+            throw new Error(errorData.error || 'Failed to create rule');
+          } catch (parseError) {
+            // If parseApiResponse throws, use its error message
+            throw parseError;
+          }
+        }
       }
       
       // Refresh the games list to show updated data
@@ -343,7 +361,8 @@ function BoardGameDatabaseContent() {
       
     } catch (error) {
       console.error('Error saving rule:', error);
-      alert('Error al guardar las reglas. Por favor, inténtalo de nuevo.');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`Error al guardar las reglas: ${errorMessage}`);
     } finally {
       setSavingRules(prev => ({ ...prev, [gameId]: false }));
     }
