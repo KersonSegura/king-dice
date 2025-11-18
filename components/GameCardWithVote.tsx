@@ -70,12 +70,20 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
         const response = await fetch(`/api/games/${game.id}/vote?userId=${user.id}`);
         if (response.ok) {
           const data = await response.json();
+          console.log(`[GameCard] Vote check for game ${game.id}:`, data);
           setHasUserVoted(data.hasVoted || false);
           setUserVoteStars(data.userRatingStars || null);
+        } else {
+          console.warn(`[GameCard] Failed to check vote for game ${game.id}:`, response.status);
+          // If API fails, assume no vote
+          setHasUserVoted(false);
+          setUserVoteStars(null);
         }
       } catch (error) {
-        // Silently fail - we'll check when modal opens
-        console.error('Error checking user vote:', error);
+        console.error('[GameCard] Error checking user vote:', error);
+        // If error, assume no vote
+        setHasUserVoted(false);
+        setUserVoteStars(null);
       }
     };
 
@@ -250,6 +258,11 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
       setExistingUserRatingStars(selectedStars);
       setHasUserVoted(true);
       setUserVoteStars(selectedStars);
+      console.log(`[GameCard] Vote submitted for game ${game.id}:`, {
+        hasUserVoted: true,
+        userVoteStars: selectedStars,
+        result
+      });
       const successMessage = result.message || (result.isNewVote ? 'Thanks for your vote!' : 'Rating updated!');
       showToast(successMessage, 'success');
       closeRatingModal();

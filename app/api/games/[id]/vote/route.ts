@@ -169,14 +169,17 @@ export async function GET(
     // Get user's existing vote if userId provided
     let existingVote = null;
     if (userId) {
-      const { data } = await supabaseAdmin
+      const { data, error } = await supabaseAdmin
         .from('user_votes')
         .select('rating')
         .eq('gameId', gameId)
         .eq('userId', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single() to handle no results gracefully
       
-      existingVote = data;
+      // Only set existingVote if data exists and no error (or error is just "not found")
+      if (data && !error) {
+        existingVote = data;
+      }
     }
 
     // Get all votes for this game to calculate average

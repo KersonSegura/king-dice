@@ -567,6 +567,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
       setExistingUserRatingStars(selectedStars);
       setHasUserVoted(true);
       setUserVoteStars(selectedStars);
+      console.log(`[GamePage] Vote submitted for game ${game.id}:`, {
+        hasUserVoted: true,
+        userVoteStars: selectedStars,
+        result
+      });
       const successMessage = result.message || (result.isNewVote ? 'Thanks for your vote!' : 'Rating updated!');
       showToast(successMessage, 'success');
       closeRatingModal();
@@ -632,12 +637,20 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         const response = await fetch(`/api/games/${game.id}/vote?userId=${user.id}`);
         if (response.ok) {
           const data = await response.json();
+          console.log(`[GamePage] Vote check for game ${game.id}:`, data);
           setHasUserVoted(data.hasVoted || false);
           setUserVoteStars(data.userRatingStars || null);
+        } else {
+          console.warn(`[GamePage] Failed to check vote for game ${game.id}:`, response.status);
+          // If API fails, assume no vote
+          setHasUserVoted(false);
+          setUserVoteStars(null);
         }
       } catch (error) {
-        // Silently fail - we'll check when modal opens
-        console.error('Error checking user vote:', error);
+        console.error('[GamePage] Error checking user vote:', error);
+        // If error, assume no vote
+        setHasUserVoted(false);
+        setUserVoteStars(null);
       }
     };
 
