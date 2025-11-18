@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     const query = supabaseAdmin
-      .from('gameRule')
+      .from('game_rules')
       .select(`
         id, gameId, language, rulesText, rulesHtml, setupInstructions, victoryConditions,
         game:games(
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data, error } = await supabaseAdmin
-      .from('gameRule')
+      .from('game_rules')
       .insert(insertPayload)
       .select(`
         id, gameId, language, rulesText, rulesHtml, setupInstructions, victoryConditions,
