@@ -170,9 +170,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         } else {
           let errorMessage = 'Login failed. Please try again.';
           try {
-            const errorData = await response.json();
-            console.log('Login error response:', errorData);
-            errorMessage = errorData.message || errorMessage;
+            // Check if response is HTML (Cloudflare 522 error)
+            const text = await response.text();
+            if (text.includes('<!DOCTYPE') || text.includes('522') || text.includes('Connection timed out')) {
+              errorMessage = 'Database connection timeout. The database may be temporarily unavailable. Please try again in a few minutes.';
+            } else {
+              try {
+                const errorData = JSON.parse(text);
+                console.log('Login error response:', errorData);
+                errorMessage = errorData.message || errorMessage;
+              } catch (jsonError) {
+                // Not JSON, use the text or default message
+                errorMessage = `Login failed with status ${response.status}. Please try again.`;
+              }
+            }
           } catch (parseError) {
             console.error('Failed to parse error response:', parseError);
             errorMessage = `Login failed with status ${response.status}. Please try again.`;
@@ -181,7 +192,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         }
       } catch (error) {
         console.error('Login error:', error);
-        setError('Network error. Please check your connection and try again.');
+        // Check if it's a Cloudflare 522 timeout error
+        if (error instanceof Error && error.message.includes('<!DOCTYPE')) {
+          setError('Database connection timeout. The database may be temporarily unavailable. Please try again in a few minutes.');
+        } else {
+          setError('Network error. Please check your connection and try again.');
+        }
       } finally {
         setIsLoading(false);
       }
