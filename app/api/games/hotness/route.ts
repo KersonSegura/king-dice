@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     // OPTIMIZED: Query games by name matching the hardcoded list
     // Split into batches to avoid Supabase OR clause limits
     const gamesToFind = hotnessGames.slice(0, limit);
-    const BATCH_SIZE = 10;
+    const BATCH_SIZE = 5; // Smaller batches = faster queries
     const allMatchedGames: any[] = [];
     
     console.log(`🔍 Starting to fetch ${gamesToFind.length} games in batches of ${BATCH_SIZE}`);
@@ -83,13 +83,11 @@ export async function GET(request: NextRequest) {
       console.log(`   Batch games:`, batch);
       
       batch.forEach((gameName) => {
-        // For ilike, we need to wrap in quotes and escape properly
-        // Supabase ilike expects the value to be quoted
+        // Escape single quotes for SQL ilike (case-insensitive)
         const escapedName = gameName.replace(/'/g, "''");
-        // Use eq for exact match instead of ilike - faster and more precise
-        orConditions.push(`nameEn.eq.${escapedName}`);
-        orConditions.push(`nameEs.eq.${escapedName}`);
-        orConditions.push(`name.eq.${escapedName}`);
+        orConditions.push(`nameEn.ilike.${escapedName}`);
+        orConditions.push(`nameEs.ilike.${escapedName}`);
+        orConditions.push(`name.ilike.${escapedName}`);
       });
 
       console.log(`   Built ${orConditions.length} OR conditions`);
