@@ -172,8 +172,11 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games (using single fetch + memory filter)`);
+    console.log(`📊 Total games in database:`, allGames?.length || 0);
     console.log(`📊 Games found (first 10):`, foundGames.slice(0, 10).map(g => ({ id: g.id, name: g.nameEn || g.nameEs || g.name })));
-    console.log(`📊 All game IDs:`, foundGames.map(g => g.id));
+    console.log(`📊 All game IDs (${foundGames.length} total):`, foundGames.map(g => g.id));
+    console.log(`📊 Games without IDs:`, foundGames.filter(g => !g.id).length);
+    console.log(`📊 Missing games (${missingGames.length}):`, missingGames.slice(0, 10));
 
     return NextResponse.json({ 
       games: foundGames,
