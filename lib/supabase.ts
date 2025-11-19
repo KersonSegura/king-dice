@@ -27,10 +27,23 @@ export const supabaseAdmin = createClient(
     global: {
       // Add timeout to prevent hanging requests
       fetch: (url, options = {}) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
+        // Clean up timeout if request completes
+        const originalSignal = options.signal;
+        if (originalSignal) {
+          originalSignal.addEventListener('abort', () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+          });
+        }
+        
         return fetch(url, {
           ...options,
-          // 15 second timeout for server-side requests
-          signal: AbortSignal.timeout(15000),
+          signal: controller.signal,
+        }).finally(() => {
+          clearTimeout(timeoutId);
         });
       },
     },
