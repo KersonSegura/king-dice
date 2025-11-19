@@ -65,71 +65,34 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
 
-    // OPTIMIZED: Query games by name matching the hardcoded list
-    // Split into batches to avoid Supabase OR clause limits
+    // OPTIMIZED: Fetch ALL games once and filter in memory (fastest, most reliable)
     const gamesToFind = hotnessGames.slice(0, limit);
-    const BATCH_SIZE = 5; // Smaller batches = faster queries
-    const allMatchedGames: any[] = [];
+    let allGames: any[] = [];
     
-    console.log(`🔍 Starting to fetch ${gamesToFind.length} games in batches of ${BATCH_SIZE}`);
-    console.log(`📋 First 5 games to find:`, gamesToFind.slice(0, 5));
+    console.log(`🔍 Fetching all games from database (will filter ${gamesToFind.length} games in memory)`);
+    const queryStartTime = Date.now();
     
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
-      const orConditions: string[] = [];
-      
-      console.log(`\n🔄 Processing batch ${batchNum}/${Math.ceil(gamesToFind.length / BATCH_SIZE)} (games ${i + 1}-${Math.min(i + BATCH_SIZE, gamesToFind.length)})`);
-      console.log(`   Batch games:`, batch);
-      
-      batch.forEach((gameName) => {
-        // Escape single quotes for SQL ilike (case-insensitive)
-        const escapedName = gameName.replace(/'/g, "''");
-        orConditions.push(`nameEn.ilike.${escapedName}`);
-        orConditions.push(`nameEs.ilike.${escapedName}`);
-        orConditions.push(`name.ilike.${escapedName}`);
-      });
+    try {
+      const { data: fetchedGames, error: fetchError } = await supabaseAdmin
+        .from('games')
+        .select('*')
+        .limit(10000); // Fetch up to 10k games
 
-      console.log(`   Built ${orConditions.length} OR conditions`);
-      console.log(`   Executing query...`);
+      const queryDuration = Date.now() - queryStartTime;
+      console.log(`✅ Fetched ${fetchedGames?.length || 0} games in ${queryDuration}ms`);
 
-      const queryStartTime = Date.now();
-      try {
-        const { data: batchGames, error: batchError } = await supabaseAdmin
-          .from('games')
-          .select('*')
-          .or(orConditions.join(','))
-          .limit(BATCH_SIZE * 3);
-
-        const queryDuration = Date.now() - queryStartTime;
-        console.log(`   ✅ Query completed in ${queryDuration}ms`);
-
-        if (batchError) {
-          console.error(`   ❌ Batch ${batchNum} query error:`, batchError);
-          console.error(`   ❌ Error code:`, batchError.code);
-          console.error(`   ❌ Error message:`, batchError.message);
-          continue;
-        }
-
-        if (batchGames) {
-          console.log(`   ✅ Found ${batchGames.length} games in batch ${batchNum}`);
-          allMatchedGames.push(...batchGames);
-        } else {
-          console.log(`   ⚠️ Batch ${batchNum} returned no games`);
-        }
-      } catch (error) {
-        const queryDuration = Date.now() - queryStartTime;
-        console.error(`   ❌ Exception in batch ${batchNum} after ${queryDuration}ms:`, error);
-        console.error(`   ❌ Error type:`, error instanceof Error ? error.constructor.name : typeof error);
-        console.error(`   ❌ Error message:`, error instanceof Error ? error.message : String(error));
-        if (error instanceof Error && error.stack) {
-          console.error(`   ❌ Stack trace:`, error.stack);
-        }
+      if (fetchError) {
+        console.error('❌ Error fetching all games:', fetchError);
+        throw fetchError;
       }
+      
+      allGames = fetchedGames || [];
+    } catch (error) {
+      console.error('❌ Error fetching games:', error);
+      throw error;
     }
     
-    console.log(`\n📊 Total games fetched: ${allMatchedGames.length}`);
-    const matchedGames = allMatchedGames;
+    const matchedGames = allGames;
 
     // Create a map: lowercase name -> game
     const gamesMap = new Map<string, any>();
