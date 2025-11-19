@@ -118,10 +118,12 @@ export async function GET(request: NextRequest) {
       console.warn('⚠️ Falling back to memory-based filtering');
       const queryStartTimeFallback = Date.now();
       
+      // Reduced limit to avoid overwhelming unhealthy database
       const { data: fetchedGames, error: fetchError } = await supabaseAdmin
         .from('games')
         .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
-        .limit(10000);
+        .limit(5000) // Reduced from 10000 to reduce load
+        .order('id', { ascending: true }); // Add ordering for consistency
 
       if (fetchError) {
         const queryDuration = Date.now() - queryStartTimeFallback;
