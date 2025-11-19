@@ -384,9 +384,16 @@ export async function getUserFromToken(token: string): Promise<AuthResult> {
 
     if (error) {
       console.error('❌ getUserFromToken: Supabase query error:', error);
+      const errorMessage = error?.message || String(error || '');
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+        return {
+          success: false,
+          message: 'Database connection timeout. Please try again in a few moments.'
+        };
+      }
       return {
         success: false,
-        message: `Database query failed: ${error.message}`
+        message: `Database query failed: ${errorMessage}`
       };
     }
 
