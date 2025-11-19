@@ -78,23 +78,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await fetch('/api/auth/verify', {
         method: 'GET',
-        credentials: 'include'
+        credentials: 'include',
+        cache: 'no-store'
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
-        
-        // Award daily login XP if user hasn't logged in today
-        if (data.user?.id && data.user?.username) {
-          awardDailyLoginXP(data.user.id, data.user.username);
+        if (data.user) {
+          setUser(data.user);
+          
+          // Award daily login XP if user hasn't logged in today
+          if (data.user?.id && data.user?.username) {
+            awardDailyLoginXP(data.user.id, data.user.username);
+          }
+        } else {
+          setUser(null);
         }
       } else {
         // Token is invalid or expired
         setUser(null);
       }
     } catch (error) {
-      // Silent error handling
+      console.error('Error verifying auth:', error);
       setUser(null);
     } finally {
       setIsLoading(false);

@@ -63,14 +63,21 @@ function ForumsPageContent() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
+        setLoading(true);
         const response = await fetch(`/api/posts?page=1&limit=20${isAuthenticated && user ? `&userId=${user.id}` : ''}`, { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
-          setPosts(data.posts);
+          setPosts(data.posts || []);
           setHasMorePosts((data.posts || []).length === 20);
+        } else {
+          console.error('Failed to load posts:', response.status, response.statusText);
+          setPosts([]);
         }
       } catch (error) {
         console.error('Error loading posts:', error);
+        setPosts([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -103,8 +110,7 @@ function ForumsPageContent() {
 
     setCategories(categories);
     loadPosts();
-    setLoading(false);
-  }, []);
+  }, [isAuthenticated, user?.id]);
 
   // Infinite scroll functionality
   useEffect(() => {

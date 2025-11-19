@@ -167,8 +167,9 @@ function CommunityGalleryPageContent() {
     
     const fetchGalleryData = async () => {
       try {
+        setLoading(true);
         const url = user ? `/api/gallery?userId=${user.id}&page=1&limit=20` : '/api/gallery?page=1&limit=20';
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
 
@@ -179,10 +180,20 @@ function CommunityGalleryPageContent() {
             setHasMoreImages((data.images || []).length === 20);
           }
         } else {
-          console.error('Failed to fetch gallery data');
+          console.error('Failed to fetch gallery data:', response.status, response.statusText);
+          if (isMounted) {
+            setAllImages([]);
+            setDisplayedImages([]);
+            setCategories([]);
+          }
         }
       } catch (error) {
         console.error('Error fetching gallery data:', error);
+        if (isMounted) {
+          setAllImages([]);
+          setDisplayedImages([]);
+          setCategories([]);
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -195,7 +206,7 @@ function CommunityGalleryPageContent() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user?.id]);
 
   // Handle dice sharing from My Dice page
   useEffect(() => {
