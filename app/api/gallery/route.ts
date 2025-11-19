@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,7 +8,10 @@ type GalleryRow = Record<string, any>;
 
 async function detectCamelCase(): Promise<boolean> {
   try {
-    const { data } = await supabaseAdmin.from('gallery_images').select('*').limit(1);
+    const { data } = await executeSupabaseQuery(
+      () => supabaseAdmin.from('gallery_images').select('*').limit(1),
+      { maxRetries: 1, baseDelay: 400, timeout: 10000 }
+    );
     if (data && data.length > 0) {
       return Object.prototype.hasOwnProperty.call(data[0], 'imageUrl');
     }
@@ -215,9 +219,10 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || '';
     const userId = searchParams.get('userId') || '';
 
-    const { data: galleryRows, error: galleryError } = await supabaseAdmin
-      .from('gallery_images')
-      .select('*');
+    const { data: galleryRows, error: galleryError } = await executeSupabaseQuery(
+      () => supabaseAdmin.from('gallery_images').select('*'),
+      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+    );
 
     if (galleryError) {
       console.error('Supabase gallery query error:', galleryError);
@@ -234,10 +239,13 @@ export async function GET(request: NextRequest) {
     let authorMap = new Map<string, any>();
     if (authorIds.length > 0) {
       try {
-        const { data: authors, error: authorError } = await supabaseAdmin
-          .from('users')
-          .select('id, username, avatar, xp, title, isVerified, isAdmin')
-          .in('id', authorIds as string[]);
+        const { data: authors, error: authorError } = await executeSupabaseQuery(
+          () => supabaseAdmin
+            .from('users')
+            .select('id, username, avatar, xp, title, isVerified, isAdmin')
+            .in('id', authorIds as string[]),
+          { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+        );
         if (authorError) {
           console.error('Error fetching gallery authors:', authorError);
         } else if (authors) {
@@ -273,14 +281,17 @@ export async function GET(request: NextRequest) {
     if (userId && images.length > 0) {
       const imageIds = images.map(img => img.id);
       try {
-        const { data: votes, error } = await supabaseAdmin
-          .from('gallery_votes')
-          .select('gallery_image_id, vote_type')
-          .eq('user_id', userId)
-          .in('gallery_image_id', imageIds);
+        const { data: votes, error } = await executeSupabaseQuery(
+          () => supabaseAdmin
+            .from('gallery_votes')
+            .select('gallery_image_id, vote_type')
+            .eq('user_id', userId)
+            .in('gallery_image_id', imageIds),
+          { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+        );
         if (!error && votes) {
           const idToVote = new Map<string, string>();
-          votes.forEach(vote => idToVote.set(vote.gallery_image_id, vote.vote_type));
+          votes.forEach((vote: any) => idToVote.set(vote.gallery_image_id, vote.vote_type));
           images = images.map(image => ({
             ...image,
             userVote: idToVote.get(image.id) ?? null

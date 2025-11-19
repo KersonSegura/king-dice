@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
 import { supabaseAdmin } from '@/lib/supabase';
+import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 
 // Force dynamic so likes/replies reflect immediately when navigating back
 export const dynamic = 'force-dynamic';
@@ -100,9 +101,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const userId = searchParams.get('userId') || '';
 
-    const { data: postRows, error: postsError } = await supabaseAdmin
-      .from('posts')
-      .select('*');
+    const { data: postRows, error: postsError } = await executeSupabaseQuery(
+      () => supabaseAdmin.from('posts').select('*'),
+      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+    );
 
     if (postsError) {
       throw postsError;
@@ -121,10 +123,13 @@ export async function GET(request: NextRequest) {
     const authorIds = Array.from(new Set(filteredRows.map(row => row.authorId ?? row.author_id).filter(Boolean)));
     let authorMap = new Map<string, any>();
     if (authorIds.length > 0) {
-      const { data: authors, error: authorsError } = await supabaseAdmin
-        .from('users')
-        .select('id, username, avatar, xp, title')
-        .in('id', authorIds as string[]);
+      const { data: authors, error: authorsError } = await executeSupabaseQuery(
+        () => supabaseAdmin
+          .from('users')
+          .select('id, username, avatar, xp, title')
+          .in('id', authorIds as string[]),
+        { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+      );
 
       if (authorsError) {
         console.error('Error fetching post authors:', authorsError);
@@ -144,8 +149,14 @@ export async function GET(request: NextRequest) {
       const ids = paginatedPosts.map(p => p.id);
       if (ids.length > 0) {
         const [{ data: up }, { data: down }] = await Promise.all([
-          supabaseAdmin.from('post_votes').select('post_id').in('post_id', ids).eq('vote_type', 'up'),
-          supabaseAdmin.from('post_votes').select('post_id').in('post_id', ids).eq('vote_type', 'down')
+          executeSupabaseQuery(
+            () => supabaseAdmin.from('post_votes').select('post_id').in('post_id', ids).eq('vote_type', 'up'),
+            { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+          ).then(r => ({ data: r.data })),
+          executeSupabaseQuery(
+            () => supabaseAdmin.from('post_votes').select('post_id').in('post_id', ids).eq('vote_type', 'down'),
+            { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+          ).then(r => ({ data: r.data }))
         ]);
 
         const upCount: Record<string, number> = {};
@@ -168,12 +179,15 @@ export async function GET(request: NextRequest) {
 
         let userVotes: Record<string, string> = {};
         if (userId) {
-          const { data: uv } = await supabaseAdmin
-            .from('post_votes')
-            .select('post_id, vote_type')
-            .in('post_id', ids)
-            .eq('user_id', userId);
-          (uv || []).forEach(v => {
+          const { data: uv } = await executeSupabaseQuery(
+            () => supabaseAdmin
+              .from('post_votes')
+              .select('post_id, vote_type')
+              .in('post_id', ids)
+              .eq('user_id', userId),
+            { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+          );
+          (uv || []).forEach((v: any) => {
             userVotes[v.post_id] = v.vote_type;
           });
         }

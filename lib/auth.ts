@@ -96,7 +96,7 @@ export async function authenticateUser(identifier: string, password: string): Pr
         .limit(1),
       {
         maxRetries: 2,
-        retryDelay: 1000,
+        baseDelay: 400,
         timeout: 15000
       }
     );
@@ -243,7 +243,7 @@ export async function registerUser(username: string, email: string, password: st
         .select('id, username, email')
         .or(`username.eq.${username},email.eq.${email}`)
         .limit(1),
-      { maxRetries: 2, retryDelay: 1000, timeout: 15000 }
+      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
     );
 
     if (checkError) {
@@ -295,7 +295,7 @@ export async function registerUser(username: string, email: string, password: st
         })
         .select('id, username, email, avatar, isAdmin, level, xp')
         .single(),
-      { maxRetries: 2, retryDelay: 1000, timeout: 15000 }
+      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
     );
 
     if (createError || !newUser) {
@@ -379,7 +379,7 @@ export async function getUserFromToken(token: string): Promise<AuthResult> {
         .select('id, username, email, avatar, isAdmin, level, xp')
         .eq('id', payload.userId)
         .single(),
-      { maxRetries: 2, retryDelay: 1000, timeout: 15000 }
+      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
     );
 
     if (error) {
