@@ -51,34 +51,7 @@ export default function HotGamesPage() {
         const gamesList = data.games || [];
         setGames(gamesList);
         setLoading(false); // Show games immediately
-        
-        // Fetch votes in batch for all games (non-blocking - don't await)
-        if (gamesList.length > 0 && isAuthenticated && user?.id) {
-          // Don't await - let games show first, votes will load in background
-          const gameIds = gamesList.map((g: any) => g.id).filter((id: any) => id);
-          if (gameIds.length > 0) {
-            fetchJsonWithRetry('/api/games/votes/batch', {
-              method: 'POST',
-              cache: 'no-store',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
-              },
-              body: JSON.stringify({ gameIds, userId: user.id })
-            }, {
-              maxRetries: 2,
-              retryDelay: 500,
-              timeout: 20000
-            }).then((votesData) => {
-              console.log('✅ Batch votes fetched for hot games:', Object.keys(votesData).length);
-              setVotes(votesData);
-            }).catch((error) => {
-              console.error('❌ Error fetching batch votes for hot games:', error);
-              // Continue without vote data - cards will fetch individually
-            });
-          }
-        }
+        // Votes will be loaded on-demand when users hover/click the star button
       } catch (error) {
         console.error('Error fetching hot games:', error);
         setGames([]);

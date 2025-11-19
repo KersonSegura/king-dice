@@ -46,29 +46,7 @@ export default function PopularesPage() {
         } else {
           const gamesList = data.games || [];
           setGames(gamesList);
-          
-          // Fetch votes in batch for all games
-          if (gamesList.length > 0 && isAuthenticated && user?.id) {
-            try {
-              const gameIds = gamesList.map((g: any) => g.id).filter((id: any) => id);
-              if (gameIds.length > 0) {
-                const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ gameIds, userId: user.id })
-                }, {
-                  maxRetries: 2,
-                  retryDelay: 500,
-                  timeout: 10000
-                });
-                console.log('✅ Batch votes fetched for popular games:', Object.keys(votesData).length);
-                setVotes(votesData);
-              }
-            } catch (error) {
-              console.error('❌ Error fetching batch votes for popular games:', error);
-              // Continue without vote data - cards will fetch individually
-            }
-          }
+          // Votes will be loaded on-demand when users hover/click the star button
         }
       } catch (err) {
         setError('Error al cargar los juegos populares');

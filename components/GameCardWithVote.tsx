@@ -66,10 +66,11 @@ export default function GameCardWithVote({ game, voteData }: GameCardWithVotePro
     setLocalUserVotes(game.userVotes ?? 0);
   }, [game.id, game.userRating, game.userVotes]);
 
-  // Check if user has voted when component mounts or user changes
-  // If voteData is provided, use it instead of making an API call
+  // Track if we've loaded vote data (to avoid duplicate requests)
+  const [voteDataLoaded, setVoteDataLoaded] = useState(false);
+
+  // If voteData is provided as prop, use it directly (for backward compatibility)
   useEffect(() => {
-    // If vote data is provided as prop, use it directly
     if (voteData) {
       setHasUserVoted(voteData.hasVoted || false);
       setUserVoteStars(voteData.userRatingStars || null);
@@ -79,40 +80,9 @@ export default function GameCardWithVote({ game, voteData }: GameCardWithVotePro
       if (voteData.totalVotes) {
         setLocalUserVotes(voteData.totalVotes);
       }
-      return;
+      setVoteDataLoaded(true);
     }
-
-    // Otherwise, fetch vote data individually (backward compatibility)
-    const checkUserVote = async () => {
-      if (!isAuthenticated || !user?.id) {
-        setHasUserVoted(false);
-        setUserVoteStars(null);
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/games/${game.id}/vote?userId=${user.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`[GameCard] Vote check for game ${game.id}:`, data);
-          setHasUserVoted(data.hasVoted || false);
-          setUserVoteStars(data.userRatingStars || null);
-        } else {
-          console.warn(`[GameCard] Failed to check vote for game ${game.id}:`, response.status);
-          // If API fails, assume no vote
-          setHasUserVoted(false);
-          setUserVoteStars(null);
-        }
-      } catch (error) {
-        console.error('[GameCard] Error checking user vote:', error);
-        // If error, assume no vote
-        setHasUserVoted(false);
-        setUserVoteStars(null);
-      }
-    };
-
-    checkUserVote();
-  }, [game.id, user?.id, isAuthenticated, voteData]);
+  }, [voteData]);
 
   useEffect(() => {
     console.log('Modal state changed:', isRatingModalOpen);
@@ -313,6 +283,32 @@ export default function GameCardWithVote({ game, voteData }: GameCardWithVotePro
     }
   };
 
+  // Load vote data when hovering over star button
+  const loadVoteData = async () => {
+    if (voteDataLoaded || !isAuthenticated || !user?.id) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/games/${game.id}/vote?userId=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setHasUserVoted(data.hasVoted || false);
+        setUserVoteStars(data.userRatingStars || null);
+        if (data.averageUserRatingRaw) {
+          setLocalUserRating(data.averageUserRatingRaw);
+        }
+        if (data.totalVotes) {
+          setLocalUserVotes(data.totalVotes);
+        }
+        setVoteDataLoaded(true);
+      }
+    } catch (error) {
+      // Silently fail - we'll try again on click
+      console.error('[GameCard] Error loading vote data:', error);
+    }
+  };
+
   const handleStarMouseEnter = () => {
     if (starButtonRef.current) {
       const rect = starButtonRef.current.getBoundingClientRect();
@@ -322,16 +318,22 @@ export default function GameCardWithVote({ game, voteData }: GameCardWithVotePro
       });
     }
     setShowTooltip(true);
+    // Load vote data on hover
+    loadVoteData();
   };
 
   const handleStarMouseLeave = () => {
     setShowTooltip(false);
   };
 
-  const handleStarClick = (e: React.MouseEvent) => {
+  const handleStarClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     console.log('Star button clicked, opening modal...');
+    // Ensure vote data is loaded before opening modal
+    if (!voteDataLoaded && isAuthenticated && user?.id) {
+      await loadVoteData();
+    }
     openRatingModal();
   };
 
