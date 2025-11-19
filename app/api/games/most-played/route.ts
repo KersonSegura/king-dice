@@ -114,16 +114,29 @@ export async function GET(request: NextRequest) {
             if (nameEn === lowerName || nameEs === lowerName || name === lowerName) {
               score = 1000;
             }
-            // Contains full search term = high score
+            // Contains full search term = high score (be more lenient)
             else if (nameEn.includes(lowerName) || nameEs.includes(lowerName) || name.includes(lowerName)) {
-              // Prefer matches where the length is similar (within 20 chars)
+              // Prefer matches where the length is similar, but accept up to 50 char difference
               const lengthDiff = Math.abs((nameEn.length || nameEs.length || name.length) - lowerName.length);
-              score = 100 - lengthDiff;
+              score = Math.max(1, 100 - lengthDiff); // Minimum score of 1
             }
             // Search term contains game name (handles "The X" vs "X")
             else if (lowerName.includes(nameEn) || lowerName.includes(nameEs) || lowerName.includes(name)) {
               const lengthDiff = Math.abs((nameEn.length || nameEs.length || name.length) - lowerName.length);
-              score = 50 - lengthDiff;
+              score = Math.max(1, 50 - lengthDiff); // Minimum score of 1
+            }
+            // Also try fuzzy matching - check if names share significant words
+            else {
+              const searchWords = lowerName.split(/\s+/).filter(w => w.length > 2); // Words longer than 2 chars
+              const dbWords = (nameEn || nameEs || name).split(/\s+/).filter(w => w.length > 2);
+              
+              if (searchWords.length > 0 && dbWords.length > 0) {
+                const matchingWords = searchWords.filter(sw => dbWords.some(dw => dw.includes(sw) || sw.includes(dw)));
+                if (matchingWords.length >= Math.min(2, searchWords.length)) {
+                  // If at least 2 words match (or all words if fewer than 2), give it a low score
+                  score = 10;
+                }
+              }
             }
             
             if (score > bestScore && score > 0) {
