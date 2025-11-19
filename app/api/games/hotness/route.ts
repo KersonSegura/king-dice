@@ -66,29 +66,44 @@ export async function GET(request: NextRequest) {
     console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
 
     // OPTIMIZED: Query games by name matching the hardcoded list
-    // Build OR conditions for all game names
-    const orConditions: string[] = [];
+    // Split into batches to avoid Supabase OR clause limits
     const gamesToFind = hotnessGames.slice(0, limit);
+    const BATCH_SIZE = 10;
+    const allMatchedGames: any[] = [];
     
-    gamesToFind.forEach((gameName) => {
-      // Escape single quotes for SQL
-      const escapedName = gameName.replace(/'/g, "''");
-      orConditions.push(`nameEn.ilike.${escapedName}`);
-      orConditions.push(`nameEs.ilike.${escapedName}`);
-      orConditions.push(`name.ilike.${escapedName}`);
-    });
+    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+      const orConditions: string[] = [];
+      
+      batch.forEach((gameName) => {
+        // Escape single quotes for SQL
+        const escapedName = gameName.replace(/'/g, "''");
+        orConditions.push(`nameEn.ilike.${escapedName}`);
+        orConditions.push(`nameEs.ilike.${escapedName}`);
+        orConditions.push(`name.ilike.${escapedName}`);
+      });
 
-    // Fetch all matching games in one query
-    const { data: matchedGames, error: fetchError } = await supabaseAdmin
-      .from('games')
-      .select('*')
-      .or(orConditions.join(','))
-      .limit(limit * 3); // Get more than needed in case of duplicates
+      try {
+        const { data: batchGames, error: batchError } = await supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(orConditions.join(','))
+          .limit(BATCH_SIZE * 3);
 
-    if (fetchError) {
-      console.error('❌ Error fetching hotness games:', fetchError);
-      throw fetchError;
+        if (batchError) {
+          console.error(`❌ Error fetching batch ${i / BATCH_SIZE + 1}:`, batchError);
+          continue;
+        }
+
+        if (batchGames) {
+          allMatchedGames.push(...batchGames);
+        }
+      } catch (error) {
+        console.error(`❌ Error in batch ${i / BATCH_SIZE + 1}:`, error);
+      }
     }
+    
+    const matchedGames = allMatchedGames;
 
     // Create a map: lowercase name -> game
     const gamesMap = new Map<string, any>();
