@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { supabaseAdmin } from '@/lib/supabase';
+import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -85,19 +86,34 @@ export async function authenticateUser(identifier: string, password: string): Pr
     console.log('🔐 authenticateUser: Starting authentication for:', identifier);
     console.log('🔐 Checking Supabase connection...');
     
-    // Find user by username or email
+    // Find user by username or email with retry logic
     console.log('🔍 Searching for user:', identifier);
-    const { data: users, error } = await supabaseAdmin
-      .from('users')
-      .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled')
-      .or(`username.eq.${identifier},email.eq.${identifier}`)
-      .limit(1);
+    const { data: users, error } = await executeSupabaseQuery(
+      () => supabaseAdmin
+        .from('users')
+        .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled')
+        .or(`username.eq.${identifier},email.eq.${identifier}`)
+        .limit(1),
+      {
+        maxRetries: 2,
+        retryDelay: 1000,
+        timeout: 15000
+      }
+    );
 
     if (error) {
       console.error('❌ Supabase query error:', error);
+      // Check if error message contains HTML (Cloudflare timeout page)
+      const errorMessage = error.message || String(error);
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+        return {
+          success: false,
+          message: 'Database connection timeout. The database may be temporarily unavailable. Please try again in a few moments.'
+        };
+      }
       return {
         success: false,
-        message: `Database connection failed: ${error.message}`
+        message: `Database connection failed: ${errorMessage}`
       };
     }
 
@@ -221,14 +237,24 @@ export async function registerUser(username: string, email: string, password: st
     }
 
     // Check if user already exists
-    const { data: existingUsers, error: checkError } = await supabaseAdmin
-      .from('users')
-      .select('id, username, email')
-      .or(`username.eq.${username},email.eq.${email}`)
-      .limit(1);
+    const { data: existingUsers, error: checkError } = await executeSupabaseQuery(
+      () => supabaseAdmin
+        .from('users')
+        .select('id, username, email')
+        .or(`username.eq.${username},email.eq.${email}`)
+        .limit(1),
+      { maxRetries: 2, retryDelay: 1000, timeout: 15000 }
+    );
 
     if (checkError) {
       console.error('❌ registerUser: Error checking existing user:', checkError);
+      const errorMessage = checkError.message || String(checkError);
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+        return {
+          success: false,
+          message: 'Database connection timeout. Please try again in a few moments.'
+        };
+      }
       return {
         success: false,
         message: 'Database connection failed. Please try again.'
@@ -255,22 +281,32 @@ export async function registerUser(username: string, email: string, password: st
 
     // Create user in Supabase
     console.log('📝 registerUser: Creating user in database...');
-    const { data: newUser, error: createError } = await supabaseAdmin
-      .from('users')
-      .insert({
-        username,
-        email,
-        passwordHash,
-        avatar: defaultAvatar,
-        level: 1,
-        xp: 0,
-        isAdmin: false
-      })
-      .select('id, username, email, avatar, isAdmin, level, xp')
-      .single();
+    const { data: newUser, error: createError } = await executeSupabaseQuery(
+      () => supabaseAdmin
+        .from('users')
+        .insert({
+          username,
+          email,
+          passwordHash,
+          avatar: defaultAvatar,
+          level: 1,
+          xp: 0,
+          isAdmin: false
+        })
+        .select('id, username, email, avatar, isAdmin, level, xp')
+        .single(),
+      { maxRetries: 2, retryDelay: 1000, timeout: 15000 }
+    );
 
     if (createError || !newUser) {
       console.error('❌ registerUser: Error creating user:', createError);
+      const errorMessage = createError?.message || String(createError || '');
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+        return {
+          success: false,
+          message: 'Database connection timeout. Please try again in a few moments.'
+        };
+      }
       return {
         success: false,
         message: 'Registration failed. Please try again.'
@@ -336,12 +372,15 @@ export async function getUserFromToken(token: string): Promise<AuthResult> {
 
     console.log('✅ getUserFromToken: Token valid, fetching user:', payload.userId);
 
-    // Get fresh user data from Supabase
-    const { data: user, error } = await supabaseAdmin
-      .from('users')
-      .select('id, username, email, avatar, isAdmin, level, xp')
-      .eq('id', payload.userId)
-      .single();
+    // Get fresh user data from Supabase with retry logic
+    const { data: user, error } = await executeSupabaseQuery(
+      () => supabaseAdmin
+        .from('users')
+        .select('id, username, email, avatar, isAdmin, level, xp')
+        .eq('id', payload.userId)
+        .single(),
+      { maxRetries: 2, retryDelay: 1000, timeout: 15000 }
+    );
 
     if (error) {
       console.error('❌ getUserFromToken: Supabase query error:', error);
