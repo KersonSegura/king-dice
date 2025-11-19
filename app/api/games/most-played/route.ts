@@ -82,70 +82,37 @@ export async function GET(request: NextRequest) {
       // Track which games we've already matched to avoid duplicates
       const matchedGameIds = new Set<number>();
       
-      // Match games in the correct order, respecting year if provided
+      // Match games in the correct order - SIMPLE APPROACH
       gamesToFind.forEach((gameInfo) => {
         const lowerName = gameInfo.name.toLowerCase().trim();
         let matchedGame: any = null;
         
-        // Strategy 1: Try exact match first (case-insensitive)
+        // Strategy 1: Try exact match first (case-insensitive) from map
         matchedGame = gamesMap.get(lowerName)?.find((g: any) => {
           if (matchedGameIds.has(g.id)) return false;
           if (gameInfo.year && g.yearRelease !== gameInfo.year) return false;
           return true;
         });
         
-        // Strategy 2: If no exact match, search through all games for best match
+        // Strategy 2: If no exact match, search all games for simple contains match
         if (!matchedGame) {
-          let bestMatch: any = null;
-          let bestScore = 0;
-          
           for (const game of (allGames || [])) {
             if (matchedGameIds.has(game.id)) continue; // Skip already matched
+            if (!game.id) continue; // Skip games without IDs
             if (gameInfo.year && game.yearRelease !== gameInfo.year) continue; // Year must match
             
             const nameEn = (game.nameEn || '').toLowerCase().trim();
             const nameEs = (game.nameEs || '').toLowerCase().trim();
             const name = (game.name || '').toLowerCase().trim();
             
-            // Calculate similarity score
-            let score = 0;
-            
-            // Exact match = highest score
-            if (nameEn === lowerName || nameEs === lowerName || name === lowerName) {
-              score = 1000;
-            }
-            // Contains full search term = high score (be more lenient)
-            else if (nameEn.includes(lowerName) || nameEs.includes(lowerName) || name.includes(lowerName)) {
-              // Prefer matches where the length is similar, but accept up to 50 char difference
-              const lengthDiff = Math.abs((nameEn.length || nameEs.length || name.length) - lowerName.length);
-              score = Math.max(1, 100 - lengthDiff); // Minimum score of 1
-            }
-            // Search term contains game name (handles "The X" vs "X")
-            else if (lowerName.includes(nameEn) || lowerName.includes(nameEs) || lowerName.includes(name)) {
-              const lengthDiff = Math.abs((nameEn.length || nameEs.length || name.length) - lowerName.length);
-              score = Math.max(1, 50 - lengthDiff); // Minimum score of 1
-            }
-            // Also try fuzzy matching - check if names share significant words
-            else {
-              const searchWords = lowerName.split(/\s+/).filter(w => w.length > 2); // Words longer than 2 chars
-              const dbWords = (nameEn || nameEs || name).split(/\s+/).filter(w => w.length > 2);
-              
-              if (searchWords.length > 0 && dbWords.length > 0) {
-                const matchingWords = searchWords.filter(sw => dbWords.some(dw => dw.includes(sw) || sw.includes(dw)));
-                if (matchingWords.length >= Math.min(2, searchWords.length)) {
-                  // If at least 2 words match (or all words if fewer than 2), give it a low score
-                  score = 10;
-                }
-              }
-            }
-            
-            if (score > bestScore && score > 0) {
-              bestScore = score;
-              bestMatch = game;
+            // Simple matching: exact match or contains
+            if (nameEn === lowerName || nameEs === lowerName || name === lowerName ||
+                nameEn.includes(lowerName) || nameEs.includes(lowerName) || name.includes(lowerName) ||
+                lowerName.includes(nameEn) || lowerName.includes(nameEs) || lowerName.includes(name)) {
+              matchedGame = game;
+              break; // Take first match
             }
           }
-          
-          matchedGame = bestMatch;
         }
 
         if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
