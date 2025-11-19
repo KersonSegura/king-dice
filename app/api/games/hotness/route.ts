@@ -65,76 +65,72 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
 
-    // OPTIMIZED: Query each game individually - avoids OR clause timeouts
+    // OPTIMIZED: Fetch all games once and filter in memory (single query, fast)
     const gamesToFind = hotnessGames.slice(0, limit);
-    const foundGames: any[] = [];
-    const missingGames: string[] = [];
     
-    console.log(`🔍 Fetching ${gamesToFind.length} specific games individually`);
+    console.log(`🔍 Fetching all games from database (will filter ${gamesToFind.length} games in memory)`);
     const queryStartTime = Date.now();
     
-    // Query games one at a time to avoid Supabase timeouts
-    for (let i = 0; i < gamesToFind.length; i++) {
-      const gameName = gamesToFind[i];
-      const lowerName = gameName.toLowerCase().trim();
-      
-      try {
-        // Query for this specific game name
-        const { data: games, error } = await supabaseAdmin
-          .from('games')
-          .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
-          .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
-          .limit(1);
-        
-        if (error) {
-          console.error(`❌ Error fetching game ${i + 1} "${gameName}":`, error.message);
-          missingGames.push(gameName);
-          continue;
-        }
-        
-        if (games && games.length > 0) {
-          // Check for exact match (case-insensitive)
-          const matchedGame = games.find((g: any) => {
-            const nameEn = (g.nameEn || '').toLowerCase().trim();
-            const nameEs = (g.nameEs || '').toLowerCase().trim();
-            const name = (g.name || '').toLowerCase().trim();
-            return nameEn === lowerName || nameEs === lowerName || name === lowerName;
-          });
-          
-          if (matchedGame) {
-            foundGames.push(matchedGame);
-            console.log(`✅ Found game ${i + 1}/${gamesToFind.length}: ${gameName}`);
-          } else {
-            missingGames.push(gameName);
-            console.log(`⚠️ Game ${i + 1}/${gamesToFind.length} "${gameName}" - no exact match found`);
-          }
-        } else {
-          missingGames.push(gameName);
-          console.log(`⚠️ Game ${i + 1}/${gamesToFind.length} "${gameName}" - not found in database`);
-        }
-      } catch (error) {
-        console.error(`❌ Exception fetching game ${i + 1} "${gameName}":`, error);
-        missingGames.push(gameName);
-      }
-    }
-    
-    const queryDuration = Date.now() - queryStartTime;
-    console.log(`✅ Finished fetching ${foundGames.length}/${gamesToFind.length} games in ${queryDuration}ms`);
-    
-    const matchedGames = foundGames;
+    let allGames: any[] = [];
+    try {
+      // Single query - fetch all games with only needed columns
+      const { data: fetchedGames, error: fetchError } = await supabaseAdmin
+        .from('games')
+        .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
+        .limit(10000); // Reasonable limit
 
-    // Games are already matched and in correct order from the loop above
-    // Just ensure no duplicates
-    const uniqueGames: any[] = [];
-    const seenIds = new Set<number>();
-    foundGames.forEach((game) => {
-      if (game.id && !seenIds.has(game.id)) {
-        seenIds.add(game.id);
-        uniqueGames.push(game);
+      const queryDuration = Date.now() - queryStartTime;
+      console.log(`✅ Fetched ${fetchedGames?.length || 0} games in ${queryDuration}ms`);
+
+      if (fetchError) {
+        console.error('❌ Error fetching games:', fetchError);
+        throw fetchError;
+      }
+      
+      allGames = fetchedGames || [];
+    } catch (error) {
+      const queryDuration = Date.now() - queryStartTime;
+      console.error(`❌ Error fetching games after ${queryDuration}ms:`, error);
+      throw error;
+    }
+
+    // Create a map for fast lookup: lowercase name -> game
+    const gamesMap = new Map<string, any>();
+    allGames.forEach((game) => {
+      if (!game.id) return;
+      const nameEn = (game.nameEn || '').toLowerCase().trim();
+      const nameEs = (game.nameEs || '').toLowerCase().trim();
+      const name = (game.name || '').toLowerCase().trim();
+      
+      if (nameEn) gamesMap.set(nameEn, game);
+      if (nameEs) gamesMap.set(nameEs, game);
+      if (name) gamesMap.set(name, game);
+    });
+
+    // Match games in the correct order from hardcoded list
+    const foundGames: any[] = [];
+    const missingGames: string[] = [];
+    const matchedGameIds = new Set<number>();
+
+    gamesToFind.forEach((gameName) => {
+      const lowerName = gameName.toLowerCase().trim();
+      let matchedGame = gamesMap.get(lowerName);
+      
+      // If not found, try without apostrophes (handles "Feya's" vs "Feyas")
+      if (!matchedGame) {
+        const nameWithoutApostrophe = lowerName.replace(/'/g, '');
+        matchedGame = gamesMap.get(nameWithoutApostrophe);
+      }
+      
+      if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
+        matchedGameIds.add(matchedGame.id);
+        foundGames.push(matchedGame);
+      } else {
+        missingGames.push(gameName);
       }
     });
     
-    const foundGamesFinal = uniqueGames;
+    const foundGamesFinal = foundGames;
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found (${missingGames.length}):`, missingGames.join(', '));
