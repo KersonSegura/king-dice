@@ -65,97 +65,83 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
 
-    // OPTIMIZED: Fetch ALL games once and filter in memory (fastest, most reliable)
+    // OPTIMIZED: Query each game individually - avoids OR clause timeouts
     const gamesToFind = hotnessGames.slice(0, limit);
-    let allGames: any[] = [];
-    
-    console.log(`🔍 Fetching all games from database (will filter ${gamesToFind.length} games in memory)`);
-    const queryStartTime = Date.now();
-    
-    try {
-      // Select only the columns we need - much faster than SELECT *
-      const { data: fetchedGames, error: fetchError } = await supabaseAdmin
-        .from('games')
-        .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
-        .limit(5000); // Reduced limit - should be enough
-
-      const queryDuration = Date.now() - queryStartTime;
-      console.log(`✅ Fetched ${fetchedGames?.length || 0} games in ${queryDuration}ms`);
-
-      if (fetchError) {
-        console.error('❌ Error fetching all games:', fetchError);
-        console.error('❌ Error details:', JSON.stringify(fetchError, null, 2));
-        throw fetchError;
-      }
-      
-      allGames = fetchedGames || [];
-    } catch (error) {
-      const queryDuration = Date.now() - queryStartTime;
-      console.error(`❌ Error fetching games after ${queryDuration}ms:`, error);
-      console.error('❌ Error type:', error instanceof Error ? error.constructor.name : typeof error);
-      throw error;
-    }
-    
-    const matchedGames = allGames;
-
-    // Create a map: lowercase name -> game
-    const gamesMap = new Map<string, any>();
-    (matchedGames || []).forEach((game) => {
-      if (!game.id) return;
-      const nameEn = (game.nameEn || '').toLowerCase().trim();
-      const nameEs = (game.nameEs || '').toLowerCase().trim();
-      const name = (game.name || '').toLowerCase().trim();
-      
-      if (nameEn) gamesMap.set(nameEn, game);
-      if (nameEs) gamesMap.set(nameEs, game);
-      if (name) gamesMap.set(name, game);
-    });
-
-    // Match games in the correct order from hardcoded list
     const foundGames: any[] = [];
     const missingGames: string[] = [];
-    const matchedGameIds = new Set<number>();
-
-    gamesToFind.forEach((gameName) => {
+    
+    console.log(`🔍 Fetching ${gamesToFind.length} specific games individually`);
+    const queryStartTime = Date.now();
+    
+    // Query games one at a time to avoid Supabase timeouts
+    for (let i = 0; i < gamesToFind.length; i++) {
+      const gameName = gamesToFind[i];
       const lowerName = gameName.toLowerCase().trim();
-      let matchedGame = gamesMap.get(lowerName);
       
-      // If not found, try without apostrophes (handles "Feya's" vs "Feyas")
-      if (!matchedGame) {
-        const nameWithoutApostrophe = lowerName.replace(/'/g, '');
-        matchedGame = gamesMap.get(nameWithoutApostrophe);
-      }
-      
-      if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
-        matchedGameIds.add(matchedGame.id);
-        foundGames.push(matchedGame);
-      } else {
-        missingGames.push(gameName);
-        // Debug missing games
-        if (missingGames.length <= 3) {
-          console.log(`   🔍 Looking for: "${gameName}" (lowercase: "${lowerName}")`);
-          const similarKeys = Array.from(gamesMap.keys()).filter(k => 
-            k.includes(lowerName.substring(0, Math.min(5, lowerName.length))) || 
-            lowerName.includes(k.substring(0, Math.min(5, k.length)))
-          ).slice(0, 3);
-          if (similarKeys.length > 0) {
-            console.log(`      Similar names found:`, similarKeys);
-          }
+      try {
+        // Query for this specific game name
+        const { data: games, error } = await supabaseAdmin
+          .from('games')
+          .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
+          .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
+          .limit(1);
+        
+        if (error) {
+          console.error(`❌ Error fetching game ${i + 1} "${gameName}":`, error.message);
+          missingGames.push(gameName);
+          continue;
         }
+        
+        if (games && games.length > 0) {
+          // Check for exact match (case-insensitive)
+          const matchedGame = games.find((g: any) => {
+            const nameEn = (g.nameEn || '').toLowerCase().trim();
+            const nameEs = (g.nameEs || '').toLowerCase().trim();
+            const name = (g.name || '').toLowerCase().trim();
+            return nameEn === lowerName || nameEs === lowerName || name === lowerName;
+          });
+          
+          if (matchedGame) {
+            foundGames.push(matchedGame);
+            console.log(`✅ Found game ${i + 1}/${gamesToFind.length}: ${gameName}`);
+          } else {
+            missingGames.push(gameName);
+            console.log(`⚠️ Game ${i + 1}/${gamesToFind.length} "${gameName}" - no exact match found`);
+          }
+        } else {
+          missingGames.push(gameName);
+          console.log(`⚠️ Game ${i + 1}/${gamesToFind.length} "${gameName}" - not found in database`);
+        }
+      } catch (error) {
+        console.error(`❌ Exception fetching game ${i + 1} "${gameName}":`, error);
+        missingGames.push(gameName);
+      }
+    }
+    
+    const queryDuration = Date.now() - queryStartTime;
+    console.log(`✅ Finished fetching ${foundGames.length}/${gamesToFind.length} games in ${queryDuration}ms`);
+    
+    const matchedGames = foundGames;
+
+    // Games are already matched and in correct order from the loop above
+    // Just ensure no duplicates
+    const uniqueGames: any[] = [];
+    const seenIds = new Set<number>();
+    foundGames.forEach((game) => {
+      if (game.id && !seenIds.has(game.id)) {
+        seenIds.add(game.id);
+        uniqueGames.push(game);
       }
     });
+    
+    const foundGamesFinal = uniqueGames;
 
     if (missingGames.length > 0) {
-      console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
-    }
-
-    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games`);
-    if (missingGames.length > 0) {
-      console.log(`⚠️ Missing games (${missingGames.length}):`, missingGames.slice(0, 10));
+      console.warn(`⚠️ Games not found (${missingGames.length}):`, missingGames.join(', '));
     }
 
     return NextResponse.json({ 
-      games: foundGames,
+      games: foundGamesFinal,
       category: 'hotness',
       total: foundGames.length,
       description: 'The hottest games today according to BoardGameGeek',
