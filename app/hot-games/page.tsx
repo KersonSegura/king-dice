@@ -28,8 +28,8 @@ interface Game {
 
 export default function HotGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
-  const [votes, setVotes] = useState<Record<number, any>>({});
   const [loading, setLoading] = useState(true);
+  // Vote data is now loaded on-demand when users interact with star buttons
   const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
