@@ -114,13 +114,22 @@ export async function GET(request: NextRequest) {
         // Try exact match first
         let matchedGame = gamesMap.get(lowerName)?.find(g => !matchedGameIds.has(g.id));
         
-        // If no exact match, try partial match (but be more precise)
+        // If no exact match, try to find games where the database name contains the full search name
+        // This handles cases like "The Lord of the Rings: Fate of the Fellowship" vs "Lord of the Rings: Fate of the Fellowship"
         if (!matchedGame) {
-          // Look for games where the name starts with or equals the search term
           for (const [key, games] of gamesMap.entries()) {
-            // More precise matching: exact match or starts with
-            if (key === lowerName || key.startsWith(lowerName) || lowerName.startsWith(key)) {
-              matchedGame = games.find(g => !matchedGameIds.has(g.id));
+            // Only match if the key contains the full search term (not just a substring)
+            // This prevents "Ark" from matching "Ark Nova"
+            if (key === lowerName || 
+                (key.includes(lowerName) && Math.abs(key.length - lowerName.length) <= 10)) {
+              matchedGame = games.find(g => {
+                if (matchedGameIds.has(g.id)) return false;
+                // Verify the game name actually contains our search term
+                const gameNameEn = g.nameEn?.toLowerCase() || '';
+                const gameNameEs = g.nameEs?.toLowerCase() || '';
+                const gameName = g.name?.toLowerCase() || '';
+                return gameNameEn.includes(lowerName) || gameNameEs.includes(lowerName) || gameName.includes(lowerName);
+              });
               if (matchedGame) break;
             }
           }
