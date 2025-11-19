@@ -110,32 +110,52 @@ export async function GET(request: NextRequest) {
       // Match games in the correct order
       gamesToFind.forEach((gameName) => {
         const lowerName = gameName.toLowerCase().trim();
+        let matchedGame: any = null;
         
-        // Try exact match first
-        let matchedGame = gamesMap.get(lowerName)?.find(g => !matchedGameIds.has(g.id));
+        // Strategy 1: Try exact match first (case-insensitive)
+        matchedGame = gamesMap.get(lowerName)?.find(g => !matchedGameIds.has(g.id));
         
-        // If no exact match, try to find games where the database name contains the full search name
-        // This handles cases like "The Lord of the Rings: Fate of the Fellowship" vs "Lord of the Rings: Fate of the Fellowship"
+        // Strategy 2: If no exact match, search through all games for best match
         if (!matchedGame) {
-          for (const [key, games] of gamesMap.entries()) {
-            // Only match if the key contains the full search term (not just a substring)
-            // This prevents "Ark" from matching "Ark Nova"
-            if (key === lowerName || 
-                (key.includes(lowerName) && Math.abs(key.length - lowerName.length) <= 10)) {
-              matchedGame = games.find(g => {
-                if (matchedGameIds.has(g.id)) return false;
-                // Verify the game name actually contains our search term
-                const gameNameEn = g.nameEn?.toLowerCase() || '';
-                const gameNameEs = g.nameEs?.toLowerCase() || '';
-                const gameName = g.name?.toLowerCase() || '';
-                return gameNameEn.includes(lowerName) || gameNameEs.includes(lowerName) || gameName.includes(lowerName);
-              });
-              if (matchedGame) break;
+          let bestMatch: any = null;
+          let bestScore = 0;
+          
+          for (const game of (allGames || [])) {
+            if (matchedGameIds.has(game.id)) continue; // Skip already matched
+            
+            const nameEn = (game.nameEn || '').toLowerCase().trim();
+            const nameEs = (game.nameEs || '').toLowerCase().trim();
+            const name = (game.name || '').toLowerCase().trim();
+            
+            // Calculate similarity score
+            let score = 0;
+            
+            // Exact match = highest score
+            if (nameEn === lowerName || nameEs === lowerName || name === lowerName) {
+              score = 1000;
+            }
+            // Contains full search term = high score
+            else if (nameEn.includes(lowerName) || nameEs.includes(lowerName) || name.includes(lowerName)) {
+              // Prefer matches where the length is similar (within 20 chars)
+              const lengthDiff = Math.abs((nameEn.length || nameEs.length || name.length) - lowerName.length);
+              score = 100 - lengthDiff;
+            }
+            // Search term contains game name (handles "The X" vs "X")
+            else if (lowerName.includes(nameEn) || lowerName.includes(nameEs) || lowerName.includes(name)) {
+              const lengthDiff = Math.abs((nameEn.length || nameEs.length || name.length) - lowerName.length);
+              score = 50 - lengthDiff;
+            }
+            
+            if (score > bestScore && score > 0) {
+              bestScore = score;
+              bestMatch = game;
             }
           }
+          
+          matchedGame = bestMatch;
         }
 
-        if (matchedGame && !matchedGameIds.has(matchedGame.id)) {
+        if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
           matchedGameIds.add(matchedGame.id);
           foundGames.push(matchedGame);
         } else {
