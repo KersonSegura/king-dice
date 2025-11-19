@@ -141,7 +141,13 @@ export default function HomePage() {
         
         // Fetch hot games with retry
         try {
-          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=${currentLimit}`, {}, {
+          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=${currentLimit}`, {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          }, {
             maxRetries: 3,
             retryDelay: 1000,
             timeout: 15000
@@ -197,7 +203,13 @@ export default function HomePage() {
         
         // Fetch top ranked games with retry
         try {
-          const rankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=${currentLimit}`, {}, {
+          const rankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=${currentLimit}`, {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          }, {
             maxRetries: 3,
             retryDelay: 1000,
             timeout: 15000
