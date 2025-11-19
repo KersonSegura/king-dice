@@ -6,6 +6,7 @@ import { Search, Filter, Grid, List, Star, Users, Clock, Calendar } from 'lucide
 import Link from 'next/link';
 import Image from 'next/image';
 import BackButton from '@/components/BackButton';
+import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 
 interface Game {
   id: number;
@@ -39,6 +40,7 @@ interface GameFilters {
 export default function AllGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,6 +65,7 @@ export default function AllGamesPage() {
 
   const loadGames = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -77,14 +80,22 @@ export default function AllGamesPage() {
         ...(filters.maxYear && { maxYear: filters.maxYear })
       });
 
-      const response = await fetch(`/api/games?${params}`);
-      const data = await response.json();
+      const data = await fetchJsonWithRetry(`/api/games?${params}`, {}, {
+        maxRetries: 3,
+        retryDelay: 1000,
+        timeout: 15000
+      });
       
       setGames(data.games || []);
-      setTotalPages(Math.ceil(data.total / gamesPerPage));
-      setTotalGames(data.total);
+      setTotalPages(Math.ceil((data.total || 0) / gamesPerPage));
+      setTotalGames(data.total || 0);
     } catch (error) {
       console.error('Error loading games:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load games. Please try again.';
+      setError(errorMessage);
+      setGames([]);
+      setTotalPages(1);
+      setTotalGames(0);
     } finally {
       setIsLoading(false);
     }
@@ -278,6 +289,20 @@ export default function AllGamesPage() {
               </div>
             )}
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+              <span className="block sm:inline font-bold">Error loading games:</span>
+              <span className="block sm:inline ml-0 sm:ml-2">{error}</span>
+              <button
+                onClick={loadGames}
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
           {/* Results Info */}
           <div className="flex justify-between items-center mb-6">

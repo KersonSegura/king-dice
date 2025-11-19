@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
+import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 
 const BOARDLE_ASSET_BASE =
   'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images/boardle-images';
@@ -136,13 +137,13 @@ export default function HomePage() {
         setLoading(true);
         console.log('🔍 Fetching games...');
         
-        // Fetch hot games
-        const hotResponse = await fetch(`/api/games/hotness?limit=${currentLimit}`);
-        if (!hotResponse.ok) {
-          console.error('❌ Hot games API error:', hotResponse.status, await hotResponse.text());
-          setHotGames([]);
-        } else {
-          const hotData = await hotResponse.json();
+        // Fetch hot games with retry
+        try {
+          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=${currentLimit}`, {}, {
+            maxRetries: 3,
+            retryDelay: 1000,
+            timeout: 15000
+          });
           console.log('✅ Hot games response:', { count: hotData.games?.length, total: hotData.total });
           const mappedHotGames = (hotData.games || []).map((game: any) => ({
             ...game,
@@ -156,15 +157,18 @@ export default function HomePage() {
           }));
           console.log('📊 Mapped hot games:', mappedHotGames.length);
           setHotGames(mappedHotGames);
+        } catch (error) {
+          console.error('❌ Error fetching hot games:', error);
+          setHotGames([]);
         }
         
-        // Fetch top ranked games
-        const rankedResponse = await fetch(`/api/games/most-played?limit=${currentLimit}`);
-        if (!rankedResponse.ok) {
-          console.error('❌ Top ranked games API error:', rankedResponse.status, await rankedResponse.text());
-          setTopRankedGames([]);
-        } else {
-          const rankedData = await rankedResponse.json();
+        // Fetch top ranked games with retry
+        try {
+          const rankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=${currentLimit}`, {}, {
+            maxRetries: 3,
+            retryDelay: 1000,
+            timeout: 15000
+          });
           console.log('✅ Top ranked games response:', { count: rankedData.games?.length, total: rankedData.total });
           const mappedRankedGames = (rankedData.games || []).map((game: any) => ({
             ...game,
@@ -178,12 +182,13 @@ export default function HomePage() {
           }));
           console.log('📊 Mapped ranked games:', mappedRankedGames.length);
           setTopRankedGames(mappedRankedGames);
+        } catch (error) {
+          console.error('❌ Error fetching ranked games:', error);
+          setTopRankedGames([]);
         }
         
       } catch (error) {
         console.error('❌ Error fetching games:', error);
-        setHotGames([]);
-        setTopRankedGames([]);
       } finally {
         setLoading(false);
       }

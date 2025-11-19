@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Check, X, HelpCircle, RotateCcw, Lightbulb, Type, Image, RectangleHorizontal } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBoardleStats } from '@/hooks/useBoardleStats';
+import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 
 
 // Game data type
@@ -159,17 +160,23 @@ export function BoardleGame({}: BoardleGameProps) {
   const loadAllGames = async () => {
     setIsLoadingGames(true);
     try {
-      // Load all three modes in parallel
-      const [titleResponse, imageResponse, cardResponse] = await Promise.all([
-        fetch('/api/boardle/games'),
-        fetch('/api/boardle/image-games'),
-        fetch('/api/boardle/card-games')
-      ]);
-
+      // Load all three modes in parallel with retry logic
       const [titleData, imageData, cardData] = await Promise.all([
-        titleResponse.json(),
-        imageResponse.json(),
-        cardResponse.json()
+        fetchJsonWithRetry('/api/boardle/games', {}, {
+          maxRetries: 3,
+          retryDelay: 1000,
+          timeout: 15000
+        }),
+        fetchJsonWithRetry('/api/boardle/image-games', {}, {
+          maxRetries: 3,
+          retryDelay: 1000,
+          timeout: 15000
+        }),
+        fetchJsonWithRetry('/api/boardle/card-games', {}, {
+          maxRetries: 3,
+          retryDelay: 1000,
+          timeout: 15000
+        })
       ]);
 
       // Set each mode's game

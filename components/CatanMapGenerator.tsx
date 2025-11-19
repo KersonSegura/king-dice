@@ -574,18 +574,27 @@ export function terrainsPassClusterRule(terrains: Terrain[], customRules: any): 
 
 export function generateValidTerrains(customRules: any): Terrain[] {
   const pool = buildTerrainPool();
-  for (let tries=0; tries<MAX_TERRAIN_TRIES; tries++){
+  // Increase tries significantly and keep retrying until we find valid terrains
+  for (let tries=0; tries<MAX_TERRAIN_TRIES * 5; tries++){
     shuffleInPlace(pool);
     if (terrainsPassClusterRule(pool, customRules)) return [...pool];
   }
-  // If we somehow can't satisfy after many tries, return the best we found (or relax to <=3)
-  return [...pool];
+  // If we still can't find valid terrains after many tries, throw error instead of returning invalid
+  console.error('❌ Failed to generate valid terrains after', MAX_TERRAIN_TRIES * 5, 'attempts');
+  throw new Error('Failed to generate valid terrains that satisfy clustering rules');
 }
 
 // ---------- MAIN: build board without rendering invalid states ----------
 export function makeValidBoard(customRules: any): Board {
   
   const terrains = generateValidTerrains(customRules);
+  
+  // CRITICAL: Validate terrains before proceeding
+  if (!terrainsPassClusterRule(terrains, customRules)) {
+    console.error('🚫 CRITICAL: Terrain validation failed in makeValidBoard!');
+    throw new Error('Terrain cluster rule failed - retrying board generation');
+  }
+  
   const desertIdx = terrains.indexOf("desert");
   const numbers = generateValidNumbers(desertIdx, customRules);
   
@@ -1652,19 +1661,22 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
     // Use setTimeout to prevent blocking the UI
     setTimeout(() => {
-      try {
-        
-        let board;
-        if (currentMapType === 'expansion') {
-          board = makeValidExpansionBoard(customRules);
-        } else {
-          try {
-            board = makeValidBoard(customRules);
-          } catch (error) {
-            console.error('❌ Error generating classic board:', error);
-            throw error;
+      const MAX_RETRIES = 10; // Maximum number of retries for board generation
+      let retryCount = 0;
+      
+      const attemptGeneration = (): void => {
+        try {
+          let board;
+          if (currentMapType === 'expansion') {
+            board = makeValidExpansionBoard(customRules);
+          } else {
+            try {
+              board = makeValidBoard(customRules);
+            } catch (error) {
+              console.error('❌ Error generating classic board:', error);
+              throw error;
+            }
           }
-        }
 
         // Convert to hexagons format
         const currentTilePositions = currentMapType === 'classic' ? classicTilePositions : expansionTilePositions;
@@ -1766,18 +1778,47 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         }
         
         
-      setHexagons(newHexagons);
-      setIsGenerating(false);
-      } catch (error) {
-        console.error('❌ Board generation failed:', error);
-        console.error('❌ Error details:', {
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : 'No stack trace',
-          currentMapType: currentMapType,
-          mapType: mapType
-        });
-        setIsGenerating(false);
-      }
+          setHexagons(newHexagons);
+          setIsGenerating(false);
+        } catch (error) {
+          // Check if this is a terrain validation error that we should retry
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const isRetryableError = 
+            errorMessage.includes('Terrain cluster rule failed') ||
+            errorMessage.includes('Failed to generate valid terrains') ||
+            errorMessage.includes('retrying board generation');
+          
+          if (isRetryableError && retryCount < MAX_RETRIES) {
+            retryCount++;
+            console.warn(`⚠️ Board generation failed (attempt ${retryCount}/${MAX_RETRIES}), retrying...`, errorMessage);
+            // Retry after a short delay to avoid blocking
+            setTimeout(() => {
+              attemptGeneration();
+            }, 50);
+            return;
+          }
+          
+          // If we've exhausted retries or it's a non-retryable error, show the error
+          console.error('❌ Board generation failed:', error);
+          console.error('❌ Error details:', {
+            message: errorMessage,
+            stack: error instanceof Error ? error.stack : 'No stack trace',
+            currentMapType: currentMapType,
+            mapType: mapType,
+            retryCount: retryCount
+          });
+          
+          // Show user-friendly error message
+          if (isRetryableError && retryCount >= MAX_RETRIES) {
+            console.error('❌ Failed to generate valid map after', MAX_RETRIES, 'attempts. Please try again.');
+          }
+          
+          setIsGenerating(false);
+        }
+      };
+      
+      // Start the first attempt
+      attemptGeneration();
     }, 100);
   };
 

@@ -8,6 +8,7 @@ import Footer from './Footer';
 import LazyList from './LazyList';
 import VideoLinks from './VideoLinks';
 import PDFHandler from './PDFHandler';
+import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 // import BackToTopButton from './BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -205,8 +206,11 @@ function BoardGameDatabaseContent() {
         ...(withoutRulesOnly && { withoutRules: 'true' })
       });
       
-      const response = await fetch(`/api/boardgames?${params}`);
-      const data = await response.json();
+      const data = await fetchJsonWithRetry(`/api/boardgames?${params}`, {}, {
+        maxRetries: 3,
+        retryDelay: 1000,
+        timeout: 15000
+      });
       
       if (data.games && data.pagination) {
         setGames(data.games);
@@ -225,6 +229,14 @@ function BoardGameDatabaseContent() {
     } catch (error) {
       console.error('Error fetching games:', error);
       setGames([]);
+      setPagination({
+        page: 1,
+        limit: 50,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false
+      });
     } finally {
       setLoading(false);
     }
