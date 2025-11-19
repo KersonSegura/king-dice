@@ -64,13 +64,19 @@ function ForumsPageContent() {
     const loadPosts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/posts?page=1&limit=20${isAuthenticated && user ? `&userId=${user.id}` : ''}`, { cache: 'no-store' });
+        const url = `/api/posts?page=1&limit=20${isAuthenticated && user ? `&userId=${user.id}` : ''}`;
+        const response = await fetch(url, { 
+          cache: 'no-store',
+          credentials: 'include'
+        });
         if (response.ok) {
           const data = await response.json();
           setPosts(data.posts || []);
           setHasMorePosts((data.posts || []).length === 20);
         } else {
           console.error('Failed to load posts:', response.status, response.statusText);
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Error details:', errorData);
           setPosts([]);
         }
       } catch (error) {

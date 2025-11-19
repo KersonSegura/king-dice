@@ -168,9 +168,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           setShowPassword(false);
           setShowConfirmPassword(false);
         } else {
-          const errorData = await response.json();
-          console.log('Login error response:', errorData);
-          setError(errorData.message || 'Login failed. Please try again.');
+          let errorMessage = 'Login failed. Please try again.';
+          try {
+            const errorData = await response.json();
+            console.log('Login error response:', errorData);
+            errorMessage = errorData.message || errorMessage;
+          } catch (parseError) {
+            console.error('Failed to parse error response:', parseError);
+            errorMessage = `Login failed with status ${response.status}. Please try again.`;
+          }
+          setError(errorMessage);
         }
       } catch (error) {
         console.error('Login error:', error);
