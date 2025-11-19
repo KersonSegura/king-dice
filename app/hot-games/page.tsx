@@ -35,40 +35,20 @@ export default function HotGamesPage() {
   useEffect(() => {
     const fetchHotGames = async () => {
       try {
+        setLoading(true);
         const data = await fetchJsonWithRetry('/api/games/hotness?limit=50', {}, {
           maxRetries: 3,
           retryDelay: 1000,
           timeout: 15000
         });
-        console.log('📦 Raw API response:', { 
-          gamesCount: data.games?.length, 
-          total: data.total,
-          firstFew: data.games?.slice(0, 3).map((g: any) => ({ id: g.id, name: g.nameEn || g.nameEs || g.name }))
-        });
         
-        const mappedGames = (data.games || []).map((game: any) => ({
-          ...game,
-          id: game.id, // Ensure ID is present
-          bggId: game.bggId || game.bgg_id,
-          name: game.name || game.nameEn || game.nameEs || 'Unknown Game',
-          year: game.year || game.yearRelease || game.year_release,
-          minPlayers: game.minPlayers || game.min_players,
-          maxPlayers: game.maxPlayers || game.max_players,
-          minPlayTime: game.minPlayTime || game.durationMinutes || game.duration_minutes,
-          maxPlayTime: game.maxPlayTime || game.durationMinutes || game.duration_minutes,
-          image: game.image || game.imageUrl || game.image_url || game.thumbnailUrl || game.thumbnail_url,
-          averageRating: game.userRating || game.user_rating || game.bggRating || game.bgg_rating,
-          numVotes: game.userVotes || game.user_votes || game.bggVotes || game.bgg_votes,
-          ranking: game.bggRanking || game.bgg_ranking
-        })).filter((g: any) => g.id); // Filter out games without IDs
+        const gamesList = data.games || [];
+        setGames(gamesList);
         
-        console.log('📊 Mapped games:', mappedGames.length, 'games with IDs');
-        setGames(mappedGames);
-        
-        // Fetch votes in batch
-        if (mappedGames.length > 0 && isAuthenticated && user?.id) {
+        // Fetch votes in batch for all games
+        if (gamesList.length > 0 && isAuthenticated && user?.id) {
           try {
-            const gameIds = mappedGames.map((g: any) => g.id).filter((id: any) => id);
+            const gameIds = gamesList.map((g: any) => g.id).filter((id: any) => id);
             if (gameIds.length > 0) {
               const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
                 method: 'POST',
@@ -83,12 +63,13 @@ export default function HotGamesPage() {
               setVotes(votesData);
             }
           } catch (error) {
-            console.error('❌ Error fetching batch votes:', error);
+            console.error('❌ Error fetching batch votes for hot games:', error);
             // Continue without vote data - cards will fetch individually
           }
         }
       } catch (error) {
         console.error('Error fetching hot games:', error);
+        setGames([]);
       } finally {
         setLoading(false);
       }
@@ -131,7 +112,11 @@ export default function HotGamesPage() {
         ) : games.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {games.map((game, index) => (
-              <GameCardWithVote key={game.id} game={{ ...game, rank: index + 1 }} voteData={votes[game.id]} />
+              <GameCardWithVote 
+                key={game.id} 
+                game={{ ...game, rank: index + 1 }} 
+                voteData={votes[game.id]}
+              />
             ))}
           </div>
         ) : (
