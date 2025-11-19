@@ -113,13 +113,11 @@ export async function GET(request: NextRequest) {
     const foundGamesFinal = uniqueGames;
 
     if (missingGames.length > 0) {
-      console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
+      console.warn(`⚠️ Games not found (${missingGames.length}):`, missingGames.join(', '));
     }
 
-    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} most played games (using single fetch + memory filter)`);
-
     return NextResponse.json({ 
-      games: foundGames,
+      games: foundGamesFinal,
       category: 'most-played',
       total: foundGames.length,
       description: 'The most played games this month according to BoardGameGeek',
