@@ -43,11 +43,12 @@ export async function GET(request: NextRequest) {
     const gamesToFind = topRankedGames.slice(0, limit);
     const foundGames: any[] = [];
     const missingGames: string[] = [];
+    let allGames: any[] = [];
 
     // OPTIMIZED: Fetch ALL games once and filter in memory (fastest approach)
     // This avoids hundreds of database queries and timeout issues
     try {
-      const { data: allGames, error: fetchError } = await supabaseAdmin
+      const { data: fetchedGames, error: fetchError } = await supabaseAdmin
         .from('games')
         .select('*')
         .limit(10000); // Fetch up to 10k games (should cover all games)
@@ -56,6 +57,8 @@ export async function GET(request: NextRequest) {
         console.error('❌ Error fetching all games:', fetchError);
         throw fetchError;
       }
+      
+      allGames = fetchedGames || [];
 
       // Create a map for fast lookup: lowercase name -> array of games (in case of duplicates)
       const gamesMap = new Map<string, any[]>();
@@ -82,36 +85,25 @@ export async function GET(request: NextRequest) {
       // Track which games we've already matched to avoid duplicates
       const matchedGameIds = new Set<number>();
       
-      // Match games in the correct order - SIMPLE APPROACH
+      // Match games in the correct order - EXACT MATCHES ONLY
       gamesToFind.forEach((gameInfo) => {
         const lowerName = gameInfo.name.toLowerCase().trim();
         let matchedGame: any = null;
         
-        // Strategy 1: Try exact match first (case-insensitive) from map
-        matchedGame = gamesMap.get(lowerName)?.find((g: any) => {
-          if (matchedGameIds.has(g.id)) return false;
-          if (gameInfo.year && g.yearRelease !== gameInfo.year) return false;
-          return true;
-        });
-        
-        // Strategy 2: If no exact match, search all games for simple contains match
-        if (!matchedGame) {
-          for (const game of (allGames || [])) {
-            if (matchedGameIds.has(game.id)) continue; // Skip already matched
-            if (!game.id) continue; // Skip games without IDs
-            if (gameInfo.year && game.yearRelease !== gameInfo.year) continue; // Year must match
-            
-            const nameEn = (game.nameEn || '').toLowerCase().trim();
-            const nameEs = (game.nameEs || '').toLowerCase().trim();
-            const name = (game.name || '').toLowerCase().trim();
-            
-            // Simple matching: exact match or contains
-            if (nameEn === lowerName || nameEs === lowerName || name === lowerName ||
-                nameEn.includes(lowerName) || nameEs.includes(lowerName) || name.includes(lowerName) ||
-                lowerName.includes(nameEn) || lowerName.includes(nameEs) || lowerName.includes(name)) {
-              matchedGame = game;
-              break; // Take first match
-            }
+        // EXACT MATCH ONLY - check all three name fields
+        for (const game of allGames) {
+          if (matchedGameIds.has(game.id)) continue; // Skip already matched
+          if (!game.id) continue; // Skip games without IDs
+          if (gameInfo.year && game.yearRelease !== gameInfo.year) continue; // Year must match
+          
+          const nameEn = (game.nameEn || '').toLowerCase().trim();
+          const nameEs = (game.nameEs || '').toLowerCase().trim();
+          const name = (game.name || '').toLowerCase().trim();
+          
+          // EXACT MATCH ONLY - no fuzzy matching, no contains, just exact
+          if (nameEn === lowerName || nameEs === lowerName || name === lowerName) {
+            matchedGame = game;
+            break; // Found exact match, stop searching
           }
         }
 

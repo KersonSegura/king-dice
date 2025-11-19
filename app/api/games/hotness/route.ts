@@ -110,31 +110,24 @@ export async function GET(request: NextRequest) {
       // Track which games we've already matched to avoid duplicates
       const matchedGameIds = new Set<number>();
       
-      // Match games in the correct order - SIMPLE APPROACH
+      // Match games in the correct order - EXACT MATCHES ONLY
       gamesToFind.forEach((gameName) => {
         const lowerName = gameName.toLowerCase().trim();
         let matchedGame: any = null;
         
-        // Strategy 1: Try exact match first (case-insensitive) from map
-        matchedGame = gamesMap.get(lowerName)?.find(g => !matchedGameIds.has(g.id));
-        
-        // Strategy 2: If no exact match, search all games for simple contains match
-        if (!matchedGame) {
-          for (const game of (allGames || [])) {
-            if (matchedGameIds.has(game.id)) continue; // Skip already matched
-            if (!game.id) continue; // Skip games without IDs
-            
-            const nameEn = (game.nameEn || '').toLowerCase().trim();
-            const nameEs = (game.nameEs || '').toLowerCase().trim();
-            const name = (game.name || '').toLowerCase().trim();
-            
-            // Simple matching: exact match or contains
-            if (nameEn === lowerName || nameEs === lowerName || name === lowerName ||
-                nameEn.includes(lowerName) || nameEs.includes(lowerName) || name.includes(lowerName) ||
-                lowerName.includes(nameEn) || lowerName.includes(nameEs) || lowerName.includes(name)) {
-              matchedGame = game;
-              break; // Take first match
-            }
+        // EXACT MATCH ONLY - check all three name fields
+        for (const game of allGames) {
+          if (matchedGameIds.has(game.id)) continue; // Skip already matched
+          if (!game.id) continue; // Skip games without IDs
+          
+          const nameEn = (game.nameEn || '').toLowerCase().trim();
+          const nameEs = (game.nameEs || '').toLowerCase().trim();
+          const name = (game.name || '').toLowerCase().trim();
+          
+          // EXACT MATCH ONLY - no fuzzy matching, no contains, just exact
+          if (nameEn === lowerName || nameEs === lowerName || name === lowerName) {
+            matchedGame = game;
+            break; // Found exact match, stop searching
           }
         }
 
