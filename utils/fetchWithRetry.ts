@@ -59,30 +59,28 @@ export async function fetchWithRetry(
         }
       } catch (fetchError) {
         clearTimeout(timeoutId);
+        lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
 
         if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          const timeoutError = new Error(`Request timeout after ${timeout}ms`);
-          // Only throw if this is the last attempt, otherwise continue to retry
-          if (attempt === maxRetries) {
-            throw timeoutError;
-          }
-          lastError = timeoutError;
-          // Continue to retry logic below
-        } else {
-          lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
-          // Only throw if this is the last attempt
-          if (attempt === maxRetries) {
-            throw lastError;
-          }
+          lastError = new Error(`Request timeout after ${timeout}ms`);
         }
-      }
 
-      // Wait before retrying (exponential backoff) if we have an error
-      if (attempt < maxRetries && lastError) {
+        // If this is the last attempt, throw the error
+        if (attempt === maxRetries) {
+          throw lastError;
+        }
+
+        // Wait before retrying (exponential backoff)
         const delay = retryDelay * Math.pow(2, attempt);
         await new Promise(resolve => setTimeout(resolve, delay));
-        // Clear lastError for next attempt
-        lastError = null;
+        // Continue to next iteration
+        continue;
+      }
+
+      // Wait before retrying (exponential backoff) if response was not ok
+      if (attempt < maxRetries) {
+        const delay = retryDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
