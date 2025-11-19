@@ -5,6 +5,8 @@ import Link from 'next/link';
 import GameCardWithVote from '@/components/GameCardWithVote';
 import { useState, useEffect } from 'react';
 import BackButton from '@/components/BackButton';
+import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Game {
   id: number;
@@ -26,14 +28,52 @@ interface Game {
 
 export default function TopRankedPage() {
   const [games, setGames] = useState<Game[]>([]);
+  const [votes, setVotes] = useState<Record<number, any>>({});
   const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchTopRankedGames = async () => {
       try {
-        const response = await fetch('/api/games/most-played?limit=25');
-        const data = await response.json();
-        setGames(data.games || []);
+        const data = await fetchJsonWithRetry('/api/games/most-played?limit=25', {}, {
+          maxRetries: 3,
+          retryDelay: 1000,
+          timeout: 15000
+        });
+        const mappedGames = (data.games || []).map((game: any) => ({
+          ...game,
+          name: game.name || game.nameEn || 'Unknown Game',
+          year: game.year || game.yearRelease,
+          minPlayTime: game.minPlayTime || game.durationMinutes,
+          maxPlayTime: game.maxPlayTime || game.durationMinutes,
+          image: game.image || game.imageUrl || game.thumbnailUrl,
+          averageRating: game.userRating,
+          numVotes: game.userVotes
+        }));
+        setGames(mappedGames);
+        
+        // Fetch votes in batch
+        if (mappedGames.length > 0 && isAuthenticated && user?.id) {
+          try {
+            const gameIds = mappedGames.map((g: any) => g.id).filter((id: any) => id);
+            if (gameIds.length > 0) {
+              const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ gameIds, userId: user.id })
+              }, {
+                maxRetries: 2,
+                retryDelay: 500,
+                timeout: 10000
+              });
+              console.log('✅ Batch votes fetched for top ranked games:', Object.keys(votesData).length);
+              setVotes(votesData);
+            }
+          } catch (error) {
+            console.error('❌ Error fetching batch votes:', error);
+            // Continue without vote data - cards will fetch individually
+          }
+        }
       } catch (error) {
         console.error('Error fetching top ranked games:', error);
       } finally {
@@ -42,7 +82,7 @@ export default function TopRankedPage() {
     };
 
     fetchTopRankedGames();
-  }, []);
+  }, [user?.id, isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16 pb-8">
@@ -78,7 +118,7 @@ export default function TopRankedPage() {
         ) : games.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {games.map((game, index) => (
-              <GameCardWithVote key={game.id} game={{ ...game, rank: index + 1 }} />
+              <GameCardWithVote key={game.id} game={{ ...game, rank: index + 1 }} voteData={votes[game.id]} />
             ))}
           </div>
         ) : (
