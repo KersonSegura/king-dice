@@ -129,15 +129,26 @@ export async function fetchJsonWithRetry<T = any>(
   }
 
   try {
-    // Check if response has content
+    // Clone the response so we can check content type without consuming the body
+    const contentType = response.headers.get('content-type') || '';
+    
+    // Check if response is HTML (error page) by content type
+    if (contentType.includes('text/html')) {
+      const text = await response.text();
+      throw new Error('Received HTML error page instead of JSON. The server may be experiencing issues.');
+    }
+    
+    // Try to parse as JSON
     const text = await response.text();
+    
     if (!text || text.trim().length === 0) {
       // Empty response - return empty object
       return {} as T;
     }
     
-    // Check if response is HTML (error page)
-    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+    // Double-check for HTML in case content-type was wrong
+    const trimmed = text.trim();
+    if (trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
       throw new Error('Received HTML error page instead of JSON. The server may be experiencing issues.');
     }
     
@@ -146,6 +157,10 @@ export async function fetchJsonWithRetry<T = any>(
     // Provide more helpful error message
     if (error instanceof Error && error.message.includes('HTML error page')) {
       throw error;
+    }
+    // Don't wrap JSON parse errors - they're already descriptive
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON response: ${error.message}`);
     }
     throw new Error(`Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`);
   }
