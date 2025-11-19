@@ -48,22 +48,26 @@ export async function GET(request: NextRequest) {
     const queryStartTime = Date.now();
     
     try {
+      // Select only the columns we need - much faster than SELECT *
       const { data: fetchedGames, error: fetchError } = await supabaseAdmin
         .from('games')
-        .select('*')
-        .limit(10000); // Fetch up to 10k games
+        .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
+        .limit(5000); // Reduced limit - should be enough
 
       const queryDuration = Date.now() - queryStartTime;
       console.log(`✅ Fetched ${fetchedGames?.length || 0} games in ${queryDuration}ms`);
 
       if (fetchError) {
         console.error('❌ Error fetching all games:', fetchError);
+        console.error('❌ Error details:', JSON.stringify(fetchError, null, 2));
         throw fetchError;
       }
       
       allGames = fetchedGames || [];
     } catch (error) {
-      console.error('❌ Error fetching games:', error);
+      const queryDuration = Date.now() - queryStartTime;
+      console.error(`❌ Error fetching games after ${queryDuration}ms:`, error);
+      console.error('❌ Error type:', error instanceof Error ? error.constructor.name : typeof error);
       throw error;
     }
     
