@@ -149,21 +149,15 @@ export default function HomePage() {
           console.log('✅ Hot games response:', { count: hotData.games?.length, total: hotData.total });
           const mappedHotGames = (hotData.games || []).map((game: any) => ({
             ...game,
-            id: game.id, // Ensure ID is present
-            bggId: game.bggId || game.bgg_id,
-            name: game.name || game.nameEn || game.nameEs || 'Unknown Game',
-            year: game.year || game.yearRelease || game.year_release,
-            minPlayers: game.minPlayers || game.min_players,
-            maxPlayers: game.maxPlayers || game.max_players,
-            minPlayTime: game.minPlayTime || game.durationMinutes || game.duration_minutes,
-            maxPlayTime: game.maxPlayTime || game.durationMinutes || game.duration_minutes,
-            image: game.image || game.imageUrl || game.image_url || game.thumbnailUrl || game.thumbnail_url,
-            averageRating: game.userRating || game.user_rating || game.bggRating || game.bgg_rating,
-            numVotes: game.userVotes || game.user_votes || game.bggVotes || game.bgg_votes,
-            ranking: game.bggRanking || game.bgg_ranking
-          })).filter((g: any) => g.id); // Filter out games without IDs
-          
-          console.log('📊 Mapped hot games:', mappedHotGames.length, 'games with IDs');
+            name: game.name || game.nameEn || 'Unknown Game',
+            year: game.year || game.yearRelease,
+            minPlayTime: game.minPlayTime || game.durationMinutes,
+            maxPlayTime: game.maxPlayTime || game.durationMinutes,
+            image: game.image || game.imageUrl || game.thumbnailUrl,
+            averageRating: game.userRating,
+            numVotes: game.userVotes
+          }));
+          console.log('📊 Mapped hot games:', mappedHotGames.length);
           setHotGames(mappedHotGames);
           
           // Fetch votes in batch for hot games
@@ -189,8 +183,16 @@ export default function HomePage() {
             }
           }
         } catch (error) {
-          console.error('❌ Error fetching hot games:', error);
-          setHotGames([]);
+          // Only log if it's a final failure (not a retry attempt)
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          // Don't log retry attempts, only final failures
+          if (!errorMessage.includes('Retrying')) {
+            console.error('❌ Error fetching hot games:', error);
+          }
+          // Don't clear games if we already have some (from a previous successful load)
+          if (hotGames.length === 0) {
+            setHotGames([]);
+          }
         }
         
         // Fetch top ranked games with retry
@@ -237,8 +239,15 @@ export default function HomePage() {
             }
           }
         } catch (error) {
-          console.error('❌ Error fetching ranked games:', error);
-          setTopRankedGames([]);
+          // Only log if it's a final failure (not a retry attempt)
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (!errorMessage.includes('Retrying')) {
+            console.error('❌ Error fetching ranked games:', error);
+          }
+          // Don't clear games if we already have some
+          if (topRankedGames.length === 0) {
+            setTopRankedGames([]);
+          }
         }
         
       } catch (error) {

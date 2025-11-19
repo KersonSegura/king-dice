@@ -48,26 +48,41 @@ export async function fetchWithRetry(
           return response;
         }
 
-        // Log retry attempt
-        console.warn(
-          `⚠️ Fetch failed (attempt ${attempt + 1}/${maxRetries + 1}):`,
-          response.status,
-          response.statusText,
-          'Retrying...'
-        );
+        // Only log retry attempts in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            `⚠️ Fetch failed (attempt ${attempt + 1}/${maxRetries + 1}):`,
+            response.status,
+            response.statusText,
+            'Retrying...'
+          );
+        }
       } catch (fetchError) {
         clearTimeout(timeoutId);
 
         if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          throw new Error(`Request timeout after ${timeout}ms`);
+          const timeoutError = new Error(`Request timeout after ${timeout}ms`);
+          // Only throw if this is the last attempt, otherwise continue to retry
+          if (attempt === maxRetries) {
+            throw timeoutError;
+          }
+          lastError = timeoutError;
+          // Continue to retry logic below
+        } else {
+          lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+          // Only throw if this is the last attempt
+          if (attempt === maxRetries) {
+            throw lastError;
+          }
         }
-        throw fetchError;
       }
 
-      // Wait before retrying (exponential backoff)
-      if (attempt < maxRetries) {
+      // Wait before retrying (exponential backoff) if we have an error
+      if (attempt < maxRetries && lastError) {
         const delay = retryDelay * Math.pow(2, attempt);
         await new Promise(resolve => setTimeout(resolve, delay));
+        // Clear lastError for next attempt
+        lastError = null;
       }
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
@@ -77,12 +92,15 @@ export async function fetchWithRetry(
         throw lastError;
       }
 
-      // Log retry attempt
-      console.warn(
-        `⚠️ Fetch error (attempt ${attempt + 1}/${maxRetries + 1}):`,
-        lastError.message,
-        'Retrying...'
-      );
+      // Only log retry attempts in development or if verbose logging is enabled
+      // Don't spam console with retry messages
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          `⚠️ Fetch error (attempt ${attempt + 1}/${maxRetries + 1}):`,
+          lastError.message,
+          'Retrying...'
+        );
+      }
 
       // Wait before retrying (exponential backoff)
       const delay = retryDelay * Math.pow(2, attempt);
@@ -113,8 +131,24 @@ export async function fetchJsonWithRetry<T = any>(
   }
 
   try {
-    return await response.json();
+    // Check if response has content
+    const text = await response.text();
+    if (!text || text.trim().length === 0) {
+      // Empty response - return empty object
+      return {} as T;
+    }
+    
+    // Check if response is HTML (error page)
+    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+      throw new Error('Received HTML error page instead of JSON. The server may be experiencing issues.');
+    }
+    
+    return JSON.parse(text);
   } catch (error) {
+    // Provide more helpful error message
+    if (error instanceof Error && error.message.includes('HTML error page')) {
+      throw error;
+    }
     throw new Error(`Failed to parse JSON: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
