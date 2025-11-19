@@ -81,10 +81,14 @@ CREATE INDEX IF NOT EXISTS idx_gallery_votes_user_image ON gallery_votes(user_id
 -- USER_VOTES TABLE INDEXES
 -- ============================================
 -- Indexes for game voting queries (batch queries)
+-- These are critical for fast batch vote fetching
 CREATE INDEX IF NOT EXISTS idx_user_votes_game_id ON user_votes("gameId");
 CREATE INDEX IF NOT EXISTS idx_user_votes_user_id ON user_votes("userId");
 CREATE INDEX IF NOT EXISTS idx_user_votes_user_game ON user_votes("userId", "gameId");
 CREATE INDEX IF NOT EXISTS idx_user_votes_game_user ON user_votes("gameId", "userId");
+-- Composite index for batch queries with IN clause (most important)
+CREATE INDEX IF NOT EXISTS idx_user_votes_game_rating ON user_votes("gameId", "rating");
+CREATE INDEX IF NOT EXISTS idx_user_votes_game_user_rating ON user_votes("gameId", "userId", "rating");
 
 -- Handle snake_case columns if they exist
 DO $$

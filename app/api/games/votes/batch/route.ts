@@ -33,11 +33,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all votes for these games
-    const { data: allVotes, error: votesError } = await supabaseAdmin
-      .from('user_votes')
-      .select('gameId, rating, userId')
-      .in('gameId', gameIds);
+    // Get all votes for these games with retry logic
+    const { data: allVotes, error: votesError } = await executeSupabaseQuery(
+      () => supabaseAdmin
+        .from('user_votes')
+        .select('gameId, rating, userId')
+        .in('gameId', gameIds),
+      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
+    );
 
     if (votesError) {
       console.error('Error fetching batch votes:', votesError);
