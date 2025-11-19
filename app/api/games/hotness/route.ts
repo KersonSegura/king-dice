@@ -69,63 +69,70 @@ export async function GET(request: NextRequest) {
     const foundGames: any[] = [];
     const missingGames: string[] = [];
 
-    // Query all games in parallel for maximum speed
-    const gameQueries = gamesToFind.map(async (gameName) => {
-      try {
-        // Try exact match first (case-insensitive)
-        const { data: exactMatch, error: exactError } = await supabaseAdmin
-          .from('games')
-          .select('*')
-          .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
-          .limit(1)
-          .maybeSingle();
-
-        if (exactMatch && !exactError) {
-          // Verify it's an exact match (case-insensitive)
-          const lowerName = gameName.toLowerCase();
-          if (exactMatch.nameEn?.toLowerCase() === lowerName ||
-              exactMatch.nameEs?.toLowerCase() === lowerName ||
-              exactMatch.name?.toLowerCase() === lowerName) {
-            return { gameName, game: exactMatch };
-          }
-        }
-
-        // If no exact match, try partial match
-        const { data: partialMatch, error: partialError } = await supabaseAdmin
-          .from('games')
-          .select('*')
-          .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
-          .limit(1)
-          .maybeSingle();
-
-        if (partialMatch && !partialError) {
-          return { gameName, game: partialMatch };
-        }
-        
-        return { gameName, game: null };
-      } catch (error) {
-        console.error(`Error fetching game "${gameName}":`, error);
-        return { gameName, game: null };
-      }
+    // OPTIMIZED: Fetch all games in a SINGLE batch query instead of 50+ individual queries
+    // Build a single OR condition for all game names
+    const orConditions: string[] = [];
+    gamesToFind.forEach((gameName) => {
+      // Escape single quotes in game names for SQL
+      const escapedName = gameName.replace(/'/g, "''");
+      orConditions.push(`nameEn.ilike.${escapedName}`);
+      orConditions.push(`nameEs.ilike.${escapedName}`);
+      orConditions.push(`name.ilike.${escapedName}`);
     });
 
-    // Wait for all queries to complete in parallel
-    const results = await Promise.all(gameQueries);
-    
-    // Build results array in the correct order
-    for (const { gameName, game } of results) {
-      if (game) {
-        foundGames.push(game);
+    // Single query to get all matching games at once
+    const { data: allMatches, error: batchError } = await supabaseAdmin
+      .from('games')
+      .select('*')
+      .or(orConditions.join(','))
+      .limit(limit * 3); // Get more than needed in case of duplicates
+
+    if (batchError) {
+      console.error('❌ Batch query error:', batchError);
+      throw batchError;
+    }
+
+    // Create a map for quick lookup: lowercase name -> game
+    const gamesMap = new Map<string, any>();
+    (allMatches || []).forEach((game) => {
+      const nameEn = game.nameEn?.toLowerCase() || '';
+      const nameEs = game.nameEs?.toLowerCase() || '';
+      const name = game.name?.toLowerCase() || '';
+      
+      if (nameEn) gamesMap.set(nameEn, game);
+      if (nameEs) gamesMap.set(nameEs, game);
+      if (name) gamesMap.set(name, game);
+    });
+
+    // Match games in the correct order
+    gamesToFind.forEach((gameName) => {
+      const lowerName = gameName.toLowerCase();
+      
+      // Try exact match first
+      let matchedGame = gamesMap.get(lowerName);
+      
+      // If no exact match, try partial match
+      if (!matchedGame) {
+        for (const [key, game] of gamesMap.entries()) {
+          if (key.includes(lowerName) || lowerName.includes(key)) {
+            matchedGame = game;
+            break;
+          }
+        }
+      }
+
+      if (matchedGame) {
+        foundGames.push(matchedGame);
       } else {
         missingGames.push(gameName);
       }
-    }
+    });
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
     }
 
-    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games`);
+    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games (using single batch query)`);
 
     return NextResponse.json({ 
       games: foundGames,
