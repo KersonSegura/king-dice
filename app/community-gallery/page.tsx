@@ -169,7 +169,10 @@ function CommunityGalleryPageContent() {
       try {
         setLoading(true);
         const url = user ? `/api/gallery?userId=${user.id}&page=1&limit=20` : '/api/gallery?page=1&limit=20';
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetch(url, { 
+          cache: 'no-store',
+          credentials: 'include'
+        });
         if (response.ok) {
           const data = await response.json();
 
