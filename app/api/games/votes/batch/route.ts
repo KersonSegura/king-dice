@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -44,8 +45,15 @@ export async function POST(request: NextRequest) {
 
     if (votesError) {
       console.error('Error fetching batch votes:', votesError);
+      const errorMessage = votesError?.message || String(votesError || '');
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+        return NextResponse.json(
+          { error: 'Database connection timeout. Please try again in a few moments.' },
+          { status: 503 }
+        );
+      }
       return NextResponse.json(
-        { error: 'Failed to fetch votes' },
+        { error: 'Failed to fetch votes', details: errorMessage },
         { status: 500 }
       );
     }
