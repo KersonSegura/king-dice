@@ -40,70 +40,99 @@ export async function GET(request: NextRequest) {
 
     console.log(`🎯 Getting MOST PLAYED GAMES from hardcoded list (limit: ${limit})`);
 
-    // OPTIMIZED: Fetch all games once and filter in memory (single query, fast)
+    // OPTIMIZED: Use PostgreSQL function with VALUES CTE for efficient matching
     const gamesToFind = topRankedGames.slice(0, limit);
+    const gameNames = gamesToFind.map(g => g.name);
     
-    console.log(`🔍 Fetching all games from database (will filter ${gamesToFind.length} games in memory)`);
+    console.log(`🔍 Using optimized VALUES CTE query for ${gameNames.length} games`);
     const queryStartTime = Date.now();
     
-    let allGames: any[] = [];
+    let foundGames: any[] = [];
+    const missingGames: string[] = [];
+    
     try {
-      // Single query - fetch all games with only needed columns
+      // Call the PostgreSQL function that uses VALUES CTE for efficient matching
+      const { data: matchedGames, error: rpcError } = await supabaseAdmin
+        .rpc('match_games_by_names', {
+          game_names: gameNames
+        });
+
+      const queryDuration = Date.now() - queryStartTime;
+      console.log(`✅ Matched ${matchedGames?.length || 0} games in ${queryDuration}ms`);
+
+      if (rpcError) {
+        // Fallback to old method if function doesn't exist yet
+        console.warn('⚠️ RPC function not available, falling back to memory filter:', rpcError.message);
+        throw rpcError;
+      }
+      
+      // Sort by match_order to preserve input order, remove match_order from results
+      foundGames = (matchedGames || [])
+        .sort((a: any, b: any) => (a.match_order || 0) - (b.match_order || 0))
+        .map(({ match_order, ...game }: any) => game);
+      
+      // Track which games were found
+      const foundGameNames = new Set(
+        foundGames.map((g: any) => {
+          const nameEn = (g.nameEn || '').toLowerCase().trim();
+          const nameEs = (g.nameEs || '').toLowerCase().trim();
+          const name = (g.name || '').toLowerCase().trim();
+          return nameEn || nameEs || name;
+        })
+      );
+      
+      gameNames.forEach((gameName) => {
+        const lowerName = gameName.toLowerCase().trim();
+        const nameWithoutApostrophe = lowerName.replace(/'/g, '');
+        if (!foundGameNames.has(lowerName) && !foundGameNames.has(nameWithoutApostrophe)) {
+          missingGames.push(gameName);
+        }
+      });
+      
+    } catch (error) {
+      // Fallback to memory-based filtering if RPC fails
+      console.warn('⚠️ Falling back to memory-based filtering');
+      const queryStartTimeFallback = Date.now();
+      
       const { data: fetchedGames, error: fetchError } = await supabaseAdmin
         .from('games')
         .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
-        .limit(10000); // Reasonable limit
-
-      const queryDuration = Date.now() - queryStartTime;
-      console.log(`✅ Fetched ${fetchedGames?.length || 0} games in ${queryDuration}ms`);
+        .limit(10000);
 
       if (fetchError) {
-        console.error('❌ Error fetching games:', fetchError);
+        const queryDuration = Date.now() - queryStartTimeFallback;
+        console.error(`❌ Error fetching games after ${queryDuration}ms:`, fetchError);
         throw fetchError;
       }
-      
-      allGames = fetchedGames || [];
-    } catch (error) {
-      const queryDuration = Date.now() - queryStartTime;
-      console.error(`❌ Error fetching games after ${queryDuration}ms:`, error);
-      throw error;
+
+      const allGames = fetchedGames || [];
+      const gamesMap = new Map<string, any>();
+      allGames.forEach((game) => {
+        if (!game.id) return;
+        const nameEn = (game.nameEn || '').toLowerCase().trim();
+        const nameEs = (game.nameEs || '').toLowerCase().trim();
+        const name = (game.name || '').toLowerCase().trim();
+        if (nameEn) gamesMap.set(nameEn, game);
+        if (nameEs) gamesMap.set(nameEs, game);
+        if (name) gamesMap.set(name, game);
+      });
+
+      const matchedGameIds = new Set<number>();
+      gamesToFind.forEach((gameInfo) => {
+        const lowerName = gameInfo.name.toLowerCase().trim();
+        let matchedGame = gamesMap.get(lowerName);
+        if (!matchedGame) {
+          const nameWithoutApostrophe = lowerName.replace(/'/g, '');
+          matchedGame = gamesMap.get(nameWithoutApostrophe);
+        }
+        if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
+          matchedGameIds.add(matchedGame.id);
+          foundGames.push(matchedGame);
+        } else {
+          missingGames.push(gameInfo.name);
+        }
+      });
     }
-
-    // Create a map for fast lookup: lowercase name -> game
-    const gamesMap = new Map<string, any>();
-    allGames.forEach((game) => {
-      if (!game.id) return;
-      const nameEn = (game.nameEn || '').toLowerCase().trim();
-      const nameEs = (game.nameEs || '').toLowerCase().trim();
-      const name = (game.name || '').toLowerCase().trim();
-      
-      if (nameEn) gamesMap.set(nameEn, game);
-      if (nameEs) gamesMap.set(nameEs, game);
-      if (name) gamesMap.set(name, game);
-    });
-
-    // Match games in the correct order from hardcoded list
-    const foundGames: any[] = [];
-    const missingGames: string[] = [];
-    const matchedGameIds = new Set<number>();
-
-    gamesToFind.forEach((gameInfo) => {
-      const lowerName = gameInfo.name.toLowerCase().trim();
-      let matchedGame = gamesMap.get(lowerName);
-      
-      // If not found, try without apostrophes
-      if (!matchedGame) {
-        const nameWithoutApostrophe = lowerName.replace(/'/g, '');
-        matchedGame = gamesMap.get(nameWithoutApostrophe);
-      }
-      
-      if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
-        matchedGameIds.add(matchedGame.id);
-        foundGames.push(matchedGame);
-      } else {
-        missingGames.push(gameInfo.name);
-      }
-    });
     
     const foundGamesFinal = foundGames;
 
