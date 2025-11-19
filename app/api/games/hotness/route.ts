@@ -82,36 +82,44 @@ export async function GET(request: NextRequest) {
       const batchQueries = batch.map(async (gameName) => {
         try {
           // Try exact match first (case-insensitive) with retry logic
-          const { data: exactMatch, error: exactError } = await executeSupabaseQuery(
-            () => supabaseAdmin
-              .from('games')
-              .select('*')
-              .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
-              .limit(1)
-              .maybeSingle(),
+          const exactResult = await executeSupabaseQuery(
+            async () => {
+              return await supabaseAdmin
+                .from('games')
+                .select('*')
+                .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
+                .limit(1)
+                .maybeSingle();
+            },
             { maxRetries: 2, baseDelay: 300, timeout: 5000 }
           );
+
+          const { data: exactMatch, error: exactError } = exactResult;
 
           if (exactMatch && !exactError) {
             // Verify it's an exact match (case-insensitive)
             const lowerName = gameName.toLowerCase();
-            if (exactMatch.nameEn?.toLowerCase() === lowerName ||
-                exactMatch.nameEs?.toLowerCase() === lowerName ||
-                exactMatch.name?.toLowerCase() === lowerName) {
+            if ((exactMatch as any).nameEn?.toLowerCase() === lowerName ||
+                (exactMatch as any).nameEs?.toLowerCase() === lowerName ||
+                (exactMatch as any).name?.toLowerCase() === lowerName) {
               return { gameName, game: exactMatch };
             }
           }
 
           // If no exact match, try partial match with retry logic
-          const { data: partialMatch, error: partialError } = await executeSupabaseQuery(
-            () => supabaseAdmin
-              .from('games')
-              .select('*')
-              .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
-              .limit(1)
-              .maybeSingle(),
+          const partialResult = await executeSupabaseQuery(
+            async () => {
+              return await supabaseAdmin
+                .from('games')
+                .select('*')
+                .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
+                .limit(1)
+                .maybeSingle();
+            },
             { maxRetries: 2, baseDelay: 300, timeout: 5000 }
           );
+
+          const { data: partialMatch, error: partialError } = partialResult;
 
           if (partialMatch && !partialError) {
             return { gameName, game: partialMatch };
