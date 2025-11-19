@@ -30,11 +30,20 @@ interface Game {
   rank?: number; // For ranking badge
 }
 
-interface GameCardWithVoteProps {
-  game: Game;
+interface VoteData {
+  hasVoted: boolean;
+  userRatingStars: number | null;
+  averageUserRatingRaw: number;
+  averageUserRatingStars: number;
+  totalVotes: number;
 }
 
-export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
+interface GameCardWithVoteProps {
+  game: Game;
+  voteData?: VoteData; // Optional vote data to avoid individual API calls
+}
+
+export default function GameCardWithVote({ game, voteData }: GameCardWithVoteProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -58,7 +67,22 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
   }, [game.id, game.userRating, game.userVotes]);
 
   // Check if user has voted when component mounts or user changes
+  // If voteData is provided, use it instead of making an API call
   useEffect(() => {
+    // If vote data is provided as prop, use it directly
+    if (voteData) {
+      setHasUserVoted(voteData.hasVoted || false);
+      setUserVoteStars(voteData.userRatingStars || null);
+      if (voteData.averageUserRatingRaw) {
+        setLocalUserRating(voteData.averageUserRatingRaw);
+      }
+      if (voteData.totalVotes) {
+        setLocalUserVotes(voteData.totalVotes);
+      }
+      return;
+    }
+
+    // Otherwise, fetch vote data individually (backward compatibility)
     const checkUserVote = async () => {
       if (!isAuthenticated || !user?.id) {
         setHasUserVoted(false);
@@ -88,7 +112,7 @@ export default function GameCardWithVote({ game }: GameCardWithVoteProps) {
     };
 
     checkUserVote();
-  }, [game.id, user?.id, isAuthenticated]);
+  }, [game.id, user?.id, isAuthenticated, voteData]);
 
   useEffect(() => {
     console.log('Modal state changed:', isRatingModalOpen);

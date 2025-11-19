@@ -109,6 +109,8 @@ export default function HomePage() {
   const router = useRouter();
   const [hotGames, setHotGames] = useState<Game[]>([]);
   const [topRankedGames, setTopRankedGames] = useState<Game[]>([]);
+  const [topRankedVotes, setTopRankedVotes] = useState<Record<number, any>>({});
+  const [hotGamesVotes, setHotGamesVotes] = useState<Record<number, any>>({});
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentLimit, setCurrentLimit] = useState(6);
@@ -157,6 +159,29 @@ export default function HomePage() {
           }));
           console.log('📊 Mapped hot games:', mappedHotGames.length);
           setHotGames(mappedHotGames);
+          
+          // Fetch votes in batch for hot games
+          if (mappedHotGames.length > 0 && isAuthenticated && user?.id) {
+            try {
+              const gameIds = mappedHotGames.map((g: any) => g.id).filter((id: any) => id);
+              if (gameIds.length > 0) {
+                const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ gameIds, userId: user.id })
+                }, {
+                  maxRetries: 2,
+                  retryDelay: 500,
+                  timeout: 10000
+                });
+                console.log('✅ Batch votes fetched for hot games:', Object.keys(votesData).length);
+                setHotGamesVotes(votesData);
+              }
+            } catch (error) {
+              console.error('❌ Error fetching batch votes for hot games:', error);
+              // Continue without vote data - cards will fetch individually
+            }
+          }
         } catch (error) {
           console.error('❌ Error fetching hot games:', error);
           setHotGames([]);
@@ -182,6 +207,29 @@ export default function HomePage() {
           }));
           console.log('📊 Mapped ranked games:', mappedRankedGames.length);
           setTopRankedGames(mappedRankedGames);
+          
+          // Fetch votes in batch for ranked games
+          if (mappedRankedGames.length > 0 && isAuthenticated && user?.id) {
+            try {
+              const gameIds = mappedRankedGames.map((g: any) => g.id).filter((id: any) => id);
+              if (gameIds.length > 0) {
+                const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ gameIds, userId: user.id })
+                }, {
+                  maxRetries: 2,
+                  retryDelay: 500,
+                  timeout: 10000
+                });
+                console.log('✅ Batch votes fetched for ranked games:', Object.keys(votesData).length);
+                setTopRankedVotes(votesData);
+              }
+            } catch (error) {
+              console.error('❌ Error fetching batch votes for ranked games:', error);
+              // Continue without vote data - cards will fetch individually
+            }
+          }
         } catch (error) {
           console.error('❌ Error fetching ranked games:', error);
           setTopRankedGames([]);
@@ -224,7 +272,7 @@ export default function HomePage() {
 
     fetchGames();
     fetchForumStats();
-  }, [currentLimit]);
+  }, [currentLimit, user?.id, isAuthenticated]);
 
   useEffect(() => {
     const fetchGallery = async () => {
@@ -751,7 +799,7 @@ export default function HomePage() {
           ) : hotGames.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {hotGames.map((game) => (
-                <GameCardWithVote key={game.id} game={game} />
+                <GameCardWithVote key={game.id} game={game} voteData={hotGamesVotes[game.id]} />
               ))}
             </div>
           ) : (
@@ -799,7 +847,7 @@ export default function HomePage() {
           ) : topRankedGames.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {topRankedGames.map((game) => (
-                <GameCardWithVote key={game.id} game={game} />
+                <GameCardWithVote key={game.id} game={game} voteData={topRankedVotes[game.id]} />
               ))}
             </div>
           ) : (
