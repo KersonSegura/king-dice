@@ -40,135 +40,90 @@ export async function GET(request: NextRequest) {
 
     console.log(`🎯 Getting MOST PLAYED GAMES from hardcoded list (limit: ${limit})`);
 
-    // OPTIMIZED: Use PostgreSQL function with VALUES CTE for efficient matching
     const gamesToFind = topRankedGames.slice(0, limit);
-    const gameNames = gamesToFind.map(g => g.name);
-    
-    console.log(`🔍 Using optimized VALUES CTE query for ${gameNames.length} games`);
-    const queryStartTime = Date.now();
-    
-    let foundGames: any[] = [];
+    const foundGames: any[] = [];
     const missingGames: string[] = [];
+
+    // Query games in batches to avoid connection exhaustion
+    // Based on Supabase connection management best practices
+    // Process in batches of 10 to prevent overwhelming PostgREST
+    const BATCH_SIZE = 10;
+    const results: Array<{ gameInfo: typeof topRankedGames[0]; game: any }> = [];
     
-    try {
-      // Call the PostgreSQL function that uses VALUES CTE for efficient matching
-      const { data: matchedGames, error: rpcError } = await supabaseAdmin
-        .rpc('match_games_by_names', {
-          game_names: gameNames
-        });
+    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+      
+      const batchQueries = batch.map(async (gameInfo) => {
+        try {
+          // Try exact match first (case-insensitive)
+          let query = supabaseAdmin
+            .from('games')
+            .select('*')
+            .or(`nameEn.ilike.${gameInfo.name},nameEs.ilike.${gameInfo.name},name.ilike.${gameInfo.name}`);
 
-      const queryDuration = Date.now() - queryStartTime;
-      console.log(`✅ Matched ${matchedGames?.length || 0} games in ${queryDuration}ms`);
+          // If year is provided, also filter by year
+          if (gameInfo.year) {
+            query = query.eq('yearRelease', gameInfo.year);
+          }
 
-      if (rpcError) {
-        // Fallback to old method if function doesn't exist yet
-        console.warn('⚠️ RPC function not available, falling back to memory filter:', rpcError.message);
-        throw rpcError;
-      }
-      
-      // Sort by match_order to preserve input order, remove match_order from results
-      foundGames = (matchedGames || [])
-        .sort((a: any, b: any) => (a.match_order || 0) - (b.match_order || 0))
-        .map(({ match_order, ...game }: any) => game);
-      
-      // Track which games were found
-      const foundGameNames = new Set(
-        foundGames.map((g: any) => {
-          const nameEn = (g.nameEn || '').toLowerCase().trim();
-          const nameEs = (g.nameEs || '').toLowerCase().trim();
-          const name = (g.name || '').toLowerCase().trim();
-          return nameEn || nameEs || name;
-        })
-      );
-      
-      gameNames.forEach((gameName) => {
-        const lowerName = gameName.toLowerCase().trim();
-        const nameWithoutApostrophe = lowerName.replace(/'/g, '');
-        if (!foundGameNames.has(lowerName) && !foundGameNames.has(nameWithoutApostrophe)) {
-          missingGames.push(gameName);
-        }
-      });
-      
-    } catch (error) {
-      // Fallback to memory-based filtering if RPC fails
-      console.warn('⚠️ Falling back to memory-based filtering');
-      const queryStartTimeFallback = Date.now();
-      
-      // Reduced limit to avoid overwhelming unhealthy database
-      const { data: fetchedGames, error: fetchError } = await supabaseAdmin
-        .from('games')
-        .select('id, nameEn, nameEs, name, yearRelease, image, bggRating, bggRanking, bggVotes')
-        .limit(5000) // Reduced from 10000 to reduce load
-        .order('id', { ascending: true }); // Add ordering for consistency
+          const { data: exactMatch, error: exactError } = await query.limit(1).maybeSingle();
 
-      if (fetchError) {
-        const queryDuration = Date.now() - queryStartTimeFallback;
-        const errorMessage = fetchError.message || String(fetchError);
-        
-        // Check if it's a Supabase health issue (522 timeout, connection issues)
-        if (errorMessage.includes('522') || 
-            errorMessage.includes('Connection timed out') ||
-            errorMessage.includes('timeout') ||
-            errorMessage.includes('unhealthy')) {
-          console.error(`❌ Supabase health issue detected after ${queryDuration}ms:`, errorMessage);
-          // Return empty results gracefully instead of crashing
-          return NextResponse.json({ 
-            games: [],
-            category: 'most-played',
-            total: 0,
-            description: 'The most played games this month according to BoardGameGeek',
-            source: 'BGG Most Played List',
-            error: 'Database temporarily unavailable. Please try again later.'
-          }, { 
-            status: 503, // Service Unavailable
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Retry-After': '60' // Suggest retry after 60 seconds
+          if (exactMatch && !exactError) {
+            // Verify it's an exact match (case-insensitive)
+            const lowerName = gameInfo.name.toLowerCase();
+            if (exactMatch.nameEn?.toLowerCase() === lowerName ||
+                exactMatch.nameEs?.toLowerCase() === lowerName ||
+                exactMatch.name?.toLowerCase() === lowerName) {
+              return { gameInfo, game: exactMatch };
             }
-          });
+          }
+
+          // If no exact match, try partial match (without year filter first)
+          const { data: partialMatch, error: partialError } = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .or(`nameEn.ilike.%${gameInfo.name}%,nameEs.ilike.%${gameInfo.name}%,name.ilike.%${gameInfo.name}%`)
+            .limit(1)
+            .maybeSingle();
+
+          if (partialMatch && !partialError) {
+            return { gameInfo, game: partialMatch };
+          }
+          
+          return { gameInfo, game: null };
+        } catch (error) {
+          console.error(`Error fetching game "${gameInfo.name}":`, error);
+          return { gameInfo, game: null };
         }
-        
-        console.error(`❌ Error fetching games after ${queryDuration}ms:`, fetchError);
-        throw fetchError;
+      });
+
+      // Wait for batch to complete before starting next batch
+      const batchResults = await Promise.all(batchQueries);
+      results.push(...batchResults);
+      
+      // Small delay between batches to prevent connection exhaustion
+      if (i + BATCH_SIZE < gamesToFind.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
-
-      const allGames = fetchedGames || [];
-      const gamesMap = new Map<string, any>();
-      allGames.forEach((game) => {
-        if (!game.id) return;
-        const nameEn = (game.nameEn || '').toLowerCase().trim();
-        const nameEs = (game.nameEs || '').toLowerCase().trim();
-        const name = (game.name || '').toLowerCase().trim();
-        if (nameEn) gamesMap.set(nameEn, game);
-        if (nameEs) gamesMap.set(nameEs, game);
-        if (name) gamesMap.set(name, game);
-      });
-
-      const matchedGameIds = new Set<number>();
-      gamesToFind.forEach((gameInfo) => {
-        const lowerName = gameInfo.name.toLowerCase().trim();
-        let matchedGame = gamesMap.get(lowerName);
-        if (!matchedGame) {
-          const nameWithoutApostrophe = lowerName.replace(/'/g, '');
-          matchedGame = gamesMap.get(nameWithoutApostrophe);
-        }
-        if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
-          matchedGameIds.add(matchedGame.id);
-          foundGames.push(matchedGame);
-        } else {
-          missingGames.push(gameInfo.name);
-        }
-      });
     }
     
-    const foundGamesFinal = foundGames;
+    // Build results array in the correct order
+    for (const { gameInfo, game } of results) {
+      if (game) {
+        foundGames.push(game);
+      } else {
+        missingGames.push(gameInfo.name);
+      }
+    }
 
     if (missingGames.length > 0) {
-      console.warn(`⚠️ Games not found (${missingGames.length}):`, missingGames.join(', '));
+      console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
     }
 
+    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} most played games`);
+
     return NextResponse.json({ 
-      games: foundGamesFinal,
+      games: foundGames,
       category: 'most-played',
       total: foundGames.length,
       description: 'The most played games this month according to BoardGameGeek',
@@ -180,36 +135,9 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('❌ Error getting most played games:', error);
-    
-    // Check if it's a Supabase health issue
-    if (errorMessage.includes('522') || 
-        errorMessage.includes('Connection timed out') ||
-        errorMessage.includes('timeout') ||
-        errorMessage.includes('unhealthy') ||
-        errorMessage.includes('502') ||
-        errorMessage.includes('503')) {
-      return NextResponse.json(
-        { 
-          games: [],
-          category: 'most-played',
-          total: 0,
-          error: 'Database temporarily unavailable. Please try again later.',
-          details: 'Supabase connection issue detected'
-        },
-        { 
-          status: 503, // Service Unavailable
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Retry-After': '60'
-          }
-        }
-      );
-    }
-    
+    console.error('Error getting most played games:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: errorMessage },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
