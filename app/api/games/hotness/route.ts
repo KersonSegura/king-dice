@@ -143,6 +143,8 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games (using single fetch + memory filter)`);
+    console.log(`📊 Games found (first 10):`, foundGames.slice(0, 10).map(g => ({ id: g.id, name: g.nameEn || g.nameEs || g.name })));
+    console.log(`📊 All game IDs:`, foundGames.map(g => g.id));
 
     return NextResponse.json({ 
       games: foundGames,
