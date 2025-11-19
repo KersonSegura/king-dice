@@ -41,83 +41,86 @@ export async function GET(request: NextRequest) {
     console.log(`🎯 Getting MOST PLAYED GAMES from hardcoded list (limit: ${limit})`);
 
     const gamesToFind = topRankedGames.slice(0, limit);
+    const BATCH_SIZE = 10;
+    const allMatchedGames: any[] = [];
+    
+    // Query games in batches
+    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+      const orConditions: string[] = [];
+      
+      batch.forEach((gameInfo) => {
+        // Escape single quotes for SQL
+        const escapedName = gameInfo.name.replace(/'/g, "''");
+        orConditions.push(`nameEn.ilike.${escapedName}`);
+        orConditions.push(`nameEs.ilike.${escapedName}`);
+        orConditions.push(`name.ilike.${escapedName}`);
+      });
+
+      try {
+        let query = supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(orConditions.join(','))
+          .limit(BATCH_SIZE * 3);
+
+        // Add year filter if provided
+        const batchYears = batch.filter(g => g.year).map(g => g.year);
+        if (batchYears.length > 0) {
+          query = query.in('yearRelease', batchYears);
+        }
+
+        const { data: batchGames, error: batchError } = await query;
+
+        if (batchError) {
+          console.error(`❌ Error fetching batch ${i / BATCH_SIZE + 1}:`, batchError);
+          continue;
+        }
+
+        if (batchGames) {
+          allMatchedGames.push(...batchGames);
+        }
+      } catch (error) {
+        console.error(`❌ Error in batch ${i / BATCH_SIZE + 1}:`, error);
+      }
+    }
+    
+    const matchedGames = allMatchedGames;
+
+    // Create a map: lowercase name -> game
+    const gamesMap = new Map<string, any>();
+    matchedGames.forEach((game) => {
+      if (!game.id) return;
+      const nameEn = (game.nameEn || '').toLowerCase().trim();
+      const nameEs = (game.nameEs || '').toLowerCase().trim();
+      const name = (game.name || '').toLowerCase().trim();
+      
+      if (nameEn) gamesMap.set(nameEn, game);
+      if (nameEs) gamesMap.set(nameEs, game);
+      if (name) gamesMap.set(name, game);
+    });
+
+    // Match games in the correct order from hardcoded list
     const foundGames: any[] = [];
     const missingGames: string[] = [];
-    let allGames: any[] = [];
+    const matchedGameIds = new Set<number>();
 
-    // OPTIMIZED: Fetch ALL games once and filter in memory (fastest approach)
-    // This avoids hundreds of database queries and timeout issues
-    try {
-      const { data: fetchedGames, error: fetchError } = await supabaseAdmin
-        .from('games')
-        .select('*')
-        .limit(10000); // Fetch up to 10k games (should cover all games)
-
-      if (fetchError) {
-        console.error('❌ Error fetching all games:', fetchError);
-        throw fetchError;
+    gamesToFind.forEach((gameInfo) => {
+      const lowerName = gameInfo.name.toLowerCase().trim();
+      let matchedGame = gamesMap.get(lowerName);
+      
+      // If year is provided, verify it matches
+      if (matchedGame && gameInfo.year && matchedGame.yearRelease !== gameInfo.year) {
+        matchedGame = null; // Year doesn't match
       }
       
-      allGames = fetchedGames || [];
-
-      // Create a map for fast lookup: lowercase name -> array of games (in case of duplicates)
-      const gamesMap = new Map<string, any[]>();
-      (allGames || []).forEach((game) => {
-        const nameEn = game.nameEn?.toLowerCase()?.trim() || '';
-        const nameEs = game.nameEs?.toLowerCase()?.trim() || '';
-        const name = game.name?.toLowerCase()?.trim() || '';
-        
-        // Map all name variations - store arrays to handle duplicates
-        if (nameEn) {
-          if (!gamesMap.has(nameEn)) gamesMap.set(nameEn, []);
-          gamesMap.get(nameEn)!.push(game);
-        }
-        if (nameEs && nameEs !== nameEn) {
-          if (!gamesMap.has(nameEs)) gamesMap.set(nameEs, []);
-          gamesMap.get(nameEs)!.push(game);
-        }
-        if (name && name !== nameEn && name !== nameEs) {
-          if (!gamesMap.has(name)) gamesMap.set(name, []);
-          gamesMap.get(name)!.push(game);
-        }
-      });
-
-      // Track which games we've already matched to avoid duplicates
-      const matchedGameIds = new Set<number>();
-      
-      // Match games in the correct order - EXACT MATCHES ONLY
-      gamesToFind.forEach((gameInfo) => {
-        const lowerName = gameInfo.name.toLowerCase().trim();
-        let matchedGame: any = null;
-        
-        // EXACT MATCH ONLY - check all three name fields
-        for (const game of allGames) {
-          if (matchedGameIds.has(game.id)) continue; // Skip already matched
-          if (!game.id) continue; // Skip games without IDs
-          if (gameInfo.year && game.yearRelease !== gameInfo.year) continue; // Year must match
-          
-          const nameEn = (game.nameEn || '').toLowerCase().trim();
-          const nameEs = (game.nameEs || '').toLowerCase().trim();
-          const name = (game.name || '').toLowerCase().trim();
-          
-          // EXACT MATCH ONLY - no fuzzy matching, no contains, just exact
-          if (nameEn === lowerName || nameEs === lowerName || name === lowerName) {
-            matchedGame = game;
-            break; // Found exact match, stop searching
-          }
-        }
-
-        if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
-          matchedGameIds.add(matchedGame.id);
-          foundGames.push(matchedGame);
-        } else {
-          missingGames.push(gameInfo.name);
-        }
-      });
-    } catch (error) {
-      console.error('❌ Error in optimized query:', error);
-      // Fallback to empty results rather than crashing
-    }
+      if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
+        matchedGameIds.add(matchedGame.id);
+        foundGames.push(matchedGame);
+      } else {
+        missingGames.push(gameInfo.name);
+      }
+    });
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
