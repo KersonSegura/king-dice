@@ -28,7 +28,7 @@ interface Game {
 
 export default function TopRankedPage() {
   const [games, setGames] = useState<Game[]>([]);
-  const [votes, setVotes] = useState<Record<number, any>>({});
+  // Vote data is now loaded on-demand when users interact with star buttons
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuth();
 
@@ -93,7 +93,6 @@ export default function TopRankedPage() {
               <GameCardWithVote 
                 key={game.id} 
                 game={{ ...game, rank: index + 1 }} 
-                voteData={votes[game.id]}
               />
             ))}
           </div>

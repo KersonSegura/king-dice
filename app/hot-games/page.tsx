@@ -99,7 +99,6 @@ export default function HotGamesPage() {
               <GameCardWithVote 
                 key={game.id} 
                 game={{ ...game, rank: index + 1 }} 
-                voteData={votes[game.id]}
               />
             ))}
           </div>
