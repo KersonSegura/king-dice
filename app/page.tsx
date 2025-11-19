@@ -166,26 +166,31 @@ export default function HomePage() {
           console.log('📊 Mapped hot games:', mappedHotGames.length);
           setHotGames(mappedHotGames);
           
-          // Fetch votes in batch for hot games
+          // Fetch votes in batch for hot games (non-blocking - don't await)
           if (mappedHotGames.length > 0 && isAuthenticated && user?.id) {
-            try {
-              const gameIds = mappedHotGames.map((g: any) => g.id).filter((id: any) => id);
-              if (gameIds.length > 0) {
-                const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ gameIds, userId: user.id })
-                }, {
-                  maxRetries: 2,
-                  retryDelay: 500,
-                  timeout: 10000
-                });
+            // Don't await - let games show first, votes will load in background
+            const gameIds = mappedHotGames.map((g: any) => g.id).filter((id: any) => id);
+            if (gameIds.length > 0) {
+              fetchJsonWithRetry('/api/games/votes/batch', {
+                method: 'POST',
+                cache: 'no-store',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache'
+                },
+                body: JSON.stringify({ gameIds, userId: user.id })
+              }, {
+                maxRetries: 2,
+                retryDelay: 500,
+                timeout: 20000
+              }).then((votesData) => {
                 console.log('✅ Batch votes fetched for hot games:', Object.keys(votesData).length);
                 setHotGamesVotes(votesData);
-              }
-            } catch (error) {
-              console.error('❌ Error fetching batch votes for hot games:', error);
-              // Continue without vote data - cards will fetch individually
+              }).catch((error) => {
+                console.error('❌ Error fetching batch votes for hot games:', error);
+                // Continue without vote data - cards will fetch individually
+              });
             }
           }
         } catch (error) {
@@ -228,26 +233,31 @@ export default function HomePage() {
           console.log('📊 Mapped ranked games:', mappedRankedGames.length);
           setTopRankedGames(mappedRankedGames);
           
-          // Fetch votes in batch for ranked games
+          // Fetch votes in batch for ranked games (non-blocking - don't await)
           if (mappedRankedGames.length > 0 && isAuthenticated && user?.id) {
-            try {
-              const gameIds = mappedRankedGames.map((g: any) => g.id).filter((id: any) => id);
-              if (gameIds.length > 0) {
-                const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ gameIds, userId: user.id })
-                }, {
-                  maxRetries: 2,
-                  retryDelay: 500,
-                  timeout: 10000
-                });
+            // Don't await - let games show first, votes will load in background
+            const gameIds = mappedRankedGames.map((g: any) => g.id).filter((id: any) => id);
+            if (gameIds.length > 0) {
+              fetchJsonWithRetry('/api/games/votes/batch', {
+                method: 'POST',
+                cache: 'no-store',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache'
+                },
+                body: JSON.stringify({ gameIds, userId: user.id })
+              }, {
+                maxRetries: 2,
+                retryDelay: 500,
+                timeout: 20000
+              }).then((votesData) => {
                 console.log('✅ Batch votes fetched for ranked games:', Object.keys(votesData).length);
                 setTopRankedVotes(votesData);
-              }
-            } catch (error) {
-              console.error('❌ Error fetching batch votes for ranked games:', error);
-              // Continue without vote data - cards will fetch individually
+              }).catch((error) => {
+                console.error('❌ Error fetching batch votes for ranked games:', error);
+                // Continue without vote data - cards will fetch individually
+              });
             }
           }
         } catch (error) {
