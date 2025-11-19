@@ -44,32 +44,50 @@ export async function GET(request: NextRequest) {
     const foundGames: any[] = [];
     const missingGames: string[] = [];
 
-    // OPTIMIZED: Fetch all games in a SINGLE batch query instead of 25+ individual queries
-    // Build a single OR condition for all game names
-    const orConditions: string[] = [];
-    gamesToFind.forEach((gameInfo) => {
-      // Escape single quotes in game names for SQL
-      const escapedName = gameInfo.name.replace(/'/g, "''");
-      orConditions.push(`nameEn.ilike.${escapedName}`);
-      orConditions.push(`nameEs.ilike.${escapedName}`);
-      orConditions.push(`name.ilike.${escapedName}`);
-    });
+    // OPTIMIZED: Batch queries in chunks of 10 to avoid Supabase OR clause limits
+    // This is still much faster than individual queries (3 batches vs 25+ queries)
+    const BATCH_SIZE = 10;
+    const allMatches: any[] = [];
+    
+    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+      const orConditions: string[] = [];
+      
+      batch.forEach((gameInfo) => {
+        // Escape single quotes in game names for SQL
+        const escapedName = gameInfo.name.replace(/'/g, "''");
+        orConditions.push(`nameEn.ilike.${escapedName}`);
+        orConditions.push(`nameEs.ilike.${escapedName}`);
+        orConditions.push(`name.ilike.${escapedName}`);
+      });
 
-    // Single query to get all matching games at once
-    const { data: allMatches, error: batchError } = await supabaseAdmin
-      .from('games')
-      .select('*')
-      .or(orConditions.join(','))
-      .limit(limit * 3); // Get more than needed in case of duplicates
+      try {
+        let query = supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(orConditions.join(','))
+          .limit(BATCH_SIZE * 3);
 
-    if (batchError) {
-      console.error('❌ Batch query error:', batchError);
-      throw batchError;
+        const { data: batchMatches, error: batchError } = await query;
+
+        if (batchError) {
+          console.error(`❌ Batch query error for batch ${i / BATCH_SIZE + 1}:`, batchError);
+          // Continue with next batch instead of failing completely
+          continue;
+        }
+
+        if (batchMatches) {
+          allMatches.push(...batchMatches);
+        }
+      } catch (error) {
+        console.error(`❌ Error in batch ${i / BATCH_SIZE + 1}:`, error);
+        // Continue with next batch
+      }
     }
 
     // Create a map for quick lookup: lowercase name -> game
     const gamesMap = new Map<string, any>();
-    (allMatches || []).forEach((game) => {
+    allMatches.forEach((game) => {
       const nameEn = game.nameEn?.toLowerCase() || '';
       const nameEs = game.nameEs?.toLowerCase() || '';
       const name = game.name?.toLowerCase() || '';
