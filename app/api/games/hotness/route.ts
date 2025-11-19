@@ -69,86 +69,65 @@ export async function GET(request: NextRequest) {
     const foundGames: any[] = [];
     const missingGames: string[] = [];
 
-    // OPTIMIZED: Batch queries in chunks of 10 to avoid Supabase OR clause limits
-    // This is still much faster than individual queries (5 batches vs 50+ queries)
-    const BATCH_SIZE = 10;
-    const allMatches: any[] = [];
-    
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
-      const orConditions: string[] = [];
-      
-      batch.forEach((gameName) => {
-        // Escape single quotes in game names for SQL
-        const escapedName = gameName.replace(/'/g, "''");
-        orConditions.push(`nameEn.ilike.${escapedName}`);
-        orConditions.push(`nameEs.ilike.${escapedName}`);
-        orConditions.push(`name.ilike.${escapedName}`);
+    // OPTIMIZED: Fetch ALL games once and filter in memory (fastest approach)
+    // This avoids hundreds of database queries and timeout issues
+    try {
+      const { data: allGames, error: fetchError } = await supabaseAdmin
+        .from('games')
+        .select('*')
+        .limit(10000); // Fetch up to 10k games (should cover all games)
+
+      if (fetchError) {
+        console.error('❌ Error fetching all games:', fetchError);
+        throw fetchError;
+      }
+
+      // Create a map for fast lookup: lowercase name -> game
+      const gamesMap = new Map<string, any>();
+      (allGames || []).forEach((game) => {
+        const nameEn = game.nameEn?.toLowerCase() || '';
+        const nameEs = game.nameEs?.toLowerCase() || '';
+        const name = game.name?.toLowerCase() || '';
+        
+        // Map all name variations
+        if (nameEn) gamesMap.set(nameEn, game);
+        if (nameEs) gamesMap.set(nameEs, game);
+        if (name) gamesMap.set(name, game);
       });
 
-      try {
-        const { data: batchMatches, error: batchError } = await supabaseAdmin
-          .from('games')
-          .select('*')
-          .or(orConditions.join(','))
-          .limit(BATCH_SIZE * 3);
-
-        if (batchError) {
-          console.error(`❌ Batch query error for batch ${i / BATCH_SIZE + 1}:`, batchError);
-          // Continue with next batch instead of failing completely
-          continue;
-        }
-
-        if (batchMatches) {
-          allMatches.push(...batchMatches);
-        }
-      } catch (error) {
-        console.error(`❌ Error in batch ${i / BATCH_SIZE + 1}:`, error);
-        // Continue with next batch
-      }
-    }
-
-    // Create a map for quick lookup: lowercase name -> game
-    const gamesMap = new Map<string, any>();
-    allMatches.forEach((game) => {
-      const nameEn = game.nameEn?.toLowerCase() || '';
-      const nameEs = game.nameEs?.toLowerCase() || '';
-      const name = game.name?.toLowerCase() || '';
-      
-      if (nameEn) gamesMap.set(nameEn, game);
-      if (nameEs) gamesMap.set(nameEs, game);
-      if (name) gamesMap.set(name, game);
-    });
-
-    // Match games in the correct order
-    gamesToFind.forEach((gameName) => {
-      const lowerName = gameName.toLowerCase();
-      
-      // Try exact match first
-      let matchedGame = gamesMap.get(lowerName);
-      
-      // If no exact match, try partial match
-      if (!matchedGame) {
-        for (const [key, game] of gamesMap.entries()) {
-          if (key.includes(lowerName) || lowerName.includes(key)) {
-            matchedGame = game;
-            break;
+      // Match games in the correct order
+      gamesToFind.forEach((gameName) => {
+        const lowerName = gameName.toLowerCase();
+        
+        // Try exact match first
+        let matchedGame = gamesMap.get(lowerName);
+        
+        // If no exact match, try partial match
+        if (!matchedGame) {
+          for (const [key, game] of gamesMap.entries()) {
+            if (key === lowerName || key.includes(lowerName) || lowerName.includes(key)) {
+              matchedGame = game;
+              break;
+            }
           }
         }
-      }
 
-      if (matchedGame) {
-        foundGames.push(matchedGame);
-      } else {
-        missingGames.push(gameName);
-      }
-    });
+        if (matchedGame) {
+          foundGames.push(matchedGame);
+        } else {
+          missingGames.push(gameName);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error in optimized query:', error);
+      // Fallback to empty results rather than crashing
+    }
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
     }
 
-    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games (using single batch query)`);
+    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games (using single fetch + memory filter)`);
 
     return NextResponse.json({ 
       games: foundGames,
