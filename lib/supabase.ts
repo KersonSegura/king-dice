@@ -14,14 +14,37 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Client for server-side operations (with service role for admin access)
 // Use service role for full database access in API routes
+// Configuration optimized for serverless/edge functions per Supabase docs
 export const supabaseAdmin = createClient(
   supabaseUrl!,
   supabaseServiceRoleKey || supabaseAnonKey!,
-  { auth: { persistSession: false } }
+  {
+    auth: { persistSession: false },
+    // Optimize for serverless/edge functions
+    db: {
+      schema: 'public',
+    },
+    global: {
+      // Add timeout to prevent hanging requests
+      fetch: (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          // 15 second timeout for server-side requests
+          signal: AbortSignal.timeout(15000),
+        });
+      },
+    },
+  }
 );
 
 // Client for client-side (browser) - uses anon key with row-level security
-export const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!);
+// Optimized for browser usage
+export const supabaseClient = createClient(supabaseUrl!, supabaseAnonKey!, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 // Storage buckets configuration
 export const STORAGE_BUCKETS = {
