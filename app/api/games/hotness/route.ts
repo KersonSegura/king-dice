@@ -68,11 +68,12 @@ export async function GET(request: NextRequest) {
     const gamesToFind = hotnessGames.slice(0, limit);
     const foundGames: any[] = [];
     const missingGames: string[] = [];
+    let allGames: any[] = [];
 
     // OPTIMIZED: Fetch ALL games once and filter in memory (fastest approach)
     // This avoids hundreds of database queries and timeout issues
     try {
-      const { data: allGames, error: fetchError } = await supabaseAdmin
+      const { data: fetchedGames, error: fetchError } = await supabaseAdmin
         .from('games')
         .select('*')
         .limit(10000); // Fetch up to 10k games (should cover all games)
@@ -81,6 +82,8 @@ export async function GET(request: NextRequest) {
         console.error('❌ Error fetching all games:', fetchError);
         throw fetchError;
       }
+      
+      allGames = fetchedGames || [];
 
       // Create a map for fast lookup: lowercase name -> array of games (in case of duplicates)
       const gamesMap = new Map<string, any[]>();
