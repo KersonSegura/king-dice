@@ -200,10 +200,8 @@ export default function HomePage() {
           if (!errorMessage.includes('Retrying')) {
             console.error('❌ Error fetching hot games:', error);
           }
-          // Don't clear games if we already have some (from a previous successful load)
-          if (hotGames.length === 0) {
-            setHotGames([]);
-          }
+          // Set empty array on error so loading state clears
+          setHotGames([]);
         }
         
         // Fetch top ranked games with retry
@@ -266,10 +264,8 @@ export default function HomePage() {
           if (!errorMessage.includes('Retrying')) {
             console.error('❌ Error fetching ranked games:', error);
           }
-          // Don't clear games if we already have some
-          if (topRankedGames.length === 0) {
-            setTopRankedGames([]);
-          }
+          // Set empty array on error so loading state clears
+          setTopRankedGames([]);
         }
         
       } catch (error) {

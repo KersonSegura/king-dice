@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -80,13 +81,16 @@ export async function GET(request: NextRequest) {
       
       const batchQueries = batch.map(async (gameName) => {
         try {
-          // Try exact match first (case-insensitive)
-          const { data: exactMatch, error: exactError } = await supabaseAdmin
-            .from('games')
-            .select('*')
-            .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
-            .limit(1)
-            .maybeSingle();
+          // Try exact match first (case-insensitive) with retry logic
+          const { data: exactMatch, error: exactError } = await executeSupabaseQuery(
+            () => supabaseAdmin
+              .from('games')
+              .select('*')
+              .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
+              .limit(1)
+              .maybeSingle(),
+            { maxRetries: 2, baseDelay: 300, timeout: 5000 }
+          );
 
           if (exactMatch && !exactError) {
             // Verify it's an exact match (case-insensitive)
@@ -98,13 +102,16 @@ export async function GET(request: NextRequest) {
             }
           }
 
-          // If no exact match, try partial match
-          const { data: partialMatch, error: partialError } = await supabaseAdmin
-            .from('games')
-            .select('*')
-            .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
-            .limit(1)
-            .maybeSingle();
+          // If no exact match, try partial match with retry logic
+          const { data: partialMatch, error: partialError } = await executeSupabaseQuery(
+            () => supabaseAdmin
+              .from('games')
+              .select('*')
+              .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
+              .limit(1)
+              .maybeSingle(),
+            { maxRetries: 2, baseDelay: 300, timeout: 5000 }
+          );
 
           if (partialMatch && !partialError) {
             return { gameName, game: partialMatch };
