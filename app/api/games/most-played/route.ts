@@ -44,10 +44,17 @@ export async function GET(request: NextRequest) {
     const BATCH_SIZE = 10;
     const allMatchedGames: any[] = [];
     
+    console.log(`🔍 Starting to fetch ${gamesToFind.length} games in batches of ${BATCH_SIZE}`);
+    console.log(`📋 First 5 games to find:`, gamesToFind.slice(0, 5).map(g => g.name));
+    
     // Query games in batches
     for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
       const batch = gamesToFind.slice(i, i + BATCH_SIZE);
       const orConditions: string[] = [];
+      
+      console.log(`\n🔄 Processing batch ${batchNum}/${Math.ceil(gamesToFind.length / BATCH_SIZE)} (games ${i + 1}-${Math.min(i + BATCH_SIZE, gamesToFind.length)})`);
+      console.log(`   Batch games:`, batch.map(g => g.name));
       
       batch.forEach((gameInfo) => {
         // Escape single quotes for SQL
@@ -57,6 +64,17 @@ export async function GET(request: NextRequest) {
         orConditions.push(`name.ilike.${escapedName}`);
       });
 
+      console.log(`   Built ${orConditions.length} OR conditions`);
+      
+      // Add year filter if provided
+      const batchYears = batch.filter(g => g.year).map(g => g.year);
+      if (batchYears.length > 0) {
+        console.log(`   Years filter:`, batchYears);
+      }
+      
+      console.log(`   Executing query...`);
+
+      const queryStartTime = Date.now();
       try {
         let query = supabaseAdmin
           .from('games')
@@ -64,27 +82,40 @@ export async function GET(request: NextRequest) {
           .or(orConditions.join(','))
           .limit(BATCH_SIZE * 3);
 
-        // Add year filter if provided
-        const batchYears = batch.filter(g => g.year).map(g => g.year);
         if (batchYears.length > 0) {
           query = query.in('yearRelease', batchYears);
         }
 
         const { data: batchGames, error: batchError } = await query;
 
+        const queryDuration = Date.now() - queryStartTime;
+        console.log(`   ✅ Query completed in ${queryDuration}ms`);
+
         if (batchError) {
-          console.error(`❌ Error fetching batch ${i / BATCH_SIZE + 1}:`, batchError);
+          console.error(`   ❌ Batch ${batchNum} query error:`, batchError);
+          console.error(`   ❌ Error code:`, batchError.code);
+          console.error(`   ❌ Error message:`, batchError.message);
           continue;
         }
 
         if (batchGames) {
+          console.log(`   ✅ Found ${batchGames.length} games in batch ${batchNum}`);
           allMatchedGames.push(...batchGames);
+        } else {
+          console.log(`   ⚠️ Batch ${batchNum} returned no games`);
         }
       } catch (error) {
-        console.error(`❌ Error in batch ${i / BATCH_SIZE + 1}:`, error);
+        const queryDuration = Date.now() - queryStartTime;
+        console.error(`   ❌ Exception in batch ${batchNum} after ${queryDuration}ms:`, error);
+        console.error(`   ❌ Error type:`, error instanceof Error ? error.constructor.name : typeof error);
+        console.error(`   ❌ Error message:`, error instanceof Error ? error.message : String(error));
+        if (error instanceof Error && error.stack) {
+          console.error(`   ❌ Stack trace:`, error.stack);
+        }
       }
     }
     
+    console.log(`\n📊 Total games fetched: ${allMatchedGames.length}`);
     const matchedGames = allMatchedGames;
 
     // Create a map: lowercase name -> game
