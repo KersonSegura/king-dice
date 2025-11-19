@@ -66,27 +66,23 @@ export async function GET(request: NextRequest) {
 
       console.log(`   Built ${orConditions.length} OR conditions`);
       
-      // Add year filter if provided
+      // Note: We'll filter by year in memory after fetching, not in the query
+      // This avoids slow queries with both OR conditions AND year filters
       const batchYears = batch.filter(g => g.year).map(g => g.year);
       if (batchYears.length > 0) {
-        console.log(`   Years filter:`, batchYears);
+        console.log(`   Years to match (will filter in memory):`, batchYears);
       }
       
       console.log(`   Executing query...`);
 
       const queryStartTime = Date.now();
       try {
-        let query = supabaseAdmin
+        // Query WITHOUT year filter - much faster
+        const { data: batchGames, error: batchError } = await supabaseAdmin
           .from('games')
           .select('*')
           .or(orConditions.join(','))
           .limit(BATCH_SIZE * 3);
-
-        if (batchYears.length > 0) {
-          query = query.in('yearRelease', batchYears);
-        }
-
-        const { data: batchGames, error: batchError } = await query;
 
         const queryDuration = Date.now() - queryStartTime;
         console.log(`   ✅ Query completed in ${queryDuration}ms`);
@@ -100,7 +96,15 @@ export async function GET(request: NextRequest) {
 
         if (batchGames) {
           console.log(`   ✅ Found ${batchGames.length} games in batch ${batchNum}`);
-          allMatchedGames.push(...batchGames);
+          // Filter by year in memory if needed
+          const filteredGames = batchGames.filter((game: any) => {
+            // If no year filter needed, include all
+            if (batchYears.length === 0) return true;
+            // Check if this game's year matches any of the batch years
+            return batchYears.includes(game.yearRelease);
+          });
+          console.log(`   ✅ After year filter: ${filteredGames.length} games`);
+          allMatchedGames.push(...filteredGames);
         } else {
           console.log(`   ⚠️ Batch ${batchNum} returned no games`);
         }
