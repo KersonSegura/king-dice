@@ -149,15 +149,21 @@ export default function HomePage() {
           console.log('✅ Hot games response:', { count: hotData.games?.length, total: hotData.total });
           const mappedHotGames = (hotData.games || []).map((game: any) => ({
             ...game,
-            name: game.name || game.nameEn || 'Unknown Game',
-            year: game.year || game.yearRelease,
-            minPlayTime: game.minPlayTime || game.durationMinutes,
-            maxPlayTime: game.maxPlayTime || game.durationMinutes,
-            image: game.image || game.imageUrl || game.thumbnailUrl,
-            averageRating: game.userRating,
-            numVotes: game.userVotes
-          }));
-          console.log('📊 Mapped hot games:', mappedHotGames.length);
+            id: game.id, // Ensure ID is present
+            bggId: game.bggId || game.bgg_id,
+            name: game.name || game.nameEn || game.nameEs || 'Unknown Game',
+            year: game.year || game.yearRelease || game.year_release,
+            minPlayers: game.minPlayers || game.min_players,
+            maxPlayers: game.maxPlayers || game.max_players,
+            minPlayTime: game.minPlayTime || game.durationMinutes || game.duration_minutes,
+            maxPlayTime: game.maxPlayTime || game.durationMinutes || game.duration_minutes,
+            image: game.image || game.imageUrl || game.image_url || game.thumbnailUrl || game.thumbnail_url,
+            averageRating: game.userRating || game.user_rating || game.bggRating || game.bgg_rating,
+            numVotes: game.userVotes || game.user_votes || game.bggVotes || game.bgg_votes,
+            ranking: game.bggRanking || game.bgg_ranking
+          })).filter((g: any) => g.id); // Filter out games without IDs
+          
+          console.log('📊 Mapped hot games:', mappedHotGames.length, 'games with IDs');
           setHotGames(mappedHotGames);
           
           // Fetch votes in batch for hot games

@@ -57,46 +57,59 @@ export async function GET(request: NextRequest) {
         throw fetchError;
       }
 
-      // Create a map for fast lookup: lowercase name -> game
-      const gamesMap = new Map<string, any>();
+      // Create a map for fast lookup: lowercase name -> array of games (in case of duplicates)
+      const gamesMap = new Map<string, any[]>();
       (allGames || []).forEach((game) => {
-        const nameEn = game.nameEn?.toLowerCase() || '';
-        const nameEs = game.nameEs?.toLowerCase() || '';
-        const name = game.name?.toLowerCase() || '';
+        const nameEn = game.nameEn?.toLowerCase()?.trim() || '';
+        const nameEs = game.nameEs?.toLowerCase()?.trim() || '';
+        const name = game.name?.toLowerCase()?.trim() || '';
         
-        // Map all name variations
-        if (nameEn) gamesMap.set(nameEn, game);
-        if (nameEs) gamesMap.set(nameEs, game);
-        if (name) gamesMap.set(name, game);
+        // Map all name variations - store arrays to handle duplicates
+        if (nameEn) {
+          if (!gamesMap.has(nameEn)) gamesMap.set(nameEn, []);
+          gamesMap.get(nameEn)!.push(game);
+        }
+        if (nameEs && nameEs !== nameEn) {
+          if (!gamesMap.has(nameEs)) gamesMap.set(nameEs, []);
+          gamesMap.get(nameEs)!.push(game);
+        }
+        if (name && name !== nameEn && name !== nameEs) {
+          if (!gamesMap.has(name)) gamesMap.set(name, []);
+          gamesMap.get(name)!.push(game);
+        }
       });
 
+      // Track which games we've already matched to avoid duplicates
+      const matchedGameIds = new Set<number>();
+      
       // Match games in the correct order, respecting year if provided
       gamesToFind.forEach((gameInfo) => {
-        const lowerName = gameInfo.name.toLowerCase();
+        const lowerName = gameInfo.name.toLowerCase().trim();
         
         // Try exact match first
-        let matchedGame = gamesMap.get(lowerName);
-        
-        // If exact match found, verify year if provided
-        if (matchedGame && gameInfo.year && matchedGame.yearRelease !== gameInfo.year) {
-          matchedGame = null; // Year doesn't match, try partial match
-        }
+        let matchedGame = gamesMap.get(lowerName)?.find((g: any) => {
+          if (matchedGameIds.has(g.id)) return false;
+          if (gameInfo.year && g.yearRelease !== gameInfo.year) return false;
+          return true;
+        });
         
         // If no exact match, try partial match
         if (!matchedGame) {
-          for (const [key, game] of gamesMap.entries()) {
-            if (key === lowerName || key.includes(lowerName) || lowerName.includes(key)) {
-              // If year is provided, verify it matches
-              if (gameInfo.year && game.yearRelease !== gameInfo.year) {
-                continue; // Year doesn't match, try next
-              }
-              matchedGame = game;
-              break;
+          for (const [key, games] of gamesMap.entries()) {
+            if (key === lowerName || key.startsWith(lowerName) || lowerName.startsWith(key)) {
+              matchedGame = games.find((g: any) => {
+                if (matchedGameIds.has(g.id)) return false;
+                // If year is provided, verify it matches
+                if (gameInfo.year && g.yearRelease !== gameInfo.year) return false;
+                return true;
+              });
+              if (matchedGame) break;
             }
           }
         }
 
-        if (matchedGame) {
+        if (matchedGame && !matchedGameIds.has(matchedGame.id)) {
+          matchedGameIds.add(matchedGame.id);
           foundGames.push(matchedGame);
         } else {
           missingGames.push(gameInfo.name);

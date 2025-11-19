@@ -82,37 +82,52 @@ export async function GET(request: NextRequest) {
         throw fetchError;
       }
 
-      // Create a map for fast lookup: lowercase name -> game
-      const gamesMap = new Map<string, any>();
+      // Create a map for fast lookup: lowercase name -> array of games (in case of duplicates)
+      const gamesMap = new Map<string, any[]>();
       (allGames || []).forEach((game) => {
-        const nameEn = game.nameEn?.toLowerCase() || '';
-        const nameEs = game.nameEs?.toLowerCase() || '';
-        const name = game.name?.toLowerCase() || '';
+        const nameEn = game.nameEn?.toLowerCase()?.trim() || '';
+        const nameEs = game.nameEs?.toLowerCase()?.trim() || '';
+        const name = game.name?.toLowerCase()?.trim() || '';
         
-        // Map all name variations
-        if (nameEn) gamesMap.set(nameEn, game);
-        if (nameEs) gamesMap.set(nameEs, game);
-        if (name) gamesMap.set(name, game);
+        // Map all name variations - store arrays to handle duplicates
+        if (nameEn) {
+          if (!gamesMap.has(nameEn)) gamesMap.set(nameEn, []);
+          gamesMap.get(nameEn)!.push(game);
+        }
+        if (nameEs && nameEs !== nameEn) {
+          if (!gamesMap.has(nameEs)) gamesMap.set(nameEs, []);
+          gamesMap.get(nameEs)!.push(game);
+        }
+        if (name && name !== nameEn && name !== nameEs) {
+          if (!gamesMap.has(name)) gamesMap.set(name, []);
+          gamesMap.get(name)!.push(game);
+        }
       });
 
+      // Track which games we've already matched to avoid duplicates
+      const matchedGameIds = new Set<number>();
+      
       // Match games in the correct order
       gamesToFind.forEach((gameName) => {
-        const lowerName = gameName.toLowerCase();
+        const lowerName = gameName.toLowerCase().trim();
         
         // Try exact match first
-        let matchedGame = gamesMap.get(lowerName);
+        let matchedGame = gamesMap.get(lowerName)?.find(g => !matchedGameIds.has(g.id));
         
-        // If no exact match, try partial match
+        // If no exact match, try partial match (but be more precise)
         if (!matchedGame) {
-          for (const [key, game] of gamesMap.entries()) {
-            if (key === lowerName || key.includes(lowerName) || lowerName.includes(key)) {
-              matchedGame = game;
-              break;
+          // Look for games where the name starts with or equals the search term
+          for (const [key, games] of gamesMap.entries()) {
+            // More precise matching: exact match or starts with
+            if (key === lowerName || key.startsWith(lowerName) || lowerName.startsWith(key)) {
+              matchedGame = games.find(g => !matchedGameIds.has(g.id));
+              if (matchedGame) break;
             }
           }
         }
 
-        if (matchedGame) {
+        if (matchedGame && !matchedGameIds.has(matchedGame.id)) {
+          matchedGameIds.add(matchedGame.id);
           foundGames.push(matchedGame);
         } else {
           missingGames.push(gameName);
