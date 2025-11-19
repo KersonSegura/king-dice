@@ -35,27 +35,20 @@ export default function TopRankedPage() {
   useEffect(() => {
     const fetchTopRankedGames = async () => {
       try {
+        setLoading(true);
         const data = await fetchJsonWithRetry('/api/games/most-played?limit=25', {}, {
           maxRetries: 3,
           retryDelay: 1000,
           timeout: 15000
         });
-        const mappedGames = (data.games || []).map((game: any) => ({
-          ...game,
-          name: game.name || game.nameEn || 'Unknown Game',
-          year: game.year || game.yearRelease,
-          minPlayTime: game.minPlayTime || game.durationMinutes,
-          maxPlayTime: game.maxPlayTime || game.durationMinutes,
-          image: game.image || game.imageUrl || game.thumbnailUrl,
-          averageRating: game.userRating,
-          numVotes: game.userVotes
-        }));
-        setGames(mappedGames);
         
-        // Fetch votes in batch
-        if (mappedGames.length > 0 && isAuthenticated && user?.id) {
+        const gamesList = data.games || [];
+        setGames(gamesList);
+        
+        // Fetch votes in batch for all games
+        if (gamesList.length > 0 && isAuthenticated && user?.id) {
           try {
-            const gameIds = mappedGames.map((g: any) => g.id).filter((id: any) => id);
+            const gameIds = gamesList.map((g: any) => g.id).filter((id: any) => id);
             if (gameIds.length > 0) {
               const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
                 method: 'POST',
@@ -70,12 +63,13 @@ export default function TopRankedPage() {
               setVotes(votesData);
             }
           } catch (error) {
-            console.error('❌ Error fetching batch votes:', error);
+            console.error('❌ Error fetching batch votes for top ranked games:', error);
             // Continue without vote data - cards will fetch individually
           }
         }
       } catch (error) {
         console.error('Error fetching top ranked games:', error);
+        setGames([]);
       } finally {
         setLoading(false);
       }
@@ -118,7 +112,11 @@ export default function TopRankedPage() {
         ) : games.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {games.map((game, index) => (
-              <GameCardWithVote key={game.id} game={{ ...game, rank: index + 1 }} voteData={votes[game.id]} />
+              <GameCardWithVote 
+                key={game.id} 
+                game={{ ...game, rank: index + 1 }} 
+                voteData={votes[game.id]}
+              />
             ))}
           </div>
         ) : (

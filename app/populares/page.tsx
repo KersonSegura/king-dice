@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import GameCardWithVote from '@/components/GameCardWithVote';
 import { Trophy, Info, Filter } from 'lucide-react';
+import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Game {
   id: number;
@@ -24,31 +26,61 @@ interface Game {
 
 export default function PopularesPage() {
   const [games, setGames] = useState<Game[]>([]);
+  const [votes, setVotes] = useState<Record<number, any>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchPopularGames = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/games/popular?limit=50');
-        const data = await response.json();
+        const data = await fetchJsonWithRetry('/api/games/popular?limit=50', {}, {
+          maxRetries: 3,
+          retryDelay: 1000,
+          timeout: 15000
+        });
         
         if (data.error) {
           setError(data.error);
         } else {
-          setGames(data.games || []);
+          const gamesList = data.games || [];
+          setGames(gamesList);
+          
+          // Fetch votes in batch for all games
+          if (gamesList.length > 0 && isAuthenticated && user?.id) {
+            try {
+              const gameIds = gamesList.map((g: any) => g.id).filter((id: any) => id);
+              if (gameIds.length > 0) {
+                const votesData = await fetchJsonWithRetry('/api/games/votes/batch', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ gameIds, userId: user.id })
+                }, {
+                  maxRetries: 2,
+                  retryDelay: 500,
+                  timeout: 10000
+                });
+                console.log('✅ Batch votes fetched for popular games:', Object.keys(votesData).length);
+                setVotes(votesData);
+              }
+            } catch (error) {
+              console.error('❌ Error fetching batch votes for popular games:', error);
+              // Continue without vote data - cards will fetch individually
+            }
+          }
         }
       } catch (err) {
         setError('Error al cargar los juegos populares');
         console.error('Error fetching popular games:', err);
+        setGames([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchPopularGames();
-  }, []);
+  }, [user?.id, isAuthenticated]);
 
   const formatPlayers = (min: number | null, max: number | null) => {
     if (!min || !max) return 'N/A';
@@ -151,7 +183,11 @@ export default function PopularesPage() {
           {/* Games Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {games.map((game) => (
-              <GameCardWithVote key={game.id} game={game} />
+              <GameCardWithVote 
+                key={game.id} 
+                game={game} 
+                voteData={votes[game.id]}
+              />
             ))}
           </div>
 
