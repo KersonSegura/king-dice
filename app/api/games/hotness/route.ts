@@ -110,32 +110,43 @@ export async function GET(request: NextRequest) {
       // Track which games we've already matched to avoid duplicates
       const matchedGameIds = new Set<number>();
       
+      // Create a lookup map for faster exact matching
+      const exactMatchMap = new Map<string, any>();
+      allGames.forEach((game) => {
+        if (!game.id) return;
+        const nameEn = (game.nameEn || '').toLowerCase().trim();
+        const nameEs = (game.nameEs || '').toLowerCase().trim();
+        const name = (game.name || '').toLowerCase().trim();
+        
+        // Map all name variations for exact lookup
+        if (nameEn) exactMatchMap.set(nameEn, game);
+        if (nameEs) exactMatchMap.set(nameEs, game);
+        if (name) exactMatchMap.set(name, game);
+      });
+      
       // Match games in the correct order - EXACT MATCHES ONLY
       gamesToFind.forEach((gameName) => {
         const lowerName = gameName.toLowerCase().trim();
         let matchedGame: any = null;
         
-        // EXACT MATCH ONLY - check all three name fields
-        for (const game of allGames) {
-          if (matchedGameIds.has(game.id)) continue; // Skip already matched
-          if (!game.id) continue; // Skip games without IDs
-          
-          const nameEn = (game.nameEn || '').toLowerCase().trim();
-          const nameEs = (game.nameEs || '').toLowerCase().trim();
-          const name = (game.name || '').toLowerCase().trim();
-          
-          // EXACT MATCH ONLY - no fuzzy matching, no contains, just exact
-          if (nameEn === lowerName || nameEs === lowerName || name === lowerName) {
-            matchedGame = game;
-            break; // Found exact match, stop searching
-          }
-        }
-
+        // EXACT MATCH ONLY - use map for O(1) lookup
+        matchedGame = exactMatchMap.get(lowerName);
+        
+        // If found, check it's not already matched
         if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
           matchedGameIds.add(matchedGame.id);
           foundGames.push(matchedGame);
         } else {
           missingGames.push(gameName);
+          // Debug: log what we're looking for vs what's in DB
+          if (missingGames.length <= 5) {
+            console.log(`🔍 Looking for: "${gameName}" (lowercase: "${lowerName}")`);
+            const similarNames = Array.from(exactMatchMap.keys()).filter(k => 
+              k.includes(lowerName.substring(0, Math.min(5, lowerName.length))) || 
+              lowerName.includes(k.substring(0, Math.min(5, k.length)))
+            ).slice(0, 3);
+            console.log(`   Similar names in DB:`, similarNames);
+          }
         }
       });
     } catch (error) {
@@ -149,10 +160,12 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games (using single fetch + memory filter)`);
     console.log(`📊 Total games in database:`, allGames?.length || 0);
-    console.log(`📊 Games found (first 10):`, foundGames.slice(0, 10).map(g => ({ id: g.id, name: g.nameEn || g.nameEs || g.name })));
+    console.log(`📊 Games found (first 10):`, foundGames.slice(0, 10).map(g => ({ id: g.id, nameEn: g.nameEn, nameEs: g.nameEs, name: g.name })));
     console.log(`📊 All game IDs (${foundGames.length} total):`, foundGames.map(g => g.id));
     console.log(`📊 Games without IDs:`, foundGames.filter(g => !g.id).length);
-    console.log(`📊 Missing games (${missingGames.length}):`, missingGames.slice(0, 10));
+    console.log(`📊 Missing games (${missingGames.length}):`, missingGames);
+    console.log(`📊 First 5 games we're looking for:`, gamesToFind.slice(0, 5));
+    console.log(`📊 Sample database game names:`, allGames.slice(0, 5).map(g => ({ id: g.id, nameEn: g.nameEn, nameEs: g.nameEs, name: g.name })));
 
     return NextResponse.json({ 
       games: foundGames,
