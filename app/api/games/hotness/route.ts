@@ -125,6 +125,31 @@ export async function GET(request: NextRequest) {
 
       if (fetchError) {
         const queryDuration = Date.now() - queryStartTimeFallback;
+        const errorMessage = fetchError.message || String(fetchError);
+        
+        // Check if it's a Supabase health issue (522 timeout, connection issues)
+        if (errorMessage.includes('522') || 
+            errorMessage.includes('Connection timed out') ||
+            errorMessage.includes('timeout') ||
+            errorMessage.includes('unhealthy')) {
+          console.error(`❌ Supabase health issue detected after ${queryDuration}ms:`, errorMessage);
+          // Return empty results gracefully instead of crashing
+          return NextResponse.json({ 
+            games: [],
+            category: 'hotness',
+            total: 0,
+            description: 'The hottest games today according to BoardGameGeek',
+            source: 'BGG Hotness List',
+            error: 'Database temporarily unavailable. Please try again later.'
+          }, { 
+            status: 503, // Service Unavailable
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Retry-After': '60' // Suggest retry after 60 seconds
+            }
+          });
+        }
+        
         console.error(`❌ Error fetching games after ${queryDuration}ms:`, fetchError);
         throw fetchError;
       }
@@ -177,12 +202,38 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('❌ Error getting hotness games:', error);
     console.error('❌ Error type:', error instanceof Error ? error.constructor.name : typeof error);
-    console.error('❌ Error message:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Error message:', errorMessage);
+    
+    // Check if it's a Supabase health issue
+    if (errorMessage.includes('522') || 
+        errorMessage.includes('Connection timed out') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('unhealthy') ||
+        errorMessage.includes('502') ||
+        errorMessage.includes('503')) {
+      return NextResponse.json(
+        { 
+          games: [],
+          category: 'hotness',
+          total: 0,
+          error: 'Database temporarily unavailable. Please try again later.',
+          details: 'Supabase connection issue detected'
+        },
+        { 
+          status: 503, // Service Unavailable
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Retry-After': '60'
+          }
+        }
+      );
+    }
     
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', details: errorMessage },
       { status: 500 }
     );
   }
