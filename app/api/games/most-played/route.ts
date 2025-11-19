@@ -57,27 +57,19 @@ export async function GET(request: NextRequest) {
       console.log(`   Batch games:`, batch.map(g => g.name));
       
       batch.forEach((gameInfo) => {
-        // Escape single quotes for SQL
+        // Use eq for exact match instead of ilike - faster and more precise
         const escapedName = gameInfo.name.replace(/'/g, "''");
-        orConditions.push(`nameEn.ilike.${escapedName}`);
-        orConditions.push(`nameEs.ilike.${escapedName}`);
-        orConditions.push(`name.ilike.${escapedName}`);
+        orConditions.push(`nameEn.eq.${escapedName}`);
+        orConditions.push(`nameEs.eq.${escapedName}`);
+        orConditions.push(`name.eq.${escapedName}`);
       });
 
       console.log(`   Built ${orConditions.length} OR conditions`);
-      
-      // Note: We'll filter by year in memory after fetching, not in the query
-      // This avoids slow queries with both OR conditions AND year filters
-      const batchYears = batch.filter(g => g.year).map(g => g.year);
-      if (batchYears.length > 0) {
-        console.log(`   Years to match (will filter in memory):`, batchYears);
-      }
-      
       console.log(`   Executing query...`);
 
       const queryStartTime = Date.now();
       try {
-        // Query WITHOUT year filter - much faster
+        // Query WITHOUT year filter - names are unique, don't need year
         const { data: batchGames, error: batchError } = await supabaseAdmin
           .from('games')
           .select('*')
@@ -96,15 +88,7 @@ export async function GET(request: NextRequest) {
 
         if (batchGames) {
           console.log(`   ✅ Found ${batchGames.length} games in batch ${batchNum}`);
-          // Filter by year in memory if needed
-          const filteredGames = batchGames.filter((game: any) => {
-            // If no year filter needed, include all
-            if (batchYears.length === 0) return true;
-            // Check if this game's year matches any of the batch years
-            return batchYears.includes(game.yearRelease);
-          });
-          console.log(`   ✅ After year filter: ${filteredGames.length} games`);
-          allMatchedGames.push(...filteredGames);
+          allMatchedGames.push(...batchGames);
         } else {
           console.log(`   ⚠️ Batch ${batchNum} returned no games`);
         }
@@ -142,18 +126,25 @@ export async function GET(request: NextRequest) {
 
     gamesToFind.forEach((gameInfo) => {
       const lowerName = gameInfo.name.toLowerCase().trim();
-      let matchedGame = gamesMap.get(lowerName);
+      const matchedGame = gamesMap.get(lowerName);
       
-      // If year is provided, verify it matches
-      if (matchedGame && gameInfo.year && matchedGame.yearRelease !== gameInfo.year) {
-        matchedGame = null; // Year doesn't match
-      }
-      
+      // No year filtering - names are unique
       if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
         matchedGameIds.add(matchedGame.id);
         foundGames.push(matchedGame);
       } else {
         missingGames.push(gameInfo.name);
+        // Debug missing games
+        if (missingGames.length <= 3) {
+          console.log(`   🔍 Looking for: "${gameInfo.name}" (lowercase: "${lowerName}")`);
+          const similarKeys = Array.from(gamesMap.keys()).filter(k => 
+            k.includes(lowerName.substring(0, Math.min(5, lowerName.length))) || 
+            lowerName.includes(k.substring(0, Math.min(5, k.length)))
+          ).slice(0, 3);
+          if (similarKeys.length > 0) {
+            console.log(`      Similar names found:`, similarKeys);
+          }
+        }
       }
     });
 

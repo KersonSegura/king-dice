@@ -83,11 +83,13 @@ export async function GET(request: NextRequest) {
       console.log(`   Batch games:`, batch);
       
       batch.forEach((gameName) => {
-        // Escape single quotes for SQL
+        // For ilike, we need to wrap in quotes and escape properly
+        // Supabase ilike expects the value to be quoted
         const escapedName = gameName.replace(/'/g, "''");
-        orConditions.push(`nameEn.ilike.${escapedName}`);
-        orConditions.push(`nameEs.ilike.${escapedName}`);
-        orConditions.push(`name.ilike.${escapedName}`);
+        // Use eq for exact match instead of ilike - faster and more precise
+        orConditions.push(`nameEn.eq.${escapedName}`);
+        orConditions.push(`nameEs.eq.${escapedName}`);
+        orConditions.push(`name.eq.${escapedName}`);
       });
 
       console.log(`   Built ${orConditions.length} OR conditions`);
@@ -151,13 +153,30 @@ export async function GET(request: NextRequest) {
 
     gamesToFind.forEach((gameName) => {
       const lowerName = gameName.toLowerCase().trim();
-      const matchedGame = gamesMap.get(lowerName);
+      let matchedGame = gamesMap.get(lowerName);
+      
+      // If not found, try without apostrophes (handles "Feya's" vs "Feyas")
+      if (!matchedGame) {
+        const nameWithoutApostrophe = lowerName.replace(/'/g, '');
+        matchedGame = gamesMap.get(nameWithoutApostrophe);
+      }
       
       if (matchedGame && matchedGame.id && !matchedGameIds.has(matchedGame.id)) {
         matchedGameIds.add(matchedGame.id);
         foundGames.push(matchedGame);
       } else {
         missingGames.push(gameName);
+        // Debug missing games
+        if (missingGames.length <= 3) {
+          console.log(`   🔍 Looking for: "${gameName}" (lowercase: "${lowerName}")`);
+          const similarKeys = Array.from(gamesMap.keys()).filter(k => 
+            k.includes(lowerName.substring(0, Math.min(5, lowerName.length))) || 
+            lowerName.includes(k.substring(0, Math.min(5, k.length)))
+          ).slice(0, 3);
+          if (similarKeys.length > 0) {
+            console.log(`      Similar names found:`, similarKeys);
+          }
+        }
       }
     });
 
