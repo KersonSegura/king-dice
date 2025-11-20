@@ -271,48 +271,18 @@ export default function HomePage() {
             }
           }
         } catch (error) {
-          // Fetch top ranked games with retry (fallback)
-          try {
-          const rankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=${currentLimit}`, {
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache'
-            }
-          }, {
-            maxRetries: 3,
-            retryDelay: 1000,
-            timeout: 15000
-          });
-          console.log('✅ Top ranked games response:', { count: rankedData.games?.length, total: rankedData.total });
-          const mappedRankedGames = (rankedData.games || []).map((game: any) => ({
-            ...game,
-            name: game.name || game.nameEn || 'Unknown Game',
-            year: game.year || game.yearRelease,
-            minPlayTime: game.minPlayTime || game.durationMinutes,
-            maxPlayTime: game.maxPlayTime || game.durationMinutes,
-            image: game.image || game.imageUrl || game.thumbnailUrl,
-            averageRating: game.userRating,
-            numVotes: game.userVotes
-          }));
-          console.log('📊 Mapped ranked games:', mappedRankedGames.length);
-          setTopRankedGames(mappedRankedGames);
-          // Votes will be loaded on-demand when users hover/click the star button
-        } catch (error) {
-          // Only log if it's a final failure (not a retry attempt)
           const errorMessage = error instanceof Error ? error.message : String(error);
           if (!errorMessage.includes('Retrying')) {
-            console.error('❌ Error fetching ranked games:', error);
+            console.error('❌ Error fetching top ranked games:', error);
           }
-          // Only clear games if we don't have any (preserve existing games on error)
           if (topRankedGames.length === 0) {
             setTopRankedGames([]);
           }
         }
         
+        setLoading(false);
       } catch (error) {
         console.error('❌ Error fetching games:', error);
-      } finally {
         setLoading(false);
       }
     };
