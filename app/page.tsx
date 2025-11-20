@@ -360,28 +360,6 @@ export default function HomePage() {
   }, []);
 
 
-  const loadMoreGames = async () => {
-    try {
-      setLoadingMore(true);
-      const newLimit = currentLimit + 6;
-      
-      // Fetch more hot games
-      const hotResponse = await fetch(`/api/games/popular?category=hot&limit=${newLimit}`);
-      const hotData = await hotResponse.json();
-      setHotGames(hotData.games || []);
-      
-      // Fetch more top ranked games
-      const rankedResponse = await fetch(`/api/games/ranked?limit=${newLimit}`);
-      const rankedData = await rankedResponse.json();
-      setTopRankedGames(rankedData.games || []);
-      
-      setCurrentLimit(newLimit);
-    } catch (error) {
-      console.error('❌ Error loading more games:', error);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
 
   const formatPlayers = (min: number | null, max: number | null) => {
     if (!min || !max) return 'N/A';
