@@ -71,11 +71,29 @@ export async function GET(request: NextRequest) {
     const missingGames: string[] = [];
     const seenGameIds = new Set<number>();
 
-    // Helper function to query a single game
+    // Helper function to query a single game - use partial matching for better results
     const queryGame = async (gameName: string): Promise<any> => {
       try {
-        // Try nameEn first (most common field)
+        // Use partial matching with % wildcards - more forgiving
+        const searchPattern = `%${gameName}%`;
+        
+        // Try nameEn first with partial match
         const { data, error } = await executeSupabaseQuery(
+          async () => {
+            return await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEn', searchPattern)
+              .limit(1)
+              .maybeSingle();
+          },
+          { maxRetries: 0, baseDelay: 0, timeout: 2000 } // Shorter timeout
+        );
+
+        if (data && !error) return data;
+
+        // Try exact match on nameEn (faster)
+        const { data: exactData, error: exactError } = await executeSupabaseQuery(
           async () => {
             return await supabaseAdmin
               .from('games')
@@ -84,51 +102,46 @@ export async function GET(request: NextRequest) {
               .limit(1)
               .maybeSingle();
           },
-          { maxRetries: 0, baseDelay: 0, timeout: 3000 }
+          { maxRetries: 0, baseDelay: 0, timeout: 1500 }
         );
 
-        if (data && !error) return data;
+        if (exactData && !exactError) return exactData;
 
-        // Try nameEs
+        // Try nameEs with partial match
         const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
           async () => {
             return await supabaseAdmin
               .from('games')
               .select('*')
-              .ilike('nameEs', gameName)
+              .ilike('nameEs', searchPattern)
               .limit(1)
               .maybeSingle();
           },
-          { maxRetries: 0, baseDelay: 0, timeout: 3000 }
+          { maxRetries: 0, baseDelay: 0, timeout: 1500 }
         );
 
         if (dataEs && !errorEs) return dataEs;
 
-        // Try name field
-        const { data: dataName, error: errorName } = await executeSupabaseQuery(
-          async () => {
-            return await supabaseAdmin
-              .from('games')
-              .select('*')
-              .ilike('name', gameName)
-              .limit(1)
-              .maybeSingle();
-          },
-          { maxRetries: 0, baseDelay: 0, timeout: 3000 }
-        );
-
-        if (dataName && !errorName) return dataName;
         return null;
       } catch (error) {
         return null;
       }
     };
 
-    // Load first 10 games immediately (prioritize these)
+    // Load first 10 games immediately (prioritize these) - run in parallel with timeout
     const first10Games = gamesToFind.slice(0, 10);
     const first10Promises = first10Games.map(async (gameName) => {
-      const game = await queryGame(gameName);
-      return { gameName, game };
+      try {
+        // Add a timeout wrapper to ensure we don't wait forever
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout')), 5000)
+        );
+        const gamePromise = queryGame(gameName);
+        const game = await Promise.race([gamePromise, timeoutPromise]) as any;
+        return { gameName, game };
+      } catch (error) {
+        return { gameName, game: null };
+      }
     });
 
     const first10Results = await Promise.allSettled(first10Promises);
@@ -140,6 +153,18 @@ export async function GET(request: NextRequest) {
         missingGames.push(first10Games[idx]);
       }
     });
+    
+    // Return early if we found at least some games (don't wait for all)
+    if (foundGames.length > 0 && limit <= 10) {
+      console.log(`✅ Found ${foundGames.length} hotness games (early return)`);
+      return NextResponse.json({ 
+        games: foundGames,
+        category: 'hotness',
+        total: foundGames.length,
+        description: 'The hottest games today according to BoardGameGeek',
+        source: 'BGG Hotness List'
+      });
+    }
 
     // Continue loading the rest in background (games 11+)
     if (gamesToFind.length > 10) {
