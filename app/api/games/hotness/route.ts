@@ -125,62 +125,33 @@ export async function GET(request: NextRequest) {
       return results;
     };
 
-    // Load first 10 games immediately (prioritize these) - run in parallel with timeout
-    const first10Games = gamesToFind.slice(0, 10);
-    const first10Promises = first10Games.map(async (gameName) => {
-      try {
-        // Add a timeout wrapper to ensure we don't wait forever
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 5000)
-        );
-        const gamePromise = queryGame(gameName);
-        const game = await Promise.race([gamePromise, timeoutPromise]) as any;
-        return { gameName, game };
-      } catch (error) {
-        return { gameName, game: null };
-      }
-    });
-
     // Map to store games by their position in the original list
     const gamesByPosition = new Map<number, any>();
+
+    // Process all games in batches using OR queries (much faster)
+    const BATCH_SIZE = 8; // 8 games = 24 OR conditions (manageable)
     
-    const first10Results = await Promise.allSettled(first10Promises);
-    first10Results.forEach((result, idx) => {
-      if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
-        gamesByPosition.set(idx, result.value.game);
-        seenGameIds.add(result.value.game.id);
-      } else if (result.status === 'fulfilled' && !result.value.game) {
-        missingGames.push(first10Games[idx]);
-      }
-    });
-
-    // Continue loading the rest in background (games 11+)
-    if (gamesToFind.length > 10) {
-      const remainingGames = gamesToFind.slice(10);
-      // Process remaining games in small batches
-      const BATCH_SIZE = 5;
-      for (let i = 0; i < remainingGames.length; i += BATCH_SIZE) {
-        const batch = remainingGames.slice(i, i + BATCH_SIZE);
-        const batchPromises = batch.map(async (gameName, batchIdx) => {
-          const globalIdx = 10 + i + batchIdx;
-          const game = await queryGame(gameName);
-          return { position: globalIdx, gameName, game };
-        });
-
-        const batchResults = await Promise.allSettled(batchPromises);
-        batchResults.forEach((result) => {
-          if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
-            gamesByPosition.set(result.value.position, result.value.game);
-            seenGameIds.add(result.value.game.id);
-          } else if (result.status === 'fulfilled' && !result.value.game) {
-            missingGames.push(result.value.gameName);
-          }
-        });
-
-        // Small delay between batches
-        if (i + BATCH_SIZE < remainingGames.length) {
-          await new Promise(resolve => setTimeout(resolve, 50));
+    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+      
+      // Query this batch with OR conditions
+      const batchResults = await queryGamesBatch(batch);
+      
+      // Map results to positions
+      batch.forEach((gameName, batchIdx) => {
+        const globalIdx = i + batchIdx;
+        const game = batchResults.get(gameName);
+        if (game && !seenGameIds.has(game.id)) {
+          gamesByPosition.set(globalIdx, game);
+          seenGameIds.add(game.id);
+        } else if (!game) {
+          missingGames.push(gameName);
         }
+      });
+
+      // Small delay between batches to avoid overwhelming database
+      if (i + BATCH_SIZE < gamesToFind.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
     
