@@ -887,37 +887,36 @@ export default function HomePage() {
             </p>
           </div>
           
-          {loading && topRankedGames.length === 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-gray-200 animate-pulse rounded-lg h-64"></div>
-              ))}
-            </div>
-          ) : topRankedGames.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {topRankedGames.map((game, index) => (
-                  <GameCardWithVote 
-                    key={game.id} 
-                    game={game}
-                    imagePriority={index < 10}
-                  />
-                ))}
-              </div>
-              {loadingMoreTopRanked && (
-                <div className="mt-6 text-center">
-                  <div className="inline-flex items-center gap-2 text-gray-600">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
-                    <span>Loading more games...</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {topRankedGames.length === 0 ? (
+              // Show 6 skeleton cards while loading
+              [...Array(6)].map((_, i) => (
+                <div key={`skeleton-${i}`} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                  <div className="flex h-48">
+                    <div className="w-2/5 bg-gray-200 animate-pulse"></div>
+                    <div className="w-3/5 p-4 space-y-3">
+                      <div className="h-4 bg-gray-200 animate-pulse rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 animate-pulse rounded w-1/2"></div>
+                      <div className="h-3 bg-gray-200 animate-pulse rounded w-2/3"></div>
+                    </div>
                   </div>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-                <p className="font-bold">No top ranked games available</p>
-                <p>Games will be loaded soon from the database.</p>
+              ))
+            ) : (
+              topRankedGames.map((game, index) => (
+                <GameCardWithVote 
+                  key={game.id} 
+                  game={game}
+                  imagePriority={index < 10}
+                />
+              ))
+            )}
+          </div>
+          {loadingMoreTopRanked && (
+            <div className="mt-6 text-center">
+              <div className="inline-flex items-center gap-2 text-gray-600">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
+                <span>Loading more games...</span>
               </div>
             </div>
           )}

@@ -27,7 +27,8 @@ interface Game {
 }
 
 export default function HotGamesPage() {
-  const [games, setGames] = useState<Game[]>([]);
+  // Initialize with 50 placeholder slots (null = loading skeleton)
+  const [games, setGames] = useState<(Game | null)[]>(Array(50).fill(null));
   const [loading, setLoading] = useState(true);
   // Vote data is now loaded on-demand when users interact with star buttons
   const { user, isAuthenticated } = useAuth();
@@ -50,39 +51,45 @@ export default function HotGamesPage() {
         });
         
         const firstGamesList = firstData.games || [];
-        setGames(firstGamesList);
+        // Update first slots with real games, keep rest as null (skeletons)
+        const updatedGames = [...games];
+        firstGamesList.forEach((game: Game, index: number) => {
+          updatedGames[index] = game;
+        });
+        setGames(updatedGames);
         setLoading(false); // Show first games immediately
         
         // Load remaining games in background
-        if (firstGamesList.length > 0) {
-          try {
-            const allData = await fetchJsonWithRetry('/api/games/hotness?limit=50', {
-              cache: 'no-store',
-              headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
-              }
-            }, {
-              maxRetries: 2,
-              retryDelay: 1000,
-              timeout: 20000
-            });
-            
-            const allGamesList = allData.games || [];
-            if (allGamesList.length > firstGamesList.length) {
-              setGames(allGamesList);
+        try {
+          const allData = await fetchJsonWithRetry('/api/games/hotness?limit=50', {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
             }
-          } catch (error) {
-            console.error('Error loading more hot games:', error);
-            // Keep the first games even if loading more fails
-          }
+          }, {
+            maxRetries: 2,
+            retryDelay: 1000,
+            timeout: 20000
+          });
+          
+          const allGamesList = allData.games || [];
+          // Update all slots with real games
+          const finalGames = Array(50).fill(null);
+          allGamesList.forEach((game: Game, index: number) => {
+            if (index < 50) {
+              finalGames[index] = game;
+            }
+          });
+          setGames(finalGames);
+        } catch (error) {
+          console.error('Error loading more hot games:', error);
+          // Keep the games we already have
         }
       } catch (error) {
         console.error('Error fetching hot games:', error);
-        if (games.length === 0) {
-          setGames([]);
-        }
         setLoading(false);
+        // Keep skeletons showing, don't show error message
       }
     };
 
@@ -114,30 +121,33 @@ export default function HotGamesPage() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="bg-gray-200 animate-pulse rounded-lg h-48"></div>
-            ))}
-          </div>
-        ) : games.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games.map((game, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {games.map((game, index) => {
+            if (game === null) {
+              // Show loading skeleton for empty slots
+              return (
+                <div key={`skeleton-${index}`} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                  <div className="flex h-48">
+                    <div className="w-2/5 bg-gray-200 animate-pulse"></div>
+                    <div className="w-3/5 p-4 space-y-3">
+                      <div className="h-4 bg-gray-200 animate-pulse rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 animate-pulse rounded w-1/2"></div>
+                      <div className="h-3 bg-gray-200 animate-pulse rounded w-2/3"></div>
+                      <div className="h-3 bg-gray-200 animate-pulse rounded w-1/3"></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return (
               <GameCardWithVote 
                 key={game.id} 
                 game={{ ...game, rank: index + 1 }}
                 imagePriority={index < 10}
               />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-              <p className="font-bold">No hot games available</p>
-              <p>Games will be loaded soon from the database.</p>
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
