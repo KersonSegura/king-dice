@@ -111,10 +111,6 @@ export default function HomePage() {
   const [topRankedGames, setTopRankedGames] = useState<Game[]>([]);
   // Vote data is now loaded on-demand when users interact with star buttons
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [loadingMoreHotGames, setLoadingMoreHotGames] = useState(false);
-  const [loadingMoreTopRanked, setLoadingMoreTopRanked] = useState(false);
-  const [currentLimit, setCurrentLimit] = useState(6);
   const [forumStats, setForumStats] = useState({
     general: { posts: 0, replies: 0 },
     strategy: { posts: 0, replies: 0 },
@@ -140,9 +136,9 @@ export default function HomePage() {
         setLoading(true);
         console.log('🔍 Fetching games...');
         
-        // Fetch first 10 hot games immediately (fast load)
+        // Fetch only 6 hot games for main page preview
         try {
-          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=10`, {
+          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=6`, {
             cache: 'no-store',
             headers: {
               'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -151,10 +147,10 @@ export default function HomePage() {
           }, {
             maxRetries: 2,
             retryDelay: 500,
-            timeout: 8000 // Shorter timeout for first 10
+            timeout: 8000
           });
-          console.log('✅ First 10 hot games loaded:', { count: hotData.games?.length });
-          const mappedHotGames = (hotData.games || []).map((game: any) => ({
+          console.log('✅ First 6 hot games loaded:', { count: hotData.games?.length });
+          const mappedHotGames = (hotData.games || []).slice(0, 6).map((game: any) => ({
             ...game,
             name: game.name || game.nameEn || 'Unknown Game',
             year: game.year || game.yearRelease,
@@ -165,41 +161,7 @@ export default function HomePage() {
             numVotes: game.userVotes
           }));
           setHotGames(mappedHotGames);
-          setLoading(false); // Show first 10 immediately
-          
-          // Load remaining games in background
-          if (currentLimit > 10) {
-            setLoadingMoreHotGames(true);
-            try {
-              const moreHotData = await fetchJsonWithRetry(`/api/games/hotness?limit=${currentLimit}`, {
-                cache: 'no-store',
-                headers: {
-                  'Cache-Control': 'no-cache, no-store, must-revalidate',
-                  'Pragma': 'no-cache'
-                }
-              }, {
-                maxRetries: 2,
-                retryDelay: 1000,
-                timeout: 20000
-              });
-              const allMappedHotGames = (moreHotData.games || []).map((game: any) => ({
-                ...game,
-                name: game.name || game.nameEn || 'Unknown Game',
-                year: game.year || game.yearRelease,
-                minPlayTime: game.minPlayTime || game.durationMinutes,
-                maxPlayTime: game.maxPlayTime || game.durationMinutes,
-                image: game.image || game.imageUrl || game.thumbnailUrl,
-                averageRating: game.userRating,
-                numVotes: game.userVotes
-              }));
-              setHotGames(allMappedHotGames);
-            } catch (error) {
-              console.error('❌ Error loading more hot games:', error);
-              // Keep the first 10 games even if loading more fails
-            } finally {
-              setLoadingMoreHotGames(false);
-            }
-          }
+          setLoading(false);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           if (!errorMessage.includes('Retrying')) {
@@ -211,9 +173,9 @@ export default function HomePage() {
           setLoading(false);
         }
         
-        // Fetch first 10 top ranked games immediately (fast load)
+        // Fetch only 6 top ranked games for main page preview
         try {
-          const topRankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=10`, {
+          const topRankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=6`, {
             cache: 'no-store',
             headers: {
               'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -222,10 +184,10 @@ export default function HomePage() {
           }, {
             maxRetries: 2,
             retryDelay: 500,
-            timeout: 8000 // Shorter timeout for first 10
+            timeout: 8000
           });
-          console.log('✅ First 10 top ranked games loaded:', { count: topRankedData.games?.length });
-          const mappedTopRanked = (topRankedData.games || []).map((game: any) => ({
+          console.log('✅ First 6 top ranked games loaded:', { count: topRankedData.games?.length });
+          const mappedTopRanked = (topRankedData.games || []).slice(0, 6).map((game: any) => ({
             ...game,
             name: game.name || game.nameEn || 'Unknown Game',
             year: game.year || game.yearRelease,
@@ -236,40 +198,6 @@ export default function HomePage() {
             numVotes: game.userVotes
           }));
           setTopRankedGames(mappedTopRanked);
-          
-          // Load remaining games in background
-          if (currentLimit > 10) {
-            setLoadingMoreTopRanked(true);
-            try {
-              const moreTopRankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=${currentLimit}`, {
-                cache: 'no-store',
-                headers: {
-                  'Cache-Control': 'no-cache, no-store, must-revalidate',
-                  'Pragma': 'no-cache'
-                }
-              }, {
-                maxRetries: 2,
-                retryDelay: 1000,
-                timeout: 20000
-              });
-              const allMappedTopRanked = (moreTopRankedData.games || []).map((game: any) => ({
-                ...game,
-                name: game.name || game.nameEn || 'Unknown Game',
-                year: game.year || game.yearRelease,
-                minPlayTime: game.minPlayTime || game.durationMinutes,
-                maxPlayTime: game.maxPlayTime || game.durationMinutes,
-                image: game.image || game.imageUrl || game.thumbnailUrl,
-                averageRating: game.userRating,
-                numVotes: game.userVotes
-              }));
-              setTopRankedGames(allMappedTopRanked);
-            } catch (error) {
-              console.error('❌ Error loading more top ranked games:', error);
-              // Keep the first 10 games even if loading more fails
-            } finally {
-              setLoadingMoreTopRanked(false);
-            }
-          }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           if (!errorMessage.includes('Retrying')) {
@@ -317,7 +245,7 @@ export default function HomePage() {
 
     fetchGames();
     fetchForumStats();
-  }, [currentLimit, user?.id, isAuthenticated]);
+  }, [user?.id, isAuthenticated]);
 
   useEffect(() => {
     const fetchGallery = async () => {
@@ -860,15 +788,6 @@ export default function HomePage() {
               ))
             )}
           </div>
-          {loadingMoreHotGames && (
-            <div className="mt-6 text-center">
-              <div className="inline-flex items-center gap-2 text-gray-600">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
-                <span>Loading more games...</span>
-              </div>
-            </div>
-          )}
-
           <div className="text-center mt-8">
             <Link href="/hot-games" className="btn-primary">
               View All Hot Games
@@ -921,15 +840,6 @@ export default function HomePage() {
               ))
             )}
           </div>
-          {loadingMoreTopRanked && (
-            <div className="mt-6 text-center">
-              <div className="inline-flex items-center gap-2 text-gray-600">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
-                <span>Loading more games...</span>
-              </div>
-            </div>
-          )}
-
           <div className="text-center mt-8">
             <Link href="/top-ranked" className="btn-primary">
               View All Top Ranked Games
