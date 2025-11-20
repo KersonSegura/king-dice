@@ -67,89 +67,69 @@ export async function GET(request: NextRequest) {
     console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
 
     const gamesToFind = hotnessGames.slice(0, limit);
+    
+    // Use a single query to fetch all games at once using ILIKE with OR conditions
+    // Build a single query that searches all game names efficiently
+    const nameConditions = gamesToFind.map(name => {
+      // Escape single quotes in game names
+      const escapedName = name.replace(/'/g, "''");
+      return `nameEn.ilike.*${escapedName}*,nameEs.ilike.*${escapedName}*,name.ilike.*${escapedName}*`;
+    }).join(',');
+
+    const { data: allGames, error: queryError } = await executeSupabaseQuery(
+      async () => {
+        return await supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(nameConditions)
+          .limit(limit * 2); // Get more than needed in case of duplicates
+      },
+      { maxRetries: 2, baseDelay: 400, timeout: 10000 }
+    );
+
+    if (queryError) {
+      console.error('❌ Error querying games:', queryError);
+      // Return empty array instead of failing completely
+      return NextResponse.json({ 
+        games: [],
+        category: 'hotness',
+        total: 0,
+        description: 'The hottest games today according to BoardGameGeek',
+        source: 'BGG Hotness List'
+      });
+    }
+
+    // Match games to the requested order
     const foundGames: any[] = [];
     const missingGames: string[] = [];
+    const gamesMap = new Map<string, any>();
 
-    // Query games in batches to avoid connection exhaustion
-    // Based on Supabase connection management best practices
-    // Process in batches of 10 to prevent overwhelming PostgREST
-    const BATCH_SIZE = 10;
-    const results: Array<{ gameName: string; game: any }> = [];
-    
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+    // Create a map of found games by normalized name
+    (allGames || []).forEach((game: any) => {
+      const nameEn = (game.nameEn || '').toLowerCase();
+      const nameEs = (game.nameEs || '').toLowerCase();
+      const name = (game.name || '').toLowerCase();
       
-      const batchQueries = batch.map(async (gameName) => {
-        try {
-          // Try exact match first (case-insensitive) with retry logic
-          const exactResult = await executeSupabaseQuery(
-            async () => {
-              return await supabaseAdmin
-                .from('games')
-                .select('*')
-                .or(`nameEn.ilike.${gameName},nameEs.ilike.${gameName},name.ilike.${gameName}`)
-                .limit(1)
-                .maybeSingle();
-            },
-            { maxRetries: 2, baseDelay: 300, timeout: 5000 }
-          );
+      // Store by all possible name variations
+      if (nameEn) gamesMap.set(nameEn, game);
+      if (nameEs) gamesMap.set(nameEs, game);
+      if (name) gamesMap.set(name, game);
+    });
 
-          const { data: exactMatch, error: exactError } = exactResult;
-
-          if (exactMatch && !exactError) {
-            // Verify it's an exact match (case-insensitive)
-            const lowerName = gameName.toLowerCase();
-            if ((exactMatch as any).nameEn?.toLowerCase() === lowerName ||
-                (exactMatch as any).nameEs?.toLowerCase() === lowerName ||
-                (exactMatch as any).name?.toLowerCase() === lowerName) {
-              return { gameName, game: exactMatch };
-            }
-          }
-
-          // If no exact match, try partial match with retry logic
-          const partialResult = await executeSupabaseQuery(
-            async () => {
-              return await supabaseAdmin
-                .from('games')
-                .select('*')
-                .or(`nameEn.ilike.%${gameName}%,nameEs.ilike.%${gameName}%,name.ilike.%${gameName}%`)
-                .limit(1)
-                .maybeSingle();
-            },
-            { maxRetries: 2, baseDelay: 300, timeout: 5000 }
-          );
-
-          const { data: partialMatch, error: partialError } = partialResult;
-
-          if (partialMatch && !partialError) {
-            return { gameName, game: partialMatch };
-          }
-          
-          return { gameName, game: null };
-        } catch (error) {
-          console.error(`Error fetching game "${gameName}":`, error);
-          return { gameName, game: null };
+    // Match games in the requested order
+    gamesToFind.forEach((gameName) => {
+      const normalizedName = gameName.toLowerCase();
+      const matchedGame = gamesMap.get(normalizedName);
+      
+      if (matchedGame) {
+        // Check if we already added this game
+        if (!foundGames.find(g => g.id === matchedGame.id)) {
+          foundGames.push(matchedGame);
         }
-      });
-
-      // Wait for batch to complete before starting next batch
-      const batchResults = await Promise.all(batchQueries);
-      results.push(...batchResults);
-      
-      // Small delay between batches to prevent connection exhaustion
-      if (i + BATCH_SIZE < gamesToFind.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
-    
-    // Build results array in the correct order
-    for (const { gameName, game } of results) {
-      if (game) {
-        foundGames.push(game);
       } else {
         missingGames.push(gameName);
       }
-    }
+    });
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
@@ -174,9 +154,13 @@ export async function GET(request: NextRequest) {
     console.error('❌ Error type:', error instanceof Error ? error.constructor.name : typeof error);
     console.error('❌ Error message:', error instanceof Error ? error.message : String(error));
     
-    return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    // Return empty array instead of error to prevent page crashes
+    return NextResponse.json({ 
+      games: [],
+      category: 'hotness',
+      total: 0,
+      description: 'The hottest games today according to BoardGameGeek',
+      source: 'BGG Hotness List'
+    });
   }
 }
