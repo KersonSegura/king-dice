@@ -65,97 +65,63 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
+    console.log(`🔥 Getting HOTNESS GAMES (limit: ${limit})`);
 
-    const gamesToFind = hotnessGames.slice(0, limit);
-    const foundGames: any[] = [];
-    const missingGames: string[] = [];
-    const seenGameIds = new Set<number>();
+    // Strategy 1: Try precomputed table (fastest, most reliable)
+    let allGames: any[] | null = null;
+    let error: any = null;
 
-    // Normalize all game names for consistent matching
-    const normalizedNames = gamesToFind.map((name, index) => ({
-      original: name,
-      normalized: normalizeGameName(name),
-      index: index
-    }));
-
-    // Map to store games by their position in the original list
-    const gamesByPosition = new Map<number, any>();
-    
-    // Create a map of normalized names to their original indices (for fast lookup)
-    const normalizedToIndex = new Map<string, number[]>();
-    normalizedNames.forEach(nameInfo => {
-      if (!normalizedToIndex.has(nameInfo.normalized)) {
-        normalizedToIndex.set(nameInfo.normalized, []);
-      }
-      normalizedToIndex.get(nameInfo.normalized)!.push(nameInfo.index);
-    });
-
-    // Use RPC function for efficient querying (recommended by Supabase AI)
-    // This uses = ANY() which is more index-friendly than large .in() queries
-    const normalizedNameValues = normalizedNames.map(n => n.normalized);
-    
-    const { data: allGames, error } = await executeSupabaseQuery(
+    const { data: precomputedGames, error: precomputedError } = await executeSupabaseQuery(
       async () => {
         return await supabaseAdmin
-          .rpc('get_games_by_best_names_ordered', {
-            _names: normalizedNameValues
-          });
+          .rpc('get_hot_games_card_fields', { limit_count: limit });
       },
-      { maxRetries: 2, baseDelay: 200, timeout: 10000 }
+      { maxRetries: 1, baseDelay: 200, timeout: 5000 } // Fast timeout for precomputed
     );
 
+    if (!precomputedError && precomputedGames && precomputedGames.length > 0) {
+      // Precomputed table worked! Use it directly
+      console.log(`✅ Using precomputed table: ${precomputedGames.length} games`);
+      allGames = precomputedGames;
+    } else {
+      // Strategy 2: Fallback to optimized RPC with card fields only
+      console.log('⚠️ Precomputed table empty, using optimized RPC fallback');
+      
+      const gamesToFind = hotnessGames.slice(0, limit);
+      const normalizedNameValues = gamesToFind.map(name => normalizeGameName(name));
+      
+      const result = await executeSupabaseQuery(
+        async () => {
+          return await supabaseAdmin
+            .rpc('get_games_card_fields_by_names', {
+              _names: normalizedNameValues
+            });
+        },
+        { maxRetries: 2, baseDelay: 200, timeout: 15000 } // Longer timeout for fallback
+      );
+
+      allGames = result.data;
+      error = result.error;
+    }
+
+    // Map results to expected format
+    const foundGames = (allGames || []).map((game: any) => ({
+      ...game,
+      name: game.name || game.nameEn || 'Unknown Game',
+      year: game.yearRelease || game.year,
+      minPlayTime: game.durationMinutes,
+      maxPlayTime: game.durationMinutes,
+      image: game.image || game.imageUrl || game.thumbnailUrl,
+      averageRating: game.userRating,
+      numVotes: game.userVotes,
+      rank: game.rank || undefined
+    }));
+
     if (error) {
-      console.error('❌ Error querying games via RPC:', error);
-      // Return empty array instead of crashing
-      return NextResponse.json({ 
-        games: [],
-        category: 'hotness',
-        total: 0,
-        description: 'The hottest games today according to BoardGameGeek',
-        source: 'BGG Hotness List'
-      });
+      console.error('❌ Error querying games:', error);
     }
 
-    // Match found games back to their original positions
-    // The RPC returns games in input order, so we can match by index
-    if (allGames && allGames.length > 0) {
-      allGames.forEach((game: any, rpcIndex: number) => {
-        const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
-        
-        // Find matching indices for this normalized name
-        const matchingIndices = normalizedToIndex.get(gameBestNameNorm);
-        if (matchingIndices && matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
-          // Use the first matching index (prefer earlier position in list)
-          const matchIndex = matchingIndices[0];
-          if (!gamesByPosition.has(matchIndex)) {
-            gamesByPosition.set(matchIndex, game);
-            seenGameIds.add(game.id);
-          }
-        }
-      });
-    }
-
-    // Track missing games
-    normalizedNames.forEach((nameInfo) => {
-      if (!gamesByPosition.has(nameInfo.index)) {
-        missingGames.push(nameInfo.original);
-      }
-    });
-
-    // Build final array in order of the original list
-    for (let i = 0; i < gamesToFind.length; i++) {
-      const game = gamesByPosition.get(i);
-      if (game) {
-        foundGames.push(game);
-      }
-    }
-
-    if (missingGames.length > 0) {
-      console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
-    }
-
-    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} hotness games`);
+    console.log(`✅ Found ${foundGames.length} hotness games`);
 
     return NextResponse.json({ 
       games: foundGames,
@@ -165,14 +131,12 @@ export async function GET(request: NextRequest) {
       source: 'BGG Hotness List'
     }, {
       headers: {
-        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60', // Edge cache with stale-while-revalidate
         'CDN-Cache-Control': 'public, max-age=300'
       }
     });
   } catch (error) {
     console.error('❌ Error getting hotness games:', error);
-    console.error('❌ Error type:', error instanceof Error ? error.constructor.name : typeof error);
-    console.error('❌ Error message:', error instanceof Error ? error.message : String(error));
     
     // Return empty array instead of error to prevent page crashes
     return NextResponse.json({ 
@@ -181,6 +145,10 @@ export async function GET(request: NextRequest) {
       total: 0,
       description: 'The hottest games today according to BoardGameGeek',
       source: 'BGG Hotness List'
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30' // Shorter cache on error
+      }
     });
   }
 }

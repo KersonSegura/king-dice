@@ -4,19 +4,19 @@
 -- Best name (uses nameEn, falls back to nameEs, then name)
 ALTER TABLE public.games
   ADD COLUMN IF NOT EXISTS best_name_norm text GENERATED ALWAYS AS (
-    lower(regexp_replace(coalesce(name_en, name_es, name), '\s+', ' ', 'g'))
+    lower(regexp_replace(coalesce("nameEn", "nameEs", "name"), '\s+', ' ', 'g'))
   ) STORED;
 
 -- Individual normalized columns for each language
 ALTER TABLE public.games
   ADD COLUMN IF NOT EXISTS name_en_norm text GENERATED ALWAYS AS (
-    lower(regexp_replace(coalesce(name_en, ''), '\s+', ' ', 'g'))
+    lower(regexp_replace(coalesce("nameEn", ''), '\s+', ' ', 'g'))
   ) STORED,
   ADD COLUMN IF NOT EXISTS name_es_norm text GENERATED ALWAYS AS (
-    lower(regexp_replace(coalesce(name_es, ''), '\s+', ' ', 'g'))
+    lower(regexp_replace(coalesce("nameEs", ''), '\s+', ' ', 'g'))
   ) STORED,
   ADD COLUMN IF NOT EXISTS name_norm text GENERATED ALWAYS AS (
-    lower(regexp_replace(coalesce(name, ''), '\s+', ' ', 'g'))
+    lower(regexp_replace(coalesce("name", ''), '\s+', ' ', 'g'))
   ) STORED;
 
 -- Create indexes for fast lookups

@@ -40,106 +40,63 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '25');
 
-    console.log(`🎯 Getting MOST PLAYED GAMES from hardcoded list (limit: ${limit})`);
+    console.log(`🎯 Getting MOST PLAYED GAMES (limit: ${limit})`);
 
-    const gamesToFind = topRankedGames.slice(0, limit);
-    const foundGames: any[] = [];
-    const missingGames: string[] = [];
-    const seenGameIds = new Set<number>();
+    // Strategy 1: Try precomputed table (fastest, most reliable)
+    let allGames: any[] | null = null;
+    let error: any = null;
 
-    // Normalize all game names for consistent matching
-    const normalizedNames = gamesToFind.map((gameInfo, index) => ({
-      original: gameInfo,
-      normalized: normalizeGameName(gameInfo.name),
-      index: index
-    }));
-
-    // Map to store games by their position in the original list
-    const gamesByPosition = new Map<number, any>();
-    
-    // Create a map of normalized names to their original indices (for fast lookup)
-    const normalizedToIndex = new Map<string, Array<{ index: number; year?: number }>>();
-    normalizedNames.forEach(nameInfo => {
-      const key = `${nameInfo.normalized}_${nameInfo.original.year || 'any'}`;
-      if (!normalizedToIndex.has(key)) {
-        normalizedToIndex.set(key, []);
-      }
-      normalizedToIndex.get(key)!.push({ index: nameInfo.index, year: nameInfo.original.year });
-    });
-
-    // Use RPC function for efficient querying (recommended by Supabase AI)
-    // This uses = ANY() which is more index-friendly than large .in() queries
-    const normalizedNameValues = normalizedNames.map(n => n.normalized);
-    
-    const { data: allGames, error } = await executeSupabaseQuery(
+    const { data: precomputedGames, error: precomputedError } = await executeSupabaseQuery(
       async () => {
         return await supabaseAdmin
-          .rpc('get_games_by_best_names_ordered', {
-            _names: normalizedNameValues
-          });
+          .rpc('get_most_played_games_card_fields', { limit_count: limit });
       },
-      { maxRetries: 2, baseDelay: 200, timeout: 10000 }
+      { maxRetries: 1, baseDelay: 200, timeout: 5000 } // Fast timeout for precomputed
     );
 
+    if (!precomputedError && precomputedGames && precomputedGames.length > 0) {
+      // Precomputed table worked! Use it directly
+      console.log(`✅ Using precomputed table: ${precomputedGames.length} games`);
+      allGames = precomputedGames;
+    } else {
+      // Strategy 2: Fallback to optimized RPC with card fields only
+      console.log('⚠️ Precomputed table empty, using optimized RPC fallback');
+      
+      const gamesToFind = topRankedGames.slice(0, limit);
+      const normalizedNameValues = gamesToFind.map(gameInfo => normalizeGameName(gameInfo.name));
+      
+      const result = await executeSupabaseQuery(
+        async () => {
+          return await supabaseAdmin
+            .rpc('get_games_card_fields_by_names', {
+              _names: normalizedNameValues
+            });
+        },
+        { maxRetries: 2, baseDelay: 200, timeout: 15000 } // Longer timeout for fallback
+      );
+
+      allGames = result.data;
+      error = result.error;
+    }
+
+    // Map results to expected format
+    const foundGames = (allGames || []).map((game: any) => ({
+      ...game,
+      name: game.name || game.nameEn || 'Unknown Game',
+      year: game.yearRelease || game.year,
+      minPlayTime: game.durationMinutes,
+      maxPlayTime: game.durationMinutes,
+      image: game.image || game.imageUrl || game.thumbnailUrl,
+      averageRating: game.userRating,
+      numVotes: game.userVotes,
+      rank: game.rank || undefined
+    }));
+
     if (error) {
-      console.error('❌ Error querying games via RPC:', error);
-      // Return empty array instead of crashing
-      return NextResponse.json({ 
-        games: [],
-        category: 'most-played',
-        total: 0,
-        description: 'The most played games this month according to BoardGameGeek',
-        source: 'BGG Most Played List'
-      });
+      console.error('❌ Error querying games:', error);
     }
 
-    // Match found games back to their original positions
-    // The RPC returns games in input order, so we can match by index
-    if (allGames && allGames.length > 0) {
-      allGames.forEach((game: any) => {
-        const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
-        const gameYear = game.yearRelease;
-        
-        // Find matching indices for this normalized name and year
-        const keyAny = `${gameBestNameNorm}_any`;
-        const keyYear = `${gameBestNameNorm}_${gameYear}`;
-        
-        const matchingAny = normalizedToIndex.get(keyAny) || [];
-        const matchingYear = normalizedToIndex.get(keyYear) || [];
-        const matchingIndices = [...matchingYear, ...matchingAny];
-        
-        if (matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
-          // Use the first matching index (prefer earlier position in list)
-          const matchInfo = matchingIndices[0];
-          if (!gamesByPosition.has(matchInfo.index)) {
-            gamesByPosition.set(matchInfo.index, game);
-            seenGameIds.add(game.id);
-          }
-        }
-      });
-    }
-
-    // Track missing games
-    normalizedNames.forEach((nameInfo) => {
-      if (!gamesByPosition.has(nameInfo.index)) {
-        missingGames.push(nameInfo.original.name);
-      }
-    });
-
-    // Build final array in order of the original list
-    // Only add each game once, maintaining order
-    for (let i = 0; i < gamesToFind.length; i++) {
-      const game = gamesByPosition.get(i);
-      if (game && !foundGames.find(g => g.id === game.id)) {
-        foundGames.push(game);
-      }
-    }
-
-    if (missingGames.length > 0) {
-      console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
-    }
-
-    console.log(`✅ Found ${foundGames.length} out of ${gamesToFind.length} most played games`);
+    console.log(`✅ Found ${foundGames.length} most played games`);
 
     return NextResponse.json({ 
       games: foundGames,
@@ -149,15 +106,24 @@ export async function GET(request: NextRequest) {
       source: 'BGG Most Played List'
     }, {
       headers: {
-        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60', // Edge cache with stale-while-revalidate
         'CDN-Cache-Control': 'public, max-age=300'
       }
     });
   } catch (error) {
-    console.error('Error getting most played games:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    console.error('❌ Error getting most played games:', error);
+    
+    // Return empty array instead of error to prevent page crashes
+    return NextResponse.json({ 
+      games: [],
+      category: 'most-played',
+      total: 0,
+      description: 'The most played games this month according to BoardGameGeek',
+      source: 'BGG Most Played List'
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30' // Shorter cache on error
+      }
+    });
   }
 }

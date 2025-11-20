@@ -29,3 +29,4 @@ $$;
 COMMENT ON FUNCTION public.get_games_by_best_names IS 'Get games by normalized names using efficient = ANY() pattern. Fast for 25-50 names.';
 COMMENT ON FUNCTION public.get_games_by_best_names_ordered IS 'Get games by normalized names preserving input order. Fast for 25-50 names.';
 
+

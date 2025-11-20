@@ -75,6 +75,7 @@ checks.forEach(check => {
 });
 
 // Validate URL format
+let projectRef = null;
 if (supabaseUrl) {
   console.log('🔗 URL Validation:');
   if (supabaseUrl.includes('supabase.co')) {
@@ -86,8 +87,9 @@ if (supabaseUrl) {
   // Extract project reference
   const match = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/);
   if (match) {
-    console.log(`   📦 Project Reference: ${match[1]}`);
-    console.log(`   💡 Check status at: https://supabase.com/dashboard/project/${match[1]}`);
+    projectRef = match[1];
+    console.log(`   📦 Project Reference: ${projectRef}`);
+    console.log(`   💡 Check status at: https://supabase.com/dashboard/project/${projectRef}`);
   }
   console.log('');
 }
@@ -119,8 +121,8 @@ if (allValid) {
   console.log('\n📋 Next Steps:');
   console.log('   1. Verify your Supabase project is active (not paused)');
   console.log('   2. Check project status at: https://supabase.com/dashboard');
-  if (match) {
-    console.log(`   3. Direct link: https://supabase.com/dashboard/project/${match[1]}`);
+  if (projectRef) {
+    console.log(`   3. Direct link: https://supabase.com/dashboard/project/${projectRef}`);
   }
   console.log('   4. Run the database indexes migration: supabase/migrations/add_performance_indexes.sql');
   console.log('   5. Test connection: node scripts/test-supabase-connection.js');
