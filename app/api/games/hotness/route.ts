@@ -67,20 +67,43 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔥 Getting HOTNESS GAMES (limit: ${limit})`);
 
-    // Use direct query with optimized .in() on best_name_norm (no RPC needed)
+    // Batch queries into smaller chunks to avoid timeouts
     const gamesToFind = hotnessGames.slice(0, limit);
     const normalizedNameValues = gamesToFind.map(name => normalizeGameName(name));
     
-    // Direct query - only select card fields for fast response
-    const { data: allGames, error } = await executeSupabaseQuery(
-      async () => {
-        return await supabaseAdmin
-          .from('games')
-          .select('id, bggId, best_name_norm, name, nameEn, nameEs, yearRelease, minPlayers, maxPlayers, durationMinutes, imageUrl, thumbnailUrl, image, userRating, userVotes, isExpansion, ranking, bggRanking, bggRating, bggVotes')
-          .in('best_name_norm', normalizedNameValues);
-      },
-      { maxRetries: 2, baseDelay: 200, timeout: 15000 }
-    );
+    // Query in batches of 5 to avoid timeouts
+    const BATCH_SIZE = 5;
+    const allGames: any[] = [];
+    let lastError: any = null;
+    
+    for (let i = 0; i < normalizedNameValues.length; i += BATCH_SIZE) {
+      const batch = normalizedNameValues.slice(i, i + BATCH_SIZE);
+      
+      const { data: batchGames, error: batchError } = await executeSupabaseQuery(
+        async () => {
+          return await supabaseAdmin
+            .from('games')
+            .select('id, bggId, best_name_norm, name, nameEn, nameEs, yearRelease, minPlayers, maxPlayers, durationMinutes, imageUrl, thumbnailUrl, image, userRating, userVotes, isExpansion, ranking, bggRanking, bggRating, bggVotes')
+            .in('best_name_norm', batch);
+        },
+        { maxRetries: 1, baseDelay: 100, timeout: 5000 } // Shorter timeout per batch
+      );
+      
+      if (batchGames) {
+        allGames.push(...batchGames);
+      }
+      if (batchError) {
+        lastError = batchError;
+        console.warn(`⚠️ Batch ${i / BATCH_SIZE + 1} failed:`, batchError);
+      }
+      
+      // Small delay between batches to avoid overwhelming the connection pool
+      if (i + BATCH_SIZE < normalizedNameValues.length) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+    
+    const error = lastError;
 
     // Map results to expected format and preserve order
     const gamesMap = new Map<string, any>();
