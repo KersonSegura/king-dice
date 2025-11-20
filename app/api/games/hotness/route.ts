@@ -150,14 +150,6 @@ export async function GET(request: NextRequest) {
         foundGames.push(game);
       }
     }
-    
-    // Build final array in order of the original list
-    for (let i = 0; i < gamesToFind.length; i++) {
-      const game = gamesByPosition.get(i);
-      if (game) {
-        foundGames.push(game);
-      }
-    }
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
