@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Map to store games by their position in the original list
-    const gamesByPosition = new Map<number, Game>();
+    const gamesByPosition = new Map<number, any>();
     
     const first10Results = await Promise.allSettled(first10Promises);
     first10Results.forEach((result, idx) => {
