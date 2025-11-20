@@ -21,7 +21,6 @@ const GAME_FIELDS = `
   userRating,
   userVotes,
   isExpansion,
-  ranking,
   bggRanking,
   bggRating,
   bggVotes
