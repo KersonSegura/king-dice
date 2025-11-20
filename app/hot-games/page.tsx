@@ -101,7 +101,8 @@ export default function HotGamesPage() {
             {games.map((game, index) => (
               <GameCardWithVote 
                 key={game.id} 
-                game={{ ...game, rank: index + 1 }} 
+                game={{ ...game, rank: index + 1 }}
+                imagePriority={index < 10}
               />
             ))}
           </div>

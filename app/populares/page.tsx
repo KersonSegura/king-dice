@@ -160,10 +160,11 @@ export default function PopularesPage() {
 
           {/* Games Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {games.map((game) => (
+            {games.map((game, index) => (
               <GameCardWithVote 
                 key={game.id} 
-                game={game} 
+                game={game}
+                imagePriority={index < 10}
               />
             ))}
           </div>

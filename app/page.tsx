@@ -781,7 +781,11 @@ export default function HomePage() {
           ) : hotGames.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {hotGames.map((game) => (
-                <GameCardWithVote key={game.id} game={game} />
+                <GameCardWithVote 
+                  key={game.id} 
+                  game={game} 
+                  imagePriority={index < 10}
+                />
               ))}
             </div>
           ) : (
@@ -829,7 +833,11 @@ export default function HomePage() {
           ) : topRankedGames.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {topRankedGames.map((game) => (
-                <GameCardWithVote key={game.id} game={game} />
+                <GameCardWithVote 
+                  key={game.id} 
+                  game={game} 
+                  imagePriority={index < 10}
+                />
               ))}
             </div>
           ) : (

@@ -41,9 +41,10 @@ interface VoteData {
 interface GameCardWithVoteProps {
   game: Game;
   voteData?: VoteData; // Optional vote data to avoid individual API calls
+  imagePriority?: boolean; // If true, load image eagerly (for first 10 games)
 }
 
-export default function GameCardWithVote({ game, voteData }: GameCardWithVoteProps) {
+export default function GameCardWithVote({ game, voteData, imagePriority = false }: GameCardWithVoteProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -515,6 +516,8 @@ export default function GameCardWithVote({ game, voteData }: GameCardWithVotePro
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover group-hover:scale-105 transition-transform duration-300"
+              loading={imagePriority ? "eager" : "lazy"}
+              priority={imagePriority}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
