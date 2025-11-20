@@ -68,29 +68,74 @@ export async function GET(request: NextRequest) {
 
     const gamesToFind = hotnessGames.slice(0, limit);
     
-    // Use a single query to fetch all games at once
-    // Build OR conditions for each game name across all name fields
-    const orConditions: string[] = [];
-    gamesToFind.forEach(name => {
-      // Escape single quotes and wrap in wildcards for ILIKE
-      const escapedName = name.replace(/'/g, "''");
-      // Add conditions for each name field
-      orConditions.push(`nameEn.ilike.*${escapedName}*`);
-      orConditions.push(`nameEs.ilike.*${escapedName}*`);
-      orConditions.push(`name.ilike.*${escapedName}*`);
-    });
+    // Use smaller batches to avoid query complexity timeout
+    // PostgreSQL has limits on OR clause complexity, so we'll query in batches of 10
+    const BATCH_SIZE = 10;
+    const foundGames: any[] = [];
+    const missingGames: string[] = [];
+    const seenGameIds = new Set<number>();
 
-    const { data: allGames, error: queryError } = await executeSupabaseQuery(
-      async () => {
-        return await supabaseAdmin
-          .from('games')
-          .select('*')
-          .or(orConditions.join(','))
-          .limit(limit * 3); // Get more than needed in case of duplicates
-      },
-      { maxRetries: 2, baseDelay: 400, timeout: 10000 }
-    );
+    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+      
+      // Build OR conditions for this batch only (max 30 conditions: 10 games × 3 fields)
+      const orConditions: string[] = [];
+      batch.forEach(name => {
+        // Escape single quotes
+        const escapedName = name.replace(/'/g, "''");
+        // Try exact match first (no wildcards = faster)
+        orConditions.push(`nameEn.ilike.${escapedName}`);
+        orConditions.push(`nameEs.ilike.${escapedName}`);
+        orConditions.push(`name.ilike.${escapedName}`);
+      });
 
+      const { data: batchGames, error: batchError } = await executeSupabaseQuery(
+        async () => {
+          return await supabaseAdmin
+            .from('games')
+            .select('*')
+            .or(orConditions.join(','))
+            .limit(BATCH_SIZE * 2);
+        },
+        { maxRetries: 1, baseDelay: 200, timeout: 5000 }
+      );
+
+      if (batchError) {
+        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, batchError);
+        // Add all games in this batch to missing list
+        batch.forEach(name => missingGames.push(name));
+        continue;
+      }
+
+      // Match games from this batch
+      const batchMap = new Map<string, any>();
+      (batchGames || []).forEach((game: any) => {
+        const nameEn = (game.nameEn || '').toLowerCase();
+        const nameEs = (game.nameEs || '').toLowerCase();
+        const name = (game.name || '').toLowerCase();
+        if (nameEn) batchMap.set(nameEn, game);
+        if (nameEs) batchMap.set(nameEs, game);
+        if (name) batchMap.set(name, game);
+      });
+
+      // Match games in order
+      batch.forEach((gameName) => {
+        const normalizedName = gameName.toLowerCase();
+        const matchedGame = batchMap.get(normalizedName);
+        
+        if (matchedGame && !seenGameIds.has(matchedGame.id)) {
+          foundGames.push(matchedGame);
+          seenGameIds.add(matchedGame.id);
+        } else if (!matchedGame) {
+          missingGames.push(gameName);
+        }
+      });
+
+      // Small delay between batches to prevent overwhelming the database
+      if (i + BATCH_SIZE < gamesToFind.length) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
