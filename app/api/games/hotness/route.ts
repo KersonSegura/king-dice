@@ -67,55 +67,46 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔥 Getting HOTNESS GAMES (limit: ${limit})`);
 
-    // Strategy 1: Try precomputed table (fastest, most reliable)
-    let allGames: any[] | null = null;
-    let error: any = null;
-
-    const { data: precomputedGames, error: precomputedError } = await executeSupabaseQuery(
+    // Use direct query with optimized .in() on best_name_norm (no RPC needed)
+    const gamesToFind = hotnessGames.slice(0, limit);
+    const normalizedNameValues = gamesToFind.map(name => normalizeGameName(name));
+    
+    // Direct query - only select card fields for fast response
+    const { data: allGames, error } = await executeSupabaseQuery(
       async () => {
         return await supabaseAdmin
-          .rpc('get_hot_games_card_fields', { limit_count: limit });
+          .from('games')
+          .select('id, bggId, best_name_norm, name, nameEn, nameEs, yearRelease, minPlayers, maxPlayers, durationMinutes, imageUrl, thumbnailUrl, image, userRating, userVotes, isExpansion, ranking, bggRanking, bggRating, bggVotes')
+          .in('best_name_norm', normalizedNameValues);
       },
-      { maxRetries: 1, baseDelay: 200, timeout: 5000 } // Fast timeout for precomputed
+      { maxRetries: 2, baseDelay: 200, timeout: 15000 }
     );
 
-    if (!precomputedError && precomputedGames && precomputedGames.length > 0) {
-      // Precomputed table worked! Use it directly
-      console.log(`✅ Using precomputed table: ${precomputedGames.length} games`);
-      allGames = precomputedGames;
-    } else {
-      // Strategy 2: Fallback to optimized RPC with card fields only
-      console.log('⚠️ Precomputed table empty, using optimized RPC fallback');
-      
-      const gamesToFind = hotnessGames.slice(0, limit);
-      const normalizedNameValues = gamesToFind.map(name => normalizeGameName(name));
-      
-      const result = await executeSupabaseQuery(
-        async () => {
-          return await supabaseAdmin
-            .rpc('get_games_card_fields_by_names', {
-              _names: normalizedNameValues
-            });
-        },
-        { maxRetries: 2, baseDelay: 200, timeout: 15000 } // Longer timeout for fallback
-      );
+    // Map results to expected format and preserve order
+    const gamesMap = new Map<string, any>();
+    (allGames || []).forEach((game: any) => {
+      const normName = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
+      gamesMap.set(normName, game);
+    });
 
-      allGames = result.data;
-      error = result.error;
-    }
-
-    // Map results to expected format
-    const foundGames = (allGames || []).map((game: any) => ({
-      ...game,
-      name: game.name || game.nameEn || 'Unknown Game',
-      year: game.yearRelease || game.year,
-      minPlayTime: game.durationMinutes,
-      maxPlayTime: game.durationMinutes,
-      image: game.image || game.imageUrl || game.thumbnailUrl,
-      averageRating: game.userRating,
-      numVotes: game.userVotes,
-      rank: game.rank || undefined
-    }));
+    // Build array in original order
+    const foundGames: any[] = [];
+    normalizedNameValues.forEach((normName, index) => {
+      const game = gamesMap.get(normName);
+      if (game) {
+        foundGames.push({
+          ...game,
+          name: game.name || game.nameEn || 'Unknown Game',
+          year: game.yearRelease || game.year,
+          minPlayTime: game.durationMinutes,
+          maxPlayTime: game.durationMinutes,
+          image: game.image || game.imageUrl || game.thumbnailUrl,
+          averageRating: game.userRating,
+          numVotes: game.userVotes,
+          rank: index + 1
+        });
+      }
+    });
 
     if (error) {
       console.error('❌ Error querying games:', error);
