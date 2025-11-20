@@ -67,54 +67,34 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔥 Getting HOTNESS GAMES (limit: ${limit})`);
 
-    // Batch queries into smaller chunks to avoid timeouts
+    // Simple approach: Fetch games and filter in memory (like /api/games does)
     const gamesToFind = hotnessGames.slice(0, limit);
-    const normalizedNameValues = gamesToFind.map(name => normalizeGameName(name));
+    const normalizedNameValues = new Set(gamesToFind.map(name => normalizeGameName(name)));
     
-    // Query in batches of 5 to avoid timeouts
-    const BATCH_SIZE = 5;
-    const allGames: any[] = [];
-    let lastError: any = null;
-    
-    for (let i = 0; i < normalizedNameValues.length; i += BATCH_SIZE) {
-      const batch = normalizedNameValues.slice(i, i + BATCH_SIZE);
-      
-      const { data: batchGames, error: batchError } = await executeSupabaseQuery(
-        async () => {
-          return await supabaseAdmin
-            .from('games')
-            .select('id, bggId, best_name_norm, name, nameEn, nameEs, yearRelease, minPlayers, maxPlayers, durationMinutes, imageUrl, thumbnailUrl, image, userRating, userVotes, isExpansion, ranking, bggRanking, bggRating, bggVotes')
-            .in('best_name_norm', batch);
-        },
-        { maxRetries: 1, baseDelay: 100, timeout: 5000 } // Shorter timeout per batch
-      );
-      
-      if (batchGames) {
-        allGames.push(...batchGames);
-      }
-      if (batchError) {
-        lastError = batchError;
-        console.warn(`⚠️ Batch ${i / BATCH_SIZE + 1} failed:`, batchError);
-      }
-      
-      // Small delay between batches to avoid overwhelming the connection pool
-      if (i + BATCH_SIZE < normalizedNameValues.length) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-    }
-    
-    const error = lastError;
+    // Simple query like /api/games - just get games, we'll filter in memory
+    const { data: allGames, error } = await executeSupabaseQuery(
+      async () => {
+        return await supabaseAdmin
+          .from('games')
+          .select('id, bggId, best_name_norm, name, nameEn, nameEs, yearRelease, minPlayers, maxPlayers, durationMinutes, imageUrl, thumbnailUrl, image, userRating, userVotes, isExpansion, ranking, bggRanking, bggRating, bggVotes')
+          .limit(1000); // Get a reasonable number, filter in memory
+      },
+      { maxRetries: 1, baseDelay: 100, timeout: 8000 }
+    );
 
-    // Map results to expected format and preserve order
+    // Filter in memory - match by best_name_norm
     const gamesMap = new Map<string, any>();
     (allGames || []).forEach((game: any) => {
       const normName = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
-      gamesMap.set(normName, game);
+      if (normalizedNameValues.has(normName)) {
+        gamesMap.set(normName, game);
+      }
     });
 
     // Build array in original order
     const foundGames: any[] = [];
-    normalizedNameValues.forEach((normName, index) => {
+    gamesToFind.forEach((name, index) => {
+      const normName = normalizeGameName(name);
       const game = gamesMap.get(normName);
       if (game) {
         foundGames.push({
