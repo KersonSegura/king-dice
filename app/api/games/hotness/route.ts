@@ -73,57 +73,69 @@ export async function GET(request: NextRequest) {
     const seenGameIds = new Set<number>();
 
     // Normalize all game names for consistent matching
-    const normalizedNames = gamesToFind.map(name => ({
+    const normalizedNames = gamesToFind.map((name, index) => ({
       original: name,
-      normalized: normalizeGameName(name)
+      normalized: normalizeGameName(name),
+      index: index
     }));
 
     // Map to store games by their position in the original list
     const gamesByPosition = new Map<number, any>();
+    
+    // Create a map of normalized names to their original indices (for fast lookup)
+    const normalizedToIndex = new Map<string, number[]>();
+    normalizedNames.forEach(nameInfo => {
+      if (!normalizedToIndex.has(nameInfo.normalized)) {
+        normalizedToIndex.set(nameInfo.normalized, []);
+      }
+      normalizedToIndex.get(nameInfo.normalized)!.push(nameInfo.index);
+    });
 
-    // Single query using .in() on the normalized best_name_norm column
-    // This is much faster and more reliable than OR chains
+    // Query in smaller batches to avoid timeout (process 20 games at a time)
+    const BATCH_SIZE = 20;
     const normalizedNameValues = normalizedNames.map(n => n.normalized);
     
-    const { data: allGames, error } = await executeSupabaseQuery(
-      async () => {
-        return await supabaseAdmin
-          .from('games')
-          .select('*')
-          .in('best_name_norm', normalizedNameValues);
-      },
-      { maxRetries: 2, baseDelay: 200, timeout: 10000 }
-    );
+    for (let i = 0; i < normalizedNameValues.length; i += BATCH_SIZE) {
+      const batch = normalizedNameValues.slice(i, i + BATCH_SIZE);
+      
+      const { data: batchGames, error } = await executeSupabaseQuery(
+        async () => {
+          return await supabaseAdmin
+            .from('games')
+            .select('*')
+            .in('best_name_norm', batch);
+        },
+        { maxRetries: 1, baseDelay: 200, timeout: 8000 }
+      );
 
-    if (error) {
-      console.error('❌ Error querying games:', error);
-      // Return empty array instead of crashing
-      return NextResponse.json({ 
-        games: [],
-        category: 'hotness',
-        total: 0,
-        description: 'The hottest games today according to BoardGameGeek',
-        source: 'BGG Hotness List'
-      });
-    }
+      if (error) {
+        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, error);
+        // Continue with next batch instead of failing completely
+        continue;
+      }
 
-    // Match found games back to their original positions
-    if (allGames && allGames.length > 0) {
-      allGames.forEach((game: any) => {
-        const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
-        
-        // Find matching normalized name
-        const matchIndex = normalizedNames.findIndex(n => n.normalized === gameBestNameNorm);
-        if (matchIndex !== -1 && !seenGameIds.has(game.id)) {
-          gamesByPosition.set(matchIndex, game);
-          seenGameIds.add(game.id);
-        }
-      });
+      // Match found games back to their original positions
+      if (batchGames && batchGames.length > 0) {
+        batchGames.forEach((game: any) => {
+          const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
+          
+          // Find matching indices for this normalized name
+          const matchingIndices = normalizedToIndex.get(gameBestNameNorm);
+          if (matchingIndices && matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
+            // Use the first matching index (prefer earlier position in list)
+            const matchIndex = matchingIndices[0];
+            if (!gamesByPosition.has(matchIndex)) {
+              gamesByPosition.set(matchIndex, game);
+              seenGameIds.add(game.id);
+            }
+          }
+        });
+      }
     }
 
     // Track missing games
-    normalizedNames.forEach((nameInfo, index) => {
-      if (!gamesByPosition.has(index)) {
+    normalizedNames.forEach((nameInfo) => {
+      if (!gamesByPosition.has(nameInfo.index)) {
         missingGames.push(nameInfo.original);
       }
     });

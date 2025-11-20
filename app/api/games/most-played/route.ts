@@ -48,62 +48,77 @@ export async function GET(request: NextRequest) {
     const seenGameIds = new Set<number>();
 
     // Normalize all game names for consistent matching
-    const normalizedNames = gamesToFind.map(gameInfo => ({
+    const normalizedNames = gamesToFind.map((gameInfo, index) => ({
       original: gameInfo,
-      normalized: normalizeGameName(gameInfo.name)
+      normalized: normalizeGameName(gameInfo.name),
+      index: index
     }));
 
     // Map to store games by their position in the original list
     const gamesByPosition = new Map<number, any>();
+    
+    // Create a map of normalized names to their original indices (for fast lookup)
+    const normalizedToIndex = new Map<string, Array<{ index: number; year?: number }>>();
+    normalizedNames.forEach(nameInfo => {
+      const key = `${nameInfo.normalized}_${nameInfo.original.year || 'any'}`;
+      if (!normalizedToIndex.has(key)) {
+        normalizedToIndex.set(key, []);
+      }
+      normalizedToIndex.get(key)!.push({ index: nameInfo.index, year: nameInfo.original.year });
+    });
 
-    // Single query using .in() on the normalized best_name_norm column
-    // This is much faster and more reliable than OR chains
+    // Query in smaller batches to avoid timeout (process 15 games at a time)
+    const BATCH_SIZE = 15;
     const normalizedNameValues = normalizedNames.map(n => n.normalized);
     
-    const { data: allGames, error } = await executeSupabaseQuery(
-      async () => {
-        return await supabaseAdmin
-          .from('games')
-          .select('*')
-          .in('best_name_norm', normalizedNameValues);
-      },
-      { maxRetries: 2, baseDelay: 200, timeout: 10000 }
-    );
+    for (let i = 0; i < normalizedNameValues.length; i += BATCH_SIZE) {
+      const batch = normalizedNameValues.slice(i, i + BATCH_SIZE);
+      
+      const { data: batchGames, error } = await executeSupabaseQuery(
+        async () => {
+          return await supabaseAdmin
+            .from('games')
+            .select('*')
+            .in('best_name_norm', batch);
+        },
+        { maxRetries: 1, baseDelay: 200, timeout: 8000 }
+      );
 
-    if (error) {
-      console.error('❌ Error querying games:', error);
-      // Return empty array instead of crashing
-      return NextResponse.json({ 
-        games: [],
-        category: 'most-played',
-        total: 0,
-        description: 'The most played games this month according to BoardGameGeek',
-        source: 'BGG Most Played List'
-      });
-    }
+      if (error) {
+        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, error);
+        // Continue with next batch instead of failing completely
+        continue;
+      }
 
-    // Match found games back to their original positions
-    if (allGames && allGames.length > 0) {
-      allGames.forEach((game: any) => {
-        const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
-        
-        // Find matching normalized name and check year if specified
-        const matchIndex = normalizedNames.findIndex(n => {
-          const nameMatches = n.normalized === gameBestNameNorm;
-          const yearMatches = !n.original.year || !game.yearRelease || game.yearRelease === n.original.year;
-          return nameMatches && yearMatches;
+      // Match found games back to their original positions
+      if (batchGames && batchGames.length > 0) {
+        batchGames.forEach((game: any) => {
+          const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
+          const gameYear = game.yearRelease;
+          
+          // Find matching indices for this normalized name and year
+          const keyAny = `${gameBestNameNorm}_any`;
+          const keyYear = `${gameBestNameNorm}_${gameYear}`;
+          
+          const matchingAny = normalizedToIndex.get(keyAny) || [];
+          const matchingYear = normalizedToIndex.get(keyYear) || [];
+          const matchingIndices = [...matchingYear, ...matchingAny];
+          
+          if (matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
+            // Use the first matching index (prefer earlier position in list)
+            const matchInfo = matchingIndices[0];
+            if (!gamesByPosition.has(matchInfo.index)) {
+              gamesByPosition.set(matchInfo.index, game);
+              seenGameIds.add(game.id);
+            }
+          }
         });
-        
-        if (matchIndex !== -1 && !seenGameIds.has(game.id)) {
-          gamesByPosition.set(matchIndex, game);
-          seenGameIds.add(game.id);
-        }
-      });
+      }
     }
 
     // Track missing games
-    normalizedNames.forEach((nameInfo, index) => {
-      if (!gamesByPosition.has(index)) {
+    normalizedNames.forEach((nameInfo) => {
+      if (!gamesByPosition.has(nameInfo.index)) {
         missingGames.push(nameInfo.original.name);
       }
     });
