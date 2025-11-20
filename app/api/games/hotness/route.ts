@@ -67,75 +67,84 @@ export async function GET(request: NextRequest) {
     console.log(`🔥 Getting HOTNESS GAMES from hardcoded list (limit: ${limit})`);
 
     const gamesToFind = hotnessGames.slice(0, limit);
-    
-    // Use smaller batches to avoid query complexity timeout
-    // PostgreSQL has limits on OR clause complexity, so we'll query in batches of 10
-    const BATCH_SIZE = 10;
     const foundGames: any[] = [];
     const missingGames: string[] = [];
     const seenGameIds = new Set<number>();
 
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
-      
-      // Build OR conditions for this batch only (max 30 conditions: 10 games × 3 fields)
-      const orConditions: string[] = [];
-      batch.forEach(name => {
-        // Escape single quotes
-        const escapedName = name.replace(/'/g, "''");
-        // Try exact match first (no wildcards = faster)
-        orConditions.push(`nameEn.ilike.${escapedName}`);
-        orConditions.push(`nameEs.ilike.${escapedName}`);
-        orConditions.push(`name.ilike.${escapedName}`);
-      });
+    // Query games individually with very short timeouts - return quickly
+    // Use Promise.allSettled to not wait for slow queries
+    const queryPromises = gamesToFind.map(async (gameName, index) => {
+      try {
+        // Try exact match on nameEn first (simplest query)
+        const { data, error } = await executeSupabaseQuery(
+          async () => {
+            return await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEn', gameName)
+              .limit(1)
+              .maybeSingle();
+          },
+          { maxRetries: 0, baseDelay: 100, timeout: 2000 } // Very short timeout, no retries
+        );
 
-      const { data: batchGames, error: batchError } = await executeSupabaseQuery(
-        async () => {
-          return await supabaseAdmin
-            .from('games')
-            .select('*')
-            .or(orConditions.join(','))
-            .limit(BATCH_SIZE * 2);
-        },
-        { maxRetries: 1, baseDelay: 200, timeout: 5000 }
-      );
-
-      if (batchError) {
-        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, batchError);
-        // Add all games in this batch to missing list
-        batch.forEach(name => missingGames.push(name));
-        continue;
-      }
-
-      // Match games from this batch
-      const batchMap = new Map<string, any>();
-      (batchGames || []).forEach((game: any) => {
-        const nameEn = (game.nameEn || '').toLowerCase();
-        const nameEs = (game.nameEs || '').toLowerCase();
-        const name = (game.name || '').toLowerCase();
-        if (nameEn) batchMap.set(nameEn, game);
-        if (nameEs) batchMap.set(nameEs, game);
-        if (name) batchMap.set(name, game);
-      });
-
-      // Match games in order
-      batch.forEach((gameName) => {
-        const normalizedName = gameName.toLowerCase();
-        const matchedGame = batchMap.get(normalizedName);
-        
-        if (matchedGame && !seenGameIds.has(matchedGame.id)) {
-          foundGames.push(matchedGame);
-          seenGameIds.add(matchedGame.id);
-        } else if (!matchedGame) {
-          missingGames.push(gameName);
+        if (data && !error) {
+          return { index, game: data, name: gameName };
         }
-      });
 
-      // Small delay between batches to prevent overwhelming the database
-      if (i + BATCH_SIZE < gamesToFind.length) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Try nameEs if nameEn didn't work
+        const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
+          async () => {
+            return await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEs', gameName)
+              .limit(1)
+              .maybeSingle();
+          },
+          { maxRetries: 0, baseDelay: 100, timeout: 2000 }
+        );
+
+        if (dataEs && !errorEs) {
+          return { index, game: dataEs, name: gameName };
+        }
+
+        // Try name field
+        const { data: dataName, error: errorName } = await executeSupabaseQuery(
+          async () => {
+            return await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('name', gameName)
+              .limit(1)
+              .maybeSingle();
+          },
+          { maxRetries: 0, baseDelay: 100, timeout: 2000 }
+        );
+
+        if (dataName && !errorName) {
+          return { index, game: dataName, name: gameName };
+        }
+
+        return { index, game: null, name: gameName };
+      } catch (error) {
+        // Silently fail - just return null
+        return { index, game: null, name: gameName };
       }
-    }
+    });
+
+    // Wait for all queries with a timeout - return whatever we have
+    const results = await Promise.allSettled(queryPromises);
+    
+    // Process results in order
+    results.forEach((result, idx) => {
+      if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
+        foundGames.push(result.value.game);
+        seenGameIds.add(result.value.game.id);
+      } else if (result.status === 'fulfilled' && !result.value.game) {
+        missingGames.push(gamesToFind[idx]);
+      }
+    });
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
