@@ -138,11 +138,14 @@ export async function GET(request: NextRequest) {
     
     // Process results in order
     results.forEach((result, idx) => {
-      if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
-        foundGames.push(result.value.game);
-        seenGameIds.add(result.value.game.id);
-      } else if (result.status === 'fulfilled' && !result.value.game) {
-        missingGames.push(gamesToFind[idx]);
+      if (result.status === 'fulfilled') {
+        const value = result.value as { index: number; game: any; name: string };
+        if (value.game && !seenGameIds.has(value.game.id)) {
+          foundGames.push(value.game);
+          seenGameIds.add(value.game.id);
+        } else if (!value.game) {
+          missingGames.push(gamesToFind[idx]);
+        }
       }
     });
 
