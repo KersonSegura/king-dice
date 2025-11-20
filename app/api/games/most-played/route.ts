@@ -124,17 +124,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Build final array in order of the original list
+    // Only add each game once, maintaining order
     for (let i = 0; i < gamesToFind.length; i++) {
       const game = gamesByPosition.get(i);
-      if (game) {
-        foundGames.push(game);
-      }
-    }
-    
-    // Build final array in order of the original list
-    for (let i = 0; i < gamesToFind.length; i++) {
-      const game = gamesByPosition.get(i);
-      if (game) {
+      if (game && !foundGames.find(g => g.id === game.id)) {
         foundGames.push(game);
       }
     }
