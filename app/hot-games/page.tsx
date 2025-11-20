@@ -51,7 +51,7 @@ export default function HotGamesPage() {
         });
         
         const firstGamesList = firstData.games || [];
-        // Update first slots with real games, keep rest as null (skeletons)
+        // Update slots with real games, keep rest as null (skeletons)
         const updatedGames = Array(50).fill(null);
         firstGamesList.forEach((game: Game, index: number) => {
           updatedGames[index] = game;
@@ -59,7 +59,7 @@ export default function HotGamesPage() {
         setGames(updatedGames);
         setLoading(false); // Show first games immediately
         
-        // Load remaining games in background
+        // Load remaining games in background - merge results instead of replacing
         try {
           const allData = await fetchJsonWithRetry('/api/games/hotness?limit=50', {
             cache: 'no-store',
@@ -74,14 +74,16 @@ export default function HotGamesPage() {
           });
           
           const allGamesList = allData.games || [];
-          // Update all slots with real games
-          const finalGames = Array(50).fill(null);
-          allGamesList.forEach((game: Game, index: number) => {
-            if (index < 50) {
-              finalGames[index] = game;
-            }
+          // Merge with existing games - don't replace, just fill empty slots
+          setGames(prevGames => {
+            const merged = [...prevGames];
+            allGamesList.forEach((game: Game, index: number) => {
+              if (index < 50 && (!merged[index] || merged[index] === null)) {
+                merged[index] = game;
+              }
+            });
+            return merged;
           });
-          setGames(finalGames);
         } catch (error) {
           console.error('Error loading more hot games:', error);
           // Keep the games we already have

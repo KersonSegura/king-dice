@@ -45,108 +45,124 @@ export async function GET(request: NextRequest) {
     const foundGames: any[] = [];
     const missingGames: string[] = [];
     const seenGameIds = new Set<number>();
-
-    // Process individual queries in small parallel batches (5 at a time)
-    const BATCH_SIZE = 5;
     
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
-      
-      // Process batch in parallel
-      const queryPromises = batch.map(async (gameInfo, batchIndex) => {
-        const globalIndex = i + batchIndex;
-        try {
-          // Try nameEn first with year filter
-          let query = supabaseAdmin
-            .from('games')
-            .select('*')
-            .ilike('nameEn', gameInfo.name)
-            .limit(1);
-          
-          if (gameInfo.year) {
-            query = query.eq('yearRelease', gameInfo.year);
-          }
+    // Map to store games by their position in the original list
+    const gamesByPosition = new Map<number, any>();
 
-          const { data, error } = await executeSupabaseQuery(
-            async () => await query.maybeSingle(),
-            { maxRetries: 0, baseDelay: 0, timeout: 2000 }
-          );
-
-          if (data && !error) {
-            return { index: globalIndex, game: data, gameInfo };
-          }
-
-          // Try nameEs if nameEn didn't work
-          let queryEs = supabaseAdmin
-            .from('games')
-            .select('*')
-            .ilike('nameEs', gameInfo.name)
-            .limit(1);
-          
-          if (gameInfo.year) {
-            queryEs = queryEs.eq('yearRelease', gameInfo.year);
-          }
-
-          const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
-            async () => await queryEs.maybeSingle(),
-            { maxRetries: 0, baseDelay: 0, timeout: 2000 }
-          );
-
-          if (dataEs && !errorEs) {
-            return { index: globalIndex, game: dataEs, gameInfo };
-          }
-
-          // Try name field as last resort
-          let queryName = supabaseAdmin
-            .from('games')
-            .select('*')
-            .ilike('name', gameInfo.name)
-            .limit(1);
-          
-          if (gameInfo.year) {
-            queryName = queryName.eq('yearRelease', gameInfo.year);
-          }
-
-          const { data: dataName, error: errorName } = await executeSupabaseQuery(
-            async () => await queryName.maybeSingle(),
-            { maxRetries: 0, baseDelay: 0, timeout: 2000 }
-          );
-
-          if (dataName && !errorName) {
-            return { index: globalIndex, game: dataName, gameInfo };
-          }
-
-          return { index: globalIndex, game: null, gameInfo };
-        } catch (error) {
-          return { index: globalIndex, game: null, gameInfo };
+    // Helper function to query a single game
+    const queryGame = async (gameInfo: typeof topRankedGames[0]): Promise<any> => {
+      try {
+        // Try nameEn first with year filter
+        let query = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('nameEn', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          query = query.eq('yearRelease', gameInfo.year);
         }
-      });
 
-      // Wait for this batch to complete
-      const batchResults = await Promise.allSettled(queryPromises);
-      
-      // Process results
-      batchResults.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          const value = result.value as { index: number; game: any; gameInfo: typeof topRankedGames[0] };
-          if (value.game && !seenGameIds.has(value.game.id)) {
-            foundGames.push(value.game);
-            seenGameIds.add(value.game.id);
-          } else if (!value.game) {
-            missingGames.push(value.gameInfo.name);
-          }
-        } else {
-          // Promise rejected - mark as missing
-          const batchIndex = batchResults.indexOf(result);
-          if (batchIndex >= 0 && batchIndex < batch.length) {
-            missingGames.push(batch[batchIndex].name);
-          }
+        const { data, error } = await executeSupabaseQuery(
+          async () => await query.maybeSingle(),
+          { maxRetries: 0, baseDelay: 0, timeout: 2000 }
+        );
+
+        if (data && !error) return data;
+
+        // Try nameEs
+        let queryEs = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('nameEs', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          queryEs = queryEs.eq('yearRelease', gameInfo.year);
         }
-      });
 
-      // Small delay between batches
-      if (i + BATCH_SIZE < gamesToFind.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
+          async () => await queryEs.maybeSingle(),
+          { maxRetries: 0, baseDelay: 0, timeout: 2000 }
+        );
+
+        if (dataEs && !errorEs) return dataEs;
+
+        // Try name field
+        let queryName = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('name', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          queryName = queryName.eq('yearRelease', gameInfo.year);
+        }
+
+        const { data: dataName, error: errorName } = await executeSupabaseQuery(
+          async () => await queryName.maybeSingle(),
+          { maxRetries: 0, baseDelay: 0, timeout: 2000 }
+        );
+
+        if (dataName && !errorName) return dataName;
+        return null;
+      } catch (error) {
+        return null;
+      }
+    };
+
+    // Load first 10 games immediately (prioritize these)
+    const first10Games = gamesToFind.slice(0, 10);
+    const first10Promises = first10Games.map(async (gameInfo, index) => {
+      const game = await queryGame(gameInfo);
+      return { position: index, gameInfo, game };
+    });
+
+    const first10Results = await Promise.allSettled(first10Promises);
+    first10Results.forEach((result, idx) => {
+      if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
+        gamesByPosition.set(result.value.position, result.value.game);
+        seenGameIds.add(result.value.game.id);
+      } else if (result.status === 'fulfilled' && !result.value.game) {
+        missingGames.push(first10Games[idx].name);
+      }
+    });
+
+    // Continue loading the rest in background (games 11+)
+    if (gamesToFind.length > 10) {
+      const remainingGames = gamesToFind.slice(10);
+      // Process remaining games in small batches
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < remainingGames.length; i += BATCH_SIZE) {
+        const batch = remainingGames.slice(i, i + BATCH_SIZE);
+        const batchPromises = batch.map(async (gameInfo, batchIdx) => {
+          const globalIdx = 10 + i + batchIdx;
+          const game = await queryGame(gameInfo);
+          return { position: globalIdx, gameInfo, game };
+        });
+
+        const batchResults = await Promise.allSettled(batchPromises);
+        batchResults.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
+            gamesByPosition.set(result.value.position, result.value.game);
+            seenGameIds.add(result.value.game.id);
+          } else if (result.status === 'fulfilled' && !result.value.game) {
+            missingGames.push(result.value.gameInfo.name);
+          }
+        });
+
+        // Small delay between batches
+        if (i + BATCH_SIZE < remainingGames.length) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+      }
+    }
+    
+    // Build final array in order of the original list
+    for (let i = 0; i < gamesToFind.length; i++) {
+      const game = gamesByPosition.get(i);
+      if (game) {
+        foundGames.push(game);
       }
     }
 

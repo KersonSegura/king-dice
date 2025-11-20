@@ -51,7 +51,7 @@ export default function TopRankedPage() {
         });
         
         const firstGamesList = firstData.games || [];
-        // Update first slots with real games, keep rest as null (skeletons)
+        // Update slots with real games, keep rest as null (skeletons)
         const updatedGames = Array(25).fill(null);
         firstGamesList.forEach((game: Game, index: number) => {
           updatedGames[index] = game;
@@ -59,7 +59,7 @@ export default function TopRankedPage() {
         setGames(updatedGames);
         setLoading(false); // Show first games immediately
         
-        // Load remaining games in background
+        // Load remaining games in background - merge results instead of replacing
         try {
           const allData = await fetchJsonWithRetry('/api/games/most-played?limit=25', {
             cache: 'no-store',
@@ -74,14 +74,16 @@ export default function TopRankedPage() {
           });
           
           const allGamesList = allData.games || [];
-          // Update all slots with real games
-          const finalGames = Array(25).fill(null);
-          allGamesList.forEach((game: Game, index: number) => {
-            if (index < 25) {
-              finalGames[index] = game;
-            }
+          // Merge with existing games - don't replace, just fill empty slots
+          setGames(prevGames => {
+            const merged = [...prevGames];
+            allGamesList.forEach((game: Game, index: number) => {
+              if (index < 25 && (!merged[index] || merged[index] === null)) {
+                merged[index] = game;
+              }
+            });
+            return merged;
           });
-          setGames(finalGames);
         } catch (error) {
           console.error('Error loading more top ranked games:', error);
           // Keep the games we already have

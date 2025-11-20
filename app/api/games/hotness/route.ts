@@ -144,30 +144,18 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Map to store games by their position in the original list
+    const gamesByPosition = new Map<number, Game>();
+    
     const first10Results = await Promise.allSettled(first10Promises);
     first10Results.forEach((result, idx) => {
       if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
-        foundGames.push(result.value.game);
+        gamesByPosition.set(idx, result.value.game);
         seenGameIds.add(result.value.game.id);
       } else if (result.status === 'fulfilled' && !result.value.game) {
         missingGames.push(first10Games[idx]);
       }
     });
-    
-    // Return early if we found games - don't wait for all queries to complete
-    // This ensures users see content quickly even if some games aren't found
-    if (foundGames.length > 0) {
-      console.log(`✅ Found ${foundGames.length} hotness games (returning early, ${missingGames.length} still loading)`);
-      // Return what we have - frontend can load more in background if needed
-      return NextResponse.json({ 
-        games: foundGames,
-        category: 'hotness',
-        total: foundGames.length,
-        description: 'The hottest games today according to BoardGameGeek',
-        source: 'BGG Hotness List',
-        hasMore: gamesToFind.length > foundGames.length + missingGames.length
-      });
-    }
 
     // Continue loading the rest in background (games 11+)
     if (gamesToFind.length > 10) {
@@ -176,18 +164,19 @@ export async function GET(request: NextRequest) {
       const BATCH_SIZE = 5;
       for (let i = 0; i < remainingGames.length; i += BATCH_SIZE) {
         const batch = remainingGames.slice(i, i + BATCH_SIZE);
-        const batchPromises = batch.map(async (gameName) => {
+        const batchPromises = batch.map(async (gameName, batchIdx) => {
+          const globalIdx = 10 + i + batchIdx;
           const game = await queryGame(gameName);
-          return { gameName, game };
+          return { position: globalIdx, gameName, game };
         });
 
         const batchResults = await Promise.allSettled(batchPromises);
-        batchResults.forEach((result, batchIdx) => {
+        batchResults.forEach((result) => {
           if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
-            foundGames.push(result.value.game);
+            gamesByPosition.set(result.value.position, result.value.game);
             seenGameIds.add(result.value.game.id);
           } else if (result.status === 'fulfilled' && !result.value.game) {
-            missingGames.push(batch[batchIdx]);
+            missingGames.push(result.value.gameName);
           }
         });
 
@@ -195,6 +184,14 @@ export async function GET(request: NextRequest) {
         if (i + BATCH_SIZE < remainingGames.length) {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
+      }
+    }
+    
+    // Build final array in order of the original list
+    for (let i = 0; i < gamesToFind.length; i++) {
+      const game = gamesByPosition.get(i);
+      if (game) {
+        foundGames.push(game);
       }
     }
 
