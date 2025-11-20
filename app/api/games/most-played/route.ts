@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -41,80 +42,86 @@ export async function GET(request: NextRequest) {
     console.log(`🎯 Getting MOST PLAYED GAMES from hardcoded list (limit: ${limit})`);
 
     const gamesToFind = topRankedGames.slice(0, limit);
+    
+    // Use a single query to fetch all games at once
+    // Build OR conditions for each game name across all name fields
+    const orConditions: string[] = [];
+    gamesToFind.forEach(gameInfo => {
+      // Escape single quotes and wrap in wildcards for ILIKE
+      const escapedName = gameInfo.name.replace(/'/g, "''");
+      // Add conditions for each name field
+      orConditions.push(`nameEn.ilike.*${escapedName}*`);
+      orConditions.push(`nameEs.ilike.*${escapedName}*`);
+      orConditions.push(`name.ilike.*${escapedName}*`);
+    });
+
+    const { data: allGames, error: queryError } = await executeSupabaseQuery(
+      async () => {
+        return await supabaseAdmin
+          .from('games')
+          .select('*')
+          .or(orConditions.join(','))
+          .limit(limit * 3); // Get more than needed in case of duplicates
+      },
+      { maxRetries: 2, baseDelay: 400, timeout: 10000 }
+    );
+
+    if (queryError) {
+      console.error('❌ Error querying games:', queryError);
+      // Return empty array instead of failing completely
+      return NextResponse.json({ 
+        games: [],
+        category: 'most-played',
+        total: 0,
+        description: 'The most played games this month according to BoardGameGeek',
+        source: 'BGG Most Played List'
+      });
+    }
+
+    // Match games to the requested order
     const foundGames: any[] = [];
     const missingGames: string[] = [];
+    const gamesMap = new Map<string, any>();
 
-    // Query games in batches to avoid connection exhaustion
-    // Based on Supabase connection management best practices
-    // Process in batches of 10 to prevent overwhelming PostgREST
-    const BATCH_SIZE = 10;
-    const results: Array<{ gameInfo: typeof topRankedGames[0]; game: any }> = [];
-    
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
+    // Create a map of found games by normalized name
+    (allGames || []).forEach((game: any) => {
+      const nameEn = (game.nameEn || '').toLowerCase();
+      const nameEs = (game.nameEs || '').toLowerCase();
+      const name = (game.name || '').toLowerCase();
       
-      const batchQueries = batch.map(async (gameInfo) => {
-        try {
-          // Try exact match first (case-insensitive)
-          let query = supabaseAdmin
-            .from('games')
-            .select('*')
-            .or(`nameEn.ilike.${gameInfo.name},nameEs.ilike.${gameInfo.name},name.ilike.${gameInfo.name}`);
+      // Store by all possible name variations
+      if (nameEn) gamesMap.set(nameEn, game);
+      if (nameEs) gamesMap.set(nameEs, game);
+      if (name) gamesMap.set(name, game);
+    });
 
-          // If year is provided, also filter by year
-          if (gameInfo.year) {
-            query = query.eq('yearRelease', gameInfo.year);
+    // Match games in the requested order, prefer year match if available
+    gamesToFind.forEach((gameInfo) => {
+      const normalizedName = gameInfo.name.toLowerCase();
+      const matchedGame = gamesMap.get(normalizedName);
+      
+      if (matchedGame) {
+        // If year is specified, prefer games that match the year
+        if (gameInfo.year && matchedGame.yearRelease === gameInfo.year) {
+          // Check if we already added this game
+          if (!foundGames.find(g => g.id === matchedGame.id)) {
+            foundGames.push(matchedGame);
           }
-
-          const { data: exactMatch, error: exactError } = await query.limit(1).maybeSingle();
-
-          if (exactMatch && !exactError) {
-            // Verify it's an exact match (case-insensitive)
-            const lowerName = gameInfo.name.toLowerCase();
-            if (exactMatch.nameEn?.toLowerCase() === lowerName ||
-                exactMatch.nameEs?.toLowerCase() === lowerName ||
-                exactMatch.name?.toLowerCase() === lowerName) {
-              return { gameInfo, game: exactMatch };
-            }
+        } else if (!gameInfo.year) {
+          // No year specified, add any match
+          if (!foundGames.find(g => g.id === matchedGame.id)) {
+            foundGames.push(matchedGame);
           }
-
-          // If no exact match, try partial match (without year filter first)
-          const { data: partialMatch, error: partialError } = await supabaseAdmin
-            .from('games')
-            .select('*')
-            .or(`nameEn.ilike.%${gameInfo.name}%,nameEs.ilike.%${gameInfo.name}%,name.ilike.%${gameInfo.name}%`)
-            .limit(1)
-            .maybeSingle();
-
-          if (partialMatch && !partialError) {
-            return { gameInfo, game: partialMatch };
+        } else {
+          // Year doesn't match, but we'll still add it if no better match exists
+          if (!foundGames.find(g => g.id === matchedGame.id)) {
+            foundGames.push(matchedGame);
           }
-          
-          return { gameInfo, game: null };
-        } catch (error) {
-          console.error(`Error fetching game "${gameInfo.name}":`, error);
-          return { gameInfo, game: null };
         }
-      });
-
-      // Wait for batch to complete before starting next batch
-      const batchResults = await Promise.all(batchQueries);
-      results.push(...batchResults);
-      
-      // Small delay between batches to prevent connection exhaustion
-      if (i + BATCH_SIZE < gamesToFind.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
-    
-    // Build results array in the correct order
-    for (const { gameInfo, game } of results) {
-      if (game) {
-        foundGames.push(game);
       } else {
         missingGames.push(gameInfo.name);
       }
-    }
+    });
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
