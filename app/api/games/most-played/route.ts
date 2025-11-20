@@ -42,79 +42,94 @@ export async function GET(request: NextRequest) {
     console.log(`🎯 Getting MOST PLAYED GAMES from hardcoded list (limit: ${limit})`);
 
     const gamesToFind = topRankedGames.slice(0, limit);
-    
-    // Use smaller batches to avoid query complexity timeout
-    const BATCH_SIZE = 10;
     const foundGames: any[] = [];
     const missingGames: string[] = [];
     const seenGameIds = new Set<number>();
 
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
-      
-      // Build OR conditions for this batch only
-      const orConditions: string[] = [];
-      batch.forEach(gameInfo => {
-        const escapedName = gameInfo.name.replace(/'/g, "''");
-        // Try exact match first (no wildcards = faster)
-        orConditions.push(`nameEn.ilike.${escapedName}`);
-        orConditions.push(`nameEs.ilike.${escapedName}`);
-        orConditions.push(`name.ilike.${escapedName}`);
-      });
-
-      const { data: batchGames, error: batchError } = await executeSupabaseQuery(
-        async () => {
-          let query = supabaseAdmin
-            .from('games')
-            .select('*')
-            .or(orConditions.join(','))
-            .limit(BATCH_SIZE * 2);
-          return await query;
-        },
-        { maxRetries: 1, baseDelay: 200, timeout: 5000 }
-      );
-
-      if (batchError) {
-        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, batchError);
-        batch.forEach(gameInfo => missingGames.push(gameInfo.name));
-        continue;
-      }
-
-      // Match games from this batch
-      const batchMap = new Map<string, any>();
-      (batchGames || []).forEach((game: any) => {
-        const nameEn = (game.nameEn || '').toLowerCase();
-        const nameEs = (game.nameEs || '').toLowerCase();
-        const name = (game.name || '').toLowerCase();
-        if (nameEn) batchMap.set(nameEn, game);
-        if (nameEs) batchMap.set(nameEs, game);
-        if (name) batchMap.set(name, game);
-      });
-
-      // Match games in order, prefer year match if available
-      batch.forEach((gameInfo) => {
-        const normalizedName = gameInfo.name.toLowerCase();
-        const matchedGame = batchMap.get(normalizedName);
+    // Query games individually with very short timeouts - return quickly
+    const queryPromises = gamesToFind.map(async (gameInfo, index) => {
+      try {
+        // Try exact match on nameEn first
+        let query = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('nameEn', gameInfo.name)
+          .limit(1);
         
-        if (matchedGame && !seenGameIds.has(matchedGame.id)) {
-          // Prefer year match if year is specified
-          if (gameInfo.year && matchedGame.yearRelease === gameInfo.year) {
-            foundGames.push(matchedGame);
-            seenGameIds.add(matchedGame.id);
-          } else if (!gameInfo.year || !foundGames.find(g => g.id === matchedGame.id)) {
-            foundGames.push(matchedGame);
-            seenGameIds.add(matchedGame.id);
-          }
-        } else if (!matchedGame) {
-          missingGames.push(gameInfo.name);
+        if (gameInfo.year) {
+          query = query.eq('yearRelease', gameInfo.year);
         }
-      });
 
-      // Small delay between batches
-      if (i + BATCH_SIZE < gamesToFind.length) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        const { data, error } = await executeSupabaseQuery(
+          async () => await query.maybeSingle(),
+          { maxRetries: 0, baseDelay: 100, timeout: 2000 }
+        );
+
+        if (data && !error) {
+          return { index, game: data, gameInfo };
+        }
+
+        // Try nameEs
+        let queryEs = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('nameEs', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          queryEs = queryEs.eq('yearRelease', gameInfo.year);
+        }
+
+        const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
+          async () => await queryEs.maybeSingle(),
+          { maxRetries: 0, baseDelay: 100, timeout: 2000 }
+        );
+
+        if (dataEs && !errorEs) {
+          return { index, game: dataEs, gameInfo };
+        }
+
+        // Try name field
+        let queryName = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('name', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          queryName = queryName.eq('yearRelease', gameInfo.year);
+        }
+
+        const { data: dataName, error: errorName } = await executeSupabaseQuery(
+          async () => await queryName.maybeSingle(),
+          { maxRetries: 0, baseDelay: 100, timeout: 2000 }
+        );
+
+        if (dataName && !errorName) {
+          return { index, game: dataName, gameInfo };
+        }
+
+        return { index, game: null, gameInfo };
+      } catch (error) {
+        return { index, game: null, gameInfo };
       }
-    }
+    });
+
+    // Wait for all queries - return whatever we have
+    const results = await Promise.allSettled(queryPromises);
+    
+    // Process results in order
+    results.forEach((result, idx) => {
+      if (result.status === 'fulfilled') {
+        const value = result.value as { index: number; game: any; gameInfo: typeof topRankedGames[0] };
+        if (value.game && !seenGameIds.has(value.game.id)) {
+          foundGames.push(value.game);
+          seenGameIds.add(value.game.id);
+        } else if (!value.game) {
+          missingGames.push(gamesToFind[idx].name);
+        }
+      }
+    });
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
