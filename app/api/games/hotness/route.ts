@@ -144,8 +144,9 @@ export async function GET(request: NextRequest) {
         );
 
         if (data && !error) {
-          const nameEn = (data.nameEn || '').toLowerCase().trim();
-          if (nameEn === searchName) return data;
+          const gameData = data as any;
+          const nameEn = (gameData.nameEn || '').toLowerCase().trim();
+          if (nameEn === searchName) return gameData;
         }
 
         // Try nameEs
@@ -162,8 +163,9 @@ export async function GET(request: NextRequest) {
         );
 
         if (dataEs && !errorEs) {
-          const nameEs = (dataEs.nameEs || '').toLowerCase().trim();
-          if (nameEs === searchName) return dataEs;
+          const gameDataEs = dataEs as any;
+          const nameEs = (gameDataEs.nameEs || '').toLowerCase().trim();
+          if (nameEs === searchName) return gameDataEs;
         }
 
         // Try name field
@@ -180,8 +182,9 @@ export async function GET(request: NextRequest) {
         );
 
         if (dataName && !errorName) {
-          const name = (dataName.name || '').toLowerCase().trim();
-          if (name === searchName) return dataName;
+          const gameDataName = dataName as any;
+          const name = (gameDataName.name || '').toLowerCase().trim();
+          if (name === searchName) return gameDataName;
         }
 
         return null;
