@@ -71,61 +71,58 @@ export async function GET(request: NextRequest) {
     const missingGames: string[] = [];
     const seenGameIds = new Set<number>();
 
-    // Helper function to query a single game - use partial matching for better results
-    const queryGame = async (gameName: string): Promise<any> => {
+    // Query multiple games at once using OR conditions - much faster
+    const queryGamesBatch = async (gameNames: string[]): Promise<Map<string, any>> => {
+      const results = new Map<string, any>();
+      if (gameNames.length === 0) return results;
+      
       try {
-        // Use partial matching with % wildcards - more forgiving
-        const searchPattern = `%${gameName}%`;
-        
-        // Try nameEn first with partial match
-        const { data, error } = await executeSupabaseQuery(
+        // Build OR conditions for this batch
+        const orConditions: string[] = [];
+        gameNames.forEach((gameName) => {
+          // Escape single quotes for SQL
+          const escapedName = gameName.replace(/'/g, "''");
+          // Try exact match first
+          orConditions.push(`nameEn.ilike.${escapedName}`);
+          orConditions.push(`nameEs.ilike.${escapedName}`);
+          orConditions.push(`name.ilike.${escapedName}`);
+        });
+
+        // Single query for the batch
+        const { data: batchGames, error } = await executeSupabaseQuery(
           async () => {
             return await supabaseAdmin
               .from('games')
               .select('*')
-              .ilike('nameEn', searchPattern)
-              .limit(1)
-              .maybeSingle();
+              .or(orConditions.join(','));
           },
-          { maxRetries: 0, baseDelay: 0, timeout: 2000 } // Shorter timeout
+          { maxRetries: 1, baseDelay: 200, timeout: 5000 }
         );
 
-        if (data && !error) return data;
+        if (error || !batchGames) return results;
 
-        // Try exact match on nameEn (faster)
-        const { data: exactData, error: exactError } = await executeSupabaseQuery(
-          async () => {
-            return await supabaseAdmin
-              .from('games')
-              .select('*')
-              .ilike('nameEn', gameName)
-              .limit(1)
-              .maybeSingle();
-          },
-          { maxRetries: 0, baseDelay: 0, timeout: 1500 }
-        );
-
-        if (exactData && !exactError) return exactData;
-
-        // Try nameEs with partial match
-        const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
-          async () => {
-            return await supabaseAdmin
-              .from('games')
-              .select('*')
-              .ilike('nameEs', searchPattern)
-              .limit(1)
-              .maybeSingle();
-          },
-          { maxRetries: 0, baseDelay: 0, timeout: 1500 }
-        );
-
-        if (dataEs && !errorEs) return dataEs;
-
-        return null;
+        // Match games to their names
+        batchGames.forEach((game: any) => {
+          const nameEn = (game.nameEn || '').toLowerCase().trim();
+          const nameEs = (game.nameEs || '').toLowerCase().trim();
+          const name = (game.name || '').toLowerCase().trim();
+          
+          // Find matching game name
+          for (const gameName of gameNames) {
+            const searchName = gameName.toLowerCase().trim();
+            if (nameEn === searchName || nameEs === searchName || name === searchName) {
+              if (!results.has(gameName)) {
+                results.set(gameName, game);
+                break;
+              }
+            }
+          }
+        });
       } catch (error) {
-        return null;
+        console.error('Error querying batch:', error);
       }
+      
+      return results;
     };
 
     // Load first 10 games immediately (prioritize these) - run in parallel with timeout
