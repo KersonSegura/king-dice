@@ -54,6 +54,13 @@ export default function FeaturesDropdown() {
       hoverColor: '#e0990f'
     }] : []),
     {
+      name: 'Dice Roller',
+      href: '/dice-roller',
+      icon: '/DiceRollerIcon.svg',
+      color: '#fbae17',
+      hoverColor: '#e0990f'
+    },
+    {
       name: 'Catan Maps',
       href: '/catan-map-generator',
       icon: '/CatanIcon.svg',

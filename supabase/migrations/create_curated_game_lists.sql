@@ -28,7 +28,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS most_played_game_list_game_id_idx ON public.mo
 CREATE INDEX IF NOT EXISTS most_played_game_list_rank_idx ON public.most_played_game_list(rank);
 
 -- Helper CTE to upsert curated lists
-WITH hot_data(best_name_norm, rank) AS (
+WITH hot_data(raw_name, rank) AS (
   VALUES
     ('covenant', 1),
     ('recall', 2),
@@ -40,7 +40,7 @@ WITH hot_data(best_name_norm, rank) AS (
     ('the hobbit: there and back again', 8),
     ('seti: space agencies', 9),
     ('feya''s swamp', 10),
-    ('the lord of the rings: duel for middle-earth – allies', 11),
+    ('the lord of the rings: duel for middle-earth allies', 11),
     ('seti: search for extraterrestrial intelligence', 12),
     ('speakeasy', 13),
     ('the old king''s crown', 14),
@@ -81,11 +81,24 @@ WITH hot_data(best_name_norm, rank) AS (
     ('harmonies', 49),
     ('tainted grail: the fall of avalon', 50)
 ),
+normalized_hot AS (
+  SELECT
+    lower(
+      regexp_replace(
+        translate(raw_name, '–—−', '-'),
+        '\s+',
+        ' ',
+        'g'
+      )
+    ) AS best_name_norm,
+    rank
+  FROM hot_data
+),
 hot_upsert AS (
   INSERT INTO public.hot_game_list (best_name_norm, game_id, rank)
-  SELECT hd.best_name_norm, g.id, hd.rank
-  FROM hot_data hd
-  JOIN public.games g ON g.best_name_norm = hd.best_name_norm
+  SELECT nh.best_name_norm, g.id, nh.rank
+  FROM normalized_hot nh
+  JOIN public.games g ON g.best_name_norm = nh.best_name_norm
   ON CONFLICT (best_name_norm) DO UPDATE
     SET game_id = EXCLUDED.game_id,
         rank = EXCLUDED.rank,
@@ -94,7 +107,7 @@ hot_upsert AS (
 )
 SELECT count(*) AS hot_games_inserted FROM hot_upsert;
 
-WITH most_data(best_name_norm, rank) AS (
+WITH most_data(raw_name, rank) AS (
   VALUES
     ('flip 7', 1),
     ('ark nova', 2),
@@ -119,14 +132,27 @@ WITH most_data(best_name_norm, rank) AS (
     ('7 wonders duel', 21),
     ('carcassonne', 22),
     ('the gang', 23),
-    ('the lord of the rings: the fellowship of the ring – trick-taking game', 24),
+    ('the lord of the rings: the fellowship of the ring trick-taking game', 24),
     ('splendor', 25)
+),
+normalized_most AS (
+  SELECT
+    lower(
+      regexp_replace(
+        translate(raw_name, '–—−', '-'),
+        '\s+',
+        ' ',
+        'g'
+      )
+    ) AS best_name_norm,
+    rank
+  FROM most_data
 ),
 most_upsert AS (
   INSERT INTO public.most_played_game_list (best_name_norm, game_id, rank)
-  SELECT md.best_name_norm, g.id, md.rank
-  FROM most_data md
-  JOIN public.games g ON g.best_name_norm = md.best_name_norm
+  SELECT nm.best_name_norm, g.id, nm.rank
+  FROM normalized_most nm
+  JOIN public.games g ON g.best_name_norm = nm.best_name_norm
   ON CONFLICT (best_name_norm) DO UPDATE
     SET game_id = EXCLUDED.game_id,
         rank = EXCLUDED.rank,
