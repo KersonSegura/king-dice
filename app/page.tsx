@@ -112,6 +112,8 @@ export default function HomePage() {
   // Vote data is now loaded on-demand when users interact with star buttons
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingMoreHotGames, setLoadingMoreHotGames] = useState(false);
+  const [loadingMoreTopRanked, setLoadingMoreTopRanked] = useState(false);
   const [currentLimit, setCurrentLimit] = useState(6);
   const [forumStats, setForumStats] = useState({
     general: { posts: 0, replies: 0 },
@@ -138,20 +140,20 @@ export default function HomePage() {
         setLoading(true);
         console.log('🔍 Fetching games...');
         
-        // Fetch hot games with retry
+        // Fetch first 10 hot games immediately (fast load)
         try {
-          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=${currentLimit}`, {
+          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=10`, {
             cache: 'no-store',
             headers: {
               'Cache-Control': 'no-cache, no-store, must-revalidate',
               'Pragma': 'no-cache'
             }
           }, {
-            maxRetries: 3,
-            retryDelay: 1000,
-            timeout: 15000
+            maxRetries: 2,
+            retryDelay: 500,
+            timeout: 8000 // Shorter timeout for first 10
           });
-          console.log('✅ Hot games response:', { count: hotData.games?.length, total: hotData.total });
+          console.log('✅ First 10 hot games loaded:', { count: hotData.games?.length });
           const mappedHotGames = (hotData.games || []).map((game: any) => ({
             ...game,
             name: game.name || game.nameEn || 'Unknown Game',
@@ -162,24 +164,115 @@ export default function HomePage() {
             averageRating: game.userRating,
             numVotes: game.userVotes
           }));
-          console.log('📊 Mapped hot games:', mappedHotGames.length);
           setHotGames(mappedHotGames);
-          // Votes will be loaded on-demand when users hover/click the star button
+          setLoading(false); // Show first 10 immediately
+          
+          // Load remaining games in background
+          if (currentLimit > 10) {
+            setLoadingMoreHotGames(true);
+            try {
+              const moreHotData = await fetchJsonWithRetry(`/api/games/hotness?limit=${currentLimit}`, {
+                cache: 'no-store',
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache'
+                }
+              }, {
+                maxRetries: 2,
+                retryDelay: 1000,
+                timeout: 20000
+              });
+              const allMappedHotGames = (moreHotData.games || []).map((game: any) => ({
+                ...game,
+                name: game.name || game.nameEn || 'Unknown Game',
+                year: game.year || game.yearRelease,
+                minPlayTime: game.minPlayTime || game.durationMinutes,
+                maxPlayTime: game.maxPlayTime || game.durationMinutes,
+                image: game.image || game.imageUrl || game.thumbnailUrl,
+                averageRating: game.userRating,
+                numVotes: game.userVotes
+              }));
+              setHotGames(allMappedHotGames);
+            } catch (error) {
+              console.error('❌ Error loading more hot games:', error);
+              // Keep the first 10 games even if loading more fails
+            } finally {
+              setLoadingMoreHotGames(false);
+            }
+          }
         } catch (error) {
-          // Only log if it's a final failure (not a retry attempt)
           const errorMessage = error instanceof Error ? error.message : String(error);
-          // Don't log retry attempts, only final failures
           if (!errorMessage.includes('Retrying')) {
             console.error('❌ Error fetching hot games:', error);
           }
-          // Only clear games if we don't have any (preserve existing games on error)
           if (hotGames.length === 0) {
             setHotGames([]);
           }
+          setLoading(false);
         }
         
-        // Fetch top ranked games with retry
+        // Fetch first 10 top ranked games immediately (fast load)
         try {
+          const topRankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=10`, {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          }, {
+            maxRetries: 2,
+            retryDelay: 500,
+            timeout: 8000 // Shorter timeout for first 10
+          });
+          console.log('✅ First 10 top ranked games loaded:', { count: topRankedData.games?.length });
+          const mappedTopRanked = (topRankedData.games || []).map((game: any) => ({
+            ...game,
+            name: game.name || game.nameEn || 'Unknown Game',
+            year: game.year || game.yearRelease,
+            minPlayTime: game.minPlayTime || game.durationMinutes,
+            maxPlayTime: game.maxPlayTime || game.durationMinutes,
+            image: game.image || game.imageUrl || game.thumbnailUrl,
+            averageRating: game.userRating,
+            numVotes: game.userVotes
+          }));
+          setTopRankedGames(mappedTopRanked);
+          
+          // Load remaining games in background
+          if (currentLimit > 10) {
+            setLoadingMoreTopRanked(true);
+            try {
+              const moreTopRankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=${currentLimit}`, {
+                cache: 'no-store',
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache'
+                }
+              }, {
+                maxRetries: 2,
+                retryDelay: 1000,
+                timeout: 20000
+              });
+              const allMappedTopRanked = (moreTopRankedData.games || []).map((game: any) => ({
+                ...game,
+                name: game.name || game.nameEn || 'Unknown Game',
+                year: game.year || game.yearRelease,
+                minPlayTime: game.minPlayTime || game.durationMinutes,
+                maxPlayTime: game.maxPlayTime || game.durationMinutes,
+                image: game.image || game.imageUrl || game.thumbnailUrl,
+                averageRating: game.userRating,
+                numVotes: game.userVotes
+              }));
+              setTopRankedGames(allMappedTopRanked);
+            } catch (error) {
+              console.error('❌ Error loading more top ranked games:', error);
+              // Keep the first 10 games even if loading more fails
+            } finally {
+              setLoadingMoreTopRanked(false);
+            }
+          }
+        } catch (error) {
+          // Fetch top ranked games with retry (fallback)
+          try {
           const rankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=${currentLimit}`, {
             cache: 'no-store',
             headers: {
@@ -824,22 +917,32 @@ export default function HomePage() {
             </p>
           </div>
           
-          {loading ? (
+          {loading && topRankedGames.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-gray-200 animate-pulse rounded-lg h-64"></div>
               ))}
             </div>
           ) : topRankedGames.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {topRankedGames.map((game, index) => (
-                <GameCardWithVote 
-                  key={game.id} 
-                  game={game}
-                  imagePriority={index < 10}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {topRankedGames.map((game, index) => (
+                  <GameCardWithVote 
+                    key={game.id} 
+                    game={game}
+                    imagePriority={index < 10}
+                  />
+                ))}
+              </div>
+              {loadingMoreTopRanked && (
+                <div className="mt-6 text-center">
+                  <div className="inline-flex items-center gap-2 text-gray-600">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
+                    <span>Loading more games...</span>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12">
               <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
