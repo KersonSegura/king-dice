@@ -67,53 +67,56 @@ export async function GET(request: NextRequest) {
       normalizedToIndex.get(key)!.push({ index: nameInfo.index, year: nameInfo.original.year });
     });
 
-    // Query in smaller batches to avoid timeout (process 15 games at a time)
-    const BATCH_SIZE = 15;
+    // Use RPC function for efficient querying (recommended by Supabase AI)
+    // This uses = ANY() which is more index-friendly than large .in() queries
     const normalizedNameValues = normalizedNames.map(n => n.normalized);
     
-    for (let i = 0; i < normalizedNameValues.length; i += BATCH_SIZE) {
-      const batch = normalizedNameValues.slice(i, i + BATCH_SIZE);
-      
-      const { data: batchGames, error } = await executeSupabaseQuery(
-        async () => {
-          return await supabaseAdmin
-            .from('games')
-            .select('*')
-            .in('best_name_norm', batch);
-        },
-        { maxRetries: 1, baseDelay: 200, timeout: 8000 }
-      );
+    const { data: allGames, error } = await executeSupabaseQuery(
+      async () => {
+        return await supabaseAdmin
+          .rpc('get_games_by_best_names_ordered', {
+            _names: normalizedNameValues
+          });
+      },
+      { maxRetries: 2, baseDelay: 200, timeout: 10000 }
+    );
 
-      if (error) {
-        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, error);
-        // Continue with next batch instead of failing completely
-        continue;
-      }
+    if (error) {
+      console.error('❌ Error querying games via RPC:', error);
+      // Return empty array instead of crashing
+      return NextResponse.json({ 
+        games: [],
+        category: 'most-played',
+        total: 0,
+        description: 'The most played games this month according to BoardGameGeek',
+        source: 'BGG Most Played List'
+      });
+    }
 
-      // Match found games back to their original positions
-      if (batchGames && batchGames.length > 0) {
-        batchGames.forEach((game: any) => {
-          const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
-          const gameYear = game.yearRelease;
-          
-          // Find matching indices for this normalized name and year
-          const keyAny = `${gameBestNameNorm}_any`;
-          const keyYear = `${gameBestNameNorm}_${gameYear}`;
-          
-          const matchingAny = normalizedToIndex.get(keyAny) || [];
-          const matchingYear = normalizedToIndex.get(keyYear) || [];
-          const matchingIndices = [...matchingYear, ...matchingAny];
-          
-          if (matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
-            // Use the first matching index (prefer earlier position in list)
-            const matchInfo = matchingIndices[0];
-            if (!gamesByPosition.has(matchInfo.index)) {
-              gamesByPosition.set(matchInfo.index, game);
-              seenGameIds.add(game.id);
-            }
+    // Match found games back to their original positions
+    // The RPC returns games in input order, so we can match by index
+    if (allGames && allGames.length > 0) {
+      allGames.forEach((game: any) => {
+        const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
+        const gameYear = game.yearRelease;
+        
+        // Find matching indices for this normalized name and year
+        const keyAny = `${gameBestNameNorm}_any`;
+        const keyYear = `${gameBestNameNorm}_${gameYear}`;
+        
+        const matchingAny = normalizedToIndex.get(keyAny) || [];
+        const matchingYear = normalizedToIndex.get(keyYear) || [];
+        const matchingIndices = [...matchingYear, ...matchingAny];
+        
+        if (matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
+          // Use the first matching index (prefer earlier position in list)
+          const matchInfo = matchingIndices[0];
+          if (!gamesByPosition.has(matchInfo.index)) {
+            gamesByPosition.set(matchInfo.index, game);
+            seenGameIds.add(game.id);
           }
-        });
-      }
+        }
+      });
     }
 
     // Track missing games

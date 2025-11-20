@@ -91,46 +91,49 @@ export async function GET(request: NextRequest) {
       normalizedToIndex.get(nameInfo.normalized)!.push(nameInfo.index);
     });
 
-    // Query in smaller batches to avoid timeout (process 20 games at a time)
-    const BATCH_SIZE = 20;
+    // Use RPC function for efficient querying (recommended by Supabase AI)
+    // This uses = ANY() which is more index-friendly than large .in() queries
     const normalizedNameValues = normalizedNames.map(n => n.normalized);
     
-    for (let i = 0; i < normalizedNameValues.length; i += BATCH_SIZE) {
-      const batch = normalizedNameValues.slice(i, i + BATCH_SIZE);
-      
-      const { data: batchGames, error } = await executeSupabaseQuery(
-        async () => {
-          return await supabaseAdmin
-            .from('games')
-            .select('*')
-            .in('best_name_norm', batch);
-        },
-        { maxRetries: 1, baseDelay: 200, timeout: 8000 }
-      );
+    const { data: allGames, error } = await executeSupabaseQuery(
+      async () => {
+        return await supabaseAdmin
+          .rpc('get_games_by_best_names_ordered', {
+            _names: normalizedNameValues
+          });
+      },
+      { maxRetries: 2, baseDelay: 200, timeout: 10000 }
+    );
 
-      if (error) {
-        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, error);
-        // Continue with next batch instead of failing completely
-        continue;
-      }
+    if (error) {
+      console.error('❌ Error querying games via RPC:', error);
+      // Return empty array instead of crashing
+      return NextResponse.json({ 
+        games: [],
+        category: 'hotness',
+        total: 0,
+        description: 'The hottest games today according to BoardGameGeek',
+        source: 'BGG Hotness List'
+      });
+    }
 
-      // Match found games back to their original positions
-      if (batchGames && batchGames.length > 0) {
-        batchGames.forEach((game: any) => {
-          const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
-          
-          // Find matching indices for this normalized name
-          const matchingIndices = normalizedToIndex.get(gameBestNameNorm);
-          if (matchingIndices && matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
-            // Use the first matching index (prefer earlier position in list)
-            const matchIndex = matchingIndices[0];
-            if (!gamesByPosition.has(matchIndex)) {
-              gamesByPosition.set(matchIndex, game);
-              seenGameIds.add(game.id);
-            }
+    // Match found games back to their original positions
+    // The RPC returns games in input order, so we can match by index
+    if (allGames && allGames.length > 0) {
+      allGames.forEach((game: any, rpcIndex: number) => {
+        const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
+        
+        // Find matching indices for this normalized name
+        const matchingIndices = normalizedToIndex.get(gameBestNameNorm);
+        if (matchingIndices && matchingIndices.length > 0 && !seenGameIds.has(game.id)) {
+          // Use the first matching index (prefer earlier position in list)
+          const matchIndex = matchingIndices[0];
+          if (!gamesByPosition.has(matchIndex)) {
+            gamesByPosition.set(matchIndex, game);
+            seenGameIds.add(game.id);
           }
-        });
-      }
+        }
+      });
     }
 
     // Track missing games
