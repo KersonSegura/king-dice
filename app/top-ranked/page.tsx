@@ -52,7 +52,7 @@ export default function TopRankedPage() {
         
         const firstGamesList = firstData.games || [];
         // Update first slots with real games, keep rest as null (skeletons)
-        const updatedGames = [...games];
+        const updatedGames = Array(25).fill(null);
         firstGamesList.forEach((game: Game, index: number) => {
           updatedGames[index] = game;
         });

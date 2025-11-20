@@ -52,7 +52,7 @@ export default function HotGamesPage() {
         
         const firstGamesList = firstData.games || [];
         // Update first slots with real games, keep rest as null (skeletons)
-        const updatedGames = [...games];
+        const updatedGames = Array(50).fill(null);
         firstGamesList.forEach((game: Game, index: number) => {
           updatedGames[index] = game;
         });
