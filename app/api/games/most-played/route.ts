@@ -43,85 +43,78 @@ export async function GET(request: NextRequest) {
 
     const gamesToFind = topRankedGames.slice(0, limit);
     
-    // Use a single query to fetch all games at once
-    // Build OR conditions for each game name across all name fields
-    const orConditions: string[] = [];
-    gamesToFind.forEach(gameInfo => {
-      // Escape single quotes and wrap in wildcards for ILIKE
-      const escapedName = gameInfo.name.replace(/'/g, "''");
-      // Add conditions for each name field
-      orConditions.push(`nameEn.ilike.*${escapedName}*`);
-      orConditions.push(`nameEs.ilike.*${escapedName}*`);
-      orConditions.push(`name.ilike.*${escapedName}*`);
-    });
-
-    const { data: allGames, error: queryError } = await executeSupabaseQuery(
-      async () => {
-        return await supabaseAdmin
-          .from('games')
-          .select('*')
-          .or(orConditions.join(','))
-          .limit(limit * 3); // Get more than needed in case of duplicates
-      },
-      { maxRetries: 2, baseDelay: 400, timeout: 10000 }
-    );
-
-    if (queryError) {
-      console.error('❌ Error querying games:', queryError);
-      // Return empty array instead of failing completely
-      return NextResponse.json({ 
-        games: [],
-        category: 'most-played',
-        total: 0,
-        description: 'The most played games this month according to BoardGameGeek',
-        source: 'BGG Most Played List'
-      });
-    }
-
-    // Match games to the requested order
+    // Use smaller batches to avoid query complexity timeout
+    const BATCH_SIZE = 10;
     const foundGames: any[] = [];
     const missingGames: string[] = [];
-    const gamesMap = new Map<string, any>();
+    const seenGameIds = new Set<number>();
 
-    // Create a map of found games by normalized name
-    (allGames || []).forEach((game: any) => {
-      const nameEn = (game.nameEn || '').toLowerCase();
-      const nameEs = (game.nameEs || '').toLowerCase();
-      const name = (game.name || '').toLowerCase();
+    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
+      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
       
-      // Store by all possible name variations
-      if (nameEn) gamesMap.set(nameEn, game);
-      if (nameEs) gamesMap.set(nameEs, game);
-      if (name) gamesMap.set(name, game);
-    });
+      // Build OR conditions for this batch only
+      const orConditions: string[] = [];
+      batch.forEach(gameInfo => {
+        const escapedName = gameInfo.name.replace(/'/g, "''");
+        // Try exact match first (no wildcards = faster)
+        orConditions.push(`nameEn.ilike.${escapedName}`);
+        orConditions.push(`nameEs.ilike.${escapedName}`);
+        orConditions.push(`name.ilike.${escapedName}`);
+      });
 
-    // Match games in the requested order, prefer year match if available
-    gamesToFind.forEach((gameInfo) => {
-      const normalizedName = gameInfo.name.toLowerCase();
-      const matchedGame = gamesMap.get(normalizedName);
-      
-      if (matchedGame) {
-        // If year is specified, prefer games that match the year
-        if (gameInfo.year && matchedGame.yearRelease === gameInfo.year) {
-          // Check if we already added this game
-          if (!foundGames.find(g => g.id === matchedGame.id)) {
-            foundGames.push(matchedGame);
-          }
-        } else if (!gameInfo.year) {
-          // No year specified, add any match
-          if (!foundGames.find(g => g.id === matchedGame.id)) {
-            foundGames.push(matchedGame);
-          }
-        } else {
-          // Year doesn't match, but we'll still add it if no better match exists
-          if (!foundGames.find(g => g.id === matchedGame.id)) {
-            foundGames.push(matchedGame);
-          }
-        }
-      } else {
-        missingGames.push(gameInfo.name);
+      const { data: batchGames, error: batchError } = await executeSupabaseQuery(
+        async () => {
+          let query = supabaseAdmin
+            .from('games')
+            .select('*')
+            .or(orConditions.join(','))
+            .limit(BATCH_SIZE * 2);
+          return await query;
+        },
+        { maxRetries: 1, baseDelay: 200, timeout: 5000 }
+      );
+
+      if (batchError) {
+        console.error(`❌ Error querying batch ${i / BATCH_SIZE + 1}:`, batchError);
+        batch.forEach(gameInfo => missingGames.push(gameInfo.name));
+        continue;
       }
-    });
+
+      // Match games from this batch
+      const batchMap = new Map<string, any>();
+      (batchGames || []).forEach((game: any) => {
+        const nameEn = (game.nameEn || '').toLowerCase();
+        const nameEs = (game.nameEs || '').toLowerCase();
+        const name = (game.name || '').toLowerCase();
+        if (nameEn) batchMap.set(nameEn, game);
+        if (nameEs) batchMap.set(nameEs, game);
+        if (name) batchMap.set(name, game);
+      });
+
+      // Match games in order, prefer year match if available
+      batch.forEach((gameInfo) => {
+        const normalizedName = gameInfo.name.toLowerCase();
+        const matchedGame = batchMap.get(normalizedName);
+        
+        if (matchedGame && !seenGameIds.has(matchedGame.id)) {
+          // Prefer year match if year is specified
+          if (gameInfo.year && matchedGame.yearRelease === gameInfo.year) {
+            foundGames.push(matchedGame);
+            seenGameIds.add(matchedGame.id);
+          } else if (!gameInfo.year || !foundGames.find(g => g.id === matchedGame.id)) {
+            foundGames.push(matchedGame);
+            seenGameIds.add(matchedGame.id);
+          }
+        } else if (!matchedGame) {
+          missingGames.push(gameInfo.name);
+        }
+      });
+
+      // Small delay between batches
+      if (i + BATCH_SIZE < gamesToFind.length) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
