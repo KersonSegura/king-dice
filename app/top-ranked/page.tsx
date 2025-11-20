@@ -48,7 +48,10 @@ export default function TopRankedPage() {
         // Votes will be loaded on-demand when users hover/click the star button
       } catch (error) {
         console.error('Error fetching top ranked games:', error);
-        setGames([]);
+        // Only clear games if we don't have any (preserve existing games on error)
+        if (games.length === 0) {
+          setGames([]);
+        }
         setLoading(false);
       }
     };
