@@ -91,49 +91,6 @@ export async function GET(request: NextRequest) {
       { maxRetries: 2, baseDelay: 400, timeout: 10000 }
     );
 
-    if (queryError) {
-      console.error('❌ Error querying games:', queryError);
-      // Return empty array instead of failing completely
-      return NextResponse.json({ 
-        games: [],
-        category: 'hotness',
-        total: 0,
-        description: 'The hottest games today according to BoardGameGeek',
-        source: 'BGG Hotness List'
-      });
-    }
-
-    // Match games to the requested order
-    const foundGames: any[] = [];
-    const missingGames: string[] = [];
-    const gamesMap = new Map<string, any>();
-
-    // Create a map of found games by normalized name
-    (allGames || []).forEach((game: any) => {
-      const nameEn = (game.nameEn || '').toLowerCase();
-      const nameEs = (game.nameEs || '').toLowerCase();
-      const name = (game.name || '').toLowerCase();
-      
-      // Store by all possible name variations
-      if (nameEn) gamesMap.set(nameEn, game);
-      if (nameEs) gamesMap.set(nameEs, game);
-      if (name) gamesMap.set(name, game);
-    });
-
-    // Match games in the requested order
-    gamesToFind.forEach((gameName) => {
-      const normalizedName = gameName.toLowerCase();
-      const matchedGame = gamesMap.get(normalizedName);
-      
-      if (matchedGame) {
-        // Check if we already added this game
-        if (!foundGames.find(g => g.id === matchedGame.id)) {
-          foundGames.push(matchedGame);
-        }
-      } else {
-        missingGames.push(gameName);
-      }
-    });
 
     if (missingGames.length > 0) {
       console.warn(`⚠️ Games not found: ${missingGames.join(', ')}`);
