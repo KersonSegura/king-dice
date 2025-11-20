@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { executeSupabaseQuery } from '@/lib/supabase-helpers';
+import { normalizeGameName } from '@/utils/normalizeGameName';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -71,179 +72,67 @@ export async function GET(request: NextRequest) {
     const missingGames: string[] = [];
     const seenGameIds = new Set<number>();
 
-    // Query multiple games at once using OR conditions - much faster
-    const queryGamesBatch = async (gameNames: string[]): Promise<Map<string, any>> => {
-      const results = new Map<string, any>();
-      if (gameNames.length === 0) return results;
-      
-      try {
-        // Build OR conditions for this batch
-        const orConditions: string[] = [];
-        gameNames.forEach((gameName) => {
-          // Escape single quotes for SQL
-          const escapedName = gameName.replace(/'/g, "''");
-          // Try exact match first
-          orConditions.push(`nameEn.ilike.${escapedName}`);
-          orConditions.push(`nameEs.ilike.${escapedName}`);
-          orConditions.push(`name.ilike.${escapedName}`);
-        });
-
-        // Single query for the batch
-        const { data: batchGames, error } = await executeSupabaseQuery(
-          async () => {
-            return await supabaseAdmin
-              .from('games')
-              .select('*')
-              .or(orConditions.join(','));
-          },
-          { maxRetries: 1, baseDelay: 200, timeout: 5000 }
-        );
-
-        if (error || !batchGames) return results;
-
-        // Match games to their names
-        batchGames.forEach((game: any) => {
-          const nameEn = (game.nameEn || '').toLowerCase().trim();
-          const nameEs = (game.nameEs || '').toLowerCase().trim();
-          const name = (game.name || '').toLowerCase().trim();
-          
-          // Find matching game name
-          for (const gameName of gameNames) {
-            const searchName = gameName.toLowerCase().trim();
-            if (nameEn === searchName || nameEs === searchName || name === searchName) {
-              if (!results.has(gameName)) {
-                results.set(gameName, game);
-                break;
-              }
-            }
-          }
-        });
-      } catch (error) {
-        console.error('Error querying batch:', error);
-      }
-      
-      return results;
-    };
-
-    // Fallback: Query a single game individually (used when batch fails)
-    const queryGameIndividual = async (gameName: string): Promise<any> => {
-      try {
-        const searchName = gameName.toLowerCase().trim();
-        
-        // Try nameEn first
-        const { data, error } = await executeSupabaseQuery(
-          async () => {
-            return await supabaseAdmin
-              .from('games')
-              .select('*')
-              .ilike('nameEn', gameName)
-              .limit(1)
-              .maybeSingle();
-          },
-          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
-        );
-
-        if (data && !error) {
-          const gameData = data as any;
-          const nameEn = (gameData.nameEn || '').toLowerCase().trim();
-          if (nameEn === searchName) return gameData;
-        }
-
-        // Try nameEs
-        const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
-          async () => {
-            return await supabaseAdmin
-              .from('games')
-              .select('*')
-              .ilike('nameEs', gameName)
-              .limit(1)
-              .maybeSingle();
-          },
-          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
-        );
-
-        if (dataEs && !errorEs) {
-          const gameDataEs = dataEs as any;
-          const nameEs = (gameDataEs.nameEs || '').toLowerCase().trim();
-          if (nameEs === searchName) return gameDataEs;
-        }
-
-        // Try name field
-        const { data: dataName, error: errorName } = await executeSupabaseQuery(
-          async () => {
-            return await supabaseAdmin
-              .from('games')
-              .select('*')
-              .ilike('name', gameName)
-              .limit(1)
-              .maybeSingle();
-          },
-          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
-        );
-
-        if (dataName && !errorName) {
-          const gameDataName = dataName as any;
-          const name = (gameDataName.name || '').toLowerCase().trim();
-          if (name === searchName) return gameDataName;
-        }
-
-        return null;
-      } catch (error) {
-        return null;
-      }
-    };
+    // Normalize all game names for consistent matching
+    const normalizedNames = gamesToFind.map(name => ({
+      original: name,
+      normalized: normalizeGameName(name)
+    }));
 
     // Map to store games by their position in the original list
     const gamesByPosition = new Map<number, any>();
 
-    // Process all games in batches using OR queries (much faster)
-    const BATCH_SIZE = 8; // 8 games = 24 OR conditions (manageable)
+    // Single query using .in() on the normalized best_name_norm column
+    // This is much faster and more reliable than OR chains
+    const normalizedNameValues = normalizedNames.map(n => n.normalized);
     
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
-      
-      // Query this batch with OR conditions
-      const batchResults = await queryGamesBatch(batch);
-      
-      // Map results to positions and track which games weren't found
-      const notFoundInBatch: string[] = [];
-      batch.forEach((gameName, batchIdx) => {
-        const globalIdx = i + batchIdx;
-        const game = batchResults.get(gameName);
-        if (game && !seenGameIds.has(game.id)) {
-          gamesByPosition.set(globalIdx, game);
+    const { data: allGames, error } = await executeSupabaseQuery(
+      async () => {
+        return await supabaseAdmin
+          .from('games')
+          .select('*')
+          .in('best_name_norm', normalizedNameValues);
+      },
+      { maxRetries: 2, baseDelay: 200, timeout: 10000 }
+    );
+
+    if (error) {
+      console.error('❌ Error querying games:', error);
+      // Return empty array instead of crashing
+      return NextResponse.json({ 
+        games: [],
+        category: 'hotness',
+        total: 0,
+        description: 'The hottest games today according to BoardGameGeek',
+        source: 'BGG Hotness List'
+      });
+    }
+
+    // Match found games back to their original positions
+    if (allGames && allGames.length > 0) {
+      allGames.forEach((game: any) => {
+        const gameBestNameNorm = game.best_name_norm || normalizeGameName(game.nameEn || game.nameEs || game.name || '');
+        
+        // Find matching normalized name
+        const matchIndex = normalizedNames.findIndex(n => n.normalized === gameBestNameNorm);
+        if (matchIndex !== -1 && !seenGameIds.has(game.id)) {
+          gamesByPosition.set(matchIndex, game);
           seenGameIds.add(game.id);
-        } else if (!game) {
-          notFoundInBatch.push(gameName);
         }
       });
+    }
 
-      // Fallback: For games not found in batch, try individual queries
-      if (notFoundInBatch.length > 0) {
-        console.log(`⚠️ Batch query missed ${notFoundInBatch.length} games, trying individual queries...`);
-        
-        // Query missing games individually (in parallel, but with limits)
-        const individualPromises = notFoundInBatch.map(async (gameName) => {
-          const batchIdx = batch.indexOf(gameName);
-          const globalIdx = i + batchIdx;
-          const game = await queryGameIndividual(gameName);
-          return { gameName, globalIdx, game };
-        });
-
-        const individualResults = await Promise.allSettled(individualPromises);
-        individualResults.forEach((result) => {
-          if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
-            gamesByPosition.set(result.value.globalIdx, result.value.game);
-            seenGameIds.add(result.value.game.id);
-          } else if (result.status === 'fulfilled' && !result.value.game) {
-            missingGames.push(result.value.gameName);
-          }
-        });
+    // Track missing games
+    normalizedNames.forEach((nameInfo, index) => {
+      if (!gamesByPosition.has(index)) {
+        missingGames.push(nameInfo.original);
       }
+    });
 
-      // Small delay between batches to avoid overwhelming database
-      if (i + BATCH_SIZE < gamesToFind.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+    // Build final array in order of the original list
+    for (let i = 0; i < gamesToFind.length; i++) {
+      const game = gamesByPosition.get(i);
+      if (game) {
+        foundGames.push(game);
       }
     }
     
