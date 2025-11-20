@@ -36,25 +36,49 @@ export default function HotGamesPage() {
     const fetchHotGames = async () => {
       try {
         setLoading(true);
-        const data = await fetchJsonWithRetry('/api/games/hotness?limit=50', {
+        // Fetch first 10 games immediately
+        const firstData = await fetchJsonWithRetry('/api/games/hotness?limit=10', {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
           }
         }, {
-          maxRetries: 3,
-          retryDelay: 1000,
-          timeout: 15000
+          maxRetries: 2,
+          retryDelay: 500,
+          timeout: 8000
         });
         
-        const gamesList = data.games || [];
-        setGames(gamesList);
-        setLoading(false); // Show games immediately
-        // Votes will be loaded on-demand when users hover/click the star button
+        const firstGamesList = firstData.games || [];
+        setGames(firstGamesList);
+        setLoading(false); // Show first games immediately
+        
+        // Load remaining games in background
+        if (firstGamesList.length > 0) {
+          try {
+            const allData = await fetchJsonWithRetry('/api/games/hotness?limit=50', {
+              cache: 'no-store',
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+              }
+            }, {
+              maxRetries: 2,
+              retryDelay: 1000,
+              timeout: 20000
+            });
+            
+            const allGamesList = allData.games || [];
+            if (allGamesList.length > firstGamesList.length) {
+              setGames(allGamesList);
+            }
+          } catch (error) {
+            console.error('Error loading more hot games:', error);
+            // Keep the first games even if loading more fails
+          }
+        }
       } catch (error) {
         console.error('Error fetching hot games:', error);
-        // Only clear games if we don't have any (preserve existing games on error)
         if (games.length === 0) {
           setGames([]);
         }

@@ -154,15 +154,18 @@ export async function GET(request: NextRequest) {
       }
     });
     
-    // Return early if we found at least some games (don't wait for all)
-    if (foundGames.length > 0 && limit <= 10) {
-      console.log(`✅ Found ${foundGames.length} hotness games (early return)`);
+    // Return early if we found games - don't wait for all queries to complete
+    // This ensures users see content quickly even if some games aren't found
+    if (foundGames.length > 0) {
+      console.log(`✅ Found ${foundGames.length} hotness games (returning early, ${missingGames.length} still loading)`);
+      // Return what we have - frontend can load more in background if needed
       return NextResponse.json({ 
         games: foundGames,
         category: 'hotness',
         total: foundGames.length,
         description: 'The hottest games today according to BoardGameGeek',
-        source: 'BGG Hotness List'
+        source: 'BGG Hotness List',
+        hasMore: gamesToFind.length > foundGames.length + missingGames.length
       });
     }
 
