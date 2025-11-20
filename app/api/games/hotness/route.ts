@@ -70,94 +70,76 @@ export async function GET(request: NextRequest) {
     const foundGames: any[] = [];
     const missingGames: string[] = [];
     const seenGameIds = new Set<number>();
+    const gameNameMap = new Map<string, number>(); // Map game name to index for ordering
 
-    // Process queries in smaller batches to avoid overwhelming the database
-    // 15 games at a time = manageable parallel load
-    const BATCH_SIZE = 15;
-    
-    for (let i = 0; i < gamesToFind.length; i += BATCH_SIZE) {
-      const batch = gamesToFind.slice(i, i + BATCH_SIZE);
-      
-      const queryPromises = batch.map(async (gameName, batchIndex) => {
-        const globalIndex = i + batchIndex;
-        try {
-          // Try exact match on nameEn first (simplest query)
-          const { data, error } = await executeSupabaseQuery(
-            async () => {
-              return await supabaseAdmin
-                .from('games')
-                .select('*')
-                .ilike('nameEn', gameName)
-                .limit(1)
-                .maybeSingle();
-            },
-            { maxRetries: 1, baseDelay: 200, timeout: 3000 }
-          );
+    // Build OR conditions for all games in a single query
+    // This is much faster than individual queries
+    const orConditions: string[] = [];
+    gamesToFind.forEach((gameName, index) => {
+      gameNameMap.set(gameName.toLowerCase(), index);
+      // Escape single quotes for SQL
+      const escapedName = gameName.replace(/'/g, "''");
+      orConditions.push(`nameEn.ilike.${escapedName}`);
+      orConditions.push(`nameEs.ilike.${escapedName}`);
+      orConditions.push(`name.ilike.${escapedName}`);
+    });
 
-          if (data && !error) {
-            return { index: globalIndex, game: data, name: gameName };
-          }
+    try {
+      // Single query to get all matching games
+      const { data: allGames, error } = await executeSupabaseQuery(
+        async () => {
+          return await supabaseAdmin
+            .from('games')
+            .select('*')
+            .or(orConditions.join(','));
+        },
+        { maxRetries: 2, baseDelay: 300, timeout: 10000 }
+      );
 
-          // Try nameEs if nameEn didn't work
-          const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
-            async () => {
-              return await supabaseAdmin
-                .from('games')
-                .select('*')
-                .ilike('nameEs', gameName)
-                .limit(1)
-                .maybeSingle();
-            },
-            { maxRetries: 1, baseDelay: 200, timeout: 3000 }
-          );
-
-          if (dataEs && !errorEs) {
-            return { index: globalIndex, game: dataEs, name: gameName };
-          }
-
-          // Try name field
-          const { data: dataName, error: errorName } = await executeSupabaseQuery(
-            async () => {
-              return await supabaseAdmin
-                .from('games')
-                .select('*')
-                .ilike('name', gameName)
-                .limit(1)
-                .maybeSingle();
-            },
-            { maxRetries: 1, baseDelay: 200, timeout: 3000 }
-          );
-
-          if (dataName && !errorName) {
-            return { index: globalIndex, game: dataName, name: gameName };
-          }
-
-          return { index: globalIndex, game: null, name: gameName };
-        } catch (error) {
-          return { index: globalIndex, game: null, name: gameName };
-        }
-      });
-
-      // Wait for this batch to complete
-      const batchResults = await Promise.allSettled(queryPromises);
-      
-      // Process batch results
-      batchResults.forEach((result, batchIdx) => {
-        if (result.status === 'fulfilled') {
-          const value = result.value as { index: number; game: any; name: string };
-          if (value.game && !seenGameIds.has(value.game.id)) {
-            foundGames.push(value.game);
-            seenGameIds.add(value.game.id);
-          } else if (!value.game) {
-            missingGames.push(value.name);
-          }
-        }
-      });
-
-      // Small delay between batches to prevent overwhelming the database
-      if (i + BATCH_SIZE < gamesToFind.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      if (error) {
+        console.error('❌ Error querying games:', error);
+        throw error;
       }
+
+      if (allGames && allGames.length > 0) {
+        // Match games to their names (prioritize exact matches)
+        const matchedGames = new Map<number, any>(); // game index -> game data
+        
+        allGames.forEach((game: any) => {
+          const nameEn = (game.nameEn || '').toLowerCase();
+          const nameEs = (game.nameEs || '').toLowerCase();
+          const name = (game.name || '').toLowerCase();
+          
+          // Find matching game name
+          for (const [gameName, index] of gameNameMap.entries()) {
+            if (nameEn === gameName || nameEs === gameName || name === gameName) {
+              // Only add if we haven't matched this game yet, or if this is a better match
+              if (!matchedGames.has(index) || matchedGames.get(index).id === game.id) {
+                matchedGames.set(index, game);
+                break;
+              }
+            }
+          }
+        });
+
+        // Add matched games in order
+        for (let i = 0; i < gamesToFind.length; i++) {
+          const matchedGame = matchedGames.get(i);
+          if (matchedGame && !seenGameIds.has(matchedGame.id)) {
+            foundGames.push(matchedGame);
+            seenGameIds.add(matchedGame.id);
+          } else if (!matchedGame) {
+            missingGames.push(gamesToFind[i]);
+          }
+        }
+      } else {
+        // No games found - mark all as missing
+        gamesToFind.forEach(name => missingGames.push(name));
+      }
+    } catch (error) {
+      console.error('❌ Error in batch query:', error);
+      // Fallback: mark all as missing
+      gamesToFind.forEach(name => missingGames.push(name));
     }
 
     if (missingGames.length > 0) {
