@@ -68,21 +68,25 @@ export async function GET(request: NextRequest) {
 
     const gamesToFind = hotnessGames.slice(0, limit);
     
-    // Use a single query to fetch all games at once using ILIKE with OR conditions
-    // Build a single query that searches all game names efficiently
-    const nameConditions = gamesToFind.map(name => {
-      // Escape single quotes in game names
+    // Use a single query to fetch all games at once
+    // Build OR conditions for each game name across all name fields
+    const orConditions: string[] = [];
+    gamesToFind.forEach(name => {
+      // Escape single quotes and wrap in wildcards for ILIKE
       const escapedName = name.replace(/'/g, "''");
-      return `nameEn.ilike.*${escapedName}*,nameEs.ilike.*${escapedName}*,name.ilike.*${escapedName}*`;
-    }).join(',');
+      // Add conditions for each name field
+      orConditions.push(`nameEn.ilike.*${escapedName}*`);
+      orConditions.push(`nameEs.ilike.*${escapedName}*`);
+      orConditions.push(`name.ilike.*${escapedName}*`);
+    });
 
     const { data: allGames, error: queryError } = await executeSupabaseQuery(
       async () => {
         return await supabaseAdmin
           .from('games')
           .select('*')
-          .or(nameConditions)
-          .limit(limit * 2); // Get more than needed in case of duplicates
+          .or(orConditions.join(','))
+          .limit(limit * 3); // Get more than needed in case of duplicates
       },
       { maxRetries: 2, baseDelay: 400, timeout: 10000 }
     );
