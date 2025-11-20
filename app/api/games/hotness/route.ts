@@ -125,6 +125,71 @@ export async function GET(request: NextRequest) {
       return results;
     };
 
+    // Fallback: Query a single game individually (used when batch fails)
+    const queryGameIndividual = async (gameName: string): Promise<any> => {
+      try {
+        const searchName = gameName.toLowerCase().trim();
+        
+        // Try nameEn first
+        const { data, error } = await executeSupabaseQuery(
+          async () => {
+            return await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEn', gameName)
+              .limit(1)
+              .maybeSingle();
+          },
+          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
+        );
+
+        if (data && !error) {
+          const nameEn = (data.nameEn || '').toLowerCase().trim();
+          if (nameEn === searchName) return data;
+        }
+
+        // Try nameEs
+        const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
+          async () => {
+            return await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEs', gameName)
+              .limit(1)
+              .maybeSingle();
+          },
+          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
+        );
+
+        if (dataEs && !errorEs) {
+          const nameEs = (dataEs.nameEs || '').toLowerCase().trim();
+          if (nameEs === searchName) return dataEs;
+        }
+
+        // Try name field
+        const { data: dataName, error: errorName } = await executeSupabaseQuery(
+          async () => {
+            return await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('name', gameName)
+              .limit(1)
+              .maybeSingle();
+          },
+          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
+        );
+
+        if (dataName && !errorName) {
+          const name = (dataName.name || '').toLowerCase().trim();
+          if (name === searchName) return dataName;
+        }
+
+        return null;
+      } catch (error) {
+        return null;
+      }
+    };
+
     // Map to store games by their position in the original list
     const gamesByPosition = new Map<number, any>();
 
@@ -137,7 +202,8 @@ export async function GET(request: NextRequest) {
       // Query this batch with OR conditions
       const batchResults = await queryGamesBatch(batch);
       
-      // Map results to positions
+      // Map results to positions and track which games weren't found
+      const notFoundInBatch: string[] = [];
       batch.forEach((gameName, batchIdx) => {
         const globalIdx = i + batchIdx;
         const game = batchResults.get(gameName);
@@ -145,9 +211,32 @@ export async function GET(request: NextRequest) {
           gamesByPosition.set(globalIdx, game);
           seenGameIds.add(game.id);
         } else if (!game) {
-          missingGames.push(gameName);
+          notFoundInBatch.push(gameName);
         }
       });
+
+      // Fallback: For games not found in batch, try individual queries
+      if (notFoundInBatch.length > 0) {
+        console.log(`⚠️ Batch query missed ${notFoundInBatch.length} games, trying individual queries...`);
+        
+        // Query missing games individually (in parallel, but with limits)
+        const individualPromises = notFoundInBatch.map(async (gameName) => {
+          const batchIdx = batch.indexOf(gameName);
+          const globalIdx = i + batchIdx;
+          const game = await queryGameIndividual(gameName);
+          return { gameName, globalIdx, game };
+        });
+
+        const individualResults = await Promise.allSettled(individualPromises);
+        individualResults.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
+            gamesByPosition.set(result.value.globalIdx, result.value.game);
+            seenGameIds.add(result.value.game.id);
+          } else if (result.status === 'fulfilled' && !result.value.game) {
+            missingGames.push(result.value.gameName);
+          }
+        });
+      }
 
       // Small delay between batches to avoid overwhelming database
       if (i + BATCH_SIZE < gamesToFind.length) {

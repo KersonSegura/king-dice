@@ -115,6 +115,80 @@ export async function GET(request: NextRequest) {
       return results;
     };
 
+    // Fallback: Query a single game individually (used when batch fails)
+    const queryGameIndividual = async (gameInfo: typeof topRankedGames[0]): Promise<any> => {
+      try {
+        const searchName = gameInfo.name.toLowerCase().trim();
+        
+        // Try nameEn first with year filter
+        let query = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('nameEn', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          query = query.eq('yearRelease', gameInfo.year);
+        }
+
+        const { data, error } = await executeSupabaseQuery(
+          async () => await query.maybeSingle(),
+          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
+        );
+
+        if (data && !error) {
+          const nameEn = (data.nameEn || '').toLowerCase().trim();
+          if (nameEn === searchName) return data;
+        }
+
+        // Try nameEs
+        let queryEs = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('nameEs', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          queryEs = queryEs.eq('yearRelease', gameInfo.year);
+        }
+
+        const { data: dataEs, error: errorEs } = await executeSupabaseQuery(
+          async () => await queryEs.maybeSingle(),
+          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
+        );
+
+        if (dataEs && !errorEs) {
+          const nameEs = (dataEs.nameEs || '').toLowerCase().trim();
+          if (nameEs === searchName) return dataEs;
+        }
+
+        // Try name field
+        let queryName = supabaseAdmin
+          .from('games')
+          .select('*')
+          .ilike('name', gameInfo.name)
+          .limit(1);
+        
+        if (gameInfo.year) {
+          queryName = queryName.eq('yearRelease', gameInfo.year);
+        }
+
+        const { data: dataName, error: errorName } = await executeSupabaseQuery(
+          async () => await queryName.maybeSingle(),
+          { maxRetries: 1, baseDelay: 100, timeout: 3000 }
+        );
+
+        if (dataName && !errorName) {
+          const name = (dataName.name || '').toLowerCase().trim();
+          if (name === searchName) return dataName;
+        }
+
+        return null;
+      } catch (error) {
+        return null;
+      }
+    };
+
     // Process all games in batches using OR queries (much faster)
     const BATCH_SIZE = 6; // 6 games = 18 OR conditions (manageable)
     
@@ -124,7 +198,8 @@ export async function GET(request: NextRequest) {
       // Query this batch with OR conditions
       const batchResults = await queryGamesBatch(batch);
       
-      // Map results to positions
+      // Map results to positions and track which games weren't found
+      const notFoundInBatch: typeof topRankedGames = [];
       batch.forEach((gameInfo, batchIdx) => {
         const globalIdx = i + batchIdx;
         const key = `${gameInfo.name}_${gameInfo.year || 'any'}`;
@@ -133,9 +208,32 @@ export async function GET(request: NextRequest) {
           gamesByPosition.set(globalIdx, game);
           seenGameIds.add(game.id);
         } else if (!game) {
-          missingGames.push(gameInfo.name);
+          notFoundInBatch.push(gameInfo);
         }
       });
+
+      // Fallback: For games not found in batch, try individual queries
+      if (notFoundInBatch.length > 0) {
+        console.log(`⚠️ Batch query missed ${notFoundInBatch.length} games, trying individual queries...`);
+        
+        // Query missing games individually (in parallel)
+        const individualPromises = notFoundInBatch.map(async (gameInfo) => {
+          const batchIdx = batch.indexOf(gameInfo);
+          const globalIdx = i + batchIdx;
+          const game = await queryGameIndividual(gameInfo);
+          return { gameInfo, globalIdx, game };
+        });
+
+        const individualResults = await Promise.allSettled(individualPromises);
+        individualResults.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value.game && !seenGameIds.has(result.value.game.id)) {
+            gamesByPosition.set(result.value.globalIdx, result.value.game);
+            seenGameIds.add(result.value.game.id);
+          } else if (result.status === 'fulfilled' && !result.value.game) {
+            missingGames.push(result.value.gameInfo.name);
+          }
+        });
+      }
 
       // Small delay between batches
       if (i + BATCH_SIZE < gamesToFind.length) {
