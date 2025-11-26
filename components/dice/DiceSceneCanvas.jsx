@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+// CRITICAL: Import React first to ensure it's available before React Three Fiber
+import React, { useState, useEffect, Suspense } from 'react';
+// Import React DOM to ensure React internals are fully initialized
+import 'react-dom';
 
 export default function DiceSceneCanvas({ dice, rollSignal, rollResult, onComplete, compact = false }) {
   const [Canvas, setCanvas] = useState(null);
@@ -12,20 +15,23 @@ export default function DiceSceneCanvas({ dice, rollSignal, rollResult, onComple
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Ensure we're on client and React is fully initialized
+    // Ensure we're on client
     if (typeof window === 'undefined') return;
 
-    // Ensure React is loaded first before React Three Fiber
+    // Wait for next tick to ensure React is fully initialized
     const loadComponents = async () => {
       try {
-        // First, ensure React is fully loaded
-        await import('react');
-        await import('react-dom');
+        // Wait for React to be fully ready
+        await new Promise(resolve => {
+          if (typeof window !== 'undefined' && window.React) {
+            resolve();
+          } else {
+            // Wait a bit longer for React to be available
+            setTimeout(resolve, 100);
+          }
+        });
         
-        // Small delay to ensure React internals are available
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // Now load React Three Fiber and dependencies
+        // Now load React Three Fiber - React should be available
         const [fiberModule, meshModule, dreiModule] = await Promise.all([
           import('@react-three/fiber'),
           import('./DiceMesh'),
