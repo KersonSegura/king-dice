@@ -15,39 +15,36 @@ export default function DiceSceneCanvas({ dice, rollSignal, rollResult, onComple
     // Ensure we're on client and React is fully initialized
     if (typeof window === 'undefined') return;
 
-    // Small delay to ensure React is fully initialized
-    const timer = setTimeout(() => {
-      Promise.all([
-        import('@react-three/fiber').then(mod => mod.Canvas).catch(err => {
-          console.error('Failed to load @react-three/fiber:', err);
-          throw err;
-        }),
-        import('./DiceMesh').then(mod => mod.default).catch(err => {
-          console.error('Failed to load DiceMesh:', err);
-          throw err;
-        }),
-        import('@react-three/drei').then(mod => ({
-          ContactShadows: mod.ContactShadows,
-          Environment: mod.Environment,
-          OrbitControls: mod.OrbitControls
-        })).catch(err => {
-          console.error('Failed to load @react-three/drei:', err);
-          throw err;
-        })
-      ]).then(([CanvasComponent, DiceMeshComponent, dreiComponents]) => {
-        setCanvas(() => CanvasComponent);
-        setDiceMesh(() => DiceMeshComponent);
-        setContactShadows(() => dreiComponents.ContactShadows);
-        setEnvironment(() => dreiComponents.Environment);
-        setOrbitControls(() => dreiComponents.OrbitControls);
+    // Ensure React is loaded first before React Three Fiber
+    const loadComponents = async () => {
+      try {
+        // First, ensure React is fully loaded
+        await import('react');
+        await import('react-dom');
+        
+        // Small delay to ensure React internals are available
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Now load React Three Fiber and dependencies
+        const [fiberModule, meshModule, dreiModule] = await Promise.all([
+          import('@react-three/fiber'),
+          import('./DiceMesh'),
+          import('@react-three/drei')
+        ]);
+        
+        setCanvas(() => fiberModule.Canvas);
+        setDiceMesh(() => meshModule.default);
+        setContactShadows(() => dreiModule.ContactShadows);
+        setEnvironment(() => dreiModule.Environment);
+        setOrbitControls(() => dreiModule.OrbitControls);
         setIsLoaded(true);
-      }).catch(err => {
+      } catch (err) {
         console.error('Error loading 3D components:', err);
         setError(err);
-      });
-    }, 100);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    loadComponents();
   }, []);
 
   const cameraPosition = compact ? [0, 1.5, 2.5] : [0, 2.5, 4];

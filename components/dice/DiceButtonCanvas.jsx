@@ -12,28 +12,32 @@ export default function DiceButtonCanvas({ dice }) {
     // Ensure we're on client and React is fully initialized
     if (typeof window === 'undefined') return;
 
-    // Small delay to ensure React is fully initialized
-    const timer = setTimeout(() => {
-      Promise.all([
-        import('@react-three/fiber').then(mod => mod.Canvas).catch(err => {
-          console.error('Failed to load @react-three/fiber:', err);
-          throw err;
-        }),
-        import('./DiceMesh').then(mod => mod.default).catch(err => {
-          console.error('Failed to load DiceMesh:', err);
-          throw err;
-        })
-      ]).then(([CanvasComponent, DiceMeshComponent]) => {
-        setCanvas(() => CanvasComponent);
-        setDiceMesh(() => DiceMeshComponent);
+    // Ensure React is loaded first before React Three Fiber
+    const loadComponents = async () => {
+      try {
+        // First, ensure React is fully loaded
+        await import('react');
+        await import('react-dom');
+        
+        // Small delay to ensure React internals are available
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Now load React Three Fiber
+        const [fiberModule, meshModule] = await Promise.all([
+          import('@react-three/fiber'),
+          import('./DiceMesh')
+        ]);
+        
+        setCanvas(() => fiberModule.Canvas);
+        setDiceMesh(() => meshModule.default);
         setIsLoaded(true);
-      }).catch(err => {
+      } catch (err) {
         console.error('Error loading 3D components:', err);
         setError(err);
-      });
-    }, 100);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    loadComponents();
   }, []);
 
   if (error) {
