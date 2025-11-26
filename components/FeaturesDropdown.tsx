@@ -54,13 +54,6 @@ export default function FeaturesDropdown() {
       hoverColor: '#e0990f'
     }] : []),
     {
-      name: 'Dice Roller',
-      href: '/dice-roller',
-      icon: '/DiceRollerIcon.svg',
-      color: '#fbae17',
-      hoverColor: '#e0990f'
-    },
-    {
       name: 'Catan Maps',
       href: '/catan-map-generator',
       icon: '/CatanIcon.svg',
@@ -78,6 +71,13 @@ export default function FeaturesDropdown() {
       name: 'Boardle',
       href: '/boardle',
       icon: '/BoardleIcon.svg',
+      color: '#fbae17',
+      hoverColor: '#e0990f'
+    },
+    {
+      name: 'Dice Roller',
+      href: '/dice-roller',
+      icon: '/DiceRollerIcon.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
     },
@@ -129,9 +129,9 @@ export default function FeaturesDropdown() {
                   <Image
                     src={feature.icon}
                     alt={feature.name}
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6"
                   />
                 ) : (
                   <div className="w-4 h-4 bg-white rounded-sm"></div>
