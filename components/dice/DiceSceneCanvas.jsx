@@ -1,13 +1,8 @@
 'use client';
 
-// CRITICAL: Import React first to ensure it's available before React Three Fiber
-import React, { useState, useEffect, Suspense } from 'react';
-// Import React DOM to ensure React internals are initialized
-import 'react-dom/client';
-
-// Try importing React Three Fiber at top level - React should be available
-import { Canvas } from '@react-three/fiber';
-import { ContactShadows, Environment, OrbitControls } from '@react-three/drei';
+import { useState, useEffect, Suspense } from 'react';
+// Use wrapper that ensures React is loaded first
+import { Canvas, ContactShadows, Environment, OrbitControls } from './r3f-wrapper';
 import DiceMesh from './DiceMesh';
 
 export default function DiceSceneCanvas({ dice, rollSignal, rollResult, onComplete, compact = false }) {
