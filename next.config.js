@@ -88,7 +88,10 @@ const nextConfig = {
     'bcryptjs',
     'jsonwebtoken',
     'fast-xml-parser',
-    'xml2js'
+    'xml2js',
+    '@react-three/fiber',
+    '@react-three/drei',
+    'three'
   ],
 }
 
