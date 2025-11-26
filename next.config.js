@@ -89,10 +89,19 @@ const nextConfig = {
     'jsonwebtoken',
     'fast-xml-parser',
     'xml2js',
-    '@react-three/fiber',
-    '@react-three/drei',
-    'three'
   ],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Ensure React is resolved as a singleton for client-side bundles
+      // This fixes React Three Fiber's access to React internals
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        react: require.resolve('react'),
+        'react-dom': require.resolve('react-dom'),
+      };
+    }
+    return config;
+  },
 }
 
 module.exports = withSentryConfig(nextConfig, {
