@@ -99,6 +99,25 @@ const nextConfig = {
         react: require.resolve('react'),
         'react-dom': require.resolve('react-dom'),
       };
+      
+      // Ensure React is not code-split - keep it in main bundle
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks?.cacheGroups,
+            default: false,
+            vendors: false,
+            react: {
+              name: 'react',
+              test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+              priority: 20,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+      };
     }
     return config;
   },

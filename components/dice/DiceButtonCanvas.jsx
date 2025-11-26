@@ -2,55 +2,21 @@
 
 // CRITICAL: Import React first to ensure it's available before React Three Fiber
 import React, { useState, useEffect } from 'react';
-// Import React DOM to ensure React internals are fully initialized
-import 'react-dom';
+// Import React DOM to ensure React internals are initialized
+import 'react-dom/client';
+
+// Try importing React Three Fiber at top level - React should be available
+import { Canvas } from '@react-three/fiber';
+import DiceMesh from './DiceMesh';
 
 export default function DiceButtonCanvas({ dice }) {
-  const [Canvas, setCanvas] = useState(null);
-  const [DiceMesh, setDiceMesh] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [error, setError] = useState(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Ensure we're on client
-    if (typeof window === 'undefined') return;
-
-    // Wait for next tick to ensure React is fully initialized
-    const loadComponents = async () => {
-      try {
-        // Wait for React to be fully ready
-        await new Promise(resolve => {
-          if (typeof window !== 'undefined' && window.React) {
-            resolve();
-          } else {
-            // Wait a bit longer for React to be available
-            setTimeout(resolve, 100);
-          }
-        });
-        
-        // Now load React Three Fiber - React should be available
-        const [fiberModule, meshModule] = await Promise.all([
-          import('@react-three/fiber'),
-          import('./DiceMesh')
-        ]);
-        
-        setCanvas(() => fiberModule.Canvas);
-        setDiceMesh(() => meshModule.default);
-        setIsLoaded(true);
-      } catch (err) {
-        console.error('Error loading 3D components:', err);
-        setError(err);
-      }
-    };
-
-    loadComponents();
+    setIsClient(true);
   }, []);
 
-  if (error) {
-    return <div className="w-full h-full flex items-center justify-center text-white/50 text-xs">3D Load Error</div>;
-  }
-
-  if (!isLoaded || !Canvas || !DiceMesh) {
+  if (!isClient) {
     return <div className="w-full h-full" />;
   }
 
