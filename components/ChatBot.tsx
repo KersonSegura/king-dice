@@ -58,6 +58,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
           }));
           setMessages(messagesWithDates);
           console.log('Loaded', messagesWithDates.length, 'previous bot messages');
+          
+          // Scroll to bottom after messages are loaded
+          setTimeout(() => {
+            scrollToBottom();
+          }, 100);
         } catch (error) {
           console.error('Error loading bot messages:', error);
           // Add welcome message if loading fails
@@ -77,6 +82,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
           timestamp: new Date()
         }]);
       }
+    } else if (isOpen && !currentUser?.id) {
+      // Show sign-in message for unauthenticated users
+      setMessages([{
+        id: 'signin',
+        text: "Hello! 👋 I'm Dice-Bot, your AI assistant for board games! 🎲\n\nTo chat with me, please sign in or create an account. It's free and only takes a moment!\n\nOnce you're signed in, I can help you with:\n• Board game rules and strategies\n• Game recommendations\n• King Dice platform features\n• And much more!\n\nSign in to get started! 🚀",
+        isBot: true,
+        timestamp: new Date()
+      }]);
     }
   }, [isOpen, currentUser?.id]);
 
@@ -199,7 +212,10 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
   if (!isOpen) return null;
 
   return (
-    <div className={embedded ? "h-full bg-white flex flex-col overflow-hidden" : "fixed bottom-4 right-4 w-96 h-[500px] max-h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50 overflow-hidden"}>
+    <div 
+      className={embedded ? "h-full bg-white flex flex-col overflow-hidden" : "fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50 overflow-hidden"}
+      style={!embedded ? { height: '500px', maxHeight: '500px' } : {}}
+    >
       {/* Header - only show if not embedded */}
       {!embedded && (
         <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between flex-shrink-0">
