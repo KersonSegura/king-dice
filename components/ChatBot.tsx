@@ -199,7 +199,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
   if (!isOpen) return null;
 
   return (
-    <div className={embedded ? "h-full bg-white flex flex-col min-h-0" : "fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50"}>
+    <div className={embedded ? "h-full bg-white flex flex-col overflow-hidden" : "fixed bottom-4 right-4 w-96 h-[500px] max-h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50 overflow-hidden"}>
       {/* Header - only show if not embedded */}
       {!embedded && (
         <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between flex-shrink-0">
@@ -228,9 +228,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       {/* Messages - Fixed height scrollable container */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" 
+        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 max-h-full" 
         style={{ 
-          maxHeight: embedded ? '100%' : 'calc(500px - 140px)',
           scrollBehavior: 'smooth'
         }}
       >
