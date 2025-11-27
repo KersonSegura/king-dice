@@ -1,6 +1,6 @@
 # Prisma to Supabase Migration Status
 
-## ✅ Already Converted (17 routes)
+## ✅ Already Converted (19 routes)
 - `/api/auth/login` - ✅ Converted
 - `/api/auth/register` - ✅ Converted  
 - `/api/auth/me` - ✅ Converted
@@ -11,9 +11,12 @@
 - `/api/rules` (GET/POST) - ✅ Converted
 - `/api/rules/[id]` - Need to check
 - `/api/gallery` - ✅ URL fixes done
+- `/api/gallery/upload` - ✅ Converted (uses Supabase)
 - `/api/messages/unread` - ✅ Converted
 - `/api/boardle/image-proxy` - ✅ Fixed (was fs import issue)
 - `/api/boardle/card-image` - ✅ Fixed (was fs import issue)
+- `/api/users/update-profile` - ✅ Converted (uses Supabase)
+- `/api/users/collection` - ✅ Converted (uses Supabase)
 
 ## 🔴 Critical Routes Still Using Prisma (Priority Order)
 
@@ -34,12 +37,10 @@
 10. `/api/users/profile` - ❌ Uses Prisma
 11. `/api/users/profile-data` - ❌ Uses Prisma
 12. `/api/users/profile-colors` - ❌ Uses Prisma
-13. `/api/users/update-profile` - ❌ Uses Prisma
-14. `/api/users/update-profile-colors` - ❌ Uses Prisma
-15. `/api/users/stats` - ❌ Uses Prisma
-16. `/api/users/games` - ❌ Uses Prisma
-17. `/api/users/collection` - ❌ Uses Prisma
-18. `/api/users/make-admin` - ❌ Uses Prisma
+13. `/api/users/update-profile-colors` - ❌ Uses Prisma
+14. `/api/users/stats` - ❌ Uses Prisma
+15. `/api/users/games` - ❌ Uses Prisma (different from gamesList - this is for userGame table)
+16. `/api/users/make-admin` - ❌ Uses Prisma
 19. `/api/users/search` - ❌ Uses Prisma
 20. `/api/users/online` - ❌ Uses Prisma
 21. `/api/users/privacy` - ❌ Uses Prisma

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,26 +14,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID or username is required' }, { status: 400 });
     }
 
-    const whereClause = userId ? { id: userId } : { username: username! };
+    // Build query based on userId or username
+    let query = supabaseAdmin
+      .from('users')
+      .select('collection_photo, favorite_card, games_list');
 
-    const user = await prisma.user.findUnique({
-      where: whereClause,
-      select: {
-        collectionPhoto: true,
-        favoriteCard: true,
-        gamesList: true
-      }
-    });
+    if (userId) {
+      query = query.eq('id', userId);
+    } else {
+      query = query.eq('username', username!);
+    }
 
-    if (!user) {
+    const { data: user, error } = await query.single();
+
+    if (error || !user) {
+      console.error('Error fetching collection data:', error);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Parse games_list if it exists
+    let gamesList = [];
+    if (user.games_list) {
+      try {
+        gamesList = typeof user.games_list === 'string' 
+          ? JSON.parse(user.games_list) 
+          : user.games_list;
+      } catch (e) {
+        console.error('Error parsing games_list:', e);
+        gamesList = [];
+      }
     }
 
     return NextResponse.json({
       success: true,
-      collectionPhoto: user.collectionPhoto,
-      favoriteCard: user.favoriteCard,
-      gamesList: user.gamesList ? JSON.parse(user.gamesList) : []
+      collectionPhoto: user.collection_photo,
+      favoriteCard: user.favorite_card,
+      gamesList: gamesList
     });
   } catch (error) {
     console.error('Error fetching collection data:', error);
@@ -54,32 +68,48 @@ export async function POST(request: NextRequest) {
     const updateData: any = {};
     
     if (collectionPhoto !== undefined) {
-      updateData.collectionPhoto = collectionPhoto;
+      updateData.collection_photo = collectionPhoto;
     }
     
     if (favoriteCard !== undefined) {
-      updateData.favoriteCard = favoriteCard;
+      updateData.favorite_card = favoriteCard;
     }
     
     if (gamesList !== undefined) {
-      updateData.gamesList = JSON.stringify(gamesList);
+      updateData.games_list = JSON.stringify(gamesList);
     }
 
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        collectionPhoto: true,
-        favoriteCard: true,
-        gamesList: true
+    // Update user in Supabase
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
+      .from('users')
+      .update(updateData)
+      .eq('id', userId)
+      .select('collection_photo, favorite_card, games_list')
+      .single();
+
+    if (updateError || !updatedUser) {
+      console.error('Error updating collection data:', updateError);
+      return NextResponse.json({ error: 'Failed to update collection data' }, { status: 500 });
+    }
+
+    // Parse games_list if it exists
+    let parsedGamesList = [];
+    if (updatedUser.games_list) {
+      try {
+        parsedGamesList = typeof updatedUser.games_list === 'string' 
+          ? JSON.parse(updatedUser.games_list) 
+          : updatedUser.games_list;
+      } catch (e) {
+        console.error('Error parsing games_list:', e);
+        parsedGamesList = [];
       }
-    });
+    }
 
     return NextResponse.json({
       success: true,
-      collectionPhoto: user.collectionPhoto,
-      favoriteCard: user.favoriteCard,
-      gamesList: user.gamesList ? JSON.parse(user.gamesList) : []
+      collectionPhoto: updatedUser.collection_photo,
+      favoriteCard: updatedUser.favorite_card,
+      gamesList: parsedGamesList
     });
   } catch (error) {
     console.error('Error updating collection data:', error);
