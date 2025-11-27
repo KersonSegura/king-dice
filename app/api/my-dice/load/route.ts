@@ -28,15 +28,16 @@ export async function GET(request: NextRequest) {
     if (user && user.profile_colors) {
       try {
         const parsed = JSON.parse(user.profile_colors);
+        // Check for diceConfig in the merged data
         if (parsed.diceConfig) {
           return NextResponse.json({ 
             config: parsed.diceConfig,
-            updatedAt: parsed.updatedAt
+            updatedAt: parsed.diceConfigUpdatedAt || parsed.updatedAt
           });
         }
       } catch (parseError) {
         // profile_colors might be used for actual colors, not dice config
-        console.log('profile_colors is not dice config, using defaults');
+        console.log('⚠️ profile_colors is not valid JSON or doesn\'t contain dice config, using defaults');
       }
     }
 

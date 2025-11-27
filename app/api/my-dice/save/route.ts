@@ -16,42 +16,83 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing userId or config' }, { status: 400 });
     }
 
-    // Store dice config in Supabase users table
-    // Use profile_colors field or create a new dice_config field
-    // For now, we'll store it in a JSON field in the users table
+    console.log('💾 Saving dice config for user:', body.userId);
+
+    // Get existing user data including profile_colors
     const { data: user, error: findError } = await supabaseAdmin
       .from('users')
-      .select('id')
+      .select('id, profile_colors')
       .eq('id', body.userId)
       .single();
 
-    if (findError || !user) {
-      console.error('User not found:', findError);
+    if (findError) {
+      console.error('❌ Error finding user:', findError);
+      return NextResponse.json({ 
+        error: 'User not found',
+        details: findError.message 
+      }, { status: 404 });
+    }
+
+    if (!user) {
+      console.error('❌ User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Store dice config as JSON in profile_colors field (or we could add a dice_config field)
-    // For now, using a workaround: store in profile_colors as JSON
-    const diceConfigJson = JSON.stringify({
+    // Merge dice config with existing profile_colors if it exists
+    let mergedData: any = {
       diceConfig: body.config,
       updatedAt: new Date().toISOString()
-    });
+    };
+
+    // If profile_colors exists and contains profile colors data, preserve it
+    if (user.profile_colors) {
+      try {
+        const existing = JSON.parse(user.profile_colors);
+        // Check if it's profile colors format (has cover, background, containers)
+        if (existing.cover || existing.background || existing.containers) {
+          // It's profile colors, merge both
+          mergedData = {
+            ...existing,
+            diceConfig: body.config,
+            diceConfigUpdatedAt: new Date().toISOString()
+          };
+        } else if (existing.diceConfig) {
+          // It already has dice config, just update it
+          mergedData = {
+            ...existing,
+            diceConfig: body.config,
+            updatedAt: new Date().toISOString()
+          };
+        }
+      } catch (parseError) {
+        // profile_colors is not valid JSON, just store dice config
+        console.log('⚠️ profile_colors is not valid JSON, overwriting with dice config');
+      }
+    }
+
+    const mergedJson = JSON.stringify(mergedData);
+    console.log('💾 Merged data to save:', mergedJson.substring(0, 100) + '...');
 
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({ 
-        profile_colors: diceConfigJson 
+        profile_colors: mergedJson 
       })
       .eq('id', body.userId);
 
     if (updateError) {
-      console.error('Error saving dice config:', updateError);
-      return NextResponse.json({ error: 'Failed to save dice config' }, { status: 500 });
+      console.error('❌ Error saving dice config:', updateError);
+      return NextResponse.json({ 
+        error: 'Failed to save dice config',
+        details: updateError.message,
+        code: updateError.code
+      }, { status: 500 });
     }
 
+    console.log('✅ Dice config saved successfully');
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Error in save route:', error);
+    console.error('❌ Error in save route:', error);
     return NextResponse.json({ 
       error: 'Failed to save dice',
       details: error instanceof Error ? error.message : 'Unknown error'
