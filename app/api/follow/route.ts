@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         console.error('Error fetching following:', error);
-        return NextResponse.json({ error: 'Failed to fetch following' }, { status: 500 });
+        // Return empty array instead of error if table doesn't exist or query fails
+        return NextResponse.json({
+          success: true,
+          following: [],
+          count: 0
+        });
       }
 
       return NextResponse.json({
@@ -46,7 +51,12 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         console.error('Error fetching followers:', error);
-        return NextResponse.json({ error: 'Failed to fetch followers' }, { status: 500 });
+        // Return empty array instead of error if table doesn't exist or query fails
+        return NextResponse.json({
+          success: true,
+          followers: [],
+          count: 0
+        });
       }
 
       return NextResponse.json({

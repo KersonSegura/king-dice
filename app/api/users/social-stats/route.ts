@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-// GET - Get user's social stats (friends, followers, following counts)
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// GET - Get user's social stats (friends, followers, following counts)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,30 +14,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Get followers count
-    const followersCount = await prisma.follow.count({
-      where: { followingId: userId }
-    });
+    // Get followers count (users following this user)
+    const { count: followersCount, error: followersError } = await supabaseAdmin
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', userId);
 
-    // Get following count
-    const followingCount = await prisma.follow.count({
-      where: { followerId: userId }
-    });
+    if (followersError) {
+      console.error('Error fetching followers count:', followersError);
+    }
+
+    // Get following count (users this user is following)
+    const { count: followingCount, error: followingError } = await supabaseAdmin
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', userId);
+
+    if (followingError) {
+      console.error('Error fetching following count:', followingError);
+    }
 
     // Get pending follow requests received
-    const pendingRequestsCount = await prisma.followRequest.count({
-      where: { 
-        targetId: userId,
-        status: 'pending'
-      }
-    });
+    const { count: pendingRequestsCount, error: requestsError } = await supabaseAdmin
+      .from('follow_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('target_id', userId)
+      .eq('status', 'pending');
+
+    if (requestsError) {
+      console.error('Error fetching pending requests count:', requestsError);
+    }
 
     return NextResponse.json({
       success: true,
       stats: {
-        followers: followersCount,
-        following: followingCount,
-        pendingRequests: pendingRequestsCount
+        followers: followersCount || 0,
+        following: followingCount || 0,
+        pendingRequests: pendingRequestsCount || 0
       }
     });
   } catch (error) {

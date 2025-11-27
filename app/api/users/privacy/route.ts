@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-// GET - Get user's privacy settings
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// GET - Get user's privacy settings
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,19 +14,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isPrivate: true }
-    });
+    const { data: user, error } = await supabaseAdmin
+      .from('users')
+      .select('is_private')
+      .eq('id', userId)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
+      console.error('Error fetching privacy settings:', error);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
       privacy: {
-        isPrivate: user.isPrivate
+        isPrivate: user.is_private || false
       }
     });
   } catch (error) {
@@ -46,16 +46,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and privacy setting are required' }, { status: 400 });
     }
 
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { isPrivate },
-      select: { isPrivate: true }
-    });
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({ is_private: isPrivate })
+      .eq('id', userId)
+      .select('is_private')
+      .single();
+
+    if (updateError || !updatedUser) {
+      console.error('Error updating privacy settings:', updateError);
+      return NextResponse.json({ error: 'Failed to update privacy settings' }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
       privacy: {
-        isPrivate: user.isPrivate
+        isPrivate: updatedUser.is_private || false
       }
     });
   } catch (error) {

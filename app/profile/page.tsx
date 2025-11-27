@@ -993,11 +993,13 @@ export default function ProfilePage() {
         if (card !== undefined) setFavoriteCard(data.favoriteCard);
         if (games !== undefined) setGamesList(data.gamesList);
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('Error saving collection data:', errorData);
+        showToast(`Failed to save: ${errorData.error || 'Unknown error'}`, 'error');
       }
     } catch (error) {
       console.error('Error saving collection data:', error);
+      showToast('Failed to save collection data. Please try again.', 'error');
     }
   };
 
