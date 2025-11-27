@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     const { data: user, error } = await supabaseAdmin
       .from('users')
-      .select('is_private')
+      .select('isPrivate')
       .eq('id', userId)
       .single();
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       privacy: {
-        isPrivate: user.is_private || false
+        isPrivate: user.isPrivate || false
       }
     });
   } catch (error) {
@@ -54,9 +54,9 @@ export async function POST(request: NextRequest) {
 
     const { data: updatedUser, error: updateError } = await supabaseAdmin
       .from('users')
-      .update({ is_private: isPrivate })
+      .update({ isPrivate: isPrivate })
       .eq('id', userId)
-      .select('is_private')
+      .select('isPrivate')
       .single();
 
     if (updateError || !updatedUser) {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       privacy: {
-        isPrivate: updatedUser.is_private || false
+        isPrivate: updatedUser.isPrivate || false
       }
     });
   } catch (error) {

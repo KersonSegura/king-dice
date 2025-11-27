@@ -22,10 +22,11 @@ export async function GET(request: NextRequest) {
 
     if (type === 'following') {
       // Get users that this user is following
+      // Query follows table and then get user details separately
       const { data: following, error } = await supabaseAdmin
         .from('follows')
-        .select('following_id, created_at, following:users!follows_following_id_fkey(id, username, avatar, is_verified, is_admin)')
-        .eq('follower_id', userId);
+        .select('followingId, createdAt')
+        .eq('followerId', userId);
 
       if (error) {
         console.error('Error fetching following:', error);
@@ -37,15 +38,29 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Transform to include user objects
-      const users = (following || []).map((f: any) => ({
-        id: f.following_id,
-        username: f.following?.username || '',
-        avatar: f.following?.avatar || '',
-        isVerified: f.following?.is_verified || false,
-        isAdmin: f.following?.is_admin || false,
-        followedAt: f.created_at
-      })).filter((u: any) => u.id);
+      // Get user details for each following ID
+      const followingIds = (following || []).map((f: any) => f.followingId).filter(Boolean);
+      let users: any[] = [];
+      
+      if (followingIds.length > 0) {
+        const { data: userData, error: userError } = await supabaseAdmin
+          .from('users')
+          .select('id, username, avatar, isVerified, isAdmin')
+          .in('id', followingIds);
+        
+        if (!userError && userData) {
+          // Map users with their follow dates
+          const followMap = new Map((following || []).map((f: any) => [f.followingId, f.createdAt]));
+          users = userData.map((u: any) => ({
+            id: u.id,
+            username: u.username || '',
+            avatar: u.avatar || '',
+            isVerified: u.isVerified || false,
+            isAdmin: u.isAdmin || false,
+            followedAt: followMap.get(u.id)
+          }));
+        }
+      }
 
       return NextResponse.json({
         success: true,
@@ -57,8 +72,8 @@ export async function GET(request: NextRequest) {
       // Get users that follow this user
       const { data: followers, error } = await supabaseAdmin
         .from('follows')
-        .select('follower_id, created_at, follower:users!follows_follower_id_fkey(id, username, avatar, is_verified, is_admin)')
-        .eq('following_id', userId);
+        .select('followerId, createdAt')
+        .eq('followingId', userId);
 
       if (error) {
         console.error('Error fetching followers:', error);
@@ -70,15 +85,29 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Transform to include user objects
-      const users = (followers || []).map((f: any) => ({
-        id: f.follower_id,
-        username: f.follower?.username || '',
-        avatar: f.follower?.avatar || '',
-        isVerified: f.follower?.is_verified || false,
-        isAdmin: f.follower?.is_admin || false,
-        followedAt: f.created_at
-      })).filter((u: any) => u.id);
+      // Get user details for each follower ID
+      const followerIds = (followers || []).map((f: any) => f.followerId).filter(Boolean);
+      let users: any[] = [];
+      
+      if (followerIds.length > 0) {
+        const { data: userData, error: userError } = await supabaseAdmin
+          .from('users')
+          .select('id, username, avatar, isVerified, isAdmin')
+          .in('id', followerIds);
+        
+        if (!userError && userData) {
+          // Map users with their follow dates
+          const followMap = new Map((followers || []).map((f: any) => [f.followerId, f.createdAt]));
+          users = userData.map((u: any) => ({
+            id: u.id,
+            username: u.username || '',
+            avatar: u.avatar || '',
+            isVerified: u.isVerified || false,
+            isAdmin: u.isAdmin || false,
+            followedAt: followMap.get(u.id)
+          }));
+        }
+      }
 
       return NextResponse.json({
         success: true,
@@ -132,8 +161,8 @@ export async function POST(request: NextRequest) {
     const { data: existingFollow, error: existingErr } = await supabaseAdmin
       .from('follows')
       .select('id')
-      .eq('follower_id', userId)
-      .eq('following_id', targetUserId)
+      .eq('followerId', userId)
+      .eq('followingId', targetUserId)
       .maybeSingle();
 
     if (existingFollow) {
@@ -146,7 +175,7 @@ export async function POST(request: NextRequest) {
     // Create follow relationship
     const { error: createErr } = await supabaseAdmin
       .from('follows')
-      .insert({ follower_id: userId, following_id: targetUserId });
+      .insert({ followerId: userId, followingId: targetUserId });
     if (createErr) {
       console.error('Error creating follow:', createErr);
       return NextResponse.json({ error: 'Failed to follow user' }, { status: 500 });
@@ -200,8 +229,8 @@ export async function DELETE(request: NextRequest) {
     const { error: delErr } = await supabaseAdmin
       .from('follows')
       .delete()
-      .eq('follower_id', userId)
-      .eq('following_id', targetUserId);
+      .eq('followerId', userId)
+      .eq('followingId', targetUserId);
     if (delErr) {
       console.error('Error unfollowing:', delErr);
       return NextResponse.json({ error: 'Failed to unfollow user' }, { status: 500 });

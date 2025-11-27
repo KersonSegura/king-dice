@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const { count: followersCount, error: followersError } = await supabaseAdmin
       .from('follows')
       .select('*', { count: 'exact', head: true })
-      .eq('following_id', userId);
+      .eq('followingId', userId);
 
     if (followersError) {
       console.error('Error fetching followers count:', followersError);
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const { count: followingCount, error: followingError } = await supabaseAdmin
       .from('follows')
       .select('*', { count: 'exact', head: true })
-      .eq('follower_id', userId);
+      .eq('followerId', userId);
 
     if (followingError) {
       console.error('Error fetching following count:', followingError);
@@ -36,9 +36,9 @@ export async function GET(request: NextRequest) {
 
     // Get pending follow requests received
     const { count: pendingRequestsCount, error: requestsError } = await supabaseAdmin
-      .from('follow_requests')
+      .from('followRequests')
       .select('*', { count: 'exact', head: true })
-      .eq('target_id', userId)
+      .eq('targetId', userId)
       .eq('status', 'pending');
 
     if (requestsError) {

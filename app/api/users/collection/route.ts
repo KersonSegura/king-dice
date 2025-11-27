@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Build query based on userId or username
     let query = supabaseAdmin
       .from('users')
-      .select('collection_photo, favorite_card, games_list');
+      .select('collectionPhoto, favoriteCard, gamesList');
 
     if (userId) {
       query = query.eq('id', userId);
@@ -32,23 +32,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Parse games_list if it exists
+    // Parse gamesList if it exists
     let gamesList = [];
-    if (user.games_list) {
+    if (user.gamesList) {
       try {
-        gamesList = typeof user.games_list === 'string' 
-          ? JSON.parse(user.games_list) 
-          : user.games_list;
+        gamesList = typeof user.gamesList === 'string' 
+          ? JSON.parse(user.gamesList) 
+          : user.gamesList;
       } catch (e) {
-        console.error('Error parsing games_list:', e);
+        console.error('Error parsing gamesList:', e);
         gamesList = [];
       }
     }
 
     return NextResponse.json({
       success: true,
-      collectionPhoto: user.collection_photo,
-      favoriteCard: user.favorite_card,
+      collectionPhoto: user.collectionPhoto,
+      favoriteCard: user.favoriteCard,
       gamesList: gamesList
     });
   } catch (error) {
@@ -68,15 +68,15 @@ export async function POST(request: NextRequest) {
     const updateData: any = {};
     
     if (collectionPhoto !== undefined) {
-      updateData.collection_photo = collectionPhoto;
+      updateData.collectionPhoto = collectionPhoto;
     }
     
     if (favoriteCard !== undefined) {
-      updateData.favorite_card = favoriteCard;
+      updateData.favoriteCard = favoriteCard;
     }
     
     if (gamesList !== undefined) {
-      updateData.games_list = JSON.stringify(gamesList);
+      updateData.gamesList = JSON.stringify(gamesList);
     }
 
     // Update user in Supabase
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .update(updateData)
       .eq('id', userId)
-      .select('collection_photo, favorite_card, games_list')
+      .select('collectionPhoto, favoriteCard, gamesList')
       .single();
 
     if (updateError || !updatedUser) {
@@ -92,23 +92,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update collection data' }, { status: 500 });
     }
 
-    // Parse games_list if it exists
+    // Parse gamesList if it exists
     let parsedGamesList = [];
-    if (updatedUser.games_list) {
+    if (updatedUser.gamesList) {
       try {
-        parsedGamesList = typeof updatedUser.games_list === 'string' 
-          ? JSON.parse(updatedUser.games_list) 
-          : updatedUser.games_list;
+        parsedGamesList = typeof updatedUser.gamesList === 'string' 
+          ? JSON.parse(updatedUser.gamesList) 
+          : updatedUser.gamesList;
       } catch (e) {
-        console.error('Error parsing games_list:', e);
+        console.error('Error parsing gamesList:', e);
         parsedGamesList = [];
       }
     }
 
     return NextResponse.json({
       success: true,
-      collectionPhoto: updatedUser.collection_photo,
-      favoriteCard: updatedUser.favorite_card,
+      collectionPhoto: updatedUser.collectionPhoto,
+      favoriteCard: updatedUser.favoriteCard,
       gamesList: parsedGamesList
     });
   } catch (error) {

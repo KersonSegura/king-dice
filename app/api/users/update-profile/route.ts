@@ -68,12 +68,12 @@ export async function PUT(request: NextRequest) {
           id: userId,
           username: username,
           email: email,
-          password_hash: '', // Empty password for now
-          is_admin: isAdmin,
+          passwordHash: '', // Empty password for now
+          isAdmin: isAdmin,
           bio: bio || null,
-          favorite_games: favoriteGames ? JSON.stringify(favoriteGames) : null,
-          collection_photo: collectionPhoto || null,
-          favorite_card: favoriteCard || null
+          favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
+          collectionPhoto: collectionPhoto || null,
+          favoriteCard: favoriteCard || null
         })
         .select()
         .single();
@@ -130,11 +130,11 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Prepare update data with snake_case field names
+    // Prepare update data with camelCase field names (Supabase uses camelCase)
     const updateData: any = {
       username,
       email,
-      is_admin: isAdmin // Update admin status
+      isAdmin: isAdmin // Update admin status
     };
 
     // Add bio if provided
@@ -144,27 +144,27 @@ export async function PUT(request: NextRequest) {
 
     // Add favorite games if provided (store as JSON string)
     if (favoriteGames !== undefined) {
-      updateData.favorite_games = JSON.stringify(favoriteGames);
+      updateData.favoriteGames = JSON.stringify(favoriteGames);
     }
 
     // Add profile colors if provided (store as JSON string)
     if (profileColors !== undefined) {
-      updateData.profile_colors = JSON.stringify(profileColors);
+      updateData.profileColors = JSON.stringify(profileColors);
     }
 
     // Add collection photo if provided
     if (collectionPhoto !== undefined) {
-      updateData.collection_photo = collectionPhoto;
+      updateData.collectionPhoto = collectionPhoto;
     }
 
     // Add favorite card if provided
     if (favoriteCard !== undefined) {
-      updateData.favorite_card = favoriteCard;
+      updateData.favoriteCard = favoriteCard;
     }
 
     // Add games list if provided (store as JSON string)
     if (gamesList !== undefined) {
-      updateData.games_list = JSON.stringify(gamesList);
+      updateData.gamesList = JSON.stringify(gamesList);
     }
 
     // Update user profile
@@ -190,14 +190,14 @@ export async function PUT(request: NextRequest) {
               id: userId,
               username,
               email,
-              password_hash: '', // Empty password for now
-              is_admin: isAdmin,
+              passwordHash: '', // Empty password for now
+              isAdmin: isAdmin,
               bio: bio || null,
-              favorite_games: favoriteGames ? JSON.stringify(favoriteGames) : null,
-              profile_colors: profileColors ? JSON.stringify(profileColors) : null,
-              collection_photo: collectionPhoto || null,
-              favorite_card: favoriteCard || null,
-              games_list: gamesList ? JSON.stringify(gamesList) : null
+              favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
+              profileColors: profileColors ? JSON.stringify(profileColors) : null,
+              collectionPhoto: collectionPhoto || null,
+              favoriteCard: favoriteCard || null,
+              gamesList: gamesList ? JSON.stringify(gamesList) : null
             })
             .select()
             .single();
