@@ -550,6 +550,17 @@ export function BoardleGame({}: BoardleGameProps) {
   };
 
   const initializeGameForMode = (mode: GameMode, game: BoardleGame) => {
+    // Reset game state for fresh start
+    setGameOver(false);
+    setGameWon(false);
+    setGuesses([]);
+    setCurrentGuess('');
+    setCorrectLetters([]);
+    setImageGuesses([]);
+    setCurrentImageGuess('');
+    setCardGuesses([]);
+    setCurrentCardGuess('');
+    
     // Initialize letter inputs array for the new game
     const nameLength = game.name.length;
     setLetterInputs(new Array(nameLength).fill(''));
@@ -557,6 +568,8 @@ export function BoardleGame({}: BoardleGameProps) {
     // Set initial clue if available
     if (game.clues && game.clues.length > 0) {
       setRevealedClues([game.clues[0]]);
+    } else {
+      setRevealedClues([]);
     }
   };
 
