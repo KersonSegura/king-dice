@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin } from '@/lib/supabase';
 
-const prisma = new PrismaClient();
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: NextRequest,
@@ -27,65 +28,128 @@ export async function POST(
     }
 
     // Check if user has already voted for this nomination
-    const existingVote = await prisma.catanNominationVote.findUnique({
-      where: {
-        nominationId_userId: {
+    // Try camelCase first, then snake_case
+    let existingVote: any = null;
+    
+    const { data: voteCamel, error: voteErrorCamel } = await supabaseAdmin
+      .from('catan_nomination_votes')
+      .select('id, nominationId, userId')
+      .eq('nominationId', nominationId)
+      .eq('userId', userId)
+      .maybeSingle();
+
+    if (!voteErrorCamel && voteCamel) {
+      existingVote = voteCamel;
+    } else {
+      // Try snake_case
+      const { data: voteSnake, error: voteErrorSnake } = await supabaseAdmin
+        .from('catan_nomination_votes')
+        .select('id, nomination_id, user_id')
+        .eq('nomination_id', nominationId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!voteErrorSnake && voteSnake) {
+        existingVote = voteSnake;
+      }
+    }
+
+    if (existingVote) {
+      // User has already voted - remove the vote
+      // Try camelCase first
+      const { error: deleteErrorCamel } = await supabaseAdmin
+        .from('catan_nomination_votes')
+        .delete()
+        .eq('nominationId', nominationId)
+        .eq('userId', userId);
+
+      if (deleteErrorCamel) {
+        // Try snake_case
+        await supabaseAdmin
+          .from('catan_nomination_votes')
+          .delete()
+          .eq('nomination_id', nominationId)
+          .eq('user_id', userId);
+      }
+
+      // Decrease the nomination's vote count
+      // Get current votes first
+      const { data: nomData, error: nomError } = await supabaseAdmin
+        .from('catan_nominations')
+        .select('votes')
+        .eq('id', nominationId)
+        .single();
+
+      if (!nomError && nomData) {
+        const newVotes = (nomData.votes || 0) - 1;
+        await supabaseAdmin
+          .from('catan_nominations')
+          .update({ votes: newVotes })
+          .eq('id', nominationId);
+
+        return NextResponse.json({
+          success: true,
+          action: 'removed',
+          nominationId: nominationId,
+          votes: newVotes
+        });
+      }
+    } else {
+      // User hasn't voted - create the vote
+      // Try camelCase first
+      const { error: insertErrorCamel } = await supabaseAdmin
+        .from('catan_nomination_votes')
+        .insert({
           nominationId: nominationId,
           userId: userId
-        }
+        });
+
+      if (insertErrorCamel) {
+        // Try snake_case
+        await supabaseAdmin
+          .from('catan_nomination_votes')
+          .insert({
+            nomination_id: nominationId,
+            user_id: userId
+          });
       }
-    });
 
-    // Use transaction to handle both adding and removing votes
-    const result = await prisma.$transaction(async (tx) => {
-      if (existingVote) {
-        // User has already voted - remove the vote
-        await tx.catanNominationVote.delete({
-          where: {
-            nominationId_userId: {
-              nominationId: nominationId,
-              userId: userId
-            }
-          }
+      // Increase the nomination's vote count
+      // Get current votes first
+      const { data: nomData, error: nomError } = await supabaseAdmin
+        .from('catan_nominations')
+        .select('votes')
+        .eq('id', nominationId)
+        .single();
+
+      if (!nomError && nomData) {
+        const newVotes = (nomData.votes || 0) + 1;
+        await supabaseAdmin
+          .from('catan_nominations')
+          .update({ votes: newVotes })
+          .eq('id', nominationId);
+
+        return NextResponse.json({
+          success: true,
+          action: 'added',
+          nominationId: nominationId,
+          votes: newVotes
         });
-
-        // Decrease the nomination's vote count
-        const updatedNomination = await tx.catanNomination.update({
-          where: { id: nominationId },
-          data: { votes: { decrement: 1 } }
-        });
-
-        return { action: 'removed', nomination: updatedNomination };
-      } else {
-        // User hasn't voted - create the vote
-        await tx.catanNominationVote.create({
-          data: {
-            nominationId: nominationId,
-            userId: userId
-          }
-        });
-
-        // Increase the nomination's vote count
-        const updatedNomination = await tx.catanNomination.update({
-          where: { id: nominationId },
-          data: { votes: { increment: 1 } }
-        });
-
-        return { action: 'added', nomination: updatedNomination };
       }
-    });
+    }
 
-    return NextResponse.json({
-      success: true,
-      action: result.action,
-      nominationId: result.nomination.id,
-      votes: result.nomination.votes
-    });
+    return NextResponse.json(
+      { error: 'Failed to update vote' },
+      { status: 500 }
+    );
 
   } catch (error) {
     console.error('Error updating vote:', error);
     return NextResponse.json(
-      { error: 'Failed to update vote' },
+      { 
+        error: 'Failed to update vote',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

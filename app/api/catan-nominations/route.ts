@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin } from '@/lib/supabase';
 
-const prisma = new PrismaClient();
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,9 +42,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert nomination into database
-    const nomination = await prisma.catanNomination.create({
-      data: {
+    // Try camelCase first, then snake_case as fallback
+    let nomination: any = null;
+    let createError: any = null;
+
+    // Try camelCase first
+    const { data: dataCamel, error: errorCamel } = await supabaseAdmin
+      .from('catan_nominations')
+      .insert({
         mapData: JSON.stringify(mapData),
         imageData: imageBase64,
         customRules: JSON.stringify(customRules),
@@ -52,8 +58,60 @@ export async function POST(request: NextRequest) {
         userId: userId || null,
         username: username || 'Anonymous',
         avatar: avatar || null
+      })
+      .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt')
+      .single();
+
+    if (!errorCamel && dataCamel) {
+      nomination = dataCamel;
+    } else {
+      // Try snake_case as fallback
+      console.log('CamelCase insert failed, trying snake_case:', errorCamel);
+      const { data: dataSnake, error: errorSnake } = await supabaseAdmin
+        .from('catan_nominations')
+        .insert({
+          map_data: JSON.stringify(mapData),
+          image_data: imageBase64,
+          custom_rules: JSON.stringify(customRules),
+          votes: 0,
+          status: 'pending',
+          user_id: userId || null,
+          username: username || 'Anonymous',
+          avatar: avatar || null
+        })
+        .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at')
+        .single();
+
+      if (!errorSnake && dataSnake) {
+        // Map snake_case response to camelCase
+        nomination = {
+          id: dataSnake.id,
+          mapData: dataSnake.map_data,
+          imageData: dataSnake.image_data,
+          customRules: dataSnake.custom_rules,
+          votes: dataSnake.votes,
+          status: dataSnake.status,
+          userId: dataSnake.user_id,
+          username: dataSnake.username,
+          avatar: dataSnake.avatar,
+          createdAt: dataSnake.created_at
+        };
+      } else {
+        createError = errorSnake || errorCamel;
       }
-    });
+    }
+
+    if (createError || !nomination) {
+      console.error('❌ API - Error saving nomination:', createError);
+      return NextResponse.json(
+        { 
+          error: 'Failed to save nomination',
+          details: createError?.message || 'Unknown error',
+          code: createError?.code
+        },
+        { status: 500 }
+      );
+    }
 
     console.log('✅ API - Created nomination:', {
       id: nomination.id,
@@ -70,7 +128,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ API - Error saving nomination:', error);
     return NextResponse.json(
-      { error: 'Failed to save nomination' },
+      { 
+        error: 'Failed to save nomination',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
@@ -78,32 +139,66 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    // Get all nominations with pagination
-    const nominations = await prisma.catanNomination.findMany({
-      orderBy: [
-        { votes: 'desc' },
-        { createdAt: 'desc' }
-      ],
-      take: 50,
-      select: {
-        id: true,
-        mapData: true,
-        imageData: true,
-        customRules: true,
-        createdAt: true,
-        votes: true,
-        status: true,
-        userId: true,
-        username: true,
-        avatar: true
+    // Try camelCase first, then snake_case as fallback
+    let nominations: any[] = [];
+    let fetchError: any = null;
+
+    // Try camelCase first
+    const { data: dataCamel, error: errorCamel } = await supabaseAdmin
+      .from('catan_nominations')
+      .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt')
+      .order('votes', { ascending: false })
+      .order('createdAt', { ascending: false })
+      .limit(50);
+
+    if (!errorCamel && dataCamel) {
+      nominations = dataCamel;
+    } else {
+      // Try snake_case as fallback
+      console.log('CamelCase select failed, trying snake_case:', errorCamel);
+      const { data: dataSnake, error: errorSnake } = await supabaseAdmin
+        .from('catan_nominations')
+        .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at')
+        .order('votes', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (!errorSnake && dataSnake) {
+        // Map snake_case response to camelCase
+        nominations = dataSnake.map((nom: any) => ({
+          id: nom.id,
+          mapData: nom.map_data,
+          imageData: nom.image_data,
+          customRules: nom.custom_rules,
+          votes: nom.votes,
+          status: nom.status,
+          userId: nom.user_id,
+          username: nom.username,
+          avatar: nom.avatar,
+          createdAt: nom.created_at
+        }));
+      } else {
+        fetchError = errorSnake || errorCamel;
       }
-    });
+    }
+
+    if (fetchError) {
+      console.error('Error fetching nominations:', fetchError);
+      return NextResponse.json(
+        { 
+          error: 'Failed to fetch nominations',
+          details: fetchError.message,
+          code: fetchError.code
+        },
+        { status: 500 }
+      );
+    }
 
     // Ensure all nominations have a username (for backward compatibility)
     const nominationsWithUsernames = nominations.map(nomination => ({
       ...nomination,
-              username: nomination.username || 
-                (nomination.userId ? `User_${nomination.userId.slice(-6)}` : 'Anonymous')
+      username: nomination.username || 
+        (nomination.userId ? `User_${nomination.userId.slice(-6)}` : 'Anonymous')
     }));
 
     // Log the first nomination to debug user data
@@ -124,7 +219,10 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching nominations:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch nominations' },
+      { 
+        error: 'Failed to fetch nominations',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
@@ -135,23 +233,40 @@ export async function DELETE() {
     console.log('🗑️ API - Clearing all nominations...');
     
     // Delete all existing nominations
-    const deleteResult = await prisma.catanNomination.deleteMany({});
+    const { data, error } = await supabaseAdmin
+      .from('catan_nominations')
+      .delete()
+      .neq('id', 0); // Delete all (neq with impossible condition)
+    
+    if (error) {
+      console.error('❌ API - Error clearing nominations:', error);
+      return NextResponse.json(
+        { 
+          error: 'Failed to clear nominations',
+          details: error.message,
+          code: error.code
+        },
+        { status: 500 }
+      );
+    }
     
     console.log('✅ API - Cleared nominations:', {
-      count: deleteResult.count,
       message: 'All nominations deleted successfully'
     });
 
     return NextResponse.json({
       success: true,
-      message: `Successfully deleted ${deleteResult.count} nominations`,
-      deletedCount: deleteResult.count
+      message: 'Successfully deleted all nominations',
+      deletedCount: data?.length || 0
     });
 
   } catch (error) {
     console.error('❌ API - Error clearing nominations:', error);
     return NextResponse.json(
-      { error: 'Failed to clear nominations' },
+      { 
+        error: 'Failed to clear nominations',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
