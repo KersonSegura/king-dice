@@ -100,6 +100,7 @@ export default function DiceRoller() {
                     rollResult={rollResults[index] || null}
                     onComplete={handleDiceComplete}
                     compact={true}
+                    mountDelay={index * 30}
                   />
                   {dicePool.length > 1 && (
                     <button

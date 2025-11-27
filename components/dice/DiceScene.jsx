@@ -9,12 +9,17 @@ const DiceSceneCanvas = dynamic(() => import('./DiceSceneCanvas'), {
   loading: () => <div className="w-full h-full" />
 });
 
-export default function DiceScene({ dice, rollSignal, rollResult, onComplete, compact = false }) {
+export default function DiceScene({ dice, rollSignal, rollResult, onComplete, compact = false, mountDelay = 0 }) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    // Stagger mounting to prevent resource conflicts on mobile
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, mountDelay);
+
+    return () => clearTimeout(timer);
+  }, [mountDelay]);
 
   return (
     <div className={`w-full ${compact ? 'h-[200px]' : 'h-[360px]'} rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur relative overflow-hidden`}>

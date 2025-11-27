@@ -21,6 +21,7 @@ export default function DiceSceneCanvas({ dice, rollSignal, rollResult, onComple
 
   return (
     <Canvas
+      key={`canvas-${dice?.id || dice?.label || 'default'}`}
       camera={{ position: cameraPosition, fov }}
       shadows
       dpr={[1, 1.5]}
