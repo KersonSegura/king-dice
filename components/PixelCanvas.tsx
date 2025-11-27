@@ -77,6 +77,13 @@ export default function PixelCanvas({
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     return isMobile ? baseZoom * 0.7 : baseZoom * 0.5; // 70% on mobile, 50% on desktop
   };
+
+  // Get maximum zoom level based on device type
+  const getMaxZoom = () => {
+    // Check if it's a mobile device
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    return isMobile ? baseZoom * 6.67 : baseZoom * 3.33; // 1000% on mobile, 500% on desktop
+  };
   
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
@@ -665,7 +672,7 @@ export default function PixelCanvas({
 
   // Zoom controls (relative to base zoom)
   const handleZoomIn = () => {
-    const newZoomLevel = Math.min(zoomLevel + 0.5, baseZoom * 3.33); // Max 500% (3.33x base)
+    const newZoomLevel = Math.min(zoomLevel + 0.5, getMaxZoom());
     setZoomLevel(newZoomLevel);
   };
 
@@ -867,7 +874,7 @@ export default function PixelCanvas({
       if (currentDistance && currentCenter) {
         const scale = currentDistance / lastTouchDistance;
         const delta = scale > 1 ? 0.1 : -0.1;
-        const newZoomLevel = Math.max(getMinZoom(), Math.min(baseZoom * 3.33, zoomLevel + delta));
+        const newZoomLevel = Math.max(getMinZoom(), Math.min(getMaxZoom(), zoomLevel + delta));
         
         if (newZoomLevel !== zoomLevel && canvasData && containerRef.current) {
           const containerRect = containerRef.current.getBoundingClientRect();
@@ -1161,7 +1168,7 @@ export default function PixelCanvas({
         e.stopPropagation();
         
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        const newZoomLevel = Math.max(getMinZoom(), Math.min(baseZoom * 3.33, zoomLevel + delta));
+        const newZoomLevel = Math.max(getMinZoom(), Math.min(getMaxZoom(), zoomLevel + delta));
         
         if (newZoomLevel !== zoomLevel && canvasData && containerRef.current) {
           // Get mouse position relative to the canvas container
