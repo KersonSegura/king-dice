@@ -735,30 +735,31 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  // Load XP immediately when user is available (separate effect for faster loading) - Fixed with useCallback
+  // Load XP immediately when user is available - using same approach as My Dice page
   useEffect(() => {
-    console.log('🔵 Profile page useEffect triggered:', { 
-      hasUser: !!user, 
-      userId: user?.id,
-      isAuthLoading: authLoading 
-    });
+    if (!user?.id) return;
     
-    if (user?.id && !authLoading) {
-      console.log('🔵 Profile page useEffect: User ID available, loading XP...', user.id);
-      loadLevelProgress();
-    } else {
-      console.log('🔵 Profile page useEffect: Waiting for user...', { 
-        hasUser: !!user, 
-        hasUserId: !!user?.id,
-        authLoading 
-      });
-    }
-  }, [user, user?.id, authLoading, loadLevelProgress]);
+    const loadXP = async () => {
+      const { level, progress } = await fetchUserLevel();
+      setUserLevel(level);
+      setLevelProgress(progress);
+      setUserXP(progress.currentXP);
+      console.log('XP Progress loaded:', progress);
+      console.log('XP Progress refreshed:', progress); // Same format as My Dice
+    };
+    
+    loadXP();
+  }, [user?.id]);
 
-  // Monitor levelProgress changes for debugging
-  useEffect(() => {
-    console.log('📊 levelProgress state changed:', levelProgress);
-  }, [levelProgress]);
+  // Function to refresh XP progress - same as My Dice page
+  const refreshXPProgress = async () => {
+    if (!user?.id) return;
+    const { level, progress } = await fetchUserLevel();
+    setUserLevel(level);
+    setLevelProgress(progress);
+    setUserXP(progress.currentXP);
+    console.log('XP Progress refreshed:', progress);
+  };
 
   useEffect(() => {
     if (user) {
@@ -841,55 +842,51 @@ export default function ProfilePage() {
       }
     };
 
-  const loadLevelProgress = useCallback(async () => {
-    const userId = user?.id;
-    if (!userId) {
-      console.log('❌ loadLevelProgress: No user ID available', { user, userId });
-      return;
+  // Fetch user level and progress - using same approach as My Dice page
+  const fetchUserLevel = async () => {
+    if (!user?.id) {
+      return {
+        level: 1,
+        progress: {
+          currentLevel: 1,
+          currentLevelName: 'Commoner',
+          currentXP: 0,
+          xpForNextLevel: 100,
+          progressPercentage: 0
+        }
+      };
     }
-    
-    console.log('✅ loadLevelProgress: User ID found:', userId);
     
     try {
-      console.log('🔄 Loading level progress for user:', userId);
-      const response = await fetch(`/api/users/level-progress?userId=${userId}`);
-      console.log('📡 Level progress response status:', response.status);
-      
+      // Use the same endpoint as My Dice page
+      const response = await fetch(`/api/users/level-progress?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Level progress data received:', data);
-        
-        if (data && typeof data.currentXP !== 'undefined') {
-          console.log('📊 Setting XP state:', {
-            currentXP: data.currentXP,
-            currentLevel: data.currentLevel,
-            progressPercentage: data.progressPercentage
-          });
-          
-          console.log('📊 Before state update - current levelProgress:', levelProgress);
-          
-          // Use functional update to ensure we're setting the latest state
-          setLevelProgress(prev => {
-            console.log('🔄 setLevelProgress called with data:', data);
-            console.log('🔄 Previous state was:', prev);
-            return data;
-          });
-          setUserXP(data.currentXP);
-          setUserLevel(data.currentLevel);
-          
-          console.log('✅ XP state updated successfully');
-          console.log('📊 After state update - new data:', data);
-        } else {
-          console.error('❌ Invalid level progress data:', data);
-        }
-      } else {
-        const errorText = await response.text();
-        console.error('❌ Failed to load level progress:', response.status, errorText);
+        return {
+          level: data.currentLevel || 1,
+          progress: {
+            currentLevel: data.currentLevel || 1,
+            currentLevelName: data.currentLevelName || 'Commoner',
+            currentXP: data.currentXP || 0,
+            xpForNextLevel: data.xpForNextLevel || 100,
+            progressPercentage: data.progressPercentage || 0
+          }
+        };
       }
     } catch (error) {
-      console.error('❌ Error loading level progress:', error);
+      console.error('Error fetching user level:', error);
     }
-  }, [user?.id]);
+    return {
+      level: 1,
+      progress: {
+        currentLevel: 1,
+        currentLevelName: 'Commoner',
+        currentXP: 0,
+        xpForNextLevel: 100,
+        progressPercentage: 0
+      }
+    };
+  };
 
   const loadUserColors = async () => {
     if (!user) return;
