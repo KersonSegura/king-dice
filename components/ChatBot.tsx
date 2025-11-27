@@ -23,12 +23,23 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
 
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Scroll to bottom when messages change, but only if user hasn't manually scrolled up
+    const container = messagesContainerRef.current;
+    if (container) {
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      if (isNearBottom) {
+        scrollToBottom();
+      }
+    }
   }, [messages]);
 
   // Load previous bot messages from localStorage on open
@@ -191,7 +202,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
     <div className={embedded ? "h-full bg-white flex flex-col min-h-0" : "fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50"}>
       {/* Header - only show if not embedded */}
       {!embedded && (
-        <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between">
+        <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full border-2 border-white flex-shrink-0 overflow-hidden bg-white">
               <img
@@ -214,8 +225,15 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         </div>
       )}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+      {/* Messages - Fixed height scrollable container */}
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" 
+        style={{ 
+          maxHeight: embedded ? '100%' : 'calc(500px - 140px)',
+          scrollBehavior: 'smooth'
+        }}
+      >
         {messages.map((msg) => (
           <div
             key={msg.id}
