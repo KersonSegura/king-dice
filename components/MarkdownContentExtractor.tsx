@@ -55,14 +55,13 @@ function MarkdownContentExtractor({ onContentExtracted, onClose }: MarkdownConte
             body: JSON.stringify({ imageUrl })
           });
 
-          if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
-          }
-
           const result = await response.json();
           
-          if (!result.success) {
-            throw new Error(result.error || 'Failed to fetch image');
+          if (!response.ok || !result.success) {
+            const errorMessage = result.error || result.details || `API request failed: ${response.status}`;
+            console.warn(`Failed to fetch image ${imageUrl}:`, errorMessage);
+            // Continue processing other images instead of throwing
+            continue;
           }
 
           const imageData = {
