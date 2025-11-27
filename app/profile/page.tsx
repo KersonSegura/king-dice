@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { User, Calendar, Award, Edit, Settings, ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, Save, Palette, GripVertical, X } from 'lucide-react';
@@ -735,6 +735,17 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
+  // Load XP immediately when user is available (separate effect for faster loading) - Fixed with useCallback
+  useEffect(() => {
+    if (user?.id) {
+      console.log('Profile page: User ID available, loading XP...', user.id);
+      loadLevelProgress();
+    } else {
+      console.log('Profile page: No user ID available yet');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, loadLevelProgress]);
+
   useEffect(() => {
     if (user) {
       loadUserData();
@@ -744,7 +755,6 @@ export default function ProfilePage() {
       loadUserForumPosts();
       loadCollectionData();
       loadCategories();
-      loadLevelProgress();
       // Initialize form data with user data
       setFormData({
         username: user.username || '',
@@ -788,7 +798,8 @@ export default function ProfilePage() {
       if (!user) return;
       
       try {
-      setLoading(true);
+      // Don't set loading state here - it's managed separately and interferes with XP loading
+      // setLoading(true);
       
       // Load user profile data including bio and favorite games
       const response = await fetch(`/api/users/profile-data?userId=${user.id}`);
@@ -810,32 +821,52 @@ export default function ProfilePage() {
       // This will be updated when we implement the full social features
       setUserPosts([]);
       
-      // Calculate XP and level (simplified for now)
-      const totalPosts = 0; // Will be updated when we have real data
-      setUserXP(totalPosts * 10);
-      setUserLevel(Math.floor(totalPosts / 5) + 1);
+      // XP and level are loaded separately by loadLevelProgress() - don't set them here
       } catch (error) {
       console.error('Error loading user data:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
-  const loadLevelProgress = async () => {
-    if (!user?.id) return;
+  const loadLevelProgress = useCallback(async () => {
+    if (!user?.id) {
+      console.log('loadLevelProgress: No user ID available');
+      return;
+    }
+    
+    const userId = user.id; // Capture user.id to avoid stale closure
     
     try {
-      const response = await fetch(`/api/users/level-progress?userId=${user.id}`);
+      console.log('🔄 Loading level progress for user:', userId);
+      const response = await fetch(`/api/users/level-progress?userId=${userId}`);
+      console.log('📡 Level progress response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        setLevelProgress(data);
-        setUserXP(data.currentXP);
-        setUserLevel(data.currentLevel);
+        console.log('✅ Level progress data received:', data);
+        
+        if (data && typeof data.currentXP !== 'undefined') {
+          console.log('📊 Setting XP state:', {
+            currentXP: data.currentXP,
+            currentLevel: data.currentLevel,
+            progressPercentage: data.progressPercentage
+          });
+          
+          setLevelProgress(data);
+          setUserXP(data.currentXP);
+          setUserLevel(data.currentLevel);
+          
+          console.log('✅ XP state updated successfully');
+        } else {
+          console.error('❌ Invalid level progress data:', data);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to load level progress:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Error loading level progress:', error);
-      }
-    };
+      console.error('❌ Error loading level progress:', error);
+    }
+  }, [user?.id]);
 
   const loadUserColors = async () => {
     if (!user) return;
