@@ -15,39 +15,59 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all chats where user is a participant
-    const { data: participants, error: participantsError } = await supabaseAdmin
+    // Fetch participants and chats separately to avoid foreign key relationship issues
+    const { data: participantRows, error: participantRowsError } = await supabaseAdmin
       .from('chat_participants')
-      .select(`
-        chat_id,
-        joined_at,
-        last_read_at,
-        chat:chats!chat_participants_chat_id_fkey (
-          id,
-          name,
-          type,
-          created_by,
-          created_at,
-          updated_at,
-          creator:users!chats_created_by_fkey (
-            id,
-            username,
-            avatar
-          )
-        )
-      `)
+      .select('chat_id, joined_at, last_read_at')
       .eq('user_id', userId);
 
-    if (participantsError) {
-      console.error('Error fetching chat participants:', participantsError);
+    if (participantRowsError) {
+      console.error('Error fetching chat participants:', participantRowsError);
       return NextResponse.json({ error: 'Failed to fetch chats' }, { status: 500 });
     }
+
+    if (!participantRows || participantRows.length === 0) {
+      return NextResponse.json({ chats: [] });
+    }
+
+    const chatIds = participantRows.map(p => p.chat_id).filter(Boolean);
+    
+    // Fetch chats separately
+    const { data: chatsData, error: chatsError } = await supabaseAdmin
+      .from('chats')
+      .select('id, name, type, created_by, created_at, updated_at')
+      .in('id', chatIds);
+
+    if (chatsError) {
+      console.error('Error fetching chats:', chatsError);
+      return NextResponse.json({ error: 'Failed to fetch chats' }, { status: 500 });
+    }
+
+    // Get creator info for each chat
+    const creatorIds = (chatsData || []).map(c => c.created_by).filter(Boolean);
+    const { data: creatorsData } = await supabaseAdmin
+      .from('users')
+      .select('id, username, avatar')
+      .in('id', creatorIds);
+
+    const creatorsMap = new Map((creatorsData || []).map(c => [c.id, c]));
+    
+    // Combine participant data with chat data
+    const participants = participantRows.map(p => ({
+      chat_id: p.chat_id,
+      joined_at: p.joined_at,
+      last_read_at: p.last_read_at,
+      chat: {
+        ...(chatsData || []).find(c => c.id === p.chat_id),
+        creator: (chatsData || []).find(c => c.id === p.chat_id)?.created_by 
+          ? creatorsMap.get((chatsData || []).find(c => c.id === p.chat_id)?.created_by) 
+          : null
+      }
+    }));
 
     if (!participants || participants.length === 0) {
       return NextResponse.json({ chats: [] });
     }
-
-    // Get chat IDs
-    const chatIds = participants.map(p => p.chat_id).filter(Boolean);
 
     // Get last message for each chat
     const { data: lastMessages, error: messagesError } = await supabaseAdmin
@@ -77,23 +97,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get all participants for each chat
-    const { data: allParticipants, error: allParticipantsError } = await supabaseAdmin
+    // Get all participants for each chat (fetch separately to avoid foreign key issues)
+    const { data: allParticipantRows, error: allParticipantsError } = await supabaseAdmin
       .from('chat_participants')
-      .select(`
-        chat_id,
-        user_id,
-        joined_at,
-        last_read_at,
-        user:users!chat_participants_user_id_fkey (
-          id,
-          username,
-          avatar,
-          is_verified,
-          is_admin
-        )
-      `)
+      .select('chat_id, user_id, joined_at, last_read_at')
       .in('chat_id', chatIds);
+    
+    // Get user info for all participants
+    const userIds = (allParticipantRows || []).map(p => p.user_id).filter(Boolean);
+    const { data: usersData } = await supabaseAdmin
+      .from('users')
+      .select('id, username, avatar, is_verified, is_admin')
+      .in('id', userIds);
+    
+    const usersMap = new Map((usersData || []).map(u => [u.id, u]));
+    
+    // Combine participant data with user data
+    const allParticipants = (allParticipantRows || []).map(p => ({
+      ...p,
+      user: usersMap.get(p.user_id) || null
+    }));
 
     // Group participants by chat_id
     const participantsMap = new Map();

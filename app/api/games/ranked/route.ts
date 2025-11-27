@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       games,
       category: 'top-ranked',
       total: games.length,
-      description: 'The top ranked games from BoardGameGeek'
+      description: 'The top ranked games from the community'
     }, {
       headers: {
         'Cache-Control': 'public, max-age=300', // Cache for 5 minutes

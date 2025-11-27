@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       games: foundGames,
       category: 'most-played',
       total: foundGames.length,
-      description: 'The most played games this month according to BoardGameGeek',
+      description: 'The most played games this month',
       source: 'BGG Most Played List'
     }, {
       headers: {
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       games: [],
       category: 'most-played',
       total: 0,
-      description: 'The most played games this month according to BoardGameGeek',
+      description: 'The most played games this month',
       source: 'BGG Most Played List'
     }, {
       headers: {

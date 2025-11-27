@@ -95,11 +95,16 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.error || 'Failed to get bot response');
+      }
+      
       const data = await response.json();
       
       const botMessage = {
         id: (Date.now() + 1).toString(),
-        text: data.response,
+        text: data.response || data.message || "Sorry, I couldn't generate a response.",
         isBot: true,
         timestamp: new Date()
       };
@@ -113,11 +118,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         localStorage.setItem(storageKey, JSON.stringify(updatedMessages));
         console.log('Saved bot conversation to localStorage');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message to bot:', error);
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I'm having trouble connecting right now. Please try again later!",
+        text: error?.message || "Sorry, I'm having trouble connecting right now. Please try again later!",
         isBot: true,
         timestamp: new Date()
       };

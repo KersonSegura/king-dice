@@ -116,14 +116,14 @@ export default function TopRankedPage() {
                 Top Ranked Games
               </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              The 25 most played games this month according to BoardGameGeek.
+                The 25 most played games this month, based on community activity across our data sources.
               These games are trending with players around the world.
             </p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {games.map((game, index) => {
             if (game === null) {
               // Show loading skeleton for empty slots
@@ -136,9 +136,9 @@ export default function TopRankedPage() {
                       <div className="h-3 bg-gray-200 animate-pulse rounded w-1/2"></div>
                       <div className="h-3 bg-gray-200 animate-pulse rounded w-2/3"></div>
                       <div className="h-3 bg-gray-200 animate-pulse rounded w-1/3"></div>
-                    </div>
-                  </div>
-                </div>
+          </div>
+            </div>
+          </div>
               );
             }
             return (

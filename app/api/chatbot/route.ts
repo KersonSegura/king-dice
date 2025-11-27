@@ -49,10 +49,38 @@ Always be helpful, friendly, and knowledgeable about board games. When relevant,
     const botResponse = completion.choices[0]?.message?.content || "Sorry, I couldn't generate a response.";
 
     return NextResponse.json({ response: botResponse });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error calling OpenAI API:', error);
+    
+    // Handle specific OpenAI API errors
+    if (error?.status === 429 || error?.code === 'insufficient_quota') {
+      return NextResponse.json(
+        { 
+          error: 'OpenAI API quota exceeded',
+          message: 'The chatbot service is temporarily unavailable due to API quota limits. Please try again later or contact support.',
+          details: 'OpenAI API quota has been exceeded. Please check your OpenAI account billing and plan.'
+        },
+        { status: 503 } // Service Unavailable
+      );
+    }
+    
+    if (error?.status === 401) {
+      return NextResponse.json(
+        { 
+          error: 'OpenAI API authentication failed',
+          message: 'The chatbot service is temporarily unavailable. Please try again later.',
+          details: 'OpenAI API key is invalid or missing.'
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to get bot response' },
+      { 
+        error: 'Failed to get bot response',
+        message: 'Sorry, I\'m having trouble connecting right now. Please try again later!',
+        details: error?.message || 'Unknown error'
+      },
       { status: 500 }
     );
   }

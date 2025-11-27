@@ -131,8 +131,8 @@ export default function PopularesPage() {
               </h1>
             </div>
             <p className="text-xl text-dark-600 max-w-3xl mx-auto">
-              The most popular and searched games by our community, 
-              based on BoardGameGeek ranking.
+              The most popular and searched games by our community,
+              based on our aggregated popularity ranking.
             </p>
           </div>
 
@@ -145,7 +145,7 @@ export default function PopularesPage() {
                   How is popularity calculated?
                 </h3>
                 <p className="text-dark-600 mb-3">
-                  Popular games are based on BoardGameGeek ranking, 
+                  Popular games are determined by our internal popularity score,
                   which considers factors such as:
                 </p>
                 <ul className="text-dark-600 space-y-1">

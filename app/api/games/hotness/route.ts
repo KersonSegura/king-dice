@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       games: foundGames,
       category: 'hotness',
       total: foundGames.length,
-      description: 'The hottest games today according to BoardGameGeek',
+      description: 'The hottest games trending today',
       source: 'BGG Hotness List'
     }, {
       headers: {
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       games: [],
       category: 'hotness',
       total: 0,
-      description: 'The hottest games today according to BoardGameGeek',
+      description: 'The hottest games trending today',
       source: 'BGG Hotness List'
     }, {
       headers: {

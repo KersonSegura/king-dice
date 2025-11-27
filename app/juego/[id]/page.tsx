@@ -355,7 +355,7 @@ export default function GameDetailPage() {
                   className="btn-secondary w-full flex items-center justify-center space-x-2"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  <span>View on BoardGameGeek</span>
+                  <span>View original listing</span>
                 </a>
               </div>
             </div>

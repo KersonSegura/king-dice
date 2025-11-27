@@ -81,7 +81,7 @@ export default function MasVotadosPage() {
             Most Voted
           </h1>
           <p className="text-xl text-dark-600 mb-8">
-            Discover the board games with the best historical ranking according to the BoardGameGeek community
+            Discover the board games with the best historical ranking, curated from our community and across trusted sources.
           </p>
           
           {games.length > 0 && (

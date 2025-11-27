@@ -29,14 +29,14 @@
       "config": {
         "background": "/dice/Backgrounds/BlackBackground.svg",
         "dice": "/dice/Dice/WhiteDice.svg",
-        "pattern": "/dice/Patterns/1-2-3.svg",
+        "pattern": "/dice/Patterns/4-5-6.svg",
         "accessories": null,
         "hat": null,
-        "item": null,
+        "item": "/dice/Items/HealthPotion.svg",
         "companion": null,
-        "title": "/dice/Titles/Commoner.svg"
+        "title": null
       },
-      "updatedAt": "2025-10-09T18:25:26.590Z"
+      "updatedAt": "2025-11-27T06:03:49.991Z"
     }
   }
 }
