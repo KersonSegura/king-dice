@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
 
     console.log('💾 Saving dice config for user:', body.userId);
 
-    // Get existing user data including profile_colors
+    // Get existing user data including profileColors
     const { data: user, error: findError } = await supabaseAdmin
       .from('users')
-      .select('id, profile_colors')
+      .select('id, profileColors')
       .eq('id', body.userId)
       .single();
 
@@ -44,10 +44,10 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date().toISOString()
     };
 
-    // If profile_colors exists and contains profile colors data, preserve it
-    if (user.profile_colors) {
+    // If profileColors exists and contains profile colors data, preserve it
+    if (user.profileColors) {
       try {
-        const existing = JSON.parse(user.profile_colors);
+        const existing = JSON.parse(user.profileColors);
         // Check if it's profile colors format (has cover, background, containers)
         if (existing.cover || existing.background || existing.containers) {
           // It's profile colors, merge both
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({ 
-        profile_colors: mergedJson 
+        profileColors: mergedJson 
       })
       .eq('id', body.userId);
 

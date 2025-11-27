@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     // Get user from database
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
-      .select('profile_colors')
+      .select('profileColors')
       .eq('id', userId)
       .single();
 
@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to load user' }, { status: 500 });
     }
 
-    // Try to parse dice config from profile_colors field
-    if (user && user.profile_colors) {
+    // Try to parse dice config from profileColors field
+    if (user && user.profileColors) {
       try {
-        const parsed = JSON.parse(user.profile_colors);
+        const parsed = JSON.parse(user.profileColors);
         // Check for diceConfig in the merged data
         if (parsed.diceConfig) {
           return NextResponse.json({ 

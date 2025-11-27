@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Find user in database using Supabase
     const { data: user, error: findError } = await supabaseAdmin
       .from('users')
-      .select('id, username, email, avatar, title, is_admin, level, xp')
+      .select('id, username, email, avatar, title, isAdmin, level, xp')
       .eq('id', userId)
       .single();
     
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         title: selectedTitle ? titleName : null
       })
       .eq('id', user.id)
-      .select('id, username, email, avatar, title, is_admin, level, xp')
+      .select('id, username, email, avatar, title, isAdmin, level, xp')
       .single();
     
     if (updateError || !updatedUser) {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       email: updatedUser.email,
       avatar: updatedUser.avatar,
       title: updatedUser.title,
-      isAdmin: updatedUser.is_admin,
+      isAdmin: updatedUser.isAdmin,
       level: updatedUser.level,
       xp: updatedUser.xp
     };
