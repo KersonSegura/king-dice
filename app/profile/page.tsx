@@ -737,13 +737,32 @@ export default function ProfilePage() {
 
   // Load XP immediately when user is available - EXACT same as My Dice page
   useEffect(() => {
-    if (!user?.id) return;
+    console.log('🔵 Profile XP useEffect triggered:', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      currentLevelProgress: levelProgress 
+    });
+    
+    if (!user?.id) {
+      console.log('❌ No user ID, skipping XP load');
+      return;
+    }
     
     const loadXP = async () => {
+      console.log('🔄 Starting XP load for user:', user.id);
       const { level, progress } = await fetchUserLevel();
+      console.log('📦 Fetched XP data:', { level, progress });
+      
+      console.log('📊 BEFORE state update - levelProgress:', levelProgress);
       setUserLevel(level);
       setLevelProgress(progress);
+      console.log('✅ AFTER setLevelProgress called with:', progress);
       console.log('XP Progress loaded:', progress);
+      
+      // Force a check after state update
+      setTimeout(() => {
+        console.log('🔍 State check 100ms after update - levelProgress should be:', progress);
+      }, 100);
     };
     
     loadXP();
@@ -1558,25 +1577,36 @@ export default function ProfilePage() {
               </p>
               
               {/* XP Progress Bar - Exact same as My Dice page */}
-              <div className="w-full max-w-md">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className={`${coverSecondaryTextClass} font-medium`}>
-                    {levelProgress.currentXP} XP
-                  </span>
-                  <span className={`${coverSecondaryTextClass} font-medium`}>
-                    {levelProgress.xpForNextLevel > 0 ? `${levelProgress.xpForNextLevel} to next level` : 'Max Level'}
-                  </span>
-                </div>
-                <div className="w-full bg-black bg-opacity-20 rounded-full h-2">
-                  <div 
-                    className="bg-white h-2 rounded-full transition-all duration-500 ease-out"
-                    style={{ 
-                      width: `${Math.min(100, levelProgress.progressPercentage)}%`,
-                      boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
-                    }}
-                  />
-                </div>
-              </div>
+              {(() => {
+                console.log('🎨 RENDERING XP BAR - levelProgress:', levelProgress);
+                console.log('🎨 RENDERING XP BAR - currentXP:', levelProgress.currentXP);
+                console.log('🎨 RENDERING XP BAR - progressPercentage:', levelProgress.progressPercentage);
+                return (
+                  <div className="w-full max-w-md">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className={`${coverSecondaryTextClass} font-medium`}>
+                        {levelProgress.currentXP} XP
+                      </span>
+                      <span className={`${coverSecondaryTextClass} font-medium`}>
+                        {levelProgress.xpForNextLevel > 0 ? `${levelProgress.xpForNextLevel} to next level` : 'Max Level'}
+                      </span>
+                    </div>
+                    <div className="w-full bg-black bg-opacity-20 rounded-full h-2">
+                      <div 
+                        className="bg-white h-2 rounded-full transition-all duration-500 ease-out"
+                        style={{ 
+                          width: `${Math.min(100, levelProgress.progressPercentage)}%`,
+                          boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
+                        }}
+                      />
+                    </div>
+                    {/* Debug info - always visible */}
+                    <div className="text-xs text-white/50 mt-1">
+                      DEBUG: XP={levelProgress.currentXP}, Progress={levelProgress.progressPercentage?.toFixed(1)}%, Level={levelProgress.currentLevel}
+                    </div>
+                  </div>
+                );
+              })()}
                   </div>
 
                   {/* Action Buttons */}
