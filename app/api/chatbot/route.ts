@@ -35,14 +35,18 @@ For off-topic questions, politely redirect in the user's language:
 
 Always be helpful, friendly, and knowledgeable about board games. When relevant, mention that users can find more games in the King Dice database at /boardgames.`;
 
-    // Use the newer Responses API
-    const response = await openai.responses.create({
+    // Use the Chat Completions API
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      input: message,
-      store: true,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 500
     });
 
-    const botResponse = response.output_text || "Sorry, I couldn't generate a response.";
+    const botResponse = completion.choices[0]?.message?.content || "Sorry, I couldn't generate a response.";
 
     return NextResponse.json({ response: botResponse });
   } catch (error) {
