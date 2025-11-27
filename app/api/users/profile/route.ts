@@ -46,16 +46,16 @@ export async function GET(request: NextRequest) {
         email: user.email,
         avatar: user.avatar,
         bio: user.bio || '',
-        favoriteGames: user.favorite_games ? (typeof user.favorite_games === 'string' ? JSON.parse(user.favorite_games) : user.favorite_games) : [],
-        profileColors: user.profile_colors ? (typeof user.profile_colors === 'string' ? JSON.parse(user.profile_colors) : user.profile_colors) : {
+        favoriteGames: user.favoriteGames ? (typeof user.favoriteGames === 'string' ? JSON.parse(user.favoriteGames) : user.favoriteGames) : [],
+        profileColors: user.profileColors ? (typeof user.profileColors === 'string' ? JSON.parse(user.profileColors) : user.profileColors) : {
           cover: '#fbae17',
           background: '#f5f5f5',
           containers: '#ffffff'
         },
-        gamesList: user.games_list ? (typeof user.games_list === 'string' ? JSON.parse(user.games_list) : user.games_list) : [],
-        collectionPhoto: user.collection_photo,
-        favoriteCard: user.favorite_card,
-        isAdmin: user.is_admin,
+        gamesList: user.gamesList ? (typeof user.gamesList === 'string' ? JSON.parse(user.gamesList) : user.gamesList) : [],
+        collectionPhoto: user.collectionPhoto,
+        favoriteCard: user.favoriteCard,
+        isAdmin: user.isAdmin,
         levelProgress: {
           currentLevel,
           currentLevelName: levelNames[currentLevel as keyof typeof levelNames],

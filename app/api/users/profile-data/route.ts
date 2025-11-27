@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Get user profile data
     const { data: user, error: findError } = await supabaseAdmin
       .from('users')
-      .select('bio, favorite_games, profile_colors, is_admin')
+      .select('bio, favoriteGames, profileColors, isAdmin')
       .eq('id', userId)
       .single();
 
@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
 
     // Parse favorite games if it's a JSON string
     let favoriteGames = [];
-    if (user.favorite_games) {
+    if (user.favoriteGames) {
       try {
-        favoriteGames = typeof user.favorite_games === 'string' ? JSON.parse(user.favorite_games) : user.favorite_games;
+        favoriteGames = typeof user.favoriteGames === 'string' ? JSON.parse(user.favoriteGames) : user.favoriteGames;
         console.log('Parsed favorite games:', favoriteGames);
       } catch (error) {
         console.error('Error parsing favorite games:', error);
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       profile: {
         bio: user.bio || '',
         favoriteGames: favoriteGames,
-        isAdmin: user.is_admin || false
+        isAdmin: user.isAdmin || false
       }
     };
 
