@@ -42,62 +42,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try camelCase first, then snake_case as fallback
+    // Try snake_case first (based on database migration), then camelCase as fallback
     let nomination: any = null;
     let createError: any = null;
 
-    // Try camelCase first
-    const { data: dataCamel, error: errorCamel } = await supabaseAdmin
+    // Try snake_case first (matches database migration)
+    const { data: dataSnake, error: errorSnake } = await supabaseAdmin
       .from('catan_nominations')
       .insert({
-        mapData: JSON.stringify(mapData),
-        imageData: imageBase64,
-        customRules: JSON.stringify(customRules),
+        map_data: JSON.stringify(mapData),
+        image_data: imageBase64,
+        custom_rules: JSON.stringify(customRules),
         votes: 0,
         status: 'pending',
-        userId: userId || null,
+        user_id: userId || null,
         username: username || 'Anonymous',
         avatar: avatar || null
       })
-      .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt')
+      .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at')
       .single();
 
-    if (!errorCamel && dataCamel) {
-      nomination = dataCamel;
+    if (!errorSnake && dataSnake) {
+      // Map snake_case response to camelCase
+      nomination = {
+        id: dataSnake.id,
+        mapData: dataSnake.map_data,
+        imageData: dataSnake.image_data,
+        customRules: dataSnake.custom_rules,
+        votes: dataSnake.votes,
+        status: dataSnake.status,
+        userId: dataSnake.user_id,
+        username: dataSnake.username,
+        avatar: dataSnake.avatar,
+        createdAt: dataSnake.created_at
+      };
     } else {
-      // Try snake_case as fallback
-      console.log('CamelCase insert failed, trying snake_case:', errorCamel);
-      const { data: dataSnake, error: errorSnake } = await supabaseAdmin
+      // Try camelCase as fallback
+      console.log('Snake_case insert failed, trying camelCase:', errorSnake);
+      const { data: dataCamel, error: errorCamel } = await supabaseAdmin
         .from('catan_nominations')
         .insert({
-          map_data: JSON.stringify(mapData),
-          image_data: imageBase64,
-          custom_rules: JSON.stringify(customRules),
+          mapData: JSON.stringify(mapData),
+          imageData: imageBase64,
+          customRules: JSON.stringify(customRules),
           votes: 0,
           status: 'pending',
-          user_id: userId || null,
+          userId: userId || null,
           username: username || 'Anonymous',
           avatar: avatar || null
         })
-        .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at')
+        .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt')
         .single();
 
-      if (!errorSnake && dataSnake) {
-        // Map snake_case response to camelCase
-        nomination = {
-          id: dataSnake.id,
-          mapData: dataSnake.map_data,
-          imageData: dataSnake.image_data,
-          customRules: dataSnake.custom_rules,
-          votes: dataSnake.votes,
-          status: dataSnake.status,
-          userId: dataSnake.user_id,
-          username: dataSnake.username,
-          avatar: dataSnake.avatar,
-          createdAt: dataSnake.created_at
-        };
+      if (!errorCamel && dataCamel) {
+        nomination = dataCamel;
       } else {
-        createError = errorSnake || errorCamel;
+        createError = errorCamel || errorSnake;
       }
     }
 
@@ -139,46 +139,46 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    // Try camelCase first, then snake_case as fallback
+    // Try snake_case first (based on database migration), then camelCase as fallback
     let nominations: any[] = [];
     let fetchError: any = null;
 
-    // Try camelCase first
-    const { data: dataCamel, error: errorCamel } = await supabaseAdmin
+    // Try snake_case first (matches database migration)
+    const { data: dataSnake, error: errorSnake } = await supabaseAdmin
       .from('catan_nominations')
-      .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt')
+      .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at')
       .order('votes', { ascending: false })
-      .order('createdAt', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(50);
 
-    if (!errorCamel && dataCamel) {
-      nominations = dataCamel;
+    if (!errorSnake && dataSnake) {
+      // Map snake_case response to camelCase
+      nominations = dataSnake.map((nom: any) => ({
+        id: nom.id,
+        mapData: nom.map_data,
+        imageData: nom.image_data,
+        customRules: nom.custom_rules,
+        votes: nom.votes,
+        status: nom.status,
+        userId: nom.user_id,
+        username: nom.username,
+        avatar: nom.avatar,
+        createdAt: nom.created_at
+      }));
     } else {
-      // Try snake_case as fallback
-      console.log('CamelCase select failed, trying snake_case:', errorCamel);
-      const { data: dataSnake, error: errorSnake } = await supabaseAdmin
+      // Try camelCase as fallback
+      console.log('Snake_case select failed, trying camelCase:', errorSnake);
+      const { data: dataCamel, error: errorCamel } = await supabaseAdmin
         .from('catan_nominations')
-        .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at')
+        .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt')
         .order('votes', { ascending: false })
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .limit(50);
 
-      if (!errorSnake && dataSnake) {
-        // Map snake_case response to camelCase
-        nominations = dataSnake.map((nom: any) => ({
-          id: nom.id,
-          mapData: nom.map_data,
-          imageData: nom.image_data,
-          customRules: nom.custom_rules,
-          votes: nom.votes,
-          status: nom.status,
-          userId: nom.user_id,
-          username: nom.username,
-          avatar: nom.avatar,
-          createdAt: nom.created_at
-        }));
+      if (!errorCamel && dataCamel) {
+        nominations = dataCamel;
       } else {
-        fetchError = errorSnake || errorCamel;
+        fetchError = errorCamel || errorSnake;
       }
     }
 
