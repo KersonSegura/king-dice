@@ -22,20 +22,42 @@ export async function POST(request: NextRequest) {
     }
     
     // Get or find Pixel Canvas chat
-    const { data: chat } = await supabaseAdmin
+    const { data: chat, error: chatError } = await supabaseAdmin
       .from('chats')
-      .select('id')
+      .select('id, name')
       .eq('name', 'Pixel Canvas Public Chat')
       .eq('type', 'public')
       .maybeSingle();
     
-    if (!chat) {
+    if (chatError) {
+      console.error('[PIXEL CANVAS RESET] Error finding chat:', chatError);
       return NextResponse.json({
-        success: true,
+        success: false,
+        error: 'Failed to find chat',
+        details: chatError.message
+      }, { status: 500 });
+    }
+    
+    if (!chat) {
+      console.warn('[PIXEL CANVAS RESET] No chat found with name "Pixel Canvas Public Chat"');
+      // Try to find any chat with similar name
+      const { data: similarChats } = await supabaseAdmin
+        .from('chats')
+        .select('id, name, type')
+        .ilike('name', '%Pixel Canvas%')
+        .eq('type', 'public');
+      
+      console.log('[PIXEL CANVAS RESET] Found similar chats:', similarChats);
+      
+      return NextResponse.json({
+        success: false,
         message: 'No chat found to reset',
-        deletedCount: 0
+        deletedCount: 0,
+        similarChats: similarChats || []
       });
     }
+    
+    console.log('[PIXEL CANVAS RESET] Found chat:', { id: chat.id, name: chat.name });
     
     // Delete all messages from this chat - try camelCase first
     const { data: deletedCamel, error: deleteErrorCamel } = await supabaseAdmin

@@ -21,20 +21,42 @@ export async function POST(request: NextRequest) {
     }
     
     // Get or find Digital Corner chat
-    const { data: chat } = await supabaseAdmin
+    const { data: chat, error: chatError } = await supabaseAdmin
       .from('chats')
-      .select('id')
+      .select('id, name')
       .eq('name', 'Digital Corner Public Chat')
       .eq('type', 'public')
       .maybeSingle();
     
-    if (!chat) {
+    if (chatError) {
+      console.error('[DIGITAL CORNER RESET] Error finding chat:', chatError);
       return NextResponse.json({
-        success: true,
+        success: false,
+        error: 'Failed to find chat',
+        details: chatError.message
+      }, { status: 500 });
+    }
+    
+    if (!chat) {
+      console.warn('[DIGITAL CORNER RESET] No chat found with name "Digital Corner Public Chat"');
+      // Try to find any chat with similar name
+      const { data: similarChats } = await supabaseAdmin
+        .from('chats')
+        .select('id, name, type')
+        .ilike('name', '%Digital Corner%')
+        .eq('type', 'public');
+      
+      console.log('[DIGITAL CORNER RESET] Found similar chats:', similarChats);
+      
+      return NextResponse.json({
+        success: false,
         message: 'No chat found to reset',
-        deletedCount: 0
+        deletedCount: 0,
+        similarChats: similarChats || []
       });
     }
+    
+    console.log('[DIGITAL CORNER RESET] Found chat:', { id: chat.id, name: chat.name });
     
     // Delete all messages from this chat - try camelCase first
     const { data: deletedCamel, error: deleteErrorCamel } = await supabaseAdmin

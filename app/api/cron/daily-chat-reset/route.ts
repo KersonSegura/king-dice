@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
     const isAuthorizedExternal = authHeader === `Bearer ${cronSecret}`;
     
     // Allow Vercel Cron (automatically authenticated) or external cron with secret
-    if (!isVercelCron && !isAuthorizedExternal) {
+    // Also allow internal token for manual triggers
+    const isInternalToken = authHeader === 'Bearer internal-reset-token';
+    
+    if (!isVercelCron && !isAuthorizedExternal && !isInternalToken) {
       console.log('Unauthorized cron request attempt', { 
         hasAuth: !!authHeader, 
         vercel: process.env.VERCEL,
@@ -26,8 +29,15 @@ export async function GET(request: NextRequest) {
     }
     
     console.log('🕐 Daily chat reset cron job triggered at:', new Date().toISOString());
+    console.log('🔍 Environment check:', {
+      isVercelCron,
+      isAuthorizedExternal,
+      isInternalToken: authHeader === 'Bearer internal-reset-token',
+      baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+      vercel: process.env.VERCEL
+    });
     
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL || 'http://localhost:3000';
     const results = [];
     
     // Reset Digital Corner chat
@@ -43,9 +53,15 @@ export async function GET(request: NextRequest) {
       if (digitalCornerResponse.ok) {
         const digitalCornerData = await digitalCornerResponse.json();
         results.push({ chat: 'Digital Corner', ...digitalCornerData });
-        console.log('✅ Digital Corner chat reset completed');
+        console.log('✅ Digital Corner chat reset completed:', digitalCornerData);
       } else {
-        throw new Error(`Digital Corner reset failed with status: ${digitalCornerResponse.status}`);
+        const errorText = await digitalCornerResponse.text();
+        console.error('❌ Digital Corner reset failed:', {
+          status: digitalCornerResponse.status,
+          statusText: digitalCornerResponse.statusText,
+          body: errorText
+        });
+        throw new Error(`Digital Corner reset failed with status: ${digitalCornerResponse.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('❌ Digital Corner chat reset failed:', error);
@@ -65,9 +81,15 @@ export async function GET(request: NextRequest) {
       if (pixelCanvasResponse.ok) {
         const pixelCanvasData = await pixelCanvasResponse.json();
         results.push({ chat: 'Pixel Canvas', ...pixelCanvasData });
-        console.log('✅ Pixel Canvas chat reset completed');
+        console.log('✅ Pixel Canvas chat reset completed:', pixelCanvasData);
       } else {
-        throw new Error(`Pixel Canvas reset failed with status: ${pixelCanvasResponse.status}`);
+        const errorText = await pixelCanvasResponse.text();
+        console.error('❌ Pixel Canvas reset failed:', {
+          status: pixelCanvasResponse.status,
+          statusText: pixelCanvasResponse.statusText,
+          body: errorText
+        });
+        throw new Error(`Pixel Canvas reset failed with status: ${pixelCanvasResponse.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('❌ Pixel Canvas chat reset failed:', error);
