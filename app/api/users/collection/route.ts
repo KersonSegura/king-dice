@@ -4,6 +4,27 @@ import { supabaseAdmin } from '@/lib/supabase';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// Helper function to convert old /uploads/ paths to Supabase Storage URLs
+function rewriteStorageUrl(url: string | null | undefined): string | null | undefined {
+  if (!url) return url;
+  
+  // If already a full URL (Supabase Storage), return as is
+  if (url.startsWith('http') && url.includes('.supabase.co')) {
+    return url;
+  }
+  
+  // Convert old /uploads/ paths to Supabase Storage URLs
+  if (url.startsWith('/uploads/')) {
+    const filename = url.replace('/uploads/', '');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    if (supabaseUrl) {
+      return `${supabaseUrl}/storage/v1/object/public/uploads/uploads/${filename}`;
+    }
+  }
+  
+  return url;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -47,8 +68,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      collectionPhoto: user.collectionPhoto,
-      favoriteCard: user.favoriteCard,
+      collectionPhoto: rewriteStorageUrl(user.collectionPhoto),
+      favoriteCard: rewriteStorageUrl(user.favoriteCard),
       gamesList: gamesList
     });
   } catch (error) {
@@ -107,8 +128,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      collectionPhoto: updatedUser.collectionPhoto,
-      favoriteCard: updatedUser.favoriteCard,
+      collectionPhoto: rewriteStorageUrl(updatedUser.collectionPhoto),
+      favoriteCard: rewriteStorageUrl(updatedUser.favoriteCard),
       gamesList: parsedGamesList
     });
   } catch (error) {

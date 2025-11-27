@@ -3,6 +3,27 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// Helper function to convert old /uploads/ paths to Supabase Storage URLs
+function rewriteStorageUrl(url: string | null | undefined): string | null | undefined {
+  if (!url) return url;
+  
+  // If already a full URL (Supabase Storage), return as is
+  if (url.startsWith('http') && url.includes('.supabase.co')) {
+    return url;
+  }
+  
+  // Convert old /uploads/ paths to Supabase Storage URLs
+  if (url.startsWith('/uploads/')) {
+    const filename = url.replace('/uploads/', '');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    if (supabaseUrl) {
+      return `${supabaseUrl}/storage/v1/object/public/uploads/uploads/${filename}`;
+    }
+  }
+  
+  return url;
+}
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -53,8 +74,8 @@ export async function GET(request: NextRequest) {
           containers: '#ffffff'
         },
         gamesList: user.gamesList ? (typeof user.gamesList === 'string' ? JSON.parse(user.gamesList) : user.gamesList) : [],
-        collectionPhoto: user.collectionPhoto,
-        favoriteCard: user.favoriteCard,
+        collectionPhoto: rewriteStorageUrl(user.collectionPhoto),
+        favoriteCard: rewriteStorageUrl(user.favoriteCard),
         isAdmin: user.isAdmin,
         levelProgress: {
           currentLevel,
