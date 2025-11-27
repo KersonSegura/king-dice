@@ -219,7 +219,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         maxHeight: '500px', 
         minHeight: '500px',
         overflow: 'hidden'
-      } : {}}
+      } : {
+        height: '100%',
+        maxHeight: '100%',
+        overflow: 'hidden'
+      }}
     >
       {/* Header - only show if not embedded */}
       {!embedded && (
@@ -249,9 +253,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       {/* Messages - Fixed height scrollable container */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" 
+        className="flex-1 overflow-y-auto p-4 space-y-4" 
         style={{ 
-          scrollBehavior: 'smooth'
+          scrollBehavior: 'smooth',
+          minHeight: 0,
+          maxHeight: '100%',
+          height: '100%',
+          overflowY: 'auto',
+          overflowX: 'hidden'
         }}
       >
         {messages.map((msg) => (

@@ -643,10 +643,10 @@ export default function FloatingChat() {
           </div>
 
           {/* Chat Content */}
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden" style={{ height: '100%', maxHeight: '100%' }}>
             {selectedChat ? (
               selectedChat.type === 'bot' ? (
-                <div className="h-full flex flex-col min-h-0 overflow-hidden">
+                <div className="h-full flex flex-col min-h-0 overflow-hidden" style={{ height: '100%', maxHeight: '100%' }}>
                   <ChatBot 
                     isOpen={true}
                     onClose={() => setSelectedChat(null)}
