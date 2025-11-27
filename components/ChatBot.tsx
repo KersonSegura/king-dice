@@ -72,6 +72,27 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
 
+    // Check if user is authenticated - show fake bot message if not
+    if (!currentUser?.id) {
+      const userMessage = {
+        id: Date.now().toString(),
+        text: message,
+        isBot: false,
+        timestamp: new Date()
+      };
+
+      const signInMessage = {
+        id: (Date.now() + 1).toString(),
+        text: "Hello! 👋 I'm Dice-Bot, your AI assistant for board games! 🎲\n\nTo chat with me, please sign in or create an account. It's free and only takes a moment!\n\nOnce you're signed in, I can help you with:\n• Board game rules and strategies\n• Game recommendations\n• King Dice platform features\n• And much more!\n\nSign in to get started! 🚀",
+        isBot: true,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, userMessage, signInMessage]);
+      setMessage('');
+      return;
+    }
+
     const userMessage = {
       id: Date.now().toString(),
       text: message,
@@ -90,13 +111,31 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: message,
-          userId: currentUser?.id
+          message: message
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle authentication errors with fake bot message
+        if (errorData.requiresAuth || response.status === 401) {
+          const signInMessage = {
+            id: (Date.now() + 1).toString(),
+            text: "Hello! 👋 I'm Dice-Bot, your AI assistant for board games! 🎲\n\nTo chat with me, please sign in or create an account. It's free and only takes a moment!\n\nOnce you're signed in, I can help you with:\n• Board game rules and strategies\n• Game recommendations\n• King Dice platform features\n• And much more!\n\nSign in to get started! 🚀",
+            isBot: true,
+            timestamp: new Date()
+          };
+          const updatedMessages = [...messages, userMessage, signInMessage];
+          setMessages(updatedMessages);
+          if (currentUser?.id) {
+            const storageKey = `dicebot-messages-${currentUser.id}`;
+            localStorage.setItem(storageKey, JSON.stringify(updatedMessages));
+          }
+          setIsLoading(false);
+          return;
+        }
+        
         throw new Error(errorData.message || errorData.error || 'Failed to get bot response');
       }
       

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { getUserFromToken } from '@/lib/auth';
 
 // Simple in-memory rate limiting (for production, use Redis or a proper rate limiter)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -7,7 +8,7 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 10; // Max 10 requests per minute per user
 
 function checkRateLimit(userId: string | null): boolean {
-  if (!userId) return true; // Allow unauthenticated users but log it
+  if (!userId) return false; // Require authentication
   
   const now = Date.now();
   const userLimit = rateLimitMap.get(userId);
@@ -27,19 +28,40 @@ function checkRateLimit(userId: string | null): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize OpenAI client only when needed
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+    // Check authentication first - require user to be signed in
+    const token = request.cookies.get('auth_token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { 
+          error: 'Authentication required',
+          message: 'Please sign in to use the chatbot.',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
     }
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    const { message, userId } = await request.json();
+    // Verify token and get user
+    const authResult = await getUserFromToken(token);
+    
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { 
+          error: 'Authentication failed',
+          message: 'Please sign in to use the chatbot.',
+          requiresAuth: true
+        },
+        { status: 401 }
+      );
+    }
+
+    const userId = authResult.user.id;
+    const { message } = await request.json();
     
     // Rate limiting
-    if (!checkRateLimit(userId || null)) {
-      console.warn(`⚠️ Rate limit exceeded for user: ${userId || 'anonymous'}`);
+    if (!checkRateLimit(userId)) {
+      console.warn(`⚠️ Rate limit exceeded for user: ${userId}`);
       return NextResponse.json(
         { 
           error: 'Rate limit exceeded',
@@ -50,11 +72,20 @@ export async function POST(request: NextRequest) {
     }
     
     // Log usage for monitoring
-    console.log(`📊 Chatbot API call - User: ${userId || 'anonymous'}, Message length: ${message?.length || 0} chars`);
+    console.log(`📊 Chatbot API call - User: ${userId}, Message length: ${message?.length || 0} chars`);
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
+
+    // Initialize OpenAI client only when needed
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+    }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     // System prompt to make the bot specialized in board games and bilingual
     const systemPrompt = `You are Dice-Bot, a bilingual board game expert assistant for the King Dice platform.
@@ -90,7 +121,7 @@ Always be helpful, friendly, and knowledgeable about board games. When relevant,
     // Log token usage
     const usage = completion.usage;
     if (usage) {
-      console.log(`📊 Token usage - User: ${userId || 'anonymous'}, Input: ${usage.prompt_tokens}, Output: ${usage.completion_tokens}, Total: ${usage.total_tokens}`);
+      console.log(`📊 Token usage - User: ${userId}, Input: ${usage.prompt_tokens}, Output: ${usage.completion_tokens}, Total: ${usage.total_tokens}`);
     }
 
     return NextResponse.json({ response: botResponse });
