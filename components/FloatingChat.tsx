@@ -573,8 +573,8 @@ export default function FloatingChat() {
       {/* Chat Interface - Only render when chat is open */}
       {isChatOpen && (
         <div className="bg-white shadow-xl border border-gray-200 
-          fixed top-16 left-0 right-0 w-full sm:fixed sm:top-20 sm:left-auto sm:right-4 sm:w-96 sm:h-auto sm:rounded-lg
-          transform transition-transform duration-300 ease-in-out z-40 desktop-chat-height flex flex-col mobile-chat-full-height">
+          fixed top-16 left-0 right-0 w-full sm:fixed sm:top-20 sm:left-auto sm:right-4 sm:w-96 sm:h-[500px] sm:max-h-[500px] sm:rounded-lg
+          transform transition-transform duration-300 ease-in-out z-40 desktop-chat-height flex flex-col mobile-chat-full-height overflow-hidden">
           {/* Chat Header */}
           <div className="flex items-center justify-between p-4 border-b sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
             <div className="flex items-center space-x-3">
@@ -643,10 +643,10 @@ export default function FloatingChat() {
           </div>
 
           {/* Chat Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-h-0 overflow-hidden">
             {selectedChat ? (
               selectedChat.type === 'bot' ? (
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col min-h-0 overflow-hidden">
                   <ChatBot 
                     isOpen={true}
                     onClose={() => setSelectedChat(null)}
