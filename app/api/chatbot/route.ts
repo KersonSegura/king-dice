@@ -1,6 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+// Simple in-memory rate limiting (for production, use Redis or a proper rate limiter)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10; // Max 10 requests per minute per user
+
+function checkRateLimit(userId: string | null): boolean {
+  if (!userId) return true; // Allow unauthenticated users but log it
+  
+  const now = Date.now();
+  const userLimit = rateLimitMap.get(userId);
+  
+  if (!userLimit || now > userLimit.resetTime) {
+    rateLimitMap.set(userId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  
+  if (userLimit.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  
+  userLimit.count++;
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Initialize OpenAI client only when needed
@@ -12,6 +36,21 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
     const { message, userId } = await request.json();
+    
+    // Rate limiting
+    if (!checkRateLimit(userId || null)) {
+      console.warn(`⚠️ Rate limit exceeded for user: ${userId || 'anonymous'}`);
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded',
+          message: 'Too many requests. Please wait a minute before trying again.',
+        },
+        { status: 429 }
+      );
+    }
+    
+    // Log usage for monitoring
+    console.log(`📊 Chatbot API call - User: ${userId || 'anonymous'}, Message length: ${message?.length || 0} chars`);
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -47,6 +86,12 @@ Always be helpful, friendly, and knowledgeable about board games. When relevant,
     });
 
     const botResponse = completion.choices[0]?.message?.content || "Sorry, I couldn't generate a response.";
+    
+    // Log token usage
+    const usage = completion.usage;
+    if (usage) {
+      console.log(`📊 Token usage - User: ${userId || 'anonymous'}, Input: ${usage.prompt_tokens}, Output: ${usage.completion_tokens}, Total: ${usage.total_tokens}`);
+    }
 
     return NextResponse.json({ response: botResponse });
   } catch (error: any) {
