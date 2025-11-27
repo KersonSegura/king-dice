@@ -3,6 +3,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
@@ -98,7 +101,22 @@ export async function POST(request: NextRequest) {
 // Function to clean up old profile images for a user
 async function cleanupOldProfileImages(userId: string, currentImageUrl: string) {
   try {
+    // On Vercel, the filesystem is read-only except for /tmp
+    // We can't delete files from /public, so we'll skip cleanup on Vercel
+    if (process.env.VERCEL === '1') {
+      console.log('🧹 Skipping file cleanup on Vercel (read-only filesystem)');
+      return;
+    }
+
     const generatedDir = path.join(process.cwd(), 'public', 'generated');
+    
+    // Check if directory exists
+    try {
+      await fs.access(generatedDir);
+    } catch {
+      console.log('🧹 Generated directory does not exist, skipping cleanup');
+      return;
+    }
     
     // Get all files in the generated directory
     const files = await fs.readdir(generatedDir);
@@ -140,9 +158,14 @@ async function cleanupOldProfileImages(userId: string, currentImageUrl: string) 
       const filesToDelete = sortedFiles.slice(0, unreferencedFiles.length - 10);
       
       for (const file of filesToDelete) {
-        const filePath = path.join(generatedDir, file);
-        await fs.unlink(filePath);
-        console.log(`🗑️ Deleted old unreferenced dice SVG: ${file}`);
+        try {
+          const filePath = path.join(generatedDir, file);
+          await fs.unlink(filePath);
+          console.log(`🗑️ Deleted old unreferenced dice SVG: ${file}`);
+        } catch (deleteError) {
+          console.warn(`⚠️ Could not delete file ${file}:`, deleteError);
+          // Continue with other files
+        }
       }
     }
     

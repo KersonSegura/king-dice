@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
-
-function ensureDataFile(): string {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-  const file = path.join(dataDir, 'my-dice.json');
-  if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify({ users: {} }, null, 2));
-  return file;
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,37 +12,55 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
-    const file = ensureDataFile();
-    const data = JSON.parse(fs.readFileSync(file, 'utf8')) as { users: Record<string, any> };
+    // Get user from database
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('profile_colors')
+      .eq('id', userId)
+      .single();
 
-    // Get user's dice configuration or return default
-    const userConfig = data.users[userId];
-    
-    if (userConfig) {
-      return NextResponse.json({ 
-        config: userConfig.config,
-        updatedAt: userConfig.updatedAt
-      });
-    } else {
-      // Return default configuration for new users
-      const defaultConfig = {
-        background: "/dice/backgrounds/WhiteBackground.svg",
-        dice: "/dice/dice/WhiteDice.svg",
-        pattern: "/dice/patterns/1-2-3.svg",
-        accessories: null,
-        hat: null,
-        item: null,
-        companion: null,
-        title: null
-      };
-      
-      return NextResponse.json({ 
-        config: defaultConfig,
-        updatedAt: null
-      });
+    if (userError && userError.code !== 'PGRST116') {
+      console.error('Error loading user:', userError);
+      return NextResponse.json({ error: 'Failed to load user' }, { status: 500 });
     }
+
+    // Try to parse dice config from profile_colors field
+    if (user && user.profile_colors) {
+      try {
+        const parsed = JSON.parse(user.profile_colors);
+        if (parsed.diceConfig) {
+          return NextResponse.json({ 
+            config: parsed.diceConfig,
+            updatedAt: parsed.updatedAt
+          });
+        }
+      } catch (parseError) {
+        // profile_colors might be used for actual colors, not dice config
+        console.log('profile_colors is not dice config, using defaults');
+      }
+    }
+
+    // Return default configuration for new users or if no config found
+    const defaultConfig = {
+      background: "/dice/backgrounds/WhiteBackground.svg",
+      dice: "/dice/dice/WhiteDice.svg",
+      pattern: "/dice/patterns/1-2-3.svg",
+      accessories: null,
+      hat: null,
+      item: null,
+      companion: null,
+      title: null
+    };
+    
+    return NextResponse.json({ 
+      config: defaultConfig,
+      updatedAt: null
+    });
   } catch (error) {
     console.error('Error loading dice configuration:', error);
-    return NextResponse.json({ error: 'Failed to load dice configuration' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to load dice configuration',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

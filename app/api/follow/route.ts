@@ -5,6 +5,70 @@ import { createNotification } from '@/lib/notifications';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// GET - Get follow relationships
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const type = searchParams.get('type'); // 'following' or 'followers'
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (type === 'following') {
+      // Get users that this user is following
+      const { data: following, error } = await supabaseAdmin
+        .from('follows')
+        .select('following_id, created_at')
+        .eq('follower_id', userId);
+
+      if (error) {
+        console.error('Error fetching following:', error);
+        return NextResponse.json({ error: 'Failed to fetch following' }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        following: following || [],
+        count: following?.length || 0
+      });
+    } else if (type === 'followers') {
+      // Get users that follow this user
+      const { data: followers, error } = await supabaseAdmin
+        .from('follows')
+        .select('follower_id, created_at')
+        .eq('following_id', userId);
+
+      if (error) {
+        console.error('Error fetching followers:', error);
+        return NextResponse.json({ error: 'Failed to fetch followers' }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        followers: followers || [],
+        count: followers?.length || 0
+      });
+    } else {
+      return NextResponse.json(
+        { error: 'Invalid type. Use "following" or "followers"' },
+        { status: 400 }
+      );
+    }
+  } catch (error) {
+    console.error('Error in GET follow:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch follow data' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

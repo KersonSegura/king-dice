@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { supabaseAdmin } from '@/lib/supabase';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 interface SavePayload {
   userId: string;
   config: Record<string, string | null>;
-}
-
-function ensureDataFile(): string {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-  const file = path.join(dataDir, 'my-dice.json');
-  if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify({ users: {} }, null, 2));
-  return file;
 }
 
 export async function POST(request: NextRequest) {
@@ -22,18 +16,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing userId or config' }, { status: 400 });
     }
 
-    const file = ensureDataFile();
-    const data = JSON.parse(fs.readFileSync(file, 'utf8')) as { users: Record<string, any> };
+    // Store dice config in Supabase users table
+    // Use profile_colors field or create a new dice_config field
+    // For now, we'll store it in a JSON field in the users table
+    const { data: user, error: findError } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('id', body.userId)
+      .single();
 
-    data.users[body.userId] = {
-      config: body.config,
-      updatedAt: new Date().toISOString(),
-    };
+    if (findError || !user) {
+      console.error('User not found:', findError);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
-    fs.writeFileSync(file, JSON.stringify(data, null, 2));
+    // Store dice config as JSON in profile_colors field (or we could add a dice_config field)
+    // For now, using a workaround: store in profile_colors as JSON
+    const diceConfigJson = JSON.stringify({
+      diceConfig: body.config,
+      updatedAt: new Date().toISOString()
+    });
+
+    const { error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({ 
+        profile_colors: diceConfigJson 
+      })
+      .eq('id', body.userId);
+
+    if (updateError) {
+      console.error('Error saving dice config:', updateError);
+      return NextResponse.json({ error: 'Failed to save dice config' }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to save dice' }, { status: 500 });
+    console.error('Error in save route:', error);
+    return NextResponse.json({ 
+      error: 'Failed to save dice',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
