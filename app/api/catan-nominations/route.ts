@@ -42,62 +42,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try snake_case first (based on database migration), then camelCase as fallback
+    // Try camelCase first (matches Prisma schema with updatedAt), then snake_case as fallback
     let nomination: any = null;
     let createError: any = null;
+    const now = new Date().toISOString();
 
-    // Try snake_case first (matches database migration)
-    const { data: dataSnake, error: errorSnake } = await supabaseAdmin
+    // Try camelCase first (Prisma schema shows updatedAt is required)
+    const { data: dataCamel, error: errorCamel } = await supabaseAdmin
       .from('catan_nominations')
       .insert({
-        map_data: JSON.stringify(mapData),
-        image_data: imageBase64,
-        custom_rules: JSON.stringify(customRules),
+        mapData: JSON.stringify(mapData),
+        imageData: imageBase64,
+        customRules: JSON.stringify(customRules),
         votes: 0,
         status: 'pending',
-        user_id: userId || null,
+        userId: userId || null,
         username: username || 'Anonymous',
-        avatar: avatar || null
+        avatar: avatar || null,
+        createdAt: now,
+        updatedAt: now
       })
-      .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at')
+      .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt, updatedAt')
       .single();
 
-    if (!errorSnake && dataSnake) {
-      // Map snake_case response to camelCase
-      nomination = {
-        id: dataSnake.id,
-        mapData: dataSnake.map_data,
-        imageData: dataSnake.image_data,
-        customRules: dataSnake.custom_rules,
-        votes: dataSnake.votes,
-        status: dataSnake.status,
-        userId: dataSnake.user_id,
-        username: dataSnake.username,
-        avatar: dataSnake.avatar,
-        createdAt: dataSnake.created_at
-      };
+    if (!errorCamel && dataCamel) {
+      nomination = dataCamel;
     } else {
-      // Try camelCase as fallback
-      console.log('Snake_case insert failed, trying camelCase:', errorSnake);
-      const { data: dataCamel, error: errorCamel } = await supabaseAdmin
+      // Try snake_case as fallback
+      console.log('CamelCase insert failed, trying snake_case:', errorCamel);
+      const { data: dataSnake, error: errorSnake } = await supabaseAdmin
         .from('catan_nominations')
         .insert({
-          mapData: JSON.stringify(mapData),
-          imageData: imageBase64,
-          customRules: JSON.stringify(customRules),
+          map_data: JSON.stringify(mapData),
+          image_data: imageBase64,
+          custom_rules: JSON.stringify(customRules),
           votes: 0,
           status: 'pending',
-          userId: userId || null,
+          user_id: userId || null,
           username: username || 'Anonymous',
-          avatar: avatar || null
+          avatar: avatar || null,
+          created_at: now,
+          updated_at: now
         })
-        .select('id, mapData, imageData, customRules, votes, status, userId, username, avatar, createdAt')
+        .select('id, map_data, image_data, custom_rules, votes, status, user_id, username, avatar, created_at, updated_at')
         .single();
 
-      if (!errorCamel && dataCamel) {
-        nomination = dataCamel;
+      if (!errorSnake && dataSnake) {
+        // Map snake_case response to camelCase
+        nomination = {
+          id: dataSnake.id,
+          mapData: dataSnake.map_data,
+          imageData: dataSnake.image_data,
+          customRules: dataSnake.custom_rules,
+          votes: dataSnake.votes,
+          status: dataSnake.status,
+          userId: dataSnake.user_id,
+          username: dataSnake.username,
+          avatar: dataSnake.avatar,
+          createdAt: dataSnake.created_at,
+          updatedAt: dataSnake.updated_at
+        };
       } else {
-        createError = errorCamel || errorSnake;
+        createError = errorSnake || errorCamel;
       }
     }
 
