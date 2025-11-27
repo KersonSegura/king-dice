@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import { PrismaClient } from '@prisma/client';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +12,6 @@ export async function POST(request: NextRequest) {
     console.log('🎲 Dice config:', diceConfig);
     console.log('🖼️ Profile image URL:', profileImageUrl);
     console.log('👤 Username:', username);
-    console.log('🔍 User ID type:', typeof userId);
-    console.log('🔍 User ID length:', userId?.length);
     
     // Validate the request
     if (!userId || !diceConfig || !profileImageUrl) {
@@ -27,16 +21,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Clean up old profile images for this user
-    await cleanupOldProfileImages(userId, profileImageUrl);
+    // Find user in database using Supabase
+    const { data: user, error: findError } = await supabaseAdmin
+      .from('users')
+      .select('id, username, email, avatar, title, is_admin, level, xp')
+      .eq('id', userId)
+      .single();
     
-    // Find user in database
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-    
-    if (!user) {
-      console.log('❌ User not found by ID:', userId);
+    if (findError || !user) {
+      console.log('❌ User not found by ID:', userId, findError);
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -58,27 +51,39 @@ export async function POST(request: NextRequest) {
     }
     console.log('👑 Extracted title name:', titleName);
     
-    // Update the user's avatar and title in the database
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: {
+    // Update the user's avatar and title in the database using Supabase
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({
         avatar: profileImageUrl,
         title: selectedTitle ? titleName : null
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        avatar: true,
-        title: true,
-        isAdmin: true,
-        level: true,
-        xp: true
-      }
-    });
+      })
+      .eq('id', user.id)
+      .select('id, username, email, avatar, title, is_admin, level, xp')
+      .single();
     
-    console.log('✅ User avatar updated in database:', updatedUser.avatar);
-    console.log('✅ User title updated in database:', updatedUser.title);
+    if (updateError || !updatedUser) {
+      console.error('❌ Error updating user:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update user' },
+        { status: 500 }
+      );
+    }
+    
+    // Map Supabase response to match expected format
+    const formattedUser = {
+      id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      avatar: updatedUser.avatar,
+      title: updatedUser.title,
+      isAdmin: updatedUser.is_admin,
+      level: updatedUser.level,
+      xp: updatedUser.xp
+    };
+    
+    console.log('✅ User avatar updated in database:', formattedUser.avatar);
+    console.log('✅ User title updated in database:', formattedUser.title);
     console.log('✅ Dice configuration saved successfully');
     
     return NextResponse.json({
@@ -86,7 +91,7 @@ export async function POST(request: NextRequest) {
       message: 'Dice configuration saved successfully',
       profileImageUrl,
       diceConfig,
-      updatedUser: updatedUser
+      updatedUser: formattedUser
     });
     
   } catch (error) {
@@ -101,84 +106,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// Function to clean up old profile images for a user
-async function cleanupOldProfileImages(userId: string, currentImageUrl: string) {
-  try {
-    // On Vercel, the filesystem is read-only except for /tmp
-    // We can't delete files from /public, so we'll skip cleanup on Vercel
-    if (process.env.VERCEL === '1') {
-      console.log('🧹 Skipping file cleanup on Vercel (read-only filesystem)');
-      return;
-    }
-
-    const generatedDir = path.join(process.cwd(), 'public', 'generated');
-    
-    // Check if directory exists
-    try {
-      await fs.access(generatedDir);
-    } catch {
-      console.log('🧹 Generated directory does not exist, skipping cleanup');
-      return;
-    }
-    
-    // Get all files in the generated directory
-    const files = await fs.readdir(generatedDir);
-    
-    // Filter for dice files (excluding the current one)
-    const diceFiles = files.filter(file => 
-      file.startsWith('dice-') && 
-      file.endsWith('.svg') && 
-      !file.includes(path.basename(currentImageUrl))
-    );
-    
-    // Check which files are still referenced in the database
-    const referencedFiles = new Set();
-    
-    // Get all user avatars that reference generated files
-    const users = await prisma.user.findMany({
-      select: { avatar: true }
-    });
-    
-    users.forEach(user => {
-      if (user.avatar && user.avatar.includes('/generated/dice-')) {
-        const filename = path.basename(user.avatar);
-        referencedFiles.add(filename);
-      }
-    });
-    
-    // Only delete files that are not referenced by any user AND are old (more than 10 files)
-    const unreferencedFiles = diceFiles.filter(file => !referencedFiles.has(file));
-    
-    if (unreferencedFiles.length > 10) {
-      // Sort by timestamp (oldest first for deletion)
-      const sortedFiles = unreferencedFiles.sort((a, b) => {
-        const timestampA = parseInt(a.replace('dice-', '').replace('.svg', ''));
-        const timestampB = parseInt(b.replace('dice-', '').replace('.svg', ''));
-        return timestampA - timestampB;
-      });
-      
-      // Delete only the oldest unreferenced files (keep 10 most recent unreferenced)
-      const filesToDelete = sortedFiles.slice(0, unreferencedFiles.length - 10);
-      
-      for (const file of filesToDelete) {
-        try {
-          const filePath = path.join(generatedDir, file);
-          await fs.unlink(filePath);
-          console.log(`🗑️ Deleted old unreferenced dice SVG: ${file}`);
-        } catch (deleteError) {
-          console.warn(`⚠️ Could not delete file ${file}:`, deleteError);
-          // Continue with other files
-        }
-      }
-    }
-    
-    console.log(`🧹 Cleanup completed. Kept ${diceFiles.length - Math.max(0, unreferencedFiles.length - 10)} dice SVGs.`);
-    
-  } catch (error) {
-    console.error('❌ Error during cleanup:', error);
-    // Don't fail the main operation if cleanup fails
-  }
-}
-
-
