@@ -29,15 +29,36 @@ export async function GET(request: NextRequest) {
     }
     
     console.log('🕐 Daily chat reset cron job triggered at:', new Date().toISOString());
+    
+    // Get base URL - Vercel provides VERCEL_URL, or use NEXT_PUBLIC_BASE_URL, or construct from request
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL;
+    
+    // If we have a URL without protocol, add https://
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = `https://${baseUrl}`;
+    }
+    
+    // If still no URL, try to construct from request host header
+    if (!baseUrl) {
+      const host = request.headers.get('host');
+      if (host) {
+        baseUrl = `https://${host}`;
+      } else {
+        // Last resort: use production domain
+        baseUrl = 'https://kingdice.gg';
+      }
+    }
+    
     console.log('🔍 Environment check:', {
       isVercelCron,
       isAuthorizedExternal,
       isInternalToken: authHeader === 'Bearer internal-reset-token',
-      baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
-      vercel: process.env.VERCEL
+      baseUrl,
+      nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+      vercelUrl: process.env.VERCEL_URL,
+      vercel: process.env.VERCEL,
+      host: request.headers.get('host')
     });
-    
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL || 'http://localhost:3000';
     const results = [];
     
     // Reset Digital Corner chat
