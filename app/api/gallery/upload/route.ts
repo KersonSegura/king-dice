@@ -107,12 +107,13 @@ export async function POST(request: NextRequest) {
     
     const now = new Date().toISOString();
     
-    // Create image in database using Supabase directly (to avoid Prisma connection issues)
-    // Try camelCase first (matches Prisma schema), then snake_case as fallback
+    // Create image in database using Supabase directly
+    // Try camelCase first, then snake_case as fallback
+    // Don't include 'views' or 'downloads' if they don't exist - let database defaults handle it
     let imageData: any = null;
     let createError: any = null;
     
-    // Try camelCase first
+    // Try camelCase first (without views/downloads to avoid schema errors)
     const { data: dataCamel, error: errorCamel } = await supabaseAdmin
       .from('gallery_images')
       .insert({
@@ -125,7 +126,6 @@ export async function POST(request: NextRequest) {
         authorId: author.id,
         votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
         comments: 0,
-        views: 0,
         createdAt: now,
         updatedAt: now
       })
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     if (!errorCamel && dataCamel) {
       imageData = dataCamel;
     } else {
-      // Try snake_case as fallback
+      // Try snake_case as fallback (without views/downloads)
       console.log('CamelCase insert failed, trying snake_case:', errorCamel);
       const { data: dataSnake, error: errorSnake } = await supabaseAdmin
         .from('gallery_images')
@@ -149,7 +149,6 @@ export async function POST(request: NextRequest) {
           author_id: author.id,
           votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
           comments: 0,
-          views: 0,
           created_at: now,
           updated_at: now
         })
