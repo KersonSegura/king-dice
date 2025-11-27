@@ -9,7 +9,7 @@ import { getRandomRoll } from './diceLogic';
 const DiceScene = dynamic(() => import('./DiceScene'), { ssr: false });
 
 export default function DiceRoller() {
-  const [dicePool, setDicePool] = useState([DEFAULT_DICE]); // Array of dice in the pool
+  const [dicePool, setDicePool] = useState([{ ...DEFAULT_DICE, id: Date.now() }]); // Array of dice in the pool with unique IDs
   const [rollResults, setRollResults] = useState([]); // Array of roll results
   const [rollSignal, setRollSignal] = useState(0);
   const [isRolling, setIsRolling] = useState(false);
@@ -17,12 +17,12 @@ export default function DiceRoller() {
 
   const addDiceToPool = (dice) => {
     if (dicePool.length >= 10) return; // Max 10 dice
-    setDicePool([...dicePool, dice]);
+    setDicePool([...dicePool, { ...dice, id: Date.now() + Math.random() }]);
   };
 
-  const removeDiceFromPool = (index) => {
+  const removeDiceFromPool = (id) => {
     if (dicePool.length <= 1) return; // Keep at least 1 die
-    const newPool = dicePool.filter((_, i) => i !== index);
+    const newPool = dicePool.filter(d => d.id !== id);
     setDicePool(newPool);
     setRollResults([]); // Clear results when pool changes
   };
@@ -52,7 +52,7 @@ export default function DiceRoller() {
       <div className="max-w-5xl mx-auto space-y-10">
         <div className="text-center space-y-2">
           <p className="text-sm uppercase tracking-[0.25em] text-amber-300/80">Virtual Dice Studio</p>
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-slate-300 whitespace-nowrap">Add dice to the pool and roll them together.</h1>
+          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">Add dice to the pool and roll them together.</h1>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-4xl mx-auto">
@@ -93,7 +93,7 @@ export default function DiceRoller() {
             `}} />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
               {dicePool.map((dice, index) => (
-                <div key={index} className="relative">
+                <div key={dice.id} className="relative">
                   <DiceScene
                     dice={dice}
                     rollSignal={rollSignal}
@@ -103,7 +103,7 @@ export default function DiceRoller() {
                   />
                   {dicePool.length > 1 && (
                     <button
-                      onClick={() => removeDiceFromPool(index)}
+                      onClick={() => removeDiceFromPool(dice.id)}
                       disabled={isRolling}
                       className="dice-remove-btn absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center font-bold transition disabled:opacity-50 z-10"
                       style={{
