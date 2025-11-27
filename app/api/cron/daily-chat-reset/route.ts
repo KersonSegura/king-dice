@@ -1,4 +1,106 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+// Helper function to reset a chat by name
+async function resetChat(chatName: string) {
+  try {
+    // Get or find the chat
+    const { data: chat, error: chatError } = await supabaseAdmin
+      .from('chats')
+      .select('id, name')
+      .eq('name', chatName)
+      .eq('type', 'public')
+      .maybeSingle();
+    
+    if (chatError) {
+      console.error(`[${chatName} RESET] Error finding chat:`, chatError);
+      return {
+        success: false,
+        error: 'Failed to find chat',
+        details: chatError.message,
+        deletedCount: 0
+      };
+    }
+    
+    if (!chat) {
+      console.warn(`[${chatName} RESET] No chat found with name "${chatName}"`);
+      // Try to find any chat with similar name
+      const { data: similarChats } = await supabaseAdmin
+        .from('chats')
+        .select('id, name, type')
+        .ilike('name', `%${chatName.split(' ')[0]}%`)
+        .eq('type', 'public');
+      
+      console.log(`[${chatName} RESET] Found similar chats:`, similarChats);
+      
+      return {
+        success: false,
+        message: 'No chat found to reset',
+        deletedCount: 0,
+        similarChats: similarChats || []
+      };
+    }
+    
+    console.log(`[${chatName} RESET] Found chat:`, { id: chat.id, name: chat.name });
+    
+    // Delete all messages from this chat - try camelCase first
+    const { data: deletedCamel, error: deleteErrorCamel } = await supabaseAdmin
+      .from('messages')
+      .delete()
+      .eq('chatId', chat.id)
+      .select('id');
+    
+    let deletedCount = 0;
+    let deleteError = null;
+    
+    if (!deleteErrorCamel && deletedCamel) {
+      deletedCount = deletedCamel.length;
+    } else {
+      // Try snake_case as fallback
+      const { data: deletedSnake, error: deleteErrorSnake } = await supabaseAdmin
+        .from('messages')
+        .delete()
+        .eq('chat_id', chat.id)
+        .select('id');
+      
+      if (!deleteErrorSnake && deletedSnake) {
+        deletedCount = deletedSnake.length;
+      } else {
+        deleteError = deleteErrorSnake || deleteErrorCamel;
+      }
+    }
+    
+    if (deleteError) {
+      console.error(`[${chatName} RESET] Error deleting messages:`, deleteError);
+      return {
+        success: false,
+        error: 'Failed to delete messages',
+        details: deleteError.message,
+        deletedCount: 0
+      };
+    }
+    
+    console.log(`[${chatName} RESET] ✅ Deleted ${deletedCount} messages from ${chatName} chat`);
+    
+    return {
+      success: true,
+      message: `${chatName} chat reset completed`,
+      deletedCount,
+      resetAt: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error(`Error resetting ${chatName} chat:`, error);
+    return {
+      success: false,
+      error: 'Failed to reset chat',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      deletedCount: 0
+    };
+  }
+}
 
 // This endpoint can be called by a cron service (like Vercel Cron or external cron job)
 export async function GET(request: NextRequest) {
@@ -30,87 +132,30 @@ export async function GET(request: NextRequest) {
     
     console.log('🕐 Daily chat reset cron job triggered at:', new Date().toISOString());
     
-    // Get base URL - Vercel provides VERCEL_URL, or use NEXT_PUBLIC_BASE_URL, or construct from request
-    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL;
-    
-    // If we have a URL without protocol, add https://
-    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-      baseUrl = `https://${baseUrl}`;
-    }
-    
-    // If still no URL, try to construct from request host header
-    if (!baseUrl) {
-      const host = request.headers.get('host');
-      if (host) {
-        baseUrl = `https://${host}`;
-      } else {
-        // Last resort: use production domain
-        baseUrl = 'https://kingdice.gg';
-      }
-    }
-    
-    console.log('🔍 Environment check:', {
-      isVercelCron,
-      isAuthorizedExternal,
-      isInternalToken: authHeader === 'Bearer internal-reset-token',
-      baseUrl,
-      nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
-      vercelUrl: process.env.VERCEL_URL,
-      vercel: process.env.VERCEL,
-      host: request.headers.get('host')
-    });
     const results = [];
     
-    // Reset Digital Corner chat
+    // Reset Digital Corner chat - call function directly instead of HTTP request
     try {
-      const digitalCornerResponse = await fetch(`${baseUrl}/api/digital-corner/chat/reset`, {
-        method: 'POST',
-        headers: {
-          'authorization': 'Bearer internal-reset-token',
-          'content-type': 'application/json'
-        }
-      });
-      
-      if (digitalCornerResponse.ok) {
-        const digitalCornerData = await digitalCornerResponse.json();
-        results.push({ chat: 'Digital Corner', ...digitalCornerData });
-        console.log('✅ Digital Corner chat reset completed:', digitalCornerData);
+      const digitalCornerResult = await resetChat('Digital Corner Public Chat');
+      results.push({ chat: 'Digital Corner', ...digitalCornerResult });
+      if (digitalCornerResult.success) {
+        console.log('✅ Digital Corner chat reset completed:', digitalCornerResult);
       } else {
-        const errorText = await digitalCornerResponse.text();
-        console.error('❌ Digital Corner reset failed:', {
-          status: digitalCornerResponse.status,
-          statusText: digitalCornerResponse.statusText,
-          body: errorText
-        });
-        throw new Error(`Digital Corner reset failed with status: ${digitalCornerResponse.status} - ${errorText}`);
+        console.error('❌ Digital Corner reset failed:', digitalCornerResult);
       }
     } catch (error) {
       console.error('❌ Digital Corner chat reset failed:', error);
       results.push({ chat: 'Digital Corner', error: error instanceof Error ? error.message : 'Unknown error' });
     }
     
-    // Reset Pixel Canvas chat
+    // Reset Pixel Canvas chat - call function directly instead of HTTP request
     try {
-      const pixelCanvasResponse = await fetch(`${baseUrl}/api/pixel-canvas/chat/reset`, {
-        method: 'POST',
-        headers: {
-          'authorization': 'Bearer internal-reset-token',
-          'content-type': 'application/json'
-        }
-      });
-      
-      if (pixelCanvasResponse.ok) {
-        const pixelCanvasData = await pixelCanvasResponse.json();
-        results.push({ chat: 'Pixel Canvas', ...pixelCanvasData });
-        console.log('✅ Pixel Canvas chat reset completed:', pixelCanvasData);
+      const pixelCanvasResult = await resetChat('Pixel Canvas Public Chat');
+      results.push({ chat: 'Pixel Canvas', ...pixelCanvasResult });
+      if (pixelCanvasResult.success) {
+        console.log('✅ Pixel Canvas chat reset completed:', pixelCanvasResult);
       } else {
-        const errorText = await pixelCanvasResponse.text();
-        console.error('❌ Pixel Canvas reset failed:', {
-          status: pixelCanvasResponse.status,
-          statusText: pixelCanvasResponse.statusText,
-          body: errorText
-        });
-        throw new Error(`Pixel Canvas reset failed with status: ${pixelCanvasResponse.status} - ${errorText}`);
+        console.error('❌ Pixel Canvas reset failed:', pixelCanvasResult);
       }
     } catch (error) {
       console.error('❌ Pixel Canvas chat reset failed:', error);
@@ -119,9 +164,13 @@ export async function GET(request: NextRequest) {
     
     console.log('✅ Daily chat reset completed for both chats');
     
+    const allSuccess = results.every(r => r.success !== false && !r.error);
+    
     return NextResponse.json({
-      success: true,
-      message: 'Daily chat reset completed for both chats',
+      success: allSuccess,
+      message: allSuccess 
+        ? 'Daily chat reset completed for both chats' 
+        : 'Daily chat reset completed with some errors',
       results: results,
       executedAt: new Date().toISOString()
     });
