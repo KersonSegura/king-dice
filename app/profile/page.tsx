@@ -736,6 +736,7 @@ export default function ProfilePage() {
   }, [isAuthenticated, authLoading, router]);
 
   // Load XP immediately when user is available - EXACT same as My Dice page
+  // XP DEBUG VERSION 2.0 - Added authLoading check - 2025-01-27
   useEffect(() => {
     console.log('🔵 Profile XP useEffect triggered:', { 
       authLoading,
@@ -1611,9 +1612,9 @@ export default function ProfilePage() {
                         }}
                       />
                     </div>
-                    {/* Debug info - always visible */}
-                    <div className="text-xs text-white/50 mt-1">
-                      DEBUG: XP={levelProgress.currentXP}, Progress={levelProgress.progressPercentage?.toFixed(1)}%, Level={levelProgress.currentLevel}
+                    {/* Debug info - always visible - VERSION 2.0 */}
+                    <div className="text-xs text-white/50 mt-1" style={{backgroundColor: 'rgba(0,0,0,0.5)', padding: '4px', borderRadius: '4px'}}>
+                      DEBUG v2.0: XP={levelProgress.currentXP}, Progress={levelProgress.progressPercentage?.toFixed(1)}%, Level={levelProgress.currentLevel}
                     </div>
                   </div>
                 );
