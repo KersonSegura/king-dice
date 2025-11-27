@@ -379,7 +379,13 @@ export default function MyDicePage() {
   });
   const [loading, setLoading] = useState(true);
   const [userLevel, setUserLevel] = useState(1);
-  const [levelProgress, setLevelProgress] = useState({ progressPercentage: 0, xpForNextLevel: 100 });
+  const [levelProgress, setLevelProgress] = useState({
+    currentLevel: 1,
+    currentLevelName: 'Commoner',
+    currentXP: 0,
+    xpForNextLevel: 100,
+    progressPercentage: 0
+  });
   const [showXPHelp, setShowXPHelp] = useState(false);
 
   // Load saved configuration from server (user-specific)
@@ -438,26 +444,59 @@ export default function MyDicePage() {
     }
   };
 
-  // Fetch user level and progress
+  // Fetch user level and progress - using same endpoint as profile page
   const fetchUserLevel = async () => {
-    if (!user?.id) return { level: 1, progress: { progressPercentage: 0, xpForNextLevel: 100 } };
+    if (!user?.id) {
+      return {
+        level: 1,
+        progress: {
+          currentLevel: 1,
+          currentLevelName: 'Commoner',
+          currentXP: 0,
+          xpForNextLevel: 100,
+          progressPercentage: 0
+        }
+      };
+    }
     
     try {
-      const response = await fetch(`/api/reputation?userId=${user.id}&action=progress`);
+      // Use the same endpoint as the profile page for consistency
+      const response = await fetch(`/api/users/level-progress?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
-        return { 
-          level: data.progress?.currentLevel || 1, 
+        return {
+          level: data.currentLevel || 1,
           progress: {
-            progressPercentage: data.progress?.progressPercentage || 0,
-            xpForNextLevel: data.progress?.xpForNextLevel || 100
+            currentLevel: data.currentLevel || 1,
+            currentLevelName: data.currentLevelName || 'Commoner',
+            currentXP: data.currentXP || 0,
+            xpForNextLevel: data.xpForNextLevel || 100,
+            progressPercentage: data.progressPercentage || 0
           }
         };
       }
     } catch (error) {
       console.error('Error fetching user level:', error);
     }
-    return { level: 1, progress: { progressPercentage: 0, xpForNextLevel: 100 } };
+    return {
+      level: 1,
+      progress: {
+        currentLevel: 1,
+        currentLevelName: 'Commoner',
+        currentXP: 0,
+        xpForNextLevel: 100,
+        progressPercentage: 0
+      }
+    };
+  };
+
+  // Function to refresh XP progress
+  const refreshXPProgress = async () => {
+    if (!user?.id) return;
+    const { level, progress } = await fetchUserLevel();
+    setUserLevel(level);
+    setLevelProgress(progress);
+    console.log('XP Progress refreshed:', progress);
   };
 
   useEffect(() => {
@@ -465,10 +504,11 @@ export default function MyDicePage() {
       try {
         setLoading(true);
         
-        // Fetch user level and progress first
+        // Fetch user level and progress first - using same endpoint as profile page
         const { level, progress } = await fetchUserLevel();
         setUserLevel(level);
         setLevelProgress(progress);
+        console.log('XP Progress loaded:', progress);
         
         // Fetch assets with user level
         const res = await fetch(`/api/dice-assets?userLevel=${level}`);
@@ -594,6 +634,31 @@ export default function MyDicePage() {
     }
   }, [loading]);
 
+  // Refresh XP when page becomes visible (user returns to tab)
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshXPProgress();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Also refresh every 30 seconds while page is visible
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshXPProgress();
+      }
+    }, 30000);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [user?.id]);
+
   const handleSelect = (tab: TabKey, src: string) => {
     setSelected(prev => {
       const newSelection = { ...prev, [tab]: src };
@@ -693,14 +758,21 @@ export default function MyDicePage() {
             {user && (
                <div className="mt-2 flex items-center justify-between sm:justify-start gap-2">
                  <div className="flex items-center gap-2">
-                   <span className="text-sm text-gray-600">Level {userLevel}</span>
-                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                     <div 
-                       className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
-                       style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
-                     ></div>
+                   <span className="text-sm text-gray-600">
+                     Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
+                   </span>
+                   <div className="flex items-center gap-2">
+                     <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                       <div 
+                         className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
+                         style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
+                       ></div>
+                     </div>
+                     <span className="text-xs text-gray-500">
+                       {levelProgress.currentXP} XP
+                       {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} to next`}
+                     </span>
                    </div>
-                   <span className="hidden sm:inline text-xs text-gray-500">Progress to next level</span>
                  </div>
                  <button
                    onClick={() => setShowXPHelp(true)}

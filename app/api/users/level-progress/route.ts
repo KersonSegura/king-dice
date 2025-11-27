@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const levelProgress = getLevelProgress(userId);
+    const levelProgress = await getLevelProgress(userId);
     
     return NextResponse.json(levelProgress);
   } catch (error) {
