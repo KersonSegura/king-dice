@@ -24,45 +24,67 @@ export async function GET(request: NextRequest) {
       // Get users that this user is following
       const { data: following, error } = await supabaseAdmin
         .from('follows')
-        .select('following_id, created_at')
+        .select('following_id, created_at, following:users!follows_following_id_fkey(id, username, avatar, is_verified, is_admin)')
         .eq('follower_id', userId);
 
       if (error) {
         console.error('Error fetching following:', error);
-        // Return empty array instead of error if table doesn't exist or query fails
         return NextResponse.json({
           success: true,
+          users: [],
           following: [],
           count: 0
         });
       }
 
+      // Transform to include user objects
+      const users = (following || []).map((f: any) => ({
+        id: f.following_id,
+        username: f.following?.username || '',
+        avatar: f.following?.avatar || '',
+        isVerified: f.following?.is_verified || false,
+        isAdmin: f.following?.is_admin || false,
+        followedAt: f.created_at
+      })).filter((u: any) => u.id);
+
       return NextResponse.json({
         success: true,
+        users: users,
         following: following || [],
-        count: following?.length || 0
+        count: users.length
       });
     } else if (type === 'followers') {
       // Get users that follow this user
       const { data: followers, error } = await supabaseAdmin
         .from('follows')
-        .select('follower_id, created_at')
+        .select('follower_id, created_at, follower:users!follows_follower_id_fkey(id, username, avatar, is_verified, is_admin)')
         .eq('following_id', userId);
 
       if (error) {
         console.error('Error fetching followers:', error);
-        // Return empty array instead of error if table doesn't exist or query fails
         return NextResponse.json({
           success: true,
+          users: [],
           followers: [],
           count: 0
         });
       }
 
+      // Transform to include user objects
+      const users = (followers || []).map((f: any) => ({
+        id: f.follower_id,
+        username: f.follower?.username || '',
+        avatar: f.follower?.avatar || '',
+        isVerified: f.follower?.is_verified || false,
+        isAdmin: f.follower?.is_admin || false,
+        followedAt: f.created_at
+      })).filter((u: any) => u.id);
+
       return NextResponse.json({
         success: true,
+        users: users,
         followers: followers || [],
-        count: followers?.length || 0
+        count: users.length
       });
     } else {
       return NextResponse.json(

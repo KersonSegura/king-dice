@@ -22,7 +22,13 @@ export async function GET(request: NextRequest) {
 
     if (error || !user) {
       console.error('Error fetching privacy settings:', error);
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      // Return default privacy settings if user not found
+      return NextResponse.json({
+        success: true,
+        privacy: {
+          isPrivate: false
+        }
+      });
     }
 
     return NextResponse.json({

@@ -180,8 +180,9 @@ export async function PUT(request: NextRequest) {
 
       if (updateError) {
         console.error('Update failed, error:', updateError);
+        console.error('Error details:', JSON.stringify(updateError, null, 2));
         // If update fails (user not found), try to create the user
-        if (updateError.message.includes('0 rows') || updateError.code === 'PGRST116') {
+        if (updateError.message?.includes('0 rows') || updateError.code === 'PGRST116' || updateError.message?.includes('PGRST116')) {
           console.log('User not found, creating new user...');
           const { data: created, error: createError } = await supabaseAdmin
             .from('users')

@@ -34,11 +34,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform the data to always show the other user
-    const friends = friendships.map(friendship => {
-      const isUser = friendship.userId === userId;
+    const friends = (friendships || []).map((friendship: any) => {
+      const isUser = friendship.user_id === userId;
+      const otherUser = isUser ? friendship.friend : friendship.user;
       return {
         id: friendship.id,
-        user: isUser ? friendship.friend : friendship.user,
+        user: {
+          id: otherUser?.id || '',
+          username: otherUser?.username || '',
+          avatar: otherUser?.avatar || '',
+          isVerified: otherUser?.is_verified || false,
+          isAdmin: otherUser?.is_admin || false
+        },
         status: friendship.status,
         createdAt: friendship.created_at
       };
