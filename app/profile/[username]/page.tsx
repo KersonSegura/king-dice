@@ -406,96 +406,18 @@ export default function UserProfilePage() {
         const data = await response.json();
         setUserProfile(data.user);
         
-        // Check if this is the current user's profile - Facebook-style approach
-        const checkProfileOwnership = async () => {
-          try {
-            // Method 1: Check server-side session (like Facebook does)
-            const sessionResponse = await fetch('/api/auth/me', {
-              method: 'GET',
-              credentials: 'include'
-            });
-            
-            if (sessionResponse.ok) {
-              const sessionData = await sessionResponse.json();
-              if (sessionData.user && sessionData.user.username === data.user.username) {
-                console.log('✅ Server session match:', sessionData.user.username);
-                setIsOwnProfile(true);
-                return;
-              }
-            }
-            
-            // Method 2: Check localStorage (fallback)
-            const currentUser = localStorage.getItem('currentUser') || 
-                               localStorage.getItem('username') || 
-                               localStorage.getItem('user') ||
-                               localStorage.getItem('loggedInUser');
-            const isOwn = currentUser === data.user.username;
-            
-            // Method 3: Check sessionStorage (another fallback)
-            const sessionUser = sessionStorage.getItem('currentUser') || 
-                               sessionStorage.getItem('username') || 
-                               sessionStorage.getItem('user');
-            const isOwnSession = sessionUser === data.user.username;
-            
-            // Method 4: Check cookies (browser cookies)
-            const getCookie = (name: string) => {
-              const value = `; ${document.cookie}`;
-              const parts = value.split(`; ${name}=`);
-              if (parts.length === 2) return parts.pop()?.split(';').shift();
-            };
-            const cookieUser = getCookie('username') || getCookie('user') || getCookie('currentUser');
-            const isOwnCookie = cookieUser === data.user.username;
-            
-            // Method 5: Check all localStorage keys for any match
-            const allStorageKeys = Object.keys(localStorage);
-            let foundMatch = false;
-            
-            // Check for the old project user ID and map it to current username
-            const oldUserId = localStorage.getItem('reglas-de-mesa-user-id');
-            if (oldUserId && oldUserId.includes('user_')) {
-              console.log('🔍 Found old user ID:', oldUserId);
-              // Map the old user ID to the current username 'kingdice'
-              // This handles the migration from old project name
-              if (data.user.username === 'kingdice') {
-                foundMatch = true;
-                console.log('✅ Using old user ID as ownership indicator for kingdice user');
-              }
-            }
-            
-            // Also check for direct username match
-            for (const key of allStorageKeys) {
-              const value = localStorage.getItem(key);
-              if (value === data.user.username) {
-                console.log(`✅ Found match in localStorage key "${key}":`, value);
-                foundMatch = true;
-                break;
-              }
-            }
-            
-            const finalResult = isOwn || isOwnSession || isOwnCookie || foundMatch;
-            setIsOwnProfile(finalResult);
-            
-            // Debug logging (can be removed in production)
-            console.log('Profile ownership check:', {
-              profileUsername: data.user.username,
-              finalResult,
-              methods: {
-                localStorage: isOwn,
-                sessionStorage: isOwnSession,
-                cookies: isOwnCookie,
-                localStorageScan: foundMatch
-              }
-            });
-            
-          } catch (error) {
-            console.error('Error checking profile ownership:', error);
-            // Fallback to localStorage only
-            const currentUser = localStorage.getItem('currentUser');
-            setIsOwnProfile(currentUser === data.user.username);
-          }
-        };
+        // Check if this is the current user's profile
+        // Use the authenticated user from useAuth() - most reliable method
+        const isOwn = user?.id === data.user.id || user?.username === data.user.username;
+        setIsOwnProfile(isOwn);
         
-        await checkProfileOwnership();
+        console.log('Profile ownership check:', {
+          profileId: data.user.id,
+          profileUsername: data.user.username,
+          currentUserId: user?.id,
+          currentUsername: user?.username,
+          isOwnProfile: isOwn
+        });
         
         // Set profile colors
         if (data.user.profileColors) {
@@ -636,6 +558,21 @@ export default function UserProfilePage() {
       showToast('Failed to add game', 'error');
     }
   };
+
+  // Update isOwnProfile when user or userProfile changes
+  useEffect(() => {
+    if (user && userProfile) {
+      const isOwn = user.id === userProfile.id || user.username === userProfile.username;
+      setIsOwnProfile(isOwn);
+      console.log('Updated isOwnProfile:', {
+        userId: user.id,
+        profileId: userProfile.id,
+        username: user.username,
+        profileUsername: userProfile.username,
+        isOwn
+      });
+    }
+  }, [user, userProfile]);
 
   // Debounced search
   useEffect(() => {
