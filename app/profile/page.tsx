@@ -738,15 +738,26 @@ export default function ProfilePage() {
   // Load XP immediately when user is available - EXACT same as My Dice page
   useEffect(() => {
     console.log('🔵 Profile XP useEffect triggered:', { 
+      authLoading,
       hasUser: !!user, 
       userId: user?.id,
+      isAuthenticated,
       currentLevelProgress: levelProgress 
     });
     
-    if (!user?.id) {
-      console.log('❌ No user ID, skipping XP load');
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('⏳ Auth still loading, waiting...');
       return;
     }
+    
+    // Wait for user to be available - EXACT same check as My Dice
+    if (!user?.id) {
+      console.log('❌ No user ID, skipping XP load', { user, userId: user?.id });
+      return;
+    }
+    
+    console.log('✅ User available, loading XP for:', user.id);
     
     const loadXP = async () => {
       console.log('🔄 Starting XP load for user:', user.id);
@@ -766,7 +777,7 @@ export default function ProfilePage() {
     };
     
     loadXP();
-  }, [user?.id]);
+  }, [authLoading, user?.id, isAuthenticated]);
 
   // Function to refresh XP progress - same as My Dice page
   const refreshXPProgress = async () => {
