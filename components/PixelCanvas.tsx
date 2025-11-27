@@ -709,39 +709,11 @@ export default function PixelCanvas({
     setPanY(0);
   };
 
-  // Helper function to constrain pan values to keep canvas visible within container bounds
+  // Helper function to constrain pan values - removed constraints for free panning
   const constrainPan = (newPanX: number, newPanY: number, currentZoomLevel = zoomLevel) => {
-    if (!canvasData || !containerRef.current) return { x: newPanX, y: newPanY };
-    
-    // Calculate actual canvas dimensions at current zoom
-    const canvasWidth = canvasData.width * pixelSize * currentZoomLevel;
-    const canvasHeight = canvasData.height * pixelSize * currentZoomLevel;
-    
-    // Get container dimensions (accounting for padding)
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    
-    // Different padding for mobile vs desktop
-    const padding = isMobile ? 32 : 32; // p-4 = 16px each side = 32px total
-    const containerWidth = containerRect.width - padding;
-    const containerHeight = containerRect.height - padding;
-    
-    // Calculate how much the canvas extends beyond the container
-    const excessWidth = Math.max(0, canvasWidth - containerWidth);
-    const excessHeight = Math.max(0, canvasHeight - containerHeight);
-    
-     // No constraints - allow free panning in all directions
-     // You can pan the canvas anywhere you want
-     const minX = -excessWidth;
-     const maxX = containerWidth;
-     const minY = -excessHeight;
-     const maxY = containerHeight;
-    
-    
-    return {
-      x: Math.max(minX, Math.min(maxX, newPanX)),
-      y: Math.max(minY, Math.min(maxY, newPanY))
-    };
+    // No constraints - allow free panning in all directions
+    // Users can pan anywhere to see the entire canvas when zoomed in
+    return { x: newPanX, y: newPanY };
   };
 
 
