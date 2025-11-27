@@ -112,10 +112,10 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
 
     // Check if we're in production (Vercel) or local
     const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
-    const maxFileSize = isProduction ? 3 * 1024 * 1024 : 15 * 1024 * 1024; // 3MB on Vercel, 15MB locally
+    const maxFileSize = isProduction ? 3 * 1024 * 1024 : 16 * 1024 * 1024; // 3MB on Vercel, 16MB locally
     
     if (file.size > maxFileSize) {
-      const maxSizeMB = isProduction ? 3 : 15;
+      const maxSizeMB = isProduction ? 3 : 16;
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       setError(`File size (${fileSizeMB}MB) is too large. Maximum allowed is ${maxSizeMB}MB. Please use a PDF URL for larger files.`);
       return;
@@ -194,7 +194,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
               className="hidden"
               disabled={uploading}
             />
-            <p className="text-xs text-gray-500 mt-1">Max 15MB locally, 3MB on production</p>
+            <p className="text-xs text-gray-500 mt-1">Max 16MB locally, 3MB on production</p>
           </div>
         </div>
       )}
