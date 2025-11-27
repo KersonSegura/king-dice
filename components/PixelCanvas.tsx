@@ -251,6 +251,7 @@ export default function PixelCanvas({
                 
                 // Check if pixel already exists at this position (update)
                 const existingIndex = prev.pixels.findIndex(p => p.x === newPixel.x && p.y === newPixel.y);
+                const isNewPixel = existingIndex === -1;
                 let updatedPixels;
                 
                 if (existingIndex !== -1) {
@@ -268,6 +269,12 @@ export default function PixelCanvas({
                   newGrid[newPixel.y][newPixel.x] = newPixel.color;
                 }
                 
+                // Update stats based on whether it's a new pixel
+                setStats(prevStats => ({
+                  ...prevStats,
+                  totalPixels: isNewPixel ? (prevStats?.totalPixels || 0) + 1 : (prevStats?.totalPixels || 0)
+                }));
+                
                 return {
                   ...prev,
                   pixels: updatedPixels,
@@ -276,12 +283,6 @@ export default function PixelCanvas({
                   uniqueUsers: new Set(updatedPixels.map(p => p.userId)).size
                 };
               });
-              
-              // Update stats
-              setStats(prev => ({
-                ...prev,
-                totalPixels: (prev?.totalPixels || 0) + (existingIndex === -1 ? 1 : 0)
-              }));
             }
           )
           .subscribe((status) => {
