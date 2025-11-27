@@ -22,18 +22,18 @@
 
 @media (min-width: 640px) {
   .desktop-chat-height {
-    height: calc(100vh - 350px) !important;
-    max-height: calc(100vh - 350px) !important;
-    min-height: calc(100vh - 350px) !important;
+    height: 500px !important;
+    max-height: 500px !important;
+    min-height: 500px !important;
     top: auto !important;
     bottom: 1rem !important;
   }
   
   /* Override mobile chat height for desktop */
   .mobile-chat-full-height {
-    height: auto !important;
-    max-height: none !important;
-    min-height: auto !important;
+    height: 500px !important;
+    max-height: 500px !important;
+    min-height: 500px !important;
   }
 }
 

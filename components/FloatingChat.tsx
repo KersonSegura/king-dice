@@ -577,14 +577,15 @@ export default function FloatingChat() {
           fixed top-16 left-0 right-0 w-full sm:fixed sm:top-20 sm:left-auto sm:right-4 sm:w-96 sm:rounded-lg
           transform transition-transform duration-300 ease-in-out z-40 flex flex-col overflow-hidden"
           style={{
-            height: 'calc(100vh - 4rem)',
-            maxHeight: 'calc(100vh - 4rem)',
+            height: 'calc(100vh - 4rem) !important',
+            maxHeight: 'calc(100vh - 4rem) !important',
+            minHeight: 'calc(100vh - 4rem) !important',
             ...(typeof window !== 'undefined' && window.innerWidth >= 640 ? {
-              height: '500px',
-              maxHeight: '500px',
-              minHeight: '500px'
+              height: '500px !important',
+              maxHeight: '500px !important',
+              minHeight: '500px !important'
             } : {})
-          }}
+          } as React.CSSProperties}
         >
           {/* Chat Header */}
           <div className="flex items-center justify-between p-4 border-b sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
