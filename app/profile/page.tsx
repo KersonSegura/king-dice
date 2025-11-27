@@ -737,14 +737,23 @@ export default function ProfilePage() {
 
   // Load XP immediately when user is available (separate effect for faster loading) - Fixed with useCallback
   useEffect(() => {
-    if (user?.id) {
-      console.log('Profile page: User ID available, loading XP...', user.id);
+    console.log('🔵 Profile page useEffect triggered:', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      isAuthLoading: authLoading 
+    });
+    
+    if (user?.id && !authLoading) {
+      console.log('🔵 Profile page useEffect: User ID available, loading XP...', user.id);
       loadLevelProgress();
     } else {
-      console.log('Profile page: No user ID available yet');
+      console.log('🔵 Profile page useEffect: Waiting for user...', { 
+        hasUser: !!user, 
+        hasUserId: !!user?.id,
+        authLoading 
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, loadLevelProgress]);
+  }, [user, user?.id, authLoading, loadLevelProgress]);
 
   useEffect(() => {
     if (user) {
@@ -828,12 +837,13 @@ export default function ProfilePage() {
     };
 
   const loadLevelProgress = useCallback(async () => {
-    if (!user?.id) {
-      console.log('loadLevelProgress: No user ID available');
+    const userId = user?.id;
+    if (!userId) {
+      console.log('❌ loadLevelProgress: No user ID available', { user, userId });
       return;
     }
     
-    const userId = user.id; // Capture user.id to avoid stale closure
+    console.log('✅ loadLevelProgress: User ID found:', userId);
     
     try {
       console.log('🔄 Loading level progress for user:', userId);
@@ -851,11 +861,14 @@ export default function ProfilePage() {
             progressPercentage: data.progressPercentage
           });
           
+          console.log('📊 Before state update - current levelProgress:', levelProgress);
+          
           setLevelProgress(data);
           setUserXP(data.currentXP);
           setUserLevel(data.currentLevel);
           
           console.log('✅ XP state updated successfully');
+          console.log('📊 After state update - new data:', data);
         } else {
           console.error('❌ Invalid level progress data:', data);
         }
