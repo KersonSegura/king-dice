@@ -755,6 +755,11 @@ export default function ProfilePage() {
     }
   }, [user, user?.id, authLoading, loadLevelProgress]);
 
+  // Monitor levelProgress changes for debugging
+  useEffect(() => {
+    console.log('📊 levelProgress state changed:', levelProgress);
+  }, [levelProgress]);
+
   useEffect(() => {
     if (user) {
       loadUserData();
@@ -863,7 +868,12 @@ export default function ProfilePage() {
           
           console.log('📊 Before state update - current levelProgress:', levelProgress);
           
-          setLevelProgress(data);
+          // Use functional update to ensure we're setting the latest state
+          setLevelProgress(prev => {
+            console.log('🔄 setLevelProgress called with data:', data);
+            console.log('🔄 Previous state was:', prev);
+            return data;
+          });
           setUserXP(data.currentXP);
           setUserLevel(data.currentLevel);
           
@@ -1556,17 +1566,17 @@ export default function ProfilePage() {
               <div className="w-full max-w-md">
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className={`${coverSecondaryTextClass} font-medium`}>
-                    {levelProgress.currentXP} XP
+                    {levelProgress?.currentXP ?? userXP ?? 0} XP
                   </span>
                   <span className={`${coverSecondaryTextClass} font-medium`}>
-                    {levelProgress.xpForNextLevel > 0 ? `${levelProgress.xpForNextLevel} to next level` : 'Max Level'}
+                    {levelProgress?.xpForNextLevel > 0 ? `${levelProgress.xpForNextLevel} to next level` : 'Max Level'}
                   </span>
                 </div>
                 <div className="w-full bg-black bg-opacity-20 rounded-full h-2">
                   <div 
                     className="bg-white h-2 rounded-full transition-all duration-500 ease-out"
                     style={{ 
-                      width: `${levelProgress.progressPercentage}%`,
+                      width: `${Math.max(0, Math.min(100, levelProgress?.progressPercentage ?? 0))}%`,
                       boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
                     }}
                   />
