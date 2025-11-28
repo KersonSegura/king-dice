@@ -9,7 +9,7 @@ Companion - None.
 Title - Commoner
 
 Unlocks at Level 2:
-Background - White, Black, Blue, Green, Red, Yellow.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2.
 Accessories - None.
@@ -19,7 +19,7 @@ Companion - None.
 Title - Commoner, Squire.
 
 Unlocks at Level 3:
-Background - White, Black, Blue, Green, Red, Yellow.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2.
 Accessories - Bow.
@@ -29,7 +29,7 @@ Companion - Meeple.
 Title - Commoner, Squire, Knight.
 
 Unlocks at Level 4:
-Background - White, Black, Blue, Green, Red, Yellow, Game Board.
+Background - White, Black, Blue, Green, Red, Yellow, Game Board, Orange, Pink, Purple, Brown, Light Yellow, Light Blue.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC.
 Accessories - Bow, Belt.
@@ -39,7 +39,7 @@ Companion - Meeple.
 Title - Commoner, Squire, Knight, Champion.
 
 Unlocks at Level 5:
-Background - White, Black, Blue, Green, Red, Yellow, Game Board.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue, Game Board.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC.
 Accessories - Bow, Belt, Blush.
@@ -49,7 +49,7 @@ Companion - Meeple, Mini-Dice.
 Title - Commoner, Squire, Knight, Champion, Baron, Baroness.
 
 Unlocks at Level 6:
-Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue, Game Board, Chess Board.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits.
 Accessories - Bow, Belt, Blush, Sunglasses.
@@ -59,7 +59,7 @@ Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight.
 Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady.
 
 Unlocks at Level 7:
-Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue, Game Board, Chess Board.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits.
 Accessories - Bow, Belt, Blush, Sunglasses, Scar.
@@ -69,7 +69,7 @@ Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull.
 Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage.
 
 Unlocks at Level 8:
-Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board, Casino.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue, Game Board, Chess Board, Casino.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik, Dice-Skull.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits, Elements.
 Accessories - Bow, Belt, Blush, Sunglasses, Scar.
@@ -79,7 +79,7 @@ Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull, Eight 
 Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage, Duke, Duchess.
 
 Unlocks at Level 9:
-Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board, Casino, Card Game.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue, Game Board, Chess Board, Casino, Card Game.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik, Dice-Skull, Safe.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits, Elements.
 Accessories - Bow, Belt, Blush, Sunglasses, Scar, Patch.
@@ -89,7 +89,7 @@ Companion - Meeple, Mini-Dice, Jack in the box, Chess Knight, Dice-Skull, Eight 
 Title - Commoner, Squire, Knight, Champion, Baron, Baroness, Lord, Lady, Archmage, Duke, Duchess, Prince, Princess.
 
 Unlocks at Level 10:
-Background - White, Black, Blue, Green, Red, Yellow, Game Board, Chess Board, Casino, Card Game.
+Background - White, Black, Blue, Green, Red, Yellow, Orange, Pink, Purple, Brown, Light Yellow, Light Blue, Game Board, Chess Board, Casino, Card Game.
 Dice - White, Black, Blue, Green, Orange, Pink, Purple, Red, Yellow, Box, Ice Cube, Rubik, Dice-Skull, Safe.
 Pattern - 1 2 3, 2 1 4, 3 6 5, 4 5 6, 5 4 1, 6 3 2, ABC, Mistery, Suits, Elements.
 Accessories - Bow, Belt, Blush, Sunglasses, Scar, Patch, King's Cape.
