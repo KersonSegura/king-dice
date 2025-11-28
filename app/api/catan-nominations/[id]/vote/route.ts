@@ -97,6 +97,7 @@ export async function POST(
     } else {
       // User hasn't voted - create the vote
       // Try camelCase first
+      let insertSuccess = false;
       const { error: insertErrorCamel } = await supabaseAdmin
         .from('catan_nomination_votes')
         .insert({
@@ -104,37 +105,80 @@ export async function POST(
           userId: userId
         });
 
-      if (insertErrorCamel) {
+      if (!insertErrorCamel) {
+        insertSuccess = true;
+      } else {
+        // Check if it's a unique constraint violation (user already voted)
+        if (insertErrorCamel.code === '23505' || insertErrorCamel.message?.includes('unique')) {
+          // User already voted (race condition), treat as existing vote
+          const { data: nomData } = await supabaseAdmin
+            .from('catan_nominations')
+            .select('votes')
+            .eq('id', nominationId)
+            .single();
+
+          if (nomData) {
+            return NextResponse.json({
+              success: true,
+              action: 'already_voted',
+              nominationId: nominationId,
+              votes: nomData.votes || 0
+            });
+          }
+        }
+
         // Try snake_case
-        await supabaseAdmin
+        const { error: insertErrorSnake } = await supabaseAdmin
           .from('catan_nomination_votes')
           .insert({
             nomination_id: nominationId,
             user_id: userId
           });
+
+        if (!insertErrorSnake) {
+          insertSuccess = true;
+        } else if (insertErrorSnake.code === '23505' || insertErrorSnake.message?.includes('unique')) {
+          // User already voted (race condition), treat as existing vote
+          const { data: nomData } = await supabaseAdmin
+            .from('catan_nominations')
+            .select('votes')
+            .eq('id', nominationId)
+            .single();
+
+          if (nomData) {
+            return NextResponse.json({
+              success: true,
+              action: 'already_voted',
+              nominationId: nominationId,
+              votes: nomData.votes || 0
+            });
+          }
+        }
       }
 
-      // Increase the nomination's vote count
-      // Get current votes first
-      const { data: nomData, error: nomError } = await supabaseAdmin
-        .from('catan_nominations')
-        .select('votes')
-        .eq('id', nominationId)
-        .single();
-
-      if (!nomError && nomData) {
-        const newVotes = (nomData.votes || 0) + 1;
-        await supabaseAdmin
+      if (insertSuccess) {
+        // Increase the nomination's vote count
+        // Get current votes first
+        const { data: nomData, error: nomError } = await supabaseAdmin
           .from('catan_nominations')
-          .update({ votes: newVotes })
-          .eq('id', nominationId);
+          .select('votes')
+          .eq('id', nominationId)
+          .single();
 
-        return NextResponse.json({
-          success: true,
-          action: 'added',
-          nominationId: nominationId,
-          votes: newVotes
-        });
+        if (!nomError && nomData) {
+          const newVotes = (nomData.votes || 0) + 1;
+          await supabaseAdmin
+            .from('catan_nominations')
+            .update({ votes: newVotes })
+            .eq('id', nominationId);
+
+          return NextResponse.json({
+            success: true,
+            action: 'added',
+            nominationId: nominationId,
+            votes: newVotes
+          });
+        }
       }
     }
 

@@ -7,6 +7,7 @@ import CatanMapGenerator from '@/components/CatanMapGenerator';
 import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { supabaseClient } from '@/lib/supabase';
 import BackButton from '@/components/BackButton';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
@@ -45,8 +46,52 @@ export default function CatanMapGeneratorPage() {
 
   useEffect(() => {
     fetchNominations();
+    fetchUserVotes();
   }, [currentUserId, user, isAuthenticated]);
 
+
+  const fetchUserVotes = async () => {
+    if (!isAuthenticated || !user?.id) {
+      setUserVotedNominations(new Set<number>());
+      return;
+    }
+
+    try {
+      // Fetch all votes for the current user - try both camelCase and snake_case
+      let votes: any[] = [];
+      
+      // Try camelCase first
+      const { data: votesCamel, error: errorCamel } = await supabaseClient
+        .from('catan_nomination_votes')
+        .select('nominationId')
+        .eq('userId', user.id);
+
+      if (!errorCamel && votesCamel) {
+        votes = votesCamel;
+      } else {
+        // Try snake_case
+        const { data: votesSnake, error: errorSnake } = await supabaseClient
+          .from('catan_nomination_votes')
+          .select('nomination_id')
+          .eq('user_id', user.id);
+
+        if (!errorSnake && votesSnake) {
+          votes = votesSnake;
+        }
+      }
+
+      if (votes && votes.length > 0) {
+        const votedIds = new Set<number>(votes.map((v: any) => Number(v.nominationId || v.nomination_id)));
+        setUserVotedNominations(votedIds);
+        console.log('Loaded user votes:', Array.from(votedIds));
+      } else {
+        setUserVotedNominations(new Set<number>());
+      }
+    } catch (error) {
+      console.error('Failed to fetch user votes:', error);
+      setUserVotedNominations(new Set<number>());
+    }
+  };
 
   const fetchNominations = async () => {
     try {
