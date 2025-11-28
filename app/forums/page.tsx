@@ -411,25 +411,32 @@ function ForumsPageContent() {
           position: 'fixed',
           top: 0,
           left: 0,
-          right: 0,
-          bottom: 0,
           width: '100vw',
           height: '100vh',
           backgroundColor: '#f9fafb',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999
+          zIndex: 99999
         }}
       >
-        <div className="text-center px-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Forums</h2>
-          <p className="text-gray-600">Fetching posts and categories...</p>
-          <div className="mt-4 flex justify-center space-x-1">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+        <div 
+          style={{
+            backgroundColor: 'transparent',
+            padding: '2rem',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            margin: 0
+          }}
+        >
+          <div className="text-center px-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Forums</h2>
+            <p className="text-gray-600">Fetching posts and categories...</p>
+            <div className="mt-4 flex justify-center space-x-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
           </div>
         </div>
       </div>
