@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getLevelProgress } from '@/lib/reputation';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -48,16 +49,8 @@ export async function GET(request: NextRequest) {
 
     const user = users;
 
-    // Calculate level progress
-    const levelNames = {
-      1: 'Commoner', 2: 'Squire', 3: 'Knight', 4: 'Champion', 5: 'Baron/Baroness',
-      6: 'Lord/Lady', 7: 'Archmage', 8: 'Duke/Duchess', 9: 'Lord/Lady', 10: 'King/Queen'
-    };
-
-    const currentLevel = user.level || 1;
-    const currentXP = user.xp || 0;
-    const xpForNextLevel = currentLevel < 10 ? (currentLevel * 100) - currentXP : 0;
-    const progressPercentage = currentLevel < 10 ? (currentXP / (currentLevel * 100)) * 100 : 100;
+    // Calculate level progress using the same function as level-progress route
+    const levelProgress = await getLevelProgress(user.id);
 
     return NextResponse.json({
       success: true,
@@ -78,11 +71,11 @@ export async function GET(request: NextRequest) {
         favoriteCard: rewriteStorageUrl(user.favoriteCard),
         isAdmin: user.isAdmin,
         levelProgress: {
-          currentLevel,
-          currentLevelName: levelNames[currentLevel as keyof typeof levelNames],
-          currentXP,
-          xpForNextLevel,
-          progressPercentage
+          currentLevel: levelProgress.currentLevel,
+          currentLevelName: levelProgress.currentLevelName,
+          currentXP: levelProgress.currentXP,
+          xpForNextLevel: levelProgress.xpForNextLevel,
+          progressPercentage: levelProgress.progressPercentage
         },
         posts: [],
         galleryImages: []
