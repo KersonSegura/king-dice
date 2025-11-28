@@ -2,11 +2,11 @@
   <defs>
     <style>
       .cls-1 {
-        fill: #ff4545;
+        fill: #92c5f7;
       }
     </style>
   </defs>
   <g id="Backgrounds">
-    <rect id="Red" class="cls-1" width="512" height="512"/>
+    <rect id="LightBlue" class="cls-1" width="512" height="512"/>
   </g>
 </svg>
