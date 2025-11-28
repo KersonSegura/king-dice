@@ -689,6 +689,24 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     fetchGame();
   }, [id]);
 
+  // Set active tab to first available tab when game loads
+  useEffect(() => {
+    if (!game) return;
+    
+    const rules = game.rules?.find(r => r.language === 'es') || game.rules?.find(r => r.language === 'en');
+    const hasRules = !!rules?.rulesText;
+    const hasVideo = !!game.videoUrl;
+    const hasPdf = !!(game.pdfUrl || game.pdfFile);
+    
+    // Set to first available tab in order: rules > video > pdf
+    if (hasRules) {
+      setActiveTab('rules');
+    } else if (hasVideo) {
+      setActiveTab('video');
+    } else if (hasPdf) {
+      setActiveTab('pdf');
+    }
+  }, [game]);
 
   if (loading) {
     return (
