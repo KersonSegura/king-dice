@@ -517,39 +517,26 @@ export async function registerUser(username: string, email: string, password: st
     console.log('✅ registerUser: User created:', (newUser as any).username);
 
     // Generate verification code and send email
+    const verificationCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
+    // Save verification code to database
+    const { error: codeError } = await supabaseAdmin
+      .from('two_factor_codes')
+      .insert({
+        userId: newUser.id,
+        code: verificationCode,
+        expiresAt: expiresAt,
+        used: false
+      });
+
+    if (codeError) {
+      console.error('❌ registerUser: Error saving verification code:', codeError);
+      // Continue anyway - user can request a new code
+    }
+
+    // Send verification email
     try {
-      const emailServiceModule = await import('@/lib/email-service');
-      const emailService = emailServiceModule.emailService;
-      const generateVerificationCode = emailServiceModule.generateVerificationCode;
-      
-      if (!emailService) {
-        console.error('❌ registerUser: emailService is null or undefined');
-        console.error('❌ Module exports:', Object.keys(emailServiceModule));
-      }
-      
-      if (!generateVerificationCode || typeof generateVerificationCode !== 'function') {
-        console.error('❌ registerUser: generateVerificationCode is not a function');
-      }
-      
-      const verificationCode = generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
-
-      // Save verification code to database
-      const { error: codeError } = await supabaseAdmin
-        .from('two_factor_codes')
-        .insert({
-          userId: newUser.id,
-          code: verificationCode,
-          expiresAt: expiresAt,
-          used: false
-        });
-
-      if (codeError) {
-        console.error('❌ registerUser: Error saving verification code:', codeError);
-        // Continue anyway - user can request a new code
-      }
-
-      // Send verification email
       if (emailService && typeof emailService.sendRegistrationVerificationCode === 'function') {
         const emailSent = await emailService.sendRegistrationVerificationCode(email, verificationCode, username);
         if (!emailSent) {
@@ -559,16 +546,13 @@ export async function registerUser(username: string, email: string, password: st
           console.log('✅ registerUser: Verification email sent successfully');
         }
       } else {
-        console.error('❌ registerUser: Cannot send email - emailService.sendRegistrationVerificationCode is not a function');
+        console.error('❌ registerUser: emailService.sendRegistrationVerificationCode is not a function');
         console.error('❌ emailService:', emailService);
         console.error('❌ emailService type:', typeof emailService);
-        if (emailService) {
-          console.error('❌ emailService methods:', Object.keys(emailService));
-        }
         // Continue anyway - user can request a new code
       }
     } catch (emailError) {
-      console.error('❌ registerUser: Error importing email service:', emailError);
+      console.error('❌ registerUser: Error sending verification email:', emailError);
       // Continue anyway - user can request a new code
     }
 
