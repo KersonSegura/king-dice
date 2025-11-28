@@ -38,6 +38,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     hasUppercase: /[A-Z]/.test(formData.password),
     hasLowercase: /[a-z]/.test(formData.password),
     hasNumber: /[0-9]/.test(formData.password),
+    passwordsMatch: isRegistering ? (formData.password === formData.confirmPassword && formData.password.length > 0) : true,
   };
 
   // Load saved credentials on component mount
@@ -423,6 +424,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <div className={`flex items-center transition-colors ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
                   <span className="mr-2 font-bold">{passwordRequirements.hasNumber ? '✓' : '✗'}</span>
                   <span>At least one number</span>
+                </div>
+                <div className={`flex items-center transition-colors ${passwordRequirements.passwordsMatch ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="mr-2 font-bold">{passwordRequirements.passwordsMatch ? '✓' : '✗'}</span>
+                  <span>Passwords match</span>
                 </div>
               </div>
             </div>

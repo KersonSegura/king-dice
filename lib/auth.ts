@@ -301,20 +301,59 @@ export async function registerUser(username: string, email: string, password: st
 
     // If user exists, check if it's an orphaned/incomplete user that can be cleaned up
     if (existingUser) {
+      const createdAt = existingUser.createdAt ? new Date(existingUser.createdAt).getTime() : 0;
+      const isOld = createdAt > 0 && createdAt < Date.now() - 24 * 60 * 60 * 1000; // Older than 24 hours
+      
+      // Consider user orphaned if:
+      // 1. No password hash (incomplete registration)
+      // 2. Unverified and old (stale failed registration)
+      // 3. Unverified regardless of age (allow re-registration for unverified users)
       const isOrphaned = !existingUser.passwordHash || 
-                        (!existingUser.isVerified && existingUser.createdAt && 
-                         new Date(existingUser.createdAt).getTime() < Date.now() - 24 * 60 * 60 * 1000); // Older than 24 hours
+                        (!existingUser.isVerified && (isOld || true)); // Always allow re-registration for unverified users
+      
+      console.log('🔍 Checking existing user:', {
+        username: existingUser.username,
+        hasPassword: !!existingUser.passwordHash,
+        isVerified: existingUser.isVerified,
+        createdAt: existingUser.createdAt,
+        isOld,
+        isOrphaned
+      });
       
       if (isOrphaned) {
-        console.log('🧹 Found orphaned user, cleaning up:', existingUser.username);
-        // Delete the orphaned user
-        await supabaseAdmin
-          .from('users')
-          .delete()
-          .eq('id', existingUser.id);
-        console.log('✅ Cleaned up orphaned user');
+        console.log('🧹 Found orphaned/unverified user, cleaning up:', existingUser.username);
+        // Delete the orphaned user and related data
+        try {
+          // Delete verification codes first (try both camelCase and snake_case)
+          await supabaseAdmin
+            .from('two_factor_codes')
+            .delete()
+            .eq('userId', existingUser.id);
+          
+          await supabaseAdmin
+            .from('two_factor_codes')
+            .delete()
+            .eq('user_id', existingUser.id);
+          
+          // Delete the user
+          const { error: deleteError } = await supabaseAdmin
+            .from('users')
+            .delete()
+            .eq('id', existingUser.id);
+          
+          if (deleteError) {
+            console.error('❌ Error deleting orphaned user:', deleteError);
+            // Continue anyway - try to create the user
+          } else {
+            console.log('✅ Cleaned up orphaned user');
+          }
+        } catch (cleanupError) {
+          console.error('❌ Error during cleanup:', cleanupError);
+          // Continue anyway - try to create the user
+        }
       } else {
-        // User exists and is complete
+        // User exists and is complete/verified
+        console.log('❌ User already exists and is verified:', existingUser.username);
         return {
           success: false,
           message: 'Username already exists. Please choose a different username.'
