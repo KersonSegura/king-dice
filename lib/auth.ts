@@ -359,6 +359,16 @@ export async function registerUser(username: string, email: string, password: st
     console.log('🎨 registerUser: Generating default avatar...');
     const defaultAvatar = await generateDefaultAvatar();
 
+    // Generate CUID for user ID (similar to Prisma's default)
+    const generateCuid = () => {
+      const timestamp = Date.now().toString(36);
+      const random = Math.random().toString(36).substring(2, 15);
+      const random2 = Math.random().toString(36).substring(2, 15);
+      return `c${timestamp}${random}${random2}`.substring(0, 25);
+    };
+    
+    const userId = generateCuid();
+
     // Create user in Supabase (unverified)
     console.log('📝 registerUser: Creating user in database...');
     const createResult = await executeSupabaseQuery(
@@ -366,6 +376,7 @@ export async function registerUser(username: string, email: string, password: st
         const result = await supabaseAdmin
           .from('users')
           .insert({
+            id: userId,
             username,
             email,
             passwordHash,
