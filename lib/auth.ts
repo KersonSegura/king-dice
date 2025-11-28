@@ -401,22 +401,40 @@ export async function registerUser(username: string, email: string, password: st
 
     if (createError || !newUser) {
       console.error('❌ registerUser: Error creating user:', createError);
+      console.error('❌ Full error object:', JSON.stringify(createError, null, 2));
+      
       const errorMessage = createError?.message || String(createError || '');
+      const errorCode = (createError as any)?.code;
+      const errorDetails = (createError as any)?.details;
+      
+      console.error('❌ Error code:', errorCode);
+      console.error('❌ Error details:', errorDetails);
       
       // Check for specific database constraint errors
-      if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint') || errorMessage.includes('already exists')) {
-        if (errorMessage.toLowerCase().includes('username')) {
+      if (errorCode === '23505' || errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint') || errorMessage.includes('already exists')) {
+        if (errorMessage.toLowerCase().includes('username') || errorDetails?.includes('username')) {
           return {
             success: false,
             message: 'Username already exists. Please choose a different username.'
           };
         }
-        if (errorMessage.toLowerCase().includes('email')) {
+        if (errorMessage.toLowerCase().includes('email') || errorDetails?.includes('email')) {
           return {
             success: false,
             message: 'Email already exists. Please use a different email address or try logging in.'
           };
         }
+      }
+      
+      // Check for null constraint violations
+      if (errorCode === '23502' || errorMessage.includes('null value') || errorMessage.includes('violates not-null constraint')) {
+        const fieldMatch = errorMessage.match(/column "(\w+)" of relation/);
+        const fieldName = fieldMatch ? fieldMatch[1] : 'unknown field';
+        console.error(`❌ Missing required field: ${fieldName}`);
+        return {
+          success: false,
+          message: `Registration failed: Missing required field '${fieldName}'. Please contact support if this persists.`
+        };
       }
       
       if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
@@ -427,16 +445,17 @@ export async function registerUser(username: string, email: string, password: st
       }
       
       // Return more specific error if available
-      if (errorMessage && errorMessage !== '[object Object]') {
+      if (errorMessage && errorMessage !== '[object Object]' && errorMessage.length > 0) {
         return {
           success: false,
           message: errorMessage
         };
       }
       
+      // Last resort - return detailed error for debugging
       return {
         success: false,
-        message: 'Registration failed. Please try again.'
+        message: `Registration failed: ${errorCode ? `Error code ${errorCode}` : 'Unknown error'}. Please try again or contact support.`
       };
     }
 
@@ -489,9 +508,24 @@ export async function registerUser(username: string, email: string, password: st
   } catch (error) {
     console.error('❌ registerUser: Registration error:', error);
     console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Full error object:', JSON.stringify(error, null, 2));
+    
+    // Try to extract more specific error information
+    let errorMessage = 'Registration failed. Please try again.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'object' && error !== null) {
+      const errorObj = error as any;
+      if (errorObj.message) {
+        errorMessage = errorObj.message;
+      } else if (errorObj.error) {
+        errorMessage = errorObj.error;
+      }
+    }
+    
     return {
       success: false,
-      message: 'Registration failed. Please try again.'
+      message: errorMessage
     };
   }
 }

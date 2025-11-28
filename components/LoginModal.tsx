@@ -275,7 +275,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Username
+              {isRegistering ? 'Username' : 'Username or Email'}
             </label>
             <div className="relative">
                              <Image
@@ -289,7 +289,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 type="text"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="Enter username"
+                placeholder={isRegistering ? "Enter username" : "Enter username or email"}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
               />
