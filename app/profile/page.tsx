@@ -736,49 +736,18 @@ export default function ProfilePage() {
   }, [isAuthenticated, authLoading, router]);
 
   // Load XP immediately when user is available - EXACT same as My Dice page
-  // XP DEBUG VERSION 2.0 - Added authLoading check - 2025-01-27
   useEffect(() => {
-    console.log('🔵 Profile XP useEffect triggered:', { 
-      authLoading,
-      hasUser: !!user, 
-      userId: user?.id,
-      isAuthenticated,
-      currentLevelProgress: levelProgress 
-    });
-    
-    // Wait for auth to finish loading
-    if (authLoading) {
-      console.log('⏳ Auth still loading, waiting...');
-      return;
-    }
-    
-    // Wait for user to be available - EXACT same check as My Dice
-    if (!user?.id) {
-      console.log('❌ No user ID, skipping XP load', { user, userId: user?.id });
-      return;
-    }
-    
-    console.log('✅ User available, loading XP for:', user.id);
+    if (!user?.id) return;
     
     const loadXP = async () => {
-      console.log('🔄 Starting XP load for user:', user.id);
       const { level, progress } = await fetchUserLevel();
-      console.log('📦 Fetched XP data:', { level, progress });
-      
-      console.log('📊 BEFORE state update - levelProgress:', levelProgress);
       setUserLevel(level);
       setLevelProgress(progress);
-      console.log('✅ AFTER setLevelProgress called with:', progress);
       console.log('XP Progress loaded:', progress);
-      
-      // Force a check after state update
-      setTimeout(() => {
-        console.log('🔍 State check 100ms after update - levelProgress should be:', progress);
-      }, 100);
     };
     
     loadXP();
-  }, [authLoading, user?.id, isAuthenticated]);
+  }, [user?.id]);
 
   // Function to refresh XP progress - same as My Dice page
   const refreshXPProgress = async () => {
@@ -1589,36 +1558,25 @@ export default function ProfilePage() {
               </p>
               
               {/* XP Progress Bar - Exact same as My Dice page */}
-              {(() => {
-                console.log('🎨 RENDERING XP BAR - levelProgress:', levelProgress);
-                console.log('🎨 RENDERING XP BAR - currentXP:', levelProgress.currentXP);
-                console.log('🎨 RENDERING XP BAR - progressPercentage:', levelProgress.progressPercentage);
-                return (
-                  <div className="w-full max-w-md">
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className={`${coverSecondaryTextClass} font-medium`}>
-                        {levelProgress.currentXP} XP
-                      </span>
-                      <span className={`${coverSecondaryTextClass} font-medium`}>
-                        {levelProgress.xpForNextLevel > 0 ? `${levelProgress.xpForNextLevel} to next level` : 'Max Level'}
-                      </span>
-                    </div>
-                    <div className="w-full bg-black bg-opacity-20 rounded-full h-2">
-                      <div 
-                        className="bg-white h-2 rounded-full transition-all duration-500 ease-out"
-                        style={{ 
-                          width: `${Math.min(100, levelProgress.progressPercentage)}%`,
-                          boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
-                        }}
-                      />
-                    </div>
-                    {/* Debug info - always visible - VERSION 2.0 */}
-                    <div className="text-xs text-white/50 mt-1" style={{backgroundColor: 'rgba(0,0,0,0.5)', padding: '4px', borderRadius: '4px'}}>
-                      DEBUG v2.0: XP={levelProgress.currentXP}, Progress={levelProgress.progressPercentage?.toFixed(1)}%, Level={levelProgress.currentLevel}
-                    </div>
-                  </div>
-                );
-              })()}
+              <div className="w-full max-w-md">
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className={`${coverSecondaryTextClass} font-medium`}>
+                    {levelProgress.currentXP} XP
+                  </span>
+                  <span className={`${coverSecondaryTextClass} font-medium`}>
+                    {levelProgress.xpForNextLevel > 0 ? `${levelProgress.xpForNextLevel} to next level` : 'Max Level'}
+                  </span>
+                </div>
+                <div className="w-full bg-black bg-opacity-20 rounded-full h-2">
+                  <div 
+                    className="bg-white h-2 rounded-full transition-all duration-500 ease-out"
+                    style={{ 
+                      width: `${Math.min(100, levelProgress.progressPercentage)}%`,
+                      boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
+                    }}
+                  />
+                </div>
+              </div>
                   </div>
 
                   {/* Action Buttons */}
