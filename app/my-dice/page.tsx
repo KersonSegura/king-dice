@@ -390,22 +390,35 @@ export default function MyDicePage() {
 
   // Load saved configuration from server (user-specific)
   const loadSavedConfiguration = async (): Promise<Record<TabKey, string | null>> => {
-    if (!user?.id) return {
-      background: null, dice: null, pattern: null, accessories: null, hat: null, item: null, companion: null, title: null
-    };
+    if (!user?.id) {
+      console.log('⚠️ No user ID available, returning empty config');
+      return {
+        background: null, dice: null, pattern: null, accessories: null, hat: null, item: null, companion: null, title: null
+      };
+    }
     
     try {
+      console.log('🔄 Fetching saved configuration for user:', user.id);
       const response = await fetch(`/api/my-dice/load?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('📂 Loaded saved configuration from server:', data);
-        return data.config;
+        console.log('✅ Loaded saved configuration from server:', data);
+        if (data.config) {
+          console.log('📦 Config data:', data.config);
+          return data.config;
+        } else {
+          console.log('⚠️ No config in response, using defaults');
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to load saved configuration:', response.status, errorText);
       }
     } catch (error) {
       console.error('❌ Error loading saved configuration from server:', error);
     }
     
-    // Return default configuration for new users
+    // Return default configuration for new users (only if no saved config found)
+    console.log('📝 Returning default configuration (no saved config found)');
     return {
       background: "/dice/backgrounds/WhiteBackground.svg",
       dice: "/dice/dice/WhiteDice.svg", 
@@ -514,6 +527,11 @@ export default function MyDicePage() {
   }, [user?.id]);
 
   useEffect(() => {
+    // Don't load until user is available
+    if (!user?.id) {
+      return;
+    }
+
     const load = async () => {
       try {
         setLoading(true);
@@ -537,7 +555,7 @@ export default function MyDicePage() {
           const sorted = sortAssetsRecord(incoming);
           setAssets(sorted);
 
-          // Load saved configuration first
+          // Load saved configuration first - this must happen after user is available
           const savedConfig = await loadSavedConfiguration();
           
           // Helper function to pick assets with fallback
@@ -549,20 +567,23 @@ export default function MyDicePage() {
           };
 
           // Debug: Log the sorted assets to see the order
-          console.log('Sorted assets:', sorted);
-          console.log('Saved configuration:', savedConfig);
+          console.log('📦 Sorted assets:', sorted);
+          console.log('💾 Saved configuration loaded:', savedConfig);
 
           // Use saved configuration if available, otherwise use defaults
+          // IMPORTANT: Prioritize saved config values - only use pick() as fallback if saved is null/undefined
           let initialSelection = {
-            background: savedConfig.background || pick("background"),
-            dice: savedConfig.dice || pick("dice"),
-            pattern: savedConfig.pattern || null, // Use saved pattern, fallback to null
-            accessories: savedConfig.accessories || null,
-            hat: savedConfig.hat || null,
-            item: savedConfig.item || null,
-            companion: savedConfig.companion || null,
-            title: savedConfig.title || null,
+            background: savedConfig.background ?? pick("background"),
+            dice: savedConfig.dice ?? pick("dice"),
+            pattern: savedConfig.pattern ?? null, // Use saved pattern, fallback to null
+            accessories: savedConfig.accessories ?? null,
+            hat: savedConfig.hat ?? null,
+            item: savedConfig.item ?? null,
+            companion: savedConfig.companion ?? null,
+            title: savedConfig.title ?? null,
           };
+
+          console.log('🎯 Initial selection (before compatibility check):', initialSelection);
 
           // Validate compatibility rules for saved configuration
           // If no dice is selected, ensure pattern is null
@@ -617,8 +638,9 @@ export default function MyDicePage() {
             }
           }
 
-          console.log('Initial selection (after compatibility check):', initialSelection);
+          console.log('✅ Final initial selection (after compatibility check):', initialSelection);
           setSelected(initialSelection);
+          console.log('💾 State updated with saved configuration');
         }
         }
       } catch (error) {
@@ -628,7 +650,7 @@ export default function MyDicePage() {
       }
     };
     load();
-  }, []);
+  }, [user?.id]); // Re-run when user becomes available
 
   // Auto-save configuration whenever selected changes (but not during initial load)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
