@@ -735,6 +735,16 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
+  // Function to refresh XP progress - same as My Dice page (defined before useEffects)
+  const refreshXPProgress = useCallback(async () => {
+    if (!user?.id) return;
+    const { level, progress } = await fetchUserLevel();
+    setUserLevel(level);
+    setLevelProgress(progress);
+    setUserXP(progress.currentXP);
+    console.log('XP Progress refreshed:', progress);
+  }, [user?.id]);
+
   // Load XP immediately when user is available - EXACT same as My Dice page
   useEffect(() => {
     if (!user?.id) return;
@@ -749,15 +759,30 @@ export default function ProfilePage() {
     loadXP();
   }, [user?.id]);
 
-  // Function to refresh XP progress - same as My Dice page
-  const refreshXPProgress = async () => {
+  // Refresh XP when page becomes visible (user returns to tab) - EXACT same as My Dice page
+  useEffect(() => {
     if (!user?.id) return;
-    const { level, progress } = await fetchUserLevel();
-    setUserLevel(level);
-    setLevelProgress(progress);
-    setUserXP(progress.currentXP);
-    console.log('XP Progress refreshed:', progress);
-  };
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshXPProgress();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Also refresh every 30 seconds while page is visible
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshXPProgress();
+      }
+    }, 30000);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [user?.id, refreshXPProgress]);
 
   useEffect(() => {
     if (user) {
