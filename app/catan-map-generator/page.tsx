@@ -7,7 +7,7 @@ import CatanMapGenerator from '@/components/CatanMapGenerator';
 import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { supabaseClient } from '@/lib/supabase';
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import BackButton from '@/components/BackButton';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
@@ -57,6 +57,8 @@ export default function CatanMapGeneratorPage() {
     }
 
     try {
+      const supabaseClient = await getSupabaseBrowserClient();
+      
       // Fetch all votes for the current user - try both camelCase and snake_case
       let votes: any[] = [];
       
