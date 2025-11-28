@@ -74,16 +74,35 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         return;
       }
 
-      if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters');
-        setIsLoading(false);
-        return;
-      }
-
       // Check email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         setError('Please enter a valid email address');
+        setIsLoading(false);
+        return;
+      }
+
+      // Password requirements: at least 8 characters, 1 uppercase, 1 lowercase, 1 number
+      if (formData.password.length < 8) {
+        setError('Password must be at least 8 characters');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!/[A-Z]/.test(formData.password)) {
+        setError('Password must contain at least one uppercase letter');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!/[a-z]/.test(formData.password)) {
+        setError('Password must contain at least one lowercase letter');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!/[0-9]/.test(formData.password)) {
+        setError('Password must contain at least one number');
         setIsLoading(false);
         return;
       }
@@ -104,14 +123,38 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         if (response.ok) {
           const data = await response.json();
-          login(data.user, data.token);
-          onClose();
-          setFormData({ username: '', email: '', password: '', confirmPassword: '' });
-          setShowPassword(false);
-          setShowConfirmPassword(false);
+          
+          // Check if email verification is required
+          if (data.requiresVerification) {
+            // Show verification modal
+            setTwoFactorData({
+              userId: data.user.id,
+              email: data.user.email,
+              username: data.user.username
+            });
+            setShowTwoFactor(true);
+            setError(''); // Clear any errors
+          } else {
+            // Registration complete, log in
+            login(data.user, data.token);
+            onClose();
+            setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+            setShowPassword(false);
+            setShowConfirmPassword(false);
+          }
         } else {
-          const errorData = await response.json();
-          setError(errorData.message || 'Registration failed. Please try again.');
+          let errorMessage = 'Registration failed. Please try again.';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+            console.error('Registration error response:', errorData);
+          } catch (parseError) {
+            console.error('Failed to parse error response:', parseError);
+            const text = await response.text();
+            console.error('Error response text:', text);
+            errorMessage = `Registration failed with status ${response.status}. Please try again.`;
+          }
+          setError(errorMessage);
         }
       } catch (error) {
         console.error('Registration error:', error);
