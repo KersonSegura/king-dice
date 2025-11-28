@@ -262,25 +262,25 @@ export async function registerUser(username: string, email: string, password: st
 
     // Check if username already exists (case-insensitive)
     // Try camelCase first, then snake_case
-    let usernameExists = false;
+    let existingUser: any = null;
     const { data: usernameDataCamel, error: usernameErrorCamel } = await supabaseAdmin
       .from('users')
-      .select('id, username')
+      .select('id, username, passwordHash, isVerified, createdAt')
       .ilike('username', username)
       .limit(1);
 
     if (!usernameErrorCamel && usernameDataCamel && usernameDataCamel.length > 0) {
-      usernameExists = true;
+      existingUser = usernameDataCamel[0];
     } else {
       // Try snake_case
       const { data: usernameDataSnake, error: usernameErrorSnake } = await supabaseAdmin
         .from('users')
-        .select('id, username')
+        .select('id, username, passwordHash, isVerified, createdAt')
         .ilike('username', username)
         .limit(1);
 
       if (!usernameErrorSnake && usernameDataSnake && usernameDataSnake.length > 0) {
-        usernameExists = true;
+        existingUser = usernameDataSnake[0];
       }
 
       if (usernameErrorSnake && usernameErrorCamel) {
@@ -299,11 +299,27 @@ export async function registerUser(username: string, email: string, password: st
       }
     }
 
-    if (usernameExists) {
-      return {
-        success: false,
-        message: 'Username already exists. Please choose a different username.'
-      };
+    // If user exists, check if it's an orphaned/incomplete user that can be cleaned up
+    if (existingUser) {
+      const isOrphaned = !existingUser.passwordHash || 
+                        (!existingUser.isVerified && existingUser.createdAt && 
+                         new Date(existingUser.createdAt).getTime() < Date.now() - 24 * 60 * 60 * 1000); // Older than 24 hours
+      
+      if (isOrphaned) {
+        console.log('🧹 Found orphaned user, cleaning up:', existingUser.username);
+        // Delete the orphaned user
+        await supabaseAdmin
+          .from('users')
+          .delete()
+          .eq('id', existingUser.id);
+        console.log('✅ Cleaned up orphaned user');
+      } else {
+        // User exists and is complete
+        return {
+          success: false,
+          message: 'Username already exists. Please choose a different username.'
+        };
+      }
     }
 
     // Check if email already exists (case-insensitive)
