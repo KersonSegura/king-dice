@@ -371,6 +371,7 @@ export async function registerUser(username: string, email: string, password: st
 
     // Create user in Supabase (unverified)
     console.log('📝 registerUser: Creating user in database...');
+    const now = new Date().toISOString();
     const createResult = await executeSupabaseQuery(
       async () => {
         const result = await supabaseAdmin
@@ -384,7 +385,10 @@ export async function registerUser(username: string, email: string, password: st
             level: 1,
             xp: 0,
             isAdmin: false,
-            isVerified: false // User must verify email
+            isVerified: false, // User must verify email
+            createdAt: now,
+            updatedAt: now,
+            joinDate: now
           })
           .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
           .single();
