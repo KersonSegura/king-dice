@@ -691,12 +691,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
   // Set active tab to first available tab when game loads
   useEffect(() => {
-    if (!game) return;
+    if (!game || loading) return;
     
+    // Use the same logic as the render to find rules
     const rules = game.rules?.find(r => r.language === 'es') || game.rules?.find(r => r.language === 'en');
     const hasRules = !!rules?.rulesText;
-    const hasVideo = !!game.videoUrl;
+    // Check videoUrl - it might be a string or array
+    const hasVideo = !!(game.videoUrl && (Array.isArray(game.videoUrl) ? game.videoUrl.length > 0 : game.videoUrl));
     const hasPdf = !!(game.pdfUrl || game.pdfFile);
+    
+    console.log('Setting active tab:', { hasRules, hasVideo, hasPdf, videoUrl: game.videoUrl });
     
     // Set to first available tab in order: rules > video > pdf
     if (hasRules) {
@@ -706,7 +710,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     } else if (hasPdf) {
       setActiveTab('pdf');
     }
-  }, [game]);
+    // If no tabs available, the section won't render anyway due to the conditional
+  }, [game, loading]);
 
   if (loading) {
     return (
