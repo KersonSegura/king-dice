@@ -499,19 +499,35 @@ export default function MyDicePage() {
     console.log('XP Progress refreshed:', progress);
   };
 
+  // Load XP immediately when user is available (don't wait for assets)
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const loadXP = async () => {
+      const { level, progress } = await fetchUserLevel();
+      setUserLevel(level);
+      setLevelProgress(progress);
+      console.log('XP Progress loaded:', progress);
+    };
+    
+    loadXP();
+  }, [user?.id]);
+
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         
-        // Fetch user level and progress first - using same endpoint as profile page
-        const { level, progress } = await fetchUserLevel();
-        setUserLevel(level);
-        setLevelProgress(progress);
-        console.log('XP Progress loaded:', progress);
+        // Fetch user level first if not already loaded
+        let currentLevel = userLevel;
+        if (!currentLevel || currentLevel === 1) {
+          const { level } = await fetchUserLevel();
+          currentLevel = level;
+          setUserLevel(level);
+        }
         
         // Fetch assets with user level
-        const res = await fetch(`/api/dice-assets?userLevel=${level}`);
+        const res = await fetch(`/api/dice-assets?userLevel=${currentLevel}`);
         if (res.ok) {
           const data = await res.json();
           const incoming = data.assets as Record<TabKey, Asset[]>;

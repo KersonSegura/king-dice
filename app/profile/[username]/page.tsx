@@ -228,6 +228,7 @@ export default function UserProfilePage() {
   const [imageComments, setImageComments] = useState<any[]>([]);
   const [imageLikes, setImageLikes] = useState<{[imageId: string]: boolean}>({});
   const [loadingComments, setLoadingComments] = useState(false);
+  const [testButtonVisible, setTestButtonVisible] = useState(true);
   const [showGamesListModal, setShowGamesListModal] = useState(false);
   const [showAddGameModal, setShowAddGameModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1014,7 +1015,20 @@ export default function UserProfilePage() {
   const coverSecondaryTextClass = getSecondaryTextColorClass(true);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: profileColors.background }}>
+    <div className="min-h-screen relative" style={{ backgroundColor: profileColors.background }}>
+      {/* TEST BUTTON - DEPLOYMENT VERIFICATION - REMOVE AFTER TESTING */}
+      {testButtonVisible && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[9999] bg-red-600 text-white p-6 rounded-lg shadow-2xl border-4 border-yellow-400">
+          <h2 className="text-2xl font-bold mb-4 text-center">🚀 DEPLOYMENT TEST v2.0 🚀</h2>
+          <p className="text-center mb-4">If you see this, deployments ARE working!</p>
+          <button
+            onClick={() => setTestButtonVisible(false)}
+            className="bg-white text-red-600 px-6 py-2 rounded font-bold hover:bg-gray-100 w-full"
+          >
+            Close Test Button
+          </button>
+        </div>
+      )}
       {/* Back button */}
       <div className="border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
         <div className="max-w-6xl mx-auto">
