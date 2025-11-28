@@ -223,8 +223,11 @@ function buildPreviewLayers(sel: Record<TabKey, string | null>): string[] {
 }
 
 function getThumbnailPath(originalPath: string): string {
-  // Extract the filename from the original path
-  const pathParts = originalPath.split('/');
+  // Decode URL-encoded path first (handles %20 for spaces, etc.)
+  const decodedPath = decodeURIComponent(originalPath);
+  
+  // Extract the filename from the decoded path
+  const pathParts = decodedPath.split('/');
   const filename = pathParts[pathParts.length - 1];
   
   // Remove the file extension
@@ -237,7 +240,7 @@ function getThumbnailPath(originalPath: string): string {
   // For pattern files (Black/White patterns), remove spaces before adding Thumbnail
   // e.g., "White 1-2-3" -> "White1-2-3Thumbnail.svg"
   // e.g., "Black 1-2-3" -> "Black1-2-3Thumbnail.svg"
-  if (originalPath.includes('/Patterns/')) {
+  if (decodedPath.includes('/Patterns/')) {
     // Remove spaces from pattern names to match thumbnail file naming
     baseName = baseName.replace(/\s+/g, '');
   }
