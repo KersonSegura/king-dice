@@ -232,7 +232,15 @@ function getThumbnailPath(originalPath: string): string {
   if (lastDotIndex === -1) return originalPath;
   
   const extension = filename.substring(lastDotIndex);
-  const baseName = filename.substring(0, lastDotIndex);
+  let baseName = filename.substring(0, lastDotIndex);
+  
+  // For pattern files (Black/White patterns), remove spaces before adding Thumbnail
+  // e.g., "White 1-2-3" -> "White1-2-3Thumbnail.svg"
+  // e.g., "Black 1-2-3" -> "Black1-2-3Thumbnail.svg"
+  if (originalPath.includes('/Patterns/')) {
+    // Remove spaces from pattern names to match thumbnail file naming
+    baseName = baseName.replace(/\s+/g, '');
+  }
   
   // Add "Thumbnail" with capital T to match the actual file naming convention
   const thumbnailName = baseName + 'Thumbnail' + extension;
