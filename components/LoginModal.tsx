@@ -32,6 +32,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     username: string;
   } | null>(null);
 
+  // Password requirement checks
+  const passwordRequirements = {
+    minLength: formData.password.length >= 8,
+    hasUppercase: /[A-Z]/.test(formData.password),
+    hasLowercase: /[a-z]/.test(formData.password),
+    hasNumber: /[0-9]/.test(formData.password),
+  };
+
   // Load saved credentials on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -393,6 +401,30 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           {error && (
             <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
               {error}
+            </div>
+          )}
+
+          {isRegistering && (
+            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-md">
+              <div className="text-gray-700 font-medium mb-2">Password Requirements:</div>
+              <div className="space-y-1.5">
+                <div className={`flex items-center transition-colors ${passwordRequirements.minLength ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="mr-2 font-bold">{passwordRequirements.minLength ? '✓' : '✗'}</span>
+                  <span>At least 8 characters</span>
+                </div>
+                <div className={`flex items-center transition-colors ${passwordRequirements.hasUppercase ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="mr-2 font-bold">{passwordRequirements.hasUppercase ? '✓' : '✗'}</span>
+                  <span>At least one uppercase letter</span>
+                </div>
+                <div className={`flex items-center transition-colors ${passwordRequirements.hasLowercase ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="mr-2 font-bold">{passwordRequirements.hasLowercase ? '✓' : '✗'}</span>
+                  <span>At least one lowercase letter</span>
+                </div>
+                <div className={`flex items-center transition-colors ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="mr-2 font-bold">{passwordRequirements.hasNumber ? '✓' : '✗'}</span>
+                  <span>At least one number</span>
+                </div>
+              </div>
             </div>
           )}
 

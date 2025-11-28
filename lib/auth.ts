@@ -28,10 +28,12 @@ export interface AuthResult {
     isAdmin: boolean;
     level?: number;
     xp?: number;
+    isVerified?: boolean;
   };
   token?: string;
   message?: string;
   requiresTwoFactor?: boolean;
+  requiresVerification?: boolean; // For email verification during registration
   userId?: string;
 }
 
@@ -229,45 +231,123 @@ export async function registerUser(username: string, email: string, password: st
       };
     }
 
-    if (password.length < 6) {
+    // Password requirements: at least 8 characters, 1 uppercase, 1 lowercase, 1 number
+    if (password.length < 8) {
       return {
         success: false,
-        message: 'Password must be at least 6 characters'
+        message: 'Password must be at least 8 characters'
       };
     }
 
-    // Check if user already exists
-    const { data: existingUsers, error: checkError } = await executeSupabaseQuery(
-      () => supabaseAdmin
-        .from('users')
-        .select('id, username, email')
-        .or(`username.eq.${username},email.eq.${email}`)
-        .limit(1),
-      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
-    );
+    if (!/[A-Z]/.test(password)) {
+      return {
+        success: false,
+        message: 'Password must contain at least one uppercase letter'
+      };
+    }
 
-    if (checkError) {
-      console.error('❌ registerUser: Error checking existing user:', checkError);
-      const errorMessage = checkError.message || String(checkError);
-      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+    if (!/[a-z]/.test(password)) {
+      return {
+        success: false,
+        message: 'Password must contain at least one lowercase letter'
+      };
+    }
+
+    if (!/[0-9]/.test(password)) {
+      return {
+        success: false,
+        message: 'Password must contain at least one number'
+      };
+    }
+
+    // Check if username already exists (case-insensitive)
+    // Try camelCase first, then snake_case
+    let usernameExists = false;
+    const { data: usernameDataCamel, error: usernameErrorCamel } = await supabaseAdmin
+      .from('users')
+      .select('id, username')
+      .ilike('username', username)
+      .limit(1);
+
+    if (!usernameErrorCamel && usernameDataCamel && usernameDataCamel.length > 0) {
+      usernameExists = true;
+    } else {
+      // Try snake_case
+      const { data: usernameDataSnake, error: usernameErrorSnake } = await supabaseAdmin
+        .from('users')
+        .select('id, username')
+        .ilike('username', username)
+        .limit(1);
+
+      if (!usernameErrorSnake && usernameDataSnake && usernameDataSnake.length > 0) {
+        usernameExists = true;
+      }
+
+      if (usernameErrorSnake && usernameErrorCamel) {
+        console.error('❌ registerUser: Error checking existing username:', usernameErrorCamel || usernameErrorSnake);
+        const errorMessage = (usernameErrorCamel?.message || usernameErrorSnake?.message || String(usernameErrorCamel || usernameErrorSnake));
+        if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+          return {
+            success: false,
+            message: 'Database connection timeout. Please try again in a few moments.'
+          };
+        }
         return {
           success: false,
-          message: 'Database connection timeout. Please try again in a few moments.'
+          message: 'Database connection failed. Please try again.'
         };
       }
+    }
+
+    if (usernameExists) {
       return {
         success: false,
-        message: 'Database connection failed. Please try again.'
+        message: 'Username already exists. Please choose a different username.'
       };
     }
 
-    if (existingUsers && existingUsers.length > 0) {
-      const existingUser = existingUsers[0];
+    // Check if email already exists (case-insensitive)
+    let emailExists = false;
+    const { data: emailDataCamel, error: emailErrorCamel } = await supabaseAdmin
+      .from('users')
+      .select('id, email')
+      .ilike('email', email)
+      .limit(1);
+
+    if (!emailErrorCamel && emailDataCamel && emailDataCamel.length > 0) {
+      emailExists = true;
+    } else {
+      // Try snake_case
+      const { data: emailDataSnake, error: emailErrorSnake } = await supabaseAdmin
+        .from('users')
+        .select('id, email')
+        .ilike('email', email)
+        .limit(1);
+
+      if (!emailErrorSnake && emailDataSnake && emailDataSnake.length > 0) {
+        emailExists = true;
+      }
+
+      if (emailErrorSnake && emailErrorCamel) {
+        console.error('❌ registerUser: Error checking existing email:', emailErrorCamel || emailErrorSnake);
+        const errorMessage = (emailErrorCamel?.message || emailErrorSnake?.message || String(emailErrorCamel || emailErrorSnake));
+        if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+          return {
+            success: false,
+            message: 'Database connection timeout. Please try again in a few moments.'
+          };
+        }
+        return {
+          success: false,
+          message: 'Database connection failed. Please try again.'
+        };
+      }
+    }
+
+    if (emailExists) {
       return {
         success: false,
-        message: existingUser.username === username 
-          ? 'Username already exists' 
-          : 'Email already exists'
+        message: 'Email already exists. Please use a different email address or try logging in.'
       };
     }
 
@@ -279,70 +359,116 @@ export async function registerUser(username: string, email: string, password: st
     console.log('🎨 registerUser: Generating default avatar...');
     const defaultAvatar = await generateDefaultAvatar();
 
-    // Create user in Supabase
+    // Create user in Supabase (unverified)
     console.log('📝 registerUser: Creating user in database...');
-    const { data: newUser, error: createError } = await executeSupabaseQuery(
-      () => supabaseAdmin
-        .from('users')
-        .insert({
-          username,
-          email,
-          passwordHash,
-          avatar: defaultAvatar,
-          level: 1,
-          xp: 0,
-          isAdmin: false
-        })
-        .select('id, username, email, avatar, isAdmin, level, xp')
-        .single(),
+    const createResult = await executeSupabaseQuery(
+      async () => {
+        const result = await supabaseAdmin
+          .from('users')
+          .insert({
+            username,
+            email,
+            passwordHash,
+            avatar: defaultAvatar,
+            level: 1,
+            xp: 0,
+            isAdmin: false,
+            isVerified: false // User must verify email
+          })
+          .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
+          .single();
+        return result;
+      },
       { maxRetries: 2, baseDelay: 400, timeout: 15000 }
     );
+
+    const { data: newUser, error: createError } = createResult;
 
     if (createError || !newUser) {
       console.error('❌ registerUser: Error creating user:', createError);
       const errorMessage = createError?.message || String(createError || '');
+      
+      // Check for specific database constraint errors
+      if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint') || errorMessage.includes('already exists')) {
+        if (errorMessage.toLowerCase().includes('username')) {
+          return {
+            success: false,
+            message: 'Username already exists. Please choose a different username.'
+          };
+        }
+        if (errorMessage.toLowerCase().includes('email')) {
+          return {
+            success: false,
+            message: 'Email already exists. Please use a different email address or try logging in.'
+          };
+        }
+      }
+      
       if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
         return {
           success: false,
           message: 'Database connection timeout. Please try again in a few moments.'
         };
       }
+      
+      // Return more specific error if available
+      if (errorMessage && errorMessage !== '[object Object]') {
+        return {
+          success: false,
+          message: errorMessage
+        };
+      }
+      
       return {
         success: false,
         message: 'Registration failed. Please try again.'
       };
     }
 
-    console.log('✅ registerUser: User created:', newUser.username);
+    console.log('✅ registerUser: User created:', (newUser as any).username);
 
-    // Generate token
-    const token = generateToken({
-      userId: newUser.id,
-      username: newUser.username,
-      email: newUser.email,
-      isAdmin: newUser.isAdmin || false
-    });
+    // Generate verification code and send email
+    const { emailService, generateVerificationCode } = await import('@/lib/email-service');
+    const verificationCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
 
-    if (!token) {
-      console.error('❌ registerUser: Failed to generate token');
-      return {
-        success: false,
-        message: 'Registration failed: Token generation error'
-      };
+    // Save verification code to database
+    const { error: codeError } = await supabaseAdmin
+      .from('two_factor_codes')
+      .insert({
+        userId: newUser.id,
+        code: verificationCode,
+        expiresAt: expiresAt,
+        used: false
+      });
+
+    if (codeError) {
+      console.error('❌ registerUser: Error saving verification code:', codeError);
+      // Continue anyway - user can request a new code
     }
 
+    // Send verification email
+    const emailSent = await emailService.sendRegistrationVerificationCode(email, verificationCode, username);
+    if (!emailSent) {
+      console.error('❌ registerUser: Failed to send verification email');
+      // Continue anyway - user can request a new code
+    }
+
+    // Return user data but indicate verification is required
+    const userData = newUser as any;
     return {
       success: true,
       user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        avatar: newUser.avatar || '/DiceLogo.svg',
-        isAdmin: newUser.isAdmin || false,
-        level: newUser.level || 1,
-        xp: newUser.xp || 0
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        avatar: userData.avatar || '/DiceLogo.svg',
+        isAdmin: userData.isAdmin || false,
+        level: userData.level || 1,
+        xp: userData.xp || 0,
+        isVerified: false
       },
-      token
+      requiresVerification: true // Flag to indicate email verification is needed
     };
 
   } catch (error) {
