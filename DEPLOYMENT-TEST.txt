@@ -1,4 +1,0 @@
-This file was created to test if commits are reaching GitHub.
-If you see this file on GitHub, then pushes are working!
-Created: 2025-01-27
-
