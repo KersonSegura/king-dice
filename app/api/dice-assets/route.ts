@@ -69,7 +69,13 @@ function listSvgsInDir(absDir: string, webDirSegment: string, userLevel: number)
         'Companions': 'companions'
       };
       const categoryKey = categoryKeyMap[webDirSegment] || webDirSegment.toLowerCase();
-      const assetKey = filename.replace(/\.svg$/i, ''); // Use filename without extension for lookup
+      // Normalize asset key: remove spaces and hyphens to match dice-asset-levels.ts format
+      // e.g., "Black 1-2-3.svg" -> "Black123"
+      let assetKey = filename.replace(/\.svg$/i, ''); // Remove extension
+      if (categoryKey === 'patterns') {
+        // For patterns, remove spaces and hyphens to match the normalized names in dice-asset-levels.ts
+        assetKey = assetKey.replace(/\s+/g, '').replace(/-/g, '');
+      }
       const levelRequirement = getAssetLevelRequirement(categoryKey, assetKey);
       
 
