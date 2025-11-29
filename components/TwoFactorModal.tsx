@@ -10,6 +10,7 @@ interface TwoFactorModalProps {
   email: string;
   username: string;
   onSuccess: (user: any, token: string) => void;
+  isRegistration?: boolean; // Flag to indicate if this is for email verification during registration
 }
 
 export default function TwoFactorModal({
@@ -18,7 +19,8 @@ export default function TwoFactorModal({
   userId,
   email,
   username,
-  onSuccess
+  onSuccess,
+  isRegistration = false
 }: TwoFactorModalProps) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,12 +28,16 @@ export default function TwoFactorModal({
   const [error, setError] = useState('');
   const [codeSent, setCodeSent] = useState(false);
 
-  // Auto-send code when modal opens
+  // Auto-send code when modal opens (only for 2FA, not registration)
+  // For registration, email is already sent during account creation
   useEffect(() => {
-    if (isOpen && !codeSent) {
+    if (isOpen && !codeSent && !isRegistration) {
       sendVerificationCode();
+    } else if (isOpen && isRegistration) {
+      // For registration, mark code as sent since email was already sent during registration
+      setCodeSent(true);
     }
-  }, [isOpen]);
+  }, [isOpen, isRegistration]);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -85,7 +91,10 @@ export default function TwoFactorModal({
     setError('');
 
     try {
-      const response = await fetch('/api/auth/verify-2fa-code', {
+      // Use different endpoint for registration email verification vs 2FA
+      const endpoint = isRegistration ? '/api/auth/verify-email' : '/api/auth/verify-2fa-code';
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,8 +136,12 @@ export default function TwoFactorModal({
               <Shield className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Two-Factor Authentication</h2>
-              <p className="text-sm text-gray-600">Verify your identity</p>
+              <h2 className="text-xl font-bold text-gray-900">
+                {isRegistration ? 'Email Verification' : 'Two-Factor Authentication'}
+              </h2>
+              <p className="text-sm text-gray-600">
+                {isRegistration ? 'Verify your email address' : 'Verify your identity'}
+              </p>
             </div>
           </div>
           <button

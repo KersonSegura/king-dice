@@ -492,6 +492,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             setShowPassword(false);
             setShowConfirmPassword(false);
           }}
+          isRegistration={isRegistering} // Pass registration flag so modal knows email was already sent
         />
       )}
     </div>
