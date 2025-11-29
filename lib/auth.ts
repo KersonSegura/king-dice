@@ -4,6 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 import fs from 'fs/promises';
 import path from 'path';
+// Static import for emailService and generateVerificationCode
+import { emailService, generateVerificationCode } from '@/lib/email-service';
 
 // JWT Secret - in production, this should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
