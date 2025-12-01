@@ -88,13 +88,14 @@ export class EmailService {
           };
         } else {
           // Configure OAuth 2.0 for nodemailer
+          // nodemailer will automatically get accessToken from refreshToken using googleapis
           transporterConfig.auth = {
             type: 'OAuth2',
             user: smtpUser,
             clientId: clientId,
             clientSecret: clientSecret,
             refreshToken: refreshToken,
-            // accessToken will be obtained dynamically via oauth2Service
+            accessUrl: 'https://oauth2.googleapis.com/token',
           };
         }
         transporterConfig.secure = false; // Gmail uses STARTTLS on port 587
@@ -185,21 +186,8 @@ export class EmailService {
           return false;
         }
 
-        // If using OAuth 2.0, get fresh access token before sending
-        if (this.useOAuth2 && this.transporter) {
-          const accessToken = await oauth2Service.getAccessToken();
-          if (!accessToken) {
-            console.error('❌ Failed to get OAuth 2.0 access token');
-            return false;
-          }
-          
-          // Update the transporter's auth with fresh access token
-          // nodemailer needs the accessToken to be set before sending
-          (this.transporter as any).auth = {
-            ...(this.transporter as any).auth,
-            accessToken: accessToken
-          };
-        }
+        // OAuth 2.0 access token is obtained automatically via the callback in transporter config
+        // No need to update it manually here
 
         const mailOptions: any = {
           from: `King Dice <${this.fromEmail}>`,
