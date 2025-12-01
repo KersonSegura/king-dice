@@ -12,9 +12,9 @@ const { google } = require('googleapis');
 const readline = require('readline');
 
 // Get from Google Cloud Console → APIs & Services → Credentials
-const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID || 'YOUR_CLIENT_ID';
-const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET || 'YOUR_CLIENT_SECRET';
-const REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback';
+const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID || '404642348674-7138cc5c375r881cbmtg2gpu465pccao.apps.googleusercontent.com';
+const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET || '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';
+const REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || 'https://kingdice.gg/api/auth/google/callback';
 
 if (CLIENT_ID === 'YOUR_CLIENT_ID' || CLIENT_SECRET === 'YOUR_CLIENT_SECRET') {
   console.error('❌ Please set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET environment variables');
