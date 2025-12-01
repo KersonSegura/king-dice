@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { oauth2Service } from './oauth-service';
 
 // Email service for sending verification codes
 // For development, we'll use a simple file-based approach
@@ -17,13 +18,18 @@ export class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private fromEmail: string;
   private isDevelopment: boolean;
+  private useOAuth2: boolean;
 
   constructor() {
     // Get SMTP configuration from environment variables
-    // Supports: Gmail, SendGrid, Mailgun, AWS SES, and other SMTP servers
+    // Supports: Gmail (OAuth 2.0 or App Passwords), SendGrid, Mailgun, AWS SES, and other SMTP servers
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
     const smtpUser = process.env.SMTP_USER || 'verify@kingdice.com';
+    
+    // Check if OAuth 2.0 is configured (preferred method)
+    this.useOAuth2 = oauth2Service.isConfigured();
+    
     // Remove spaces from password (Google displays app passwords with spaces)
     const rawPassword = process.env.SMTP_PASS || '';
     const smtpPass = rawPassword ? rawPassword.replace(/\s+/g, '') : undefined;
@@ -31,30 +37,33 @@ export class EmailService {
     // Business email address for sending verification emails
     this.fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.com';
     
-    // Check if we're in development (no password configured)
-    this.isDevelopment = !smtpPass;
+    // Check if we're in development (no password or OAuth configured)
+    this.isDevelopment = !this.useOAuth2 && !smtpPass;
 
     if (this.isDevelopment) {
       // Development mode: log emails and save to file
       console.log('📧 Email Service: Running in development mode');
-      console.log('📧 To enable email sending, set SMTP_PASS environment variable');
-      console.log('📧 For Gmail: Use an App Password (not your regular password)');
-      console.log('📧 For SendGrid: Use your API key');
+      console.log('📧 To enable email sending:');
+      console.log('   - For OAuth 2.0: Set GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REFRESH_TOKEN');
+      console.log('   - For App Passwords: Set SMTP_PASS environment variable');
+      console.log('   - For SendGrid: Set SMTP_HOST=smtp.sendgrid.net and SMTP_PASS=your-api-key');
       console.log('📧 Emails will be saved to data/emails/ directory');
     } else {
-      // Log password info for debugging (without exposing the actual password)
+      // Log configuration info
       const passwordLength = smtpPass ? smtpPass.length : 0;
       const hadSpaces = rawPassword !== smtpPass;
       const isSendGrid = smtpHost.includes('sendgrid');
+      const isGmail = smtpHost.includes('gmail.com');
       
       console.log('📧 Email Service: SMTP Configuration:', {
         host: smtpHost,
         port: smtpPort,
         user: smtpUser,
         from: this.fromEmail,
-        provider: isSendGrid ? 'SendGrid' : smtpHost.includes('gmail') ? 'Gmail' : 'Custom SMTP',
-        passwordLength: passwordLength,
-        hadSpaces: hadSpaces
+        provider: isSendGrid ? 'SendGrid' : isGmail ? (this.useOAuth2 ? 'Gmail (OAuth 2.0)' : 'Gmail (App Password)') : 'Custom SMTP',
+        authentication: this.useOAuth2 ? 'OAuth 2.0' : 'Password',
+        passwordLength: this.useOAuth2 ? 'N/A' : passwordLength,
+        hadSpaces: this.useOAuth2 ? 'N/A' : hadSpaces
       });
 
       // Production mode: configure real SMTP transporter
@@ -62,14 +71,30 @@ export class EmailService {
         host: smtpHost,
         port: smtpPort,
         secure: smtpPort === 465, // Use secure connection for port 465 (SSL)
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        }
       };
 
+      // Configure authentication
+      if (this.useOAuth2 && isGmail) {
+        // OAuth 2.0 for Gmail - will be set dynamically per email
+        // For now, set up the transporter structure
+        transporterConfig.auth = {
+          type: 'OAuth2',
+          user: smtpUser,
+        };
+        transporterConfig.secure = false; // Gmail uses STARTTLS on port 587
+        transporterConfig.tls = {
+          rejectUnauthorized: true
+        };
+      } else {
+        // Traditional password-based authentication
+        transporterConfig.auth = {
+          user: smtpUser,
+          pass: smtpPass,
+        };
+      }
+
       // Gmail/Google Workspace specific settings
-      if (smtpHost.includes('gmail.com')) {
+      if (isGmail && !this.useOAuth2) {
         transporterConfig.secure = false; // Gmail uses STARTTLS on port 587
         transporterConfig.tls = {
           rejectUnauthorized: true // Gmail has valid certificates
@@ -87,7 +112,7 @@ export class EmailService {
       this.transporter = nodemailer.createTransport(transporterConfig);
       
       console.log('✅ Email Service: Configured successfully', {
-        provider: isSendGrid ? 'SendGrid' : smtpHost.includes('gmail') ? 'Gmail' : 'Custom SMTP',
+        provider: isSendGrid ? 'SendGrid' : isGmail ? (this.useOAuth2 ? 'Gmail (OAuth 2.0)' : 'Gmail (App Password)') : 'Custom SMTP',
         host: smtpHost,
         port: smtpPort,
         from: this.fromEmail
@@ -144,7 +169,17 @@ export class EmailService {
           return false;
         }
 
-        const mailOptions = {
+        // If using OAuth 2.0, get fresh access token before sending
+        let oauthCredentials = null;
+        if (this.useOAuth2) {
+          oauthCredentials = await oauth2Service.getOAuth2Credentials();
+          if (!oauthCredentials) {
+            console.error('❌ Failed to get OAuth 2.0 credentials');
+            return false;
+          }
+        }
+
+        const mailOptions: any = {
           from: `King Dice <${this.fromEmail}>`,
           to: options.to,
           subject: options.subject,
@@ -152,11 +187,22 @@ export class EmailService {
           text: options.text || options.subject, // Fallback text version
         };
 
+        // Add OAuth credentials to mail options if using OAuth 2.0
+        if (this.useOAuth2 && oauthCredentials) {
+          mailOptions.auth = {
+            user: oauthCredentials.user,
+            accessToken: oauthCredentials.accessToken,
+            refreshToken: process.env.GOOGLE_OAUTH_REFRESH_TOKEN,
+            expires: Date.now() + 3600000
+          };
+        }
+
         const info = await this.transporter.sendMail(mailOptions);
         console.log('✅ Email sent successfully:', {
           messageId: info.messageId,
           to: options.to,
-          subject: options.subject
+          subject: options.subject,
+          method: this.useOAuth2 ? 'OAuth 2.0' : 'SMTP Password'
         });
         return true;
       }
