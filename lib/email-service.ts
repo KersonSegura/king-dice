@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { google } from 'googleapis';
 import { oauth2Service } from './oauth-service';
 
 // Email service for sending verification codes
@@ -181,13 +182,16 @@ export class EmailService {
         return true;
       } else {
         // Production mode: send real email
+        // Use Gmail API directly for OAuth 2.0 (more reliable than SMTP)
+        if (this.useOAuth2) {
+          return await this.sendEmailViaGmailAPI(options);
+        }
+
+        // Use SMTP for non-OAuth methods (app passwords, SendGrid, etc.)
         if (!this.transporter) {
           console.error('❌ Email transporter not initialized');
           return false;
         }
-
-        // OAuth 2.0 access token is obtained automatically via the callback in transporter config
-        // No need to update it manually here
 
         const mailOptions: any = {
           from: `King Dice <${this.fromEmail}>`,
@@ -202,7 +206,7 @@ export class EmailService {
           messageId: info.messageId,
           to: options.to,
           subject: options.subject,
-          method: this.useOAuth2 ? 'OAuth 2.0' : 'SMTP Password'
+          method: 'SMTP Password'
         });
         return true;
       }
@@ -225,6 +229,78 @@ export class EmailService {
         console.error('   5. Redeploy the application');
       }
       
+      return false;
+    }
+  }
+
+  /**
+   * Send email using Gmail API directly (for OAuth 2.0)
+   */
+  private async sendEmailViaGmailAPI(options: EmailOptions): Promise<boolean> {
+    try {
+      const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+      const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+      const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || 'https://kingdice.gg/api/auth/google/callback';
+
+      if (!clientId || !clientSecret || !refreshToken) {
+        console.error('❌ OAuth 2.0 credentials incomplete');
+        return false;
+      }
+
+      // Create OAuth2 client
+      const oauth2Client = new google.auth.OAuth2(
+        clientId,
+        clientSecret,
+        redirectUri
+      );
+
+      oauth2Client.setCredentials({
+        refresh_token: refreshToken
+      });
+
+      // Get Gmail API client
+      const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+      // Create email message in RFC 2822 format
+      const emailMessage = [
+        `From: King Dice <${this.fromEmail}>`,
+        `To: ${options.to}`,
+        `Subject: ${options.subject}`,
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=utf-8',
+        '',
+        options.html
+      ].join('\n');
+
+      // Encode message in base64url format
+      const encodedMessage = Buffer.from(emailMessage)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      // Send email via Gmail API
+      const response = await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw: encodedMessage
+        }
+      });
+
+      console.log('✅ Email sent successfully via Gmail API:', {
+        messageId: response.data.id,
+        to: options.to,
+        subject: options.subject,
+        method: 'Gmail API (OAuth 2.0)'
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('❌ Error sending email via Gmail API:', error);
+      if (error.response) {
+        console.error('❌ Gmail API error response:', error.response.data);
+      }
       return false;
     }
   }
