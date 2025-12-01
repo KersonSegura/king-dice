@@ -20,11 +20,11 @@ export class EmailService {
 
   constructor() {
     // Get SMTP configuration from environment variables
-    // Default to Google Workspace settings for verify@kingdice.com
-    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'; // Google Workspace uses Gmail SMTP
+    // Supports: Gmail, SendGrid, Mailgun, AWS SES, and other SMTP servers
+    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
     const smtpUser = process.env.SMTP_USER || 'verify@kingdice.com';
-    // Remove spaces from app password (Google displays them with spaces but they should be entered without)
+    // Remove spaces from password (Google displays app passwords with spaces)
     const rawPassword = process.env.SMTP_PASS || '';
     const smtpPass = rawPassword ? rawPassword.replace(/\s+/g, '') : undefined;
     
@@ -38,41 +38,59 @@ export class EmailService {
       // Development mode: log emails and save to file
       console.log('📧 Email Service: Running in development mode');
       console.log('📧 To enable email sending, set SMTP_PASS environment variable');
-      console.log('📧 For Google Workspace, use an App Password (not your regular password)');
+      console.log('📧 For Gmail: Use an App Password (not your regular password)');
+      console.log('📧 For SendGrid: Use your API key');
       console.log('📧 Emails will be saved to data/emails/ directory');
     } else {
       // Log password info for debugging (without exposing the actual password)
       const passwordLength = smtpPass ? smtpPass.length : 0;
       const hadSpaces = rawPassword !== smtpPass;
-      console.log('📧 Email Service: SMTP Password Info:', {
-        originalLength: rawPassword.length,
-        processedLength: passwordLength,
-        hadSpaces: hadSpaces,
-        firstChar: smtpPass ? smtpPass[0] : 'N/A',
-        lastChar: smtpPass ? smtpPass[passwordLength - 1] : 'N/A'
-      });
-
-      // Production mode: configure real SMTP transporter
-      this.transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: false, // Gmail uses STARTTLS on port 587
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-        // Gmail/Google Workspace specific settings
-        tls: {
-          rejectUnauthorized: true // Gmail has valid certificates
-        }
-      });
+      const isSendGrid = smtpHost.includes('sendgrid');
       
-      console.log('✅ Email Service: Configured with Google Workspace', {
+      console.log('📧 Email Service: SMTP Configuration:', {
         host: smtpHost,
         port: smtpPort,
         user: smtpUser,
         from: this.fromEmail,
-        passwordLength: passwordLength
+        provider: isSendGrid ? 'SendGrid' : smtpHost.includes('gmail') ? 'Gmail' : 'Custom SMTP',
+        passwordLength: passwordLength,
+        hadSpaces: hadSpaces
+      });
+
+      // Production mode: configure real SMTP transporter
+      const transporterConfig: any = {
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465, // Use secure connection for port 465 (SSL)
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        }
+      };
+
+      // Gmail/Google Workspace specific settings
+      if (smtpHost.includes('gmail.com')) {
+        transporterConfig.secure = false; // Gmail uses STARTTLS on port 587
+        transporterConfig.tls = {
+          rejectUnauthorized: true // Gmail has valid certificates
+        };
+      }
+
+      // SendGrid uses STARTTLS
+      if (isSendGrid) {
+        transporterConfig.secure = false;
+        transporterConfig.tls = {
+          rejectUnauthorized: true
+        };
+      }
+
+      this.transporter = nodemailer.createTransport(transporterConfig);
+      
+      console.log('✅ Email Service: Configured successfully', {
+        provider: isSendGrid ? 'SendGrid' : smtpHost.includes('gmail') ? 'Gmail' : 'Custom SMTP',
+        host: smtpHost,
+        port: smtpPort,
+        from: this.fromEmail
       });
     }
   }
