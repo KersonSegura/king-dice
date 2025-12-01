@@ -75,12 +75,28 @@ export class EmailService {
 
       // Configure authentication
       if (this.useOAuth2 && isGmail) {
-        // OAuth 2.0 for Gmail - will be set dynamically per email
-        // For now, set up the transporter structure
-        transporterConfig.auth = {
-          type: 'OAuth2',
-          user: smtpUser,
-        };
+        // OAuth 2.0 for Gmail - configure with client credentials
+        const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+        const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+        const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+        
+        if (!clientId || !clientSecret || !refreshToken) {
+          console.error('❌ OAuth 2.0 credentials incomplete. Falling back to password auth.');
+          transporterConfig.auth = {
+            user: smtpUser,
+            pass: smtpPass,
+          };
+        } else {
+          // Configure OAuth 2.0 for nodemailer
+          transporterConfig.auth = {
+            type: 'OAuth2',
+            user: smtpUser,
+            clientId: clientId,
+            clientSecret: clientSecret,
+            refreshToken: refreshToken,
+            // accessToken will be obtained dynamically via oauth2Service
+          };
+        }
         transporterConfig.secure = false; // Gmail uses STARTTLS on port 587
         transporterConfig.tls = {
           rejectUnauthorized: true
@@ -170,13 +186,19 @@ export class EmailService {
         }
 
         // If using OAuth 2.0, get fresh access token before sending
-        let oauthCredentials = null;
-        if (this.useOAuth2) {
-          oauthCredentials = await oauth2Service.getOAuth2Credentials();
-          if (!oauthCredentials) {
-            console.error('❌ Failed to get OAuth 2.0 credentials');
+        if (this.useOAuth2 && this.transporter) {
+          const accessToken = await oauth2Service.getAccessToken();
+          if (!accessToken) {
+            console.error('❌ Failed to get OAuth 2.0 access token');
             return false;
           }
+          
+          // Update the transporter's auth with fresh access token
+          // nodemailer needs the accessToken to be set before sending
+          (this.transporter as any).auth = {
+            ...(this.transporter as any).auth,
+            accessToken: accessToken
+          };
         }
 
         const mailOptions: any = {
@@ -186,16 +208,6 @@ export class EmailService {
           html: options.html,
           text: options.text || options.subject, // Fallback text version
         };
-
-        // Add OAuth credentials to mail options if using OAuth 2.0
-        if (this.useOAuth2 && oauthCredentials) {
-          mailOptions.auth = {
-            user: oauthCredentials.user,
-            accessToken: oauthCredentials.accessToken,
-            refreshToken: process.env.GOOGLE_OAUTH_REFRESH_TOKEN,
-            expires: Date.now() + 3600000
-          };
-        }
 
         const info = await this.transporter.sendMail(mailOptions);
         console.log('✅ Email sent successfully:', {
