@@ -105,13 +105,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (authResult.token) {
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60 // 7 days
-      };
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    };
       response.cookies.set('auth_token', authResult.token, cookieOptions);
     }
 

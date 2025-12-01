@@ -404,8 +404,8 @@ export default function MyDicePage() {
     if (!user?.id) {
       console.log('⚠️ No user ID available, returning empty config');
       return {
-        background: null, dice: null, pattern: null, accessories: null, hat: null, item: null, companion: null, title: null
-      };
+      background: null, dice: null, pattern: null, accessories: null, hat: null, item: null, companion: null, title: null
+    };
     }
     
     try {
@@ -416,7 +416,7 @@ export default function MyDicePage() {
         console.log('✅ Loaded saved configuration from server:', data);
         if (data.config) {
           console.log('📦 Config data:', data.config);
-          return data.config;
+        return data.config;
         } else {
           console.log('⚠️ No config in response, using defaults');
         }
@@ -488,7 +488,7 @@ export default function MyDicePage() {
       const response = await fetch(`/api/users/level-progress?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
-        return {
+        return { 
           level: data.currentLevel || 1,
           progress: {
             currentLevel: data.currentLevel || 1,
@@ -552,7 +552,7 @@ export default function MyDicePage() {
         if (!currentLevel || currentLevel === 1) {
           const { level } = await fetchUserLevel();
           currentLevel = level;
-          setUserLevel(level);
+        setUserLevel(level);
         }
         
         // Fetch assets with user level
@@ -811,12 +811,12 @@ export default function MyDicePage() {
                      Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
                    </span>
                    <div className="flex items-center gap-2">
-                     <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                       <div 
-                         className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
-                         style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
-                       ></div>
-                     </div>
+                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                     <div 
+                       className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
+                       style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
+                     ></div>
+                   </div>
                      <span className="text-xs text-gray-500">
                        {levelProgress.currentXP} XP
                        {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} to next`}

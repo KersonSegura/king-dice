@@ -735,15 +735,61 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  // Function to refresh XP progress - same as My Dice page (defined before useEffects)
-  const refreshXPProgress = useCallback(async () => {
+  // Fetch user level and progress - using same approach as My Dice page (MUST be defined before useEffects)
+  const fetchUserLevel = async () => {
+    if (!user?.id) {
+      return {
+        level: 1,
+        progress: {
+          currentLevel: 1,
+          currentLevelName: 'Commoner',
+          currentXP: 0,
+          xpForNextLevel: 100,
+          progressPercentage: 0
+        }
+      };
+    }
+    
+    try {
+      // Use the same endpoint as My Dice page
+      const response = await fetch(`/api/users/level-progress?userId=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          level: data.currentLevel || 1,
+          progress: {
+            currentLevel: data.currentLevel || 1,
+            currentLevelName: data.currentLevelName || 'Commoner',
+            currentXP: data.currentXP || 0,
+            xpForNextLevel: data.xpForNextLevel || 100,
+            progressPercentage: data.progressPercentage || 0
+          }
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching user level:', error);
+    }
+    return {
+      level: 1,
+      progress: {
+        currentLevel: 1,
+        currentLevelName: 'Commoner',
+        currentXP: 0,
+        xpForNextLevel: 100,
+        progressPercentage: 0
+      }
+    };
+  };
+
+  // Function to refresh XP progress - same as My Dice page
+  const refreshXPProgress = async () => {
     if (!user?.id) return;
     const { level, progress } = await fetchUserLevel();
     setUserLevel(level);
     setLevelProgress(progress);
     setUserXP(progress.currentXP);
     console.log('XP Progress refreshed:', progress);
-  }, [user?.id]);
+  };
 
   // Load XP immediately when user is available - EXACT same as My Dice page
   useEffect(() => {
@@ -782,7 +828,7 @@ export default function ProfilePage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(interval);
     };
-  }, [user?.id, refreshXPProgress]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -865,51 +911,6 @@ export default function ProfilePage() {
       }
     };
 
-  // Fetch user level and progress - using same approach as My Dice page
-  const fetchUserLevel = async () => {
-    if (!user?.id) {
-      return {
-        level: 1,
-        progress: {
-          currentLevel: 1,
-          currentLevelName: 'Commoner',
-          currentXP: 0,
-          xpForNextLevel: 100,
-          progressPercentage: 0
-        }
-      };
-    }
-    
-    try {
-      // Use the same endpoint as My Dice page
-      const response = await fetch(`/api/users/level-progress?userId=${user.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          level: data.currentLevel || 1,
-          progress: {
-            currentLevel: data.currentLevel || 1,
-            currentLevelName: data.currentLevelName || 'Commoner',
-            currentXP: data.currentXP || 0,
-            xpForNextLevel: data.xpForNextLevel || 100,
-            progressPercentage: data.progressPercentage || 0
-          }
-        };
-      }
-    } catch (error) {
-      console.error('Error fetching user level:', error);
-    }
-    return {
-      level: 1,
-      progress: {
-        currentLevel: 1,
-        currentLevelName: 'Commoner',
-        currentXP: 0,
-        xpForNextLevel: 100,
-        progressPercentage: 0
-      }
-    };
-  };
 
   const loadUserColors = async () => {
     if (!user) return;

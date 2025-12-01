@@ -388,16 +388,16 @@ export async function registerUser(username: string, email: string, password: st
       if (emailErrorSnake && emailErrorCamel) {
         console.error('❌ registerUser: Error checking existing email:', emailErrorCamel || emailErrorSnake);
         const errorMessage = (emailErrorCamel?.message || emailErrorSnake?.message || String(emailErrorCamel || emailErrorSnake));
-        if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
-          return {
-            success: false,
-            message: 'Database connection timeout. Please try again in a few moments.'
-          };
-        }
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
         return {
           success: false,
-          message: 'Database connection failed. Please try again.'
+          message: 'Database connection timeout. Please try again in a few moments.'
         };
+      }
+      return {
+        success: false,
+        message: 'Database connection failed. Please try again.'
+      };
       }
     }
 
@@ -432,21 +432,21 @@ export async function registerUser(username: string, email: string, password: st
     const createResult = await executeSupabaseQuery(
       async () => {
         const result = await supabaseAdmin
-          .from('users')
-          .insert({
+        .from('users')
+        .insert({
             id: userId,
-            username,
-            email,
-            passwordHash,
-            avatar: defaultAvatar,
-            level: 1,
-            xp: 0,
+          username,
+          email,
+          passwordHash,
+          avatar: defaultAvatar,
+          level: 1,
+          xp: 0,
             isAdmin: false,
             isVerified: false, // User must verify email
             createdAt: now,
             updatedAt: now,
             joinDate: now
-          })
+        })
           .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
           .single();
         return result;
@@ -503,12 +503,12 @@ export async function registerUser(username: string, email: string, password: st
       
       // Return more specific error if available
       if (errorMessage && errorMessage !== '[object Object]' && errorMessage.length > 0) {
-        return {
-          success: false,
+      return {
+        success: false,
           message: errorMessage
-        };
-      }
-      
+      };
+    }
+
       // Last resort - return detailed error for debugging
       return {
         success: false,
@@ -521,6 +521,14 @@ export async function registerUser(username: string, email: string, password: st
     // Generate verification code and send email
     const verificationCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
+    console.log('📧 registerUser: Generated verification code for:', {
+      userId: newUser.id,
+      username,
+      email,
+      codeLength: verificationCode.length,
+      expiresAt
+    });
 
     // Save verification code to database
     const { error: codeError } = await supabaseAdmin
@@ -535,17 +543,29 @@ export async function registerUser(username: string, email: string, password: st
     if (codeError) {
       console.error('❌ registerUser: Error saving verification code:', codeError);
       // Continue anyway - user can request a new code
+    } else {
+      console.log('✅ registerUser: Verification code saved to database');
     }
 
     // Send verification email
     try {
+      console.log('📧 registerUser: Attempting to send verification email...');
+      console.log('📧 registerUser: Email service check:', {
+        emailServiceExists: !!emailService,
+        hasMethod: emailService && typeof emailService.sendRegistrationVerificationCode === 'function',
+        smtpConfigured: !!process.env.SMTP_PASS
+      });
+
       if (emailService && typeof emailService.sendRegistrationVerificationCode === 'function') {
         const emailSent = await emailService.sendRegistrationVerificationCode(email, verificationCode, username);
         if (!emailSent) {
-          console.error('❌ registerUser: Failed to send verification email');
+          console.error('❌ registerUser: Failed to send verification email (emailSent=false)');
           // Continue anyway - user can request a new code
         } else {
-          console.log('✅ registerUser: Verification email sent successfully');
+          console.log('✅ registerUser: Verification email sent successfully to:', email);
+          if (!process.env.SMTP_PASS) {
+            console.log('⚠️ registerUser: Running in development mode - email saved to file system or logged');
+          }
         }
       } else {
         console.error('❌ registerUser: emailService.sendRegistrationVerificationCode is not a function');
@@ -555,6 +575,10 @@ export async function registerUser(username: string, email: string, password: st
       }
     } catch (emailError) {
       console.error('❌ registerUser: Error sending verification email:', emailError);
+      console.error('❌ registerUser: Error details:', {
+        message: emailError instanceof Error ? emailError.message : String(emailError),
+        stack: emailError instanceof Error ? emailError.stack : undefined
+      });
       // Continue anyway - user can request a new code
     }
 

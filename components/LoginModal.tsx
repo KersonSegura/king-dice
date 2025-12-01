@@ -145,16 +145,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             setError(''); // Clear any errors
           } else {
             // Registration complete, log in
-            login(data.user, data.token);
-            onClose();
-            setFormData({ username: '', email: '', password: '', confirmPassword: '' });
-            setShowPassword(false);
-            setShowConfirmPassword(false);
+          login(data.user, data.token);
+          onClose();
+          setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+          setShowPassword(false);
+          setShowConfirmPassword(false);
           }
         } else {
           let errorMessage = 'Registration failed. Please try again.';
           try {
-            const errorData = await response.json();
+          const errorData = await response.json();
             errorMessage = errorData.message || errorMessage;
             console.error('Registration error response:', errorData);
           } catch (parseError) {

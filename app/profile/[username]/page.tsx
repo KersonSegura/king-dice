@@ -411,9 +411,9 @@ export default function UserProfilePage() {
         const isOwn = user?.id === data.user.id || user?.username === data.user.username;
         setIsOwnProfile(isOwn);
         
-        console.log('Profile ownership check:', {
+            console.log('Profile ownership check:', {
           profileId: data.user.id,
-          profileUsername: data.user.username,
+              profileUsername: data.user.username,
           currentUserId: user?.id,
           currentUsername: user?.username,
           isOwnProfile: isOwn
