@@ -24,7 +24,8 @@ export class EmailService {
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'; // Google Workspace uses Gmail SMTP
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
     const smtpUser = process.env.SMTP_USER || 'verify@kingdice.com';
-    const smtpPass = process.env.SMTP_PASS;
+    // Remove spaces from app password (Google displays them with spaces but they should be entered without)
+    const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : undefined;
     
     // Business email address for sending verification emails
     this.fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.com';

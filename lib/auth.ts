@@ -530,10 +530,21 @@ export async function registerUser(username: string, email: string, password: st
       expiresAt
     });
 
+    // Generate CUID for verification code ID (same format as user ID)
+    const generateCuid = () => {
+      const timestamp = Date.now().toString(36);
+      const counter = Math.floor(Math.random() * 36).toString(36);
+      const fingerprint = Math.floor(Math.random() * 36).toString(36);
+      const random = Math.random().toString(36).substring(2, 15);
+      return `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+    };
+    const codeId = generateCuid();
+
     // Save verification code to database
     const { error: codeError } = await supabaseAdmin
       .from('two_factor_codes')
       .insert({
+        id: codeId,
         userId: newUser.id,
         code: verificationCode,
         expiresAt: expiresAt,
