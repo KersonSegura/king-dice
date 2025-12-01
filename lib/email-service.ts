@@ -25,7 +25,8 @@ export class EmailService {
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
     const smtpUser = process.env.SMTP_USER || 'verify@kingdice.com';
     // Remove spaces from app password (Google displays them with spaces but they should be entered without)
-    const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : undefined;
+    const rawPassword = process.env.SMTP_PASS || '';
+    const smtpPass = rawPassword ? rawPassword.replace(/\s+/g, '') : undefined;
     
     // Business email address for sending verification emails
     this.fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.com';
@@ -40,6 +41,17 @@ export class EmailService {
       console.log('📧 For Google Workspace, use an App Password (not your regular password)');
       console.log('📧 Emails will be saved to data/emails/ directory');
     } else {
+      // Log password info for debugging (without exposing the actual password)
+      const passwordLength = smtpPass ? smtpPass.length : 0;
+      const hadSpaces = rawPassword !== smtpPass;
+      console.log('📧 Email Service: SMTP Password Info:', {
+        originalLength: rawPassword.length,
+        processedLength: passwordLength,
+        hadSpaces: hadSpaces,
+        firstChar: smtpPass ? smtpPass[0] : 'N/A',
+        lastChar: smtpPass ? smtpPass[passwordLength - 1] : 'N/A'
+      });
+
       // Production mode: configure real SMTP transporter
       this.transporter = nodemailer.createTransport({
         host: smtpHost,
@@ -59,7 +71,8 @@ export class EmailService {
         host: smtpHost,
         port: smtpPort,
         user: smtpUser,
-        from: this.fromEmail
+        from: this.fromEmail,
+        passwordLength: passwordLength
       });
     }
   }
@@ -129,8 +142,25 @@ export class EmailService {
         });
         return true;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error sending email:', error);
+      
+      // Provide more helpful error messages
+      if (error.code === 'EAUTH' || error.responseCode === 535) {
+        console.error('❌ SMTP Authentication Failed!');
+        console.error('❌ This usually means:');
+        console.error('   1. The app password is incorrect or has spaces');
+        console.error('   2. The app password was generated for a different app');
+        console.error('   3. 2-Step Verification is not enabled on the Google account');
+        console.error('   4. The app password needs to be regenerated');
+        console.error('❌ To fix:');
+        console.error('   1. Go to https://myaccount.google.com/apppasswords');
+        console.error('   2. Generate a new app password for "Mail"');
+        console.error('   3. Copy the 16-character password (without spaces)');
+        console.error('   4. Update SMTP_PASS in Vercel environment variables');
+        console.error('   5. Redeploy the application');
+      }
+      
       return false;
     }
   }
