@@ -109,8 +109,8 @@ function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
       avatar: authorData.avatar ?? null,
       reputation: authorData.xp ?? 0,
       title: authorData.title ?? null,
-      isVerified: authorData.isVerified ?? authorData.is_verified ?? false,
-      isAdmin: authorData.isAdmin ?? authorData.is_admin ?? false
+      isVerified: authorData.isVerified ?? false,
+      isAdmin: authorData.isAdmin ?? false
     },
     createdAt: typeof createdAt === 'string' ? createdAt : new Date(createdAt).toISOString(),
     votes: parseVotes(row.votes),
@@ -259,7 +259,7 @@ export async function GET(request: NextRequest) {
         const { data: authors, error: authorError } = await executeSupabaseQuery(
           () => supabaseAdmin
             .from('users')
-            .select('id, username, avatar, xp, title, isVerified, is_verified, isAdmin, is_admin')
+            .select('id, username, avatar, xp, title, isVerified, isAdmin')
             .in('id', authorIds as string[]),
           { maxRetries: 2, baseDelay: 400, timeout: 15000 }
         );
@@ -271,8 +271,8 @@ export async function GET(request: NextRequest) {
             const normalizedAuthor = {
               ...author,
               username: author.username || null,
-              isVerified: author.isVerified ?? author.is_verified ?? false,
-              isAdmin: author.isAdmin ?? author.is_admin ?? false,
+              isVerified: author.isVerified ?? false,
+              isAdmin: author.isAdmin ?? false,
               xp: author.xp ?? 0
             };
             return [author.id, normalizedAuthor];
@@ -426,7 +426,7 @@ export async function POST(request: NextRequest) {
     try {
       const { data: authors, error: authorError } = await supabaseAdmin
         .from('users')
-        .select('id, username, avatar, xp, title, isVerified, is_verified, isAdmin, is_admin')
+        .select('id, username, avatar, xp, title, isVerified, isAdmin')
         .in('id', authorIds);
       if (authorError) {
         console.error('Error fetching author for gallery insert:', authorError);
@@ -434,8 +434,8 @@ export async function POST(request: NextRequest) {
         authorMap = new Map(authors.map(author => [author.id, {
           ...author,
           username: author.username || null,
-          isVerified: author.isVerified ?? author.is_verified ?? false,
-          isAdmin: author.isAdmin ?? author.is_admin ?? false,
+          isVerified: author.isVerified ?? false,
+          isAdmin: author.isAdmin ?? false,
           xp: author.xp ?? 0
         }]));
       }
