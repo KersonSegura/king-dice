@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getUserFromToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
 
 export async function DELETE(request: NextRequest) {
   try {
     // Get authentication token from cookies
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    const token = request.cookies.get('auth_token')?.value;
 
     if (!token) {
       return NextResponse.json(

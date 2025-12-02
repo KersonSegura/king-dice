@@ -7,6 +7,7 @@ import { Settings, User, Lock, Bell, ArrowLeft, Save, X, CheckCircle, Shield } f
 import Link from 'next/link';
 import Image from 'next/image';
 import PrivacySettings from '@/components/PrivacySettings';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 
 export default function SettingsPage() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -29,6 +30,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [showDeleteConfirm1, setShowDeleteConfirm1] = useState(false);
+  const [showDeleteConfirm2, setShowDeleteConfirm2] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -185,16 +188,23 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      return;
-    }
-    
-    if (!confirm('This will permanently delete all your data. Are you absolutely sure?')) {
-      return;
-    }
-    
+  const handleDeleteAccount = () => {
+    // Show first confirmation
+    setShowDeleteConfirm1(true);
+  };
+
+  const handleFirstConfirm = () => {
+    setShowDeleteConfirm1(false);
+    // Show second confirmation after a brief delay
+    setTimeout(() => {
+      setShowDeleteConfirm2(true);
+    }, 100);
+  };
+
+  const handleFinalDelete = async () => {
+    setShowDeleteConfirm2(false);
     setLoading(true);
+    
     try {
       const response = await fetch('/api/users/delete-account', {
         method: 'DELETE',
@@ -502,6 +512,30 @@ export default function SettingsPage() {
           </button>
         </div>
       )}
+
+      {/* First Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteConfirm1}
+        onClose={() => setShowDeleteConfirm1(false)}
+        onConfirm={handleFirstConfirm}
+        title="Delete Account?"
+        message="Are you sure you want to delete your account? This action cannot be undone."
+        confirmText="Yes, Continue"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Second Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteConfirm2}
+        onClose={() => setShowDeleteConfirm2(false)}
+        onConfirm={handleFinalDelete}
+        title="Final Confirmation"
+        message="This will permanently delete all your data including posts, images, comments, and messages. Are you absolutely sure?"
+        confirmText="Yes, Delete My Account"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 } 
