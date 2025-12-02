@@ -221,10 +221,11 @@ function buildInsertPayload(useCamelCase: boolean, payload: {
 }
 
 function selectColumns(useCamelCase: boolean): string {
+  // Only select columns that exist in the database (matching upload route)
   if (useCamelCase) {
-    return 'id, title, description, imageUrl, thumbnailUrl, category, authorId, votes, comments, views, downloads, createdAt, updatedAt';
+    return 'id, title, description, imageUrl, thumbnailUrl, category, authorId, votes, comments, createdAt, updatedAt';
   }
-  return 'id, title, description, image_url, thumbnail_url, category, author_id, votes, comments, views, downloads, views_count, downloads_count, comments_count, created_at, updated_at';
+  return 'id, title, description, image_url, thumbnail_url, category, author_id, votes, comments, created_at, updated_at';
 }
 
 export async function GET(request: NextRequest) {
