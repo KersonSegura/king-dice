@@ -974,7 +974,12 @@ export default function UserProfilePage() {
 
   // Simple text color detection based on cover color brightness
   const isLightCover = () => {
-    const color = profileColors.cover;
+    const color = profileColors?.cover;
+    
+    // Safety check: if color is undefined or invalid, default to light
+    if (!color || typeof color !== 'string') {
+      return true; // Default to light color for safety
+    }
     
     // Convert hex to RGB
     const hex = color.replace('#', '');

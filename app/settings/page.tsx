@@ -225,8 +225,8 @@ export default function SettingsPage() {
           logout();
         }
         localStorage.clear();
-        window.location.href = '/';
-      }, 2000);
+        router.push('/');
+      }, 1500);
     } catch (error: any) {
       console.error('Error deleting account:', error);
       showNotificationToast(error.message || 'Failed to delete account');
