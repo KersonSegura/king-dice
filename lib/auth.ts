@@ -706,11 +706,11 @@ export async function getUserFromToken(token: string): Promise<AuthResult> {
 // Generate default avatar for new users
 async function generateDefaultAvatar(): Promise<string> {
   try {
-    // Default dice configuration: white background, white dice, 1-2-3 pattern, no accessories
+    // Default dice configuration: white background, white dice, black 1-2-3 pattern, no accessories
     const defaultConfig = {
       background: '/dice/Backgrounds/WhiteBackground.svg',
       dice: '/dice/Dice/WhiteDice.svg',
-      pattern: '/dice/Patterns/1-2-3.svg',
+      pattern: '/dice/Patterns/Black 1-2-3.svg',
       accessories: null,
       hat: null,
       item: null,
@@ -758,15 +758,36 @@ async function generateCompositeSvg(diceConfig: any): Promise<string> {
   
   // Helper function to load SVG content and make IDs unique
   const loadSvgContent = async (svgPath: string, layerPrefix: string): Promise<string> => {
+    if (!svgPath) return '';
+    
     try {
-      const fullPath = path.join(process.cwd(), 'public', svgPath);
-      const content = await fs.readFile(fullPath, 'utf8');
+      // Convert SVG path to file path, handling URL encoding
+      const relativePath = svgPath.replace('/dice/', '');
+      // Decode URL-encoded path components
+      const decodedPath = decodeURIComponent(relativePath);
+      const fullPath = path.join(process.cwd(), 'public', 'dice', decodedPath);
       
-      // Make IDs unique by prefixing with layer prefix
-      let processedContent = content.replace(/id="([^"]+)"/g, `id="${layerPrefix}-$1"`);
-      processedContent = processedContent.replace(/#([^"'\s>]+)/g, `#${layerPrefix}-$1`);
+      // Load the SVG file
+      const svgContent = await fs.readFile(fullPath, 'utf-8');
       
-      return processedContent;
+      // Extract the content between <svg> tags (remove the outer svg wrapper)
+      const svgMatch = svgContent.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
+      if (svgMatch && svgMatch[1]) {
+        let content = svgMatch[1].trim();
+        
+        // Make all IDs unique by adding layer prefix
+        content = content.replace(/id="([^"]+)"/g, `id="${layerPrefix}-$1"`);
+        content = content.replace(/url\(#([^)]+)\)/g, `url(#${layerPrefix}-$1)`);
+        content = content.replace(/xlink:href="#([^"]+)"/g, `xlink:href="#${layerPrefix}-$1"`);
+        
+        // Make CSS classes unique by adding layer prefix
+        content = content.replace(/\.cls-(\d+)/g, `.${layerPrefix}-cls-$1`);
+        content = content.replace(/class="cls-(\d+)"/g, `class="${layerPrefix}-cls-$1"`);
+        
+        return content;
+      }
+      
+      return '';
     } catch (error) {
       console.error(`Error loading SVG ${svgPath}:`, error);
       return '';
