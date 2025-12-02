@@ -107,7 +107,7 @@ function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
       id: authorId,
       name: authorName,
       avatar: authorData.avatar ?? null,
-      reputation: authorData.xp ?? authorData.reputation ?? 0,
+      reputation: authorData.xp ?? 0,
       title: authorData.title ?? null,
       isVerified: authorData.isVerified ?? authorData.is_verified ?? false,
       isAdmin: authorData.isAdmin ?? authorData.is_admin ?? false
@@ -259,7 +259,7 @@ export async function GET(request: NextRequest) {
         const { data: authors, error: authorError } = await executeSupabaseQuery(
           () => supabaseAdmin
             .from('users')
-            .select('id, username, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
+            .select('id, username, avatar, xp, title, isVerified, is_verified, isAdmin, is_admin')
             .in('id', authorIds as string[]),
           { maxRetries: 2, baseDelay: 400, timeout: 15000 }
         );
@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
               username: author.username || null,
               isVerified: author.isVerified ?? author.is_verified ?? false,
               isAdmin: author.isAdmin ?? author.is_admin ?? false,
-              xp: author.xp ?? author.reputation ?? 0
+              xp: author.xp ?? 0
             };
             return [author.id, normalizedAuthor];
           }));
@@ -426,7 +426,7 @@ export async function POST(request: NextRequest) {
     try {
       const { data: authors, error: authorError } = await supabaseAdmin
         .from('users')
-        .select('id, username, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
+        .select('id, username, avatar, xp, title, isVerified, is_verified, isAdmin, is_admin')
         .in('id', authorIds);
       if (authorError) {
         console.error('Error fetching author for gallery insert:', authorError);
@@ -436,7 +436,7 @@ export async function POST(request: NextRequest) {
           username: author.username || null,
           isVerified: author.isVerified ?? author.is_verified ?? false,
           isAdmin: author.isAdmin ?? author.is_admin ?? false,
-          xp: author.xp ?? author.reputation ?? 0
+          xp: author.xp ?? 0
         }]));
       }
     } catch (error) {
