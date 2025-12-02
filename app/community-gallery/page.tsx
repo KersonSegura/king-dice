@@ -1318,13 +1318,13 @@ function CommunityGalleryPageContent() {
                 className={`${viewMode === 'explore' ? 'bg-white overflow-hidden transition-shadow cursor-pointer group' : 'bg-white rounded-lg overflow-hidden transition-shadow cursor-pointer group'} ${featuredIds.has(image.id) ? 'border-2 border-[#fbae17] shadow-lg' : viewMode === 'explore' ? '' : 'shadow-sm border border-gray-200 hover:shadow-md'}`}
                 onClick={() => handleImageClick(image)}
               >
-                <div className="relative aspect-square">
+                <div className="relative aspect-square bg-white">
                   {displayUrl && displayUrl.includes('/gallery/') ? (
                     <div 
                       className="w-full h-full group-hover:opacity-90 transition-opacity"
                       style={{
                         backgroundImage: `url(${displayUrl})`,
-                        backgroundSize: 'contain',
+                        backgroundSize: '100% 100%',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat'
                       }}

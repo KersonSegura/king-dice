@@ -403,7 +403,7 @@ export default function ImageModal({
           </div>
 
           {/* Image - Full Width */}
-          <div className="flex-1 bg-gray-100 flex items-center justify-center relative group">
+          <div className="flex-1 bg-gray-100 flex items-center justify-center relative group aspect-square">
             {/* Navigation Arrows */}
             {onNavigate && allImages.length > 1 && (
               <>
@@ -631,7 +631,7 @@ export default function ImageModal({
         {/* Desktop Layout - Facebook Style */}
         <div className="hidden sm:flex w-full">
         {/* Left Side - Image */}
-        <div className="flex-1 bg-gray-100 flex items-center justify-center relative group">
+        <div className="flex-1 bg-gray-100 flex items-center justify-center relative group min-h-[500px]">
           {/* Navigation Arrows */}
           {onNavigate && allImages.length > 1 && (
             <>
@@ -660,7 +660,7 @@ export default function ImageModal({
           <img
             src={imageUrl}
             alt={alt || title || 'Gallery image'}
-            className="max-w-full max-h-full object-contain"
+            className="w-full h-full object-contain"
           />
         </div>
 
