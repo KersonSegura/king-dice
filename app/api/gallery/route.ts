@@ -89,8 +89,6 @@ function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
   let authorName = 'Unknown User';
   if (authorData.username) {
     authorName = authorData.username;
-  } else if (authorData.name) {
-    authorName = authorData.name;
   } else if (authorId) {
     // Only use User ID as fallback if we have an ID but no user data
     // This should rarely happen if the query is working correctly
@@ -261,7 +259,7 @@ export async function GET(request: NextRequest) {
         const { data: authors, error: authorError } = await executeSupabaseQuery(
           () => supabaseAdmin
             .from('users')
-            .select('id, username, name, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
+            .select('id, username, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
             .in('id', authorIds as string[]),
           { maxRetries: 2, baseDelay: 400, timeout: 15000 }
         );
@@ -272,7 +270,7 @@ export async function GET(request: NextRequest) {
           authorMap = new Map(authors.map(author => {
             const normalizedAuthor = {
               ...author,
-              username: author.username || author.name || null,
+              username: author.username || null,
               isVerified: author.isVerified ?? author.is_verified ?? false,
               isAdmin: author.isAdmin ?? author.is_admin ?? false,
               xp: author.xp ?? author.reputation ?? 0
@@ -428,14 +426,14 @@ export async function POST(request: NextRequest) {
     try {
       const { data: authors, error: authorError } = await supabaseAdmin
         .from('users')
-        .select('id, username, name, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
+        .select('id, username, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
         .in('id', authorIds);
       if (authorError) {
         console.error('Error fetching author for gallery insert:', authorError);
       } else if (authors) {
         authorMap = new Map(authors.map(author => [author.id, {
           ...author,
-          username: author.username || author.name || null,
+          username: author.username || null,
           isVerified: author.isVerified ?? author.is_verified ?? false,
           isAdmin: author.isAdmin ?? author.is_admin ?? false,
           xp: author.xp ?? author.reputation ?? 0
