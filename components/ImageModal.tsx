@@ -429,11 +429,17 @@ export default function ImageModal({
               </>
             )}
             
-            <img
-              src={imageUrl}
-              alt={alt || title || 'Gallery image'}
-              className="w-full h-full object-contain"
-            />
+          <img
+            src={imageUrl}
+            alt={alt || title || 'Gallery image'}
+            className="w-full h-full"
+            style={{ 
+              objectFit: 'contain',
+              width: '100%',
+              height: '100%',
+              display: 'block'
+            }}
+          />
           </div>
 
           {/* Actions and Comments - Below Image */}
@@ -631,7 +637,7 @@ export default function ImageModal({
         {/* Desktop Layout - Facebook Style */}
         <div className="hidden sm:flex w-full">
         {/* Left Side - Image */}
-        <div className="flex-1 bg-gray-100 flex items-center justify-center relative group min-h-[500px]">
+        <div className="flex-1 bg-gray-100 flex items-center justify-center relative group min-h-[500px] aspect-square max-w-[576px]">
           {/* Navigation Arrows */}
           {onNavigate && allImages.length > 1 && (
             <>
@@ -661,6 +667,7 @@ export default function ImageModal({
             src={imageUrl}
             alt={alt || title || 'Gallery image'}
             className="w-full h-full object-contain"
+            style={{ minWidth: '100%', minHeight: '100%' }}
           />
         </div>
 
