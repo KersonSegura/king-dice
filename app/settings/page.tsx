@@ -9,7 +9,7 @@ import Image from 'next/image';
 import PrivacySettings from '@/components/PrivacySettings';
 
 export default function SettingsPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -196,11 +196,30 @@ export default function SettingsPage() {
     
     setLoading(true);
     try {
-      // In a real application, this would call a delete account API
-      showNotificationToast('Account deletion requested. This feature is not yet implemented.');
-    } catch (error) {
+      const response = await fetch('/api/users/delete-account', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      showNotificationToast('Account deleted successfully. Redirecting...');
+      
+      // Logout and clear local storage, then redirect to home
+      setTimeout(() => {
+        if (logout) {
+          logout();
+        }
+        localStorage.clear();
+        window.location.href = '/';
+      }, 2000);
+    } catch (error: any) {
       console.error('Error deleting account:', error);
-      showNotificationToast('Failed to delete account');
+      showNotificationToast(error.message || 'Failed to delete account');
     } finally {
       setLoading(false);
     }
