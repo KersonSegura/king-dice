@@ -906,7 +906,7 @@ async function generateCompositeSvg(diceConfig: any): Promise<string> {
   const defsSection = Array.from(allDefs).join('\n');
   const layersSection = layers.join('\n');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000">
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512" viewBox="0 0 512 512">
   <defs>
     ${defsSection}
   </defs>
