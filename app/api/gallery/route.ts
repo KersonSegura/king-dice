@@ -189,14 +189,13 @@ function buildInsertPayload(useCamelCase: boolean, payload: {
   authorId: string;
   now: string;
 }): Record<string, any> {
+  // Don't include 'views' or 'downloads' if they don't exist - let database defaults handle it
   const base = {
     id: payload.id,
     title: payload.title,
     description: payload.description,
     votes: JSON.stringify({ upvotes: 0, downvotes: 0 }),
     comments: 0,
-    views: 0,
-    downloads: 0,
     category: payload.category
   };
 
