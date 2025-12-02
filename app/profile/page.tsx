@@ -1506,6 +1506,43 @@ export default function ProfilePage() {
     return luminance > 0.5;
   };
 
+  // Darken a color for better readability on light backgrounds
+  const darkenColor = (color: string, amount: number = 0.4): string => {
+    if (!color || typeof color !== 'string') {
+      return '#000000'; // Default to black if invalid
+    }
+    
+    // Convert hex to RGB
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Darken by reducing each RGB component
+    const darkenedR = Math.max(0, Math.floor(r * (1 - amount)));
+    const darkenedG = Math.max(0, Math.floor(g * (1 - amount)));
+    const darkenedB = Math.max(0, Math.floor(b * (1 - amount)));
+    
+    // Convert back to hex
+    const toHex = (n: number) => {
+      const hex = n.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    
+    return `#${toHex(darkenedR)}${toHex(darkenedG)}${toHex(darkenedB)}`;
+  };
+
+  // Get readable text color for buttons and tags
+  const getReadableTextColor = (): string => {
+    const isLight = isLightCover();
+    if (isLight) {
+      // Use darker version of the cover color for better readability
+      return darkenColor(profileColors.cover, 0.5);
+    }
+    // For dark covers, use white text
+    return '#ffffff';
+  };
+
   // Text color classes based on theme
   const getTextColorClass = (isCover = false) => {
     if (isCover) {
@@ -1679,7 +1716,14 @@ export default function ProfilePage() {
                   <div className="flex flex-wrap gap-2">
                     {formData.favoriteGames.length > 0 ? (
                       formData.favoriteGames.map((category, index) => (
-                        <span key={index} className="px-3 py-1 bg-[#fbae17]/10 text-[#fbae17] rounded-full text-sm font-medium">
+                        <span 
+                          key={index} 
+                          className="px-3 py-1 rounded-full text-sm font-medium"
+                          style={{ 
+                            backgroundColor: `${profileColors.cover}1A`, // 10% opacity
+                            color: isLightCover() ? darkenColor(profileColors.cover, 0.5) : profileColors.cover
+                          }}
+                        >
                           {category}
                         </span>
                       ))
