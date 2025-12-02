@@ -369,7 +369,7 @@ export async function POST(request: NextRequest) {
 
     const payload = {
       id,
-      title: title || (category === 'collections' ? 'Collection Photo' : 'Gallery Image'),
+      title: title || (category === 'collections' ? 'Collection Photo' : category === 'the-kings-card' ? "The King's Card" : 'Gallery Image'),
       description: description || '',
       imageUrl,
       thumbnailUrl: imageUrl,

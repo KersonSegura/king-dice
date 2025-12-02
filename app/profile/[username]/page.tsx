@@ -706,7 +706,7 @@ export default function UserProfilePage() {
           } : null);
           
           // Post to gallery with custom description
-          await fetch('/api/gallery', {
+          const galleryPostResponse = await fetch('/api/gallery', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -716,6 +716,14 @@ export default function UserProfilePage() {
               authorId: userProfile.id
             })
           });
+
+          if (!galleryPostResponse.ok) {
+            const errorData = await galleryPostResponse.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('Failed to post to gallery:', errorData);
+            // Don't fail the upload, but log the error
+          } else {
+            console.log('✅ Successfully posted to gallery with category:', category);
+          }
 
           // Refresh user images
           const galleryResponse = await fetch(`/api/gallery?author=${userProfile.id}`);
