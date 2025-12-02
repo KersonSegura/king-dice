@@ -706,6 +706,13 @@ export default function UserProfilePage() {
           } : null);
           
           // Post to gallery with custom description
+          console.log('📤 Posting to gallery:', {
+            imageUrl: url,
+            category: category,
+            description: description || (isCollectionPhoto ? 'Collection photo' : 'Favorite card'),
+            authorId: userProfile.id
+          });
+          
           const galleryPostResponse = await fetch('/api/gallery', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -719,10 +726,19 @@ export default function UserProfilePage() {
 
           if (!galleryPostResponse.ok) {
             const errorData = await galleryPostResponse.json().catch(() => ({ error: 'Unknown error' }));
-            console.error('Failed to post to gallery:', errorData);
-            // Don't fail the upload, but log the error
+            console.error('❌ Failed to post to gallery:', {
+              status: galleryPostResponse.status,
+              statusText: galleryPostResponse.statusText,
+              error: errorData
+            });
+            showToast(`Failed to post to gallery: ${errorData.error || 'Unknown error'}`, 'error');
           } else {
-            console.log('✅ Successfully posted to gallery with category:', category);
+            const responseData = await galleryPostResponse.json().catch(() => null);
+            console.log('✅ Successfully posted to gallery:', {
+              category: category,
+              imageId: responseData?.image?.id,
+              response: responseData
+            });
           }
 
           // Refresh user images
@@ -1076,7 +1092,17 @@ export default function UserProfilePage() {
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat'
                 }}
-                onClick={() => setShowImageModal(true)}
+                onClick={() => {
+                  setSelectedImage({
+                    url: userProfile.avatar,
+                    title: `${userProfile.username}'s Avatar`,
+                    author: {
+                      name: userProfile.username,
+                      avatar: userProfile.avatar
+                    }
+                  });
+                  setShowImageModal(true);
+                }}
                 title="Click to view full size"
               />
             </div>

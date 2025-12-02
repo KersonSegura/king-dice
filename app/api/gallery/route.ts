@@ -359,7 +359,10 @@ export async function POST(request: NextRequest) {
   try {
     const { imageUrl, category, description, authorId, title } = await request.json();
 
+    console.log('📥 Gallery POST request:', { imageUrl, category, description, authorId, title });
+
     if (!imageUrl || !category || !description || !authorId) {
+      console.error('❌ Missing required fields:', { imageUrl: !!imageUrl, category: !!category, description: !!description, authorId: !!authorId });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -417,9 +420,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (!insertedRow || insertError) {
-      console.error('Error inserting gallery image:', insertError);
-      return NextResponse.json({ error: 'Failed to create gallery image' }, { status: 500 });
+      console.error('❌ Error inserting gallery image:', {
+        error: insertError,
+        category,
+        authorId,
+        imageUrl: imageUrl.substring(0, 50) + '...'
+      });
+      return NextResponse.json({ error: 'Failed to create gallery image', details: insertError?.message }, { status: 500 });
     }
+
+    console.log('✅ Gallery image created successfully:', {
+      id: insertedRow.id,
+      category,
+      authorId,
+      title: insertedRow.title || insertedRow.title
+    });
 
     const authorIds = [authorId];
     let authorMap = new Map<string, any>();

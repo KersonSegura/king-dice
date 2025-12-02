@@ -1568,7 +1568,17 @@ export default function ProfilePage() {
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat'
                 }}
-                onClick={!isEditing ? () => setShowImageModal(true) : undefined}
+                onClick={!isEditing ? () => {
+                  setSelectedImage({
+                    url: getUserDiceAvatar(),
+                    title: `${user?.username}'s Avatar`,
+                    author: user ? {
+                      name: user.username,
+                      avatar: user.avatar || '/DefaultDiceAvatar.svg'
+                    } : undefined
+                  });
+                  setShowImageModal(true);
+                } : undefined}
                 title={isEditing ? "Edit mode - viewing disabled" : "Click to view full size"}
               />
             </div>
