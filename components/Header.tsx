@@ -202,16 +202,15 @@ export default function Header() {
                 <>
                   {/* Avatar Button with notification badge */}
                   <div className="relative" onClick={() => setIsUserMenuOpen(v => !v)}>
-                    <div
-                      className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer"
-                      style={{
-                        backgroundColor: '#ffffff',
-                        backgroundImage: `url(${user?.avatar || '/DefaultDiceAvatar.svg'})`,
-                        backgroundSize: 'contain',
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat'
-                      }}
-                    />
+                    <div className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer flex items-center justify-center bg-white">
+                      <Image
+                        src={user?.avatar || '/DefaultDiceAvatar.svg'}
+                        alt={user?.username || 'User avatar'}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                     {!isUserMenuOpen && notifUnread > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-4 px-1.5 rounded-full min-w-[16px] text-center">
                         {notifUnread > 99 ? '99+' : notifUnread}
@@ -267,16 +266,15 @@ export default function Header() {
                           {/* User Info Section */}
                           <div className="px-6 py-4 border-b border-gray-100">
                             <div className="flex items-center space-x-3">
-                              <div 
-                                className="w-16 h-16 rounded-full border-2 border-black overflow-hidden"
-                                style={{
-                                  backgroundColor: '#ffffff',
-                                  backgroundImage: `url(${user?.avatar || '/DefaultDiceAvatar.svg'})`,
-                                  backgroundSize: 'contain',
-                                  backgroundPosition: 'center',
-                                  backgroundRepeat: 'no-repeat'
-                                }}
-                              />
+                              <div className="w-16 h-16 rounded-full border-2 border-black overflow-hidden flex items-center justify-center bg-white">
+                                <Image
+                                  src={user?.avatar || '/DefaultDiceAvatar.svg'}
+                                  alt={user?.username || 'User avatar'}
+                                  width={64}
+                                  height={64}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
                               <div className="flex-1 min-w-0 space-y-1">
                                 <p className="text-sm font-semibold text-gray-900 truncate">{user?.username}</p>
                                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
