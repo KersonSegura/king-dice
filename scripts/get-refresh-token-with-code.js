@@ -7,9 +7,17 @@
 
 const { google } = require('googleapis');
 
-const CLIENT_ID = '404642348674-7138cc5c375r881cbmtg2gpu465pccao.apps.googleusercontent.com';
-const CLIENT_SECRET = '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';
-const REDIRECT_URI = 'https://kingdice.gg/api/auth/google/callback';
+// IMPORTANT: Set these as environment variables or edit this file with your credentials
+// DO NOT commit real credentials to Git!
+const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID || 'YOUR_CLIENT_ID_HERE';
+const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET || 'YOUR_CLIENT_SECRET_HERE';
+const REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || 'https://kingdice.gg/api/auth/google/callback';
+
+if (!CLIENT_ID || !CLIENT_SECRET || CLIENT_ID === 'YOUR_CLIENT_ID_HERE' || CLIENT_SECRET === 'YOUR_CLIENT_SECRET_HERE') {
+  console.error('❌ Please set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET environment variables');
+  console.error('   Example: GOOGLE_OAUTH_CLIENT_ID=xxx GOOGLE_OAUTH_CLIENT_SECRET=yyy node scripts/get-refresh-token-with-code.js "CODE"');
+  process.exit(1);
+}
 
 // Get authorization code from command line argument
 const authCode = process.argv[2];

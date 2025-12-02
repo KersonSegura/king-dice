@@ -1,0 +1,5 @@
+[33m7119bf1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Use Gmail API directly for OAuth 2.0 email sending
+[33m5da2aab[m[33m ([m[1;31morigin/main[m[33m)[m Use Gmail API directly for OAuth 2.0 instead of SMTP
+[33md17b9e4[m Simplify OAuth 2.0 config - let nodemailer handle token refresh automatically
+[33mb53c906[m Fix OAuth 2.0 configuration for nodemailer - include clientId and clientSecret
+[33mac4b8fe[m Implement OAuth 2.0 support for Gmail email sending

@@ -38,3 +38,6 @@ next-env.d.ts
 
 # Uploads (user-generated content)
 public/uploads/
+
+# OAuth credentials (never commit these!)
+OAUTH2_CREDENTIALS.md
