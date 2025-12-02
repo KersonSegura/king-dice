@@ -72,6 +72,11 @@ function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
   const authorId = row.authorId ?? row.author_id ?? row.userId ?? row.user_id ?? null;
   const authorData = authorMap.get(authorId || '') || {};
 
+  // Log if author data is missing (for debugging)
+  if (authorId && !authorData.username && !authorData.name) {
+    console.warn(`⚠️ Author data not found for ID: ${authorId}`);
+  }
+
   const createdAt = row.createdAt ?? row.created_at ?? new Date().toISOString();
   const updatedAt = row.updatedAt ?? row.updated_at ?? createdAt;
 
@@ -79,6 +84,19 @@ function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
   const thumbnailUrl = row.thumbnailUrl ?? row.thumbnail_url ?? imageUrl;
   const category = row.category ?? 'uncategorized';
   const title = row.title ?? (category === 'collections' ? 'Collection Photo' : 'Gallery Image');
+
+  // Determine author name with better fallback logic
+  let authorName = 'Unknown User';
+  if (authorData.username) {
+    authorName = authorData.username;
+  } else if (authorData.name) {
+    authorName = authorData.name;
+  } else if (authorId) {
+    // Only use User ID as fallback if we have an ID but no user data
+    // This should rarely happen if the query is working correctly
+    authorName = `User ${authorId.substring(0, 8)}`;
+    console.warn(`⚠️ Using fallback name for author ID: ${authorId}`);
+  }
 
   return {
     id: row.id,
@@ -89,7 +107,7 @@ function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
     category,
     author: {
       id: authorId,
-      name: authorData.username || authorData.name || (authorId ? `User ${authorId.substring(0, 8)}` : 'Unknown User'),
+      name: authorName,
       avatar: authorData.avatar ?? null,
       reputation: authorData.xp ?? authorData.reputation ?? 0,
       title: authorData.title ?? null,
@@ -239,6 +257,7 @@ export async function GET(request: NextRequest) {
     let authorMap = new Map<string, any>();
     if (authorIds.length > 0) {
       try {
+        console.log(`🔍 Fetching author data for ${authorIds.length} unique author IDs`);
         const { data: authors, error: authorError } = await executeSupabaseQuery(
           () => supabaseAdmin
             .from('users')
@@ -247,18 +266,31 @@ export async function GET(request: NextRequest) {
           { maxRetries: 2, baseDelay: 400, timeout: 15000 }
         );
         if (authorError) {
-          console.error('Error fetching gallery authors:', authorError);
+          console.error('❌ Error fetching gallery authors:', authorError);
         } else if (authors) {
-          authorMap = new Map(authors.map(author => [author.id, {
-            ...author,
-            username: author.username || author.name || null,
-            isVerified: author.isVerified ?? author.is_verified ?? false,
-            isAdmin: author.isAdmin ?? author.is_admin ?? false,
-            xp: author.xp ?? author.reputation ?? 0
-          }]));
+          console.log(`✅ Found ${authors.length} authors out of ${authorIds.length} requested`);
+          authorMap = new Map(authors.map(author => {
+            const normalizedAuthor = {
+              ...author,
+              username: author.username || author.name || null,
+              isVerified: author.isVerified ?? author.is_verified ?? false,
+              isAdmin: author.isAdmin ?? author.is_admin ?? false,
+              xp: author.xp ?? author.reputation ?? 0
+            };
+            return [author.id, normalizedAuthor];
+          }));
+          
+          // Log missing authors
+          const foundIds = new Set(authors.map(a => a.id));
+          const missingIds = authorIds.filter(id => !foundIds.has(id));
+          if (missingIds.length > 0) {
+            console.warn(`⚠️ Missing author data for ${missingIds.length} IDs:`, missingIds.slice(0, 5));
+          }
+        } else {
+          console.warn('⚠️ No authors returned from query');
         }
       } catch (error) {
-        console.error('Unexpected error fetching gallery authors:', error);
+        console.error('❌ Unexpected error fetching gallery authors:', error);
       }
     }
 
