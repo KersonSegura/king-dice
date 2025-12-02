@@ -89,7 +89,7 @@ function mapGalleryRow(row: GalleryRow, authorMap: Map<string, any>) {
     category,
     author: {
       id: authorId,
-      name: authorData.username || authorData.name || 'Unknown',
+      name: authorData.username || authorData.name || (authorId ? `User ${authorId.substring(0, 8)}` : 'Unknown User'),
       avatar: authorData.avatar ?? null,
       reputation: authorData.xp ?? authorData.reputation ?? 0,
       title: authorData.title ?? null,
@@ -242,14 +242,20 @@ export async function GET(request: NextRequest) {
         const { data: authors, error: authorError } = await executeSupabaseQuery(
           () => supabaseAdmin
             .from('users')
-            .select('id, username, avatar, xp, title, isVerified, isAdmin')
+            .select('id, username, name, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
             .in('id', authorIds as string[]),
           { maxRetries: 2, baseDelay: 400, timeout: 15000 }
         );
         if (authorError) {
           console.error('Error fetching gallery authors:', authorError);
         } else if (authors) {
-          authorMap = new Map(authors.map(author => [author.id, author]));
+          authorMap = new Map(authors.map(author => [author.id, {
+            ...author,
+            username: author.username || author.name || null,
+            isVerified: author.isVerified ?? author.is_verified ?? false,
+            isAdmin: author.isAdmin ?? author.is_admin ?? false,
+            xp: author.xp ?? author.reputation ?? 0
+          }]));
         }
       } catch (error) {
         console.error('Unexpected error fetching gallery authors:', error);
@@ -388,12 +394,20 @@ export async function POST(request: NextRequest) {
     const authorIds = [authorId];
     let authorMap = new Map<string, any>();
     try {
-      const { data: authors } = await supabaseAdmin
+      const { data: authors, error: authorError } = await supabaseAdmin
         .from('users')
-        .select('id, username, avatar, xp, title, isVerified, isAdmin')
+        .select('id, username, name, avatar, xp, reputation, title, isVerified, is_verified, isAdmin, is_admin')
         .in('id', authorIds);
-      if (authors) {
-        authorMap = new Map(authors.map(author => [author.id, author]));
+      if (authorError) {
+        console.error('Error fetching author for gallery insert:', authorError);
+      } else if (authors) {
+        authorMap = new Map(authors.map(author => [author.id, {
+          ...author,
+          username: author.username || author.name || null,
+          isVerified: author.isVerified ?? author.is_verified ?? false,
+          isAdmin: author.isAdmin ?? author.is_admin ?? false,
+          xp: author.xp ?? author.reputation ?? 0
+        }]));
       }
     } catch (error) {
       console.error('Error fetching author for gallery insert:', error);

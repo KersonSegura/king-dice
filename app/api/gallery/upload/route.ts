@@ -2,33 +2,52 @@ import { NextRequest, NextResponse } from 'next/server';
 import { moderateImage, moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
 import { uploadToStorage, STORAGE_BUCKETS, supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const authResult = await getUserFromToken(token);
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
+
     const formData = await request.formData();
     const file = formData.get('image') as File;
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
-    const authorString = formData.get('author') as string;
 
-    let author;
-    try {
-      author = JSON.parse(authorString);
-    } catch (e) {
-      console.error('Error parsing author:', e);
+    if (!file || !category) {
       return NextResponse.json(
-        { error: 'Invalid author data' },
+        { error: 'Image and category are required' },
         { status: 400 }
       );
     }
 
-    if (!file || !category || !author) {
-      return NextResponse.json(
-        { error: 'Image, category, and author are required' },
-        { status: 400 }
-      );
-    }
+    // Use authenticated user data instead of trusting frontend
+    const author = {
+      id: authenticatedUser.id,
+      name: authenticatedUser.username,
+      avatar: authenticatedUser.avatar || '/DefaultDiceAvatar.svg',
+      reputation: authenticatedUser.reputation || authenticatedUser.xp || 0
+    };
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
