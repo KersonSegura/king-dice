@@ -87,10 +87,12 @@ function buildInsertPayload(useCamel: boolean, payload: {
 }
 
 function selectColumns(useCamel: boolean) {
+  // Only select columns that exist in the database
   if (useCamel) {
     return 'id, title, content, category, authorId, votes, replies, createdAt, updatedAt';
   }
-  return 'id, title, content, category, author_id, votes, replies, replies_count, created_at, updated_at';
+  // Remove replies_count if it doesn't exist (similar to gallery issue)
+  return 'id, title, content, category, author_id, votes, replies, created_at, updated_at';
 }
 
 export async function GET(request: NextRequest) {
@@ -288,15 +290,46 @@ export async function POST(request: NextRequest) {
         .select(selectColumns(useCamel))
         .single();
 
+    console.log('Attempting to insert post with camelCase...');
     let insertResult = await runInsert(true);
-    if (insertResult.error && insertResult.error.code === '42703') {
-      insertResult = await runInsert(false);
+    if (insertResult.error) {
+      console.error('CamelCase insert error:', {
+        code: insertResult.error.code,
+        message: insertResult.error.message,
+        details: insertResult.error.details,
+        hint: insertResult.error.hint
+      });
+      if (insertResult.error.code === '42703') {
+        console.log('Retrying with snake_case...');
+        insertResult = await runInsert(false);
+        if (insertResult.error) {
+          console.error('Snake_case insert error:', {
+            code: insertResult.error.code,
+            message: insertResult.error.message,
+            details: insertResult.error.details,
+            hint: insertResult.error.hint
+          });
+        }
+      }
     }
 
     const { data: newPost, error: createError } = insertResult;
 
     if (createError || !newPost) {
-      throw new Error(`Failed to create post: ${createError?.message || 'Unknown error'}`);
+      console.error('❌ Failed to create post:', {
+        error: createError,
+        payload: payload,
+        camelPayload: camelPayload,
+        snakePayload: snakePayload
+      });
+      return NextResponse.json(
+        { 
+          error: 'Failed to create post',
+          details: createError?.message || 'Unknown error',
+          code: createError?.code
+        },
+        { status: 500 }
+      );
     }
 
     const formattedPost = mapPostRow(newPost, new Map([[author.id, {
