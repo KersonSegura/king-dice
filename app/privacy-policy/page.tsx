@@ -56,6 +56,7 @@ export default function PrivacyPolicyPage() {
                 <li>• Profile information you choose to share (bio, favorite games, avatar)</li>
                 <li>• Game collection photos and favorite cards (if uploaded)</li>
                 <li>• Privacy settings and profile customization preferences</li>
+                <li>• OAuth provider information (if you sign in with Google or Facebook): email, name, and profile picture</li>
               </ul>
             </div>
 
@@ -171,6 +172,46 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
+        {/* OAuth Providers */}
+        <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">OAuth Authentication (Google & Facebook)</h2>
+          
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              King Dice offers the option to sign in using your Google or Facebook account for convenience. 
+              When you choose this option:
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">What We Receive</h3>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Your email address</li>
+                  <li>• Your name (from your OAuth provider)</li>
+                  <li>• Your profile picture (optional)</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="font-semibold text-green-900 mb-2">What We Don't Access</h3>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• Your OAuth provider password</li>
+                  <li>• Your contacts or friends list</li>
+                  <li>• Any other data from your OAuth account</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-sm">
+                <strong>Important:</strong> Your OAuth provider (Google or Facebook) may collect information 
+                about your use of King Dice according to their own privacy policies. We recommend reviewing 
+                their privacy policies to understand how they handle your data.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Data Sharing */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Data Sharing and Third Parties</h2>
@@ -192,6 +233,7 @@ export default function PrivacyPolicyPage() {
               <h3 className="text-lg font-semibold text-gray-800 mb-3">Limited Sharing Scenarios</h3>
               <ul className="text-gray-600 space-y-2 ml-4">
                 <li>• <strong>Service Providers:</strong> Trusted partners who help operate King Dice (hosting, email delivery, analytics)</li>
+                <li>• <strong>OAuth Providers:</strong> When you sign in with Google or Facebook, we share authentication requests with these providers (as required for OAuth functionality)</li>
                 <li>• <strong>Legal Requirements:</strong> When required by law, court order, or to protect rights and safety</li>
                 <li>• <strong>Business Transfers:</strong> In the unlikely event of a merger or acquisition, with user notification</li>
                 <li>• <strong>Public Content:</strong> Information you choose to make public (posts, comments, gallery images)</li>
@@ -223,7 +265,10 @@ export default function PrivacyPolicyPage() {
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Deletion:</strong> Delete your account and associated data
+                    <strong>Deletion:</strong> Delete your account and associated data. 
+                    <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline ml-1">
+                      Learn how to delete your account
+                    </a>
                   </div>
                 </li>
                 <li className="flex items-start">
@@ -347,13 +392,25 @@ export default function PrivacyPolicyPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold text-gray-800 mb-2">Email</h3>
-                <p className="text-gray-600">privacy@kingdice.com</p>
+                <p className="text-gray-600">
+                  <a href="mailto:privacy@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
+                    privacy@kingdice.gg
+                  </a>
+                </p>
               </div>
               
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold text-gray-800 mb-2">Response Time</h3>
                 <p className="text-gray-600">We respond to privacy requests within 30 days</p>
               </div>
+            </div>
+            
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800">
+                <strong>Account Deletion:</strong> To request deletion of your account and data, 
+                please visit our <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline font-semibold">Data Deletion page</a> 
+                {' '}or email us at <a href="mailto:privacy@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">privacy@kingdice.gg</a>.
+              </p>
             </div>
           </div>
         </section>
