@@ -569,7 +569,21 @@ export default function MyDicePage() {
           // Load saved configuration first - this must happen after user is available
           const savedConfig = await loadSavedConfiguration();
           
-          // Helper function to pick assets with fallback
+          // Helper function to find specific default assets by name pattern
+          const findDefaultAsset = (tab: TabKey, patterns: string[]): string | null => {
+            const list = sorted[tab];
+            if (!list || list.length === 0) return null;
+            
+            // Look for an asset that matches all patterns (case-insensitive)
+            const found = list.find(asset => {
+              const assetName = asset.src.toLowerCase();
+              return patterns.every(pattern => assetName.includes(pattern.toLowerCase()));
+            });
+            
+            return found?.src ?? null;
+          };
+
+          // Helper function to pick first available asset as fallback
           const pick = (tab: TabKey, fallbackIndex = 0): string | null => {
             const list = sorted[tab];
             if (!list || list.length === 0) return null;
@@ -581,12 +595,31 @@ export default function MyDicePage() {
           console.log('📦 Sorted assets:', sorted);
           console.log('💾 Saved configuration loaded:', savedConfig);
 
-          // Use saved configuration if available, otherwise use defaults
-          // IMPORTANT: Prioritize saved config values - only use pick() as fallback if saved is null/undefined
+          // Determine if this is a new user (no saved config)
+          const isNewUser = !savedConfig.background && !savedConfig.dice;
+
+          // Helper to find Black 123 pattern (handles various naming formats)
+          const findBlack123Pattern = (): string | null => {
+            const list = sorted.pattern;
+            if (!list || list.length === 0) return null;
+            
+            // Look for Black 123 pattern - must contain "black" and either "1-2-3" or "123"
+            const found = list.find(asset => {
+              const assetName = asset.src.toLowerCase();
+              const hasBlack = assetName.includes("black");
+              const has123 = assetName.includes("1-2-3") || assetName.includes("123");
+              return hasBlack && has123;
+            });
+            
+            return found?.src ?? null;
+          };
+
+          // Use saved configuration if available, otherwise use specific defaults for new users
+          // IMPORTANT: Prioritize saved config values - only use defaults if saved is null/undefined
           let initialSelection = {
-            background: savedConfig.background ?? pick("background"),
-            dice: savedConfig.dice ?? pick("dice"),
-            pattern: savedConfig.pattern ?? null, // Use saved pattern, fallback to null
+            background: savedConfig.background ?? (isNewUser ? findDefaultAsset("background", ["white", "background"]) : pick("background")),
+            dice: savedConfig.dice ?? (isNewUser ? findDefaultAsset("dice", ["white", "dice"]) : pick("dice")),
+            pattern: savedConfig.pattern ?? (isNewUser ? findBlack123Pattern() : null),
             accessories: savedConfig.accessories ?? null,
             hat: savedConfig.hat ?? null,
             item: savedConfig.item ?? null,
