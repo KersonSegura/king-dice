@@ -5,15 +5,44 @@ import { supabaseAdmin } from './supabase';
 import { generateToken } from './auth';
 import { generateDefaultAvatar } from './auth';
 
+// Validate OAuth credentials
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const facebookClientId = process.env.FACEBOOK_CLIENT_ID;
+const facebookClientSecret = process.env.FACEBOOK_CLIENT_SECRET;
+
+if (!googleClientId || !googleClientSecret) {
+  console.warn('⚠️ Google OAuth credentials not configured. Google sign-in will not work.');
+}
+
+if (!facebookClientId || !facebookClientSecret) {
+  console.warn('⚠️ Facebook OAuth credentials not configured. Facebook sign-in will not work.');
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: googleClientId || '',
+      clientSecret: googleClientSecret || '',
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+        },
+      },
     }),
     FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID || '',
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
+      clientId: facebookClientId || '',
+      clientSecret: facebookClientSecret || '',
+      authorization: {
+        params: {
+          scope: 'email,public_profile',
+        },
+      },
+      httpOptions: {
+        timeout: 10000, // 10 seconds timeout for Facebook API calls
+      },
     }),
   ],
   callbacks: {
@@ -188,5 +217,19 @@ export const authOptions: NextAuthOptions = {
     maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   secret: process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET,
+  debug: process.env.NODE_ENV === 'development', // Enable debug logging in development
+  logger: {
+    error(code, metadata) {
+      console.error('❌ NextAuth error:', code, metadata);
+    },
+    warn(code) {
+      console.warn('⚠️ NextAuth warning:', code);
+    },
+    debug(code, metadata) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 NextAuth debug:', code, metadata);
+      }
+    },
+  },
 };
 
