@@ -299,7 +299,8 @@ export async function POST(request: NextRequest) {
         details: insertResult.error.details,
         hint: insertResult.error.hint
       });
-      if (insertResult.error.code === '42703') {
+      // Retry with snake_case if column not found (42703) or schema cache error (PGRST204)
+      if (insertResult.error.code === '42703' || insertResult.error.code === 'PGRST204') {
         console.log('Retrying with snake_case...');
         insertResult = await runInsert(false);
         if (insertResult.error) {
@@ -309,8 +310,12 @@ export async function POST(request: NextRequest) {
             details: insertResult.error.details,
             hint: insertResult.error.hint
           });
+        } else {
+          console.log('✅ Post inserted successfully with snake_case');
         }
       }
+    } else {
+      console.log('✅ Post inserted successfully with camelCase');
     }
 
     const { data: newPost, error: createError } = insertResult;

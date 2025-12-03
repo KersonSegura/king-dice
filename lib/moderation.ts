@@ -21,9 +21,12 @@ export interface ImageModerationResult extends ModerationResult {
 // Text Moderation using OpenAI Moderation API
 export async function moderateText(text: string): Promise<TextModerationResult> {
   try {
-    // In production, you would use the actual OpenAI API
-    // For now, we'll simulate the moderation
-    const response = await fetch('/api/moderate/text', {
+    // Use absolute URL for server-side requests
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000';
+    
+    const response = await fetch(`${baseUrl}/api/moderate/text`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
