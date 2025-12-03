@@ -17,12 +17,24 @@ This guide will help you set up Google and Facebook OAuth authentication for Kin
 4. Create OAuth 2.0 credentials:
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "OAuth client ID"
+   - **IMPORTANT:** If you see "OAuth consent screen" first, configure it:
+     - Choose "External" (NOT "Internal") - This allows any Google user to sign in
+     - Fill in required fields (App name, User support email, Developer contact)
+     - Add scopes: `email`, `profile`, `openid`
+     - Add test users if in testing mode (optional)
    - Choose "Web application"
    - Add authorized redirect URIs:
      - `http://localhost:3000/api/auth/callback/google` (for development)
      - `https://kingdice.gg/api/auth/callback/google` (for production)
    - Click "Create"
    - Copy the **Client ID** and **Client Secret**
+
+5. **If you get "Error 403: org_internal":**
+   - This means your OAuth app is set to "Internal" instead of "External"
+   - Go to "APIs & Services" > "OAuth consent screen"
+   - Change "User Type" from "Internal" to "External"
+   - Save and wait a few minutes for changes to propagate
+   - Try signing in again
 
 ## Step 2: Facebook OAuth Setup
 
@@ -82,6 +94,12 @@ Or use an online generator: https://generate-secret.vercel.app/32
 ### "Invalid redirect URI" error
 - Make sure the redirect URIs in Google/Facebook match exactly
 - Check that you're using the correct environment (localhost vs production)
+
+### "Error 403: org_internal" (Google OAuth)
+- Your Google OAuth app is set to "Internal" instead of "External"
+- Go to Google Cloud Console > "APIs & Services" > "OAuth consent screen"
+- Change "User Type" from "Internal" to "External"
+- Save and wait a few minutes, then try again
 
 ### "OAuth sign-in failed: No email provided"
 - Some OAuth providers require email scope to be requested

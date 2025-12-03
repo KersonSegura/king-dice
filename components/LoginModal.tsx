@@ -482,23 +482,32 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       setIsLoading(false);
                     } else if (result?.ok) {
                       // Success - NextAuth will handle the session
-                      // We need to get the session and update our auth context
-                      const sessionResponse = await fetch('/api/auth/session');
-                      if (sessionResponse.ok) {
-                        const session = await sessionResponse.json();
-                        if (session?.user && session?.accessToken) {
+                      // Wait a bit for NextAuth to process the callback
+                      await new Promise(resolve => setTimeout(resolve, 500));
+                      
+                      // Sync NextAuth session with auth_token cookie
+                      const callbackResponse = await fetch('/api/auth/oauth-callback');
+                      if (callbackResponse.ok) {
+                        const data = await callbackResponse.json();
+                        if (data?.user && data?.token) {
                           login({
-                            id: session.userId || session.user.id,
-                            username: session.username || session.user.name,
-                            email: session.user.email,
-                            avatar: session.user.image || '/DefaultDiceAvatar.svg',
-                            isAdmin: session.isAdmin || false,
+                            id: data.user.id,
+                            username: data.user.username,
+                            email: data.user.email,
+                            avatar: data.user.avatar,
+                            isAdmin: data.user.isAdmin || false,
                             isVerified: true,
-                            level: session.level || 1,
-                            xp: session.xp || 0,
-                          }, session.accessToken);
+                            level: data.user.level || 1,
+                            xp: data.user.xp || 0,
+                          }, data.token);
                           onClose();
+                          // Reload to ensure all components pick up the new auth state
+                          window.location.reload();
+                        } else {
+                          setError('Failed to complete sign-in. Please try again.');
                         }
+                      } else {
+                        setError('Failed to sync session. Please try again.');
                       }
                       setIsLoading(false);
                     }
@@ -536,22 +545,32 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                       setIsLoading(false);
                     } else if (result?.ok) {
                       // Success - NextAuth will handle the session
-                      const sessionResponse = await fetch('/api/auth/session');
-                      if (sessionResponse.ok) {
-                        const session = await sessionResponse.json();
-                        if (session?.user && session?.accessToken) {
+                      // Wait a bit for NextAuth to process the callback
+                      await new Promise(resolve => setTimeout(resolve, 500));
+                      
+                      // Sync NextAuth session with auth_token cookie
+                      const callbackResponse = await fetch('/api/auth/oauth-callback');
+                      if (callbackResponse.ok) {
+                        const data = await callbackResponse.json();
+                        if (data?.user && data?.token) {
                           login({
-                            id: session.userId || session.user.id,
-                            username: session.username || session.user.name,
-                            email: session.user.email,
-                            avatar: session.user.image || '/DefaultDiceAvatar.svg',
-                            isAdmin: session.isAdmin || false,
+                            id: data.user.id,
+                            username: data.user.username,
+                            email: data.user.email,
+                            avatar: data.user.avatar,
+                            isAdmin: data.user.isAdmin || false,
                             isVerified: true,
-                            level: session.level || 1,
-                            xp: session.xp || 0,
-                          }, session.accessToken);
+                            level: data.user.level || 1,
+                            xp: data.user.xp || 0,
+                          }, data.token);
                           onClose();
+                          // Reload to ensure all components pick up the new auth state
+                          window.location.reload();
+                        } else {
+                          setError('Failed to complete sign-in. Please try again.');
                         }
+                      } else {
+                        setError('Failed to sync session. Please try again.');
                       }
                       setIsLoading(false);
                     }
