@@ -704,7 +704,7 @@ export async function getUserFromToken(token: string): Promise<AuthResult> {
 }
 
 // Generate default avatar for new users
-async function generateDefaultAvatar(): Promise<string> {
+export async function generateDefaultAvatar(): Promise<string> {
   try {
     // Default dice configuration: white background, white dice, black 1-2-3 pattern, no accessories
     const defaultConfig = {
