@@ -225,7 +225,7 @@ export default function TermsOfServicePage() {
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-yellow-800">
                   We respect intellectual property rights. If you believe your copyrighted work has been 
-                  infringed, please contact us with a detailed DMCA notice at legal@kingdice.com.
+                  infringed, please contact us with a detailed DMCA notice at support@kingdice.gg.
                 </p>
               </div>
             </div>
@@ -437,21 +437,16 @@ export default function TermsOfServicePage() {
               If you have questions about these Terms of Service, please contact us:
             </p>
             
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">General Support</h3>
-                <p className="text-gray-600 text-sm">support@kingdice.com</p>
-              </div>
-              
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Legal Questions</h3>
-                <p className="text-gray-600 text-sm">legal@kingdice.com</p>
-              </div>
-              
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Abuse Reports</h3>
-                <p className="text-gray-600 text-sm">abuse@kingdice.com</p>
-              </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-2">Contact Us</h3>
+              <p className="text-gray-600 text-sm">
+                <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
+                  support@kingdice.gg
+                </a>
+              </p>
+              <p className="text-gray-500 text-xs mt-2">
+                For general support, legal questions, abuse reports, or any other inquiries.
+              </p>
             </div>
             
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mt-6">

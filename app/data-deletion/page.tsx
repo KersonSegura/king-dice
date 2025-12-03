@@ -78,10 +78,10 @@ export default function DataDeletionPage() {
                 <div className="bg-white rounded p-4 border border-orange-300">
                   <p className="font-semibold text-gray-800 mb-2">Send an email to:</p>
                   <a 
-                    href="mailto:privacy@kingdice.gg" 
+                    href="mailto:support@kingdice.gg" 
                     className="text-blue-600 hover:text-blue-800 underline text-lg"
                   >
-                    privacy@kingdice.gg
+                    support@kingdice.gg
                   </a>
                   <p className="text-sm text-gray-600 mt-3">
                     Include the following information in your email:
@@ -143,8 +143,8 @@ export default function DataDeletionPage() {
                 <div className="space-y-2 text-gray-700">
                   <p>
                     <strong>Email:</strong>{' '}
-                    <a href="mailto:privacy@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
-                      privacy@kingdice.gg
+                    <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
+                      support@kingdice.gg
                     </a>
                   </p>
                   <p>

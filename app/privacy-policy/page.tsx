@@ -393,8 +393,8 @@ export default function PrivacyPolicyPage() {
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold text-gray-800 mb-2">Email</h3>
                 <p className="text-gray-600">
-                  <a href="mailto:privacy@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
-                    privacy@kingdice.gg
+                  <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
+                    support@kingdice.gg
                   </a>
                 </p>
               </div>
@@ -409,7 +409,7 @@ export default function PrivacyPolicyPage() {
               <p className="text-blue-800">
                 <strong>Account Deletion:</strong> To request deletion of your account and data, 
                 please visit our <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline font-semibold">Data Deletion page</a> 
-                {' '}or email us at <a href="mailto:privacy@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">privacy@kingdice.gg</a>.
+                {' '}or email us at <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">support@kingdice.gg</a>.
               </p>
             </div>
           </div>

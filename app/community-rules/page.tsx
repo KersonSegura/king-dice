@@ -535,7 +535,9 @@ export default function CommunityRulesPage() {
                 <p className="text-green-700 text-sm mb-3">
                   For questions about community rules, moderation decisions, or general support.
                 </p>
-                <p className="text-green-600 font-medium">support@kingdice.com</p>
+                <p className="text-green-600 font-medium">
+                  <a href="mailto:support@kingdice.gg" className="hover:underline">support@kingdice.gg</a>
+                </p>
               </div>
               
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -543,7 +545,9 @@ export default function CommunityRulesPage() {
                 <p className="text-red-700 text-sm mb-3">
                   For urgent safety concerns, harassment, or serious rule violations.
                 </p>
-                <p className="text-red-600 font-medium">abuse@kingdice.com</p>
+                <p className="text-red-600 font-medium">
+                  <a href="mailto:support@kingdice.gg" className="hover:underline">support@kingdice.gg</a>
+                </p>
               </div>
             </div>
 
