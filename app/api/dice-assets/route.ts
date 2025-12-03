@@ -75,6 +75,22 @@ function listSvgsInDir(absDir: string, webDirSegment: string, userLevel: number)
       if (categoryKey === 'patterns') {
         // For patterns, remove spaces and hyphens to match the normalized names in dice-asset-levels.ts
         assetKey = assetKey.replace(/\s+/g, '').replace(/-/g, '');
+      } else if (categoryKey === 'dice') {
+        // Special case: "Dice-BotDice" keeps the hyphen
+        if (assetKey.toLowerCase() === 'dice-botdice' || assetKey.toLowerCase() === 'dice-bot') {
+          assetKey = 'Dice-BotDice';
+        } else {
+          // For other dice, remove spaces and hyphens, and ensure "Dice" suffix is present
+          // e.g., "Dice-Skull.svg" -> "DiceSkullDice", "White.svg" -> "WhiteDice"
+          assetKey = assetKey.replace(/\s+/g, '').replace(/-/g, '');
+          // Add "Dice" suffix if not already present (case-insensitive)
+          if (!assetKey.toLowerCase().endsWith('dice')) {
+            assetKey = assetKey + 'Dice';
+          }
+          // Convert to PascalCase to match config keys (first letter uppercase, rest as-is but ensure proper casing)
+          // e.g., "diceskullDice" -> "DiceSkullDice", "whiteDice" -> "WhiteDice"
+          assetKey = assetKey.charAt(0).toUpperCase() + assetKey.slice(1);
+        }
       }
       const levelRequirement = getAssetLevelRequirement(categoryKey, assetKey);
       
