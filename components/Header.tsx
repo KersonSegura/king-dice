@@ -186,6 +186,16 @@ export default function Header() {
               />
               <span>Gallery</span>
             </Link>
+            <Link href="/shop" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
+              <Image
+                src="/ShopIcon.svg"
+                alt="Shop Icon"
+                width={24}
+                height={24}
+                className="w-6 h-6"
+              />
+              <span>Shop</span>
+            </Link>
           </nav>
 
                      {/* Right (Actions) */}
@@ -498,6 +508,20 @@ export default function Header() {
                   className="w-6 h-6"
                 />
                 <span>Gallery</span>
+              </Link>
+              <Link 
+                href="/shop" 
+                className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Image
+                  src="/ShopIcon.svg"
+                  alt="Shop Icon"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6"
+                />
+                <span>Shop</span>
               </Link>
               
               {/* Mobile Features Section */}

@@ -1,0 +1,11 @@
+# Board Games Input File
+# Format: Game Name|Amazon URL|Category|Players|PlayTime
+# AgeRange is optional and can be added at the end if needed
+# Lines starting with # are comments and will be ignored
+# Empty lines are ignored
+
+# Add your games below (one per line):
+Catan|https://www.amazon.com/dp/B0DYK1ZH2D?tag=kingdice-20|Strategy|3-4|60-90 min
+Ticket to Ride|https://www.amazon.com/dp/ASIN?tag=kingdice-20|Family|2-5|30-60 min
+Wingspan|https://www.amazon.com/dp/ASIN?tag=kingdice-20|Strategy|1-5|40-70 min
+

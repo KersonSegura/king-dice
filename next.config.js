@@ -75,6 +75,12 @@ const nextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/boardle-images/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'm.media-amazon.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // Optimize bundle size for Vercel
