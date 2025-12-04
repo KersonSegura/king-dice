@@ -118,7 +118,7 @@ export const boardGames: BoardGame[] = [
     name: 'Catan',
     description: 'The classic strategy game of trading and building settlements. Build roads, settlements, and cities to expand your civilization. Explore the island of Catan by gathering resources, building infrastructure, and nurturing trade relationships.',
     imageUrl: 'https://m.media-amazon.com/images/I/81QZ1fV9+YL._AC_SL1500_.jpg',
-    amazonUrl: 'https://www.amazon.com/dp/B0DYK1ZH2D?tag=kingdice-20',
+    amazonUrl: 'https://www.amazon.com/dp/B0DYK1ZH2D?coliid=I3AN8YQZ35DOV8&colid=2AM8KE7XTVQEL&th=1&linkCode=ll1&tag=kingdice-20&linkId=19c20e46df7bd07028b556973934847d&language=en_US&ref_=as_li_ss_tl',
     asin: 'B0DYK1ZH2D',
     price: '$29.99',
     originalPrice: '$54.99',
@@ -128,16 +128,125 @@ export const boardGames: BoardGame[] = [
     category: 'Strategy',
     ageRange: '10+',
     lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'ticket-to-ride',
+    name: 'Ticket to Ride',
+    description: 'Experience Ticket to Ride, a family board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/ticket-to-ride.jpg',
+    amazonUrl: createAmazonLink('B0F8PKN4B7'),
+    asin: 'B0F8PKN4B7',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '2-5',
+    playTime: '30-60 min',
+    category: 'Family',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'azul',
+    name: 'Azul',
+    description: 'Experience Azul, a family board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/azul.jpg',
+    amazonUrl: createAmazonLink('B077MZ2MPW'),
+    asin: 'B077MZ2MPW',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '2-7',
+    playTime: '30-45 min',
+    category: 'Family',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'wingspan',
+    name: 'Wingspan',
+    description: 'Experience Wingspan, a strategy board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/wingspan.jpg',
+    amazonUrl: createAmazonLink('B07YQ641NQ'),
+    asin: 'B07YQ641NQ',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '1-5',
+    playTime: '40-70 min',
+    category: 'Strategy',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'would-you-rather',
+    name: 'Would You Rather?',
+    description: 'Experience Would You Rather?, a party board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/would-you-rather.jpg',
+    amazonUrl: createAmazonLink('B0BRT58L5W'),
+    asin: 'B0BRT58L5W',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '3-6',
+    category: 'Party',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'herd-mentality',
+    name: 'Herd Mentality',
+    description: 'Experience Herd Mentality, a family board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/herd-mentality.jpg',
+    amazonUrl: createAmazonLink('B093HBBMPT'),
+    asin: 'B093HBBMPT',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '4-20',
+    playTime: '20 min',
+    category: 'Family',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'carcassonne',
+    name: 'Carcassonne',
+    description: 'Experience Carcassonne, a strategy board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/carcassonne.jpg',
+    amazonUrl: createAmazonLink('B00NX627HW'),
+    asin: 'B00NX627HW',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '2-5',
+    playTime: '35 min',
+    category: 'Strategy',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'risk',
+    name: 'Risk',
+    description: 'Experience Risk, a strategy board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/risk.jpg',
+    amazonUrl: createAmazonLink('B01ALHAIWG'),
+    asin: 'B01ALHAIWG',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '2-5',
+    category: 'Strategy',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'exploding-kittens-party-pack',
+    name: 'Exploding Kittens Party Pack',
+    description: 'Experience Exploding Kittens Party Pack, a party board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/exploding-kittens-party-pack.jpg',
+    amazonUrl: createAmazonLink('B07CTXHNSL'),
+    asin: 'B07CTXHNSL',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '2-10',
+    playTime: '15 min',
+    category: 'Party',
+    lastPriceUpdate: new Date().toISOString()
+  },
+  {
+    id: 'splendor',
+    name: 'Splendor',
+    description: 'Experience Splendor, a strategy board game that brings friends and family together for hours of fun and strategic gameplay.',
+    imageUrl: '/games/splendor.jpg',
+    amazonUrl: createAmazonLink('B00IZEUFIA'),
+    asin: 'B00IZEUFIA',
+    price: '$0.00', // TODO: Update with current price from Amazon
+    players: '2-4',
+    playTime: '30 min',
+    category: 'Strategy',
+    lastPriceUpdate: new Date().toISOString()
   }
 ];
 
-// Get games by category
-export function getGamesByCategory(category: string | null): BoardGame[] {
-  if (!category) return boardGames;
-  return boardGames.filter(game => game.category === category);
-}
-
-// Get all unique categories
-export function getCategories(): string[] {
-  return Array.from(new Set(boardGames.map(game => game.category).filter(Boolean))) as string[];
-}
+  
+  // Handle product URLs: amazon.com/product/ASIN
+  const productMatch = url.match(/\/product\/([A-Z0-9]{10})/);
+  if (productMatch) return productMatch[1
