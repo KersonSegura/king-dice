@@ -246,7 +246,13 @@ export const boardGames: BoardGame[] = [
   }
 ];
 
-  
-  // Handle product URLs: amazon.com/product/ASIN
-  const productMatch = url.match(/\/product\/([A-Z0-9]{10})/);
-  if (productMatch) return productMatch[1
+// Get games by category
+export function getGamesByCategory(category: string | null): BoardGame[] {
+  if (!category) return boardGames;
+  return boardGames.filter(game => game.category === category);
+}
+
+// Get all unique categories
+export function getCategories(): string[] {
+  return Array.from(new Set(boardGames.map(game => game.category).filter(Boolean))) as string[];
+}
