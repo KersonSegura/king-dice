@@ -115,19 +115,22 @@ export default function ShopPage() {
               {/* Game Image */}
               <div className="relative w-full h-64 bg-gray-200 overflow-hidden">
                 {game.imageUrl && game.imageUrl.startsWith('https://') ? (
-                  // External Amazon images - use regular img tag with CORS handling
+                  // External Amazon images - use regular img tag
                   <img
                     src={game.imageUrl}
                     alt={game.name}
                     className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                     onError={(e) => {
                       // Fallback to inline SVG placeholder if image fails to load
                       const target = e.currentTarget as HTMLImageElement;
+                      // Prevent infinite loop
+                      if (target.src.startsWith('data:image/svg+xml')) return;
+                      
                       const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${game.name}</text></svg>`;
                       target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
-                      console.error('Failed to load image:', game.imageUrl);
+                      // Don't log error to console to avoid noise
                     }}
                   />
                 ) : (
