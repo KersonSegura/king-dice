@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Search, X, User, Dice6, Clock, Plus } from 'lucide-react';
 import SuggestGameModal from './SuggestGameModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { closeChatOnNavigation } from '@/lib/closeChat';
 
 interface SearchResult {
   id: string;
@@ -160,6 +161,7 @@ export default function SearchBar() {
   const handleResultClick = () => {
     setIsOpen(false);
     setQuery('');
+    closeChatOnNavigation();
   };
 
   const handleSuggestGame = () => {
@@ -195,7 +197,10 @@ export default function SearchBar() {
           placeholder="Search users and games..."
           value={query}
           onChange={handleInputChange}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            setIsOpen(true);
+            closeChatOnNavigation();
+          }}
           className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
         />
         {query && (

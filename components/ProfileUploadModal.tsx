@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Upload, Image as ImageIcon } from 'lucide-react';
 
 interface ProfileUploadModalProps {
@@ -82,6 +83,21 @@ export default function ProfileUploadModal({
     setDescription('');
     onClose();
   };
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isOpen) {
+        unlockBodyScroll();
+      }
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

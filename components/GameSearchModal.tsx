@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { Search, X, ExternalLink, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -41,6 +42,21 @@ export default function GameSearchModal({
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
+  }, [isOpen]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isOpen) {
+        unlockBodyScroll();
+      }
+    };
   }, [isOpen]);
 
   // Search games from database with popularity prioritization

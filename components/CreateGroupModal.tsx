@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Users, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from './Toast';
@@ -91,6 +92,21 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }: Cr
       setLoading(false);
     }
   };
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isOpen) {
+        unlockBodyScroll();
+      }
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
 import ExpandableText from './ExpandableText';
 import ReportContent from './ReportContent';
@@ -116,17 +117,20 @@ export default function ImageModal({
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description || '');
 
+  // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
       setEditedDescription(description || '');
       setIsEditingDescription(false);
     } else {
-      document.body.style.overflow = 'unset';
+      unlockBodyScroll();
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      if (isOpen) {
+        unlockBodyScroll();
+      }
     };
   }, [isOpen, description]);
 

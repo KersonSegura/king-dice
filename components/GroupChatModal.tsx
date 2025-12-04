@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Users, Search, Plus, Check } from 'lucide-react';
 
 interface User {
@@ -107,6 +108,21 @@ export default function GroupChatModal({
       setSearchResults([]);
       setHasSearched(false);
     }
+  }, [isOpen]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isOpen) {
+        unlockBodyScroll();
+      }
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Mail, Shield, RefreshCw } from 'lucide-react';
 
 interface TwoFactorModalProps {
@@ -48,6 +49,21 @@ export default function TwoFactorModal({
       setLoading(false);
       setSending(false);
     }
+  }, [isOpen]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isOpen) {
+        unlockBodyScroll();
+      }
+    };
   }, [isOpen]);
 
   const sendVerificationCode = async () => {

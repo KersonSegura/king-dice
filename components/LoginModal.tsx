@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Mail, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import TwoFactorModal from './TwoFactorModal';
@@ -58,6 +59,21 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       }
     }
   }, []);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isOpen) {
+        unlockBodyScroll();
+      }
+    };
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

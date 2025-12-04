@@ -7,16 +7,19 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 import { getUserPostCount } from '@/lib/user-posts';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
+import { closeChatOnNavigation, closeMenusOnChatOpen } from '@/lib/closeChat';
 import LoginModal from './LoginModal';
 import FeaturesDropdown from './FeaturesDropdown';
 import BoardgamesDropdown from './BoardgamesDropdown';
 import SearchBar from './SearchBar';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useLoginModal } from '@/hooks/useLoginModal';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useLoginModal();
   const [userStats, setUserStats] = useState({ level: 1, posts: 0 });
   const { user, isAuthenticated, logout, isLoading } = useAuth();
   const { items: notifItems, unread: notifUnread, markAllRead, markOneRead } = useNotifications();
@@ -24,6 +27,7 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
 
   // Simple hover handlers - no delays, just immediate response
@@ -33,11 +37,19 @@ export default function Header() {
     }
     setIsUserMenuOpen(true);
     setShowNotificationsPanel(false);
+    // Close chat when opening profile menu on mobile
+    closeChatOnNavigation();
   };
 
   const closeMenu = () => {
     setIsUserMenuOpen(false);
     setShowNotificationsPanel(false);
+  };
+
+  // Helper function to close menu and chat on mobile navigation
+  const handleMobileNavigation = () => {
+    setIsMenuOpen(false);
+    closeChatOnNavigation();
   };
 
   // Cleanup timeout on unmount
@@ -49,12 +61,101 @@ export default function Header() {
     };
   }, []);
 
+  // Listen for chat open events to close menus on mobile
+  useEffect(() => {
+    const handleCloseMenus = () => {
+      // Only close on mobile devices
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        setIsMenuOpen(false);
+        setIsUserMenuOpen(false);
+        setShowNotificationsPanel(false);
+      }
+    };
+
+    window.addEventListener('closeMenusOnChatOpen', handleCloseMenus);
+    
+    return () => {
+      window.removeEventListener('closeMenusOnChatOpen', handleCloseMenus);
+    };
+  }, []);
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isMenuOpen) {
+        unlockBodyScroll();
+      }
+    };
+  }, [isMenuOpen]);
+
+  // Prevent scroll chaining on mobile menu when at boundaries
+  useEffect(() => {
+    if (!isMenuOpen || !mobileMenuRef.current) return;
+
+    const menuElement = mobileMenuRef.current;
+
+    const handleWheel = (e: WheelEvent) => {
+      const scrollTop = menuElement.scrollTop;
+      const scrollHeight = menuElement.scrollHeight;
+      const clientHeight = menuElement.clientHeight;
+      const maxScroll = scrollHeight - clientHeight;
+
+      const isAtTop = scrollTop <= 1;
+      const isAtBottom = scrollTop >= maxScroll - 1;
+
+      // If at boundary and trying to scroll beyond it, prevent to stop body scroll
+      if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const scrollTop = menuElement.scrollTop;
+      const scrollHeight = menuElement.scrollHeight;
+      const clientHeight = menuElement.clientHeight;
+      const maxScroll = scrollHeight - clientHeight;
+
+      const isAtTop = scrollTop <= 1;
+      const isAtBottom = scrollTop >= maxScroll - 1;
+
+      // If at boundary, prevent touch move from propagating
+      if (isAtTop || isAtBottom) {
+        // Allow the menu to scroll within bounds, but prevent chaining to body
+        // The CSS overscroll-behavior should handle this, but we reinforce it here
+      }
+    };
+
+    // Use capture phase to catch events before they bubble
+    menuElement.addEventListener('wheel', handleWheel, { passive: false, capture: true });
+    menuElement.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+
+    return () => {
+      menuElement.removeEventListener('wheel', handleWheel, { capture: true } as any);
+      menuElement.removeEventListener('touchmove', handleTouchMove, { capture: true } as any);
+    };
+  }, [isMenuOpen]);
+
   // Close mobile menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
+      const target = event.target as Node;
+      // Don't close if clicking on the menu button itself
+      if (mobileMenuButtonRef.current && mobileMenuButtonRef.current.contains(target)) {
+        return;
       }
+      // Don't close if clicking inside the menu
+      if (mobileMenuRef.current && mobileMenuRef.current.contains(target)) {
+        return;
+      }
+      // Otherwise, close the menu
+      setIsMenuOpen(false);
     }
 
     if (isMenuOpen) {
@@ -136,7 +237,11 @@ export default function Header() {
         <div className="flex justify-between items-center w-full h-16">
           {/* Left (Logo) */}
           <div className="flex items-center flex-shrink-0">
-            <Link href="/" className="flex items-center space-x-3 p-2 -m-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <Link 
+              href="/" 
+              className="flex items-center space-x-3 p-2 -m-2 rounded-lg hover:bg-gray-50 transition-colors"
+              onClick={closeChatOnNavigation}
+            >
               <div className="w-10 h-10 relative">
                 <Image
                   src="/DiceLogo.svg"
@@ -212,7 +317,16 @@ export default function Header() {
               {isAuthenticated ? (
                 <>
                   {/* Avatar Button with notification badge */}
-                  <div className="relative" onClick={() => setIsUserMenuOpen(v => !v)}>
+                  <div className="relative" onClick={() => {
+                    setIsUserMenuOpen(v => {
+                      const newMenuState = !v;
+                      // Close chat when opening profile menu on mobile
+                      if (newMenuState) {
+                        closeChatOnNavigation();
+                      }
+                      return newMenuState;
+                    });
+                  }}>
                     <div className="w-10 h-10 rounded-full border-2 border-black overflow-hidden hover:border-primary-500 transition-colors cursor-pointer flex items-center justify-center bg-white">
                       <Image
                         src={user?.avatar || '/DefaultDiceAvatar.svg'}
@@ -406,8 +520,17 @@ export default function Header() {
           
           {/* Mobile menu button */}
           <button
+            ref={mobileMenuButtonRef}
             className="md:hidden p-2 text-dark-700 hover:text-primary-500 transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={(e) => {
+              e.stopPropagation();
+              const newMenuState = !isMenuOpen;
+              setIsMenuOpen(newMenuState);
+              // Close chat when opening hamburger menu on mobile
+              if (newMenuState) {
+                closeChatOnNavigation();
+              }
+            }}
           >
             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -418,13 +541,15 @@ export default function Header() {
           <div 
             ref={mobileMenuRef}
             className="md:hidden py-4 border-t border-dark-200 max-h-[70vh] overflow-y-auto"
+            style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+            data-menu-scrollable
           >
             <nav className="flex flex-col space-y-4">
               {/* Mobile Home Link */}
               <Link 
                 href="/" 
                 className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={handleMobileNavigation}
               >
                 <Image
                   src="/HomeIcon.svg"
@@ -442,7 +567,7 @@ export default function Header() {
                 <Link 
                   href="/all-games" 
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <Image
                     src="/AllIcon.svg"
@@ -456,7 +581,7 @@ export default function Header() {
                 <Link 
                   href="/hot-games" 
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <Image
                     src="/FireIcon.svg"
@@ -470,7 +595,7 @@ export default function Header() {
                 <Link 
                   href="/top-ranked" 
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <Image
                     src="/TrophyIcon.svg"
@@ -485,7 +610,7 @@ export default function Header() {
               <Link 
                 href="/forums" 
                 className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={handleMobileNavigation}
               >
                 <Image
                   src="/ForumsIcon.svg"
@@ -499,7 +624,7 @@ export default function Header() {
               <Link 
                 href="/community-gallery" 
                 className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={handleMobileNavigation}
               >
                 <Image
                   src="/GalleryIcon.svg"
@@ -513,7 +638,7 @@ export default function Header() {
               <Link 
                 href="/shop" 
                 className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={handleMobileNavigation}
               >
                 <Image
                   src="/ShopIcon.svg"
@@ -534,7 +659,7 @@ export default function Header() {
                   <Link
                     href="/my-dice"
                     className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={handleMobileNavigation}
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                       <Image
@@ -552,7 +677,7 @@ export default function Header() {
                 <Link
                   href="/catan-map-generator"
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <Image
@@ -569,7 +694,7 @@ export default function Header() {
                 <Link
                   href="/pixel-canvas"
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <div className="w-4 h-4 bg-white rounded-sm"></div>
@@ -580,7 +705,7 @@ export default function Header() {
                 <Link
                   href="/boardle"
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <Image
@@ -597,7 +722,7 @@ export default function Header() {
                 <Link
                   href="/dice-roller"
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <Image
@@ -614,7 +739,7 @@ export default function Header() {
                 <Link
                   href="/digital-corner"
                   className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <Image
@@ -635,7 +760,7 @@ export default function Header() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded-lg transition-colors font-medium"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={handleMobileNavigation}
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>

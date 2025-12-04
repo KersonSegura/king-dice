@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatState } from '@/contexts/ChatStateContext';
+import { closeMenusOnChatOpen } from '@/lib/closeChat';
 import ChatList from './ChatList';
 import Chat from './Chat';
 import ChatBot from './ChatBot';
@@ -383,6 +384,32 @@ export default function FloatingChat() {
     window.dispatchEvent(event);
   }, [isChatOpen, selectedChat]);
 
+  // Listen for navigation events to close chat on mobile
+  useEffect(() => {
+    const handleCloseChat = () => {
+      // Only close on mobile devices
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        if (isChatOpen) {
+          setIsChatOpen(false);
+          setSelectedChat(null);
+        }
+      }
+    };
+
+    window.addEventListener('closeChatOnNavigation', handleCloseChat);
+    
+    return () => {
+      window.removeEventListener('closeChatOnNavigation', handleCloseChat);
+    };
+  }, [isChatOpen]);
+
+  // Dispatch event to close menus when chat opens on mobile
+  useEffect(() => {
+    if (isChatOpen && typeof window !== 'undefined' && window.innerWidth < 768) {
+      closeMenusOnChatOpen();
+    }
+  }, [isChatOpen]);
+
   // Icon animation effect - ALWAYS call this hook
   useEffect(() => {
     if (!isChatOpen && isAuthenticated) {
@@ -534,6 +561,8 @@ export default function FloatingChat() {
         onClick={() => {
           console.log('Chat button clicked! Current state:', { isChatOpen, selectedChat });
           setIsChatOpen(true);
+          // Close menus when opening chat on mobile
+          closeMenusOnChatOpen();
         }}
         className={`fixed bottom-4 right-4 z-40 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 ${
           isChatOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'

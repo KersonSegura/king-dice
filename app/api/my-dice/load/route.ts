@@ -74,20 +74,9 @@ export async function GET(request: NextRequest) {
       console.log('⚠️ No profileColors data found for user');
     }
 
-    // Return default configuration for new users or if no config found
-    const defaultConfig = {
-      background: "/dice/backgrounds/WhiteBackground.svg",
-      dice: "/dice/dice/WhiteDice.svg",
-      pattern: "/dice/patterns/1-2-3.svg",
-      accessories: null,
-      hat: null,
-      item: null,
-      companion: null,
-      title: null
-    };
-    
+    // Return null config for new users so defaults can be applied on client side
     return NextResponse.json({ 
-      config: defaultConfig,
+      config: null,
       updatedAt: null
     });
   } catch (error) {

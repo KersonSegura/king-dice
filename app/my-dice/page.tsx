@@ -428,12 +428,12 @@ export default function MyDicePage() {
       console.error('❌ Error loading saved configuration from server:', error);
     }
     
-    // Return default configuration for new users (only if no saved config found)
-    console.log('📝 Returning default configuration (no saved config found)');
+    // Return null for new users so defaults can be applied
+    console.log('📝 No saved config found, returning null to apply defaults');
     return {
-      background: "/dice/backgrounds/WhiteBackground.svg",
-      dice: "/dice/dice/WhiteDice.svg", 
-      pattern: "/dice/patterns/1-2-3.svg",
+      background: null,
+      dice: null, 
+      pattern: null,
       accessories: null,
       hat: null,
       item: null,
@@ -603,29 +603,65 @@ export default function MyDicePage() {
             const list = sorted.pattern;
             if (!list || list.length === 0) return null;
             
-            // Look for Black 123 pattern - must contain "black" and either "1-2-3" or "123"
+            // Look for Black 123 pattern - must contain "black" and either "1-2-3", "1 2 3", or "123"
             const found = list.find(asset => {
               const assetName = asset.src.toLowerCase();
               const hasBlack = assetName.includes("black");
-              const has123 = assetName.includes("1-2-3") || assetName.includes("123");
+              const has123 = assetName.includes("1-2-3") || assetName.includes("1 2 3") || assetName.includes("123");
               return hasBlack && has123;
             });
             
             return found?.src ?? null;
           };
 
-          // Use saved configuration if available, otherwise use specific defaults for new users
-          // IMPORTANT: Prioritize saved config values - only use defaults if saved is null/undefined
-          let initialSelection = {
-            background: savedConfig.background ?? (isNewUser ? findDefaultAsset("background", ["white", "background"]) : pick("background")),
-            dice: savedConfig.dice ?? (isNewUser ? findDefaultAsset("dice", ["white", "dice"]) : pick("dice")),
-            pattern: savedConfig.pattern ?? (isNewUser ? findBlack123Pattern() : null),
-            accessories: savedConfig.accessories ?? null,
-            hat: savedConfig.hat ?? null,
-            item: savedConfig.item ?? null,
-            companion: savedConfig.companion ?? null,
-            title: savedConfig.title ?? null,
-          };
+          // For new users, always apply defaults: white background, white dice, black 1-2-3 pattern
+          // For existing users, use saved config or fallback to first available
+          let initialSelection: Record<TabKey, string | null>;
+          
+          if (isNewUser) {
+            // New user - apply specific defaults: white background, white dice, black 1-2-3 pattern
+            const whiteBg = findDefaultAsset("background", ["white", "background"]);
+            const whiteDice = findDefaultAsset("dice", ["white", "dice"]);
+            const black123Pattern = findBlack123Pattern();
+            
+            // Ensure we always have background and dice (required for preview)
+            // Pattern should default to Black 1-2-3 for new users
+            const finalBg = whiteBg ?? pick("background", 0);
+            const finalDice = whiteDice ?? pick("dice", 0);
+            const finalPattern = black123Pattern ?? pick("pattern", 0);
+            
+            // Ensure background and dice are never null for new users (required for preview)
+            if (!finalBg || !finalDice) {
+              console.warn('⚠️ Could not find default assets, using fallback paths');
+            }
+            
+            initialSelection = {
+              background: finalBg ?? "/dice/Backgrounds/WhiteBackground.svg",
+              dice: finalDice ?? "/dice/Dice/WhiteDice.svg",
+              pattern: finalPattern ?? null, // Default to Black 1-2-3 if available
+              accessories: null,
+              hat: null,
+              item: null,
+              companion: null,
+              title: null,
+            };
+            
+            console.log('🆕 New user - applying defaults:', initialSelection);
+          } else {
+            // Existing user - use saved config with fallbacks
+            initialSelection = {
+              background: savedConfig.background ?? pick("background", 0),
+              dice: savedConfig.dice ?? pick("dice", 0),
+              pattern: savedConfig.pattern ?? null,
+              accessories: savedConfig.accessories ?? null,
+              hat: savedConfig.hat ?? null,
+              item: savedConfig.item ?? null,
+              companion: savedConfig.companion ?? null,
+              title: savedConfig.title ?? null,
+            };
+            
+            console.log('👤 Existing user - using saved config:', initialSelection);
+          }
 
           console.log('🎯 Initial selection (before compatibility check):', initialSelection);
 
@@ -830,42 +866,42 @@ export default function MyDicePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+        <div className="mb-8">
+          <div className="flex items-center space-x-3 mb-2">
             <BackButton />
-            <div>
+            <div className="flex-1 flex items-center justify-between gap-2 sm:justify-start sm:gap-4">
               <h1 className="text-3xl font-bold text-gray-900">
                 My Dice
               </h1>
-            {user && (
-               <div className="mt-2 flex items-center justify-between sm:justify-start gap-2">
-                 <div className="flex items-center gap-2">
-                   <span className="text-sm text-gray-600">
-                     Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
-                   </span>
-                   <div className="flex items-center gap-2">
-                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                     <div 
-                       className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
-                       style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
-                     ></div>
-                   </div>
-                     <span className="text-xs text-gray-500">
-                       {levelProgress.currentXP} XP
-                       {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} to next`}
-                     </span>
-                   </div>
-                 </div>
-                 <button
-                   onClick={() => setShowXPHelp(true)}
-                   className="px-2 py-1 text-xs bg-[#fbae17] text-white rounded-full hover:bg-[#e6a015] transition-colors"
-                 >
-                   How do I earn XP?
-                 </button>
-               </div>
-            )}
+              {user && (
+                <button
+                  onClick={() => setShowXPHelp(true)}
+                  className="px-2 py-1 text-xs bg-[#fbae17] text-white rounded-full hover:bg-[#e6a015] transition-colors flex-shrink-0"
+                >
+                  How do I earn XP?
+                </button>
+              )}
             </div>
           </div>
+          {user && (
+            <div className="ml-12 mt-2 flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-gray-600">
+                Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
+                    style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {levelProgress.currentXP} XP
+                  {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} to next`}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1114,9 +1150,9 @@ export default function MyDicePage() {
                   })}
               </div>
 
-              {/* Asset grid for active tab - fixed max height with scroll */}
-              <div className="p-4 max-h-[560px] overflow-y-auto overflow-x-hidden">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {/* Asset grid for active tab - shows 2 rows (4 items) at a time with internal scroll */}
+              <div className="p-4 max-h-[320px] overflow-y-auto overflow-x-hidden">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Optional None option for tabs except background and dice */}
                 {activeTab !== "background" && activeTab !== "dice" && (
                   <button
@@ -1125,7 +1161,7 @@ export default function MyDicePage() {
                     className={`relative rounded-lg border bg-white transition-shadow flex items-center justify-center ${
                       activeTab === 'title' 
                         ? 'px-4 py-2 min-h-[3rem]' 
-                        : 'overflow-hidden aspect-square h-24 w-24'
+                        : 'overflow-hidden aspect-square w-full'
                     } ${
                       !selected[activeTab] ? "border-[#fbae17] border-2 shadow-lg" : "border-gray-200 hover:shadow-md"
                     }`}
@@ -1230,7 +1266,7 @@ export default function MyDicePage() {
                         }
                       }}
                       disabled={isDisabled}
-                      className={`relative rounded-lg border overflow-hidden aspect-square transition-shadow flex items-center justify-center h-24 w-24 ${
+                      className={`relative rounded-lg border overflow-hidden aspect-square transition-shadow flex items-center justify-center w-full ${
                         isDisabled 
                           ? "bg-gray-200 border-gray-300 cursor-not-allowed opacity-60" 
                           : isActive 

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Send, Gamepad2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -60,6 +61,21 @@ export default function SuggestGameModal({
       setIsSubmitting(false);
     }
   };
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      if (isOpen) {
+        unlockBodyScroll();
+      }
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

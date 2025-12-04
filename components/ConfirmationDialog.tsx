@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface ConfirmationDialogProps {
@@ -24,7 +25,7 @@ export default function ConfirmationDialog({
   cancelText = 'Cancel',
   type = 'danger'
 }: ConfirmationDialogProps) {
-  // Handle escape key
+  // Handle escape key and scroll lock
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -33,13 +34,17 @@ export default function ConfirmationDialog({
     };
 
     if (isOpen) {
+      lockBodyScroll();
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+    } else {
+      unlockBodyScroll();
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      if (isOpen) {
+        unlockBodyScroll();
+      }
     };
   }, [isOpen, onClose]);
 
