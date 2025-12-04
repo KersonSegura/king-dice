@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingBag, ExternalLink, Star } from 'lucide-react';
+import { ShoppingBag, ExternalLink } from 'lucide-react';
 import { boardGames, getGamesByCategory, getCategories, type BoardGame } from '@/data/board-games';
 
 // Amazon Associates disclosure - required by Amazon
@@ -34,26 +34,14 @@ export default function ShopPage() {
       return false;
     }
     
-    // Price filter
+    // Price filter - Note: We can't filter by price without showing prices
+    // which violates Amazon's terms. So we'll disable price filters for now.
+    // Once PA-API is available, we can re-enable this functionality.
+    // For now, price filters are disabled to comply with Amazon's terms.
     if (priceFilter !== 'all') {
-      if (!game.price) return false;
-      
-      const price = parseFloat(game.price.replace(/[^0-9.]/g, ''));
-      
-      switch (priceFilter) {
-        case 'under5':
-          return price < 5;
-        case 'under10':
-          return price < 10;
-        case 'under25':
-          return price < 25;
-        case 'under50':
-          return price < 50;
-        case 'discounted':
-          return !!(game.originalPrice && game.originalPrice !== game.price);
-        default:
-          return true;
-      }
+      // Price filtering disabled to comply with Amazon Associates terms
+      // Users can still filter by category
+      return false; // Disable all price filters
     }
     
     return true;
@@ -104,72 +92,17 @@ export default function ShopPage() {
             </div>
           )}
 
-          {/* Price Filter */}
+          {/* Price Filter - Disabled to comply with Amazon Associates terms */}
+          {/* Price filters require showing prices, which violates Amazon's terms without PA-API */}
+          {/* Once PA-API is available, we can re-enable price filtering */}
+          {/* 
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Price & Deals</h3>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setPriceFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  priceFilter === 'all'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                All Prices
-              </button>
-              <button
-                onClick={() => setPriceFilter('discounted')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  priceFilter === 'discounted'
-                    ? 'bg-red-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                On Sale
-              </button>
-              <button
-                onClick={() => setPriceFilter('under5')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  priceFilter === 'under5'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                Under $5
-              </button>
-              <button
-                onClick={() => setPriceFilter('under10')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  priceFilter === 'under10'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                Under $10
-              </button>
-              <button
-                onClick={() => setPriceFilter('under25')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  priceFilter === 'under25'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                Under $25
-              </button>
-              <button
-                onClick={() => setPriceFilter('under50')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  priceFilter === 'under50'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-              >
-                Under $50
-              </button>
+              <button>...</button>
             </div>
           </div>
+          */}
         </div>
 
         {/* Games Grid */}
@@ -226,31 +159,6 @@ export default function ShopPage() {
                     <span className="bg-gray-100 px-2 py-1 rounded">{game.playTime}</span>
                   )}
                 </div>
-
-                {/* Rating */}
-                {game.rating && (
-                  <div className="flex items-center space-x-1 mb-3">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium text-gray-700">{game.rating}</span>
-                  </div>
-                )}
-
-                {/* Price */}
-                {game.price && (
-                  <div className="mb-3">
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-2xl font-bold text-gray-900">{game.price}</span>
-                      {game.originalPrice && game.originalPrice !== game.price && (
-                        <span className="text-sm text-red-600 font-medium line-through">{game.originalPrice}</span>
-                      )}
-                    </div>
-                    {game.originalPrice && game.originalPrice !== game.price && (
-                      <span className="text-xs text-green-600 font-medium">
-                        Save {calculateDiscount(game.originalPrice, game.price)}
-                      </span>
-                    )}
-                  </div>
-                )}
 
                 {/* Amazon Link Button - Must open in new tab per Amazon guidelines */}
                 <a
