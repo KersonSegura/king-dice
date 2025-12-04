@@ -540,15 +540,15 @@ export default function Header() {
         {isMenuOpen && (
           <div 
             ref={mobileMenuRef}
-            className="md:hidden py-4 border-t border-dark-200 max-h-[70vh] overflow-y-auto"
+            className="md:hidden py-4 border-t border-dark-200 max-h-[70vh] overflow-y-auto bg-gray-50"
             style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
             data-menu-scrollable
           >
-            <nav className="flex flex-col space-y-4">
+            <nav className="flex flex-col space-y-3 px-3">
               {/* Mobile Home Link */}
               <Link 
                 href="/" 
-                className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                 onClick={handleMobileNavigation}
               >
                 <Image
@@ -558,15 +558,15 @@ export default function Header() {
                   height={24}
                   className="w-6 h-6"
                 />
-                <span>Home</span>
+                <span className="font-medium">Home</span>
               </Link>
               
               {/* Mobile Boardgames Section */}
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-4">Board Games</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-1">Board Games</h3>
                 <Link 
                   href="/all-games" 
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <Image
@@ -576,11 +576,11 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span>All Games</span>
+                  <span className="font-medium">All Games</span>
                 </Link>
                 <Link 
                   href="/hot-games" 
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <Image
@@ -590,11 +590,11 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span>Hot Games</span>
+                  <span className="font-medium">Hot Games</span>
                 </Link>
                 <Link 
                   href="/top-ranked" 
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <Image
@@ -604,12 +604,12 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span>Top Ranked</span>
+                  <span className="font-medium">Top Ranked</span>
                 </Link>
               </div>
               <Link 
                 href="/forums" 
-                className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                 onClick={handleMobileNavigation}
               >
                 <Image
@@ -619,11 +619,11 @@ export default function Header() {
                   height={24}
                   className="w-6 h-6"
                 />
-                <span>Forums</span>
+                <span className="font-medium">Forums</span>
               </Link>
               <Link 
                 href="/community-gallery" 
-                className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                 onClick={handleMobileNavigation}
               >
                 <Image
@@ -633,11 +633,11 @@ export default function Header() {
                   height={24}
                   className="w-6 h-6"
                 />
-                <span>Gallery</span>
+                <span className="font-medium">Gallery</span>
               </Link>
               <Link 
                 href="/shop" 
-                className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                 onClick={handleMobileNavigation}
               >
                 <Image
@@ -648,17 +648,17 @@ export default function Header() {
                   className="w-6 h-6"
                   unoptimized
                 />
-                <span>Shop</span>
+                <span className="font-medium">Shop</span>
               </Link>
               
               {/* Mobile Features Section */}
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-4">Features</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-1">Features</h3>
                 
                 {isAuthenticated && (
                   <Link
                     href="/my-dice"
-                    className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                     onClick={handleMobileNavigation}
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
@@ -670,13 +670,13 @@ export default function Header() {
                         className="w-5 h-5"
                       />
                     </div>
-                    <span>My Dice</span>
+                    <span className="font-medium">My Dice</span>
                   </Link>
                 )}
                 
                 <Link
                   href="/catan-map-generator"
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
@@ -688,23 +688,23 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span>Catan Maps</span>
+                  <span className="font-medium">Catan Maps</span>
                 </Link>
                 
                 <Link
                   href="/pixel-canvas"
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <div className="w-4 h-4 bg-white rounded-sm"></div>
                   </div>
-                  <span>Pixel Canvas</span>
+                  <span className="font-medium">Pixel Canvas</span>
                 </Link>
                 
                 <Link
                   href="/boardle"
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
@@ -716,12 +716,12 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span>Boardle</span>
+                  <span className="font-medium">Boardle</span>
                 </Link>
                 
                 <Link
                   href="/dice-roller"
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
@@ -733,12 +733,12 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span>Dice Roller</span>
+                  <span className="font-medium">Dice Roller</span>
                 </Link>
                 
                 <Link
                   href="/digital-corner"
-                  className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
@@ -750,7 +750,7 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span>Digital Corner</span>
+                  <span className="font-medium">Digital Corner</span>
                 </Link>
               </div>
               
@@ -759,7 +759,7 @@ export default function Header() {
                 href="https://discord.gg/3xh7yUnnnW"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                className="flex items-center justify-center space-x-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-3 rounded-lg transition-colors font-medium shadow-sm"
                 onClick={handleMobileNavigation}
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
