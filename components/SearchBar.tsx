@@ -377,6 +377,7 @@ export default function SearchBar() {
         onClose={() => setShowSuggestModal(false)}
         gameName={query}
         suggestedBy={user?.username || 'Anonymous User'}
+        userId={user?.id || null}
       />
     </div>
   );

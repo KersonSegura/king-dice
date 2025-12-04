@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '@/lib/email-service';
+import { supabaseAdmin } from '@/lib/supabase';
+
+// Generate CUID-style ID (matches database pattern)
+function generateCuid(): string {
+  const timestamp = Date.now().toString(36);
+  const counter = Math.floor(Math.random() * 36).toString(36);
+  const fingerprint = Math.floor(Math.random() * 36).toString(36);
+  const random = Math.random().toString(36).substring(2, 15);
+  return `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+}
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { gameName, suggestedBy, userEmail, additionalInfo } = await request.json();
+    const { gameName, suggestedBy, userId, isExpansion, isDifferentEdition, additionalInfo } = await request.json();
 
     // Validate required fields
     if (!gameName || !suggestedBy) {
@@ -14,6 +24,35 @@ export async function POST(request: NextRequest) {
         { error: 'Game name and suggested by are required' },
         { status: 400 }
       );
+    }
+
+    // Generate ID for the suggestion
+    const suggestionId = generateCuid();
+
+    // Save suggestion to database (linked to user account if userId provided)
+    const now = new Date().toISOString();
+    
+    // Try snake_case first (matches our migration)
+    const { error: dbError } = await supabaseAdmin
+      .from('game_suggestions')
+      .insert({
+        id: suggestionId,
+        user_id: userId || null,
+        username: suggestedBy,
+        game_name: gameName,
+        is_expansion: isExpansion || false,
+        is_different_edition: isDifferentEdition || false,
+        additional_info: additionalInfo || null,
+        status: 'pending',
+        created_at: now,
+        updated_at: now
+      });
+
+    if (dbError) {
+      console.error('❌ Error saving game suggestion to database:', dbError);
+      // Continue anyway - still send email even if DB save fails
+    } else {
+      console.log(`✅ Game suggestion saved to database with ID: ${suggestionId}`);
     }
 
     // Email content
@@ -38,10 +77,21 @@ export async function POST(request: NextRequest) {
               <p style="margin: 5px 0; color: #111827;">${suggestedBy}</p>
             </div>
             
-            ${userEmail ? `
+            ${userId ? `
               <div style="margin-bottom: 20px;">
-                <strong style="color: #6b7280;">User Email:</strong>
-                <p style="margin: 5px 0; color: #111827;">${userEmail}</p>
+                <strong style="color: #6b7280;">User ID:</strong>
+                <p style="margin: 5px 0; color: #111827;">${userId}</p>
+                <p style="margin: 5px 0; color: #9ca3af; font-size: 12px;">User will be notified when game is added</p>
+              </div>
+            ` : ''}
+            
+            ${(isExpansion || isDifferentEdition) ? `
+              <div style="margin-bottom: 20px;">
+                <strong style="color: #6b7280;">Game Type:</strong>
+                <ul style="margin: 5px 0; padding-left: 20px; color: #111827;">
+                  ${isExpansion ? '<li>✓ It\'s an expansion</li>' : ''}
+                  ${isDifferentEdition ? '<li>✓ Is a different edition</li>' : ''}
+                </ul>
               </div>
             ` : ''}
             

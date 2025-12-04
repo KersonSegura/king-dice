@@ -4,21 +4,25 @@ import React, { useState, useEffect } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Send, Gamepad2 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SuggestGameModalProps {
   isOpen: boolean;
   onClose: () => void;
   gameName: string;
   suggestedBy: string;
+  userId?: string | null;
 }
 
 export default function SuggestGameModal({ 
   isOpen, 
   onClose, 
   gameName, 
-  suggestedBy 
+  suggestedBy,
+  userId 
 }: SuggestGameModalProps) {
-  const [userEmail, setUserEmail] = useState('');
+  const [isExpansion, setIsExpansion] = useState(false);
+  const [isDifferentEdition, setIsDifferentEdition] = useState(false);
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
@@ -38,7 +42,9 @@ export default function SuggestGameModal({
         body: JSON.stringify({
           gameName,
           suggestedBy,
-          userEmail: userEmail.trim() || undefined,
+          userId: userId || undefined,
+          isExpansion,
+          isDifferentEdition,
           additionalInfo: additionalInfo.trim() || undefined,
         }),
       });
@@ -49,7 +55,8 @@ export default function SuggestGameModal({
         showToast('Game suggestion sent successfully! We\'ll review it soon.', 'success');
         onClose();
         // Reset form
-        setUserEmail('');
+        setIsExpansion(false);
+        setIsDifferentEdition(false);
         setAdditionalInfo('');
       } else {
         showToast(data.error || 'Failed to send suggestion', 'error');
@@ -123,22 +130,27 @@ export default function SuggestGameModal({
             </div>
           </div>
 
-          {/* Email (Optional) */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Your Email (Optional)
+          {/* Checkboxes */}
+          <div className="space-y-3">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isExpansion}
+                onChange={(e) => setIsExpansion(e.target.checked)}
+                className="w-4 h-4 text-[#fbae17] border-gray-300 rounded focus:ring-[#fbae17] focus:ring-2"
+              />
+              <span className="text-sm text-gray-700">It's an expansion</span>
             </label>
-            <input
-              type="email"
-              id="email"
-              value={userEmail}
-              onChange={(e) => setUserEmail(e.target.value)}
-              placeholder="your.email@example.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] transition-colors"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              We'll use this to notify you when the game is added
-            </p>
+            
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isDifferentEdition}
+                onChange={(e) => setIsDifferentEdition(e.target.checked)}
+                className="w-4 h-4 text-[#fbae17] border-gray-300 rounded focus:ring-[#fbae17] focus:ring-2"
+              />
+              <span className="text-sm text-gray-700">Is a different edition</span>
+            </label>
           </div>
 
           {/* Additional Information */}
