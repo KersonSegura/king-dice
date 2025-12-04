@@ -29,6 +29,14 @@ export default function Header() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
+  
+  // Desktop hamburger menu for when space is limited
+  const [isDesktopNavOpen, setIsDesktopNavOpen] = useState(false);
+  const [showDesktopHamburger, setShowDesktopHamburger] = useState(false);
+  const desktopNavRef = useRef<HTMLDivElement>(null);
+  const desktopNavButtonRef = useRef<HTMLButtonElement>(null);
+  const desktopNavMenuRef = useRef<HTMLDivElement>(null);
+  const desktopNavHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Simple hover handlers - no delays, just immediate response
   const openMenu = () => {
@@ -94,6 +102,60 @@ export default function Header() {
     };
   }, [isMenuOpen]);
 
+  // Check if desktop navigation items fit and determine if hamburger is needed
+  useEffect(() => {
+    const checkNavFit = () => {
+      // Only check on desktop (md and above, which is 768px+)
+      if (typeof window === 'undefined' || window.innerWidth < 768) {
+        setShowDesktopHamburger(false);
+        return;
+      }
+
+      // Use a width-based breakpoint to determine when to show hamburger
+      // Show hamburger when window width is less than ~1900px to ensure Shop button never goes behind Features menu
+      // This appears much earlier to prevent any overlap issues (Shop button already goes behind at 1630px)
+      setShowDesktopHamburger(window.innerWidth < 1900);
+    };
+
+    // Check on mount and resize
+    checkNavFit();
+    window.addEventListener('resize', checkNavFit);
+    
+    // Also check after a short delay to ensure DOM is ready
+    const timeoutId = setTimeout(checkNavFit, 100);
+
+    return () => {
+      window.removeEventListener('resize', checkNavFit);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  // Desktop nav menu hover handlers
+  const handleDesktopNavMouseEnter = () => {
+    // Clear any existing timeout
+    if (desktopNavHoverTimeoutRef.current) {
+      clearTimeout(desktopNavHoverTimeoutRef.current);
+      desktopNavHoverTimeoutRef.current = null;
+    }
+    setIsDesktopNavOpen(true);
+  };
+
+  const handleDesktopNavMouseLeave = () => {
+    // Add a small delay before closing to prevent flickering
+    desktopNavHoverTimeoutRef.current = setTimeout(() => {
+      setIsDesktopNavOpen(false);
+    }, 150);
+  };
+
+  // Cleanup desktop nav hover timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (desktopNavHoverTimeoutRef.current) {
+        clearTimeout(desktopNavHoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Prevent scroll chaining on mobile menu when at boundaries
   useEffect(() => {
     if (!isMenuOpen || !mobileMenuRef.current) return;
@@ -155,7 +217,7 @@ export default function Header() {
         return;
       }
       // Otherwise, close the menu
-      setIsMenuOpen(false);
+        setIsMenuOpen(false);
     }
 
     if (isMenuOpen) {
@@ -259,53 +321,192 @@ export default function Header() {
           <SearchBar />
 
           {/* Center (Navigation) */}
-          <nav className="hidden md:flex flex-1 justify-center space-x-8">
-            <Link href="/" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
-              <Image
-                src="/HomeIcon.svg"
-                alt="Home Icon"
-                width={20}
-                height={20}
-                className="w-5 h-5"
-              />
-              <span>Home</span>
-            </Link>
-            <BoardgamesDropdown />
-            <Link href="/forums" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
-              <Image
-                src="/ForumsIcon.svg"
-                alt="Forums Icon"
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <span>Forums</span>
-            </Link>
-            <Link href="/community-gallery" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
-              <Image
-                src="/GalleryIcon.svg"
-                alt="Gallery Icon"
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <span>Gallery</span>
-            </Link>
-            <Link href="/shop" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
-              <Image
-                src="/ShopIcon.svg"
-                alt="Shop Icon"
-                width={24}
-                height={24}
-                className="w-6 h-6"
-                unoptimized
-              />
-              <span>Shop</span>
-            </Link>
+          <nav ref={desktopNavRef} className="hidden md:flex flex-1 justify-center space-x-8">
+            {/* Individual navigation items - shown when there's enough space */}
+            {!showDesktopHamburger && (
+              <>
+                <Link href="/" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
+                  <Image
+                    src="/HomeIcon.svg"
+                    alt="Home Icon"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />
+                  <span>Home</span>
+                </Link>
+                <BoardgamesDropdown />
+                <Link href="/forums" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
+                  <Image
+                    src="/ForumsIcon.svg"
+                    alt="Forums Icon"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6"
+                  />
+                  <span>Forums</span>
+                </Link>
+                <Link href="/community-gallery" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
+                  <Image
+                    src="/GalleryIcon.svg"
+                    alt="Gallery Icon"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6"
+                  />
+                  <span>Gallery</span>
+                </Link>
+                <Link href="/shop" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
+                  <Image
+                    src="/ShopIcon.svg"
+                    alt="Shop Icon"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6"
+                    unoptimized
+                  />
+                  <span>Shop</span>
+                </Link>
+              </>
+            )}
           </nav>
 
                      {/* Right (Actions) */}
            <div className="flex items-center justify-end flex-shrink-0 space-x-4">
+             {/* Desktop hamburger menu button - shown when space is limited, right next to Features */}
+             {showDesktopHamburger && (
+               <div 
+                 className="relative"
+                 onMouseEnter={handleDesktopNavMouseEnter}
+                 onMouseLeave={handleDesktopNavMouseLeave}
+               >
+                 <button
+                   ref={desktopNavButtonRef}
+                   className="p-2 text-gray-600 hover:text-primary-500 transition-colors rounded-lg hover:bg-gray-100"
+                   aria-label="Navigation Menu"
+                 >
+                   <Menu className="w-5 h-5" />
+                 </button>
+
+                 {/* Desktop Navigation Dropdown */}
+                 {isDesktopNavOpen && (
+                   <div
+                     ref={desktopNavMenuRef}
+                     className="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
+                   >
+                     <Link
+                       href="/"
+                       onClick={() => setIsDesktopNavOpen(false)}
+                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                     >
+                       <Image
+                         src="/HomeIcon.svg"
+                         alt="Home Icon"
+                         width={20}
+                         height={20}
+                         className="w-5 h-5"
+                       />
+                       <span>Home</span>
+                     </Link>
+                     
+                     {/* Board Games Section */}
+                     <div className="border-t border-gray-200 my-2"></div>
+                     <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                       Board Games
+                     </div>
+                     <Link
+                       href="/all-games"
+                       onClick={() => setIsDesktopNavOpen(false)}
+                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                     >
+                       <Image
+                         src="/AllIcon.svg"
+                         alt="All Games"
+                         width={24}
+                         height={24}
+                         className="w-6 h-6"
+                       />
+                       <span>All Games</span>
+                     </Link>
+                     <Link
+                       href="/hot-games"
+                       onClick={() => setIsDesktopNavOpen(false)}
+                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                     >
+                       <Image
+                         src="/FireIcon.svg"
+                         alt="Hot Games"
+                         width={24}
+                         height={24}
+                         className="w-6 h-6"
+                       />
+                       <span>Hot Games</span>
+                     </Link>
+                     <Link
+                       href="/top-ranked"
+                       onClick={() => setIsDesktopNavOpen(false)}
+                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                     >
+                       <Image
+                         src="/TrophyIcon.svg"
+                         alt="Top Ranked"
+                         width={24}
+                         height={24}
+                         className="w-6 h-6"
+                       />
+                       <span>Top Ranked</span>
+                     </Link>
+                     
+                     <div className="border-t border-gray-200 my-2"></div>
+                     
+                     <Link
+                       href="/forums"
+                       onClick={() => setIsDesktopNavOpen(false)}
+                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                     >
+                       <Image
+                         src="/ForumsIcon.svg"
+                         alt="Forums Icon"
+                         width={24}
+                         height={24}
+                         className="w-6 h-6"
+                       />
+                       <span>Forums</span>
+                     </Link>
+                     <Link
+                       href="/community-gallery"
+                       onClick={() => setIsDesktopNavOpen(false)}
+                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                     >
+                       <Image
+                         src="/GalleryIcon.svg"
+                         alt="Gallery Icon"
+                         width={24}
+                         height={24}
+                         className="w-6 h-6"
+                       />
+                       <span>Gallery</span>
+                     </Link>
+                     <Link
+                       href="/shop"
+                       onClick={() => setIsDesktopNavOpen(false)}
+                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                     >
+                       <Image
+                         src="/ShopIcon.svg"
+                         alt="Shop Icon"
+                         width={24}
+                         height={24}
+                         className="w-6 h-6"
+                         unoptimized
+                       />
+                       <span>Shop</span>
+                     </Link>
+                   </div>
+                 )}
+               </div>
+             )}
+             
              {/* Features Dropdown */}
              <FeaturesDropdown />
 

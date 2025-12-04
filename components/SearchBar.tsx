@@ -33,6 +33,7 @@ export default function SearchBar() {
   const [showSuggestModal, setShowSuggestModal] = useState(false);
   const [dropdownMetrics, setDropdownMetrics] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
   const [isMobileLayout, setIsMobileLayout] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,17 +70,21 @@ export default function SearchBar() {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        // On mobile, collapse the search bar if there's no query
+        if (typeof window !== 'undefined' && window.innerWidth < 768 && !query) {
+          setIsExpanded(false);
+        }
       }
     }
 
-    if (isOpen) {
+    if (isOpen || isExpanded) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, isExpanded, query]);
 
   useEffect(() => {
     updateDropdownPosition();
@@ -161,12 +166,32 @@ export default function SearchBar() {
   const handleResultClick = () => {
     setIsOpen(false);
     setQuery('');
+    setIsExpanded(false);
     closeChatOnNavigation();
   };
 
   const handleSuggestGame = () => {
     setShowSuggestModal(true);
     setIsOpen(false);
+  };
+
+  const handleIconClick = () => {
+    setIsExpanded(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  };
+
+  const handleInputBlur = () => {
+    // Don't collapse if there's a query or if dropdown is open
+    if (!query && !isOpen) {
+      // Small delay to allow click events on dropdown to register
+      setTimeout(() => {
+        if (!query) {
+          setIsExpanded(false);
+        }
+      }, 200);
+    }
   };
 
   const formatTime = (dateString: string) => {
@@ -185,28 +210,44 @@ export default function SearchBar() {
     : undefined;
 
   return (
-    <div className="relative flex-1 w-full sm:max-w-md mx-2 sm:mx-4" ref={searchRef}>
-      {/* Search Input */}
-      <div className="relative">
+    <div className={`relative ${isExpanded ? 'flex-1' : 'flex-shrink-0'} w-full sm:max-w-xs md:flex-1 md:max-w-sm lg:max-w-md xl:max-w-lg mx-2 sm:mx-3 md:mx-4`} ref={searchRef}>
+      {/* Icon-only button for small screens */}
+      <button
+        onClick={handleIconClick}
+        className={`md:hidden p-2 text-gray-600 hover:text-primary-500 transition-colors rounded-lg hover:bg-gray-100 ${isExpanded ? 'hidden' : 'block'}`}
+        aria-label="Search"
+      >
+        <Search className="h-5 w-5" />
+      </button>
+
+      {/* Expanded search bar - visible on md+ screens or when expanded on mobile */}
+      <div className={`relative ${isExpanded ? 'block' : 'hidden'} md:block`}>
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-gray-400" />
         </div>
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search users and games..."
+          placeholder={isExpanded && typeof window !== 'undefined' && window.innerWidth < 768 ? "Search..." : "Search users and games..."}
           value={query}
           onChange={handleInputChange}
           onFocus={() => {
             setIsOpen(true);
+            setIsExpanded(true);
             closeChatOnNavigation();
           }}
-          className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          onBlur={handleInputBlur}
+          className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
         />
         {query && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
             <button
-              onClick={handleClear}
+              onClick={() => {
+                handleClear();
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  setIsExpanded(false);
+                }
+              }}
               className="text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />
