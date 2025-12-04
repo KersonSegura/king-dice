@@ -193,6 +193,7 @@ export default function Header() {
                 width={24}
                 height={24}
                 className="w-6 h-6"
+                unoptimized
               />
               <span>Shop</span>
             </Link>
@@ -520,6 +521,7 @@ export default function Header() {
                   width={24}
                   height={24}
                   className="w-6 h-6"
+                  unoptimized
                 />
                 <span>Shop</span>
               </Link>
