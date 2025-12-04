@@ -1324,7 +1324,7 @@ function CommunityGalleryPageContent() {
                       className="w-full h-full group-hover:opacity-90 transition-opacity"
                       style={{
                         backgroundImage: `url(${displayUrl})`,
-                        backgroundSize: '100% 100%',
+                        backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat'
                       }}

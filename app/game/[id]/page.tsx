@@ -3,7 +3,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe, X } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe, X, ShoppingCart, ExternalLink } from 'lucide-react';
 import VideoLinks from '@/components/VideoLinks';
 import PDFHandler from '@/components/PDFHandler';
 import { useState, useEffect, use, useRef } from 'react';
@@ -28,6 +28,7 @@ interface Game {
   pdfUrl?: string;
   pdfFile?: string;
   officialWebsite?: string;
+  shopUrl?: string;
   bggId?: number;
   bggRanking?: number;
   bggRating?: number;
@@ -190,12 +191,54 @@ function parseMarkdownLinks(text: string): React.ReactNode {
 function renderRulesWithImages(text: string) {
   if (!text) return null;
 
+  // Helper function to check if a heading text contains "Game Rules"
+  const isGameRulesHeading = (headingText: string): boolean => {
+    const normalized = headingText.toLowerCase().trim();
+    // Remove any HTML tags for comparison
+    const textOnly = normalized.replace(/<[^>]+>/g, '').trim();
+    // Check for variations: "Game Rules", "Catan Game Rules", etc.
+    // Match patterns like "Game Rules", "Catan Game Rules", "Rules", etc.
+    return textOnly.includes('game rules') || 
+           (textOnly.includes('rules') && textOnly.split(/\s+/).length <= 3);
+  };
+
+  // Remove the first "Game Rules" heading from the text before processing
+  // This handles both markdown and HTML formats
+  let processedText = text;
+  
+  // Find the position of the first markdown heading and first HTML heading
+  const markdownMatch = processedText.match(/^(#{1,6})\s*(.+?)(\n|$)/m);
+  const htmlHeadingMatch = processedText.match(/<h([1-6])>(.*?)<\/h[1-6]>/i);
+  
+  let markdownPosition = markdownMatch ? processedText.indexOf(markdownMatch[0]) : -1;
+  let htmlPosition = htmlHeadingMatch ? processedText.indexOf(htmlHeadingMatch[0]) : -1;
+  
+  // Determine which heading comes first and check if it's a "Game Rules" heading
+  if (markdownPosition >= 0 && (htmlPosition < 0 || markdownPosition < htmlPosition)) {
+    // Markdown heading comes first
+    const [, hashes, headerText] = markdownMatch!;
+    if (isGameRulesHeading(headerText)) {
+      // Remove this line including the newline
+      processedText = processedText.replace(/^(#{1,6})\s*.+?(\n|$)/m, '').trimStart();
+    }
+  } else if (htmlPosition >= 0) {
+    // HTML heading comes first (or is the only one)
+    const fullMatch = htmlHeadingMatch![0];
+    const [, level, content] = htmlHeadingMatch!;
+    const cleanContent = content.replace(/<[^>]+>/g, '').trim();
+    if (isGameRulesHeading(cleanContent)) {
+      // Remove the HTML heading and any surrounding whitespace/newlines
+      const escapedMatch = fullMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      processedText = processedText.replace(new RegExp(`\\s*${escapedMatch}\\s*`, 'i'), '').trimStart();
+    }
+  }
+
   // Process the entire content to handle mixed HTML, markdown, and images
-  const processContentPart = (text: string): React.ReactNode[] => {
-    if (!text) return [];
+  const processContentPart = (contentText: string): React.ReactNode[] => {
+    if (!contentText) return [];
 
     // First, handle images by splitting and processing them
-    const imageParts = text.split(/(\[IMAGE:[^\]]+\]|!\[.*?\]\(data:image\/[^)]+\)|!\[.*?\]\(\/uploads\/rules-images\/[^)]+\))/g);
+    const imageParts = contentText.split(/(\[IMAGE:[^\]]+\]|!\[.*?\]\(data:image\/[^)]+\)|!\[.*?\]\(\/uploads\/rules-images\/[^)]+\))/g);
     
     return imageParts.map((part, partIndex) => {
       // Handle image placeholders
@@ -362,7 +405,7 @@ function renderRulesWithImages(text: string) {
 
   return (
     <div>
-      {processContentPart(text)}
+      {processContentPart(processedText)}
     </div>
   );
 }
@@ -374,7 +417,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [showAllDesigners, setShowAllDesigners] = useState(false);
   const [showAllPublishers, setShowAllPublishers] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf'>('rules');
+  const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
   const [isDesktop, setIsDesktop] = useState(false);
   
   // Ranking button state
@@ -699,16 +742,19 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     // Check videoUrl - it might be a string or array
     const hasVideo = !!(game.videoUrl && (Array.isArray(game.videoUrl) ? game.videoUrl.length > 0 : game.videoUrl));
     const hasPdf = !!(game.pdfUrl || game.pdfFile);
+    const hasShop = !!game.shopUrl;
     
-    console.log('Setting active tab:', { hasRules, hasVideo, hasPdf, videoUrl: game.videoUrl });
+    console.log('Setting active tab:', { hasRules, hasVideo, hasPdf, hasShop, videoUrl: game.videoUrl });
     
-    // Set to first available tab in order: rules > video > pdf
+    // Set to first available tab in order: rules > video > pdf > shop
     if (hasRules) {
       setActiveTab('rules');
     } else if (hasVideo) {
       setActiveTab('video');
     } else if (hasPdf) {
       setActiveTab('pdf');
+    } else if (hasShop) {
+      setActiveTab('shop');
     }
     // If no tabs available, the section won't render anyway due to the conditional
   }, [game, loading]);
@@ -1234,21 +1280,21 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         )}
 
         {/* Game Resources Section with Tabs */}
-        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile) && (
+        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl) && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Tab Headers */}
-            <div className="border-b border-gray-200">
-              <nav className="flex space-x-8 px-8 pt-6" aria-label="Tabs">
+            <div className="border-b border-gray-200 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <nav className="flex space-x-2 sm:space-x-4 md:space-x-8 px-4 sm:px-6 md:px-8 pt-6 min-w-max" aria-label="Tabs">
                 {rules?.rulesText && (
                   <button
                     onClick={() => setActiveTab('rules')}
-                    className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
+                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
                       activeTab === 'rules'
                         ? 'border-[#fbae17] text-[#fbae17]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <FileText className="w-5 h-5 mr-2" />
+                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                     Game Rules
                   </button>
                 )}
@@ -1256,13 +1302,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 {game?.videoUrl && (
                   <button
                     onClick={() => setActiveTab('video')}
-                    className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
+                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
                       activeTab === 'video'
                         ? 'border-[#fbae17] text-[#fbae17]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <Play className="w-5 h-5 mr-2" />
+                    <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                     Video Tutorial
                   </button>
                 )}
@@ -1270,14 +1316,28 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 {(game?.pdfUrl || game?.pdfFile) && (
                   <button
                     onClick={() => setActiveTab('pdf')}
-                    className={`py-4 px-6 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
+                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
                       activeTab === 'pdf'
                         ? 'border-[#fbae17] text-[#fbae17]'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <Download className="w-5 h-5 mr-2" />
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                     PDF
+                  </button>
+                )}
+                
+                {game?.shopUrl && (
+                  <button
+                    onClick={() => setActiveTab('shop')}
+                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
+                      activeTab === 'shop'
+                        ? 'border-[#fbae17] text-[#fbae17]'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                    Shop
                   </button>
                 )}
               </nav>
@@ -1336,6 +1396,37 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
+              {activeTab === 'shop' && game?.shopUrl && (
+                <div className="w-full">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <ShoppingCart className="w-6 h-6 mr-2 text-[#fbae17]" />
+                    Shop
+                  </h2>
+                  <div className="prose max-w-none w-full">
+                    <div className="text-gray-700 leading-relaxed w-full">
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <div className="bg-gray-50 rounded-lg p-6 w-full max-w-md text-center">
+                          <ShoppingCart className="w-12 h-12 mx-auto text-[#fbae17] mb-4" />
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Purchase {game.nameEn}</h3>
+                          <p className="text-gray-600 mb-6">
+                            Get this game from our shop
+                          </p>
+                          <a
+                            href={game.shopUrl}
+                            target="_blank"
+                            rel="noopener noreferrer sponsored"
+                            className="inline-flex items-center px-6 py-3 bg-[#fbae17] text-white rounded-lg font-medium hover:bg-[#e09915] transition-colors duration-200 shadow-md hover:shadow-lg"
+                          >
+                            <span>Buy Now</span>
+                            <ExternalLink className="w-4 h-4 ml-2" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* No content available message */}
               {activeTab === 'rules' && !rules?.rulesText && (
                 <div className="text-center py-12">
@@ -1358,6 +1449,14 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   <Download className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No PDF Available</h3>
                   <p className="text-gray-600">PDF rules are not yet available for this game.</p>
+                </div>
+              )}
+
+              {activeTab === 'shop' && !game?.shopUrl && (
+                <div className="text-center py-12">
+                  <ShoppingCart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Shop Link Available</h3>
+                  <p className="text-gray-600">Shop link is not yet available for this game.</p>
                 </div>
               )}
             </div>
