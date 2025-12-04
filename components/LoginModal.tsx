@@ -40,7 +40,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     hasUppercase: /[A-Z]/.test(formData.password),
     hasLowercase: /[a-z]/.test(formData.password),
     hasNumber: /[0-9]/.test(formData.password),
-    passwordsMatch: isRegistering ? (formData.password === formData.confirmPassword && formData.password.length > 0) : true,
   };
 
   // Load saved credentials on component mount
@@ -276,10 +275,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold">
             {isRegistering ? 'Create Account' : 'Sign In'}
           </h2>
           <button
@@ -290,7 +289,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {isRegistering ? 'Username' : 'Username or Email'}
@@ -423,28 +422,24 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           )}
 
           {isRegistering && (
-            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-md">
-              <div className="text-gray-700 font-medium mb-2">Password Requirements:</div>
-              <div className="space-y-1.5">
+            <div className="text-xs sm:text-sm bg-gray-50 p-2 sm:p-3 rounded-md">
+              <div className="text-gray-700 font-medium mb-1.5 sm:mb-2 text-xs sm:text-sm">Password Requirements:</div>
+              <div className="grid grid-cols-1 gap-1 sm:gap-1.5">
                 <div className={`flex items-center transition-colors ${passwordRequirements.minLength ? 'text-green-600' : 'text-red-600'}`}>
-                  <span className="mr-2 font-bold">{passwordRequirements.minLength ? '✓' : '✗'}</span>
-                  <span>At least 8 characters</span>
+                  <span className="mr-1.5 sm:mr-2 font-bold text-xs">{passwordRequirements.minLength ? '✓' : '✗'}</span>
+                  <span className="text-xs sm:text-sm">At least 8 characters</span>
                 </div>
                 <div className={`flex items-center transition-colors ${passwordRequirements.hasUppercase ? 'text-green-600' : 'text-red-600'}`}>
-                  <span className="mr-2 font-bold">{passwordRequirements.hasUppercase ? '✓' : '✗'}</span>
-                  <span>At least one uppercase letter</span>
+                  <span className="mr-1.5 sm:mr-2 font-bold text-xs">{passwordRequirements.hasUppercase ? '✓' : '✗'}</span>
+                  <span className="text-xs sm:text-sm">At least one uppercase letter</span>
                 </div>
                 <div className={`flex items-center transition-colors ${passwordRequirements.hasLowercase ? 'text-green-600' : 'text-red-600'}`}>
-                  <span className="mr-2 font-bold">{passwordRequirements.hasLowercase ? '✓' : '✗'}</span>
-                  <span>At least one lowercase letter</span>
+                  <span className="mr-1.5 sm:mr-2 font-bold text-xs">{passwordRequirements.hasLowercase ? '✓' : '✗'}</span>
+                  <span className="text-xs sm:text-sm">At least one lowercase letter</span>
                 </div>
                 <div className={`flex items-center transition-colors ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
-                  <span className="mr-2 font-bold">{passwordRequirements.hasNumber ? '✓' : '✗'}</span>
-                  <span>At least one number</span>
-                </div>
-                <div className={`flex items-center transition-colors ${passwordRequirements.passwordsMatch ? 'text-green-600' : 'text-red-600'}`}>
-                  <span className="mr-2 font-bold">{passwordRequirements.passwordsMatch ? '✓' : '✗'}</span>
-                  <span>Passwords match</span>
+                  <span className="mr-1.5 sm:mr-2 font-bold text-xs">{passwordRequirements.hasNumber ? '✓' : '✗'}</span>
+                  <span className="text-xs sm:text-sm">At least one number</span>
                 </div>
               </div>
             </div>
