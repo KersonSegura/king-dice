@@ -181,7 +181,7 @@ export default function ShopPage() {
             >
               {/* Game Image */}
               <div className="relative w-full h-64 bg-gray-200 overflow-hidden">
-                {game.imageUrl.startsWith('https://') ? (
+                {game.imageUrl && game.imageUrl.startsWith('https://') ? (
                   // External Amazon images - use regular img tag with CORS handling
                   <img
                     src={game.imageUrl}
@@ -190,28 +190,26 @@ export default function ShopPage() {
                     crossOrigin="anonymous"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      // Fallback to placeholder if image fails to load
+                      // Fallback to inline SVG placeholder if image fails to load
                       const target = e.currentTarget as HTMLImageElement;
-                      target.src = '/placeholder-game.jpg';
+                      const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${game.name}</text></svg>`;
+                      target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
                       console.error('Failed to load image:', game.imageUrl);
-                    }}
-                    onLoad={() => {
-                      console.log('Image loaded successfully:', game.name);
                     }}
                   />
                 ) : (
-                  // Local images - use Next.js Image component
-                  <Image
-                    src={game.imageUrl}
-                    alt={game.name}
-                    fill
-                    className="object-cover"
-                    onError={(e) => {
-                      // Fallback to placeholder if image fails to load
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.src = '/placeholder-game.jpg';
-                    }}
-                  />
+                  // Local images or missing images - show placeholder directly
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                    <div className="text-center p-4">
+                      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2">
+                        <rect width="200" height="200" fill="#e5e7e9" rx="8"/>
+                        <text x="50%" y="50%" fontFamily="Arial, sans-serif" fontSize="14" fill="#9ca3af" textAnchor="middle" dominantBaseline="middle">
+                          {game.name}
+                        </text>
+                      </svg>
+                      <p className="text-xs text-gray-500">Image coming soon</p>
+                    </div>
+                  </div>
                 )}
               </div>
 
