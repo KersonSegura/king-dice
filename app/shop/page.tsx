@@ -54,7 +54,7 @@ export default function ShopPage() {
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <img
-              src="/ShopIcon.svg?v=2"
+              src="/ShopIcon.svg?v=3"
               alt="Shop Icon"
               className="w-8 h-8"
             />
@@ -186,7 +186,7 @@ export default function ShopPage() {
         {filteredGames.length === 0 && (
           <div className="text-center py-12">
             <img
-              src="/ShopIcon.svg?v=2"
+              src="/ShopIcon.svg?v=3"
               alt="Shop Icon"
               className="w-16 h-16 text-gray-400 mx-auto mb-4"
             />

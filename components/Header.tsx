@@ -358,7 +358,7 @@ export default function Header() {
                 </Link>
                 <Link href="/shop" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
                   <img
-                    src="/ShopIcon.svg?v=2"
+                    src="/ShopIcon.svg?v=3"
                     alt="Shop Icon"
                     className="w-6 h-6"
                   />
@@ -490,7 +490,7 @@ export default function Header() {
                        className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                      >
                        <img
-                         src="/ShopIcon.svg?v=2"
+                         src="/ShopIcon.svg?v=3"
                          alt="Shop Icon"
                          className="w-6 h-6"
                        />
@@ -836,7 +836,7 @@ export default function Header() {
                 onClick={handleMobileNavigation}
               >
                 <img
-                  src="/ShopIcon.svg?v=2"
+                  src="/ShopIcon.svg?v=3"
                   alt="Shop Icon"
                   className="w-6 h-6"
                 />
