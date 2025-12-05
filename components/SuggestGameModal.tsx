@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
-import { X, Send, Gamepad2 } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -92,8 +93,14 @@ export default function SuggestGameModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-[#fbae17] rounded-lg flex items-center justify-center">
-              <Gamepad2 className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center">
+              <Image
+                src="/SuggestionIcon.svg"
+                alt="Suggestion Icon"
+                width={40}
+                height={40}
+                className="w-full h-full"
+              />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Suggest a Game</h2>
