@@ -248,36 +248,6 @@ export default function FriendsFollowersSection({
               </div>
             )}
           </div>
-          {!isOwnProfile && currentUserId && (
-            <button
-              onClick={handleFollow}
-              disabled={isEditing}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                isFollowing
-                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  : hasRequestPending
-                  ? 'bg-gray-400 text-white hover:bg-gray-500'
-                  : 'bg-[#fbae17] text-white hover:bg-[#fbae17]/80'
-              } ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isFollowing ? (
-                <>
-                  <UserMinus className="w-4 h-4 inline mr-1" />
-                  Following
-                </>
-              ) : hasRequestPending ? (
-                <>
-                  <UserMinus className="w-4 h-4 inline mr-1" />
-                  Requested
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4 inline mr-1" />
-                  {isPrivateProfile ? 'Request' : 'Follow'}
-                </>
-              )}
-            </button>
-          )}
         </div>
 
         {/* Stats Row */}

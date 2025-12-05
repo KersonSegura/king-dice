@@ -1225,7 +1225,7 @@ export default function UserProfilePage() {
                   <button
                     onClick={handleFollow}
                     disabled={isCheckingFollow}
-                    className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
+                    className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
                       isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
                     }`}
                     style={isFollowing 
