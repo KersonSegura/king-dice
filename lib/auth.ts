@@ -234,11 +234,13 @@ export async function registerUser(username: string, email: string, password: st
   try {
     console.log('🔐 registerUser: Starting registration for:', username);
     
-    // Validate input
-    if (username.length < 3) {
+    // Validate username using comprehensive validation
+    const { validateUsername } = await import('@/lib/username-validation');
+    const usernameValidation = await validateUsername(username);
+    if (!usernameValidation.valid) {
       return {
         success: false,
-        message: 'Username must be at least 3 characters'
+        message: usernameValidation.reason || 'Invalid username'
       };
     }
 

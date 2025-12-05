@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { registerUser } from '@/lib/auth';
+import { validateUsername } from '@/lib/username-validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,24 +52,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate username length
-    if (username.length < 3) {
+    // Validate username using comprehensive validation
+    const usernameValidation = await validateUsername(username);
+    if (!usernameValidation.valid) {
       return NextResponse.json(
-        { message: 'Username must be at least 3 characters' },
-        { status: 400 }
-      );
-    }
-
-    // Check if username contains KingDice variations (restricted to admin users only)
-    const containsKingDiceVariation = (username: string): boolean => {
-      const kingDiceVariations = ['kingdice', 'king-dice', 'king_dice', 'king dice'];
-      const lowerUsername = username.toLowerCase();
-      return kingDiceVariations.some(variation => lowerUsername.includes(variation));
-    };
-
-    if (containsKingDiceVariation(username)) {
-      return NextResponse.json(
-        { message: 'Usernames containing "KingDice" variations are restricted to admin users only' },
+        { message: usernameValidation.reason || 'Invalid username' },
         { status: 400 }
       );
     }

@@ -665,6 +665,33 @@ export async function POST(request: NextRequest) {
 
       console.log(`✅ Game created with ID: ${game.id}`);
 
+      // Check if any users have usernames that conflict with this game name
+      // This runs after game creation to avoid blocking game creation if there's an error
+      try {
+        const { findConflictingUsernames } = await import('@/lib/username-validation');
+        const conflictingUserIds = await findConflictingUsernames(game.nameEn || body.nameEn || '');
+        
+        if (conflictingUserIds.length > 0) {
+          console.log(`⚠️ Found ${conflictingUserIds.length} users with conflicting usernames for game "${game.nameEn}"`);
+          
+          // Flag these users as needing to change their username
+          for (const userId of conflictingUserIds) {
+            await supabaseAdmin
+              .from('users')
+              .update({
+                username_change_required: true,
+                username_change_reason: `Game name conflict: "${game.nameEn}"`
+              })
+              .eq('id', userId);
+            
+            console.log(`✅ Flagged user ${userId} to change username`);
+          }
+        }
+      } catch (conflictError) {
+        // Don't fail game creation if username conflict checking fails
+        console.error('Error checking for conflicting usernames:', conflictError);
+      }
+
       // Add English description if provided
       if (body.fullDescription) {
         await tx.gameDescription.create({
@@ -716,6 +743,44 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`✅ Transaction completed successfully for game: ${result.nameEn}`);
+    
+    // Check if any users have usernames that conflict with this game name
+    // Auto-rename them and send notifications
+    // This runs after game creation to avoid blocking game creation if there's an error
+    try {
+      const { autoRenameConflictingUsers } = await import('@/lib/username-validation');
+      const { createNotification } = await import('@/lib/notifications');
+      
+      // Check all game name fields for conflicts
+      const gameNames = [result.nameEn, result.nameEs, result.name].filter(Boolean);
+      
+      for (const gameName of gameNames) {
+        if (!gameName) continue;
+        
+        // Auto-rename conflicting users
+        const renamedUsers = await autoRenameConflictingUsers(gameName);
+        
+        if (renamedUsers.length > 0) {
+          console.log(`⚠️ Found ${renamedUsers.length} users with conflicting usernames for game "${gameName}"`);
+          
+          // Send notification to each renamed user
+          for (const { userId, oldUsername, newUsername } of renamedUsers) {
+            await createNotification({
+              userId: userId,
+              type: 'system',
+              message: `Your username "${oldUsername}" conflicts with a game we just added. We've automatically changed it to "${newUsername}". Please update it to your preferred username in your profile settings.`,
+              url: '/profile'
+            });
+            
+            console.log(`✅ Notified user ${userId} about username change from "${oldUsername}" to "${newUsername}"`);
+          }
+        }
+      }
+    } catch (conflictError) {
+      // Don't fail game creation if username conflict checking fails
+      console.error('Error handling conflicting usernames:', conflictError);
+    }
+    
     return NextResponse.json({ success: true, game: result });
 
   } catch (error) {
