@@ -357,13 +357,10 @@ export default function Header() {
                   <span>Gallery</span>
                 </Link>
                 <Link href="/shop" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
-                  <Image
+                  <img
                     src="/ShopIcon.svg"
                     alt="Shop Icon"
-                    width={24}
-                    height={24}
                     className="w-6 h-6"
-                    unoptimized
                   />
                   <span>Shop</span>
                 </Link>
@@ -492,13 +489,10 @@ export default function Header() {
                        onClick={() => setIsDesktopNavOpen(false)}
                        className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                      >
-                       <Image
+                       <img
                          src="/ShopIcon.svg"
                          alt="Shop Icon"
-                         width={24}
-                         height={24}
                          className="w-6 h-6"
-                         unoptimized
                        />
                        <span>Shop</span>
                      </Link>
@@ -841,13 +835,10 @@ export default function Header() {
                 className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                 onClick={handleMobileNavigation}
               >
-                <Image
+                <img
                   src="/ShopIcon.svg"
                   alt="Shop Icon"
-                  width={24}
-                  height={24}
                   className="w-6 h-6"
-                  unoptimized
                 />
                 <span className="font-medium">Shop</span>
               </Link>
