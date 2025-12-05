@@ -1228,18 +1228,45 @@ export default function UserProfilePage() {
                     className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
                       isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
                     }`}
-                    style={isFollowing 
-                      ? {
-                          backgroundColor: isLightCover() ? '#ffffff' : 'rgba(255, 255, 255, 0.95)',
-                          border: `2px solid ${profileColors.cover}`,
-                          color: profileColors.cover
+                    style={(() => {
+                      const isLight = isLightCover();
+                      
+                      if (isFollowing) {
+                        // Unfollow state: outlined style with contrast
+                        if (isLight) {
+                          // Light cover: dark background with cover color border
+                          return {
+                            backgroundColor: darkenColor(profileColors.cover, 0.6),
+                            border: `2px solid ${profileColors.cover}`,
+                            color: '#ffffff'
+                          };
+                        } else {
+                          // Dark cover: white background with cover color border and text
+                          return {
+                            backgroundColor: '#ffffff',
+                            border: `2px solid ${profileColors.cover}`,
+                            color: profileColors.cover
+                          };
                         }
-                      : {
-                          backgroundColor: profileColors.cover,
-                          color: getReadableTextColor(),
-                          border: `2px solid ${profileColors.cover}`
+                      } else {
+                        // Follow state: solid style with contrast
+                        if (isLight) {
+                          // Light cover: use cover color with dark text
+                          return {
+                            backgroundColor: profileColors.cover,
+                            color: darkenColor(profileColors.cover, 0.5),
+                            border: `2px solid ${profileColors.cover}`
+                          };
+                        } else {
+                          // Dark cover: white background with cover color text
+                          return {
+                            backgroundColor: '#ffffff',
+                            color: profileColors.cover,
+                            border: `2px solid #ffffff`
+                          };
                         }
-                    }
+                      }
+                    })()}
                   >
                     {isFollowing ? (
                       <>
