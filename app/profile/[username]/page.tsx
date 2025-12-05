@@ -1547,8 +1547,8 @@ export default function UserProfilePage() {
             {/* Friends & Followers Section */}
             <FriendsFollowersSection
               userId={userProfile.id}
-              currentUserId={undefined} // No current user for visitor view
-              isOwnProfile={false}
+              currentUserId={user?.id || undefined}
+              isOwnProfile={isOwnProfile}
               profileColors={profileColors}
             />
 

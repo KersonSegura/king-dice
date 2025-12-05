@@ -98,10 +98,11 @@ export default function FriendsFollowersSection({
     if (!currentUserId || currentUserId === userId) return;
     
     try {
-      const response = await fetch(`/api/follow?followerId=${currentUserId}&followingId=${userId}`, {
-        method: 'HEAD'
-      });
-      setIsFollowing(response.status === 200);
+      const response = await fetch(`/api/follow?followerId=${currentUserId}&followingId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing || false);
+      }
     } catch (error) {
       console.error('Error checking follow status:', error);
     }

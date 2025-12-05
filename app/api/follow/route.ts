@@ -12,7 +12,33 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
-    const type = searchParams.get('type'); // 'following' or 'followers'
+    const type = searchParams.get('type'); // 'following', 'followers', or 'status'
+    const followerId = searchParams.get('followerId');
+    const followingId = searchParams.get('followingId');
+
+    // Check if this is a status check (is one user following another?)
+    if (followerId && followingId) {
+      try {
+        const { data: follow, error } = await supabaseAdmin
+          .from('follows')
+          .select('id')
+          .eq('followerId', followerId)
+          .eq('followingId', followingId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking follow status:', error);
+          return NextResponse.json({ isFollowing: false }, { status: 200 });
+        }
+
+        return NextResponse.json({
+          isFollowing: !!follow
+        });
+      } catch (error) {
+        console.error('Error checking follow status:', error);
+        return NextResponse.json({ isFollowing: false }, { status: 200 });
+      }
+    }
 
     if (!userId) {
       return NextResponse.json(
