@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { User, Calendar, Award, ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, Heart, Eye, Download, X, Settings, Edit, Camera, Plus, Palette, GripVertical } from 'lucide-react';
+import { User, Calendar, Award, ArrowLeft, ThumbsUp, ThumbsDown, MessageCircle, Heart, Eye, Download, X, Settings, Edit, Camera, Plus, Palette, GripVertical, UserPlus, UserMinus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/components/Toast';
@@ -237,6 +237,9 @@ export default function UserProfilePage() {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingBio, setEditingBio] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [hasRequestPending, setHasRequestPending] = useState(false);
+  const [isCheckingFollow, setIsCheckingFollow] = useState(false);
   
   // Ref to track if we're currently closing the modal (to prevent reopening)
   const isClosingModal = useRef<boolean>(false);
@@ -450,9 +453,72 @@ export default function UserProfilePage() {
     }
   };
 
+  // Check follow status
+  const checkFollowStatus = async () => {
+    if (!user?.id || !userProfile?.id || isOwnProfile) return;
+    
+    try {
+      setIsCheckingFollow(true);
+      const response = await fetch(`/api/follow?followerId=${user.id}&followingId=${userProfile.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing || false);
+      }
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+    } finally {
+      setIsCheckingFollow(false);
+    }
+  };
+
+  // Handle follow/unfollow
+  const handleFollow = async () => {
+    if (!user?.id) {
+      showToast('Please log in to follow users', 'info');
+      return;
+    }
+
+    if (!userProfile?.id) return;
+
+    try {
+      const action = isFollowing ? 'unfollow' : 'follow';
+
+      const response = await fetch('/api/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          followerId: user.id,
+          followingId: userProfile.id
+        })
+      });
+
+      if (response.ok) {
+        setIsFollowing(!isFollowing);
+        showToast(
+          isFollowing ? 'Unfollowed user' : 'Now following user!',
+          'success'
+        );
+      } else {
+        const errorData = await response.json();
+        showToast(errorData.error || 'Failed to update follow status', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      showToast('Failed to update follow status', 'error');
+    }
+  };
+
   useEffect(() => {
     loadUserProfile();
   }, [username]);
+
+  // Check follow status when profile and user are loaded
+  useEffect(() => {
+    if (userProfile?.id && user?.id && !isOwnProfile) {
+      checkFollowStatus();
+    }
+  }, [userProfile?.id, user?.id, isOwnProfile]);
 
   // Handle URL photo parameter (for direct links to photos)
   useEffect(() => {
@@ -1146,13 +1212,43 @@ export default function UserProfilePage() {
 
             {/* User Info */}
             <div className={`flex-1 ${coverTextClass}`}>
-              <div className="flex items-center space-x-3 mb-2">
+              <div className="flex items-center space-x-3 mb-2 flex-wrap">
                 <h1 className={`text-3xl font-bold ${coverTextClass}`}>{userProfile.username}</h1>
                 {userProfile.isAdmin && (
                   <div className="flex items-center space-x-1 bg-purple-600 px-3 py-1 rounded-full">
                     <span className="text-white text-sm font-semibold">👑</span>
                     <span className="text-white text-sm font-semibold">Admin</span>
                   </div>
+                )}
+                {/* Follow Button - Instagram style */}
+                {!isOwnProfile && user?.id && userProfile?.id && (
+                  <button
+                    onClick={handleFollow}
+                    disabled={isCheckingFollow}
+                    className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 ${
+                      isFollowing
+                        ? 'bg-white/20 hover:bg-white/30 border-2 border-white/50 text-white'
+                        : 'bg-white hover:bg-gray-100 border-2 border-white'
+                    } ${isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    style={isFollowing 
+                      ? {} 
+                      : { 
+                          color: profileColors.cover
+                        }
+                    }
+                  >
+                    {isFollowing ? (
+                      <>
+                        <UserMinus className="w-4 h-4" />
+                        <span>Following</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        <span>Follow</span>
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
               <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>
