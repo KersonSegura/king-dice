@@ -1225,12 +1225,12 @@ export default function UserProfilePage() {
                   <button
                     onClick={handleFollow}
                     disabled={isCheckingFollow}
-                    className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 ${
-                      isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
+                      isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
                     }`}
                     style={isFollowing 
                       ? {
-                          backgroundColor: 'transparent',
+                          backgroundColor: isLightCover() ? '#ffffff' : 'rgba(255, 255, 255, 0.95)',
                           border: `2px solid ${profileColors.cover}`,
                           color: profileColors.cover
                         }
@@ -1244,7 +1244,7 @@ export default function UserProfilePage() {
                     {isFollowing ? (
                       <>
                         <UserMinus className="w-4 h-4" />
-                        <span>Following</span>
+                        <span>Unfollow</span>
                       </>
                     ) : (
                       <>
