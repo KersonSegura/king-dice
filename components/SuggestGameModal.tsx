@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Send } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
@@ -94,12 +93,10 @@ export default function SuggestGameModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center">
-              <Image
+              <img
                 src="/SuggestionIcon.svg"
                 alt="Suggestion Icon"
-                width={40}
-                height={40}
-                className="w-full h-full"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>
