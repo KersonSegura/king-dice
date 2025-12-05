@@ -53,13 +53,10 @@ export default function ShopPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
-            <Image
-              src="/ShopIcon.svg"
+            <img
+              src="/ShopIcon.svg?v=2"
               alt="Shop Icon"
-              width={32}
-              height={32}
               className="w-8 h-8"
-              unoptimized
             />
             <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
           </div>
@@ -188,13 +185,10 @@ export default function ShopPage() {
         {/* Empty State */}
         {filteredGames.length === 0 && (
           <div className="text-center py-12">
-            <Image
-              src="/ShopIcon.svg"
+            <img
+              src="/ShopIcon.svg?v=2"
               alt="Shop Icon"
-              width={64}
-              height={64}
               className="w-16 h-16 text-gray-400 mx-auto mb-4"
-              unoptimized
             />
             <p className="text-gray-600">No games found in this category.</p>
           </div>
