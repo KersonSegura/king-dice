@@ -118,7 +118,7 @@ export default function SearchBar() {
           console.log('[SearchBar] Users:', data.users?.length || 0);
           console.log('[SearchBar] Games:', data.games?.length || 0);
           
-          // Format results
+          // Format results - prioritize users first, then games
           const formattedResults: SearchResult[] = [
             ...(data.users || []).map((user: any) => ({
               ...user,
@@ -130,7 +130,21 @@ export default function SearchBar() {
             }))
           ];
           
-          console.log('[SearchBar] Formatted results:', formattedResults.length);
+          // Sort: users first, then games (within each type, maintain original order)
+          formattedResults.sort((a, b) => {
+            if (a.type === 'user' && b.type === 'game') return -1;
+            if (a.type === 'game' && b.type === 'user') return 1;
+            return 0;
+          });
+          
+          console.log('[SearchBar] Formatted results:', formattedResults.length, '- Users:', formattedResults.filter(r => r.type === 'user').length, 'Games:', formattedResults.filter(r => r.type === 'game').length);
+          
+          // Log first few user results for debugging
+          const userResults = formattedResults.filter(r => r.type === 'user');
+          if (userResults.length > 0) {
+            console.log('[SearchBar] Sample user results:', userResults.slice(0, 3).map(u => ({ username: u.username, id: u.id })));
+          }
+          
           setResults(formattedResults);
           setHasSearched(true);
         } else {
@@ -266,91 +280,121 @@ export default function SearchBar() {
             </div>
           ) : results.length > 0 ? (
             <div className="py-2">
-              {results.map((result, index) => (
-                <Link
-                  key={`${result.type}-${result.id}`}
-                  href={result.type === 'user' ? `/profile/${result.username}` : `/game/${result.id}`}
-                  onClick={handleResultClick}
-                  className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="flex-shrink-0">
-                    {result.type === 'user' ? (
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
-                        {result.avatar ? (
-                          <Image
-                            src={result.avatar}
-                            alt={result.username || 'User'}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                        ) : (
-                          <Dice6 className="w-4 h-4 text-white" />
-                        )}
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center overflow-hidden">
-                        {result.image ? (
-                          <Image
-                            src={result.image}
-                            alt={result.name || 'Board Game'}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <Dice6 className="w-4 h-4 text-white" />
-                        )}
+              {(() => {
+                const userResults = results.filter(r => r.type === 'user');
+                const gameResults = results.filter(r => r.type === 'game');
+                const hasUsers = userResults.length > 0;
+                const hasGames = gameResults.length > 0;
+                
+                return (
+                  <>
+                    {hasUsers && (
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <p className="text-xs font-semibold text-gray-500 uppercase">Users</p>
                       </div>
                     )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
-                        {result.type === 'user' ? result.username : result.name}
-                      </p>
-                      {result.type === 'user' && result.isVerified && (
-                        <span className="text-blue-500 text-xs">✓</span>
-                      )}
-                      {result.type === 'user' && result.isAdmin && (
-                        <span className="text-red-500 text-xs bg-red-100 px-1 rounded">ADMIN</span>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      {result.type === 'user' ? (
-                        <>
-                          <User className="w-3 h-3" />
-                          <span>User</span>
-                          {result.createdAt && (
-                            <>
-                              <span>•</span>
-                              <span>{formatTime(result.createdAt)}</span>
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <Dice6 className="w-3 h-3" />
-                          <span>Board Game</span>
-                          {result.year && (
-                            <>
-                              <span>•</span>
-                              <span>{result.year}</span>
-                            </>
-                          )}
-                          {result.players && (
-                            <>
-                              <span>•</span>
-                              <span>{result.players} players</span>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                    {userResults.map((result, index) => (
+                      <Link
+                        key={`user-${result.id}`}
+                        href={`/profile/${result.username}`}
+                        onClick={handleResultClick}
+                        className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
+                            {result.avatar ? (
+                              <Image
+                                src={result.avatar}
+                                alt={result.username || 'User'}
+                                width={32}
+                                height={32}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <Dice6 className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
+                              {result.username}
+                            </p>
+                            {result.isVerified && (
+                              <span className="text-blue-500 text-xs">✓</span>
+                            )}
+                            {result.isAdmin && (
+                              <span className="text-red-500 text-xs bg-red-100 px-1 rounded">ADMIN</span>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <User className="w-3 h-3" />
+                            <span>User</span>
+                            {result.createdAt && (
+                              <>
+                                <span>•</span>
+                                <span>{formatTime(result.createdAt)}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                    {hasGames && (
+                      <div className={`px-4 py-2 ${hasUsers ? 'border-t border-gray-200' : ''}`}>
+                        <p className="text-xs font-semibold text-gray-500 uppercase">Board Games</p>
+                      </div>
+                    )}
+                    {gameResults.map((result, index) => (
+                      <Link
+                        key={`game-${result.id}`}
+                        href={`/game/${result.id}`}
+                        onClick={handleResultClick}
+                        className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center overflow-hidden">
+                            {result.image ? (
+                              <Image
+                                src={result.image}
+                                alt={result.name || 'Board Game'}
+                                width={32}
+                                height={32}
+                                className="w-8 h-8 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <Dice6 className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
+                              {result.name}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <Dice6 className="w-3 h-3" />
+                            <span>Board Game</span>
+                            {result.year && (
+                              <>
+                                <span>•</span>
+                                <span>{result.year}</span>
+                              </>
+                            )}
+                            {result.players && (
+                              <>
+                                <span>•</span>
+                                <span>{result.players} players</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </>
+                );
+              })()}
             </div>
           ) : hasSearched ? (
             <div className="px-4 py-6 text-center text-gray-500">

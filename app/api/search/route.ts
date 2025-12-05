@@ -30,15 +30,16 @@ export async function GET(request: NextRequest) {
         
         // Search by username (primary) and email (secondary)
         // We'll do two separate queries and combine/deduplicate results
+        // Search users - use select('*') to get all columns regardless of naming convention
         const usernameQuery = supabaseAdmin
           .from('users')
-          .select('id, username, email, avatar, is_verified, is_admin, created_at')
+          .select('*')
           .ilike('username', `%${searchQuery}%`)
           .limit(limit);
         
         const emailQuery = supabaseAdmin
           .from('users')
-          .select('id, username, email, avatar, is_verified, is_admin, created_at')
+          .select('*')
           .ilike('email', `%${searchQuery}%`)
           .limit(limit);
 
@@ -97,9 +98,9 @@ export async function GET(request: NextRequest) {
           username: user.username,
           email: user.email,
           avatar: user.avatar,
-          isVerified: user.is_verified || false,
-          isAdmin: user.is_admin || false,
-          createdAt: user.created_at,
+          isVerified: user.isVerified || user.is_verified || false,
+          isAdmin: user.isAdmin || user.is_admin || false,
+          createdAt: user.createdAt || user.created_at,
           type: 'user'
         }));
 
