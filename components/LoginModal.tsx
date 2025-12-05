@@ -152,8 +152,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           // Check if email verification is required
           if (data.requiresVerification) {
             // Show verification modal
+            // For new registrations, userId is empty - we use email for verification
             setTwoFactorData({
-              userId: data.user.id,
+              userId: data.user.id || '', // Empty for new registrations
               email: data.user.email,
               username: data.user.username
             });

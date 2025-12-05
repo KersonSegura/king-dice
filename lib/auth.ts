@@ -95,7 +95,7 @@ export async function authenticateUser(identifier: string, password: string): Pr
     const { data: users, error } = await executeSupabaseQuery(
       () => supabaseAdmin
         .from('users')
-        .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled')
+        .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled, isVerified')
         .or(`username.eq.${identifier},email.eq.${identifier}`)
         .limit(1),
       {
@@ -153,6 +153,15 @@ export async function authenticateUser(identifier: string, password: string): Pr
     }
     
     console.log('✅ Password verified');
+
+    // Check if user's email is verified
+    if (!user.isVerified) {
+      console.log('❌ User email not verified');
+      return {
+        success: false,
+        message: 'Please verify your email address before signing in. Check your email for the verification code.'
+      };
+    }
 
     // Check if 2FA is enabled
     if (user.twoFactorEnabled) {
@@ -262,132 +271,16 @@ export async function registerUser(username: string, email: string, password: st
       };
     }
 
-    // Check if username already exists (case-insensitive)
-    // Try camelCase first, then snake_case
-    let existingUser: any = null;
-    const { data: usernameDataCamel, error: usernameErrorCamel } = await supabaseAdmin
+    // Check if username already exists in users table (case-insensitive)
+    const { data: usernameData, error: usernameError } = await supabaseAdmin
       .from('users')
-      .select('id, username, passwordHash, isVerified, createdAt')
+      .select('id, username')
       .ilike('username', username)
       .limit(1);
 
-    if (!usernameErrorCamel && usernameDataCamel && usernameDataCamel.length > 0) {
-      existingUser = usernameDataCamel[0];
-    } else {
-      // Try snake_case
-      const { data: usernameDataSnake, error: usernameErrorSnake } = await supabaseAdmin
-        .from('users')
-        .select('id, username, passwordHash, isVerified, createdAt')
-        .ilike('username', username)
-        .limit(1);
-
-      if (!usernameErrorSnake && usernameDataSnake && usernameDataSnake.length > 0) {
-        existingUser = usernameDataSnake[0];
-      }
-
-      if (usernameErrorSnake && usernameErrorCamel) {
-        console.error('❌ registerUser: Error checking existing username:', usernameErrorCamel || usernameErrorSnake);
-        const errorMessage = (usernameErrorCamel?.message || usernameErrorSnake?.message || String(usernameErrorCamel || usernameErrorSnake));
-        if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
-          return {
-            success: false,
-            message: 'Database connection timeout. Please try again in a few moments.'
-          };
-        }
-        return {
-          success: false,
-          message: 'Database connection failed. Please try again.'
-        };
-      }
-    }
-
-    // If user exists, check if it's an orphaned/incomplete user that can be cleaned up
-    if (existingUser) {
-      const createdAt = existingUser.createdAt ? new Date(existingUser.createdAt).getTime() : 0;
-      const isOld = createdAt > 0 && createdAt < Date.now() - 24 * 60 * 60 * 1000; // Older than 24 hours
-      
-      // Consider user orphaned if:
-      // 1. No password hash (incomplete registration)
-      // 2. Unverified and old (stale failed registration)
-      // 3. Unverified regardless of age (allow re-registration for unverified users)
-      const isOrphaned = !existingUser.passwordHash || 
-                        (!existingUser.isVerified && (isOld || true)); // Always allow re-registration for unverified users
-      
-      console.log('🔍 Checking existing user:', {
-        username: existingUser.username,
-        hasPassword: !!existingUser.passwordHash,
-        isVerified: existingUser.isVerified,
-        createdAt: existingUser.createdAt,
-        isOld,
-        isOrphaned
-      });
-      
-      if (isOrphaned) {
-        console.log('🧹 Found orphaned/unverified user, cleaning up:', existingUser.username);
-        // Delete the orphaned user and related data
-        try {
-          // Delete verification codes first (try both camelCase and snake_case)
-          await supabaseAdmin
-            .from('two_factor_codes')
-            .delete()
-            .eq('userId', existingUser.id);
-          
-          await supabaseAdmin
-            .from('two_factor_codes')
-            .delete()
-            .eq('user_id', existingUser.id);
-          
-          // Delete the user
-          const { error: deleteError } = await supabaseAdmin
-            .from('users')
-            .delete()
-            .eq('id', existingUser.id);
-          
-          if (deleteError) {
-            console.error('❌ Error deleting orphaned user:', deleteError);
-            // Continue anyway - try to create the user
-          } else {
-            console.log('✅ Cleaned up orphaned user');
-          }
-        } catch (cleanupError) {
-          console.error('❌ Error during cleanup:', cleanupError);
-          // Continue anyway - try to create the user
-        }
-      } else {
-        // User exists and is complete/verified
-        console.log('❌ User already exists and is verified:', existingUser.username);
-        return {
-          success: false,
-          message: 'Username already exists. Please choose a different username.'
-        };
-      }
-    }
-
-    // Check if email already exists (case-insensitive)
-    let emailExists = false;
-    const { data: emailDataCamel, error: emailErrorCamel } = await supabaseAdmin
-      .from('users')
-      .select('id, email')
-      .ilike('email', email)
-      .limit(1);
-
-    if (!emailErrorCamel && emailDataCamel && emailDataCamel.length > 0) {
-      emailExists = true;
-    } else {
-      // Try snake_case
-      const { data: emailDataSnake, error: emailErrorSnake } = await supabaseAdmin
-        .from('users')
-        .select('id, email')
-        .ilike('email', email)
-        .limit(1);
-
-      if (!emailErrorSnake && emailDataSnake && emailDataSnake.length > 0) {
-        emailExists = true;
-      }
-
-      if (emailErrorSnake && emailErrorCamel) {
-        console.error('❌ registerUser: Error checking existing email:', emailErrorCamel || emailErrorSnake);
-        const errorMessage = (emailErrorCamel?.message || emailErrorSnake?.message || String(emailErrorCamel || emailErrorSnake));
+    if (usernameError) {
+      console.error('❌ registerUser: Error checking existing username:', usernameError);
+      const errorMessage = usernameError.message || String(usernameError);
       if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
         return {
           success: false,
@@ -398,14 +291,74 @@ export async function registerUser(username: string, email: string, password: st
         success: false,
         message: 'Database connection failed. Please try again.'
       };
-      }
     }
 
-    if (emailExists) {
+    if (usernameData && usernameData.length > 0) {
+      return {
+        success: false,
+        message: 'Username already exists. Please choose a different username.'
+      };
+    }
+
+    // Check if username exists in pending_registrations
+    const { data: pendingUsernameData, error: pendingUsernameError } = await supabaseAdmin
+      .from('pending_registrations')
+      .select('id, username')
+      .ilike('username', username)
+      .limit(1);
+
+    if (!pendingUsernameError && pendingUsernameData && pendingUsernameData.length > 0) {
+      // Delete old pending registration
+      await supabaseAdmin
+        .from('pending_registrations')
+        .delete()
+        .eq('id', pendingUsernameData[0].id);
+      console.log('🧹 Cleaned up old pending registration for username:', username);
+    }
+
+    // Check if email already exists in users table (case-insensitive)
+    const { data: emailData, error: emailError } = await supabaseAdmin
+      .from('users')
+      .select('id, email')
+      .ilike('email', email)
+      .limit(1);
+
+    if (emailError) {
+      console.error('❌ registerUser: Error checking existing email:', emailError);
+      const errorMessage = emailError.message || String(emailError);
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
+        return {
+          success: false,
+          message: 'Database connection timeout. Please try again in a few moments.'
+        };
+      }
+      return {
+        success: false,
+        message: 'Database connection failed. Please try again.'
+      };
+    }
+
+    if (emailData && emailData.length > 0) {
       return {
         success: false,
         message: 'Email already exists. Please use a different email address or try logging in.'
       };
+    }
+
+    // Check if email exists in pending_registrations
+    const { data: pendingEmailData, error: pendingEmailError } = await supabaseAdmin
+      .from('pending_registrations')
+      .select('id, email')
+      .ilike('email', email)
+      .limit(1);
+
+    if (!pendingEmailError && pendingEmailData && pendingEmailData.length > 0) {
+      // Delete old pending registration
+      await supabaseAdmin
+        .from('pending_registrations')
+        .delete()
+        .eq('id', pendingEmailData[0].id);
+      console.log('🧹 Cleaned up old pending registration for email:', email);
     }
 
     // Hash password
@@ -416,7 +369,7 @@ export async function registerUser(username: string, email: string, password: st
     console.log('🎨 registerUser: Generating default avatar...');
     const defaultAvatar = await generateDefaultAvatar();
 
-    // Generate CUID for user ID (similar to Prisma's default)
+    // Generate CUID for pending registration ID
     const generateCuid = () => {
       const timestamp = Date.now().toString(36);
       const random = Math.random().toString(36).substring(2, 15);
@@ -424,40 +377,49 @@ export async function registerUser(username: string, email: string, password: st
       return `c${timestamp}${random}${random2}`.substring(0, 25);
     };
     
-    const userId = generateCuid();
+    const pendingId = generateCuid();
 
-    // Create user in Supabase (unverified)
-    console.log('📝 registerUser: Creating user in database...');
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
+    console.log('📧 registerUser: Generated verification code for:', {
+      pendingId,
+      username,
+      email,
+      codeLength: verificationCode.length,
+      expiresAt
+    });
+
+    // Store registration data in pending_registrations table (NOT creating user yet)
+    console.log('📝 registerUser: Storing registration data in pending_registrations...');
     const now = new Date().toISOString();
     const createResult = await executeSupabaseQuery(
       async () => {
         const result = await supabaseAdmin
-        .from('users')
-        .insert({
-            id: userId,
-          username,
-          email,
-          passwordHash,
-          avatar: defaultAvatar,
-          level: 1,
-          xp: 0,
-            isAdmin: false,
-            isVerified: false, // User must verify email
-            createdAt: now,
-            updatedAt: now,
-            joinDate: now
-        })
-          .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
+          .from('pending_registrations')
+          .insert({
+            id: pendingId,
+            username,
+            email,
+            password_hash: passwordHash,
+            avatar: defaultAvatar,
+            verification_code: verificationCode,
+            verification_code_id: null, // Not using code_id for new registrations
+            created_at: now,
+            expires_at: expiresAt
+          })
+          .select('id, username, email, avatar')
           .single();
         return result;
       },
       { maxRetries: 2, baseDelay: 400, timeout: 15000 }
     );
 
-    const { data: newUser, error: createError } = createResult;
+    const { data: pendingRegistration, error: createError } = createResult;
 
-    if (createError || !newUser) {
-      console.error('❌ registerUser: Error creating user:', createError);
+    if (createError || !pendingRegistration) {
+      console.error('❌ registerUser: Error storing pending registration:', createError);
       console.error('❌ Full error object:', JSON.stringify(createError, null, 2));
       
       const errorMessage = createError?.message || String(createError || '');
@@ -483,17 +445,6 @@ export async function registerUser(username: string, email: string, password: st
         }
       }
       
-      // Check for null constraint violations
-      if (errorCode === '23502' || errorMessage.includes('null value') || errorMessage.includes('violates not-null constraint')) {
-        const fieldMatch = errorMessage.match(/column "(\w+)" of relation/);
-        const fieldName = fieldMatch ? fieldMatch[1] : 'unknown field';
-        console.error(`❌ Missing required field: ${fieldName}`);
-        return {
-          success: false,
-          message: `Registration failed: Missing required field '${fieldName}'. Please contact support if this persists.`
-        };
-      }
-      
       if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
         return {
           success: false,
@@ -503,11 +454,11 @@ export async function registerUser(username: string, email: string, password: st
       
       // Return more specific error if available
       if (errorMessage && errorMessage !== '[object Object]' && errorMessage.length > 0) {
-      return {
-        success: false,
+        return {
+          success: false,
           message: errorMessage
-      };
-    }
+        };
+      }
 
       // Last resort - return detailed error for debugging
       return {
@@ -516,40 +467,7 @@ export async function registerUser(username: string, email: string, password: st
       };
     }
 
-    console.log('✅ registerUser: User created:', (newUser as any).username);
-
-    // Generate verification code and send email
-    const verificationCode = generateVerificationCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
-
-    console.log('📧 registerUser: Generated verification code for:', {
-      userId: newUser.id,
-      username,
-      email,
-      codeLength: verificationCode.length,
-      expiresAt
-    });
-
-    // Generate CUID for verification code ID (reuse the same function defined earlier)
-    const codeId = generateCuid();
-
-    // Save verification code to database
-    const { error: codeError } = await supabaseAdmin
-      .from('two_factor_codes')
-      .insert({
-        id: codeId,
-        userId: newUser.id,
-        code: verificationCode,
-        expiresAt: expiresAt,
-        used: false
-      });
-
-    if (codeError) {
-      console.error('❌ registerUser: Error saving verification code:', codeError);
-      // Continue anyway - user can request a new code
-    } else {
-      console.log('✅ registerUser: Verification code saved to database');
-    }
+    console.log('✅ registerUser: Pending registration stored:', pendingRegistration.username);
 
     // Send verification email
     try {
@@ -586,18 +504,19 @@ export async function registerUser(username: string, email: string, password: st
       // Continue anyway - user can request a new code
     }
 
-    // Return user data but indicate verification is required
-    const userData = newUser as any;
+    // Return email and username (no userId since user doesn't exist yet)
+    // User will be created only after email verification
+    const pendingData = pendingRegistration as any;
     return {
       success: true,
       user: {
-        id: userData.id,
-        username: userData.username,
-        email: userData.email,
-        avatar: userData.avatar || '/DiceLogo.svg',
-        isAdmin: userData.isAdmin || false,
-        level: userData.level || 1,
-        xp: userData.xp || 0,
+        id: '', // No user ID yet - user will be created after verification
+        username: pendingData.username,
+        email: pendingData.email,
+        avatar: pendingData.avatar || '/DiceLogo.svg',
+        isAdmin: false,
+        level: 1,
+        xp: 0,
         isVerified: false
       },
       requiresVerification: true // Flag to indicate email verification is needed

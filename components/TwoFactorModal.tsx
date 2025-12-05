@@ -71,14 +71,19 @@ export default function TwoFactorModal({
     setError('');
 
     try {
-      const response = await fetch('/api/auth/send-verification-code', {
+      // Use different endpoint for registration vs 2FA
+      const endpoint = isRegistration 
+        ? '/api/auth/resend-registration-code'
+        : '/api/auth/send-verification-code';
+      
+      const body = isRegistration
+        ? { email }
+        : { userId, email, username };
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          email,
-          username
-        })
+        body: JSON.stringify(body)
       });
 
       if (response.ok) {
@@ -110,13 +115,16 @@ export default function TwoFactorModal({
       // Use different endpoint for registration email verification vs 2FA
       const endpoint = isRegistration ? '/api/auth/verify-email' : '/api/auth/verify-2fa-code';
       
+      // For new registrations, send email + code (no userId)
+      // For 2FA, send userId + code
+      const body = isRegistration 
+        ? { email, code }
+        : { userId, code };
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          code
-        })
+        body: JSON.stringify(body)
       });
 
       if (response.ok) {
