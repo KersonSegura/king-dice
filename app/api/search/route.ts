@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -75,8 +77,24 @@ export async function GET(request: NextRequest) {
 
         const allUsers = Array.from(userMap.values());
         
+        // Filter out invalid users (must have id, username, and email)
+        // Also filter out any users that might have been partially deleted or have invalid data
+        const validUsers = allUsers.filter((user: any) => {
+          if (!user || !user.id || !user.username || !user.email) {
+            return false;
+          }
+          // Ensure username and email are not empty strings
+          if (typeof user.username !== 'string' || user.username.trim().length === 0) {
+            return false;
+          }
+          if (typeof user.email !== 'string' || user.email.trim().length === 0) {
+            return false;
+          }
+          return true;
+        });
+        
         // Sort to prioritize exact matches and starts-with matches
-        const sortedUsers = allUsers.sort((a: any, b: any) => {
+        const sortedUsers = validUsers.sort((a: any, b: any) => {
           const usernameA = (a.username || '').toLowerCase();
           const usernameB = (b.username || '').toLowerCase();
           const searchLower = searchQuery.toLowerCase();
@@ -93,6 +111,54 @@ export async function GET(request: NextRequest) {
           return usernameA.localeCompare(usernameB);
         });
 
+        // Get current user ID for follow status checking
+        let currentUserId: string | null = null;
+        try {
+          const cookieStore = await cookies();
+          const token = cookieStore.get('auth_token')?.value || cookieStore.get('token')?.value;
+          if (token) {
+            const authResult = await getUserFromToken(token);
+            if (authResult.success && authResult.user) {
+              currentUserId = authResult.user.id;
+            }
+          }
+        } catch (error) {
+          console.log('[SEARCH API] Could not get current user for follow status:', error);
+        }
+
+        // Get follow status for each user if current user is logged in
+        let followingUserIds: Set<string> = new Set();
+        if (currentUserId && sortedUsers.length > 0) {
+          try {
+            const userIds = sortedUsers.slice(0, limit).map((u: any) => u.id).filter(Boolean);
+            if (userIds.length > 0) {
+              // Try camelCase first (matches schema)
+              const { data: follows, error: followError } = await supabaseAdmin
+                .from('follows')
+                .select('followingId, following_id')
+                .eq('followerId', currentUserId)
+                .in('followingId', userIds);
+              
+              if (!followError && follows) {
+                followingUserIds = new Set(follows.map((f: any) => f.followingId || f.following_id).filter(Boolean));
+              } else if (followError) {
+                // Try snake_case if camelCase fails
+                const { data: followsSnake, error: followErrorSnake } = await supabaseAdmin
+                  .from('follows')
+                  .select('following_id')
+                  .eq('follower_id', currentUserId)
+                  .in('following_id', userIds);
+                
+                if (!followErrorSnake && followsSnake) {
+                  followingUserIds = new Set(followsSnake.map((f: any) => f.following_id).filter(Boolean));
+                }
+              }
+            }
+          } catch (error) {
+            console.log('[SEARCH API] Error checking follow status:', error);
+          }
+        }
+
         users = sortedUsers.slice(0, limit).map((user: any) => ({
           id: user.id,
           username: user.username,
@@ -100,7 +166,7 @@ export async function GET(request: NextRequest) {
           avatar: user.avatar,
           isVerified: user.isVerified || user.is_verified || false,
           isAdmin: user.isAdmin || user.is_admin || false,
-          createdAt: user.createdAt || user.created_at,
+          isFollowing: followingUserIds.has(user.id),
           type: 'user'
         }));
 

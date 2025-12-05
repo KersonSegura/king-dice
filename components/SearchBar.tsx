@@ -16,6 +16,7 @@ interface SearchResult {
   isVerified?: boolean;
   isAdmin?: boolean;
   createdAt?: string;
+  isFollowing?: boolean;
   name?: string;
   year?: number;
   players?: string;
@@ -329,12 +330,10 @@ export default function SearchBar() {
                           </div>
                           <div className="flex items-center space-x-2 text-xs text-gray-500">
                             <User className="w-3 h-3" />
-                            <span>User</span>
-                            {result.createdAt && (
-                              <>
-                                <span>•</span>
-                                <span>{formatTime(result.createdAt)}</span>
-                              </>
+                            {result.isFollowing ? (
+                              <span>Following</span>
+                            ) : (
+                              <span>User</span>
                             )}
                           </div>
                         </div>
