@@ -1226,14 +1226,18 @@ export default function UserProfilePage() {
                     onClick={handleFollow}
                     disabled={isCheckingFollow}
                     className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all flex items-center space-x-2 ${
-                      isFollowing
-                        ? 'bg-white/20 hover:bg-white/30 border-2 border-white/50 text-white'
-                        : 'bg-white hover:bg-gray-100 border-2 border-white'
-                    } ${isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
                     style={isFollowing 
-                      ? {} 
-                      : { 
+                      ? {
+                          backgroundColor: 'transparent',
+                          border: `2px solid ${profileColors.cover}`,
                           color: profileColors.cover
+                        }
+                      : {
+                          backgroundColor: profileColors.cover,
+                          color: getReadableTextColor(),
+                          border: `2px solid ${profileColors.cover}`
                         }
                     }
                   >
