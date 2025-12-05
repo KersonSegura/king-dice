@@ -108,6 +108,22 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     let followingIds: string[] = [];
+    
+    // Get following list if userId is provided
+    if (userId) {
+      try {
+        const { data: follows, error: followsError } = await supabaseAdmin
+          .from('follows')
+          .select('followingId')
+          .eq('followerId', userId);
+        
+        if (!followsError && follows) {
+          followingIds = follows.map((f: any) => f.followingId || f.following_id).filter(Boolean);
+        }
+      } catch (error) {
+        console.error('Error fetching following list:', error);
+      }
+    }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 
@@ -214,10 +230,21 @@ export async function GET(request: NextRequest) {
       }))
     ];
 
+    // Sort items: followed users first, then by recency and popularity
     const sortedItems = allItems
       .sort((a, b) => {
+        // First priority: followed users come first
         if (a.isFollowing && !b.isFollowing) return -1;
         if (!a.isFollowing && b.isFollowing) return 1;
+        
+        // Within followed users, sort by recency (newest first)
+        if (a.isFollowing && b.isFollowing) {
+          const timeA = new Date(a.createdAt).getTime();
+          const timeB = new Date(b.createdAt).getTime();
+          return timeB - timeA; // Newest first
+        }
+        
+        // For non-followed users, sort by popularity score
         return b.popularityScore - a.popularityScore;
       })
       .slice(offset, offset + limit);
