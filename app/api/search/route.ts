@@ -26,27 +26,91 @@ export async function GET(request: NextRequest) {
     let users: any[] = [];
     if (type === 'all' || type === 'users') {
       try {
-        const { data: dbUsers, error: usersError } = await supabaseAdmin
+        console.log('[SEARCH API] Searching for users with query:', searchQuery);
+        
+        // Search by username (primary) and email (secondary)
+        // We'll do two separate queries and combine/deduplicate results
+        const usernameQuery = supabaseAdmin
           .from('users')
           .select('id, username, email, avatar, is_verified, is_admin, created_at')
-          .or(`username.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-          .limit(limit)
-          .order('username', { ascending: true });
+          .ilike('username', `%${searchQuery}%`)
+          .limit(limit);
+        
+        const emailQuery = supabaseAdmin
+          .from('users')
+          .select('id, username, email, avatar, is_verified, is_admin, created_at')
+          .ilike('email', `%${searchQuery}%`)
+          .limit(limit);
 
-        if (usersError) {
-          console.error('Error searching users:', usersError);
-          users = [];
-        } else {
-          users = (dbUsers || []).map((user: any) => ({
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            avatar: user.avatar,
-            isVerified: user.is_verified || false,
-            isAdmin: user.is_admin || false,
-            createdAt: user.created_at,
-            type: 'user'
-          }));
+        // Execute both queries in parallel
+        const [usernameResult, emailResult] = await Promise.all([
+          usernameQuery,
+          emailQuery
+        ]);
+        
+        console.log('[SEARCH API] Username search results:', usernameResult.data?.length || 0);
+        console.log('[SEARCH API] Email search results:', emailResult.data?.length || 0);
+
+        // Combine results and deduplicate by user ID
+        const userMap = new Map();
+        
+        // Add username matches first (higher priority)
+        if (usernameResult.data) {
+          usernameResult.data.forEach((user: any) => {
+            if (!userMap.has(user.id)) {
+              userMap.set(user.id, user);
+            }
+          });
+        }
+        
+        // Add email matches (if not already in map)
+        if (emailResult.data) {
+          emailResult.data.forEach((user: any) => {
+            if (!userMap.has(user.id)) {
+              userMap.set(user.id, user);
+            }
+          });
+        }
+
+        const allUsers = Array.from(userMap.values());
+        
+        // Sort to prioritize exact matches and starts-with matches
+        const sortedUsers = allUsers.sort((a: any, b: any) => {
+          const usernameA = (a.username || '').toLowerCase();
+          const usernameB = (b.username || '').toLowerCase();
+          const searchLower = searchQuery.toLowerCase();
+          
+          // Exact match gets highest priority
+          if (usernameA === searchLower && usernameB !== searchLower) return -1;
+          if (usernameB === searchLower && usernameA !== searchLower) return 1;
+          
+          // Starts with gets next priority
+          if (usernameA.startsWith(searchLower) && !usernameB.startsWith(searchLower)) return -1;
+          if (usernameB.startsWith(searchLower) && !usernameA.startsWith(searchLower)) return 1;
+          
+          // Otherwise alphabetical
+          return usernameA.localeCompare(usernameB);
+        });
+
+        users = sortedUsers.slice(0, limit).map((user: any) => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          avatar: user.avatar,
+          isVerified: user.is_verified || false,
+          isAdmin: user.is_admin || false,
+          createdAt: user.created_at,
+          type: 'user'
+        }));
+
+        console.log('[SEARCH API] Final user results:', users.length);
+
+        // Log errors if any
+        if (usernameResult.error) {
+          console.error('[SEARCH API] Error searching users by username:', usernameResult.error);
+        }
+        if (emailResult.error) {
+          console.error('[SEARCH API] Error searching users by email:', emailResult.error);
         }
       } catch (error) {
         console.error('Error searching users:', error);
