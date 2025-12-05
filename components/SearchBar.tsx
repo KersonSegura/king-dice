@@ -269,7 +269,7 @@ export default function SearchBar() {
               {results.map((result, index) => (
                 <Link
                   key={`${result.type}-${result.id}`}
-                  href={result.type === 'user' ? `/profile/${result.id}` : `/game/${result.id}`}
+                  href={result.type === 'user' ? `/profile/${result.username}` : `/game/${result.id}`}
                   onClick={handleResultClick}
                   className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
                 >
