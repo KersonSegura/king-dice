@@ -1264,6 +1264,100 @@ export default function UserProfilePage() {
           </Link>
         )}
 
+        {/* Follow and Chat Buttons - Top Right on Mobile, Hidden on Desktop */}
+        {!isOwnProfile && user?.id && userProfile?.id && (
+          <div className="absolute top-4 right-4 z-10 flex items-center space-x-2 md:hidden">
+            <button
+              onClick={handleStartChat}
+              disabled={isCreatingChat}
+              className={`p-2 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
+                isCreatingChat ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
+              }`}
+              style={(() => {
+                const isLight = isLightCover();
+                
+                // Chat button uses same color scheme as follow button
+                if (isLight) {
+                  // Light cover: use cover color with dark text
+                  return {
+                    backgroundColor: profileColors.cover,
+                    color: darkenColor(profileColors.cover, 0.5),
+                    border: `2px solid ${profileColors.cover}`
+                  };
+                } else {
+                  // Dark cover: white background with cover color text
+                  return {
+                    backgroundColor: '#ffffff',
+                    color: profileColors.cover,
+                    border: `2px solid #ffffff`
+                  };
+                }
+              })()}
+              title="Start a chat"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleFollow}
+              disabled={isCheckingFollow}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
+                isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
+              }`}
+              style={(() => {
+                const isLight = isLightCover();
+                
+                if (isFollowing) {
+                  // Unfollow state: outlined style with contrast
+                  if (isLight) {
+                    // Light cover: dark background with cover color border
+                    return {
+                      backgroundColor: darkenColor(profileColors.cover, 0.6),
+                      border: `2px solid ${profileColors.cover}`,
+                      color: '#ffffff'
+                    };
+                  } else {
+                    // Dark cover: white background with cover color border and text
+                    return {
+                      backgroundColor: '#ffffff',
+                      border: `2px solid ${profileColors.cover}`,
+                      color: profileColors.cover
+                    };
+                  }
+                } else {
+                  // Follow state: solid style with contrast
+                  if (isLight) {
+                    // Light cover: use cover color with dark text
+                    return {
+                      backgroundColor: profileColors.cover,
+                      color: darkenColor(profileColors.cover, 0.5),
+                      border: `2px solid ${profileColors.cover}`
+                    };
+                  } else {
+                    // Dark cover: white background with cover color text
+                    return {
+                      backgroundColor: '#ffffff',
+                      color: profileColors.cover,
+                      border: `2px solid #ffffff`
+                    };
+                  }
+                }
+              })()}
+            >
+              {isFollowing ? (
+                <>
+                  <UserMinus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Unfollow</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Follow</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
         <div className="relative max-w-6xl mx-auto px-4 py-6 h-full flex items-end">
           <div className="flex items-end space-x-6 w-full">
             {/* Profile Picture */}
@@ -1302,9 +1396,9 @@ export default function UserProfilePage() {
                     <span className="text-white text-sm font-semibold">Admin</span>
                   </div>
                 )}
-                {/* Follow and Chat Buttons - Instagram style */}
+                {/* Follow and Chat Buttons - Instagram style - Desktop only */}
                 {!isOwnProfile && user?.id && userProfile?.id && (
-                  <div className="flex items-center space-x-2">
+                  <div className="hidden md:flex items-center space-x-2">
                     <button
                       onClick={handleStartChat}
                       disabled={isCreatingChat}
