@@ -3,13 +3,48 @@ import { Report } from '@/lib/moderation';
 
 export async function POST(request: NextRequest) {
   try {
-    const report: Omit<Report, 'id' | 'createdAt' | 'status'> = await request.json();
+    const reportData = await request.json();
     
-    // Generate a unique ID for the report
-    const reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Handle both old Report interface and new extended interface
+    const report: any = {
+      ...reportData,
+      contentType: reportData.contentType || reportData.targetType || 'other',
+      contentId: reportData.contentId || reportData.targetId || '',
+      reporterId: reportData.reporterId || '',
+      reason: reportData.reason || 'other',
+      description: reportData.description || '',
+    };
     
-    // Create the full report object
-    const fullReport: Report = {
+    // Generate a unique ID for the report (CUID format)
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    const reportId = `c${timestamp}${random}`.substring(0, 25);
+    
+    // Save to database using Supabase
+    const { supabaseAdmin } = await import('@/lib/supabase');
+    
+    const now = new Date().toISOString();
+    const { error: insertError } = await supabaseAdmin
+      .from('reports')
+      .insert({
+        id: reportId,
+        reason: report.reason,
+        description: report.description || null,
+        reporterId: report.reporterId,
+        targetType: report.contentType,
+        targetId: report.contentId,
+        status: 'pending',
+        createdAt: now,
+        updatedAt: now
+      });
+
+    if (insertError) {
+      console.error('Error saving report to database:', insertError);
+      // Continue to send email even if DB save fails
+    }
+
+    // Create the full report object for email
+    const fullReport = {
       ...report,
       id: reportId,
       createdAt: new Date(),

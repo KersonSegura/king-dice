@@ -17,73 +17,132 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Chat ID is required' }, { status: 400 });
     }
 
-    // Fetch messages with sender info
-    const { data: messages, error: messagesError } = await supabaseAdmin
+    // Fetch messages with sender info - try camelCase first, then snake_case
+    let messages: any = null;
+    let messagesError: any = null;
+
+    // Try camelCase first (database uses camelCase)
+    const { data: messagesCamel, error: errorCamel } = await supabaseAdmin
       .from('messages')
       .select(`
         *,
-        sender:users!messages_sender_id_fkey (
+        sender:users!messages_senderId_fkey (
           id,
           username,
           avatar,
-          is_verified,
-          is_admin
+          isVerified,
+          isAdmin
         ),
-        reply_to:messages!messages_reply_to_id_fkey (
+        replyTo:messages!messages_replyToId_fkey (
           id,
           content,
-          created_at,
-          sender:users!messages_sender_id_fkey (
+          createdAt,
+          sender:users!messages_senderId_fkey (
             id,
             username,
             avatar
           )
         )
       `)
-      .eq('chat_id', chatId)
-      .order('created_at', { ascending: false })
+      .eq('chatId', chatId)
+      .order('createdAt', { ascending: false })
       .range(offset, offset + limit - 1);
+
+    if (!errorCamel && messagesCamel) {
+      messages = messagesCamel;
+    } else {
+      // Try snake_case as fallback
+      const { data: messagesSnake, error: errorSnake } = await supabaseAdmin
+        .from('messages')
+        .select(`
+          *,
+          sender:users!messages_sender_id_fkey (
+            id,
+            username,
+            avatar,
+            is_verified,
+            is_admin
+          ),
+          reply_to:messages!messages_reply_to_id_fkey (
+            id,
+            content,
+            created_at,
+            sender:users!messages_sender_id_fkey (
+              id,
+              username,
+              avatar
+            )
+          )
+        `)
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+      
+      if (!errorSnake && messagesSnake) {
+        messages = messagesSnake;
+      } else {
+        messagesError = errorCamel || errorSnake;
+      }
+    }
 
     if (messagesError) {
       console.error('Error fetching messages:', messagesError);
       return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
     }
 
-    // Get total count
-    const { count, error: countError } = await supabaseAdmin
+    // Get total count - try both naming conventions
+    let count = 0;
+    let countError: any = null;
+
+    const { count: countCamel, error: errorCountCamel } = await supabaseAdmin
       .from('messages')
       .select('*', { count: 'exact', head: true })
-      .eq('chat_id', chatId);
+      .eq('chatId', chatId);
+
+    if (!errorCountCamel && countCamel !== null) {
+      count = countCamel;
+    } else {
+      const { count: countSnake, error: errorCountSnake } = await supabaseAdmin
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('chat_id', chatId);
+      
+      if (!errorCountSnake && countSnake !== null) {
+        count = countSnake;
+      } else {
+        countError = errorCountCamel || errorCountSnake;
+      }
+    }
 
     if (countError) {
       console.error('Error counting messages:', countError);
     }
 
-    // Format messages
+    // Format messages - handle both camelCase and snake_case
     const formattedMessages = (messages || []).map((msg: any) => ({
       id: msg.id,
-      chatId: msg.chat_id,
-      senderId: msg.sender_id,
+      chatId: msg.chatId || msg.chat_id,
+      senderId: msg.senderId || msg.sender_id,
       content: msg.content,
       type: msg.type,
-      replyToId: msg.reply_to_id,
-      createdAt: msg.created_at,
-      updatedAt: msg.updated_at,
-      sender: msg.sender ? {
-        id: msg.sender.id,
-        username: msg.sender.username,
-        avatar: msg.sender.avatar,
-        isVerified: msg.sender.is_verified,
-        isAdmin: msg.sender.is_admin
+      replyToId: msg.replyToId || msg.reply_to_id,
+      createdAt: msg.createdAt || msg.created_at,
+      updatedAt: msg.updatedAt || msg.updated_at,
+      sender: (msg.sender || msg.sender_id) ? {
+        id: (msg.sender || {}).id || msg.sender_id,
+        username: (msg.sender || {}).username,
+        avatar: (msg.sender || {}).avatar,
+        isVerified: (msg.sender || {}).isVerified || (msg.sender || {}).is_verified,
+        isAdmin: (msg.sender || {}).isAdmin || (msg.sender || {}).is_admin
       } : null,
-      replyTo: msg.reply_to ? {
-        id: msg.reply_to.id,
-        content: msg.reply_to.content,
-        createdAt: msg.reply_to.created_at,
-        sender: msg.reply_to.sender ? {
-          id: msg.reply_to.sender.id,
-          username: msg.reply_to.sender.username,
-          avatar: msg.reply_to.sender.avatar
+      replyTo: (msg.replyTo || msg.reply_to) ? {
+        id: (msg.replyTo || msg.reply_to || {}).id,
+        content: (msg.replyTo || msg.reply_to || {}).content,
+        createdAt: (msg.replyTo || msg.reply_to || {}).createdAt || (msg.replyTo || msg.reply_to || {}).created_at,
+        sender: ((msg.replyTo || msg.reply_to || {}).sender) ? {
+          id: (msg.replyTo || msg.reply_to || {}).sender.id,
+          username: (msg.replyTo || msg.reply_to || {}).sender.username,
+          avatar: (msg.replyTo || msg.reply_to || {}).sender.avatar
         } : null
       } : null
     })).reverse(); // Reverse to show oldest first
@@ -149,6 +208,41 @@ export async function POST(request: NextRequest) {
         error: 'User not authorized to send messages in this chat',
         details: participantError?.message || 'Participant not found'
       }, { status: 403 });
+    }
+
+    // Check if sender is blocked by any participant in the chat (for direct chats)
+    const { data: chatData } = await supabaseAdmin
+      .from('chats')
+      .select('type')
+      .eq('id', chatId)
+      .single();
+
+    if (chatData?.type === 'direct') {
+      // Get the other participant in the direct chat
+      const { data: otherParticipants } = await supabaseAdmin
+        .from('chat_participants')
+        .select('userId')
+        .eq('chatId', chatId)
+        .neq('userId', senderId);
+
+      if (otherParticipants && otherParticipants.length > 0) {
+        const receiverId = otherParticipants[0].userId;
+
+        // Check if receiver has blocked the sender
+        const { data: blocked } = await supabaseAdmin
+          .from('friendships')
+          .select('id')
+          .eq('user_id', receiverId)
+          .eq('friend_id', senderId)
+          .eq('status', 'blocked')
+          .maybeSingle();
+
+        if (blocked) {
+          return NextResponse.json({ 
+            error: 'You cannot send messages to this user. You have been blocked.',
+          }, { status: 403 });
+        }
+      }
     }
 
     // Create message using Supabase

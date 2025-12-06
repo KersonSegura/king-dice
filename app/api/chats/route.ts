@@ -570,3 +570,87 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
+// DELETE - Delete a chat
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const chatId = searchParams.get('chatId');
+
+    if (!chatId) {
+      return NextResponse.json({ error: 'Chat ID is required' }, { status: 400 });
+    }
+
+    // Get current user from cookies
+    const cookieStore = await import('next/headers').then(m => m.cookies());
+    const token = cookieStore.get('token')?.value;
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify user is a participant in the chat
+    const { data: userData } = await supabaseAdmin.auth.getUser(token);
+    if (!userData?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = userData.user.id;
+
+    // Check if user is a participant
+    const { data: participant, error: participantError } = await supabaseAdmin
+      .from('chat_participants')
+      .select('id')
+      .eq('chatId', chatId)
+      .eq('userId', userId)
+      .maybeSingle();
+
+    if (participantError || !participant) {
+      // Try snake_case
+      const { data: participantSnake } = await supabaseAdmin
+        .from('chat_participants')
+        .select('id')
+        .eq('chat_id', chatId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!participantSnake) {
+        return NextResponse.json({ error: 'Unauthorized to delete this chat' }, { status: 403 });
+      }
+    }
+
+    // Delete all messages in the chat first (cascade might handle this, but being explicit)
+    await supabaseAdmin
+      .from('messages')
+      .delete()
+      .eq('chatId', chatId);
+
+    // Delete all participants
+    await supabaseAdmin
+      .from('chat_participants')
+      .delete()
+      .eq('chatId', chatId);
+
+    // Delete the chat
+    const { error: deleteError } = await supabaseAdmin
+      .from('chats')
+      .delete()
+      .eq('id', chatId);
+
+    if (deleteError) {
+      console.error('[CHATS API] Error deleting chat:', deleteError);
+      return NextResponse.json({ 
+        error: 'Failed to delete chat',
+        details: deleteError.message 
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Chat deleted successfully' });
+  } catch (error: any) {
+    console.error('[CHATS API] Exception deleting chat:', error);
+    return NextResponse.json({ 
+      error: 'Failed to delete chat',
+      details: error?.message || 'Unknown error'
+    }, { status: 500 });
+  }
+}

@@ -38,10 +38,71 @@ export default function SearchBar() {
   const [followStatuses, setFollowStatuses] = useState<Record<string, boolean>>({});
   const [updatingUsers, setUpdatingUsers] = useState<Set<string>>(new Set());
   const [creatingChats, setCreatingChats] = useState<Set<string>>(new Set());
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+
+  // Load recent searches from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('recentSearches');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setRecentSearches(parsed);
+          }
+        } catch (e) {
+          console.error('Error parsing recent searches:', e);
+        }
+      }
+    }
+  }, []);
+
+  // Save recent searches to localStorage
+  const saveRecentSearch = (searchQuery: string) => {
+    if (!searchQuery || searchQuery.trim().length < 2) return;
+    
+    const trimmed = searchQuery.trim();
+    setRecentSearches(prev => {
+      // Remove if already exists, then add to beginning
+      const filtered = prev.filter(s => s.toLowerCase() !== trimmed.toLowerCase());
+      const updated = [trimmed, ...filtered].slice(0, 15); // Keep max 15 recent searches
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('recentSearches', JSON.stringify(updated));
+      }
+      
+      return updated;
+    });
+  };
+
+  // Remove a recent search
+  const removeRecentSearch = (searchQuery: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    setRecentSearches(prev => {
+      const updated = prev.filter(s => s !== searchQuery);
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('recentSearches', JSON.stringify(updated));
+      }
+      
+      return updated;
+    });
+  };
+
+  // Handle clicking on a recent search
+  const handleRecentSearchClick = (searchQuery: string) => {
+    setQuery(searchQuery);
+    setIsOpen(true);
+    // Trigger search by setting query (will trigger the search useEffect)
+  };
 
   const updateDropdownPosition = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -175,6 +236,9 @@ export default function SearchBar() {
             return updated;
           });
           setHasSearched(true);
+          
+          // Save to recent searches
+          saveRecentSearch(query);
         } else {
           const errorText = await response.text();
           console.error('Search API error:', response.status, response.statusText, errorText);
@@ -299,10 +363,51 @@ export default function SearchBar() {
         )}
       </div>
 
-      {/* Search Results Dropdown */}
-      {isOpen && query.length >= 2 && (
+      {/* Search Results Dropdown - Show recent searches when empty, results when typing */}
+      {isOpen && (
         <div className="absolute z-50 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto sm:left-0 sm:w-full" style={dropdownStyle}>
-          {loading ? (
+          {query.length < 2 ? (
+            // Show recent searches when input is empty or less than 2 characters
+            recentSearches.length > 0 ? (
+              <div className="py-2">
+                <div className="px-4 py-2 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <p className="text-xs font-semibold text-gray-500 uppercase">Recent Searches</p>
+                    </div>
+                  </div>
+                </div>
+                {recentSearches.map((searchQuery, index) => (
+                  <div
+                    key={`recent-${index}`}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  >
+                    <button
+                      onClick={() => handleRecentSearchClick(searchQuery)}
+                      className="flex items-center space-x-3 flex-1 min-w-0 text-left"
+                    >
+                      <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-700 truncate">{searchQuery}</span>
+                    </button>
+                    <button
+                      onClick={(e) => removeRecentSearch(searchQuery, e)}
+                      className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove from recent searches"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 py-6 text-center text-gray-500">
+                <Clock className="w-8 h-8 mx-auto mb-3 text-gray-300" />
+                <p className="text-sm">No recent searches</p>
+                <p className="text-xs text-gray-400 mt-1">Start typing to search for users and games</p>
+              </div>
+            )
+          ) : loading ? (
             <div className="px-4 py-3 text-center text-gray-500">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
               <p className="mt-2 text-sm">Searching...</p>

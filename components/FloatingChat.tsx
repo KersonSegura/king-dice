@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical, Trash2, Ban, Flag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { closeMenusOnChatOpen } from '@/lib/closeChat';
@@ -375,6 +375,8 @@ export default function FloatingChat() {
   const [hasShownTooltip, setHasShownTooltip] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {
@@ -436,6 +438,115 @@ export default function FloatingChat() {
       closeMenusOnChatOpen();
     }
   }, [isChatOpen]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  // Handler functions for dropdown menu
+  const handleDeleteChat = async (chatId: string) => {
+    if (!confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/chats?chatId=${chatId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setSelectedChat(null);
+        setIsChatOpen(false);
+        // Refresh the chat list by triggering a reload
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to delete chat');
+      }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      alert('Failed to delete chat');
+    }
+  };
+
+  const handleBlockUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to block this user? They will not be able to send you messages.')) {
+      return;
+    }
+
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'block',
+          friendId: userId
+        })
+      });
+
+      if (response.ok) {
+        alert('User blocked successfully');
+        // Close the chat and refresh
+        setSelectedChat(null);
+        setIsChatOpen(false);
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to block user');
+      }
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      alert('Failed to block user');
+    }
+  };
+
+  const handleReportUser = async (userId: string, chatId: string) => {
+    const reason = prompt('Please provide a reason for reporting this user:');
+    if (!reason || !reason.trim()) {
+      return;
+    }
+
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentType: 'user',
+          contentId: userId,
+          reporterId: user.id,
+          reason: 'other',
+          description: `Reported user from chat ${chatId}. Reason: ${reason}`
+        })
+      });
+
+      if (response.ok) {
+        alert('User reported successfully. Thank you for helping keep our community safe.');
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to report user');
+      }
+    } catch (error) {
+      console.error('Error reporting user:', error);
+      alert('Failed to report user');
+    }
+  };
 
   // Icon animation effect - ALWAYS call this hook
   useEffect(() => {
@@ -689,19 +800,74 @@ export default function FloatingChat() {
               )}
             </div>
             
-            <div className="flex items-center space-x-2">
-              {selectedChat && (
-                <button 
-                  className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-                  title="More options"
-                >
-                  <MoreVertical className="w-6 h-6 sm:w-5 sm:h-5" />
-                </button>
+            <div className="flex items-center space-x-2 relative">
+              {selectedChat && selectedChat.type !== 'bot' && (
+                <div className="relative" ref={dropdownRef}>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDropdown(!showDropdown);
+                    }}
+                    className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                    title="More options"
+                  >
+                    <MoreVertical className="w-6 h-6 sm:w-5 sm:h-5" />
+                  </button>
+                  
+                  {showDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      {selectedChat.type === 'direct' && (
+                        <>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setShowDropdown(false);
+                              const otherUser = selectedChat.participants?.find((p: any) => p.id !== user?.id);
+                              if (otherUser) {
+                                await handleBlockUser(otherUser.id);
+                              }
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                          >
+                            <Ban className="w-4 h-4" />
+                            <span>Block User</span>
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setShowDropdown(false);
+                              const otherUser = selectedChat.participants?.find((p: any) => p.id !== user?.id);
+                              if (otherUser) {
+                                await handleReportUser(otherUser.id, selectedChat.id);
+                              }
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                          >
+                            <Flag className="w-4 h-4" />
+                            <span>Report User</span>
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setShowDropdown(false);
+                          await handleDeleteChat(selectedChat.id);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Delete Chat</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
               <button
                 onClick={() => {
                   setIsChatOpen(false);
                   setSelectedChat(null);
+                  setShowDropdown(false);
                 }}
                 className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
               >
