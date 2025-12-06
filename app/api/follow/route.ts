@@ -239,13 +239,24 @@ export async function POST(request: NextRequest) {
 
       // Create notification for the target user
       try {
+        // Fetch the follower's username for the notification URL
+        const { data: followerUser, error: userError } = await supabaseAdmin
+          .from('users')
+          .select('username')
+          .eq('id', currentUserId)
+          .single();
+        
+        const profileUrl = followerUser?.username 
+          ? `/profile/${followerUser.username}`
+          : `/profile/${currentUserId}`;
+        
         await createNotification({
           userId: targetUser,
           type: 'follow',
           actorId: currentUserId,
           entityType: 'profile',
           entityId: currentUserId,
-          url: `/profile/${currentUserId}`,
+          url: profileUrl,
         });
       } catch (notifError) {
         console.error('Error creating notification:', notifError);

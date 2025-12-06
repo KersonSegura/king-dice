@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, X, User, Dice6, Clock, Plus } from 'lucide-react';
+import { Search, X, User, Dice6, Clock, Plus, UserPlus, UserMinus } from 'lucide-react';
 import SuggestGameModal from './SuggestGameModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { closeChatOnNavigation } from '@/lib/closeChat';
@@ -35,6 +35,8 @@ export default function SearchBar() {
   const [dropdownMetrics, setDropdownMetrics] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
   const [isMobileLayout, setIsMobileLayout] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [followStatuses, setFollowStatuses] = useState<Record<string, boolean>>({});
+  const [updatingUsers, setUpdatingUsers] = useState<Set<string>>(new Set());
   
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,6 +107,7 @@ export default function SearchBar() {
     if (query.length < 2) {
       setResults([]);
       setHasSearched(false);
+      setFollowStatuses({});
       return;
     }
 
@@ -147,6 +150,14 @@ export default function SearchBar() {
           }
           
           setResults(formattedResults);
+          // Initialize follow statuses from results
+          const initialFollowStatuses: Record<string, boolean> = {};
+          formattedResults.forEach((result) => {
+            if (result.type === 'user' && result.id) {
+              initialFollowStatuses[result.id] = result.isFollowing || false;
+            }
+          });
+          setFollowStatuses(prev => ({ ...prev, ...initialFollowStatuses }));
           setHasSearched(true);
         } else {
           const errorText = await response.text();
@@ -175,6 +186,7 @@ export default function SearchBar() {
     setResults([]);
     setHasSearched(false);
     setIsOpen(false);
+    setFollowStatuses({});
     inputRef.current?.focus();
   };
 
@@ -294,51 +306,128 @@ export default function SearchBar() {
                         <p className="text-xs font-semibold text-gray-500 uppercase">Users</p>
                       </div>
                     )}
-                    {userResults.map((result, index) => (
-                      <Link
-                        key={`user-${result.id}`}
-                        href={`/profile/${result.username}`}
-                        onClick={handleResultClick}
-                        className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
-                      >
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
-                            {result.avatar ? (
-                              <Image
-                                src={result.avatar}
-                                alt={result.username || 'User'}
-                                width={32}
-                                height={32}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
-                            ) : (
-                              <Dice6 className="w-4 h-4 text-white" />
-                            )}
-                          </div>
+                    {userResults.map((result, index) => {
+                      const isFollowing = followStatuses[result.id] ?? (result.isFollowing || false);
+                      const isUpdating = updatingUsers.has(result.id);
+                      
+                      const handleFollowClick = async (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (!user || isUpdating) return;
+                        if (result.id === user.id) return; // Can't follow yourself
+                        
+                        setUpdatingUsers(prev => new Set(prev).add(result.id));
+                        try {
+                          const action = isFollowing ? 'unfollow' : 'follow';
+                          const response = await fetch('/api/follow', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action,
+                              followerId: user.id,
+                              followingId: result.id
+                            })
+                          });
+                          
+                          if (response.ok) {
+                            const newStatus = !isFollowing;
+                            setFollowStatuses(prev => ({ ...prev, [result.id]: newStatus }));
+                            // Update the result in the results array
+                            setResults(prev => prev.map(r => 
+                              r.id === result.id && r.type === 'user' 
+                                ? { ...r, isFollowing: newStatus }
+                                : r
+                            ));
+                          }
+                        } catch (error) {
+                          console.error('Error updating follow status:', error);
+                        } finally {
+                          setUpdatingUsers(prev => {
+                            const next = new Set(prev);
+                            next.delete(result.id);
+                            return next;
+                          });
+                        }
+                      };
+                      
+                      return (
+                        <div
+                          key={`user-${result.id}`}
+                          className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <Link
+                            href={`/profile/${result.username}`}
+                            onClick={handleResultClick}
+                            className="flex items-center space-x-3 flex-1 min-w-0"
+                          >
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
+                                {result.avatar ? (
+                                  <Image
+                                    src={result.avatar}
+                                    alt={result.username || 'User'}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <Dice6 className="w-4 h-4 text-white" />
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
+                                  {result.username}
+                                </p>
+                                {result.isVerified && (
+                                  <span className="text-blue-500 text-xs">✓</span>
+                                )}
+                                {result.isAdmin && (
+                                  <span className="text-red-500 text-xs bg-red-100 px-1 rounded">ADMIN</span>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <User className="w-3 h-3" />
+                                {isFollowing ? (
+                                  <span>Following</span>
+                                ) : (
+                                  <span>User</span>
+                                )}
+                              </div>
+                            </div>
+                          </Link>
+                          {user && result.id !== user.id && (
+                            <button
+                              onClick={handleFollowClick}
+                              disabled={isUpdating}
+                              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                isUpdating 
+                                  ? 'opacity-50 cursor-not-allowed' 
+                                  : 'cursor-pointer hover:opacity-90'
+                              } ${
+                                isFollowing
+                                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                  : 'bg-[#fbae17] text-white hover:bg-[#fbae17]/90'
+                              }`}
+                            >
+                              {isFollowing ? (
+                                <>
+                                  <UserMinus className="w-3 h-3 inline mr-1" />
+                                  Unfollow
+                                </>
+                              ) : (
+                                <>
+                                  <UserPlus className="w-3 h-3 inline mr-1" />
+                                  Follow
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
-                              {result.username}
-                            </p>
-                            {result.isVerified && (
-                              <span className="text-blue-500 text-xs">✓</span>
-                            )}
-                            {result.isAdmin && (
-                              <span className="text-red-500 text-xs bg-red-100 px-1 rounded">ADMIN</span>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 text-xs text-gray-500">
-                            <User className="w-3 h-3" />
-                            {result.isFollowing ? (
-                              <span>Following</span>
-                            ) : (
-                              <span>User</span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+                      );
+                    })}
                     {hasGames && (
                       <div className={`px-4 py-2 ${hasUsers ? 'border-t border-gray-200' : ''}`}>
                         <p className="text-xs font-semibold text-gray-500 uppercase">Board Games</p>
