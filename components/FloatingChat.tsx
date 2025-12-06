@@ -403,6 +403,25 @@ export default function FloatingChat() {
     };
   }, [isChatOpen]);
 
+  // Listen for custom event to open chat with a specific user
+  useEffect(() => {
+    const handleOpenChatWithUser = (event: CustomEvent) => {
+      const { chat } = event.detail;
+      if (chat) {
+        setSelectedChat(chat);
+        setIsChatOpen(true);
+        // Close menus when opening chat on mobile
+        closeMenusOnChatOpen();
+      }
+    };
+
+    window.addEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
+    
+    return () => {
+      window.removeEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
+    };
+  }, []);
+
   // Dispatch event to close menus when chat opens on mobile
   useEffect(() => {
     if (isChatOpen && typeof window !== 'undefined' && window.innerWidth < 768) {

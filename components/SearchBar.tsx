@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, X, User, Dice6, Clock, Plus, UserPlus, UserMinus } from 'lucide-react';
+import { Search, X, User, Dice6, Clock, Plus, UserPlus, UserMinus, MessageCircle } from 'lucide-react';
 import SuggestGameModal from './SuggestGameModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { closeChatOnNavigation } from '@/lib/closeChat';
@@ -37,6 +37,7 @@ export default function SearchBar() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [followStatuses, setFollowStatuses] = useState<Record<string, boolean>>({});
   const [updatingUsers, setUpdatingUsers] = useState<Set<string>>(new Set());
+  const [creatingChats, setCreatingChats] = useState<Set<string>>(new Set());
   
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -369,6 +370,58 @@ export default function SearchBar() {
                         }
                       };
                       
+                      const handleChatClick = async (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (!user || creatingChats.has(result.id)) return;
+                        if (result.id === user.id) return; // Can't chat with yourself
+                        
+                        setCreatingChats(prev => new Set(prev).add(result.id));
+                        try {
+                          // Create or get existing direct chat
+                          const response = await fetch('/api/chats', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              type: 'direct',
+                              participants: [user.id, result.id],
+                              createdBy: user.id
+                            })
+                          });
+                          
+                          if (response.ok) {
+                            const data = await response.json();
+                            const chat = {
+                              id: data.chat.id,
+                              name: result.username,
+                              type: 'direct' as const,
+                              participants: data.chat.participants || [],
+                              createdAt: data.chat.createdAt || new Date().toISOString(),
+                              updatedAt: data.chat.updatedAt || new Date().toISOString()
+                            };
+                            
+                            // Dispatch custom event to open chat
+                            const openChatEvent = new CustomEvent('openChatWithUser', {
+                              detail: { chat }
+                            });
+                            window.dispatchEvent(openChatEvent);
+                            
+                            // Close search dropdown
+                            setIsOpen(false);
+                            setQuery('');
+                          }
+                        } catch (error) {
+                          console.error('Error starting chat:', error);
+                        } finally {
+                          setCreatingChats(prev => {
+                            const next = new Set(prev);
+                            next.delete(result.id);
+                            return next;
+                          });
+                        }
+                      };
+                      
                       return (
                         <div
                           key={`user-${result.id}`}
@@ -417,31 +470,45 @@ export default function SearchBar() {
                             </div>
                           </Link>
                           {user && result.id !== user.id && (
-                            <button
-                              onClick={handleFollowClick}
-                              disabled={isUpdating}
-                              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                isUpdating 
-                                  ? 'opacity-50 cursor-not-allowed' 
-                                  : 'cursor-pointer hover:opacity-90'
-                              } ${
-                                isFollowing
-                                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                  : 'bg-[#fbae17] text-white hover:bg-[#fbae17]/90'
-                              }`}
-                            >
-                              {isFollowing ? (
-                                <>
-                                  <UserMinus className="w-3 h-3 inline mr-1" />
-                                  Unfollow
-                                </>
-                              ) : (
-                                <>
-                                  <UserPlus className="w-3 h-3 inline mr-1" />
-                                  Follow
-                                </>
-                              )}
-                            </button>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={handleChatClick}
+                                disabled={creatingChats.has(result.id)}
+                                className={`flex-shrink-0 p-1.5 rounded-full text-xs font-medium transition-all ${
+                                  creatingChats.has(result.id)
+                                    ? 'opacity-50 cursor-not-allowed' 
+                                    : 'cursor-pointer hover:opacity-90'
+                                } bg-blue-500 text-white hover:bg-blue-600`}
+                                title="Start a chat"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={handleFollowClick}
+                                disabled={isUpdating}
+                                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                  isUpdating 
+                                    ? 'opacity-50 cursor-not-allowed' 
+                                    : 'cursor-pointer hover:opacity-90'
+                                } ${
+                                  isFollowing
+                                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    : 'bg-[#fbae17] text-white hover:bg-[#fbae17]/90'
+                                }`}
+                              >
+                                {isFollowing ? (
+                                  <>
+                                    <UserMinus className="w-3 h-3 inline mr-1" />
+                                    Unfollow
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserPlus className="w-3 h-3 inline mr-1" />
+                                    Follow
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           )}
                         </div>
                       );
