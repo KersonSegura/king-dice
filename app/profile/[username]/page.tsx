@@ -1266,11 +1266,11 @@ export default function UserProfilePage() {
 
         {/* Follow and Chat Buttons - Top Right on Mobile, Hidden on Desktop */}
         {!isOwnProfile && user?.id && userProfile?.id && (
-          <div className="absolute top-4 right-4 z-10 flex flex-col items-end space-y-2 md:hidden">
+          <div className="absolute top-4 right-4 z-10 flex items-center space-x-2 md:hidden">
             <button
               onClick={handleStartChat}
               disabled={isCreatingChat}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
+              className={`p-2 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
                 isCreatingChat ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
               }`}
               style={(() => {
@@ -1296,7 +1296,6 @@ export default function UserProfilePage() {
               title="Start a chat"
             >
               <MessageCircle className="w-4 h-4" />
-              <span>Chat</span>
             </button>
             <button
               onClick={handleFollow}
