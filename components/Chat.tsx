@@ -244,64 +244,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg flex-shrink-0">
-          <div className="flex items-center space-x-3">
-            {regularChatType === 'group' ? (
-              // Group chat icon
-              <div className="w-10 h-10 rounded-full border-2 border-gray-300 flex-shrink-0 overflow-hidden bg-blue-500 flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-            ) : regularChatType === 'direct' ? (
-              // User avatar (clickable to profile)
-              <button
-                onClick={() => {
-                  const otherUser = getOtherParticipant();
-                  if (otherUser) {
-                    window.location.href = `/profile/${otherUser.username}`;
-                  }
-                }}
-                className="w-10 h-10 rounded-full border-2 border-gray-300 flex-shrink-0 overflow-hidden hover:opacity-80 transition-opacity"
-              >
-                {getOtherParticipant()?.avatar ? (
-                  <img
-                    src={getOtherParticipant()?.avatar}
-                    alt={getOtherParticipant()?.username}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-                    {getOtherParticipant()?.username?.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </button>
-            ) : (
-              // Group chat avatar
-              <div className="w-10 h-10 rounded-full border-2 border-gray-300 flex-shrink-0 overflow-hidden">
-                <div className="w-full h-full bg-purple-500 flex items-center justify-center text-white font-semibold">
-                  {chatName.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            )}
-            <div>
-              <h3 className="font-semibold text-gray-900">{chatName}</h3>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button className="p-2 text-gray-500 hover:text-gray-700" title="More options">
-              <MoreVertical className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={onClose}
-              className="p-2 text-gray-500 hover:text-gray-700" 
-              title="Close chat"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
+      <div className="flex flex-col h-full bg-white">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {messages.map((message) => (

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft } from 'lucide-react';
+import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { closeMenusOnChatOpen } from '@/lib/closeChat';
@@ -689,15 +689,25 @@ export default function FloatingChat() {
               )}
             </div>
             
-            <button
-              onClick={() => {
-                setIsChatOpen(false);
-                setSelectedChat(null);
-              }}
-              className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-            >
-              <X className="w-6 h-6 sm:w-5 sm:h-5" />
-            </button>
+            <div className="flex items-center space-x-2">
+              {selectedChat && (
+                <button 
+                  className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                  title="More options"
+                >
+                  <MoreVertical className="w-6 h-6 sm:w-5 sm:h-5" />
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setIsChatOpen(false);
+                  setSelectedChat(null);
+                }}
+                className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+              >
+                <X className="w-6 h-6 sm:w-5 sm:h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Chat Content */}
