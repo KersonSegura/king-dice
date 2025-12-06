@@ -408,6 +408,9 @@ export default function FloatingChat() {
     const handleOpenChatWithUser = (event: CustomEvent) => {
       const { chat } = event.detail;
       if (chat) {
+        console.log('[FloatingChat] Opening chat menu with user:', chat);
+        // Set the selected chat first, then open the menu
+        // This ensures the chat is ready when the menu opens
         setSelectedChat(chat);
         setIsChatOpen(true);
         // Close menus when opening chat on mobile

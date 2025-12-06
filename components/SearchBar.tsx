@@ -392,13 +392,32 @@ export default function SearchBar() {
                           
                           if (response.ok) {
                             const data = await response.json();
+                            
+                            // Format participants to match expected structure
+                            const formattedParticipants = (data.chat.participants || []).map((p: any) => {
+                              // Handle both nested user structure and flat structure
+                              if (p.user) {
+                                return {
+                                  id: p.user.id || p.user_id,
+                                  username: p.user.username,
+                                  avatar: p.user.avatar,
+                                  isVerified: p.user.is_verified || p.user.isVerified || false,
+                                  isAdmin: p.user.is_admin || p.user.isAdmin || false,
+                                  joinedAt: p.joined_at || p.joinedAt,
+                                  lastReadAt: p.last_read_at || p.lastReadAt
+                                };
+                              } else {
+                                return p;
+                              }
+                            });
+                            
                             const chat = {
                               id: data.chat.id,
-                              name: result.username,
+                              name: data.chat.name || result.username,
                               type: 'direct' as const,
-                              participants: data.chat.participants || [],
-                              createdAt: data.chat.createdAt || new Date().toISOString(),
-                              updatedAt: data.chat.updatedAt || new Date().toISOString()
+                              participants: formattedParticipants,
+                              createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
+                              updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
                             };
                             
                             // Dispatch custom event to open chat
@@ -410,6 +429,7 @@ export default function SearchBar() {
                             // Close search dropdown
                             setIsOpen(false);
                             setQuery('');
+                            setIsExpanded(false);
                           }
                         } catch (error) {
                           console.error('Error starting chat:', error);
