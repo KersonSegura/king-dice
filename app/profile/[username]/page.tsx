@@ -1311,11 +1311,26 @@ export default function UserProfilePage() {
                       className={`p-2 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
                         isCreatingChat ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
                       }`}
-                      style={{
-                        backgroundColor: '#3b82f6',
-                        color: '#ffffff',
-                        border: '2px solid #3b82f6'
-                      }}
+                      style={(() => {
+                        const isLight = isLightCover();
+                        
+                        // Chat button uses same color scheme as follow button
+                        if (isLight) {
+                          // Light cover: use cover color with dark text
+                          return {
+                            backgroundColor: profileColors.cover,
+                            color: darkenColor(profileColors.cover, 0.5),
+                            border: `2px solid ${profileColors.cover}`
+                          };
+                        } else {
+                          // Dark cover: white background with cover color text
+                          return {
+                            backgroundColor: '#ffffff',
+                            color: profileColors.cover,
+                            border: `2px solid #ffffff`
+                          };
+                        }
+                      })()}
                       title="Start a chat"
                     >
                       <MessageCircle className="w-4 h-4" />

@@ -359,41 +359,24 @@ export async function POST(request: NextRequest) {
 
     console.log('[CHATS API] Creating new chat...');
     
-    // Create new chat - try both naming conventions
-    let newChat: any = null;
-    let createError: any = null;
+    // Create new chat - don't set createdBy for direct chats (optional field)
+    const now = new Date().toISOString();
+    const chatData: any = {
+      type,
+      name: type === 'group' ? name : null
+    };
     
-    // Try snake_case first
-    const { data: chatSnake, error: errorSnake } = await supabaseAdmin
+    // Only set createdBy for group chats
+    if (type === 'group' && createdBy) {
+      chatData.createdBy = createdBy;
+    }
+    
+    // Try camelCase first (Prisma schema)
+    const { data: newChat, error: createError } = await supabaseAdmin
       .from('chats')
-      .insert({
-        type,
-        name: type === 'group' ? name : null,
-        created_by: type === 'group' ? createdBy : null
-      })
+      .insert(chatData)
       .select()
       .single();
-    
-    if (!errorSnake && chatSnake) {
-      newChat = chatSnake;
-    } else {
-      // Try camelCase
-      const { data: chatCamel, error: errorCamel } = await supabaseAdmin
-        .from('chats')
-        .insert({
-          type,
-          name: type === 'group' ? name : null,
-          createdBy: type === 'group' ? createdBy : null
-        })
-        .select()
-        .single();
-      
-      if (!errorCamel && chatCamel) {
-        newChat = chatCamel;
-      } else {
-        createError = errorSnake || errorCamel;
-      }
-    }
 
     if (createError || !newChat) {
       console.error('[CHATS API] Error creating chat:', createError);

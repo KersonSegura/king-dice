@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET - Get user's follow requests (received or sent)
 
@@ -19,68 +17,155 @@ export async function GET(request: NextRequest) {
 
     if (type === 'received') {
       // Get follow requests received by this user
-      const requests = await prisma.followRequest.findMany({
-        where: { 
-          targetId: userId,
-          status: 'pending'
-        },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              username: true,
-              avatar: true,
-              isVerified: true,
-              isAdmin: true
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+      // Try camelCase first (Prisma schema)
+      const { data: requests, error: requestsError } = await supabaseAdmin
+        .from('follow_requests')
+        .select(`
+          id,
+          requesterId,
+          targetId,
+          status,
+          createdAt,
+          requester:users!follow_requests_requesterId_fkey (
+            id,
+            username,
+            avatar,
+            isVerified,
+            isAdmin
+          )
+        `)
+        .eq('targetId', userId)
+        .eq('status', 'pending')
+        .order('createdAt', { ascending: false });
 
-      return NextResponse.json({ 
-        requests: requests.map(request => ({
+      if (requestsError) {
+        // Try snake_case as fallback
+        const { data: requestsSnake, error: errorSnake } = await supabaseAdmin
+          .from('follow_requests')
+          .select(`
+            id,
+            requester_id,
+            target_id,
+            status,
+            created_at,
+            requester:users!follow_requests_requester_id_fkey (
+              id,
+              username,
+              avatar,
+              is_verified,
+              is_admin
+            )
+          `)
+          .eq('target_id', userId)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (errorSnake) {
+          console.error('Error fetching follow requests:', errorSnake);
+          return NextResponse.json({ error: 'Failed to fetch follow requests' }, { status: 500 });
+        }
+
+        return NextResponse.json({
+          requests: (requestsSnake || []).map((request: any) => ({
+            id: request.id,
+            user: {
+              id: request.requester?.id,
+              username: request.requester?.username,
+              avatar: request.requester?.avatar,
+              isVerified: request.requester?.is_verified || false,
+              isAdmin: request.requester?.is_admin || false
+            },
+            requestedAt: request.created_at
+          }))
+        });
+      }
+
+      return NextResponse.json({
+        requests: (requests || []).map((request: any) => ({
           id: request.id,
           user: {
-            id: request.requester.id,
-            username: request.requester.username,
-            avatar: request.requester.avatar,
-            isVerified: request.requester.isVerified,
-            isAdmin: request.requester.isAdmin
+            id: request.requester?.id,
+            username: request.requester?.username,
+            avatar: request.requester?.avatar,
+            isVerified: request.requester?.isVerified || false,
+            isAdmin: request.requester?.isAdmin || false
           },
           requestedAt: request.createdAt
         }))
       });
     } else if (type === 'sent') {
       // Get follow requests sent by this user
-      const requests = await prisma.followRequest.findMany({
-        where: { 
-          requesterId: userId,
-          status: 'pending'
-        },
-        include: {
-          target: {
-            select: {
-              id: true,
-              username: true,
-              avatar: true,
-              isVerified: true,
-              isAdmin: true
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+      const { data: requests, error: requestsError } = await supabaseAdmin
+        .from('follow_requests')
+        .select(`
+          id,
+          requesterId,
+          targetId,
+          status,
+          createdAt,
+          target:users!follow_requests_targetId_fkey (
+            id,
+            username,
+            avatar,
+            isVerified,
+            isAdmin
+          )
+        `)
+        .eq('requesterId', userId)
+        .eq('status', 'pending')
+        .order('createdAt', { ascending: false });
 
-      return NextResponse.json({ 
-        requests: requests.map(request => ({
+      if (requestsError) {
+        // Try snake_case as fallback
+        const { data: requestsSnake, error: errorSnake } = await supabaseAdmin
+          .from('follow_requests')
+          .select(`
+            id,
+            requester_id,
+            target_id,
+            status,
+            created_at,
+            target:users!follow_requests_target_id_fkey (
+              id,
+              username,
+              avatar,
+              is_verified,
+              is_admin
+            )
+          `)
+          .eq('requester_id', userId)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (errorSnake) {
+          console.error('Error fetching follow requests:', errorSnake);
+          return NextResponse.json({ error: 'Failed to fetch follow requests' }, { status: 500 });
+        }
+
+        return NextResponse.json({
+          requests: (requestsSnake || []).map((request: any) => ({
+            id: request.id,
+            user: {
+              id: request.target?.id,
+              username: request.target?.username,
+              avatar: request.target?.avatar,
+              isVerified: request.target?.is_verified || false,
+              isAdmin: request.target?.is_admin || false
+            },
+            requestedAt: request.created_at
+          }))
+        });
+      }
+
+      return NextResponse.json({
+        requests: (requests || []).map((request: any) => ({
           id: request.id,
           user: {
-            id: request.target.id,
-            username: request.target.username,
-            avatar: request.target.avatar,
-            isVerified: request.target.isVerified,
-            isAdmin: request.target.isAdmin
+            id: request.target?.id,
+            username: request.target?.username,
+            avatar: request.target?.avatar,
+            isVerified: request.target?.isVerified || false,
+            isAdmin: request.target?.isAdmin || false
           },
           requestedAt: request.createdAt
         }))
