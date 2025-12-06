@@ -321,7 +321,7 @@ export default function Header() {
           <SearchBar />
 
           {/* Center (Navigation) */}
-          <nav ref={desktopNavRef} className="hidden md:flex flex-1 justify-center space-x-8">
+          <nav ref={desktopNavRef} className="hidden md:flex md:flex-1 md:justify-center space-x-8">
             {/* Individual navigation items - shown when there's enough space */}
             {!showDesktopHamburger && (
               <>
@@ -369,7 +369,7 @@ export default function Header() {
           </nav>
 
                      {/* Right (Actions) */}
-           <div className="flex items-center justify-end flex-shrink-0 space-x-4">
+           <div className="flex items-center justify-end flex-shrink-0 space-x-2 md:space-x-4">
              {/* Desktop hamburger menu button - shown when space is limited, right next to Features */}
              {showDesktopHamburger && (
                <div 
@@ -504,9 +504,9 @@ export default function Header() {
              {/* Features Dropdown */}
              <FeaturesDropdown />
 
-            {/* User Menu Button */}
+            {/* User Menu Button - Always visible on mobile */}
             <div 
-              className="relative"
+              className="relative flex-shrink-0 z-10"
               ref={userMenuRef}
             >
               {isAuthenticated ? (
@@ -713,10 +713,10 @@ export default function Header() {
             </div>
           </div>
           
-          {/* Mobile menu button */}
+          {/* Mobile menu button - Always visible on mobile */}
           <button
             ref={mobileMenuButtonRef}
-            className="md:hidden p-2 text-dark-700 hover:text-primary-500 transition-colors"
+            className="md:hidden flex-shrink-0 p-2 text-dark-700 hover:text-primary-500 transition-colors z-10"
             onClick={(e) => {
               e.stopPropagation();
               const newMenuState = !isMenuOpen;

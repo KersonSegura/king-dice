@@ -317,7 +317,7 @@ export default function SearchBar() {
     : undefined;
 
   return (
-    <div className={`relative ${isExpanded ? 'flex-1' : 'flex-shrink-0'} w-full sm:max-w-xs md:flex-1 md:max-w-sm lg:max-w-md xl:max-w-lg mx-2 sm:mx-3 md:mx-4`} ref={searchRef}>
+    <div className={`relative ${isExpanded ? 'flex-1 md:flex-1' : 'flex-shrink-0'} ${isExpanded ? 'max-w-[calc(100vw-180px)] md:max-w-sm' : 'w-full'} sm:max-w-xs md:flex-1 md:max-w-sm lg:max-w-md xl:max-w-lg mx-1 sm:mx-3 md:mx-4`} ref={searchRef}>
       {/* Icon-only button for small screens */}
       <button
         onClick={handleIconClick}
