@@ -295,8 +295,8 @@ export default function Header() {
 
   return (
     <header className="bg-white shadow-md border-b border-dark-200">
-      <div className="w-full px-6 sm:px-8 lg:px-12">
-        <div className="flex justify-between items-center w-full h-16">
+      <div className="w-full px-2 sm:px-6 md:px-8 lg:px-12">
+        <div className="flex justify-between items-center w-full h-16 gap-2">
           {/* Left (Logo) */}
           <div className="flex items-center flex-shrink-0">
             <Link 
@@ -317,8 +317,10 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Search Bar */}
-          <SearchBar />
+          {/* Search Bar - Always visible on mobile, centered on desktop */}
+          <div className="flex-1 min-w-0 md:flex md:items-center md:justify-center">
+            <SearchBar />
+          </div>
 
           {/* Center (Navigation) */}
           <nav ref={desktopNavRef} className="hidden md:flex md:flex-1 md:justify-center space-x-8">
@@ -368,8 +370,8 @@ export default function Header() {
             )}
           </nav>
 
-                     {/* Right (Actions) */}
-           <div className="flex items-center justify-end flex-shrink-0 space-x-2 md:space-x-4">
+                     {/* Right (Actions) - Always visible on mobile */}
+           <div className="flex items-center justify-end flex-shrink-0 space-x-1 md:space-x-4">
              {/* Desktop hamburger menu button - shown when space is limited, right next to Features */}
              {showDesktopHamburger && (
                <div 
@@ -716,7 +718,7 @@ export default function Header() {
           {/* Mobile menu button - Always visible on mobile */}
           <button
             ref={mobileMenuButtonRef}
-            className="md:hidden flex-shrink-0 p-2 text-dark-700 hover:text-primary-500 transition-colors z-10"
+            className="md:hidden flex-shrink-0 p-2 text-dark-700 hover:text-primary-500 transition-colors z-10 ml-1"
             onClick={(e) => {
               e.stopPropagation();
               const newMenuState = !isMenuOpen;

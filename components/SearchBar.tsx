@@ -317,18 +317,9 @@ export default function SearchBar() {
     : undefined;
 
   return (
-    <div className={`relative ${isExpanded ? 'flex-1 md:flex-1' : 'flex-shrink-0'} ${isExpanded ? 'max-w-[calc(100vw-180px)] md:max-w-sm' : 'w-full'} sm:max-w-xs md:flex-1 md:max-w-sm lg:max-w-md xl:max-w-lg mx-1 sm:mx-3 md:mx-4`} ref={searchRef}>
-      {/* Icon-only button for small screens */}
-      <button
-        onClick={handleIconClick}
-        className={`md:hidden p-2 text-gray-600 hover:text-primary-500 transition-colors rounded-lg hover:bg-gray-100 ${isExpanded ? 'hidden' : 'block'}`}
-        aria-label="Search"
-      >
-        <Search className="h-5 w-5" />
-      </button>
-
-      {/* Expanded search bar - visible on md+ screens or when expanded on mobile */}
-      <div className={`relative ${isExpanded ? 'block' : 'hidden'} md:block`}>
+    <div className={`relative flex-1 min-w-0 md:flex-1 md:max-w-sm lg:max-w-md xl:max-w-lg mx-1 sm:mx-3 md:mx-4`} ref={searchRef}>
+      {/* Search bar - always visible on mobile, never just an icon */}
+      <div className="relative block">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-gray-400" />
         </div>
@@ -349,12 +340,7 @@ export default function SearchBar() {
         {query && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
             <button
-              onClick={() => {
-                handleClear();
-                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                  setIsExpanded(false);
-                }
-              }}
+              onClick={handleClear}
               className="text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />
