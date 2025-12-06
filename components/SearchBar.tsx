@@ -146,18 +146,33 @@ export default function SearchBar() {
           // Log first few user results for debugging
           const userResults = formattedResults.filter(r => r.type === 'user');
           if (userResults.length > 0) {
-            console.log('[SearchBar] Sample user results:', userResults.slice(0, 3).map(u => ({ username: u.username, id: u.id })));
+            console.log('[SearchBar] Sample user results:', userResults.slice(0, 3).map(u => ({ 
+              username: u.username, 
+              id: u.id, 
+              isFollowing: u.isFollowing 
+            })));
           }
           
           setResults(formattedResults);
-          // Initialize follow statuses from results
+          // Initialize follow statuses from API results - this is the source of truth
           const initialFollowStatuses: Record<string, boolean> = {};
           formattedResults.forEach((result) => {
             if (result.type === 'user' && result.id) {
-              initialFollowStatuses[result.id] = result.isFollowing || false;
+              // Use the isFollowing value from the API as the source of truth
+              const apiFollowingStatus = result.isFollowing === true;
+              initialFollowStatuses[result.id] = apiFollowingStatus;
+              console.log(`[SearchBar] User ${result.username} (${result.id}): isFollowing=${apiFollowingStatus} (from API)`);
             }
           });
-          setFollowStatuses(prev => ({ ...prev, ...initialFollowStatuses }));
+          // Update follow statuses - replace for users in current results, keep others
+          setFollowStatuses(prev => {
+            const updated = { ...prev };
+            // Overwrite follow status for users in current search results
+            Object.keys(initialFollowStatuses).forEach(userId => {
+              updated[userId] = initialFollowStatuses[userId];
+            });
+            return updated;
+          });
           setHasSearched(true);
         } else {
           const errorText = await response.text();
@@ -307,7 +322,10 @@ export default function SearchBar() {
                       </div>
                     )}
                     {userResults.map((result, index) => {
-                      const isFollowing = followStatuses[result.id] ?? (result.isFollowing || false);
+                      // Prioritize state (for real-time updates) but fall back to API result (source of truth)
+                      const isFollowing = followStatuses[result.id] !== undefined 
+                        ? followStatuses[result.id] 
+                        : (result.isFollowing === true);
                       const isUpdating = updatingUsers.has(result.id);
                       
                       const handleFollowClick = async (e: React.MouseEvent) => {

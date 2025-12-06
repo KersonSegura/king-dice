@@ -132,43 +132,56 @@ export async function GET(request: NextRequest) {
           try {
             const userIds = sortedUsers.slice(0, limit).map((u: any) => u.id).filter(Boolean);
             if (userIds.length > 0) {
-              // Try camelCase first (matches schema)
+              // Use the same column naming as the follow API route (camelCase)
               const { data: follows, error: followError } = await supabaseAdmin
                 .from('follows')
-                .select('followingId, following_id')
+                .select('followingId')
                 .eq('followerId', currentUserId)
                 .in('followingId', userIds);
               
               if (!followError && follows) {
-                followingUserIds = new Set(follows.map((f: any) => f.followingId || f.following_id).filter(Boolean));
+                followingUserIds = new Set(follows.map((f: any) => f.followingId).filter(Boolean));
+                console.log('[SEARCH API] Found', followingUserIds.size, 'followed users out of', userIds.length, 'searched users');
               } else if (followError) {
-                // Try snake_case if camelCase fails
-                const { data: followsSnake, error: followErrorSnake } = await supabaseAdmin
-                  .from('follows')
-                  .select('following_id')
-                  .eq('follower_id', currentUserId)
-                  .in('following_id', userIds);
-                
-                if (!followErrorSnake && followsSnake) {
-                  followingUserIds = new Set(followsSnake.map((f: any) => f.following_id).filter(Boolean));
+                console.error('[SEARCH API] Error checking follow status:', followError);
+                // Try snake_case as fallback
+                try {
+                  const { data: followsSnake, error: followErrorSnake } = await supabaseAdmin
+                    .from('follows')
+                    .select('following_id')
+                    .eq('follower_id', currentUserId)
+                    .in('following_id', userIds);
+                  
+                  if (!followErrorSnake && followsSnake) {
+                    followingUserIds = new Set(followsSnake.map((f: any) => f.following_id).filter(Boolean));
+                    console.log('[SEARCH API] Found', followingUserIds.size, 'followed users (snake_case)');
+                  }
+                } catch (snakeError) {
+                  console.error('[SEARCH API] Error with snake_case fallback:', snakeError);
                 }
               }
             }
           } catch (error) {
-            console.log('[SEARCH API] Error checking follow status:', error);
+            console.error('[SEARCH API] Error checking follow status:', error);
           }
         }
 
-        users = sortedUsers.slice(0, limit).map((user: any) => ({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          avatar: user.avatar,
-          isVerified: user.isVerified || user.is_verified || false,
-          isAdmin: user.isAdmin || user.is_admin || false,
-          isFollowing: followingUserIds.has(user.id),
-          type: 'user'
-        }));
+        users = sortedUsers.slice(0, limit).map((user: any) => {
+          const isFollowing = followingUserIds.has(user.id);
+          if (currentUserId) {
+            console.log(`[SEARCH API] User ${user.username} (${user.id}): isFollowing=${isFollowing} (currentUserId: ${currentUserId})`);
+          }
+          return {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            avatar: user.avatar,
+            isVerified: user.isVerified || user.is_verified || false,
+            isAdmin: user.isAdmin || user.is_admin || false,
+            isFollowing: isFollowing,
+            type: 'user'
+          };
+        });
 
         console.log('[SEARCH API] Final user results:', users.length);
 
