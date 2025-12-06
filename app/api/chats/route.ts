@@ -185,6 +185,8 @@ export async function POST(request: NextRequest) {
   try {
     const { type, name, participants, createdBy } = await request.json();
 
+    console.log('[CHATS API] Creating chat:', { type, name, participants, createdBy });
+
     if (!type || !participants || !Array.isArray(participants)) {
       return NextResponse.json({ error: 'Invalid chat data' }, { status: 400 });
     }
@@ -195,81 +197,174 @@ export async function POST(request: NextRequest) {
 
     // Check if direct chat already exists between these two users
     if (type === 'direct' && participants.length === 2) {
-      // Get all chats of type 'direct' that have both participants
-      const { data: existingParticipants, error: checkError } = await supabaseAdmin
+      console.log('[CHATS API] Checking for existing direct chat between:', participants);
+      
+      // Try snake_case first (most common in Supabase)
+      let existingParticipants: any[] = [];
+      let checkError: any = null;
+      
+      const { data: participantsSnake, error: errorSnake } = await supabaseAdmin
         .from('chat_participants')
-        .select('chat_id, user_id, chat:chats!chat_participants_chat_id_fkey (id, type)')
-        .in('user_id', participants)
-        .eq('chat.type', 'direct');
+        .select('chat_id, user_id')
+        .in('user_id', participants);
+      
+      if (!errorSnake && participantsSnake) {
+        existingParticipants = participantsSnake;
+      } else {
+        // Try camelCase as fallback
+        const { data: participantsCamel, error: errorCamel } = await supabaseAdmin
+          .from('chat_participants')
+          .select('chatId, userId')
+          .in('userId', participants);
+        
+        if (!errorCamel && participantsCamel) {
+          existingParticipants = participantsCamel.map((p: any) => ({
+            chat_id: p.chatId || p.chat_id,
+            user_id: p.userId || p.user_id
+          }));
+        } else {
+          checkError = errorSnake || errorCamel;
+        }
+      }
 
-      if (!checkError && existingParticipants) {
+      if (checkError) {
+        console.error('[CHATS API] Error checking existing participants:', checkError);
+      }
+
+      if (existingParticipants && existingParticipants.length > 0) {
         // Group by chat_id and check if any chat has both users
-        const chatMap = new Map();
+        const chatMap = new Map<string, Set<string>>();
         for (const p of existingParticipants) {
-          if (!chatMap.has(p.chat_id)) {
-            chatMap.set(p.chat_id, new Set());
+          const chatId = p.chat_id || p.chatId;
+          const userId = p.user_id || p.userId;
+          if (!chatMap.has(chatId)) {
+            chatMap.set(chatId, new Set());
           }
-          chatMap.get(p.chat_id).add(p.user_id);
+          chatMap.get(chatId)!.add(userId);
         }
 
-        // Find a chat with both participants
+        // Find a chat with both participants and check if it's a direct chat
         for (const [chatId, userIds] of chatMap.entries()) {
           if (userIds.size === 2 && participants.every((id: string) => userIds.has(id))) {
-            // Fetch the full chat data
-            const { data: existingChat, error: fetchError } = await supabaseAdmin
+            // Check if this chat is a direct chat
+            const { data: chatCheck, error: chatCheckError } = await supabaseAdmin
               .from('chats')
-              .select(`
-                *,
-                participants:chat_participants (
-                  user_id,
-                  joined_at,
-                  last_read_at,
-                  user:users!chat_participants_user_id_fkey (
+              .select('id, type')
+              .eq('id', chatId)
+              .eq('type', 'direct')
+              .maybeSingle();
+            
+            if (!chatCheckError && chatCheck && chatCheck.type === 'direct') {
+              // Fetch the full chat data - try both naming conventions
+              let existingChat: any = null;
+              let fetchError: any = null;
+              
+              // Try snake_case first
+              const { data: chatSnake, error: errorSnake } = await supabaseAdmin
+                .from('chats')
+                .select(`
+                  *,
+                  participants:chat_participants (
+                    user_id,
+                    joined_at,
+                    last_read_at,
+                    user:users!chat_participants_user_id_fkey (
+                      id,
+                      username,
+                      avatar,
+                      is_verified,
+                      is_admin
+                    )
+                  ),
+                  creator:users!chats_created_by_fkey (
                     id,
                     username,
-                    avatar,
-                    is_verified,
-                    is_admin
+                    avatar
                   )
-                ),
-                creator:users!chats_created_by_fkey (
-                  id,
-                  username,
-                  avatar
-                )
-              `)
-              .eq('id', chatId)
-              .single();
+                `)
+                .eq('id', chatId)
+                .single();
+              
+              if (!errorSnake && chatSnake) {
+                existingChat = chatSnake;
+              } else {
+                // Try camelCase
+                const { data: chatCamel, error: errorCamel } = await supabaseAdmin
+                  .from('chats')
+                  .select(`
+                    *,
+                    participants:chat_participants (
+                      userId,
+                      joinedAt,
+                      lastReadAt,
+                      user:users!chat_participants_userId_fkey (
+                        id,
+                        username,
+                        avatar,
+                        isVerified,
+                        isAdmin
+                      )
+                    ),
+                    creator:users!chats_createdBy_fkey (
+                      id,
+                      username,
+                      avatar
+                    )
+                  `)
+                  .eq('id', chatId)
+                  .single();
+                
+                if (!errorCamel && chatCamel) {
+                  existingChat = chatCamel;
+                } else {
+                  fetchError = errorSnake || errorCamel;
+                }
+              }
 
-            if (!fetchError && existingChat) {
-              return NextResponse.json({ 
-                chat: {
-                  id: existingChat.id,
-                  name: existingChat.name,
-                  type: existingChat.type,
-                  participants: (existingChat.participants || []).map((p: any) => ({
-                    id: p.user.id,
-                    username: p.user.username,
-                    avatar: p.user.avatar,
-                    isVerified: p.user.is_verified,
-                    isAdmin: p.user.is_admin,
-                    joinedAt: p.joined_at,
-                    lastReadAt: p.last_read_at
-                  })),
-                  createdAt: existingChat.created_at,
-                  updatedAt: existingChat.updated_at,
-                  createdBy: existingChat.creator
-                },
-                message: 'Direct chat already exists'
-              });
+              if (!fetchError && existingChat) {
+                console.log('[CHATS API] Found existing direct chat:', existingChat.id);
+                
+                // Format participants based on which naming convention was used
+                const formattedParticipants = (existingChat.participants || []).map((p: any) => {
+                  const user = p.user || {};
+                  return {
+                    id: user.id,
+                    username: user.username,
+                    avatar: user.avatar,
+                    isVerified: user.is_verified || user.isVerified || false,
+                    isAdmin: user.is_admin || user.isAdmin || false,
+                    joinedAt: p.joined_at || p.joinedAt,
+                    lastReadAt: p.last_read_at || p.lastReadAt
+                  };
+                });
+
+                return NextResponse.json({ 
+                  chat: {
+                    id: existingChat.id,
+                    name: existingChat.name || formattedParticipants.find((p: any) => p.id !== createdBy)?.username,
+                    type: existingChat.type,
+                    participants: formattedParticipants,
+                    createdAt: existingChat.created_at || existingChat.createdAt,
+                    updatedAt: existingChat.updated_at || existingChat.updatedAt,
+                    createdBy: existingChat.creator
+                  },
+                  message: 'Direct chat already exists'
+                });
+              }
             }
           }
         }
       }
     }
 
-    // Create new chat
-    const { data: newChat, error: createError } = await supabaseAdmin
+    console.log('[CHATS API] Creating new chat...');
+    
+    // Create new chat - try both naming conventions
+    let newChat: any = null;
+    let createError: any = null;
+    
+    // Try snake_case first
+    const { data: chatSnake, error: errorSnake } = await supabaseAdmin
       .from('chats')
       .insert({
         type,
@@ -278,32 +373,87 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single();
-
-    if (createError || !newChat) {
-      console.error('Error creating chat:', createError);
-      return NextResponse.json({ error: 'Failed to create chat' }, { status: 500 });
+    
+    if (!errorSnake && chatSnake) {
+      newChat = chatSnake;
+    } else {
+      // Try camelCase
+      const { data: chatCamel, error: errorCamel } = await supabaseAdmin
+        .from('chats')
+        .insert({
+          type,
+          name: type === 'group' ? name : null,
+          createdBy: type === 'group' ? createdBy : null
+        })
+        .select()
+        .single();
+      
+      if (!errorCamel && chatCamel) {
+        newChat = chatCamel;
+      } else {
+        createError = errorSnake || errorCamel;
+      }
     }
 
-    // Add participants
-    const participantInserts = participants.map((userId: string) => ({
+    if (createError || !newChat) {
+      console.error('[CHATS API] Error creating chat:', createError);
+      return NextResponse.json({ 
+        error: 'Failed to create chat',
+        details: createError?.message || 'Unknown error'
+      }, { status: 500 });
+    }
+
+    console.log('[CHATS API] Chat created, ID:', newChat.id);
+
+    // Add participants - try both naming conventions
+    let participantsError: any = null;
+    
+    // Try snake_case first
+    const participantInsertsSnake = participants.map((userId: string) => ({
       chat_id: newChat.id,
       user_id: userId,
       joined_at: new Date().toISOString()
     }));
-
-    const { error: participantsError } = await supabaseAdmin
+    
+    const { error: errorSnakePart } = await supabaseAdmin
       .from('chat_participants')
-      .insert(participantInserts);
-
-    if (participantsError) {
-      console.error('Error adding participants:', participantsError);
-      // Try to clean up the chat
-      await supabaseAdmin.from('chats').delete().eq('id', newChat.id);
-      return NextResponse.json({ error: 'Failed to add participants' }, { status: 500 });
+      .insert(participantInsertsSnake);
+    
+    if (errorSnakePart) {
+      // Try camelCase
+      const participantInsertsCamel = participants.map((userId: string) => ({
+        chatId: newChat.id,
+        userId: userId,
+        joinedAt: new Date().toISOString()
+      }));
+      
+      const { error: errorCamelPart } = await supabaseAdmin
+        .from('chat_participants')
+        .insert(participantInsertsCamel);
+      
+      if (errorCamelPart) {
+        participantsError = errorCamelPart;
+      }
     }
 
-    // Fetch the complete chat with participants and creator
-    const { data: completeChat, error: fetchError } = await supabaseAdmin
+    if (participantsError) {
+      console.error('[CHATS API] Error adding participants:', participantsError);
+      // Try to clean up the chat
+      await supabaseAdmin.from('chats').delete().eq('id', newChat.id);
+      return NextResponse.json({ 
+        error: 'Failed to add participants',
+        details: participantsError?.message || 'Unknown error'
+      }, { status: 500 });
+    }
+
+    console.log('[CHATS API] Participants added, fetching complete chat...');
+
+    // Fetch the complete chat with participants and creator - try both naming conventions
+    let completeChat: any = null;
+    let fetchError: any = null;
+    
+    // Try snake_case first
+    const { data: completeSnake, error: errorFetchSnake } = await supabaseAdmin
       .from('chats')
       .select(`
         *,
@@ -327,14 +477,72 @@ export async function POST(request: NextRequest) {
       `)
       .eq('id', newChat.id)
       .single();
+    
+    if (!errorFetchSnake && completeSnake) {
+      completeChat = completeSnake;
+    } else {
+      // Try camelCase
+      const { data: completeCamel, error: errorFetchCamel } = await supabaseAdmin
+        .from('chats')
+        .select(`
+          *,
+          participants:chat_participants (
+            userId,
+            joinedAt,
+            lastReadAt,
+            user:users!chat_participants_userId_fkey (
+              id,
+              username,
+              avatar,
+              isVerified,
+              isAdmin
+            )
+          ),
+          creator:users!chats_createdBy_fkey (
+            id,
+            username,
+            avatar
+          )
+        `)
+        .eq('id', newChat.id)
+        .single();
+      
+      if (!errorFetchCamel && completeCamel) {
+        completeChat = completeCamel;
+      } else {
+        fetchError = errorFetchSnake || errorFetchCamel;
+      }
+    }
 
     if (fetchError || !completeChat) {
-      console.error('Error fetching created chat:', fetchError);
-      return NextResponse.json({ error: 'Failed to fetch created chat' }, { status: 500 });
+      console.error('[CHATS API] Error fetching created chat:', fetchError);
+      return NextResponse.json({ 
+        error: 'Failed to fetch created chat',
+        details: fetchError?.message || 'Unknown error'
+      }, { status: 500 });
     }
 
     // Find other participant for direct chats
-    const otherParticipant = (completeChat.participants || []).find((p: any) => p.user_id !== createdBy);
+    const otherParticipant = (completeChat.participants || []).find((p: any) => {
+      const userId = p.user_id || p.userId;
+      return userId !== createdBy;
+    });
+
+    // Format participants
+    const formattedParticipants = (completeChat.participants || []).map((p: any) => {
+      const user = p.user || {};
+      return {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+        isVerified: user.is_verified || user.isVerified || false,
+        isAdmin: user.is_admin || user.isAdmin || false,
+        joinedAt: p.joined_at || p.joinedAt,
+        lastReadAt: p.last_read_at || p.lastReadAt
+      };
+    });
+
+    console.log('[CHATS API] Chat created successfully:', completeChat.id);
 
     return NextResponse.json({ 
       chat: {
@@ -344,22 +552,17 @@ export async function POST(request: NextRequest) {
           'Group Chat'
         ),
         type: completeChat.type,
-        participants: (completeChat.participants || []).map((p: any) => ({
-          id: p.user.id,
-          username: p.user.username,
-          avatar: p.user.avatar,
-          isVerified: p.user.is_verified,
-          isAdmin: p.user.is_admin,
-          joinedAt: p.joined_at,
-          lastReadAt: p.last_read_at
-        })),
-        createdAt: completeChat.created_at,
-        updatedAt: completeChat.updated_at,
+        participants: formattedParticipants,
+        createdAt: completeChat.created_at || completeChat.createdAt,
+        updatedAt: completeChat.updated_at || completeChat.updatedAt,
         createdBy: completeChat.creator
       }
     });
-  } catch (error) {
-    console.error('Error creating chat:', error);
-    return NextResponse.json({ error: 'Failed to create chat' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[CHATS API] Exception creating chat:', error);
+    return NextResponse.json({ 
+      error: 'Failed to create chat',
+      details: error?.message || 'Unknown error'
+    }, { status: 500 });
   }
 }
