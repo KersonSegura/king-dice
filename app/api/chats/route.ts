@@ -371,7 +371,9 @@ export async function POST(request: NextRequest) {
     const chatData: any = {
       id: generatedChatId,
       type,
-      name: type === 'group' ? name : null
+      name: type === 'group' ? name : null,
+      createdAt: now,
+      updatedAt: now
     };
     
     // Only set createdBy for group chats
