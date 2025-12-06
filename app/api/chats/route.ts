@@ -359,9 +359,17 @@ export async function POST(request: NextRequest) {
 
     console.log('[CHATS API] Creating new chat...');
     
+    // Generate CUID for chat ID (same format as Prisma generates)
+    const timestamp = Date.now().toString(36);
+    const counter = Math.floor(Math.random() * 36).toString(36);
+    const fingerprint = Math.floor(Math.random() * 36).toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    const generatedChatId = `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+    
     // Create new chat - don't set createdBy for direct chats (optional field)
     const now = new Date().toISOString();
     const chatData: any = {
+      id: generatedChatId,
       type,
       name: type === 'group' ? name : null
     };
@@ -388,34 +396,45 @@ export async function POST(request: NextRequest) {
 
     console.log('[CHATS API] Chat created, ID:', newChat.id);
 
-    // Add participants - try both naming conventions
-    let participantsError: any = null;
+    // Add participants - generate CUIDs for each participant
+    const generateParticipantId = () => {
+      const timestamp = Date.now().toString(36);
+      const counter = Math.floor(Math.random() * 36).toString(36);
+      const fingerprint = Math.floor(Math.random() * 36).toString(36);
+      const random = Math.random().toString(36).substring(2, 15);
+      return `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+    };
     
-    // Try snake_case first
-    const participantInsertsSnake = participants.map((userId: string) => ({
-      chat_id: newChat.id,
-      user_id: userId,
-      joined_at: new Date().toISOString()
+    let participantsError: any = null;
+    const joinedAt = new Date().toISOString();
+    
+    // Try camelCase first (matches database schema)
+    const participantInsertsCamel = participants.map((userId: string) => ({
+      id: generateParticipantId(),
+      chatId: newChat.id,
+      userId: userId,
+      joinedAt: joinedAt
     }));
     
-    const { error: errorSnakePart } = await supabaseAdmin
+    const { error: errorCamelPart } = await supabaseAdmin
       .from('chat_participants')
-      .insert(participantInsertsSnake);
+      .insert(participantInsertsCamel);
     
-    if (errorSnakePart) {
-      // Try camelCase
-      const participantInsertsCamel = participants.map((userId: string) => ({
-        chatId: newChat.id,
-        userId: userId,
-        joinedAt: new Date().toISOString()
+    if (errorCamelPart) {
+      // Try snake_case as fallback
+      const participantInsertsSnake = participants.map((userId: string) => ({
+        id: generateParticipantId(),
+        chat_id: newChat.id,
+        user_id: userId,
+        joined_at: joinedAt
       }));
       
-      const { error: errorCamelPart } = await supabaseAdmin
+      const { error: errorSnakePart } = await supabaseAdmin
         .from('chat_participants')
-        .insert(participantInsertsCamel);
+        .insert(participantInsertsSnake);
       
-      if (errorCamelPart) {
-        participantsError = errorCamelPart;
+      if (errorSnakePart) {
+        participantsError = errorSnakePart;
       }
     }
 
