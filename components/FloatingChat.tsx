@@ -407,6 +407,7 @@ export default function FloatingChat() {
   useEffect(() => {
     const handleOpenChatWithUser = (event: CustomEvent) => {
       const { chat } = event.detail;
+      console.log('[FloatingChat] Received openChatWithUser event:', event);
       if (chat) {
         console.log('[FloatingChat] Opening chat menu with user:', chat);
         // Set the selected chat first, then open the menu
@@ -415,12 +416,16 @@ export default function FloatingChat() {
         setIsChatOpen(true);
         // Close menus when opening chat on mobile
         closeMenusOnChatOpen();
+      } else {
+        console.warn('[FloatingChat] Received event but no chat data:', event.detail);
       }
     };
 
+    console.log('[FloatingChat] Setting up openChatWithUser event listener');
     window.addEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
     
     return () => {
+      console.log('[FloatingChat] Removing openChatWithUser event listener');
       window.removeEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
     };
   }, []);

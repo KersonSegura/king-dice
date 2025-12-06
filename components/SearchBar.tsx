@@ -374,9 +374,16 @@ export default function SearchBar() {
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        if (!user || creatingChats.has(result.id)) return;
-                        if (result.id === user.id) return; // Can't chat with yourself
+                        if (!user || creatingChats.has(result.id)) {
+                          console.log('[SearchBar] Chat click blocked:', { hasUser: !!user, isCreating: creatingChats.has(result.id) });
+                          return;
+                        }
+                        if (result.id === user.id) {
+                          console.log('[SearchBar] Cannot chat with yourself');
+                          return;
+                        }
                         
+                        console.log('[SearchBar] Starting chat with user:', result.username, result.id);
                         setCreatingChats(prev => new Set(prev).add(result.id));
                         try {
                           // Create or get existing direct chat
@@ -390,49 +397,57 @@ export default function SearchBar() {
                             })
                           });
                           
-                          if (response.ok) {
-                            const data = await response.json();
-                            
-                            // Format participants to match expected structure
-                            const formattedParticipants = (data.chat.participants || []).map((p: any) => {
-                              // Handle both nested user structure and flat structure
-                              if (p.user) {
-                                return {
-                                  id: p.user.id || p.user_id,
-                                  username: p.user.username,
-                                  avatar: p.user.avatar,
-                                  isVerified: p.user.is_verified || p.user.isVerified || false,
-                                  isAdmin: p.user.is_admin || p.user.isAdmin || false,
-                                  joinedAt: p.joined_at || p.joinedAt,
-                                  lastReadAt: p.last_read_at || p.lastReadAt
-                                };
-                              } else {
-                                return p;
-                              }
-                            });
-                            
-                            const chat = {
-                              id: data.chat.id,
-                              name: data.chat.name || result.username,
-                              type: 'direct' as const,
-                              participants: formattedParticipants,
-                              createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
-                              updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
-                            };
-                            
-                            // Dispatch custom event to open chat
-                            const openChatEvent = new CustomEvent('openChatWithUser', {
-                              detail: { chat }
-                            });
-                            window.dispatchEvent(openChatEvent);
-                            
-                            // Close search dropdown
-                            setIsOpen(false);
-                            setQuery('');
-                            setIsExpanded(false);
+                          if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            console.error('[SearchBar] Chat API error:', response.status, errorData);
+                            return;
                           }
+                          
+                          const data = await response.json();
+                          console.log('[SearchBar] Chat created/found:', data);
+                          
+                          // Format participants to match expected structure
+                          const formattedParticipants = (data.chat.participants || []).map((p: any) => {
+                            // Handle both nested user structure and flat structure
+                            if (p.user) {
+                              return {
+                                id: p.user.id || p.user_id,
+                                username: p.user.username,
+                                avatar: p.user.avatar,
+                                isVerified: p.user.is_verified || p.user.isVerified || false,
+                                isAdmin: p.user.is_admin || p.user.isAdmin || false,
+                                joinedAt: p.joined_at || p.joinedAt,
+                                lastReadAt: p.last_read_at || p.lastReadAt
+                              };
+                            } else {
+                              return p;
+                            }
+                          });
+                          
+                          const chat = {
+                            id: data.chat.id,
+                            name: data.chat.name || result.username,
+                            type: 'direct' as const,
+                            participants: formattedParticipants,
+                            createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
+                            updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
+                          };
+                          
+                          console.log('[SearchBar] Dispatching chat event:', chat);
+                          // Dispatch custom event to open chat
+                          const openChatEvent = new CustomEvent('openChatWithUser', {
+                            detail: { chat },
+                            bubbles: true
+                          });
+                          window.dispatchEvent(openChatEvent);
+                          console.log('[SearchBar] Chat event dispatched');
+                          
+                          // Close search dropdown
+                          setIsOpen(false);
+                          setQuery('');
+                          setIsExpanded(false);
                         } catch (error) {
-                          console.error('Error starting chat:', error);
+                          console.error('[SearchBar] Error starting chat:', error);
                         } finally {
                           setCreatingChats(prev => {
                             const next = new Set(prev);

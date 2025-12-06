@@ -240,6 +240,7 @@ export default function UserProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [hasRequestPending, setHasRequestPending] = useState(false);
   const [isCheckingFollow, setIsCheckingFollow] = useState(false);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
   
   // Ref to track if we're currently closing the modal (to prevent reopening)
   const isClosingModal = useRef<boolean>(false);
@@ -506,6 +507,87 @@ export default function UserProfilePage() {
     } catch (error) {
       console.error('Error updating follow status:', error);
       showToast('Failed to update follow status', 'error');
+    }
+  };
+
+  // Handle start chat
+  const handleStartChat = async () => {
+    if (!user?.id) {
+      showToast('Please log in to start a chat', 'info');
+      return;
+    }
+
+    if (!userProfile?.id || isOwnProfile) return;
+    
+    if (isCreatingChat) return;
+
+    setIsCreatingChat(true);
+    try {
+      console.log('[Profile] Starting chat with user:', userProfile.username, userProfile.id);
+      
+      // Create or get existing direct chat
+      const response = await fetch('/api/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'direct',
+          participants: [user.id, userProfile.id],
+          createdBy: user.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[Profile] Chat API error:', response.status, errorData);
+        showToast('Failed to start chat', 'error');
+        return;
+      }
+
+      const data = await response.json();
+      console.log('[Profile] Chat created/found:', data);
+
+      // Format participants to match expected structure
+      const formattedParticipants = (data.chat.participants || []).map((p: any) => {
+        // Handle both nested user structure and flat structure
+        if (p.user) {
+          return {
+            id: p.user.id || p.user_id,
+            username: p.user.username,
+            avatar: p.user.avatar,
+            isVerified: p.user.is_verified || p.user.isVerified || false,
+            isAdmin: p.user.is_admin || p.user.isAdmin || false,
+            joinedAt: p.joined_at || p.joinedAt,
+            lastReadAt: p.last_read_at || p.lastReadAt
+          };
+        } else {
+          return p;
+        }
+      });
+
+      const chat = {
+        id: data.chat.id,
+        name: data.chat.name || userProfile.username,
+        type: 'direct' as const,
+        participants: formattedParticipants,
+        createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
+        updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
+      };
+
+      console.log('[Profile] Dispatching chat event:', chat);
+      // Dispatch custom event to open chat
+      const openChatEvent = new CustomEvent('openChatWithUser', {
+        detail: { chat },
+        bubbles: true
+      });
+      window.dispatchEvent(openChatEvent);
+      console.log('[Profile] Chat event dispatched');
+      
+      showToast('Opening chat...', 'success');
+    } catch (error) {
+      console.error('[Profile] Error starting chat:', error);
+      showToast('Failed to start chat', 'error');
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
@@ -1220,66 +1302,83 @@ export default function UserProfilePage() {
                     <span className="text-white text-sm font-semibold">Admin</span>
                   </div>
                 )}
-                {/* Follow Button - Instagram style */}
+                {/* Follow and Chat Buttons - Instagram style */}
                 {!isOwnProfile && user?.id && userProfile?.id && (
-                  <button
-                    onClick={handleFollow}
-                    disabled={isCheckingFollow}
-                    className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
-                      isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
-                    }`}
-                    style={(() => {
-                      const isLight = isLightCover();
-                      
-                      if (isFollowing) {
-                        // Unfollow state: outlined style with contrast
-                        if (isLight) {
-                          // Light cover: dark background with cover color border
-                          return {
-                            backgroundColor: darkenColor(profileColors.cover, 0.6),
-                            border: `2px solid ${profileColors.cover}`,
-                            color: '#ffffff'
-                          };
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleStartChat}
+                      disabled={isCreatingChat}
+                      className={`p-2 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
+                        isCreatingChat ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
+                      }`}
+                      style={{
+                        backgroundColor: '#3b82f6',
+                        color: '#ffffff',
+                        border: '2px solid #3b82f6'
+                      }}
+                      title="Start a chat"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleFollow}
+                      disabled={isCheckingFollow}
+                      className={`px-6 py-2 rounded-full text-sm font-semibold transition-all flex items-center space-x-2 shadow-md ${
+                        isCheckingFollow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
+                      }`}
+                      style={(() => {
+                        const isLight = isLightCover();
+                        
+                        if (isFollowing) {
+                          // Unfollow state: outlined style with contrast
+                          if (isLight) {
+                            // Light cover: dark background with cover color border
+                            return {
+                              backgroundColor: darkenColor(profileColors.cover, 0.6),
+                              border: `2px solid ${profileColors.cover}`,
+                              color: '#ffffff'
+                            };
+                          } else {
+                            // Dark cover: white background with cover color border and text
+                            return {
+                              backgroundColor: '#ffffff',
+                              border: `2px solid ${profileColors.cover}`,
+                              color: profileColors.cover
+                            };
+                          }
                         } else {
-                          // Dark cover: white background with cover color border and text
-                          return {
-                            backgroundColor: '#ffffff',
-                            border: `2px solid ${profileColors.cover}`,
-                            color: profileColors.cover
-                          };
+                          // Follow state: solid style with contrast
+                          if (isLight) {
+                            // Light cover: use cover color with dark text
+                            return {
+                              backgroundColor: profileColors.cover,
+                              color: darkenColor(profileColors.cover, 0.5),
+                              border: `2px solid ${profileColors.cover}`
+                            };
+                          } else {
+                            // Dark cover: white background with cover color text
+                            return {
+                              backgroundColor: '#ffffff',
+                              color: profileColors.cover,
+                              border: `2px solid #ffffff`
+                            };
+                          }
                         }
-                      } else {
-                        // Follow state: solid style with contrast
-                        if (isLight) {
-                          // Light cover: use cover color with dark text
-                          return {
-                            backgroundColor: profileColors.cover,
-                            color: darkenColor(profileColors.cover, 0.5),
-                            border: `2px solid ${profileColors.cover}`
-                          };
-                        } else {
-                          // Dark cover: white background with cover color text
-                          return {
-                            backgroundColor: '#ffffff',
-                            color: profileColors.cover,
-                            border: `2px solid #ffffff`
-                          };
-                        }
-                      }
-                    })()}
-                  >
-                    {isFollowing ? (
-                      <>
-                        <UserMinus className="w-4 h-4" />
-                        <span>Unfollow</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-4 h-4" />
-                        <span>Follow</span>
-                      </>
-                    )}
-                  </button>
+                      })()}
+                    >
+                      {isFollowing ? (
+                        <>
+                          <UserMinus className="w-4 h-4" />
+                          <span>Unfollow</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4" />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
               <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>
