@@ -440,7 +440,8 @@ export default function FloatingChat() {
       console.log('[FloatingChat] Removing openChatWithUser event listener');
       window.removeEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
     };
-  }, [setChatListRefreshTrigger]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // setChatListRefreshTrigger is a stable state setter, doesn't need to be in deps
 
   // Dispatch event to close menus when chat opens on mobile
   useEffect(() => {
