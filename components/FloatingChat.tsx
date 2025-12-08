@@ -440,7 +440,7 @@ export default function FloatingChat() {
       console.log('[FloatingChat] Removing openChatWithUser event listener');
       window.removeEventListener('openChatWithUser', handleOpenChatWithUser as EventListener);
     };
-  }, []);
+  }, [setChatListRefreshTrigger]);
 
   // Dispatch event to close menus when chat opens on mobile
   useEffect(() => {

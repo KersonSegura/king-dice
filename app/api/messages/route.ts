@@ -17,102 +17,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Chat ID is required' }, { status: 400 });
     }
 
-    // Fetch messages with sender info - try camelCase first, then snake_case
-    let messages: any = null;
-    let messagesError: any = null;
-
-    // Try camelCase first (database uses camelCase)
-    const { data: messagesCamel, error: errorCamel } = await supabaseAdmin
+    // Fetch messages with sender info - use snake_case to match database schema
+    const { data: messages, error: messagesError } = await supabaseAdmin
       .from('messages')
       .select(`
         *,
-        sender:users!messages_senderId_fkey (
+        sender:users!messages_sender_id_fkey (
           id,
           username,
           avatar,
-          isVerified,
-          isAdmin
+          is_verified,
+          is_admin
         ),
-        replyTo:messages!messages_replyToId_fkey (
+        reply_to:messages!messages_reply_to_id_fkey (
           id,
           content,
-          createdAt,
-          sender:users!messages_senderId_fkey (
+          created_at,
+          sender:users!messages_sender_id_fkey (
             id,
             username,
             avatar
           )
         )
       `)
-      .eq('chatId', chatId)
-      .order('createdAt', { ascending: false })
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
-
-    if (!errorCamel && messagesCamel) {
-      messages = messagesCamel;
-    } else {
-      // Try snake_case as fallback
-      const { data: messagesSnake, error: errorSnake } = await supabaseAdmin
-        .from('messages')
-        .select(`
-          *,
-          sender:users!messages_sender_id_fkey (
-            id,
-            username,
-            avatar,
-            is_verified,
-            is_admin
-          ),
-          reply_to:messages!messages_reply_to_id_fkey (
-            id,
-            content,
-            created_at,
-            sender:users!messages_sender_id_fkey (
-              id,
-              username,
-              avatar
-            )
-          )
-        `)
-        .eq('chat_id', chatId)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
-      
-      if (!errorSnake && messagesSnake) {
-        messages = messagesSnake;
-      } else {
-        messagesError = errorCamel || errorSnake;
-      }
-    }
 
     if (messagesError) {
       console.error('Error fetching messages:', messagesError);
       return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
     }
 
-    // Get total count - try both naming conventions
-    let count = 0;
-    let countError: any = null;
-
-    const { count: countCamel, error: errorCountCamel } = await supabaseAdmin
+    // Get total count - use snake_case
+    const { count, error: countError } = await supabaseAdmin
       .from('messages')
       .select('*', { count: 'exact', head: true })
-      .eq('chatId', chatId);
-
-    if (!errorCountCamel && countCamel !== null) {
-      count = countCamel;
-    } else {
-      const { count: countSnake, error: errorCountSnake } = await supabaseAdmin
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('chat_id', chatId);
-      
-      if (!errorCountSnake && countSnake !== null) {
-        count = countSnake;
-      } else {
-        countError = errorCountCamel || errorCountSnake;
-      }
-    }
+      .eq('chat_id', chatId);
 
     if (countError) {
       console.error('Error counting messages:', countError);
@@ -179,11 +120,25 @@ export async function POST(request: NextRequest) {
       .eq('user_id', senderId)
       .maybeSingle();
 
+    if (participantError) {
+      console.error('[MESSAGES API] Error checking participant:', participantError);
+      return NextResponse.json({ 
+        error: 'Failed to verify participant',
+        details: participantError.message
+      }, { status: 500 });
+    }
+
     if (!participant) {
-      console.error('User not found as participant:', { chatId, senderId, participantError });
+      console.error('[MESSAGES API] User not found as participant:', { chatId, senderId });
+      // Log all participants for debugging
+      const { data: allParticipants } = await supabaseAdmin
+        .from('chat_participants')
+        .select('user_id, chat_id')
+        .eq('chat_id', chatId);
+      console.error('[MESSAGES API] All participants in chat:', allParticipants);
       return NextResponse.json({ 
         error: 'User not authorized to send messages in this chat',
-        details: participantError?.message || 'Participant not found'
+        details: 'Participant not found'
       }, { status: 403 });
     }
 
@@ -262,8 +217,8 @@ export async function POST(request: NextRequest) {
     
     console.log('[MESSAGES API] Inserting message with data:', {
       id: insertData.id,
-      chatId: insertData.chatId,
-      senderId: insertData.senderId,
+      chat_id: insertData.chat_id,
+      sender_id: insertData.sender_id,
       content: insertData.content?.substring(0, 50)
     });
     
@@ -283,44 +238,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (!insertError && insertedMessage) {
-      // Fetch the complete message with relationships
-      // Try camelCase first (matches database schema)
-      let { data: fullMessage, error: fetchError } = await supabaseAdmin
+      // Fetch the complete message with relationships - use snake_case
+      const { data: fullMessage, error: fetchError } = await supabaseAdmin
         .from('messages')
         .select(`
           *,
-          sender:users!messages_senderId_fkey (
+          sender:users!messages_sender_id_fkey (
             id,
             username,
             avatar,
-            isVerified,
-            isAdmin
+            is_verified,
+            is_admin
           )
         `)
         .eq('id', insertedMessage.id)
         .single();
-      
-      // If camelCase fails, try snake_case (for GET compatibility)
-      if (fetchError) {
-        console.log('[MESSAGES API] CamelCase fetch failed, trying snake_case:', fetchError.message);
-        const result = await supabaseAdmin
-          .from('messages')
-          .select(`
-            *,
-            sender:users!messages_sender_id_fkey (
-              id,
-              username,
-              avatar,
-              is_verified,
-              is_admin
-            )
-          `)
-          .eq('id', insertedMessage.id)
-          .single();
-        
-        fullMessage = result.data;
-        fetchError = result.error;
-      }
       
       if (!fetchError && fullMessage) {
         newMessage = fullMessage;
