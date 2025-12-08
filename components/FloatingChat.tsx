@@ -190,27 +190,6 @@ function CustomChatList({
 
       {/* Results */}
       <div className="flex-1 overflow-y-auto">
-            {/* Create Group Button */}
-            <div className="p-4 border-b border-gray-100">
-              <button
-                onClick={onCreateGroup}
-                className="w-full flex items-center space-x-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-              >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-500 text-white">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div className="flex-1 text-left">
-                  <h3 className="text-sm font-semibold text-blue-900">
-                    Create Group Chat
-                  </h3>
-                  <p className="text-sm text-blue-700">
-                    Start a group conversation
-                  </p>
-                </div>
-                <Plus className="w-5 h-5 text-blue-600" />
-              </button>
-            </div>
-
             {/* Dice-Bot Chat - Always show first */}
             <div
               onClick={onStartBotChat}
@@ -821,6 +800,17 @@ export default function FloatingChat() {
             </div>
             
             <div className="flex items-center space-x-2 relative">
+              {/* Create Group Chat Button - Show when no chat is selected */}
+              {!selectedChat && (
+                <button
+                  onClick={handleCreateGroup}
+                  className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                  title="Create Group Chat"
+                >
+                  <Users className="w-6 h-6 sm:w-5 sm:h-5" />
+                </button>
+              )}
+              
               {selectedChat && selectedChat.type !== 'bot' && (
                 <div className="relative" ref={dropdownRef}>
                   <button 
