@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 // GET - Get user's chats
 
@@ -568,20 +570,20 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get current user from cookies
-    const cookieStore = await import('next/headers').then(m => m.cookies());
+    const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value || cookieStore.get('token')?.value;
     
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user is a participant in the chat
-    const { data: userData } = await supabaseAdmin.auth.getUser(token);
-    if (!userData?.user) {
+    // Verify user using getUserFromToken
+    const authResult = await getUserFromToken(token);
+    if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = userData.user.id;
+    const userId = authResult.user.id;
 
     // Check if user is a participant
     const { data: participant, error: participantError } = await supabaseAdmin
@@ -651,20 +653,22 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Get current user from cookies
-    const cookieStore = await import('next/headers').then(m => m.cookies());
+    const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value || cookieStore.get('token')?.value;
     
     if (!token) {
+      console.error('[CHATS API PATCH] No token found in cookies');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user is a participant in the chat
-    const { data: userData } = await supabaseAdmin.auth.getUser(token);
-    if (!userData?.user) {
+    // Verify user using getUserFromToken
+    const authResult = await getUserFromToken(token);
+    if (!authResult.success || !authResult.user) {
+      console.error('[CHATS API PATCH] Invalid token:', authResult);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const currentUserId = userData.user.id;
+    const currentUserId = authResult.user.id;
 
     // Verify chat exists and is a group chat
     const { data: chatData, error: chatError } = await supabaseAdmin
