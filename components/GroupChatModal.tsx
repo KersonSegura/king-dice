@@ -18,6 +18,9 @@ interface GroupChatModalProps {
   onCreateGroup: (groupName: string, selectedUsers: User[]) => void;
   currentUser: User;
   initialUser?: User | null; // Pre-select a user when creating group from search results
+  existingChatId?: string | null; // If provided, we're adding people to an existing group
+  existingParticipants?: User[]; // Existing participants to filter out from search
+  onAddParticipants?: (userIds: string[]) => Promise<void>; // Callback when adding to existing group
 }
 
 export default function GroupChatModal({ 
@@ -25,7 +28,10 @@ export default function GroupChatModal({
   onClose, 
   onCreateGroup, 
   currentUser,
-  initialUser 
+  initialUser,
+  existingChatId,
+  existingParticipants = [],
+  onAddParticipants
 }: GroupChatModalProps) {
   const [groupName, setGroupName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,9 +55,11 @@ export default function GroupChatModal({
       const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
       if (response.ok) {
         const data = await response.json();
-        // Filter out current user and already selected users
+        // Filter out current user, already selected users, and existing participants
         const filteredUsers = (data.users || []).filter((u: User) => 
-          u.id !== currentUser?.id && !selectedUsers.find(selected => selected.id === u.id)
+          u.id !== currentUser?.id && 
+          !selectedUsers.find(selected => selected.id === u.id) &&
+          !existingParticipants.find(existing => existing.id === u.id)
         );
         setSearchResults(filteredUsers);
       }
@@ -75,7 +83,7 @@ export default function GroupChatModal({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedUsers]);
+  }, [searchQuery, selectedUsers, existingParticipants]);
 
   // Toggle user selection
   const toggleUserSelection = (user: User) => {
@@ -89,21 +97,35 @@ export default function GroupChatModal({
     });
   };
 
-  // Create group
-  const handleCreateGroup = () => {
-    if (!groupName.trim() || selectedUsers.length === 0) {
-      return;
+  // Create group or add participants
+  const handleCreateGroup = async () => {
+    if (existingChatId && onAddParticipants) {
+      // Adding to existing group
+      if (selectedUsers.length === 0) {
+        return;
+      }
+      const userIds = selectedUsers.map(u => u.id);
+      await onAddParticipants(userIds);
+      // Reset form
+      setSelectedUsers([]);
+      setSearchQuery('');
+      setSearchResults([]);
+      setHasSearched(false);
+      onClose();
+    } else {
+      // Creating new group
+      if (!groupName.trim() || selectedUsers.length === 0) {
+        return;
+      }
+      onCreateGroup(groupName.trim(), selectedUsers);
+      // Reset form
+      setGroupName('');
+      setSelectedUsers([]);
+      setSearchQuery('');
+      setSearchResults([]);
+      setHasSearched(false);
+      onClose();
     }
-    
-    onCreateGroup(groupName.trim(), selectedUsers);
-    
-    // Reset form
-    setGroupName('');
-    setSelectedUsers([]);
-    setSearchQuery('');
-    setSearchResults([]);
-    setHasSearched(false);
-    onClose();
   };
 
   // Reset form when modal closes or set initial user when opening
@@ -144,7 +166,9 @@ export default function GroupChatModal({
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-2">
             <Users className="w-5 h-5 text-blue-500" />
-            <h3 className="text-lg font-semibold text-gray-900">Create Group Chat</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {existingChatId ? 'Add People to Group' : 'Create Group Chat'}
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -156,20 +180,22 @@ export default function GroupChatModal({
 
         {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Group Name Input */}
-          <div className="p-4 border-b">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Group Name
-            </label>
-            <input
-              type="text"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Enter group name..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              maxLength={50}
-            />
-          </div>
+          {/* Group Name Input - only show when creating new group */}
+          {!existingChatId && (
+            <div className="p-4 border-b">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Group Name
+              </label>
+              <input
+                type="text"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Enter group name..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                maxLength={50}
+              />
+            </div>
+          )}
 
           {/* Selected Users */}
           {selectedUsers.length > 0 && (
@@ -301,10 +327,10 @@ export default function GroupChatModal({
           </button>
           <button
             onClick={handleCreateGroup}
-            disabled={!groupName.trim() || selectedUsers.length === 0}
+            disabled={existingChatId ? selectedUsers.length === 0 : (!groupName.trim() || selectedUsers.length === 0)}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create Group ({selectedUsers.length + 1})
+            {existingChatId ? `Add People (${selectedUsers.length})` : `Create Group (${selectedUsers.length + 1})`}
           </button>
         </div>
       </div>

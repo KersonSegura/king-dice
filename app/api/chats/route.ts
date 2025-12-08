@@ -640,3 +640,119 @@ export async function DELETE(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
+// PATCH - Add participants to an existing group chat
+export async function PATCH(request: NextRequest) {
+  try {
+    const { chatId, userIds } = await request.json();
+
+    if (!chatId || !userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return NextResponse.json({ error: 'Chat ID and user IDs array are required' }, { status: 400 });
+    }
+
+    // Get current user from cookies
+    const cookieStore = await import('next/headers').then(m => m.cookies());
+    const token = cookieStore.get('token')?.value;
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify user is a participant in the chat
+    const { data: userData } = await supabaseAdmin.auth.getUser(token);
+    if (!userData?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const currentUserId = userData.user.id;
+
+    // Verify chat exists and is a group chat
+    const { data: chatData, error: chatError } = await supabaseAdmin
+      .from('chats')
+      .select('type')
+      .eq('id', chatId)
+      .single();
+
+    if (chatError || !chatData) {
+      return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
+    }
+
+    if (chatData.type !== 'group') {
+      return NextResponse.json({ error: 'Can only add participants to group chats' }, { status: 400 });
+    }
+
+    // Verify current user is a participant
+    const { data: participant, error: participantError } = await supabaseAdmin
+      .from('chat_participants')
+      .select('id')
+      .eq('chatId', chatId)
+      .eq('userId', currentUserId)
+      .maybeSingle();
+
+    if (participantError || !participant) {
+      return NextResponse.json({ error: 'You must be a participant to add members' }, { status: 403 });
+    }
+
+    // Get existing participants to avoid duplicates
+    const { data: existingParticipants } = await supabaseAdmin
+      .from('chat_participants')
+      .select('userId')
+      .eq('chatId', chatId);
+
+    const existingUserIds = (existingParticipants || []).map((p: any) => p.userId);
+    const newUserIds = userIds.filter((userId: string) => !existingUserIds.includes(userId));
+
+    if (newUserIds.length === 0) {
+      return NextResponse.json({ 
+        message: 'All users are already participants',
+        added: 0
+      });
+    }
+
+    // Generate CUIDs for new participants
+    const generateParticipantId = () => {
+      const timestamp = Date.now().toString(36);
+      const counter = Math.floor(Math.random() * 36).toString(36);
+      const fingerprint = Math.floor(Math.random() * 36).toString(36);
+      const random = Math.random().toString(36).substring(2, 15);
+      return `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
+    };
+
+    const joinedAt = new Date().toISOString();
+    const participantInserts = newUserIds.map((userId: string) => ({
+      id: generateParticipantId(),
+      chatId: chatId,
+      userId: userId,
+      joinedAt: joinedAt
+    }));
+
+    const { error: insertError } = await supabaseAdmin
+      .from('chat_participants')
+      .insert(participantInserts);
+
+    if (insertError) {
+      console.error('[CHATS API] Error adding participants:', insertError);
+      return NextResponse.json({ 
+        error: 'Failed to add participants',
+        details: insertError.message
+      }, { status: 500 });
+    }
+
+    // Update chat's updatedAt timestamp
+    await supabaseAdmin
+      .from('chats')
+      .update({ updatedAt: new Date().toISOString() })
+      .eq('id', chatId);
+
+    return NextResponse.json({ 
+      message: 'Participants added successfully',
+      added: newUserIds.length
+    });
+  } catch (error: any) {
+    console.error('[CHATS API] Exception adding participants:', error);
+    return NextResponse.json({ 
+      error: 'Failed to add participants',
+      details: error?.message || 'Unknown error'
+    }, { status: 500 });
+  }
+}

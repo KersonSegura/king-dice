@@ -653,12 +653,12 @@ export default function MyDicePage() {
               background: savedConfig.background ?? pick("background", 0),
               dice: savedConfig.dice ?? pick("dice", 0),
               pattern: savedConfig.pattern ?? null,
-              accessories: savedConfig.accessories ?? null,
-              hat: savedConfig.hat ?? null,
-              item: savedConfig.item ?? null,
-              companion: savedConfig.companion ?? null,
-              title: savedConfig.title ?? null,
-            };
+            accessories: savedConfig.accessories ?? null,
+            hat: savedConfig.hat ?? null,
+            item: savedConfig.item ?? null,
+            companion: savedConfig.companion ?? null,
+            title: savedConfig.title ?? null,
+          };
             
             console.log('👤 Existing user - using saved config:', initialSelection);
           }
@@ -873,7 +873,7 @@ export default function MyDicePage() {
               <h1 className="text-3xl font-bold text-gray-900">
                 My Dice
               </h1>
-              {user && (
+            {user && (
                 <button
                   onClick={() => setShowXPHelp(true)}
                   className="px-2 py-1 text-xs bg-[#fbae17] text-white rounded-full hover:bg-[#e6a015] transition-colors flex-shrink-0"
@@ -885,23 +885,23 @@ export default function MyDicePage() {
           </div>
           {user && (
             <div className="ml-12 mt-2 flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-gray-600">
-                Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
-              </span>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
-                    style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-500">
-                  {levelProgress.currentXP} XP
-                  {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} to next`}
-                </span>
-              </div>
-            </div>
-          )}
+                   <span className="text-sm text-gray-600">
+                     Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
+                   </span>
+                   <div className="flex items-center gap-2">
+                   <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                     <div 
+                       className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-300"
+                       style={{ width: `${Math.min(100, levelProgress.progressPercentage)}%` }}
+                     ></div>
+                   </div>
+                     <span className="text-xs text-gray-500">
+                       {levelProgress.currentXP} XP
+                       {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} to next`}
+                     </span>
+                   </div>
+               </div>
+            )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

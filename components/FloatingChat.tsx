@@ -17,7 +17,8 @@ function CustomChatList({
   onStartDirectChat, 
   onStartBotChat,
   user,
-  refreshTrigger
+  refreshTrigger,
+  onStartGroupChatWithUser
 }: {
   onSelectChat: (chat: any) => void;
   onCreateGroup: () => void;
@@ -25,6 +26,7 @@ function CustomChatList({
   onStartBotChat: () => void;
   user: any;
   refreshTrigger?: number;
+  onStartGroupChatWithUser?: (targetUser: any) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -128,8 +130,9 @@ function CustomChatList({
 
   // Create a group with a user - opens modal with user pre-selected
   const createGroupWithUser = (targetUser: any) => {
-    setInitialGroupUser(targetUser);
-    setShowCreateGroup(true);
+    if (onStartGroupChatWithUser) {
+      onStartGroupChatWithUser(targetUser);
+    }
   };
 
   const formatTime = (dateString: string) => {
@@ -340,6 +343,7 @@ export default function FloatingChat() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [chatListRefreshTrigger, setChatListRefreshTrigger] = useState(0);
   const [initialGroupUser, setInitialGroupUser] = useState<any>(null);
+  const [showAddPeople, setShowAddPeople] = useState(false);
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {
@@ -626,6 +630,42 @@ export default function FloatingChat() {
     }
   };
 
+  const handleAddParticipants = async (userIds: string[]) => {
+    if (!selectedChat || selectedChat.type !== 'group') return;
+    
+    try {
+      const response = await fetch('/api/chats', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatId: selectedChat.id,
+          userIds
+        })
+      });
+
+      if (response.ok) {
+        // Refresh the chat to get updated participants
+        const chatResponse = await fetch(`/api/chats?userId=${user?.id}`);
+        if (chatResponse.ok) {
+          const chatData = await chatResponse.json();
+          const updatedChat = chatData.chats.find((c: any) => c.id === selectedChat.id);
+          if (updatedChat) {
+            setSelectedChat(updatedChat);
+          }
+        }
+        setShowAddPeople(false);
+        setChatListRefreshTrigger(prev => prev + 1);
+      } else {
+        const errorData = await response.json();
+        console.error('Error adding participants:', errorData);
+        alert(errorData.error || 'Failed to add participants');
+      }
+    } catch (error) {
+      console.error('Error adding participants:', error);
+      alert('Failed to add participants');
+    }
+  };
+
   const handleStartDirectChat = () => {
     setShowStartDirectChat(true);
   };
@@ -786,6 +826,17 @@ export default function FloatingChat() {
                 </button>
               )}
               
+              {/* Add People Button - Show when viewing a group chat */}
+              {selectedChat && selectedChat.type === 'group' && (
+                <button
+                  onClick={() => setShowAddPeople(true)}
+                  className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                  title="Add People"
+                >
+                  <Plus className="w-6 h-6 sm:w-5 sm:h-5" />
+                </button>
+              )}
+              
               {selectedChat && selectedChat.type !== 'bot' && (
                 <div className="relative" ref={dropdownRef}>
                   <button 
@@ -891,6 +942,10 @@ export default function FloatingChat() {
                 onStartBotChat={handleStartBotChat}
                 user={user}
                 refreshTrigger={chatListRefreshTrigger}
+                onStartGroupChatWithUser={(targetUser) => {
+                  setInitialGroupUser(targetUser);
+                  setShowCreateGroup(true);
+                }}
               />
             )}
           </div>
@@ -937,6 +992,19 @@ export default function FloatingChat() {
         onCreateGroup={handleCreateGroupChat}
         currentUser={user}
         initialUser={initialGroupUser}
+      />
+      
+      {/* Add People to Group Modal */}
+      <GroupChatModal
+        isOpen={showAddPeople}
+        onClose={() => {
+          setShowAddPeople(false);
+        }}
+        onCreateGroup={handleCreateGroupChat}
+        currentUser={user}
+        existingChatId={selectedChat?.id}
+        existingParticipants={selectedChat?.participants || []}
+        onAddParticipants={handleAddParticipants}
       />
     </>
   );
