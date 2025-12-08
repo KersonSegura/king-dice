@@ -646,29 +646,15 @@ export async function DELETE(request: NextRequest) {
 // PATCH - Add participants to an existing group chat
 export async function PATCH(request: NextRequest) {
   try {
-    const { chatId, userIds } = await request.json();
+    const { chatId, userIds, currentUserId } = await request.json();
 
     if (!chatId || !userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json({ error: 'Chat ID and user IDs array are required' }, { status: 400 });
     }
 
-    // Get current user from cookies
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value || cookieStore.get('token')?.value;
-    
-    if (!token) {
-      console.error('[CHATS API PATCH] No token found in cookies');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!currentUserId) {
+      return NextResponse.json({ error: 'Current user ID is required' }, { status: 400 });
     }
-
-    // Verify user using getUserFromToken
-    const authResult = await getUserFromToken(token);
-    if (!authResult.success || !authResult.user) {
-      console.error('[CHATS API PATCH] Invalid token:', authResult);
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const currentUserId = authResult.user.id;
 
     // Verify chat exists and is a group chat
     const { data: chatData, error: chatError } = await supabaseAdmin

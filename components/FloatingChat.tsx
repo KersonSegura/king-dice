@@ -640,7 +640,8 @@ export default function FloatingChat() {
         credentials: 'include',
         body: JSON.stringify({
           chatId: selectedChat.id,
-          userIds
+          userIds,
+          currentUserId: user?.id
         })
       });
 

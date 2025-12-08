@@ -212,32 +212,32 @@ export async function POST(request: NextRequest) {
 
     // Handle different actions
     if (action === 'follow') {
-      // Check if already following
-      const { data: existingFollow, error: existingErr } = await supabaseAdmin
-        .from('follows')
-        .select('id')
+    // Check if already following
+    const { data: existingFollow, error: existingErr } = await supabaseAdmin
+      .from('follows')
+      .select('id')
         .eq('followerId', currentUserId)
         .eq('followingId', targetUser)
-        .maybeSingle();
+      .maybeSingle();
 
-      if (existingFollow) {
+    if (existingFollow) {
         return NextResponse.json({
           success: true,
           message: 'Already following this user'
         });
-      }
+    }
 
-      // Create follow relationship
-      const { error: createErr } = await supabaseAdmin
-        .from('follows')
+    // Create follow relationship
+    const { error: createErr } = await supabaseAdmin
+      .from('follows')
         .insert({ followerId: currentUserId, followingId: targetUser });
       
-      if (createErr) {
-        console.error('Error creating follow:', createErr);
-        return NextResponse.json({ error: 'Failed to follow user' }, { status: 500 });
-      }
+    if (createErr) {
+      console.error('Error creating follow:', createErr);
+      return NextResponse.json({ error: 'Failed to follow user' }, { status: 500 });
+    }
 
-      // Create notification for the target user
+    // Create notification for the target user
       try {
         // Fetch the follower's username for the notification URL
         const { data: followerUser, error: userError } = await supabaseAdmin
@@ -250,23 +250,23 @@ export async function POST(request: NextRequest) {
           ? `/profile/${followerUser.username}`
           : `/profile/${currentUserId}`;
         
-        await createNotification({
+    await createNotification({
           userId: targetUser,
-          type: 'follow',
+      type: 'follow',
           actorId: currentUserId,
-          entityType: 'profile',
+      entityType: 'profile',
           entityId: currentUserId,
           url: profileUrl,
-        });
+    });
       } catch (notifError) {
         console.error('Error creating notification:', notifError);
         // Don't fail the request if notification fails
       }
 
-      return NextResponse.json({
-        success: true,
-        message: 'Successfully followed user'
-      });
+    return NextResponse.json({
+      success: true,
+      message: 'Successfully followed user'
+    });
 
     } else if (action === 'unfollow') {
       // Remove follow relationship
