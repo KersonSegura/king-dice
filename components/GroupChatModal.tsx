@@ -17,13 +17,15 @@ interface GroupChatModalProps {
   onClose: () => void;
   onCreateGroup: (groupName: string, selectedUsers: User[]) => void;
   currentUser: User;
+  initialUser?: User | null; // Pre-select a user when creating group from search results
 }
 
 export default function GroupChatModal({ 
   isOpen, 
   onClose, 
   onCreateGroup, 
-  currentUser 
+  currentUser,
+  initialUser 
 }: GroupChatModalProps) {
   const [groupName, setGroupName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,7 +101,7 @@ export default function GroupChatModal({
     onClose();
   };
 
-  // Reset form when modal closes
+  // Reset form when modal closes or set initial user when opening
   useEffect(() => {
     if (!isOpen) {
       setGroupName('');
@@ -107,8 +109,11 @@ export default function GroupChatModal({
       setSearchQuery('');
       setSearchResults([]);
       setHasSearched(false);
+    } else if (initialUser) {
+      // Pre-select the initial user when modal opens
+      setSelectedUsers([initialUser]);
     }
-  }, [isOpen]);
+  }, [isOpen, initialUser]);
 
   // Lock body scroll when modal is open
   useEffect(() => {

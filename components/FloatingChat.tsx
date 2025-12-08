@@ -126,41 +126,10 @@ function CustomChatList({
     }
   };
 
-  // Create a group with a user
-  const createGroupWithUser = async (targetUser: any) => {
-    const groupName = prompt(`Enter group name (with ${targetUser.username}):`);
-    if (!groupName?.trim()) return;
-
-    try {
-      const response = await fetch('/api/chats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'group',
-          name: groupName.trim(),
-          participants: [user?.id, targetUser.id],
-          createdBy: user?.id
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Create chat object for our interface
-        const chat = {
-          id: data.chat.id,
-          name: data.chat.name,
-          type: 'group',
-          participants: data.chat.participants,
-          createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
-          updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
-        };
-        // Refresh the chat list to include the new chat
-        fetchExistingChats();
-        onSelectChat(chat);
-      }
-    } catch (error) {
-      console.error('Error creating group:', error);
-    }
+  // Create a group with a user - opens modal with user pre-selected
+  const createGroupWithUser = (targetUser: any) => {
+    setInitialGroupUser(targetUser);
+    setShowCreateGroup(true);
   };
 
   const formatTime = (dateString: string) => {
@@ -370,6 +339,7 @@ export default function FloatingChat() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [chatListRefreshTrigger, setChatListRefreshTrigger] = useState(0);
+  const [initialGroupUser, setInitialGroupUser] = useState<any>(null);
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {
@@ -960,9 +930,13 @@ export default function FloatingChat() {
       {/* Group Chat Creation Modal */}
       <GroupChatModal
         isOpen={showCreateGroup}
-        onClose={() => setShowCreateGroup(false)}
+        onClose={() => {
+          setShowCreateGroup(false);
+          setInitialGroupUser(null);
+        }}
         onCreateGroup={handleCreateGroupChat}
         currentUser={user}
+        initialUser={initialGroupUser}
       />
     </>
   );
