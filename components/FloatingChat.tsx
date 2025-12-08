@@ -915,6 +915,7 @@ export default function FloatingChat() {
                   chatType={selectedChat.type}
                   participants={selectedChat.participants}
                   onClose={handleBackToChatList}
+                  onMessageSent={() => setChatListRefreshTrigger(prev => prev + 1)}
                 />
               )
             ) : (

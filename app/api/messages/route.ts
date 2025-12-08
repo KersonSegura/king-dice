@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch messages with sender info - use camelCase to match database schema
+    // Note: replyTo relationship removed as it causes foreign key errors in Supabase
     const { data: messages, error: messagesError } = await supabaseAdmin
       .from('messages')
       .select(`
@@ -28,16 +29,6 @@ export async function GET(request: NextRequest) {
           avatar,
           isVerified,
           isAdmin
-        ),
-        replyTo:messages!messages_replyToId_fkey (
-          id,
-          content,
-          createdAt,
-          sender:users!messages_senderId_fkey (
-            id,
-            username,
-            avatar
-          )
         )
       `)
       .eq('chatId', chatId)
@@ -76,16 +67,7 @@ export async function GET(request: NextRequest) {
         isVerified: (msg.sender || {}).isVerified || (msg.sender || {}).is_verified,
         isAdmin: (msg.sender || {}).isAdmin || (msg.sender || {}).is_admin
       } : null,
-      replyTo: (msg.replyTo || msg.reply_to) ? {
-        id: (msg.replyTo || msg.reply_to || {}).id,
-        content: (msg.replyTo || msg.reply_to || {}).content,
-        createdAt: (msg.replyTo || msg.reply_to || {}).createdAt || (msg.replyTo || msg.reply_to || {}).created_at,
-        sender: ((msg.replyTo || msg.reply_to || {}).sender) ? {
-          id: (msg.replyTo || msg.reply_to || {}).sender.id,
-          username: (msg.replyTo || msg.reply_to || {}).sender.username,
-          avatar: (msg.replyTo || msg.reply_to || {}).sender.avatar
-        } : null
-      } : null
+      replyTo: null // ReplyTo relationship removed to avoid foreign key errors
     })).reverse(); // Reverse to show oldest first
 
     return NextResponse.json({
@@ -256,32 +238,9 @@ export async function POST(request: NextRequest) {
       
       if (!fetchError && fullMessage) {
         newMessage = fullMessage;
-        
-        // Fetch reply_to separately if needed
-        const replyId = fullMessage.replyToId || fullMessage.reply_to_id;
-        if (replyToId && replyId) {
-          const { data: replyMessage } = await supabaseAdmin
-            .from('messages')
-            .select(`
-              id,
-              content,
-              createdAt,
-              created_at,
-              sender:users!messages_senderId_fkey (
-                id,
-                username,
-                avatar
-              )
-            `)
-            .eq('id', replyId)
-            .single();
-          
-          if (replyMessage) {
-            newMessage.reply_to = replyMessage;
-          }
-        }
       } else {
         messageError = fetchError;
+        console.error('[MESSAGES API] Error fetching created message:', fetchError);
       }
     } else {
       messageError = insertError;
@@ -319,16 +278,7 @@ export async function POST(request: NextRequest) {
         isVerified: newMessage.sender.is_verified !== undefined ? newMessage.sender.is_verified : newMessage.sender.isVerified,
         isAdmin: newMessage.sender.is_admin !== undefined ? newMessage.sender.is_admin : newMessage.sender.isAdmin
       } : null,
-      replyTo: (newMessage.reply_to || newMessage.replyTo) ? {
-        id: (newMessage.reply_to || newMessage.replyTo).id,
-        content: (newMessage.reply_to || newMessage.replyTo).content,
-        createdAt: (newMessage.reply_to || newMessage.replyTo).created_at || (newMessage.reply_to || newMessage.replyTo).createdAt,
-        sender: (newMessage.reply_to || newMessage.replyTo).sender ? {
-          id: (newMessage.reply_to || newMessage.replyTo).sender.id,
-          username: (newMessage.reply_to || newMessage.replyTo).sender.username,
-          avatar: (newMessage.reply_to || newMessage.replyTo).sender.avatar
-        } : null
-      } : null
+      replyTo: null // ReplyTo relationship not fetched to avoid foreign key errors
     };
 
     return NextResponse.json({ message: formattedMessage });

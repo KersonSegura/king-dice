@@ -39,9 +39,10 @@ interface ChatProps {
   chatType: 'direct' | 'group' | 'bot';
   participants: any[];
   onClose: () => void;
+  onMessageSent?: () => void; // Callback to refresh chat list
 }
 
-export default function Chat({ chatId, chatName, chatType, participants, onClose }: ChatProps) {
+export default function Chat({ chatId, chatName, chatType, participants, onClose, onMessageSent }: ChatProps) {
   const { socket, isConnected } = useSocket();
   const { user } = useAuth();
   const { showToast, ToastContainer } = useToast();
@@ -168,9 +169,21 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       
       if (response.ok) {
         const data = await response.json();
-        setMessages(prev => [...prev, data.message]);
+        // Reload all messages to ensure we have the latest from the database
+        const reloadResponse = await fetch(`/api/messages?chatId=${chatId}`);
+        if (reloadResponse.ok) {
+          const reloadData = await reloadResponse.json();
+          setMessages(reloadData.messages);
+        } else {
+          // Fallback: add the new message to the list
+          setMessages(prev => [...prev, data.message]);
+        }
         setNewMessage('');
         setReplyingTo(null);
+        // Notify parent to refresh chat list
+        if (onMessageSent) {
+          onMessageSent();
+        }
         // Scroll to bottom after sending
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
