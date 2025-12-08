@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     // Fetch participants and chats separately to avoid foreign key relationship issues
     const { data: participantRows, error: participantRowsError } = await supabaseAdmin
       .from('chat_participants')
-      .select('chat_id, joined_at, last_read_at')
-      .eq('user_id', userId);
+      .select('chatId, joinedAt, lastReadAt')
+      .eq('userId', userId);
 
     if (participantRowsError) {
       console.error('Error fetching chat participants:', participantRowsError);
@@ -30,12 +30,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ chats: [] });
     }
 
-    const chatIds = participantRows.map(p => p.chat_id).filter(Boolean);
+    const chatIds = participantRows.map(p => p.chatId).filter(Boolean);
     
     // Fetch chats separately
     const { data: chatsData, error: chatsError } = await supabaseAdmin
       .from('chats')
-      .select('id, name, type, created_by, created_at, updated_at')
+      .select('id, name, type, createdBy, createdAt, updatedAt')
       .in('id', chatIds);
 
     if (chatsError) {
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get creator info for each chat
-    const creatorIds = (chatsData || []).map(c => c.created_by).filter(Boolean);
+    const creatorIds = (chatsData || []).map(c => c.createdBy).filter(Boolean);
     const { data: creatorsData } = await supabaseAdmin
       .from('users')
       .select('id, username, avatar')
@@ -54,13 +54,13 @@ export async function GET(request: NextRequest) {
     
     // Combine participant data with chat data
     const participants = participantRows.map(p => ({
-      chat_id: p.chat_id,
-      joined_at: p.joined_at,
-      last_read_at: p.last_read_at,
+      chatId: p.chatId,
+      joinedAt: p.joinedAt,
+      lastReadAt: p.lastReadAt,
       chat: {
-        ...(chatsData || []).find(c => c.id === p.chat_id),
-        creator: (chatsData || []).find(c => c.id === p.chat_id)?.created_by 
-          ? creatorsMap.get((chatsData || []).find(c => c.id === p.chat_id)?.created_by) 
+        ...(chatsData || []).find(c => c.id === p.chatId),
+        creator: (chatsData || []).find(c => c.id === p.chatId)?.createdBy 
+          ? creatorsMap.get((chatsData || []).find(c => c.id === p.chatId)?.createdBy) 
           : null
       }
     }));
@@ -74,25 +74,25 @@ export async function GET(request: NextRequest) {
       .from('messages')
       .select(`
         id,
-        chat_id,
+        chatId,
         content,
         type,
-        created_at,
-        sender:users!messages_sender_id_fkey (
+        createdAt,
+        sender:users!messages_senderId_fkey (
           id,
           username,
           avatar
         )
       `)
-      .in('chat_id', chatIds)
-      .order('created_at', { ascending: false });
+      .in('chatId', chatIds)
+      .order('createdAt', { ascending: false });
 
-    // Group messages by chat_id and get the first (latest) one for each
+    // Group messages by chatId and get the first (latest) one for each
     const lastMessageMap = new Map();
     if (lastMessages) {
       for (const msg of lastMessages) {
-        if (!lastMessageMap.has(msg.chat_id)) {
-          lastMessageMap.set(msg.chat_id, msg);
+        if (!lastMessageMap.has(msg.chatId)) {
+          lastMessageMap.set(msg.chatId, msg);
         }
       }
     }
@@ -100,14 +100,14 @@ export async function GET(request: NextRequest) {
     // Get all participants for each chat (fetch separately to avoid foreign key issues)
     const { data: allParticipantRows, error: allParticipantsError } = await supabaseAdmin
       .from('chat_participants')
-      .select('chat_id, user_id, joined_at, last_read_at')
-      .in('chat_id', chatIds);
+      .select('chatId, userId, joinedAt, lastReadAt')
+      .in('chatId', chatIds);
     
     // Get user info for all participants
-    const userIds = (allParticipantRows || []).map(p => p.user_id).filter(Boolean);
+    const userIds = (allParticipantRows || []).map(p => p.userId).filter(Boolean);
     const { data: usersData } = await supabaseAdmin
       .from('users')
-      .select('id, username, avatar, is_verified, is_admin')
+      .select('id, username, avatar, isVerified, isAdmin')
       .in('id', userIds);
     
     const usersMap = new Map((usersData || []).map(u => [u.id, u]));
@@ -115,17 +115,17 @@ export async function GET(request: NextRequest) {
     // Combine participant data with user data
     const allParticipants = (allParticipantRows || []).map(p => ({
       ...p,
-      user: usersMap.get(p.user_id) || null
+      user: usersMap.get(p.userId) || null
     }));
 
-    // Group participants by chat_id
+    // Group participants by chatId
     const participantsMap = new Map();
     if (allParticipants) {
       for (const p of allParticipants) {
-        if (!participantsMap.has(p.chat_id)) {
-          participantsMap.set(p.chat_id, []);
+        if (!participantsMap.has(p.chatId)) {
+          participantsMap.set(p.chatId, []);
         }
-        participantsMap.get(p.chat_id).push(p);
+        participantsMap.get(p.chatId).push(p);
       }
     }
 
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
       const chatParticipants = participantsMap.get(chat.id) || [];
       const lastMessage = lastMessageMap.get(chat.id);
       const otherParticipants = chatParticipants
-        .filter((cp: any) => cp.user_id !== userId)
+        .filter((cp: any) => cp.userId !== userId)
         .map((cp: any) => cp.user);
 
       return {
@@ -146,24 +146,24 @@ export async function GET(request: NextRequest) {
           id: cp.user.id,
           username: cp.user.username,
           avatar: cp.user.avatar,
-          isVerified: cp.user.is_verified,
-          isAdmin: cp.user.is_admin,
-          joinedAt: cp.joined_at,
-          lastReadAt: cp.last_read_at
+          isVerified: cp.user.isVerified,
+          isAdmin: cp.user.isAdmin,
+          joinedAt: cp.joinedAt,
+          lastReadAt: cp.lastReadAt
         })),
         lastMessage: lastMessage ? {
           id: lastMessage.id,
           content: lastMessage.content,
           type: lastMessage.type,
-          createdAt: lastMessage.created_at,
+          createdAt: lastMessage.createdAt,
           sender: lastMessage.sender ? {
             id: lastMessage.sender.id,
             username: lastMessage.sender.username,
             avatar: lastMessage.sender.avatar
           } : null
         } : null,
-        createdAt: chat.created_at,
-        updatedAt: chat.updated_at,
+        createdAt: chat.createdAt,
+        updatedAt: chat.updatedAt,
         createdBy: chat.creator
       };
     }).sort((a: any, b: any) => {
