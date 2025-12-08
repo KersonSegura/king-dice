@@ -1276,12 +1276,12 @@ export default function UserProfilePage() {
               style={(() => {
                 const isLight = isLightCover();
                 
-                // Chat button uses same color scheme as follow button
+                // Chat button: always use contrasting background
                 if (isLight) {
-                  // Light cover: use cover color with dark text
+                  // Light cover: white background with cover color text and border
                   return {
-                    backgroundColor: profileColors.cover,
-                    color: darkenColor(profileColors.cover, 0.5),
+                    backgroundColor: '#ffffff',
+                    color: profileColors.cover,
                     border: `2px solid ${profileColors.cover}`
                   };
                 } else {
@@ -1326,10 +1326,10 @@ export default function UserProfilePage() {
                 } else {
                   // Follow state: solid style with contrast
                   if (isLight) {
-                    // Light cover: use cover color with dark text
+                    // Light cover: white background with cover color text and border
                     return {
-                      backgroundColor: profileColors.cover,
-                      color: darkenColor(profileColors.cover, 0.5),
+                      backgroundColor: '#ffffff',
+                      color: profileColors.cover,
                       border: `2px solid ${profileColors.cover}`
                     };
                   } else {
@@ -1408,12 +1408,12 @@ export default function UserProfilePage() {
                       style={(() => {
                         const isLight = isLightCover();
                         
-                        // Chat button uses same color scheme as follow button
+                        // Chat button: always use contrasting background
                         if (isLight) {
-                          // Light cover: use cover color with dark text
+                          // Light cover: white background with cover color text and border
                           return {
-                            backgroundColor: profileColors.cover,
-                            color: darkenColor(profileColors.cover, 0.5),
+                            backgroundColor: '#ffffff',
+                            color: profileColors.cover,
                             border: `2px solid ${profileColors.cover}`
                           };
                         } else {
@@ -1458,10 +1458,10 @@ export default function UserProfilePage() {
                         } else {
                           // Follow state: solid style with contrast
                           if (isLight) {
-                            // Light cover: use cover color with dark text
+                            // Light cover: white background with cover color text and border
                             return {
-                              backgroundColor: profileColors.cover,
-                              color: darkenColor(profileColors.cover, 0.5),
+                              backgroundColor: '#ffffff',
+                              color: profileColors.cover,
                               border: `2px solid ${profileColors.cover}`
                             };
                           } else {
