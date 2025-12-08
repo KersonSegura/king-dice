@@ -17,31 +17,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Chat ID is required' }, { status: 400 });
     }
 
-    // Fetch messages with sender info - use snake_case to match database schema
+    // Fetch messages with sender info - use camelCase to match database schema
     const { data: messages, error: messagesError } = await supabaseAdmin
       .from('messages')
       .select(`
         *,
-        sender:users!messages_sender_id_fkey (
+        sender:users!messages_senderId_fkey (
           id,
           username,
           avatar,
-          is_verified,
-          is_admin
+          isVerified,
+          isAdmin
         ),
-        reply_to:messages!messages_reply_to_id_fkey (
+        replyTo:messages!messages_replyToId_fkey (
           id,
           content,
-          created_at,
-          sender:users!messages_sender_id_fkey (
+          createdAt,
+          sender:users!messages_senderId_fkey (
             id,
             username,
             avatar
           )
         )
       `)
-      .eq('chat_id', chatId)
-      .order('created_at', { ascending: false })
+      .eq('chatId', chatId)
+      .order('createdAt', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (messagesError) {
@@ -49,11 +49,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
     }
 
-    // Get total count - use snake_case
+    // Get total count - use camelCase
     const { count, error: countError } = await supabaseAdmin
       .from('messages')
       .select('*', { count: 'exact', head: true })
-      .eq('chat_id', chatId);
+      .eq('chatId', chatId);
 
     if (countError) {
       console.error('Error counting messages:', countError);
@@ -112,12 +112,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Verify user is participant in the chat - use snake_case
+    // Verify user is participant in the chat - use camelCase
     const { data: participant, error: participantError } = await supabaseAdmin
       .from('chat_participants')
       .select('id')
-      .eq('chat_id', chatId)
-      .eq('user_id', senderId)
+      .eq('chatId', chatId)
+      .eq('userId', senderId)
       .maybeSingle();
 
     if (participantError) {
@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
       // Log all participants for debugging
       const { data: allParticipants } = await supabaseAdmin
         .from('chat_participants')
-        .select('user_id, chat_id')
-        .eq('chat_id', chatId);
+        .select('userId, chatId')
+        .eq('chatId', chatId);
       console.error('[MESSAGES API] All participants in chat:', allParticipants);
       return NextResponse.json({ 
         error: 'User not authorized to send messages in this chat',
@@ -153,19 +153,19 @@ export async function POST(request: NextRequest) {
       // Get the other participant in the direct chat
       const { data: otherParticipants } = await supabaseAdmin
         .from('chat_participants')
-        .select('user_id')
-        .eq('chat_id', chatId)
-        .neq('user_id', senderId);
+        .select('userId')
+        .eq('chatId', chatId)
+        .neq('userId', senderId);
 
       if (otherParticipants && otherParticipants.length > 0) {
-        const receiverId = otherParticipants[0].user_id;
+        const receiverId = otherParticipants[0].userId;
 
         // Check if receiver has blocked the sender
         const { data: blocked } = await supabaseAdmin
           .from('friendships')
           .select('id')
-          .eq('user_id', receiverId)
-          .eq('friend_id', senderId)
+          .eq('userId', receiverId)
+          .eq('friendId', senderId)
           .eq('status', 'blocked')
           .maybeSingle();
 
@@ -199,26 +199,26 @@ export async function POST(request: NextRequest) {
     
     console.log('[MESSAGES API] Generated cuid ID:', generatedId, 'Length:', generatedId.length);
     
-    // Use snake_case to match database schema
+    // Use camelCase to match database schema
     const now = new Date().toISOString();
     const insertData: any = {
       id: generatedId,
-      chat_id: chatId,
-      sender_id: senderId,
+      chatId: chatId,
+      senderId: senderId,
       content,
       type: type || 'text',
-      created_at: now,
-      updated_at: now
+      createdAt: now,
+      updatedAt: now
     };
     
     if (replyToId) {
-      insertData.reply_to_id = replyToId;
+      insertData.replyToId = replyToId;
     }
     
     console.log('[MESSAGES API] Inserting message with data:', {
       id: insertData.id,
-      chat_id: insertData.chat_id,
-      sender_id: insertData.sender_id,
+      chatId: insertData.chatId,
+      senderId: insertData.senderId,
       content: insertData.content?.substring(0, 50)
     });
     
@@ -238,17 +238,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!insertError && insertedMessage) {
-      // Fetch the complete message with relationships - use snake_case
+      // Fetch the complete message with relationships - use camelCase
       const { data: fullMessage, error: fetchError } = await supabaseAdmin
         .from('messages')
         .select(`
           *,
-          sender:users!messages_sender_id_fkey (
+          sender:users!messages_senderId_fkey (
             id,
             username,
             avatar,
-            is_verified,
-            is_admin
+            isVerified,
+            isAdmin
           )
         `)
         .eq('id', insertedMessage.id)
@@ -296,10 +296,10 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Update chat's updated_at timestamp
+    // Update chat's updatedAt timestamp
     await supabaseAdmin
       .from('chats')
-      .update({ updated_at: new Date().toISOString() })
+      .update({ updatedAt: new Date().toISOString() })
       .eq('id', chatId);
 
     // Format message - handle both column naming conventions

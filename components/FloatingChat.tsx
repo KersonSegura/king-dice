@@ -385,6 +385,7 @@ export default function FloatingChat() {
   const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [chatListRefreshTrigger, setChatListRefreshTrigger] = useState(0);
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {

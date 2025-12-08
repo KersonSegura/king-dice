@@ -366,19 +366,19 @@ export async function POST(request: NextRequest) {
     const random = Math.random().toString(36).substring(2, 15);
     const generatedChatId = `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
     
-    // Create new chat - use snake_case to match database schema
+    // Create new chat - use camelCase to match database schema
     const now = new Date().toISOString();
     const chatData: any = {
       id: generatedChatId,
       type,
       name: type === 'group' ? name : null,
-      created_at: now,
-      updated_at: now
+      createdAt: now,
+      updatedAt: now
     };
     
-    // Only set created_by for group chats
+    // Only set createdBy for group chats
     if (type === 'group' && createdBy) {
-      chatData.created_by = createdBy;
+      chatData.createdBy = createdBy;
     }
     
     // Use snake_case (matches database schema)
@@ -410,12 +410,12 @@ export async function POST(request: NextRequest) {
     let participantsError: any = null;
     const joinedAt = new Date().toISOString();
     
-    // Use snake_case to match database schema
+    // Use camelCase to match database schema
     const participantInserts = participants.map((userId: string) => ({
       id: generateParticipantId(),
-      chat_id: newChat.id,
-      user_id: userId,
-      joined_at: joinedAt
+      chatId: newChat.id,
+      userId: userId,
+      joinedAt: joinedAt
     }));
     
     const { error: participantsInsertError } = await supabaseAdmin
