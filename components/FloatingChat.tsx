@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical, Trash2, Ban, Flag } from 'lucide-react';
+import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical, Trash2, Ban, Flag, LogOut, Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { closeMenusOnChatOpen } from '@/lib/closeChat';
@@ -9,6 +9,7 @@ import ChatList from './ChatList';
 import Chat from './Chat';
 import ChatBot from './ChatBot';
 import GroupChatModal from './GroupChatModal';
+import ViewMembersModal from './ViewMembersModal';
 
 // Custom User Search Component
 function CustomChatList({ 
@@ -344,6 +345,7 @@ export default function FloatingChat() {
   const [chatListRefreshTrigger, setChatListRefreshTrigger] = useState(0);
   const [initialGroupUser, setInitialGroupUser] = useState<any>(null);
   const [showAddPeople, setShowAddPeople] = useState(false);
+  const [showViewMembers, setShowViewMembers] = useState(false);
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {
@@ -515,6 +517,40 @@ export default function FloatingChat() {
     } catch (error) {
       console.error('Error reporting user:', error);
       alert('Failed to report user');
+    }
+  };
+
+  const handleLeaveGroup = async (chatId: string) => {
+    if (!confirm('Are you sure you want to leave this group? You will no longer receive messages from this group.')) {
+      return;
+    }
+
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch('/api/chats/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatId,
+          userId: user.id
+        })
+      });
+
+      if (response.ok) {
+        // Close the chat and refresh the chat list
+        setSelectedChat(null);
+        setIsChatOpen(false);
+        setChatListRefreshTrigger(prev => prev + 1);
+        // Optionally reload to ensure everything is updated
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to leave group');
+      }
+    } catch (error) {
+      console.error('Error leaving group:', error);
+      alert('Failed to leave group');
     }
   };
 
@@ -886,6 +922,32 @@ export default function FloatingChat() {
                           </button>
                         </>
                       )}
+                      {selectedChat.type === 'group' && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowDropdown(false);
+                              setShowViewMembers(true);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>View Members</span>
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setShowDropdown(false);
+                              await handleLeaveGroup(selectedChat.id);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 flex items-center space-x-2"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span>Leave the group</span>
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
@@ -1007,6 +1069,14 @@ export default function FloatingChat() {
         existingChatId={selectedChat?.id}
         existingParticipants={selectedChat?.participants || []}
         onAddParticipants={handleAddParticipants}
+      />
+      
+      {/* View Members Modal */}
+      <ViewMembersModal
+        isOpen={showViewMembers}
+        onClose={() => setShowViewMembers(false)}
+        members={selectedChat?.participants || []}
+        groupName={selectedChat?.name || 'Group'}
       />
     </>
   );
