@@ -171,36 +171,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Verify user is participant in the chat - try both column naming conventions
-    let participant = null;
-    let participantError = null;
-    
-    // Try camelCase first (database uses camelCase)
-    const { data: participantCamel, error: participantErrorCamel } = await supabaseAdmin
+    // Verify user is participant in the chat - use snake_case
+    const { data: participant, error: participantError } = await supabaseAdmin
       .from('chat_participants')
       .select('id')
-      .eq('chatId', chatId)
-      .eq('userId', senderId)
+      .eq('chat_id', chatId)
+      .eq('user_id', senderId)
       .maybeSingle();
-    
-    if (!participantErrorCamel && participantCamel) {
-      participant = participantCamel;
-    } else {
-      // Try snake_case as fallback
-      const { data: participantSnake, error: participantErrorSnake } = await supabaseAdmin
-        .from('chat_participants')
-        .select('id')
-        .eq('chat_id', chatId)
-        .eq('user_id', senderId)
-        .maybeSingle();
-      
-      if (!participantErrorSnake && participantSnake) {
-        participant = participantSnake;
-      } else {
-        participantError = participantErrorCamel || participantErrorSnake;
-        console.error('Error checking participant:', participantError);
-      }
-    }
 
     if (!participant) {
       console.error('User not found as participant:', { chatId, senderId, participantError });
@@ -221,12 +198,12 @@ export async function POST(request: NextRequest) {
       // Get the other participant in the direct chat
       const { data: otherParticipants } = await supabaseAdmin
         .from('chat_participants')
-        .select('userId')
-        .eq('chatId', chatId)
-        .neq('userId', senderId);
+        .select('user_id')
+        .eq('chat_id', chatId)
+        .neq('user_id', senderId);
 
       if (otherParticipants && otherParticipants.length > 0) {
-        const receiverId = otherParticipants[0].userId;
+        const receiverId = otherParticipants[0].user_id;
 
         // Check if receiver has blocked the sender
         const { data: blocked } = await supabaseAdmin
@@ -267,20 +244,20 @@ export async function POST(request: NextRequest) {
     
     console.log('[MESSAGES API] Generated cuid ID:', generatedId, 'Length:', generatedId.length);
     
-    // Use camelCase column names (database schema uses camelCase)
+    // Use snake_case to match database schema
     const now = new Date().toISOString();
     const insertData: any = {
       id: generatedId,
-      chatId: chatId,
-      senderId: senderId,
+      chat_id: chatId,
+      sender_id: senderId,
       content,
       type: type || 'text',
-      createdAt: now,
-      updatedAt: now
+      created_at: now,
+      updated_at: now
     };
     
     if (replyToId) {
-      insertData.replyToId = replyToId;
+      insertData.reply_to_id = replyToId;
     }
     
     console.log('[MESSAGES API] Inserting message with data:', {
@@ -387,19 +364,11 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Update chat's updatedAt timestamp - try both column naming conventions
-    const { error: updateError } = await supabaseAdmin
+    // Update chat's updated_at timestamp
+    await supabaseAdmin
       .from('chats')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', chatId);
-    
-    if (updateError) {
-      // Try camelCase as fallback
-      await supabaseAdmin
-        .from('chats')
-        .update({ updatedAt: new Date().toISOString() })
-        .eq('id', chatId);
-    }
 
     // Format message - handle both column naming conventions
     const formattedMessage = {
@@ -436,4 +405,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }
+
 

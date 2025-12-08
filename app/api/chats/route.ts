@@ -366,22 +366,22 @@ export async function POST(request: NextRequest) {
     const random = Math.random().toString(36).substring(2, 15);
     const generatedChatId = `c${timestamp}${counter}${fingerprint}${random}`.substring(0, 25);
     
-    // Create new chat - don't set createdBy for direct chats (optional field)
+    // Create new chat - use snake_case to match database schema
     const now = new Date().toISOString();
     const chatData: any = {
       id: generatedChatId,
       type,
       name: type === 'group' ? name : null,
-      createdAt: now,
-      updatedAt: now
+      created_at: now,
+      updated_at: now
     };
     
-    // Only set createdBy for group chats
+    // Only set created_by for group chats
     if (type === 'group' && createdBy) {
-      chatData.createdBy = createdBy;
+      chatData.created_by = createdBy;
     }
     
-    // Try camelCase first (Prisma schema)
+    // Use snake_case (matches database schema)
     const { data: newChat, error: createError } = await supabaseAdmin
       .from('chats')
       .insert(chatData)
@@ -410,34 +410,20 @@ export async function POST(request: NextRequest) {
     let participantsError: any = null;
     const joinedAt = new Date().toISOString();
     
-    // Try camelCase first (matches database schema)
-    const participantInsertsCamel = participants.map((userId: string) => ({
+    // Use snake_case to match database schema
+    const participantInserts = participants.map((userId: string) => ({
       id: generateParticipantId(),
-      chatId: newChat.id,
-      userId: userId,
-      joinedAt: joinedAt
+      chat_id: newChat.id,
+      user_id: userId,
+      joined_at: joinedAt
     }));
     
-    const { error: errorCamelPart } = await supabaseAdmin
+    const { error: participantsInsertError } = await supabaseAdmin
       .from('chat_participants')
-      .insert(participantInsertsCamel);
+      .insert(participantInserts);
     
-    if (errorCamelPart) {
-      // Try snake_case as fallback
-      const participantInsertsSnake = participants.map((userId: string) => ({
-        id: generateParticipantId(),
-        chat_id: newChat.id,
-        user_id: userId,
-        joined_at: joinedAt
-      }));
-      
-      const { error: errorSnakePart } = await supabaseAdmin
-        .from('chat_participants')
-        .insert(participantInsertsSnake);
-      
-      if (errorSnakePart) {
-        participantsError = errorSnakePart;
-      }
+    if (participantsInsertError) {
+      participantsError = participantsInsertError;
     }
 
     if (participantsError) {

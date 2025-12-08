@@ -16,13 +16,15 @@ function CustomChatList({
   onCreateGroup, 
   onStartDirectChat, 
   onStartBotChat,
-  user
+  user,
+  refreshTrigger
 }: {
   onSelectChat: (chat: any) => void;
   onCreateGroup: () => void;
   onStartDirectChat: () => void;
   onStartBotChat: () => void;
   user: any;
+  refreshTrigger?: number;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -72,10 +74,10 @@ function CustomChatList({
     }
   };
 
-  // Load existing chats on mount
+  // Load existing chats on mount and when refreshTrigger changes
   useEffect(() => {
     fetchExistingChats();
-  }, [user?.id]);
+  }, [user?.id, refreshTrigger]);
 
   // Debounce search
   useEffect(() => {
@@ -107,9 +109,11 @@ function CustomChatList({
           name: targetUser.username,
           type: 'direct' as const,
           participants: data.chat.participants,
-          createdAt: data.chat.createdAt || new Date().toISOString(),
-          updatedAt: data.chat.updatedAt || new Date().toISOString()
+          createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
+          updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
         };
+        // Refresh the chat list to include the new chat
+        fetchExistingChats();
         onSelectChat(chat);
       }
     } catch (error) {
@@ -141,8 +145,12 @@ function CustomChatList({
           id: data.chat.id,
           name: data.chat.name,
           type: 'group',
-          participants: data.chat.participants
+          participants: data.chat.participants,
+          createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
+          updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
         };
+        // Refresh the chat list to include the new chat
+        fetchExistingChats();
         onSelectChat(chat);
       }
     } catch (error) {
@@ -418,6 +426,8 @@ export default function FloatingChat() {
         setIsChatOpen(true);
         // Close menus when opening chat on mobile
         closeMenusOnChatOpen();
+        // Refresh the chat list to ensure it's up to date
+        setChatListRefreshTrigger(prev => prev + 1);
       } else {
         console.warn('[FloatingChat] Received event but no chat data:', event.detail);
       }
@@ -647,11 +657,13 @@ export default function FloatingChat() {
           name: data.chat.name,
           type: 'group' as const,
           participants: data.chat.participants,
-          createdAt: data.chat.createdAt,
-          updatedAt: data.chat.updatedAt
+          createdAt: data.chat.createdAt || data.chat.created_at || new Date().toISOString(),
+          updatedAt: data.chat.updatedAt || data.chat.updated_at || new Date().toISOString()
         };
         setSelectedChat(chat);
         setShowCreateGroup(false);
+        // Refresh chat list in CustomChatList if it's visible
+        // The chat list will refresh when the component re-renders
       }
     } catch (error) {
       console.error('Error creating group chat:', error);
@@ -664,6 +676,12 @@ export default function FloatingChat() {
 
   const handleSelectChat = (chat: any) => {
     setSelectedChat(chat);
+  };
+
+  // Refresh chat list when going back to the list
+  const handleBackToChatList = () => {
+    setSelectedChat(null);
+    setChatListRefreshTrigger(prev => prev + 1);
   };
 
   // Add Dice-Bot as a default chat option
@@ -749,7 +767,7 @@ export default function FloatingChat() {
             <div className="flex items-center space-x-3">
               {selectedChat && (
                 <button
-                  onClick={() => setSelectedChat(null)}
+                  onClick={handleBackToChatList}
                   className="text-white hover:text-gray-200"
                   title="Back to search"
                 >
@@ -883,7 +901,7 @@ export default function FloatingChat() {
                 <div className="h-full flex flex-col min-h-0 overflow-hidden" style={{ height: '100%', maxHeight: '100%' }}>
                   <ChatBot 
                     isOpen={true}
-                    onClose={() => setSelectedChat(null)}
+                    onClose={handleBackToChatList}
                     currentUser={user}
                     embedded={true}
                   />
@@ -894,7 +912,7 @@ export default function FloatingChat() {
                   chatName={selectedChat.name}
                   chatType={selectedChat.type}
                   participants={selectedChat.participants}
-                  onClose={() => setSelectedChat(null)}
+                  onClose={handleBackToChatList}
                 />
               )
             ) : (
@@ -904,6 +922,7 @@ export default function FloatingChat() {
                 onStartDirectChat={handleStartDirectChat}
                 onStartBotChat={handleStartBotChat}
                 user={user}
+                refreshTrigger={chatListRefreshTrigger}
               />
             )}
           </div>
