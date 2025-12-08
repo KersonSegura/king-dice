@@ -569,7 +569,7 @@ export async function DELETE(request: NextRequest) {
 
     // Get current user from cookies
     const cookieStore = await import('next/headers').then(m => m.cookies());
-    const token = cookieStore.get('token')?.value;
+    const token = cookieStore.get('auth_token')?.value || cookieStore.get('token')?.value;
     
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -652,7 +652,7 @@ export async function PATCH(request: NextRequest) {
 
     // Get current user from cookies
     const cookieStore = await import('next/headers').then(m => m.cookies());
-    const token = cookieStore.get('token')?.value;
+    const token = cookieStore.get('auth_token')?.value || cookieStore.get('token')?.value;
     
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -637,6 +637,7 @@ export default function FloatingChat() {
       const response = await fetch('/api/chats', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           chatId: selectedChat.id,
           userIds
