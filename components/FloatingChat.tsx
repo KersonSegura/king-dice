@@ -82,7 +82,12 @@ function CustomChatList({
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      searchUsers(searchQuery);
+      if (searchQuery.trim().length >= 2) {
+        searchUsers(searchQuery);
+      } else {
+        setSearchResults([]);
+        setHasSearched(false);
+      }
     }, 300);
 
     return () => clearTimeout(timer);
