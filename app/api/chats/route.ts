@@ -132,6 +132,45 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Calculate unread counts for each chat in parallel (optimized)
+    const unreadCountsMap = new Map<string, number>();
+    if (chatIds.length > 0 && participants.length > 0) {
+      // Create a map of participant data for quick lookup
+      const participantMap = new Map(participants.map((p: any) => [p.chatId, p]));
+      
+      // Run unread count queries in parallel
+      const unreadCountPromises = chatIds.map(async (chatId: string) => {
+        const participant = participantMap.get(chatId);
+        if (!participant) return { chatId, count: 0 };
+        
+        const lastReadAt = participant.lastReadAt;
+        const cutoffDate = lastReadAt ? new Date(lastReadAt).toISOString() : new Date(0).toISOString();
+        
+        // Count unread messages - optimized query
+        const { count, error } = await supabaseAdmin
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('chatId', chatId)
+          .gt('createdAt', cutoffDate)
+          .neq('senderId', userId);
+        
+        if (error) {
+          console.error(`Error counting unread for chat ${chatId}:`, error);
+          return { chatId, count: 0 };
+        }
+        
+        return { chatId, count: (count || 0) };
+      });
+      
+      // Wait for all unread counts in parallel
+      const unreadCounts = await Promise.all(unreadCountPromises);
+      unreadCounts.forEach(({ chatId, count }) => {
+        if (count > 0) {
+          unreadCountsMap.set(chatId, count);
+        }
+      });
+    }
+
     // Format the response
     const formattedChats = participants.map((p: any) => {
       const chat = p.chat;
@@ -140,6 +179,7 @@ export async function GET(request: NextRequest) {
       const otherParticipants = chatParticipants
         .filter((cp: any) => cp.userId !== userId)
         .map((cp: any) => cp.user);
+      const unreadCount = unreadCountsMap.get(chat.id) || 0;
 
       return {
         id: chat.id,
@@ -165,6 +205,7 @@ export async function GET(request: NextRequest) {
             avatar: lastMessage.sender.avatar
           } : null
         } : null,
+        unreadCount,
         createdAt: chat.createdAt,
         updatedAt: chat.updatedAt,
         createdBy: chat.creator

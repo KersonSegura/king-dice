@@ -54,7 +54,8 @@ function CustomChatList({
   refreshTrigger,
   chatsWithUnread,
   onChatOpened,
-  onStartGroupChatWithUser
+  onStartGroupChatWithUser,
+  setChatsWithUnread
 }: {
   onSelectChat: (chat: any) => void;
   onCreateGroup: () => void;
@@ -62,9 +63,10 @@ function CustomChatList({
   onStartBotChat: () => void;
   user: any;
   refreshTrigger?: number;
-  chatsWithUnread?: Set<string>;
+  chatsWithUnread?: Map<string, number>;
   onChatOpened?: (chatId: string) => void;
   onStartGroupChatWithUser?: (targetUser: any) => void;
+  setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -108,7 +110,26 @@ function CustomChatList({
       const response = await fetch(`/api/chats?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
-        setExistingChats(data.chats || []);
+        const chats = data.chats || [];
+        setExistingChats(chats);
+        
+        // Initialize unread counts from API response
+        if (setChatsWithUnread) {
+          const unreadMap = new Map<string, number>();
+          chats.forEach((chat: any) => {
+            if (chat.unreadCount > 0) {
+              unreadMap.set(chat.id, chat.unreadCount);
+            }
+          });
+          // Merge with existing real-time updates
+          setChatsWithUnread(prev => {
+            const merged = new Map(prev);
+            unreadMap.forEach((count, chatId) => {
+              merged.set(chatId, count);
+            });
+            return merged;
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -237,20 +258,19 @@ function CustomChatList({
               Recent Chats
             </div>
             {existingChats.slice(0, 5).map((chat) => {
-              const hasUnread = chatsWithUnread?.has(chat.id) || false;
+              // Get unread count from chat data or from real-time updates
+              const unreadCount = chatsWithUnread?.get(chat.id) || chat.unreadCount || 0;
               return (
               <div
                 key={chat.id}
                 onClick={() => {
                   onSelectChat(chat);
-                  // Remove from unread set when opened
+                  // Remove from unread map when opened
                   if (onChatOpened) {
                     onChatOpened(chat.id);
                   }
                 }}
-                className={`p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors relative ${
-                  hasUnread ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                }`}
+                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors relative"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
@@ -296,8 +316,10 @@ function CustomChatList({
                       )}
                     </div>
                   </div>
-                  {hasUnread && (
-                    <div className="absolute top-2 right-2 w-3 h-3 bg-blue-500 rounded-full"></div>
+                  {unreadCount > 0 && (
+                    <div className="absolute top-2 right-2 min-w-[20px] h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </div>
                   )}
                 </div>
               </div>
@@ -401,7 +423,7 @@ export default function FloatingChat() {
   const [initialGroupUser, setInitialGroupUser] = useState<any>(null);
   const [showAddPeople, setShowAddPeople] = useState(false);
   const [showViewMembers, setShowViewMembers] = useState(false);
-  const [chatsWithUnread, setChatsWithUnread] = useState<Set<string>>(new Set());
+  const [chatsWithUnread, setChatsWithUnread] = useState<Map<string, number>>(new Map());
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {
@@ -701,13 +723,14 @@ export default function FloatingChat() {
             // Refresh unread count immediately
             await fetchUnreadCount();
             
-            // Add chat to unread set if this is not the currently selected chat
+            // Add chat to unread map if this is not the currently selected chat
             const notificationChatId = notification.entity_id || notification.entityId;
             const isCurrentChat = selectedChat?.id === notificationChatId;
             if (notificationChatId && !isCurrentChat) {
               setChatsWithUnread(prev => {
-                const next = new Set(prev);
-                next.add(notificationChatId);
+                const next = new Map(prev);
+                const currentCount = next.get(notificationChatId) || 0;
+                next.set(notificationChatId, currentCount + 1);
                 return next;
               });
               
@@ -780,12 +803,14 @@ export default function FloatingChat() {
               // (if chat is not open, count increases)
               await fetchUnreadCount();
               
-              // Add chat to unread set if this is not the currently selected chat
+              // Add chat to unread map if this is not the currently selected chat
               const isCurrentChat = selectedChat?.id === chatId;
               if (!isCurrentChat) {
+                // Increment unread count for this chat
                 setChatsWithUnread(prev => {
-                  const next = new Set(prev);
-                  next.add(chatId);
+                  const next = new Map(prev);
+                  const currentCount = next.get(chatId) || 0;
+                  next.set(chatId, currentCount + 1);
                   return next;
                 });
                 
@@ -917,9 +942,9 @@ export default function FloatingChat() {
 
   const handleSelectChat = (chat: any) => {
     setSelectedChat(chat);
-    // Remove from unread set when chat is opened
+    // Remove from unread map when chat is opened
     setChatsWithUnread(prev => {
-      const next = new Set(prev);
+      const next = new Map(prev);
       next.delete(chat.id);
       return next;
     });
@@ -1214,10 +1239,11 @@ export default function FloatingChat() {
                 user={user}
                 refreshTrigger={chatListRefreshTrigger}
                 chatsWithUnread={chatsWithUnread}
+                setChatsWithUnread={setChatsWithUnread}
                 onChatOpened={(chatId) => {
-                  // Remove from unread set when chat is opened
+                  // Remove from unread map when chat is opened
                   setChatsWithUnread(prev => {
-                    const next = new Set(prev);
+                    const next = new Map(prev);
                     next.delete(chatId);
                     return next;
                   });
