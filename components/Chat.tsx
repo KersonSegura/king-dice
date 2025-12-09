@@ -74,6 +74,74 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Helpers for game mentions (@GameName -> link to /game/:id)
+  const GAME_MENTION_REGEX = /@([A-Za-z0-9][A-Za-z0-9\\s\\-']{0,50})/g;
+
+  const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+
+  const resolveGameMentions = async (text: string): Promise<string> => {
+    // Find unique mentions
+    const matches = Array.from(text.matchAll(GAME_MENTION_REGEX)).map(m => m[1].trim());
+    const uniqueNames = Array.from(new Set(matches)).filter(Boolean);
+
+    if (uniqueNames.length === 0) return text;
+
+    let resolvedText = text;
+
+    for (const name of uniqueNames) {
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(name)}&type=games&limit=1`);
+        if (!response.ok) continue;
+        const data = await response.json();
+        const game = (data.games || [])[0];
+        if (game?.id) {
+          // Replace all occurrences of the mention with a markdown-style link
+          const mentionPattern = new RegExp(`@${escapeRegExp(name)}`, 'g');
+          resolvedText = resolvedText.replace(
+            mentionPattern,
+            `[@${name}](/game/${game.id})`
+          );
+        }
+      } catch (error) {
+        console.error('Error resolving game mention:', name, error);
+      }
+    }
+
+    return resolvedText;
+  };
+
+  const renderContent = (content: string) => {
+    const parts: React.ReactNode[] = [];
+    const linkRegex = /\\[([^\\]]+)\\]\\((\\/game\\/[^\\)]+)\\)/g;
+    let lastIndex = 0;
+    let match;
+
+    // Convert markdown links to anchor tags, keep other text as-is
+    while ((match = linkRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index));
+      }
+      parts.push(
+        <a
+          key={`${match[2]}-${match.index}`}
+          href={match[2]}
+          className="underline text-blue-600 hover:text-blue-700 break-words"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {match[1]}
+        </a>
+      );
+      lastIndex = linkRegex.lastIndex;
+    }
+
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex));
+    }
+
+    return parts;
+  };
+
   // Load messages and mark as read
   useEffect(() => {
     const loadMessages = async () => {
@@ -150,10 +218,13 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
+    // Resolve @GameName mentions to links
+    const resolvedContent = await resolveGameMentions(newMessage.trim());
+
     const messageData = {
       chatId,
       senderId: user.id,
-      content: newMessage.trim(),
+      content: resolvedContent,
       type: 'text',
       replyToId: replyingTo?.id
     };
@@ -305,7 +376,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                     <div className="truncate">{message.replyTo.content}</div>
                   </div>
                 )}
-                <div className="text-sm">{message.content}</div>
+                <div className="text-sm break-words">{renderContent(message.content)}</div>
                 <div className={`text-xs mt-1 ${
                   message.senderId === user?.id ? 'text-blue-100' : 'text-gray-500'
                 }`}>
