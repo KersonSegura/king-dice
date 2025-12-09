@@ -112,7 +112,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
 
   const renderContent = (content: string) => {
     const parts: React.ReactNode[] = [];
-    const linkRegex = /\\[([^\\]]+)\\]\\((\\/game\\/[^\\)]+)\\)/g;
+    const linkRegex = /\[([^\]]+)\]\((\/game\/[^\)]+)\)/g;
     let lastIndex = 0;
     let match;
 
