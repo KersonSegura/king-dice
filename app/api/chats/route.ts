@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ chats: [] });
     }
 
-    // Get last message for each chat
+    // Get last message for each chat - optimized: limit results per chat
     const { data: lastMessages, error: messagesError } = await supabaseAdmin
       .from('messages')
       .select(`
@@ -87,7 +87,8 @@ export async function GET(request: NextRequest) {
         )
       `)
       .in('chatId', chatIds)
-      .order('createdAt', { ascending: false });
+      .order('createdAt', { ascending: false })
+      .limit(chatIds.length * 10); // Limit to reasonable number (10 messages per chat max)
 
     // Group messages by chatId and get the first (latest) one for each
     const lastMessageMap = new Map();

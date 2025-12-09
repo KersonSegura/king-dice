@@ -70,6 +70,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -343,10 +344,23 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     };
   }, [chatId, user?.id]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom - immediately when messages load, smooth for new messages
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > 0 && messagesEndRef.current) {
+      // Scroll immediately on initial load, smooth for subsequent updates
+      messagesEndRef.current.scrollIntoView({ behavior: isInitialLoad ? 'auto' : 'smooth' });
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    }
+  }, [messages, isInitialLoad]);
+  
+  // Reset initial load flag when chat changes
+  useEffect(() => {
+    setIsInitialLoad(true);
+  }, [chatId]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;

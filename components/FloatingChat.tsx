@@ -104,9 +104,7 @@ function CustomChatList({
     if (!user?.id) return;
     
     try {
-      // Show empty array immediately to avoid blocking
-      setExistingChats([]);
-      
+      // Don't clear existing chats - keep them visible while loading
       const response = await fetch(`/api/chats?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
@@ -703,15 +701,20 @@ export default function FloatingChat() {
             // Refresh unread count immediately
             await fetchUnreadCount();
             
-            // Add chat to unread set if chat is not currently open
+            // Add chat to unread set if this is not the currently selected chat
             const notificationChatId = notification.entity_id || notification.entityId;
-            if (notificationChatId && !isChatOpen && selectedChat?.id !== notificationChatId) {
-              setChatsWithUnread(prev => new Set(prev).add(notificationChatId));
-            }
-            
-            // Only play sound if chat is not open
-            if (!isChatOpen) {
-              playMessageSound();
+            const isCurrentChat = selectedChat?.id === notificationChatId;
+            if (notificationChatId && !isCurrentChat) {
+              setChatsWithUnread(prev => {
+                const next = new Set(prev);
+                next.add(notificationChatId);
+                return next;
+              });
+              
+              // Only play sound if chat is not open
+              if (!isChatOpen) {
+                playMessageSound();
+              }
             }
           }
           
@@ -777,14 +780,19 @@ export default function FloatingChat() {
               // (if chat is not open, count increases)
               await fetchUnreadCount();
               
-              // Add chat to unread set if chat is not currently open
-              if (!isChatOpen && selectedChat?.id !== chatId) {
-                setChatsWithUnread(prev => new Set(prev).add(chatId));
-              }
-              
-              // Only play sound if chat is not open
-              if (!isChatOpen) {
-                playMessageSound();
+              // Add chat to unread set if this is not the currently selected chat
+              const isCurrentChat = selectedChat?.id === chatId;
+              if (!isCurrentChat) {
+                setChatsWithUnread(prev => {
+                  const next = new Set(prev);
+                  next.add(chatId);
+                  return next;
+                });
+                
+                // Only play sound if chat is not open
+                if (!isChatOpen) {
+                  playMessageSound();
+                }
               }
             }
           }
