@@ -176,39 +176,134 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     loadMessages();
   }, [chatId, showToast, user?.id]);
 
-  // Socket events
+  // Real-time message updates using Supabase
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    if (!chatId || !user?.id) return;
 
-    // Join chat room
-    socket.emit('join-chat', chatId);
+    let channel: any;
+    let active = true;
 
-    // Listen for new messages
-    socket.on('new-message', (message: Message) => {
-      setMessages(prev => [...prev, message]);
-    });
+    (async () => {
+      const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser');
+      const supabaseClient = await getSupabaseBrowserClient();
 
-    // Listen for typing indicators
-    socket.on('user-typing', (data: { userId: string; username?: string; isTyping: boolean }) => {
-      if (data.userId !== user?.id) {
-        setTypingUsers(prev => {
-          if (data.isTyping) {
-            return { ...prev, [data.userId]: data.username || 'Someone' };
-          } else {
-            const newTyping = { ...prev };
-            delete newTyping[data.userId];
-            return newTyping;
+      // Subscribe to new messages in this chat
+      channel = supabaseClient
+        .channel(`chat-messages-${chatId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `chatId=eq.${chatId}`
+        }, async (payload) => {
+          if (!active) return;
+          
+          const newMessage: any = payload.new;
+          const messageChatId = newMessage.chatId || newMessage.chat_id;
+          const messageSenderId = newMessage.senderId || newMessage.sender_id;
+
+          // Only add if it's not from current user (current user's messages are handled optimistically)
+          // or if it's a different message than what we already have
+          if (messageChatId === chatId) {
+            // Check if message already exists (avoid duplicates)
+            setMessages(prev => {
+              const exists = prev.some(m => m.id === newMessage.id);
+              if (exists) return prev;
+              
+              // Fetch sender info if not included
+              if (!newMessage.sender && messageSenderId) {
+                // Fetch sender info
+                (async () => {
+                  try {
+                    const { data: senderData } = await supabaseClient
+                      .from('users')
+                      .select('id, username, avatar, isVerified, isAdmin')
+                      .eq('id', messageSenderId)
+                      .single();
+
+                    if (senderData) {
+                      const fullMessage: Message = {
+                        id: newMessage.id,
+                        chatId: messageChatId,
+                        senderId: messageSenderId,
+                        content: newMessage.content,
+                        type: newMessage.type || 'text',
+                        replyToId: newMessage.replyToId || newMessage.reply_to_id,
+                        createdAt: newMessage.createdAt || newMessage.created_at,
+                        sender: {
+                          id: senderData.id,
+                          username: senderData.username,
+                          avatar: senderData.avatar || '',
+                          isVerified: senderData.isVerified || senderData.is_verified || false,
+                          isAdmin: senderData.isAdmin || senderData.is_admin || false
+                        },
+                        replyTo: undefined
+                      };
+                      
+                      setMessages(prevMsgs => {
+                        const alreadyExists = prevMsgs.some(m => m.id === fullMessage.id);
+                        if (alreadyExists) return prevMsgs;
+                        return [...prevMsgs, fullMessage];
+                      });
+                    }
+                  } catch (error) {
+                    console.error('Error fetching sender info:', error);
+                  }
+                })();
+                
+                return prev;
+              }
+              
+              // If sender info is already in the payload, use it
+              const fullMessage: Message = {
+                id: newMessage.id,
+                chatId: messageChatId,
+                senderId: messageSenderId,
+                content: newMessage.content,
+                type: newMessage.type || 'text',
+                replyToId: newMessage.replyToId || newMessage.reply_to_id,
+                createdAt: newMessage.createdAt || newMessage.created_at,
+                sender: newMessage.sender || {
+                  id: messageSenderId,
+                  username: 'Unknown',
+                  avatar: '',
+                  isVerified: false,
+                  isAdmin: false
+                },
+                replyTo: undefined
+              };
+              
+              return [...prev, fullMessage];
+            });
+
+            // Mark as read if chat is open
+            if (messageSenderId !== user.id) {
+              try {
+                await fetch('/api/messages/unread', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId: user.id, chatId })
+                });
+              } catch (error) {
+                // Silent fail - not critical
+              }
+            }
           }
-        });
-      }
-    });
+        })
+        .subscribe();
+    })();
 
     return () => {
-      socket.emit('leave-chat', chatId);
-      socket.off('new-message');
-      socket.off('user-typing');
+      active = false;
+      if (channel) {
+        (async () => {
+          const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser');
+          const supabase = await getSupabaseBrowserClient();
+          supabase.removeChannel(channel);
+        })();
+      }
     };
-  }, [socket, isConnected, chatId, user?.id]);
+  }, [chatId, user?.id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -218,8 +313,15 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
+    // Store the message content before clearing
+    const messageContent = newMessage.trim();
+    
+    // Clear input immediately for better UX
+    setNewMessage('');
+    setReplyingTo(null);
+
     // Resolve @GameName mentions to links
-    const resolvedContent = await resolveGameMentions(newMessage.trim());
+    const resolvedContent = await resolveGameMentions(messageContent);
 
     const messageData = {
       chatId,
@@ -229,9 +331,35 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       replyToId: replyingTo?.id
     };
 
+    // Create optimistic message for immediate display
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      chatId,
+      senderId: user.id,
+      content: resolvedContent,
+      type: 'text',
+      replyToId: replyingTo?.id,
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: user.id,
+        username: user.username || 'You',
+        avatar: user.avatar || '',
+        isVerified: user.isVerified || false,
+        isAdmin: user.isAdmin || false
+      },
+      replyTo: replyingTo || undefined
+    };
+
+    // Add optimistic message immediately
+    setMessages(prev => [...prev, optimisticMessage]);
+
+    // Scroll to bottom immediately
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+
     try {
-      // Save message via API (socket is currently disabled)
-      console.log('Saving message via API:', messageData);
+      // Save message via API
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,32 +368,36 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       
       if (response.ok) {
         const data = await response.json();
-        // Reload all messages to ensure we have the latest from the database
-        const reloadResponse = await fetch(`/api/messages?chatId=${chatId}`);
-        if (reloadResponse.ok) {
-          const reloadData = await reloadResponse.json();
-          setMessages(reloadData.messages);
-        } else {
-          // Fallback: add the new message to the list
-          setMessages(prev => [...prev, data.message]);
-        }
-        setNewMessage('');
-        setReplyingTo(null);
+        // Replace optimistic message with real message from server
+        setMessages(prev => {
+          const filtered = prev.filter(m => m.id !== optimisticMessage.id);
+          return [...filtered, data.message];
+        });
+        
         // Notify parent to refresh chat list
         if (onMessageSent) {
           onMessageSent();
         }
-        // Scroll to bottom after sending
+        
+        // Scroll to bottom after update
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       } else {
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
         const errorData = await response.json().catch(() => ({}));
         showToast(errorData.error || 'Failed to send message', 'error');
+        // Restore message to input
+        setNewMessage(messageContent);
       }
     } catch (error) {
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
       console.error('Error sending message:', error);
       showToast('Failed to send message', 'error');
+      // Restore message to input
+      setNewMessage(messageContent);
     }
   };
 
