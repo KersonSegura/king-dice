@@ -112,8 +112,14 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }: Cr
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-96">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        onClick={onClose}
+      >
+        <div 
+          className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-96"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="text-lg font-semibold">Create Group Chat</h3>
             <button
