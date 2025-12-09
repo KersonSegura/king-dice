@@ -75,7 +75,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Helpers for game mentions (@GameName -> link to /game/:id)
-  const GAME_MENTION_REGEX = /@([A-Za-z0-9][A-Za-z0-9\\s\\-']{0,50})/g;
+  const GAME_MENTION_REGEX = /@([A-Za-z0-9][A-Za-z0-9 \-\']{0,50})/g;
 
   const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
 
