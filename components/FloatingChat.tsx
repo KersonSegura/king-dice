@@ -620,36 +620,146 @@ export default function FloatingChat() {
     }
   }, [isChatOpen, isAuthenticated, hasShownTooltip]);
 
-  // Fetch unread messages count - ALWAYS call this hook
+  // Play message notification sound
+  const playMessageSound = () => {
+    try {
+      const audio = new Audio('/Sound/MessageReceivedAudio.mp3');
+      audio.volume = 0.5; // Set volume to 50%
+      audio.play().catch(error => {
+        console.log('Could not play notification sound:', error);
+      });
+    } catch (error) {
+      console.log('Error creating audio:', error);
+    }
+  };
+
+  // Fetch unread messages count and set up real-time subscriptions - ALWAYS call this hook
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      const fetchUnreadCount = async () => {
-        try {
-          const response = await fetch(`/api/messages/unread?userId=${user.id}`);
-          if (response.ok) {
-            const data = await response.json();
-            const newUnreadCount = data.unreadCount || 0;
+    if (!isAuthenticated || !user?.id) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch(`/api/messages/unread?userId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const newUnreadCount = data.unreadCount || 0;
+          
+          // Play sound if unread count increased (and chat is not open)
+          if (newUnreadCount > previousUnreadCount && previousUnreadCount >= 0 && !isChatOpen) {
+            playMessageSound();
+          }
+          
+          setPreviousUnreadCount(unreadCount);
+          setUnreadCount(newUnreadCount);
+        }
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+    
+    // Set up real-time subscriptions for notifications (messages and group additions)
+    (async () => {
+      const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser');
+      const supabase = await getSupabaseBrowserClient();
+
+      // Subscribe to new notifications for this user
+      const notificationsChannel = supabase
+        .channel(`chat-notifications-${user.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        }, async (payload) => {
+          const notification: any = payload.new;
+          
+          // Handle message notifications
+          if (notification.type === 'message' && !isChatOpen) {
+            // Refresh unread count immediately
+            await fetchUnreadCount();
             
-            // Play sound if unread count increased
-            if (newUnreadCount > previousUnreadCount && previousUnreadCount >= 0) {
-              playMessageSound();
+            // Play sound
+            playMessageSound();
+          }
+          
+          // Handle group addition notifications
+          if (notification.type === 'system' && notification.entity_type === 'chat' && !isChatOpen) {
+            // User was added to a group - show notification and play sound
+            playMessageSound();
+            
+            // Refresh chat list to show the new group
+            setChatListRefreshTrigger(prev => prev + 1);
+          }
+        })
+        .subscribe();
+
+      // Also subscribe to messages table directly for faster updates
+      // We'll subscribe to all messages and filter in JavaScript
+      const messagesChannel = supabase
+        .channel(`messages-realtime-${user.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        }, async (payload) => {
+          const newMessage: any = payload.new;
+          
+          // Handle both camelCase and snake_case
+          const senderId = newMessage.senderId || newMessage.sender_id;
+          const chatId = newMessage.chatId || newMessage.chat_id;
+          
+          // Check if this message is in a chat where user is a participant
+          // and message is not from current user
+          if (senderId !== user.id && !isChatOpen && chatId) {
+            // Check if user is a participant in this chat (try both naming conventions)
+            let participant = null;
+            
+            // Try camelCase first
+            const { data: participantCamel } = await supabase
+              .from('chat_participants')
+              .select('id')
+              .eq('chatId', chatId)
+              .eq('userId', user.id)
+              .maybeSingle();
+            
+            if (participantCamel) {
+              participant = participantCamel;
+            } else {
+              // Try snake_case
+              const { data: participantSnake } = await supabase
+                .from('chat_participants')
+                .select('id')
+                .eq('chat_id', chatId)
+                .eq('user_id', user.id)
+                .maybeSingle();
+              
+              if (participantSnake) {
+                participant = participantSnake;
+              }
             }
             
-            setPreviousUnreadCount(unreadCount);
-            setUnreadCount(newUnreadCount);
+            if (participant) {
+              // User is a participant - refresh unread count and play sound
+              await fetchUnreadCount();
+              playMessageSound();
+            }
           }
-        } catch (error) {
-          console.error('Error fetching unread count:', error);
-        }
-      };
+        })
+        .subscribe();
 
-      fetchUnreadCount();
-      
-      // Refresh unread count every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, user?.id, unreadCount, previousUnreadCount]);
+      return () => {
+        supabase.removeChannel(notificationsChannel);
+        supabase.removeChannel(messagesChannel);
+      };
+    })();
+
+    // Refresh unread count every 30 seconds as fallback
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user?.id, unreadCount, previousUnreadCount, isChatOpen]);
 
   // Reset unread count when chat is opened
   useEffect(() => {
@@ -765,19 +875,6 @@ export default function FloatingChat() {
       updatedAt: new Date().toISOString()
     };
     setSelectedChat(botChat);
-  };
-
-  // Play message notification sound
-  const playMessageSound = () => {
-    try {
-      const audio = new Audio('/Sound/MessageReceivedAudio.mp3');
-      audio.volume = 0.5; // Set volume to 50%
-      audio.play().catch(error => {
-        console.log('Could not play notification sound:', error);
-      });
-    } catch (error) {
-      console.log('Error creating audio:', error);
-    }
   };
 
   return (

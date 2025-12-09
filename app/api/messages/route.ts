@@ -261,6 +261,47 @@ export async function POST(request: NextRequest) {
       .update({ updatedAt: new Date().toISOString() })
       .eq('id', chatId);
 
+    // Get all participants in the chat (except the sender) to create notifications
+    const { data: chatParticipants } = await supabaseAdmin
+      .from('chat_participants')
+      .select('userId')
+      .eq('chatId', chatId)
+      .neq('userId', senderId);
+
+    // Get chat info for notification
+    const { data: chatInfo } = await supabaseAdmin
+      .from('chats')
+      .select('name, type')
+      .eq('id', chatId)
+      .single();
+
+    // Get sender info for notification
+    const { data: senderInfo } = await supabaseAdmin
+      .from('users')
+      .select('username')
+      .eq('id', senderId)
+      .single();
+
+    // Create notifications for all participants (except sender)
+    if (chatParticipants && chatParticipants.length > 0) {
+      const { createNotification } = await import('@/lib/notifications');
+      const notificationMessage = chatInfo?.type === 'group' 
+        ? `${senderInfo?.username || 'Someone'} sent a message in "${chatInfo?.name || 'Group Chat'}"`
+        : `${senderInfo?.username || 'Someone'} sent you a message`;
+      
+      for (const participant of chatParticipants) {
+        await createNotification({
+          userId: participant.userId,
+          type: 'message',
+          actorId: senderId,
+          entityType: 'chat',
+          entityId: chatId,
+          url: `/chat/${chatId}`,
+          message: notificationMessage
+        });
+      }
+    }
+
     // Format message - handle both column naming conventions
     const formattedMessage = {
       id: newMessage.id,

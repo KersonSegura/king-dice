@@ -734,6 +734,33 @@ export async function PATCH(request: NextRequest) {
       .update({ updatedAt: new Date().toISOString() })
       .eq('id', chatId);
 
+    // Get chat name and current user info for notifications
+    const { data: chatInfo } = await supabaseAdmin
+      .from('chats')
+      .select('name')
+      .eq('id', chatId)
+      .single();
+
+    const { data: currentUserInfo } = await supabaseAdmin
+      .from('users')
+      .select('username')
+      .eq('id', currentUserId)
+      .single();
+
+    // Create notifications for each newly added user
+    const { createNotification } = await import('@/lib/notifications');
+    for (const userId of newUserIds) {
+      await createNotification({
+        userId,
+        type: 'system',
+        actorId: currentUserId,
+        entityType: 'chat',
+        entityId: chatId,
+        url: `/chat/${chatId}`,
+        message: `${currentUserInfo?.username || 'Someone'} added you to the group "${chatInfo?.name || 'Group Chat'}"`
+      });
+    }
+
     return NextResponse.json({ 
       message: 'Participants added successfully',
       added: newUserIds.length
