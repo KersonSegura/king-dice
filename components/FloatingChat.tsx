@@ -11,6 +11,39 @@ import ChatBot from './ChatBot';
 import GroupChatModal from './GroupChatModal';
 import ViewMembersModal from './ViewMembersModal';
 
+// Color palette for group chats - enough colors to minimize repeats
+const GROUP_COLORS = [
+  '#3b82f6', // blue-500
+  '#10b981', // emerald-500
+  '#f59e0b', // amber-500
+  '#ef4444', // red-500
+  '#8b5cf6', // violet-500
+  '#ec4899', // pink-500
+  '#06b6d4', // cyan-500
+  '#84cc16', // lime-500
+  '#f97316', // orange-500
+  '#6366f1', // indigo-500
+  '#14b8a6', // teal-500
+  '#a855f7', // purple-500
+  '#22c55e', // green-500
+  '#eab308', // yellow-500
+  '#64748b', // slate-500
+];
+
+// Function to assign a consistent color to a group chat based on its ID
+function getGroupChatColor(chatId: string): string {
+  // Simple hash function to convert chat ID to a number
+  let hash = 0;
+  for (let i = 0; i < chatId.length; i++) {
+    const char = chatId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Use absolute value and modulo to get index
+  const index = Math.abs(hash) % GROUP_COLORS.length;
+  return GROUP_COLORS[index];
+}
+
 // Custom User Search Component
 function CustomChatList({ 
   onSelectChat, 
@@ -207,7 +240,10 @@ function CustomChatList({
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
                     {chat.type === 'group' ? (
-                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white">
+                      <div 
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                        style={{ backgroundColor: getGroupChatColor(chat.id) }}
+                      >
                         <Users className="w-6 h-6" />
                       </div>
                     ) : (
@@ -820,6 +856,13 @@ export default function FloatingChat() {
                           alt="Dice-Bot"
                           className="w-6 h-6"
                         />
+                      </div>
+                    ) : selectedChat.type === 'group' ? (
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                        style={{ backgroundColor: getGroupChatColor(selectedChat.id) }}
+                      >
+                        <Users className="w-5 h-5" />
                       </div>
                     ) : (
                       <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">

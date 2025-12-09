@@ -5,6 +5,39 @@ import { MessageCircle, Plus, Search, Users, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from './Toast';
 
+// Color palette for group chats - enough colors to minimize repeats
+const GROUP_COLORS = [
+  '#3b82f6', // blue-500
+  '#10b981', // emerald-500
+  '#f59e0b', // amber-500
+  '#ef4444', // red-500
+  '#8b5cf6', // violet-500
+  '#ec4899', // pink-500
+  '#06b6d4', // cyan-500
+  '#84cc16', // lime-500
+  '#f97316', // orange-500
+  '#6366f1', // indigo-500
+  '#14b8a6', // teal-500
+  '#a855f7', // purple-500
+  '#22c55e', // green-500
+  '#eab308', // yellow-500
+  '#64748b', // slate-500
+];
+
+// Function to assign a consistent color to a group chat based on its ID
+function getGroupChatColor(chatId: string): string {
+  // Simple hash function to convert chat ID to a number
+  let hash = 0;
+  for (let i = 0; i < chatId.length; i++) {
+    const char = chatId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Use absolute value and modulo to get index
+  const index = Math.abs(hash) % GROUP_COLORS.length;
+  return GROUP_COLORS[index];
+}
+
 interface Chat {
   id: string;
   name: string;
@@ -165,17 +198,26 @@ export default function ChatList({ onSelectChat, onCreateGroup, onStartDirectCha
                   className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {displayAvatar ? (
-                        <img
-                          src={displayAvatar}
-                          alt={displayName}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      ) : (
-                        displayName.charAt(0).toUpperCase()
-                      )}
-                    </div>
+                    {chat.type === 'group' ? (
+                      <div 
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                        style={{ backgroundColor: getGroupChatColor(chat.id) }}
+                      >
+                        <Users className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                        {displayAvatar ? (
+                          <img
+                            src={displayAvatar}
+                            alt={displayName}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          displayName.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-gray-900 truncate">
