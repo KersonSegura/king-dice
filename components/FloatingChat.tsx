@@ -1,5 +1,6 @@
 'use client';
 
+// FloatingChat component for managing chat interface
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical, Trash2, Ban, Flag, LogOut, Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
