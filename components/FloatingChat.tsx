@@ -52,6 +52,8 @@ function CustomChatList({
   onStartBotChat,
   user,
   refreshTrigger,
+  chatsWithUnread,
+  onChatOpened,
   onStartGroupChatWithUser
 }: {
   onSelectChat: (chat: any) => void;
@@ -60,6 +62,8 @@ function CustomChatList({
   onStartBotChat: () => void;
   user: any;
   refreshTrigger?: number;
+  chatsWithUnread?: Set<string>;
+  onChatOpened?: (chatId: string) => void;
   onStartGroupChatWithUser?: (targetUser: any) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,11 +99,14 @@ function CustomChatList({
     }
   };
 
-  // Fetch existing chats
+  // Fetch existing chats - optimized to show immediately
   const fetchExistingChats = async () => {
     if (!user?.id) return;
     
     try {
+      // Show empty array immediately to avoid blocking
+      setExistingChats([]);
+      
       const response = await fetch(`/api/chats?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
@@ -231,11 +238,21 @@ function CustomChatList({
             <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Recent Chats
             </div>
-            {existingChats.slice(0, 5).map((chat) => (
+            {existingChats.slice(0, 5).map((chat) => {
+              const hasUnread = chatsWithUnread?.has(chat.id) || false;
+              return (
               <div
                 key={chat.id}
-                onClick={() => onSelectChat(chat)}
-                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                onClick={() => {
+                  onSelectChat(chat);
+                  // Remove from unread set when opened
+                  if (onChatOpened) {
+                    onChatOpened(chat.id);
+                  }
+                }}
+                className={`p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors relative ${
+                  hasUnread ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                }`}
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
@@ -281,9 +298,13 @@ function CustomChatList({
                       )}
                     </div>
                   </div>
+                  {hasUnread && (
+                    <div className="absolute top-2 right-2 w-3 h-3 bg-blue-500 rounded-full"></div>
+                  )}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 
@@ -382,6 +403,7 @@ export default function FloatingChat() {
   const [initialGroupUser, setInitialGroupUser] = useState<any>(null);
   const [showAddPeople, setShowAddPeople] = useState(false);
   const [showViewMembers, setShowViewMembers] = useState(false);
+  const [chatsWithUnread, setChatsWithUnread] = useState<Set<string>>(new Set());
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {
@@ -677,12 +699,20 @@ export default function FloatingChat() {
           const notification: any = payload.new;
           
           // Handle message notifications
-          if (notification.type === 'message' && !isChatOpen) {
+          if (notification.type === 'message') {
             // Refresh unread count immediately
             await fetchUnreadCount();
             
-            // Play sound
-            playMessageSound();
+            // Add chat to unread set if chat is not currently open
+            const notificationChatId = notification.entity_id || notification.entityId;
+            if (notificationChatId && !isChatOpen && selectedChat?.id !== notificationChatId) {
+              setChatsWithUnread(prev => new Set(prev).add(notificationChatId));
+            }
+            
+            // Only play sound if chat is not open
+            if (!isChatOpen) {
+              playMessageSound();
+            }
           }
           
           // Handle group addition notifications
@@ -746,6 +776,11 @@ export default function FloatingChat() {
               // (if chat is open, messages are marked as read, so count decreases)
               // (if chat is not open, count increases)
               await fetchUnreadCount();
+              
+              // Add chat to unread set if chat is not currently open
+              if (!isChatOpen && selectedChat?.id !== chatId) {
+                setChatsWithUnread(prev => new Set(prev).add(chatId));
+              }
               
               // Only play sound if chat is not open
               if (!isChatOpen) {
@@ -874,6 +909,12 @@ export default function FloatingChat() {
 
   const handleSelectChat = (chat: any) => {
     setSelectedChat(chat);
+    // Remove from unread set when chat is opened
+    setChatsWithUnread(prev => {
+      const next = new Set(prev);
+      next.delete(chat.id);
+      return next;
+    });
   };
 
   // Refresh chat list when going back to the list
@@ -1164,6 +1205,15 @@ export default function FloatingChat() {
                 onStartBotChat={handleStartBotChat}
                 user={user}
                 refreshTrigger={chatListRefreshTrigger}
+                chatsWithUnread={chatsWithUnread}
+                onChatOpened={(chatId) => {
+                  // Remove from unread set when chat is opened
+                  setChatsWithUnread(prev => {
+                    const next = new Set(prev);
+                    next.delete(chatId);
+                    return next;
+                  });
+                }}
                 onStartGroupChatWithUser={(targetUser) => {
                   setInitialGroupUser(targetUser);
                   setShowCreateGroup(true);
