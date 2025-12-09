@@ -345,8 +345,6 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   }, [chatId, user?.id]);
 
   // Auto-scroll to bottom - immediately when messages load, smooth for new messages
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
   useEffect(() => {
     if (messages.length > 0 && messagesEndRef.current) {
       // Scroll immediately on initial load, smooth for subsequent updates
