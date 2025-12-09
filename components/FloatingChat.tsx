@@ -895,15 +895,15 @@ export default function FloatingChat() {
               )}
             </div>
             
-            <div className="flex items-center space-x-2 relative">
+            <div className="flex items-center gap-3 relative">
               {/* Create Group Chat Button - Show when no chat is selected */}
               {!selectedChat && (
                 <button
                   onClick={handleCreateGroup}
-                  className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                  className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
                   title="Create Group Chat"
                 >
-                  <Users className="w-6 h-6 sm:w-5 sm:h-5" />
+                  <Users className="w-5 h-5" />
                 </button>
               )}
               
@@ -911,10 +911,10 @@ export default function FloatingChat() {
               {selectedChat && selectedChat.type === 'group' && (
                 <button
                   onClick={() => setShowAddPeople(true)}
-                  className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                  className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
                   title="Add People"
                 >
-                  <Plus className="w-6 h-6 sm:w-5 sm:h-5" />
+                  <Plus className="w-5 h-5" />
                 </button>
               )}
               
@@ -925,10 +925,10 @@ export default function FloatingChat() {
                       e.stopPropagation();
                       setShowDropdown(!showDropdown);
                     }}
-                    className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                    className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
                     title="More options"
                   >
-                    <MoreVertical className="w-6 h-6 sm:w-5 sm:h-5" />
+                    <MoreVertical className="w-5 h-5" />
                   </button>
                   
                   {showDropdown && (
@@ -1012,9 +1012,9 @@ export default function FloatingChat() {
                   setSelectedChat(null);
                   setShowDropdown(false);
                 }}
-                className="text-white hover:text-gray-200 p-2 -m-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
               >
-                <X className="w-6 h-6 sm:w-5 sm:h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
