@@ -318,7 +318,7 @@ function CustomChatList({
                     </div>
                   </div>
                   {unreadCount > 0 && (
-                    <div className="absolute top-2 right-2 min-w-[20px] h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5">
+                    <div className="absolute top-1/2 -translate-y-1/2 right-4 min-w-[28px] h-7 bg-blue-500 text-white text-sm font-bold rounded-full flex items-center justify-center px-2">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </div>
                   )}
