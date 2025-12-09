@@ -713,7 +713,7 @@ export default function FloatingChat() {
           
           // Check if this message is in a chat where user is a participant
           // and message is not from current user
-          if (senderId !== user.id && !isChatOpen && chatId) {
+          if (senderId !== user.id && chatId) {
             // Check if user is a participant in this chat (try both naming conventions)
             let participant = null;
             
@@ -742,9 +742,15 @@ export default function FloatingChat() {
             }
             
             if (participant) {
-              // User is a participant - refresh unread count and play sound
+              // User is a participant - always refresh unread count
+              // (if chat is open, messages are marked as read, so count decreases)
+              // (if chat is not open, count increases)
               await fetchUnreadCount();
-              playMessageSound();
+              
+              // Only play sound if chat is not open
+              if (!isChatOpen) {
+                playMessageSound();
+              }
             }
           }
         })
@@ -761,12 +767,24 @@ export default function FloatingChat() {
     return () => clearInterval(interval);
   }, [isAuthenticated, user?.id, unreadCount, previousUnreadCount, isChatOpen]);
 
-  // Reset unread count when chat is opened
+  // Update unread count when chat is opened or closed
   useEffect(() => {
-    if (isChatOpen) {
-      setUnreadCount(0);
+    if (isAuthenticated && user?.id) {
+      const updateUnreadCount = async () => {
+        try {
+          const response = await fetch(`/api/messages/unread?userId=${user.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setUnreadCount(data.unreadCount || 0);
+          }
+        } catch (error) {
+          console.error('Error fetching unread count:', error);
+        }
+      };
+      
+      updateUnreadCount();
     }
-  }, [isChatOpen]);
+  }, [isChatOpen, isAuthenticated, user?.id]);
 
   // Early return AFTER all hooks
   if (!isAuthenticated || !user) {

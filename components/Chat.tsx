@@ -206,9 +206,42 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
           // or if it's a different message than what we already have
           if (messageChatId === chatId) {
             // Check if message already exists (avoid duplicates)
+            // Also check for optimistic messages with same content from same sender
             setMessages(prev => {
               const exists = prev.some(m => m.id === newMessage.id);
               if (exists) return prev;
+              
+              // Check if there's an optimistic message with same content that we should replace
+              const optimisticIndex = prev.findIndex(m => 
+                m.id.startsWith('temp-') && 
+                m.senderId === messageSenderId && 
+                m.content === newMessage.content &&
+                Math.abs(new Date(m.createdAt).getTime() - new Date(newMessage.createdAt || newMessage.created_at).getTime()) < 5000
+              );
+              
+              if (optimisticIndex !== -1) {
+                // Replace optimistic message in place
+                const updated = [...prev];
+                const fullMessage: Message = {
+                  id: newMessage.id,
+                  chatId: messageChatId,
+                  senderId: messageSenderId,
+                  content: newMessage.content,
+                  type: newMessage.type || 'text',
+                  replyToId: newMessage.replyToId || newMessage.reply_to_id,
+                  createdAt: newMessage.createdAt || newMessage.created_at,
+                  sender: newMessage.sender || {
+                    id: messageSenderId,
+                    username: 'Unknown',
+                    avatar: '',
+                    isVerified: false,
+                    isAdmin: false
+                  },
+                  replyTo: undefined
+                };
+                updated[optimisticIndex] = fullMessage;
+                return updated;
+              }
               
               // Fetch sender info if not included
               if (!newMessage.sender && messageSenderId) {
@@ -276,7 +309,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
               return [...prev, fullMessage];
             });
 
-            // Mark as read if chat is open
+            // Mark as read if chat is open and message is from another user
             if (messageSenderId !== user.id) {
               try {
                 await fetch('/api/messages/unread', {
@@ -284,6 +317,11 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ userId: user.id, chatId })
                 });
+                
+                // Notify parent to update unread count
+                if (onMessageSent) {
+                  onMessageSent();
+                }
               } catch (error) {
                 // Silent fail - not critical
               }
@@ -368,21 +406,25 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       
       if (response.ok) {
         const data = await response.json();
-        // Replace optimistic message with real message from server
+        // Update optimistic message in place to avoid flicker
         setMessages(prev => {
-          const filtered = prev.filter(m => m.id !== optimisticMessage.id);
-          return [...filtered, data.message];
+          const index = prev.findIndex(m => m.id === optimisticMessage.id);
+          if (index !== -1) {
+            // Replace optimistic message with real message in place
+            const updated = [...prev];
+            updated[index] = data.message;
+            return updated;
+          }
+          // If optimistic message not found, just add the real one (shouldn't happen)
+          const exists = prev.some(m => m.id === data.message.id);
+          if (exists) return prev;
+          return [...prev, data.message];
         });
         
         // Notify parent to refresh chat list
         if (onMessageSent) {
           onMessageSent();
         }
-        
-        // Scroll to bottom after update
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
       } else {
         // Remove optimistic message on error
         setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
