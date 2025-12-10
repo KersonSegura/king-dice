@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -575,6 +574,9 @@ export async function POST(request: NextRequest) {
     
     // Remove id if it somehow exists in the body (shouldn't happen, but defensive)
     delete body.id;
+    
+    // Lazy load prisma only when needed (POST handler)
+    const { prisma } = await import('@/lib/prisma');
     
     // Check for duplicate games (case-sensitive for now)
     const existingGame = await prisma.game.findFirst({
