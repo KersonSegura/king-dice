@@ -642,50 +642,22 @@ export async function POST(request: NextRequest) {
         userVotes: 0,
       };
       
-      // Try camelCase first
-      let gameResult = await supabaseAdmin
+      // Insert game using camelCase (matches Prisma schema)
+      const gameResult = await supabaseAdmin
         .from('games')
         .insert(gameData)
         .select('id, nameEn, nameEs, name, yearRelease, year')
         .single();
       
-      // If camelCase fails, try snake_case
-      if (gameResult.error) {
-        const snakeGameData: any = {
-          name_en: gameData.nameEn,
-          name_es: gameData.nameEs,
-          year_release: gameData.yearRelease,
-          designer: gameData.designer,
-          developer: gameData.developer,
-          min_players: gameData.minPlayers,
-          max_players: gameData.maxPlayers,
-          duration_minutes: gameData.durationMinutes,
-          image_url: gameData.imageUrl,
-          thumbnail_url: gameData.thumbnailUrl,
-          video_url: gameData.videoUrl,
-          pdf_url: gameData.pdfUrl,
-          pdf_file: gameData.pdfFile,
-          official_website: gameData.officialWebsite,
-          is_expansion: gameData.isExpansion,
-          name: gameData.name,
-          year: gameData.year,
-          min_play_time: gameData.minPlayTime,
-          max_play_time: gameData.maxPlayTime,
-          image: gameData.image,
-          expansions: gameData.expansions,
-          category: gameData.category,
-          user_rating: gameData.userRating,
-          user_votes: gameData.userVotes,
-        };
-        
-        gameResult = await supabaseAdmin
-          .from('games')
-          .insert(snakeGameData)
-          .select('id, nameEn, nameEs, name, yearRelease, year, name_en, name_es, year_release')
-          .single();
-      }
-      
       if (gameResult.error || !gameResult.data) {
+        console.error('❌ Error creating game:', JSON.stringify(gameResult.error, null, 2));
+        console.error('📋 Game data attempted:', JSON.stringify(gameData, null, 2));
+        console.error('🔍 Error details:', {
+          message: gameResult.error?.message,
+          code: gameResult.error?.code,
+          details: gameResult.error?.details,
+          hint: gameResult.error?.hint
+        });
         throw new Error(`Failed to create game: ${gameResult.error?.message || 'Unknown error'}`);
       }
       
