@@ -575,119 +575,134 @@ export async function POST(request: NextRequest) {
     // Remove id if it somehow exists in the body (shouldn't happen, but defensive)
     delete body.id;
     
-    // Check for DATABASE_URL before importing prisma (to provide better error message)
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { 
-          error: 'Database connection not configured',
-          message: 'DATABASE_URL environment variable is required but not set.',
-          hint: 'For local development, create a .env file in the project root with your Supabase connection string:\nDATABASE_URL=postgresql://user:password@host:port/database'
-        },
-        { status: 500 }
-      );
-    }
+    // Check for duplicate games using Supabase (case-sensitive for now)
+    const { data: existingGames, error: findError } = await supabaseAdmin
+      .from('games')
+      .select('id')
+      .or(`nameEn.eq.${body.nameEn},nameEs.eq.${body.nameEs},name.eq.${body.nameEn}`)
+      .limit(1);
     
-    // Lazy load prisma only when needed (POST handler)
-    const { prisma } = await import('@/lib/prisma');
-    
-    // Check for duplicate games (case-sensitive for now)
-    const existingGame = await prisma.game.findFirst({
-      where: {
-        OR: [
-          { nameEn: { equals: body.nameEn } },
-          { nameEs: { equals: body.nameEs } },
-          { name: { equals: body.nameEn } }
-        ]
-      }
-    });
+    const existingGame = existingGames && existingGames.length > 0 ? { id: existingGames[0].id } : null;
 
     // If game exists, delete it and all related data to overwrite
     if (existingGame) {
       console.log(`🔄 Game already exists (ID: ${existingGame.id}), deleting to overwrite...`);
       
-      // Delete all related data first (Prisma should handle this with cascading deletes if configured)
-      await prisma.$transaction(async (tx) => {
-        // Delete descriptions
-        await tx.gameDescription.deleteMany({
-          where: { gameId: existingGame.id }
-        });
-        
-        // Delete rules
-        await tx.gameRule.deleteMany({
-          where: { gameId: existingGame.id }
-        });
-        
-        // Delete category relationships
-        await tx.gameCategory.deleteMany({
-          where: { gameId: existingGame.id }
-        });
-        
-        // Delete mechanic relationships
-        await tx.gameMechanic.deleteMany({
-          where: { gameId: existingGame.id }
-        });
-        
-        // Delete expansion relationships (where this game is the base game)
-        await tx.expansion.deleteMany({
-          where: { baseGameId: existingGame.id }
-        });
-        
-        // Finally, delete the game itself
-        await tx.game.delete({
-          where: { id: existingGame.id }
-        });
-      }, {
-        timeout: 30000, // 30 seconds timeout for complex operations
-        maxWait: 5000,  // 5 seconds max wait to acquire a connection
-      });
+      // Delete all related data first (using Supabase - handle both column naming conventions)
+      const gameId = existingGame.id;
+      
+      // Delete in reverse order of dependencies (cascading deletes should handle this, but being explicit)
+      await Promise.all([
+        supabaseAdmin.from('game_descriptions').delete().or(`gameId.eq.${gameId},game_id.eq.${gameId}`),
+        supabaseAdmin.from('game_rules').delete().or(`gameId.eq.${gameId},game_id.eq.${gameId}`),
+        supabaseAdmin.from('game_categories').delete().or(`gameId.eq.${gameId},game_id.eq.${gameId}`),
+        supabaseAdmin.from('game_mechanics').delete().or(`gameId.eq.${gameId},game_id.eq.${gameId}`),
+        supabaseAdmin.from('expansions').delete().or(`baseGameId.eq.${gameId},base_game_id.eq.${gameId}`)
+      ]);
+      
+      // Finally, delete the game itself
+      await supabaseAdmin.from('games').delete().eq('id', gameId);
       
       console.log(`✅ Existing game deleted, proceeding with new data...`);
     }
     
-    // Use a transaction to ensure all operations succeed or all fail
-    // Increased timeout to 30 seconds for complex operations
-    const result = await prisma.$transaction(async (tx) => {
-      // Create a new game - explicitly define all fields (no spread operator)
-      const game = await tx.game.create({
-        data: {
-          nameEn: body.nameEn || '',
-          nameEs: body.nameEs || '',
-          yearRelease: body.yearRelease || null,
-          designer: body.designer || null,
-          developer: body.developer || null,
-          minPlayers: body.minPlayers || null,
-          maxPlayers: body.maxPlayers || null,
-          durationMinutes: body.durationMinutes || null,
-          imageUrl: body.imageUrl || null,
-          thumbnailUrl: body.thumbnailUrl || null,
-          videoUrl: body.videoUrl || null,
-          pdfUrl: body.pdfUrl || null,
-          pdfFile: body.pdfFile || null,
-          officialWebsite: body.officialWebsite || null,
-          isExpansion: body.isExpansion || false,
-          // Legacy fields
-          name: body.nameEn || '',
-          year: body.yearRelease || null,
-          minPlayTime: body.durationMinutes || null,
-          maxPlayTime: body.durationMinutes || null,
-          image: body.thumbnailUrl || body.imageUrl || null,
-          expansions: 0,
-          category: 'ranked',
-          userRating: 0,
-          userVotes: 0,
-        },
-      });
-
-      console.log(`✅ Game created with ID: ${game.id}`);
+    // Create game and related data using Supabase
+    // We'll handle rollback manually if any step fails
+    let createdGame: any = null;
+    let createdDescriptionIds: number[] = [];
+    let createdRuleId: number | null = null;
+    
+    try {
+      // Create the game - try camelCase first, fallback to snake_case
+      const gameData: any = {
+        nameEn: body.nameEn || '',
+        nameEs: body.nameEs || '',
+        yearRelease: body.yearRelease || null,
+        designer: body.designer || null,
+        developer: body.developer || null,
+        minPlayers: body.minPlayers || null,
+        maxPlayers: body.maxPlayers || null,
+        durationMinutes: body.durationMinutes || null,
+        imageUrl: body.imageUrl || null,
+        thumbnailUrl: body.thumbnailUrl || null,
+        videoUrl: body.videoUrl || null,
+        pdfUrl: body.pdfUrl || null,
+        pdfFile: body.pdfFile || null,
+        officialWebsite: body.officialWebsite || null,
+        isExpansion: body.isExpansion || false,
+        // Legacy fields
+        name: body.nameEn || '',
+        year: body.yearRelease || null,
+        minPlayTime: body.durationMinutes || null,
+        maxPlayTime: body.durationMinutes || null,
+        image: body.thumbnailUrl || body.imageUrl || null,
+        expansions: 0,
+        category: 'ranked',
+        userRating: 0,
+        userVotes: 0,
+      };
+      
+      // Try camelCase first
+      let gameResult = await supabaseAdmin
+        .from('games')
+        .insert(gameData)
+        .select('id, nameEn, nameEs, name, yearRelease, year')
+        .single();
+      
+      // If camelCase fails, try snake_case
+      if (gameResult.error) {
+        const snakeGameData: any = {
+          name_en: gameData.nameEn,
+          name_es: gameData.nameEs,
+          year_release: gameData.yearRelease,
+          designer: gameData.designer,
+          developer: gameData.developer,
+          min_players: gameData.minPlayers,
+          max_players: gameData.maxPlayers,
+          duration_minutes: gameData.durationMinutes,
+          image_url: gameData.imageUrl,
+          thumbnail_url: gameData.thumbnailUrl,
+          video_url: gameData.videoUrl,
+          pdf_url: gameData.pdfUrl,
+          pdf_file: gameData.pdfFile,
+          official_website: gameData.officialWebsite,
+          is_expansion: gameData.isExpansion,
+          name: gameData.name,
+          year: gameData.year,
+          min_play_time: gameData.minPlayTime,
+          max_play_time: gameData.maxPlayTime,
+          image: gameData.image,
+          expansions: gameData.expansions,
+          category: gameData.category,
+          user_rating: gameData.userRating,
+          user_votes: gameData.userVotes,
+        };
+        
+        gameResult = await supabaseAdmin
+          .from('games')
+          .insert(snakeGameData)
+          .select('id, nameEn, nameEs, name, yearRelease, year, name_en, name_es, year_release')
+          .single();
+      }
+      
+      if (gameResult.error || !gameResult.data) {
+        throw new Error(`Failed to create game: ${gameResult.error?.message || 'Unknown error'}`);
+      }
+      
+      createdGame = gameResult.data;
+      const gameId = createdGame.id;
+      
+      console.log(`✅ Game created with ID: ${gameId}`);
 
       // Check if any users have usernames that conflict with this game name
       // This runs after game creation to avoid blocking game creation if there's an error
       try {
         const { findConflictingUsernames } = await import('@/lib/username-validation');
-        const conflictingUserIds = await findConflictingUsernames(game.nameEn || body.nameEn || '');
+        const gameName = createdGame.nameEn || createdGame.name_en || body.nameEn || '';
+        const conflictingUserIds = await findConflictingUsernames(gameName);
         
         if (conflictingUserIds.length > 0) {
-          console.log(`⚠️ Found ${conflictingUserIds.length} users with conflicting usernames for game "${game.nameEn}"`);
+          console.log(`⚠️ Found ${conflictingUserIds.length} users with conflicting usernames for game "${gameName}"`);
           
           // Flag these users as needing to change their username
           for (const userId of conflictingUserIds) {
@@ -695,7 +710,7 @@ export async function POST(request: NextRequest) {
               .from('users')
               .update({
                 username_change_required: true,
-                username_change_reason: `Game name conflict: "${game.nameEn}"`
+                username_change_reason: `Game name conflict: "${gameName}"`
               })
               .eq('id', userId);
             
@@ -709,55 +724,138 @@ export async function POST(request: NextRequest) {
 
       // Add English description if provided
       if (body.fullDescription) {
-        await tx.gameDescription.create({
-          data: {
-            gameId: game.id,
+        const descData: any = {
+          gameId: gameId,
+          language: 'en',
+          shortDescription: body.fullDescription.substring(0, 200) + (body.fullDescription.length > 200 ? '...' : ''),
+          fullDescription: body.fullDescription,
+        };
+        
+        let descResult = await supabaseAdmin
+          .from('game_descriptions')
+          .insert(descData)
+          .select('id')
+          .single();
+        
+        // Try snake_case if camelCase fails
+        if (descResult.error) {
+          const snakeDescData: any = {
+            game_id: gameId,
             language: 'en',
-            shortDescription: body.fullDescription.substring(0, 200) + (body.fullDescription.length > 200 ? '...' : ''),
-            fullDescription: body.fullDescription,
-          },
-        });
-        console.log(`✅ English description created for game ${game.id}`);
+            short_description: descData.shortDescription,
+            full_description: descData.fullDescription,
+          };
+          descResult = await supabaseAdmin
+            .from('game_descriptions')
+            .insert(snakeDescData)
+            .select('id')
+            .single();
+        }
+        
+        if (!descResult.error && descResult.data) {
+          createdDescriptionIds.push(descResult.data.id);
+          console.log(`✅ English description created for game ${gameId}`);
+        }
       }
 
-      // Add Spanish description if provided (and different from English)
-      // Only create Spanish description if nameEs is provided AND we want a separate Spanish description
-      // For now, we'll skip creating a duplicate Spanish description with the same content
-      // Users can add Spanish descriptions later if needed
+      // Add Spanish description if provided
       if (body.fullDescriptionEs && body.nameEs) {
-        await tx.gameDescription.create({
-          data: {
-            gameId: game.id,
+        const descData: any = {
+          gameId: gameId,
+          language: 'es',
+          shortDescription: body.fullDescriptionEs.substring(0, 200) + (body.fullDescriptionEs.length > 200 ? '...' : ''),
+          fullDescription: body.fullDescriptionEs,
+        };
+        
+        let descResult = await supabaseAdmin
+          .from('game_descriptions')
+          .insert(descData)
+          .select('id')
+          .single();
+        
+        // Try snake_case if camelCase fails
+        if (descResult.error) {
+          const snakeDescData: any = {
+            game_id: gameId,
             language: 'es',
-            shortDescription: body.fullDescriptionEs.substring(0, 200) + (body.fullDescriptionEs.length > 200 ? '...' : ''),
-            fullDescription: body.fullDescriptionEs,
-          },
-        });
-        console.log(`✅ Spanish description created for game ${game.id}`);
+            short_description: descData.shortDescription,
+            full_description: descData.fullDescription,
+          };
+          descResult = await supabaseAdmin
+            .from('game_descriptions')
+            .insert(snakeDescData)
+            .select('id')
+            .single();
+        }
+        
+        if (!descResult.error && descResult.data) {
+          createdDescriptionIds.push(descResult.data.id);
+          console.log(`✅ Spanish description created for game ${gameId}`);
+        }
       }
 
       // Add rules if provided
       if (body.rulesText && body.rulesText.trim()) {
-        await tx.gameRule.create({
-          data: {
-            gameId: game.id,
+        const ruleData: any = {
+          gameId: gameId,
+          language: 'es',
+          rulesText: body.rulesText,
+          rulesHtml: `<div class="game-rules">${body.rulesText.replace(/\n/g, '<br>')}</div>`,
+        };
+        
+        let ruleResult = await supabaseAdmin
+          .from('game_rules')
+          .insert(ruleData)
+          .select('id')
+          .single();
+        
+        // Try snake_case if camelCase fails
+        if (ruleResult.error) {
+          const snakeRuleData: any = {
+            game_id: gameId,
             language: 'es',
-            rulesText: body.rulesText,
-            rulesHtml: `<div class="game-rules">${body.rulesText.replace(/\n/g, '<br>')}</div>`,
-          },
-        });
-        console.log(`✅ Rules created for game ${game.id}`);
+            rules_text: ruleData.rulesText,
+            rules_html: ruleData.rulesHtml,
+          };
+          ruleResult = await supabaseAdmin
+            .from('game_rules')
+            .insert(snakeRuleData)
+            .select('id')
+            .single();
+        }
+        
+        if (!ruleResult.error && ruleResult.data) {
+          createdRuleId = ruleResult.data.id;
+          console.log(`✅ Rules created for game ${gameId}`);
+        }
       } else {
-        console.log(`⚠️ No rules provided for game ${game.id}`);
+        console.log(`⚠️ No rules provided for game ${gameId}`);
       }
+      
+      // All operations succeeded
+      // result will be set below after try-catch
 
-      return game;
-    }, {
-      timeout: 30000, // 30 seconds timeout for complex operations
-      maxWait: 5000,  // 5 seconds max wait to acquire a connection
-    });
+    } catch (createError) {
+      // Rollback: delete anything we created
+      if (createdGame) {
+        console.log(`⚠️ Rolling back game creation for game ID: ${createdGame.id}`);
+        // Delete descriptions
+        if (createdDescriptionIds.length > 0) {
+          await supabaseAdmin.from('game_descriptions').delete().in('id', createdDescriptionIds);
+        }
+        // Delete rule
+        if (createdRuleId) {
+          await supabaseAdmin.from('game_rules').delete().eq('id', createdRuleId);
+        }
+        // Delete game
+        await supabaseAdmin.from('games').delete().eq('id', createdGame.id);
+      }
+      throw createError;
+    }
 
-    console.log(`✅ Transaction completed successfully for game: ${result.nameEn}`);
+    const result = createdGame!; // Safe to assert non-null here since we wouldn't reach this if creation failed
+    const gameName = result.nameEn || result.name_en || result.name || body.nameEn || '';
+    console.log(`✅ Game creation completed successfully: ${gameName}`);
     
     // Check if any users have usernames that conflict with this game name
     // Auto-rename them and send notifications
@@ -766,8 +864,11 @@ export async function POST(request: NextRequest) {
       const { autoRenameConflictingUsers } = await import('@/lib/username-validation');
       const { createNotification } = await import('@/lib/notifications');
       
-      // Check all game name fields for conflicts
-      const gameNames = [result.nameEn, result.nameEs, result.name].filter(Boolean);
+      // Check all game name fields for conflicts  
+      const gameNameEn = result.nameEn || result.name_en || '';
+      const gameNameEs = result.nameEs || result.name_es || '';
+      const gameNameLegacy = result.name || '';
+      const gameNames = [gameNameEn, gameNameEs, gameNameLegacy].filter(Boolean);
       
       for (const gameName of gameNames) {
         if (!gameName) continue;
@@ -801,7 +902,10 @@ export async function POST(request: NextRequest) {
       const { createNotification } = await import('@/lib/notifications');
       
       // Check for matching game suggestions (case-insensitive)
-      const gameNamesToCheck = [result.nameEn, result.nameEs, result.name].filter(Boolean);
+      const gameNameEnCheck = result.nameEn || result.name_en || '';
+      const gameNameEsCheck = result.nameEs || result.name_es || '';
+      const gameNameLegacyCheck = result.name || '';
+      const gameNamesToCheck = [gameNameEnCheck, gameNameEsCheck, gameNameLegacyCheck].filter(Boolean);
       
       for (const gameName of gameNamesToCheck) {
         if (!gameName) continue;
