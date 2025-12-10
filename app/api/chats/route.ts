@@ -71,30 +71,57 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ chats: [] });
     }
 
-    // Get last message for each chat - optimized: limit results per chat
-    const { data: lastMessages, error: messagesError } = await supabaseAdmin
-      .from('messages')
-      .select(`
-        id,
-        chatId,
-        content,
-        type,
-        createdAt,
-        sender:users!messages_senderId_fkey (
-          id,
-          username,
-          avatar
-        )
-      `)
-      .in('chatId', chatIds)
-      .order('createdAt', { ascending: false })
-      .limit(chatIds.length * 10); // Limit to reasonable number (10 messages per chat max)
+    // Get last message for each chat - optimized: fetch only one message per chat
+    // Use a more efficient approach: get the latest message per chat
+    const lastMessages: any[] = [];
+    if (chatIds.length > 0) {
+      // Fetch last message for each chat in parallel (more efficient than fetching all and filtering)
+      const messagePromises = chatIds.map(async (chatId: string) => {
+        const { data, error } = await supabaseAdmin
+          .from('messages')
+          .select(`
+            id,
+            chatId,
+            content,
+            type,
+            createdAt,
+            senderId
+          `)
+          .eq('chatId', chatId)
+          .order('createdAt', { ascending: false })
+          .limit(1)
+          .maybeSingle(); // Use maybeSingle to avoid errors when no messages exist
+        
+        if (!error && data) {
+          // Fetch sender info separately if message exists
+          if (data.senderId) {
+            const { data: senderData } = await supabaseAdmin
+              .from('users')
+              .select('id, username, avatar')
+              .eq('id', data.senderId)
+              .maybeSingle(); // Use maybeSingle in case user doesn't exist
+            
+            return {
+              ...data,
+              sender: senderData || null
+            };
+          }
+          return { ...data, sender: null };
+        }
+        return null;
+      });
+      
+      const results = await Promise.all(messagePromises);
+      lastMessages.push(...results.filter(Boolean));
+    }
+    
+    const messagesError = null; // Set to null since we handle errors in the loop above
 
-    // Group messages by chatId and get the first (latest) one for each
+    // Group messages by chatId - already have one per chat
     const lastMessageMap = new Map();
-    if (lastMessages) {
+    if (lastMessages && lastMessages.length > 0) {
       for (const msg of lastMessages) {
-        if (!lastMessageMap.has(msg.chatId)) {
+        if (msg && msg.chatId) {
           lastMessageMap.set(msg.chatId, msg);
         }
       }

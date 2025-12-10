@@ -74,6 +74,41 @@ function CustomChatList({
   const [existingChats, setExistingChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Load cached chats instantly from localStorage
+  const loadCachedChats = (): any[] => {
+    if (typeof window === 'undefined' || !user?.id) return [];
+    try {
+      const cacheKey = `chats_cache_${user.id}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { chats, timestamp } = JSON.parse(cached);
+        // Cache is valid for 5 minutes
+        const cacheAge = Date.now() - timestamp;
+        if (cacheAge < 5 * 60 * 1000) {
+          return chats || [];
+        }
+      }
+    } catch (error) {
+      console.error('Error loading cached chats:', error);
+    }
+    return [];
+  };
+
+  // Save chats to localStorage cache
+  const saveCachedChats = (chats: any[]) => {
+    if (typeof window === 'undefined' || !user?.id) return;
+    try {
+      const cacheKey = `chats_cache_${user.id}`;
+      localStorage.setItem(cacheKey, JSON.stringify({
+        chats,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Error saving cached chats:', error);
+    }
+  };
 
   // Search for users
   const searchUsers = async (query: string) => {
@@ -102,17 +137,44 @@ function CustomChatList({
     }
   };
 
-  // Fetch existing chats - optimized to show immediately
-  const fetchExistingChats = async () => {
+  // Fetch existing chats - optimized with caching for instant display
+  const fetchExistingChats = async (showCached = true) => {
     if (!user?.id) return;
     
+    // Show cached chats instantly on first load
+    if (showCached && isInitialLoad) {
+      const cachedChats = loadCachedChats();
+      if (cachedChats.length > 0) {
+        setExistingChats(cachedChats);
+        setIsInitialLoad(false);
+        // Initialize unread counts from cache
+        if (setChatsWithUnread) {
+          const unreadMap = new Map<string, number>();
+          cachedChats.forEach((chat: any) => {
+            if (chat.unreadCount > 0) {
+              unreadMap.set(chat.id, chat.unreadCount);
+            }
+          });
+          setChatsWithUnread(prev => {
+            const merged = new Map(prev);
+            unreadMap.forEach((count, chatId) => {
+              merged.set(chatId, count);
+            });
+            return merged;
+          });
+        }
+      }
+    }
+    
+    // Fetch fresh data in background
     try {
-      // Don't clear existing chats - keep them visible while loading
       const response = await fetch(`/api/chats?userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
         const chats = data.chats || [];
         setExistingChats(chats);
+        saveCachedChats(chats); // Cache the fresh data
+        setIsInitialLoad(false);
         
         // Initialize unread counts from API response
         if (setChatsWithUnread) {
@@ -134,12 +196,21 @@ function CustomChatList({
       }
     } catch (error) {
       console.error('Error fetching chats:', error);
+      // Keep cached chats visible if fetch fails
+      if (existingChats.length === 0) {
+        const cachedChats = loadCachedChats();
+        if (cachedChats.length > 0) {
+          setExistingChats(cachedChats);
+        }
+      }
+      setIsInitialLoad(false);
     }
   };
 
   // Load existing chats on mount and when refreshTrigger changes
   useEffect(() => {
-    fetchExistingChats();
+    // Load cached chats immediately, then fetch fresh data
+    fetchExistingChats(true);
   }, [user?.id, refreshTrigger]);
 
   // Debounce search
@@ -197,16 +268,26 @@ function CustomChatList({
   };
 
   const formatTime = (dateString: string) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    if (diffInHours < 1) {
-      return 'now';
+    if (diffInMinutes < 1) {
+      return 'just now';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}m`;
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`;
+      return `${diffInHours}h`;
+    } else if (diffInDays === 1) {
+      return 'yesterday';
+    } else if (diffInDays < 7) {
+      return `${diffInDays}d`;
     } else {
-      return date.toLocaleDateString();
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
   };
 
@@ -251,6 +332,26 @@ function CustomChatList({
                 </div>
               </div>
             </div>
+
+        {/* Skeleton Loading - Show while initial load and no cached data */}
+        {!hasSearched && isInitialLoad && existingChats.length === 0 && (
+          <div className="border-b border-gray-100">
+            <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Recent Chats
+            </div>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 border-b border-gray-50 animate-pulse">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Existing Chats */}
         {!hasSearched && existingChats.length > 0 && (
@@ -312,7 +413,19 @@ function CustomChatList({
                       )}
                       {chat.lastMessage && (
                         <p className="text-sm text-gray-500 truncate">
-                          {chat.lastMessage.sender.username}: {chat.lastMessage.content}
+                          {chat.type === 'group' && chat.lastMessage.sender ? (
+                            <>
+                              <span className="font-medium">{chat.lastMessage.sender.username}:</span>{' '}
+                              {chat.lastMessage.content}
+                            </>
+                          ) : (
+                            chat.lastMessage.content
+                          )}
+                        </p>
+                      )}
+                      {!chat.lastMessage && (
+                        <p className="text-sm text-gray-400 italic">
+                          No messages yet
                         </p>
                       )}
                     </div>
@@ -425,6 +538,29 @@ export default function FloatingChat() {
   const [showAddPeople, setShowAddPeople] = useState(false);
   const [showViewMembers, setShowViewMembers] = useState(false);
   const [chatsWithUnread, setChatsWithUnread] = useState<Map<string, number>>(new Map());
+
+  // Prefetch chats on mount for instant access (even when chat is closed)
+  useEffect(() => {
+    if (user?.id && typeof window !== 'undefined') {
+      // Prefetch chats in background - use cached version if available
+      const cacheKey = `chats_cache_${user.id}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (!cached) {
+        // Only prefetch if no cache exists - this ensures instant loading when user opens chat
+        fetch(`/api/chats?userId=${user.id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.chats) {
+              localStorage.setItem(cacheKey, JSON.stringify({
+                chats: data.chats,
+                timestamp: Date.now()
+              }));
+            }
+          })
+          .catch(err => console.error('Error prefetching chats:', err));
+      }
+    }
+  }, [user?.id]);
 
   // Dispatch custom event for BackToTopButton to listen to
   useEffect(() => {
