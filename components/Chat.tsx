@@ -418,14 +418,17 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
-    // Store the message content before clearing
-    const messageContent = newMessage.trim();
+    // Store the original message content (in cleaner format) before clearing
+    const originalMessage = newMessage.trim();
+    
+    // Convert cleaner format (🔗GameName + ZWJ + id) back to markdown for sending
+    const messageContent = convertGameMentionsToMarkdown(originalMessage);
     
     // Clear input immediately for better UX
     setNewMessage('');
     setReplyingTo(null);
 
-    // Resolve @GameName mentions to links
+    // Resolve any remaining @GameName mentions to links (for backwards compatibility)
     const resolvedContent = await resolveGameMentions(messageContent);
 
     const messageData = {
@@ -497,16 +500,16 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
         const errorData = await response.json().catch(() => ({}));
         showToast(errorData.error || 'Failed to send message', 'error');
-        // Restore message to input
-        setNewMessage(messageContent);
+        // Restore message to input (in original cleaner format)
+        setNewMessage(originalMessage);
       }
     } catch (error) {
       // Remove optimistic message on error
       setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
       console.error('Error sending message:', error);
       showToast('Failed to send message', 'error');
-      // Restore message to input
-      setNewMessage(messageContent);
+      // Restore message to input (in original cleaner format)
+      setNewMessage(originalMessage);
     }
   };
 
@@ -542,11 +545,16 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       // Check if there's a space, newline, or closing bracket after the @ (mention ended or already a link)
       const textAfterAt = textBeforeCursor.substring(lastAtPos + 1);
       const hasSpaceAfterAt = textAfterAt.includes(' ') || textAfterAt.includes('\n');
-      const isAlreadyLink = value.substring(lastAtPos, cursorPos).includes('](/game/');
+      // Check for both markdown format and new cleaner format
+      const ZWJ = '\u200D';
+      const isAlreadyLink = value.substring(lastAtPos, cursorPos).includes('](/game/') || 
+                           value.substring(lastAtPos, cursorPos).includes(`🔗`) ||
+                           (textAfterAt.includes(ZWJ) && textAfterAt.split(ZWJ).length > 1);
       
       if (!hasSpaceAfterAt && !isAlreadyLink) {
-        // We're in a mention - extract the query
-        const query = textAfterAt;
+        // We're in a mention - extract the query (remove zero-width characters)
+        const ZWJ = '\u200D';
+        const query = textAfterAt.replace(new RegExp(ZWJ, 'g'), '').replace(/🔗/g, '');
         setMentionStartPos(lastAtPos);
         setMentionQuery(query);
         setShowMentionDropdown(true);
@@ -597,7 +605,11 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     const gameName = game.nameEn || game.name || mentionQuery;
     const beforeMention = newMessage.substring(0, mentionStartPos);
     const afterMention = newMessage.substring(mentionStartPos + 1 + mentionQuery.length);
-    const linkText = `[${gameName}](/game/${game.id})`;
+    // Use a cleaner visual format: 🔗 GameName
+    // Store the game ID using zero-width characters (invisible)
+    // Format: 🔗GameName + ZWJ + gameId + ZWJ (ZWJ = zero-width joiner \u200D)
+    const ZWJ = '\u200D'; // Zero-width joiner (invisible)
+    const linkText = `🔗${gameName}${ZWJ}${game.id}${ZWJ}`;
     const newText = beforeMention + linkText + afterMention;
     
     setNewMessage(newText);
@@ -608,11 +620,22 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     // Focus input and set cursor position after the inserted link
     setTimeout(() => {
       if (inputRef.current) {
-        const newCursorPos = beforeMention.length + linkText.length;
+        // Position cursor after the visible part
+        const visiblePart = `🔗${gameName}`;
+        const newCursorPos = beforeMention.length + visiblePart.length;
         inputRef.current.focus();
         inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
       }
     }, 0);
+  };
+
+  // Convert the cleaner format back to markdown when sending
+  const convertGameMentionsToMarkdown = (text: string): string => {
+    // Convert 🔗GameName + ZWJ + gameId + ZWJ back to [GameName](/game/id)
+    const ZWJ = '\u200D';
+    return text.replace(new RegExp(`🔗([^${ZWJ}]+)${ZWJ}(\\d+)${ZWJ}`, 'g'), (match, gameName, gameId) => {
+      return `[${gameName}](/game/${gameId})`;
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
