@@ -898,11 +898,27 @@ export async function POST(request: NextRequest) {
           try {
             console.log(`🔍 Searching for suggestions matching game name: "${gameName}"`);
             
-            const { data: matchingSuggestions, error: suggestionsError } = await supabaseAdmin
+            // First try exact match (case-insensitive)
+            let { data: matchingSuggestions, error: suggestionsError } = await supabaseAdmin
               .from('game_suggestions')
               .select('id, user_id, username, game_name, status')
               .ilike('game_name', gameName)
               .eq('status', 'pending');
+            
+            // If no exact match, try pattern match (contains)
+            if ((!matchingSuggestions || matchingSuggestions.length === 0) && !suggestionsError) {
+              console.log(`🔍 No exact match found for "${gameName}", trying pattern match...`);
+              const patternMatch = await supabaseAdmin
+                .from('game_suggestions')
+                .select('id, user_id, username, game_name, status')
+                .ilike('game_name', `%${gameName}%`)
+                .eq('status', 'pending');
+              
+              if (!patternMatch.error) {
+                matchingSuggestions = patternMatch.data;
+                suggestionsError = patternMatch.error;
+              }
+            }
             
             if (suggestionsError) {
               console.error('❌ Error checking for matching game suggestions:', suggestionsError);
@@ -910,6 +926,16 @@ export async function POST(request: NextRequest) {
             }
             
             console.log(`📋 Found ${matchingSuggestions?.length || 0} pending suggestion(s) for "${gameName}"`);
+            
+            // Debug: Log all pending suggestions to help troubleshoot if no matches found
+            if (!matchingSuggestions || matchingSuggestions.length === 0) {
+              const allPending = await supabaseAdmin
+                .from('game_suggestions')
+                .select('id, user_id, game_name, status')
+                .eq('status', 'pending')
+                .limit(20);
+              console.log(`🔍 All pending suggestions in DB (for debugging):`, allPending.data);
+            }
             
             if (matchingSuggestions && matchingSuggestions.length > 0) {
               console.log(`✅ Found ${matchingSuggestions.length} matching suggestion(s) for game "${gameName}"`);
@@ -945,7 +971,7 @@ export async function POST(request: NextRequest) {
                       entityType: 'game',
                       entityId: result.id,
                       url: `/game/${result.id}`,
-                      message: `Great news! The game "${gameName}" you suggested has been added to the database. Check it out!`
+                      message: `Great news! The game "${gameName}" you suggested has been added to our database. Thanks for helping us grow! 🎲`
                     });
                     
                     console.log(`✅ Notification created for user ${suggestion.user_id}`, notificationResult);
