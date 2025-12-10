@@ -889,28 +889,37 @@ export async function POST(request: NextRequest) {
         const gameNameLegacyCheck = result.name || '';
         const gameNamesToCheck = [gameNameEnCheck, gameNameEsCheck, gameNameLegacyCheck].filter(Boolean);
         
+        console.log(`🔍 Checking for matching game suggestions. Game names to check:`, gameNamesToCheck);
+        
         for (const gameName of gameNamesToCheck) {
           if (!gameName) continue;
           
           // Find matching suggestions
           try {
+            console.log(`🔍 Searching for suggestions matching game name: "${gameName}"`);
+            
             const { data: matchingSuggestions, error: suggestionsError } = await supabaseAdmin
               .from('game_suggestions')
-              .select('id, user_id, username, game_name')
+              .select('id, user_id, username, game_name, status')
               .ilike('game_name', gameName)
               .eq('status', 'pending');
             
             if (suggestionsError) {
-              console.error('Error checking for matching game suggestions:', suggestionsError);
+              console.error('❌ Error checking for matching game suggestions:', suggestionsError);
               continue;
             }
             
+            console.log(`📋 Found ${matchingSuggestions?.length || 0} pending suggestion(s) for "${gameName}"`);
+            
             if (matchingSuggestions && matchingSuggestions.length > 0) {
               console.log(`✅ Found ${matchingSuggestions.length} matching suggestion(s) for game "${gameName}"`);
+              console.log(`📋 Suggestions:`, matchingSuggestions.map(s => ({ id: s.id, user_id: s.user_id, game_name: s.game_name })));
               
               // Update suggestion status to 'added' and notify users
               for (const suggestion of matchingSuggestions) {
-                await supabaseAdmin
+                console.log(`🔄 Updating suggestion ${suggestion.id} status to 'added'...`);
+                
+                const updateResult = await supabaseAdmin
                   .from('game_suggestions')
                   .update({ 
                     status: 'added',
@@ -918,25 +927,44 @@ export async function POST(request: NextRequest) {
                   })
                   .eq('id', suggestion.id);
                 
+                if (updateResult.error) {
+                  console.error(`❌ Error updating suggestion ${suggestion.id}:`, updateResult.error);
+                  continue;
+                }
+                
+                console.log(`✅ Updated suggestion ${suggestion.id} status to 'added'`);
+                
                 // Notify the user who suggested it
                 if (suggestion.user_id) {
-                  await createNotification({
-                    userId: suggestion.user_id,
-                    type: 'system',
-                    entityType: 'game',
-                    entityId: result.id,
-                    url: `/game/${result.id}`,
-                    message: `Great news! The game "${gameName}" you suggested has been added to the database. Check it out!`
-                  });
+                  console.log(`📧 Creating notification for user ${suggestion.user_id}...`);
+                  
+                  try {
+                    const notificationResult = await createNotification({
+                      userId: suggestion.user_id,
+                      type: 'system',
+                      entityType: 'game',
+                      entityId: result.id,
+                      url: `/game/${result.id}`,
+                      message: `Great news! The game "${gameName}" you suggested has been added to the database. Check it out!`
+                    });
+                    
+                    console.log(`✅ Notification created for user ${suggestion.user_id}`, notificationResult);
+                  } catch (notifError) {
+                    console.error(`❌ Error creating notification for user ${suggestion.user_id}:`, notifError);
+                  }
+                } else {
+                  console.log(`⚠️ Suggestion ${suggestion.id} has no user_id (anonymous suggestion), skipping notification`);
                 }
               }
+            } else {
+              console.log(`ℹ️ No matching suggestions found for "${gameName}"`);
             }
           } catch (suggestionCheckError: any) {
-            console.error('Error checking for matching game suggestions:', suggestionCheckError);
+            console.error('❌ Error in suggestion check loop:', suggestionCheckError);
           }
         }
       } catch (suggestionError) {
-        console.error('Error in game suggestion check:', suggestionError);
+        console.error('❌ Error in game suggestion check:', suggestionError);
       }
     })();
     
