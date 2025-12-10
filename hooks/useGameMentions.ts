@@ -62,9 +62,49 @@ export const useGameMentions = (
   // Convert the cleaner format back to markdown when sending
   const convertGameMentionsToMarkdown = (text: string): string => {
     const ZWJ = '\u200D';
-    return text.replace(new RegExp(`🔗([^${ZWJ}]+)${ZWJ}(\\d+)${ZWJ}`, 'g'), (match, gameName, gameId) => {
-      return `[${gameName}](/game/${gameId})`;
-    });
+    const linkEmoji = '🔗';
+    
+    // Use string methods instead of regex to avoid Turbopack parsing issues
+    let result = text;
+    let searchIndex = 0;
+    
+    while (true) {
+      // Find the next link emoji
+      const emojiIndex = result.indexOf(linkEmoji, searchIndex);
+      if (emojiIndex === -1) break;
+      
+      // Find the first ZWJ after the emoji (end of game name)
+      const afterEmoji = result.substring(emojiIndex + linkEmoji.length);
+      const firstZWJIndex = afterEmoji.indexOf(ZWJ);
+      if (firstZWJIndex === -1) {
+        searchIndex = emojiIndex + linkEmoji.length;
+        continue;
+      }
+      
+      const gameName = afterEmoji.substring(0, firstZWJIndex);
+      
+      // Find the second ZWJ (end of game ID)
+      const afterFirstZWJ = afterEmoji.substring(firstZWJIndex + ZWJ.length);
+      const secondZWJIndex = afterFirstZWJ.indexOf(ZWJ);
+      if (secondZWJIndex === -1) {
+        searchIndex = emojiIndex + linkEmoji.length;
+        continue;
+      }
+      
+      const gameId = afterFirstZWJ.substring(0, secondZWJIndex);
+      const linkEndIndex = emojiIndex + linkEmoji.length + firstZWJIndex + ZWJ.length + secondZWJIndex + ZWJ.length;
+      
+      // Replace the cleaner format with markdown
+      const before = result.substring(0, emojiIndex);
+      const after = result.substring(linkEndIndex);
+      const markdownLink = `[${gameName}](/game/${gameId})`;
+      result = before + markdownLink + after;
+      
+      // Continue searching from after the replacement
+      searchIndex = emojiIndex + markdownLink.length;
+    }
+    
+    return result;
   };
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -87,8 +127,8 @@ export const useGameMentions = (
                            (textAfterAt.includes(ZWJ) && textAfterAt.split(ZWJ).length > 1);
       
       if (!hasSpaceAfterAt && !isAlreadyLink) {
-        // We're in a mention - extract the query (remove zero-width characters)
-        const query = textAfterAt.replace(new RegExp(ZWJ, 'g'), '').replace(/🔗/g, '');
+        // We're in a mention - extract the query (remove zero-width characters and link emoji)
+        const query = textAfterAt.replace(new RegExp(ZWJ, 'g'), '').replace(new RegExp('🔗', 'g'), '');
         setMentionStartPos(lastAtPos);
         setMentionQuery(query);
         setShowMentionDropdown(true);
