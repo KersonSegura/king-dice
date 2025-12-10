@@ -833,109 +833,114 @@ export async function POST(request: NextRequest) {
     const gameName = result.nameEn || result.name_en || result.name || body.nameEn || '';
     console.log(`✅ Game creation completed successfully: ${gameName}`);
     
-    // Check if any users have usernames that conflict with this game name
-    // Auto-rename them and send notifications
-    // This runs after game creation to avoid blocking game creation if there's an error
-    try {
-      const { autoRenameConflictingUsers } = await import('@/lib/username-validation');
-      const { createNotification } = await import('@/lib/notifications');
-      
-      // Check all game name fields for conflicts  
-      const gameNameEn = result.nameEn || result.name_en || '';
-      const gameNameEs = result.nameEs || result.name_es || '';
-      const gameNameLegacy = result.name || '';
-      const gameNames = [gameNameEn, gameNameEs, gameNameLegacy].filter(Boolean);
-      
-      for (const gameName of gameNames) {
-        if (!gameName) continue;
-        
-        // Auto-rename conflicting users
-        const renamedUsers = await autoRenameConflictingUsers(gameName);
-        
-        if (renamedUsers.length > 0) {
-          console.log(`⚠️ Found ${renamedUsers.length} users with conflicting usernames for game "${gameName}"`);
-          
-          // Send notification to each renamed user
-          for (const { userId, oldUsername, newUsername } of renamedUsers) {
-            await createNotification({
-              userId: userId,
-              type: 'system',
-              message: `Your username "${oldUsername}" conflicts with a game we just added. We've automatically changed it to "${newUsername}". Please update it to your preferred username in your profile settings.`,
-              url: '/profile'
-            });
-            
-            console.log(`✅ Notified user ${userId} about username change from "${oldUsername}" to "${newUsername}"`);
-          }
-        }
-      }
-    } catch (conflictError) {
-      // Don't fail game creation if username conflict checking fails
-      console.error('Error handling conflicting usernames:', conflictError);
-    }
+    // Return response immediately - post-processing happens in background
+    // This prevents timeouts during game creation
+    const response = NextResponse.json({ success: true, game: result });
     
-    // Check if this game matches any pending suggestions and notify users
-    try {
-      const { createNotification } = await import('@/lib/notifications');
-      
-      // Check for matching game suggestions (case-insensitive)
-      const gameNameEnCheck = result.nameEn || result.name_en || '';
-      const gameNameEsCheck = result.nameEs || result.name_es || '';
-      const gameNameLegacyCheck = result.name || '';
-      const gameNamesToCheck = [gameNameEnCheck, gameNameEsCheck, gameNameLegacyCheck].filter(Boolean);
-      
-      for (const gameName of gameNamesToCheck) {
-        if (!gameName) continue;
+    // Run post-processing operations asynchronously (don't await)
+    // These are non-critical and shouldn't block the response
+    (async () => {
+      try {
+        // Check if any users have usernames that conflict with this game name
+        const { autoRenameConflictingUsers } = await import('@/lib/username-validation');
+        const { createNotification } = await import('@/lib/notifications');
         
-        // Find matching suggestions (case-insensitive, status 'pending')
-        const { data: matchingSuggestions, error: suggestionsError } = await supabaseAdmin
-          .from('game_suggestions')
-          .select('id, user_id, username, game_name')
-          .ilike('game_name', gameName)
-          .eq('status', 'pending');
+        // Check all game name fields for conflicts  
+        const gameNameEn = result.nameEn || result.name_en || '';
+        const gameNameEs = result.nameEs || result.name_es || '';
+        const gameNameLegacy = result.name || '';
+        const gameNames = [gameNameEn, gameNameEs, gameNameLegacy].filter(Boolean);
         
-        if (suggestionsError) {
-          console.error('Error checking for matching game suggestions:', suggestionsError);
-          continue;
-        }
-        
-        if (matchingSuggestions && matchingSuggestions.length > 0) {
-          console.log(`✅ Found ${matchingSuggestions.length} matching suggestion(s) for game "${gameName}"`);
+        for (const gameName of gameNames) {
+          if (!gameName) continue;
           
-          // Update suggestion status to 'added' and notify users
-          for (const suggestion of matchingSuggestions) {
-            // Update suggestion status
-            await supabaseAdmin
-              .from('game_suggestions')
-              .update({ 
-                status: 'added',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', suggestion.id);
+          // Auto-rename conflicting users
+          try {
+            const renamedUsers = await autoRenameConflictingUsers(gameName);
             
-            console.log(`✅ Updated suggestion ${suggestion.id} status to 'added'`);
-            
-            // Notify the user who suggested it (if they have a user_id)
-            if (suggestion.user_id) {
-              await createNotification({
-                userId: suggestion.user_id,
-                type: 'system',
-                entityType: 'game',
-                entityId: result.id,
-                url: `/game/${result.id}`,
-                message: `Great news! The game "${gameName}" you suggested has been added to the database. Check it out!`
-              });
+            if (renamedUsers.length > 0) {
+              console.log(`⚠️ Found ${renamedUsers.length} users with conflicting usernames for game "${gameName}"`);
               
-              console.log(`✅ Notified user ${suggestion.user_id} about their suggested game being added`);
+              // Send notification to each renamed user
+              for (const { userId, oldUsername, newUsername } of renamedUsers) {
+                await createNotification({
+                  userId: userId,
+                  type: 'system',
+                  message: `Your username "${oldUsername}" conflicts with a game we just added. We've automatically changed it to "${newUsername}". Please update it to your preferred username in your profile settings.`,
+                  url: '/profile'
+                });
+              }
             }
+          } catch (renameError: any) {
+            console.error('Error handling conflicting usernames:', renameError);
           }
         }
+      } catch (conflictError) {
+        console.error('Error in username conflict check:', conflictError);
       }
-    } catch (suggestionError) {
-      // Don't fail game creation if suggestion checking fails
-      console.error('Error checking for matching game suggestions:', suggestionError);
-    }
+      
+      try {
+        // Check if this game matches any pending suggestions and notify users
+        const { createNotification } = await import('@/lib/notifications');
+        
+        // Check for matching game suggestions (case-insensitive)
+        const gameNameEnCheck = result.nameEn || result.name_en || '';
+        const gameNameEsCheck = result.nameEs || result.name_es || '';
+        const gameNameLegacyCheck = result.name || '';
+        const gameNamesToCheck = [gameNameEnCheck, gameNameEsCheck, gameNameLegacyCheck].filter(Boolean);
+        
+        for (const gameName of gameNamesToCheck) {
+          if (!gameName) continue;
+          
+          // Find matching suggestions
+          try {
+            const { data: matchingSuggestions, error: suggestionsError } = await supabaseAdmin
+              .from('game_suggestions')
+              .select('id, user_id, username, game_name')
+              .ilike('game_name', gameName)
+              .eq('status', 'pending');
+            
+            if (suggestionsError) {
+              console.error('Error checking for matching game suggestions:', suggestionsError);
+              continue;
+            }
+            
+            if (matchingSuggestions && matchingSuggestions.length > 0) {
+              console.log(`✅ Found ${matchingSuggestions.length} matching suggestion(s) for game "${gameName}"`);
+              
+              // Update suggestion status to 'added' and notify users
+              for (const suggestion of matchingSuggestions) {
+                await supabaseAdmin
+                  .from('game_suggestions')
+                  .update({ 
+                    status: 'added',
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', suggestion.id);
+                
+                // Notify the user who suggested it
+                if (suggestion.user_id) {
+                  await createNotification({
+                    userId: suggestion.user_id,
+                    type: 'system',
+                    entityType: 'game',
+                    entityId: result.id,
+                    url: `/game/${result.id}`,
+                    message: `Great news! The game "${gameName}" you suggested has been added to the database. Check it out!`
+                  });
+                }
+              }
+            }
+          } catch (suggestionCheckError: any) {
+            console.error('Error checking for matching game suggestions:', suggestionCheckError);
+          }
+        }
+      } catch (suggestionError) {
+        console.error('Error in game suggestion check:', suggestionError);
+      }
+    })();
     
-    return NextResponse.json({ success: true, game: result });
+    return response;
 
   } catch (error) {
     console.error('❌ Error creating board game:', error);
