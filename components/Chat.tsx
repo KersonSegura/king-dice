@@ -72,8 +72,18 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
+  // Game mention dropdown state
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionResults, setMentionResults] = useState<any[]>([]);
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [mentionStartPos, setMentionStartPos] = useState(0);
+  const [mentionSearchTimeout, setMentionSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const mentionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Helpers for game mentions (@GameName -> link to /game/:id)
   const GAME_MENTION_REGEX = /@([A-Za-z0-9][A-Za-z0-9 \-\']{0,50})/g;
@@ -81,6 +91,11 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
 
   const resolveGameMentions = async (text: string): Promise<string> => {
+    // Skip if text already contains markdown links (already resolved)
+    if (text.includes('](/game/')) {
+      return text;
+    }
+
     // Find unique mentions
     const matches = Array.from(text.matchAll(GAME_MENTION_REGEX)).map(m => m[1].trim());
     const uniqueNames = Array.from(new Set(matches)).filter(Boolean);
@@ -363,6 +378,39 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     setIsInitialLoad(true);
   }, [chatId]);
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (mentionSearchTimeout) {
+        clearTimeout(mentionSearchTimeout);
+      }
+    };
+  }, [mentionSearchTimeout]);
+
+  // Close mention dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showMentionDropdown &&
+        mentionDropdownRef.current &&
+        !mentionDropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowMentionDropdown(false);
+        setMentionQuery('');
+        setMentionResults([]);
+      }
+    };
+
+    if (showMentionDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showMentionDropdown]);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
@@ -458,8 +506,68 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     }
   };
 
+  // Search games for mention dropdown
+  const searchGamesForMention = async (query: string) => {
+    if (!query.trim()) {
+      setMentionResults([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=games&limit=5`);
+      if (response.ok) {
+        const data = await response.json();
+        setMentionResults(data.games || []);
+      }
+    } catch (error) {
+      console.error('Error searching games for mention:', error);
+      setMentionResults([]);
+    }
+  };
+
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(e.target.value);
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart || 0;
+    setNewMessage(value);
+
+    // Check if we're in a mention context (@...)
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtPos = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtPos !== -1) {
+      // Check if there's a space, newline, or closing bracket after the @ (mention ended or already a link)
+      const textAfterAt = textBeforeCursor.substring(lastAtPos + 1);
+      const hasSpaceAfterAt = textAfterAt.includes(' ') || textAfterAt.includes('\n');
+      const isAlreadyLink = value.substring(lastAtPos, cursorPos).includes('](/game/');
+      
+      if (!hasSpaceAfterAt && !isAlreadyLink) {
+        // We're in a mention - extract the query
+        const query = textAfterAt;
+        setMentionStartPos(lastAtPos);
+        setMentionQuery(query);
+        setShowMentionDropdown(true);
+        setSelectedMentionIndex(0);
+
+        // Debounce the search
+        if (mentionSearchTimeout) {
+          clearTimeout(mentionSearchTimeout);
+        }
+        const timeout = setTimeout(() => {
+          searchGamesForMention(query);
+        }, 200);
+        setMentionSearchTimeout(timeout);
+      } else {
+        // Mention ended or already a link
+        setShowMentionDropdown(false);
+        setMentionQuery('');
+        setMentionResults([]);
+      }
+    } else {
+      // No @ found
+      setShowMentionDropdown(false);
+      setMentionQuery('');
+      setMentionResults([]);
+    }
 
     if (socket && isConnected) {
       // Clear existing timeout
@@ -481,7 +589,53 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const insertGameMention = (game: any) => {
+    const gameName = game.nameEn || game.name || mentionQuery;
+    const beforeMention = newMessage.substring(0, mentionStartPos);
+    const afterMention = newMessage.substring(mentionStartPos + 1 + mentionQuery.length);
+    const linkText = `[${gameName}](/game/${game.id})`;
+    const newText = beforeMention + linkText + afterMention;
+    
+    setNewMessage(newText);
+    setShowMentionDropdown(false);
+    setMentionQuery('');
+    setMentionResults([]);
+    
+    // Focus input and set cursor position after the inserted link
+    setTimeout(() => {
+      if (inputRef.current) {
+        const newCursorPos = beforeMention.length + linkText.length;
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showMentionDropdown && mentionResults.length > 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        insertGameMention(mentionResults[selectedMentionIndex]);
+        return;
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev => 
+          prev < mentionResults.length - 1 ? prev + 1 : prev
+        );
+        return;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev => prev > 0 ? prev - 1 : 0);
+        return;
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowMentionDropdown(false);
+        setMentionQuery('');
+        setMentionResults([]);
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -620,17 +774,62 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         )}
 
         {/* Input */}
-        <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+        <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0 relative">
           <div className="flex space-x-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={handleTyping}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={false}
-            />
+            <div className="flex-1 relative">
+              <input
+                ref={inputRef}
+                type="text"
+                value={newMessage}
+                onChange={handleTyping}
+                onKeyDown={handleKeyPress}
+                placeholder="Type your message..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={false}
+              />
+              
+              {/* Game Mention Dropdown */}
+              {showMentionDropdown && (
+                <div
+                  ref={mentionDropdownRef}
+                  className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+                >
+                  <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
+                    Search game...
+                  </div>
+                  {mentionResults.length > 0 ? (
+                    <div className="py-1">
+                      {mentionResults.map((game, index) => (
+                        <button
+                          key={game.id}
+                          onClick={() => insertGameMention(game)}
+                          className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors ${
+                            index === selectedMentionIndex ? 'bg-blue-100' : ''
+                          }`}
+                        >
+                          <div className="font-medium text-sm text-gray-900">
+                            {game.nameEn || game.name}
+                          </div>
+                          {game.yearRelease && (
+                            <div className="text-xs text-gray-500">
+                              {game.yearRelease}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : mentionQuery.length > 0 ? (
+                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                      No games found
+                    </div>
+                  ) : (
+                    <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                      Type to search games...
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="p-2 text-gray-500 hover:text-gray-700"
