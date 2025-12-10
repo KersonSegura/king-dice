@@ -575,6 +575,18 @@ export async function POST(request: NextRequest) {
     // Remove id if it somehow exists in the body (shouldn't happen, but defensive)
     delete body.id;
     
+    // Check for DATABASE_URL before importing prisma (to provide better error message)
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection not configured',
+          message: 'DATABASE_URL environment variable is required but not set.',
+          hint: 'For local development, create a .env file in the project root with your Supabase connection string:\nDATABASE_URL=postgresql://user:password@host:port/database'
+        },
+        { status: 500 }
+      );
+    }
+    
     // Lazy load prisma only when needed (POST handler)
     const { prisma } = await import('@/lib/prisma');
     
