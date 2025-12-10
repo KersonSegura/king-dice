@@ -262,11 +262,30 @@ export class EmailService {
       // Get Gmail API client
       const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
+      // Encode subject line properly for non-ASCII characters (emojis, etc.)
+      // Use RFC 2047 encoding for email headers
+      const encodeSubject = (subject: string): string => {
+        // Check if subject contains non-ASCII characters
+        const hasNonAscii = /[^\x00-\x7F]/.test(subject);
+        if (!hasNonAscii) {
+          return subject;
+        }
+        // Encode using RFC 2047 format: =?charset?encoding?encoded-text?=
+        // For UTF-8: =?UTF-8?B?base64-encoded-text?=
+        const encoded = Buffer.from(subject, 'utf-8').toString('base64');
+        // Split into chunks of 75 characters (RFC 2047 limit)
+        const chunks: string[] = [];
+        for (let i = 0; i < encoded.length; i += 75) {
+          chunks.push(encoded.substring(i, i + 75));
+        }
+        return chunks.map(chunk => `=?UTF-8?B?${chunk}?=`).join('\n ');
+      };
+
       // Create email message in RFC 2822 format
       const emailMessage = [
         `From: King Dice <${this.fromEmail}>`,
         `To: ${options.to}`,
-        `Subject: ${options.subject}`,
+        `Subject: ${encodeSubject(options.subject)}`,
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=utf-8',
         '',
