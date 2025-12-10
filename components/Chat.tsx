@@ -129,7 +129,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     return resolvedText;
   };
 
-  const renderContent = (content: string) => {
+  const renderContent = (content: string, isUserMessage: boolean = false) => {
     const parts: React.ReactNode[] = [];
     const linkRegex = /\[([^\]]+)\]\((\/game\/[^\)]+)\)/g;
     let lastIndex = 0;
@@ -140,11 +140,15 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       if (match.index > lastIndex) {
         parts.push(content.slice(lastIndex, match.index));
       }
+      // Use yellow for links in blue message bubbles (user messages), blue for gray bubbles
+      const linkClassName = isUserMessage
+        ? 'underline text-yellow-300 hover:text-yellow-200 break-words'
+        : 'underline text-blue-600 hover:text-blue-700 break-words';
       parts.push(
         <a
           key={`${match[2]}-${match.index}`}
           href={match[2]}
-          className="underline text-blue-600 hover:text-blue-700 break-words"
+          className={linkClassName}
           target="_blank"
           rel="noreferrer"
         >
@@ -719,7 +723,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                     <div className="truncate">{message.replyTo.content}</div>
                   </div>
                 )}
-                <div className="text-sm break-words">{renderContent(message.content)}</div>
+                <div className="text-sm break-words">{renderContent(message.content, message.senderId === user?.id)}</div>
                 <div className={`text-xs mt-1 ${
                   message.senderId === user?.id ? 'text-blue-100' : 'text-gray-500'
                 }`}>
