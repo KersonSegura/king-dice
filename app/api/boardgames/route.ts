@@ -781,6 +781,65 @@ export async function POST(request: NextRequest) {
       console.error('Error handling conflicting usernames:', conflictError);
     }
     
+    // Check if this game matches any pending suggestions and notify users
+    try {
+      const { createNotification } = await import('@/lib/notifications');
+      
+      // Check for matching game suggestions (case-insensitive)
+      const gameNamesToCheck = [result.nameEn, result.nameEs, result.name].filter(Boolean);
+      
+      for (const gameName of gameNamesToCheck) {
+        if (!gameName) continue;
+        
+        // Find matching suggestions (case-insensitive, status 'pending')
+        const { data: matchingSuggestions, error: suggestionsError } = await supabaseAdmin
+          .from('game_suggestions')
+          .select('id, user_id, username, game_name')
+          .ilike('game_name', gameName)
+          .eq('status', 'pending');
+        
+        if (suggestionsError) {
+          console.error('Error checking for matching game suggestions:', suggestionsError);
+          continue;
+        }
+        
+        if (matchingSuggestions && matchingSuggestions.length > 0) {
+          console.log(`✅ Found ${matchingSuggestions.length} matching suggestion(s) for game "${gameName}"`);
+          
+          // Update suggestion status to 'added' and notify users
+          for (const suggestion of matchingSuggestions) {
+            // Update suggestion status
+            await supabaseAdmin
+              .from('game_suggestions')
+              .update({ 
+                status: 'added',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', suggestion.id);
+            
+            console.log(`✅ Updated suggestion ${suggestion.id} status to 'added'`);
+            
+            // Notify the user who suggested it (if they have a user_id)
+            if (suggestion.user_id) {
+              await createNotification({
+                userId: suggestion.user_id,
+                type: 'system',
+                entityType: 'game',
+                entityId: result.id,
+                url: `/game/${result.id}`,
+                message: `Great news! The game "${gameName}" you suggested has been added to the database. Check it out!`
+              });
+              
+              console.log(`✅ Notified user ${suggestion.user_id} about their suggested game being added`);
+            }
+          }
+        }
+      }
+    } catch (suggestionError) {
+      // Don't fail game creation if suggestion checking fails
+      console.error('Error checking for matching game suggestions:', suggestionError);
+    }
+    
     return NextResponse.json({ success: true, game: result });
 
   } catch (error) {
