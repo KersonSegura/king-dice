@@ -16,6 +16,9 @@ import LoginModal from '@/components/LoginModal';
 import ModernTooltip from '@/components/ModernTooltip';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import BackButton from '@/components/BackButton';
+import { useGameMentions } from '@/hooks/useGameMentions';
+import { renderContentWithGameLinks } from '@/utils/renderContent';
+import { useRef } from 'react';
 
 function ForumsPageContent() {
   const searchParams = useSearchParams();
@@ -44,6 +47,19 @@ function ForumsPageContent() {
     content: '',
     category: 'general'
   });
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const {
+    showMentionDropdown,
+    mentionQuery,
+    mentionResults,
+    selectedMentionIndex,
+    mentionDropdownRef,
+    handleTyping: handleContentTyping,
+    handleKeyPress: handleContentKeyPress,
+    insertGameMention,
+    convertGameMentionsToMarkdown
+  } = useGameMentions(newPost.content, (content) => setNewPost({...newPost, content}), contentTextareaRef);
 
   // Handle URL parameters for category and author selection
   useEffect(() => {
@@ -190,7 +206,10 @@ function ForumsPageContent() {
     setIsCreatingPost(true);
 
     try {
-      // Moderate both title and content
+      // Convert game mentions to markdown format first
+      const contentWithLinks = convertGameMentionsToMarkdown(newPost.content);
+
+      // Moderate both title and content (use converted content for moderation)
       const moderationPromises = [
         fetch('/api/moderate/text', {
           method: 'POST',
@@ -200,7 +219,7 @@ function ForumsPageContent() {
         fetch('/api/moderate/text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: newPost.content })
+          body: JSON.stringify({ text: contentWithLinks })
         })
       ];
       
@@ -229,7 +248,7 @@ function ForumsPageContent() {
       // Create new post via API
       const postData = {
         title: newPost.title,
-        content: newPost.content,
+        content: contentWithLinks,
         category: newPost.category,
         author: {
           id: user.id,
@@ -615,7 +634,7 @@ function ForumsPageContent() {
                 {/* Post content - uses full width */}
                 <div className="w-full">
                   <p className="text-gray-600 mb-4 line-clamp-2 text-sm sm:text-base">
-                    {post.content}
+                    {renderContentWithGameLinks(post.content)}
                   </p>
 
                   {/* Bottom row: Interactions and actions */}
@@ -741,13 +760,59 @@ function ForumsPageContent() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Content
                 </label>
-                <textarea
-                  value={newPost.content}
-                  onChange={(e) => setNewPost({...newPost, content: e.target.value})}
-                  rows={6}
-                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
-                  placeholder="Write your post content..."
-                />
+                <div className="relative">
+                  <textarea
+                    ref={contentTextareaRef}
+                    value={newPost.content}
+                    onChange={handleContentTyping}
+                    onKeyDown={handleContentKeyPress}
+                    rows={6}
+                    className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
+                    placeholder="Write your post content... (use @ to mention games)"
+                  />
+                  
+                  {/* Game Mention Dropdown */}
+                  {showMentionDropdown && (
+                    <div
+                      ref={mentionDropdownRef}
+                      className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+                    >
+                      <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
+                        Search game...
+                      </div>
+                      {mentionResults.length > 0 ? (
+                        <div className="py-1">
+                          {mentionResults.map((game, index) => (
+                            <button
+                              key={game.id}
+                              onClick={() => insertGameMention(game)}
+                              className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors ${
+                                index === selectedMentionIndex ? 'bg-blue-100' : ''
+                              }`}
+                            >
+                              <div className="font-medium text-sm text-gray-900">
+                                {game.nameEn || game.name}
+                              </div>
+                              {game.yearRelease && (
+                                <div className="text-xs text-gray-500">
+                                  {game.yearRelease}
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      ) : mentionQuery.length > 0 ? (
+                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                          No games found
+                        </div>
+                      ) : (
+                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                          Type to search games...
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             

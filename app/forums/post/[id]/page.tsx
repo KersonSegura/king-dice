@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ThumbsUp, ThumbsDown, Flag, ArrowLeft, MessageSquare, User, Calendar, Send, TrendingUp, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -13,6 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import ModernTooltip from '@/components/ModernTooltip';
 import RecentGalleryImages from '@/components/RecentGalleryImages';
+import { useGameMentions } from '@/hooks/useGameMentions';
+import { renderContentWithGameLinks } from '@/utils/renderContent';
 
 interface Comment {
   id: string;
@@ -60,6 +62,20 @@ export default function PostDetailPage() {
   const [showDeletePostConfirm, setShowDeletePostConfirm] = useState(false);
   const [showDeleteCommentConfirm, setShowDeleteCommentConfirm] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const {
+    showMentionDropdown,
+    mentionQuery,
+    mentionResults,
+    selectedMentionIndex,
+    mentionDropdownRef,
+    handleTyping: handleCommentTyping,
+    handleKeyPress: handleCommentKeyPress,
+    insertGameMention,
+    convertGameMentionsToMarkdown
+  } = useGameMentions(newComment, setNewComment, commentTextareaRef);
 
   // Sync local vote whenever post changes
   useEffect(() => {
@@ -283,11 +299,14 @@ export default function PostDetailPage() {
     setIsSubmittingComment(true);
 
     try {
+      // Convert game mentions to markdown format
+      const contentWithLinks = convertGameMentionsToMarkdown(newComment);
+      
       // Simulate text moderation
       const moderationResponse = await fetch('/api/moderate/text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newComment })
+        body: JSON.stringify({ text: contentWithLinks })
       });
       
       const moderationResult = await moderationResponse.json();
@@ -305,7 +324,7 @@ export default function PostDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: newComment,
+          content: contentWithLinks,
           author: {
             id: user.id,
             name: user.username,
@@ -521,7 +540,7 @@ export default function PostDetailPage() {
                 {/* Content */}
                 <div className="prose max-w-none mb-6">
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
-                    {post.content}
+                    {renderContentWithGameLinks(post.content)}
                   </p>
                 </div>
 
@@ -668,7 +687,7 @@ export default function PostDetailPage() {
                   
                   <div className="prose max-w-none mb-6">
                       <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
-                      {post.content}
+                      {renderContentWithGameLinks(post.content)}
                     </p>
                   </div>
 
@@ -743,15 +762,60 @@ export default function PostDetailPage() {
                       }}
                     />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 relative">
                     <textarea
+                      ref={commentTextareaRef}
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder={isAuthenticated ? "Write a comment..." : "Please sign in to comment"}
+                      onChange={handleCommentTyping}
+                      onKeyDown={handleCommentKeyPress}
+                      placeholder={isAuthenticated ? "Write a comment... (use @ to mention games)" : "Please sign in to comment"}
                       rows={3}
                       className="w-full p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-sm sm:text-base"
                       disabled={!isAuthenticated}
                     />
+                    
+                    {/* Game Mention Dropdown */}
+                    {showMentionDropdown && (
+                      <div
+                        ref={mentionDropdownRef}
+                        className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+                      >
+                        <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
+                          Search game...
+                        </div>
+                        {mentionResults.length > 0 ? (
+                          <div className="py-1">
+                            {mentionResults.map((game, index) => (
+                              <button
+                                key={game.id}
+                                onClick={() => insertGameMention(game)}
+                                className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors ${
+                                  index === selectedMentionIndex ? 'bg-blue-100' : ''
+                                }`}
+                              >
+                                <div className="font-medium text-sm text-gray-900">
+                                  {game.nameEn || game.name}
+                                </div>
+                                {game.yearRelease && (
+                                  <div className="text-xs text-gray-500">
+                                    {game.yearRelease}
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        ) : mentionQuery.length > 0 ? (
+                          <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                            No games found
+                          </div>
+                        ) : (
+                          <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                            Type to search games...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                     <div className="flex justify-end mt-2">
                       <button
                         onClick={handleCreateComment}
@@ -860,7 +924,7 @@ export default function PostDetailPage() {
                         </div>
                         
                         <p className="text-gray-700 mb-2 whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm sm:text-base">
-                          {comment.content}
+                          {renderContentWithGameLinks(comment.content)}
                         </p>
                         
                         <div className="flex justify-end">
