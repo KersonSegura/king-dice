@@ -96,11 +96,14 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         const data = await response.json();
         const game = (data.games || [])[0];
         if (game?.id) {
+          // Get the game's actual name (prefer nameEn, fallback to name)
+          const gameName = game.nameEn || game.name || name;
           // Replace all occurrences of the mention with a markdown-style link
+          // Use the game's actual name as the link text
           const mentionPattern = new RegExp(`@${escapeRegExp(name)}`, 'g');
           resolvedText = resolvedText.replace(
             mentionPattern,
-            `[@${name}](/game/${game.id})`
+            `[${gameName}](/game/${game.id})`
           );
         }
       } catch (error) {
