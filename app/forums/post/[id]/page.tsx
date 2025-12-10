@@ -815,7 +815,6 @@ export default function PostDetailPage() {
                         )}
                       </div>
                     )}
-                  </div>
                     <div className="flex justify-end mt-2">
                       <button
                         onClick={handleCreateComment}
