@@ -614,6 +614,7 @@ export async function POST(request: NextRequest) {
     
     try {
       // Create the game - try camelCase first, fallback to snake_case
+      const now = new Date().toISOString();
       const gameData: any = {
         nameEn: body.nameEn || '',
         nameEs: body.nameEs || '',
@@ -640,6 +641,9 @@ export async function POST(request: NextRequest) {
         category: 'ranked',
         userRating: 0,
         userVotes: 0,
+        // Timestamps - required by database (Prisma handled these automatically)
+        createdAt: now,
+        updatedAt: now,
       };
       
       // Insert game using camelCase (matches Prisma schema)
