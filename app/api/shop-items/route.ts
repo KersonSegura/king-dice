@@ -57,16 +57,37 @@ export async function GET(request: NextRequest) {
 
     // Fetch categories for all games
     // Try both camelCase and snake_case column names
-    const { data: gameCategories, error: categoriesError } = await supabaseAdmin
+    let gameCategories: any[] = [];
+    let categoriesError: any = null;
+    
+    // Try camelCase first
+    const { data: categoriesCamel, error: errorCamel } = await supabaseAdmin
       .from('game_categories')
       .select(`
         *,
         category:categories(*)
       `)
       .in('gameId', gameIds);
-
-    if (categoriesError) {
-      console.warn('[SHOP ITEMS API] Error fetching categories:', categoriesError);
+    
+    if (errorCamel) {
+      console.warn('[SHOP ITEMS API] Error fetching categories with camelCase, trying snake_case:', errorCamel);
+      // Try snake_case
+      const { data: categoriesSnake, error: errorSnake } = await supabaseAdmin
+        .from('game_categories')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .in('game_id', gameIds);
+      
+      if (errorSnake) {
+        console.warn('[SHOP ITEMS API] Error fetching categories with snake_case:', errorSnake);
+        categoriesError = errorSnake;
+      } else {
+        gameCategories = categoriesSnake || [];
+      }
+    } else {
+      gameCategories = categoriesCamel || [];
     }
 
     // Group categories by game ID
