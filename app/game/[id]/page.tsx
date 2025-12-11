@@ -3,7 +3,7 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe, X, ShoppingCart, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe, X, ExternalLink } from 'lucide-react';
 import VideoLinks from '@/components/VideoLinks';
 import PDFHandler from '@/components/PDFHandler';
 import { useState, useEffect, use, useRef } from 'react';
@@ -1343,7 +1343,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                    <img src="/ShopIcon.svg" alt="Shop" className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                     Shop
                   </button>
                 )}
@@ -1406,7 +1406,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               {activeTab === 'shop' && (game?.shopItems?.length || game?.shopUrl || game?.amazonUrl) && (
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <ShoppingCart className="w-6 h-6 mr-2 text-[#fbae17]" />
+                    <img src="/ShopIcon.svg" alt="Shop" className="w-6 h-6 mr-2" />
                     Shop
                   </h2>
                   <div className="prose max-w-none w-full">
@@ -1419,7 +1419,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                           link: game.amazonUrl || game.shopUrl
                         }]).map((item, idx) => (
                           <div key={idx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                            <div className="relative w-full h-64 bg-gray-200 overflow-hidden flex items-center justify-center">
+                            <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
                               {item.imageUrl ? (
                                 item.imageUrl.startsWith('https://m.media-amazon.com') ? (
                                   <Image
@@ -1538,9 +1538,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
-              {activeTab === 'shop' && !game?.shopUrl && (
+              {activeTab === 'shop' && !game?.shopUrl && !game?.amazonUrl && !(game?.shopItems && game.shopItems.length > 0) && (
                 <div className="text-center py-12">
-                  <ShoppingCart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <img src="/ShopIcon.svg" alt="Shop" className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No Shop Link Available</h3>
                   <p className="text-gray-600">Shop link is not yet available for this game.</p>
                 </div>
