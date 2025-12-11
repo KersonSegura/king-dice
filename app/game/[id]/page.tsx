@@ -749,9 +749,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     // Check videoUrl - it might be a string or array
     const hasVideo = !!(game.videoUrl && (Array.isArray(game.videoUrl) ? game.videoUrl.length > 0 : game.videoUrl));
     const hasPdf = !!(game.pdfUrl || game.pdfFile);
-    const hasShop = !!game.shopUrl;
+    const hasShop = !!(game.shopUrl || game.amazonUrl || (game.shopItems && game.shopItems.length > 0));
     
-    console.log('Setting active tab:', { hasRules, hasVideo, hasPdf, hasShop, videoUrl: game.videoUrl });
+    console.log('Setting active tab:', { hasRules, hasVideo, hasPdf, hasShop, videoUrl: game.videoUrl, shopItems: game.shopItems });
     
     // Set to first available tab in order: rules > video > pdf > shop
     if (hasRules) {
@@ -1287,7 +1287,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         )}
 
         {/* Game Resources Section with Tabs */}
-        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl || game?.amazonUrl) && (
+        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0)) && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Tab Headers */}
             <div className="border-b border-gray-200 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -1334,7 +1334,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   </button>
                 )}
                 
-                {(game?.shopUrl || game?.amazonUrl) && (
+                {(game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0)) && (
                   <button
                     onClick={() => setActiveTab('shop')}
                     className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${

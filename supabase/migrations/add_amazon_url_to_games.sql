@@ -10,9 +10,10 @@ CREATE TABLE IF NOT EXISTS public.game_shop_items (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "gameId" INT NOT NULL REFERENCES public.games(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  imageUrl TEXT,
+  "imageUrl" TEXT,
   link TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_game_shop_items_game_id ON public.game_shop_items("gameId");
