@@ -30,6 +30,7 @@ interface Game {
   officialWebsite?: string;
   amazonUrl?: string;
   isExpansion?: boolean;
+  shopItems?: ShopItem[];
   gameCategories: Array<{
     category: {
       id: number;
@@ -77,6 +78,13 @@ interface GameRule {
   rulesHtml?: string;
 }
 
+interface ShopItem {
+  id?: number;
+  title: string;
+  imageUrl?: string;
+  link: string;
+}
+
 interface PaginationInfo {
   page: number;
   limit: number;
@@ -117,6 +125,7 @@ function BoardGameDatabaseContent() {
   const [savingRules, setSavingRules] = useState<{[key: number]: boolean}>({});
   const [editingGame, setEditingGame] = useState<{[key: number]: boolean}>({});
   const [editingGameData, setEditingGameData] = useState<{[key: number]: Partial<Game> & { fullDescription?: string }}>({});
+  const [editingShopItems, setEditingShopItems] = useState<{ [key: number]: ShopItem[] }>({});
   const [savingGame, setSavingGame] = useState<{[key: number]: boolean}>({});
   const [showOnlyWithoutRules, setShowOnlyWithoutRules] = useState(false);
   const [showAddGameForm, setShowAddGameForm] = useState(false);
@@ -426,11 +435,21 @@ function BoardGameDatabaseContent() {
         isExpansion: game.isExpansion || false
       }
     }));
+
+    setEditingShopItems(prev => ({
+      ...prev,
+      [game.id]: game.shopItems ? [...game.shopItems] : []
+    }));
   };
 
   const cancelEditingGame = (gameId: number) => {
     setEditingGame(prev => ({ ...prev, [gameId]: false }));
     setEditingGameData(prev => ({ ...prev, [gameId]: {} }));
+    setEditingShopItems(prev => {
+      const updated = { ...prev };
+      delete updated[gameId];
+      return updated;
+    });
   };
 
   // Helper function to safely parse API responses (handles both JSON and non-JSON)
@@ -575,6 +594,16 @@ function BoardGameDatabaseContent() {
       if (gameData.pdfUrl !== undefined) cleanGameData.pdfUrl = cleanString(gameData.pdfUrl, true);
       if (gameData.pdfFile !== undefined) cleanGameData.pdfFile = gameData.pdfFile; // Don't clean base64 data
       if (gameData.officialWebsite !== undefined) cleanGameData.officialWebsite = cleanString(gameData.officialWebsite, true);
+      // Shop items
+      const currentGame = games.find(g => g.id === gameId);
+      const shopItems = editingShopItems[gameId] ?? currentGame?.shopItems ?? [];
+      cleanGameData.shopItems = shopItems
+        .filter(item => item && item.title && item.link)
+        .map(item => ({
+          title: item.title,
+          imageUrl: cleanString(item.imageUrl, true),
+          link: cleanString(item.link, true)
+        }));
       if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
       if (gameData.isExpansion !== undefined) cleanGameData.isExpansion = gameData.isExpansion;
 
@@ -2160,6 +2189,98 @@ You can use markdown formatting:
                                 }))}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
                               />
+
+                              {/* Shop Items (per-game shop section) */}
+                              <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-semibold text-gray-800">Shop Cards for this Game</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingShopItems(prev => ({
+                                      ...prev,
+                                      [game.id]: [ ...(prev[game.id] ?? game.shopItems ?? []), { title: '', imageUrl: '', link: '' } ]
+                                    }))}
+                                    className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                  >
+                                    Add Card
+                                  </button>
+                                </div>
+
+                                { (editingShopItems[game.id] ?? game.shopItems ?? []).length === 0 && (
+                                  <p className="text-xs text-gray-500">No shop cards yet. Add one to show purchase options for this game.</p>
+                                )}
+
+                                <div className="space-y-3">
+                                  {(editingShopItems[game.id] ?? game.shopItems ?? []).map((item, idx) => (
+                                    <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-start bg-white border border-gray-200 rounded-lg p-3">
+                                      <div className="space-y-1">
+                                        <label className="text-xs text-gray-600">Title</label>
+                                        <input
+                                          type="text"
+                                          value={item.title || ''}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setEditingShopItems(prev => {
+                                              const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
+                                              list[idx] = { ...list[idx], title: value };
+                                              return { ...prev, [game.id]: list };
+                                            });
+                                          }}
+                                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                                          placeholder="e.g., Catan Base Game"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <label className="text-xs text-gray-600">Image URL</label>
+                                        <input
+                                          type="url"
+                                          value={item.imageUrl || ''}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setEditingShopItems(prev => {
+                                              const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
+                                              list[idx] = { ...list[idx], imageUrl: value };
+                                              return { ...prev, [game.id]: list };
+                                            });
+                                          }}
+                                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                                          placeholder="https://m.media-amazon.com/..."
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <label className="text-xs text-gray-600">Link</label>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingShopItems(prev => {
+                                              const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
+                                              list.splice(idx, 1);
+                                              return { ...prev, [game.id]: list };
+                                            })}
+                                            className="text-xs text-red-600 hover:text-red-800"
+                                          >
+                                            Remove
+                                          </button>
+                                        </div>
+                                        <input
+                                          type="url"
+                                          value={item.link || ''}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setEditingShopItems(prev => {
+                                              const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
+                                              list[idx] = { ...list[idx], link: value };
+                                              return { ...prev, [game.id]: list };
+                                            });
+                                          }}
+                                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                                          placeholder="Amazon link or other store link"
+                                        />
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                               {/* PDF Upload Section */}
                               <div className="space-y-2">
                                 <label className="block text-xs font-medium text-gray-700">

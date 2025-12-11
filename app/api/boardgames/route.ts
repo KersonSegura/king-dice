@@ -287,13 +287,15 @@ export async function GET(request: NextRequest) {
         { data: allMechanics, error: mechanicsError },
         { data: allDescriptions, error: descriptionsError },
         { data: allRulesInitial, error: rulesError },
-        { data: allExpansions, error: expansionsError }
+        { data: allExpansions, error: expansionsError },
+        { data: allShopItems, error: shopItemsError }
       ] = await Promise.all([
         supabaseAdmin.from('game_categories').select('*, category:categories(*)').in('gameId', gameIds),
         supabaseAdmin.from('game_mechanics').select('*, mechanic:mechanics(*)').in('gameId', gameIds),
         supabaseAdmin.from('game_descriptions').select('*').in('gameId', gameIds),
         supabaseAdmin.from('game_rules').select('*').in('gameId', gameIds),
-        supabaseAdmin.from('expansions').select('*').in('baseGameId', gameIds)
+        supabaseAdmin.from('expansions').select('*').in('baseGameId', gameIds),
+        supabaseAdmin.from('game_shop_items').select('*').in('gameId', gameIds)
       ]);
 
       // Handle rules query error - try camelCase column name if snake_case failed
@@ -322,6 +324,7 @@ export async function GET(request: NextRequest) {
       if (mechanicsError) console.warn('[BOARDGAMES API] Error fetching mechanics:', mechanicsError);
       if (descriptionsError) console.warn('[BOARDGAMES API] Error fetching descriptions:', descriptionsError);
       if (expansionsError) console.warn('[BOARDGAMES API] Error fetching expansions:', expansionsError);
+      if (shopItemsError) console.warn('[BOARDGAMES API] Error fetching shop items:', shopItemsError);
       
       console.log('[BOARDGAMES API] Fetched related data:', {
         categories: allCategories?.length || 0,
@@ -350,6 +353,7 @@ export async function GET(request: NextRequest) {
       const descriptionsByGame: Record<number, any[]> = {};
       const rulesByGame: Record<number, any[]> = {};
       const expansionsByGame: Record<number, any[]> = {};
+      const shopItemsByGame: Record<number, any[]> = {};
 
       (allCategories || []).forEach((gc: any) => {
         const gameId = gc.game_id ?? gc.gameId;
@@ -425,6 +429,18 @@ export async function GET(request: NextRequest) {
         });
       });
 
+      (allShopItems || []).forEach((item: any) => {
+        const gameId = item.game_id ?? item.gameId;
+        if (!shopItemsByGame[gameId]) shopItemsByGame[gameId] = [];
+        shopItemsByGame[gameId].push({
+          id: item.id,
+          gameId,
+          title: item.title,
+          imageUrl: item.image_url ?? item.imageUrl,
+          link: item.link
+        });
+      });
+
       // Transform games to match expected format for GameSearch component
       // For search results, we need: id, nameEn, nameEs, yearRelease, minPlayers, maxPlayers, durationMinutes, imageUrl, thumbnailUrl
       // Use paginatedGames (already sorted and paginated for search)
@@ -465,7 +481,8 @@ export async function GET(request: NextRequest) {
         gameMechanics: mechanicsByGame[game.id] || [],
         descriptions: descriptionsByGame[game.id] || [],
         rules: rulesByGame[game.id] || [],
-        baseGameExpansions: expansionsByGame[game.id] || []
+        baseGameExpansions: expansionsByGame[game.id] || [],
+        shopItems: shopItemsByGame[game.id] || []
       }));
 
               // Filter games without rules if requested
@@ -610,6 +627,7 @@ export async function POST(request: NextRequest) {
     // We'll handle rollback manually if any step fails
     let createdGame: any = null;
     let createdDescriptionIds: number[] = [];
+    let createdShopItemIds: number[] = [];
     let createdRuleId: number | null = null;
     
     try {
@@ -808,6 +826,31 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`⚠️ No rules provided for game ${gameId}`);
       }
+
+      // Add shop items if provided
+      if (Array.isArray(body.shopItems)) {
+        for (const item of body.shopItems) {
+          if (!item || !item.title || !item.link) continue;
+          const shopItemData: any = {
+            gameId,
+            title: item.title,
+            imageUrl: item.imageUrl || null,
+            link: item.link
+          };
+          const shopResult = await supabaseAdmin
+            .from('game_shop_items')
+            .insert(shopItemData)
+            .select('id')
+            .single();
+          if (shopResult.error) {
+            console.error('Error inserting shop item:', shopResult.error);
+            continue;
+          }
+          if (shopResult.data?.id) {
+            createdShopItemIds.push(shopResult.data.id);
+          }
+        }
+      }
       
       // All operations succeeded
       // result will be set below after try-catch
@@ -819,6 +862,10 @@ export async function POST(request: NextRequest) {
         // Delete descriptions
         if (createdDescriptionIds.length > 0) {
           await supabaseAdmin.from('game_descriptions').delete().in('id', createdDescriptionIds);
+        }
+        // Delete shop items
+        if (createdShopItemIds.length > 0) {
+          await supabaseAdmin.from('game_shop_items').delete().in('id', createdShopItemIds);
         }
         // Delete rule
         if (createdRuleId) {

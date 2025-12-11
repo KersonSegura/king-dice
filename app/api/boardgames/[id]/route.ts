@@ -366,6 +366,27 @@ export async function PUT(
       }
     }
 
+    // Update shop items if provided: replace all items for this game
+    if (Array.isArray(body.shopItems)) {
+      await supabaseAdmin.from('game_shop_items').delete().eq('gameId', gameId);
+      const itemsToInsert = body.shopItems
+        .filter((item: any) => item && item.title && item.link)
+        .map((item: any) => ({
+          gameId,
+          title: item.title,
+          imageUrl: item.imageUrl || null,
+          link: item.link
+        }));
+      if (itemsToInsert.length > 0) {
+        const { error: shopInsertError } = await supabaseAdmin
+          .from('game_shop_items')
+          .insert(itemsToInsert);
+        if (shopInsertError) {
+          console.error('Error inserting shop items:', shopInsertError);
+        }
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
       game: transformedGame,

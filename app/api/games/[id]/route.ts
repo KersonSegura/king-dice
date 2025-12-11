@@ -59,7 +59,8 @@ export async function GET(
       { data: gameMechanics, error: gmError },
       { data: descriptions, error: descError },
       { data: rulesInitial, error: rulesError },
-      { data: baseGameExpansions, error: expError }
+      { data: baseGameExpansions, error: expError },
+      { data: shopItems, error: shopItemsError }
     ] = await Promise.all([
       // Game Categories with category details - use camelCase (gameId)
       supabaseAdmin
@@ -95,7 +96,12 @@ export async function GET(
       supabaseAdmin
         .from('expansions')
         .select('*')
-        .eq('baseGameId', id)
+        .eq('baseGameId', id),
+      // Shop items
+      supabaseAdmin
+        .from('game_shop_items')
+        .select('*')
+        .eq('gameId', id)
     ]);
 
     // Log any errors (non-fatal, some relations might be empty)
@@ -131,6 +137,7 @@ export async function GET(
       }
     }
     if (expError) console.warn('[GAME API] Error fetching expansions:', expError);
+    if (shopItemsError) console.warn('[GAME API] Error fetching shop items:', shopItemsError);
     
     // Debug: Log what we got
     console.log('[GAME API] Fetched data counts:', {
@@ -182,6 +189,7 @@ export async function GET(
       pdfUrl: (game as any).pdfUrl ?? (game as any).pdf_url,
       pdfFile: (game as any).pdfFile ?? (game as any).pdf_file,
       officialWebsite: (game as any).officialWebsite ?? (game as any).official_website,
+      amazonUrl: (game as any).amazonUrl ?? (game as any).amazon_url,
       bggRanking: (game as any).bggRanking ?? (game as any).bgg_ranking,
       bggRating: (game as any).bggRating ?? (game as any).bgg_rating,
       bggVotes: (game as any).bggVotes ?? (game as any).bgg_votes,
@@ -208,6 +216,13 @@ export async function GET(
           }
         };
       }),
+      shopItems: (shopItems || []).map((item: any) => ({
+        id: item.id,
+        gameId: item.gameId ?? item.game_id,
+        title: item.title,
+        imageUrl: item.imageUrl ?? item.image_url,
+        link: item.link
+      })),
       gameMechanics: (gameMechanics || []).map((gm: any) => {
         const mech = Array.isArray(gm.mechanic) ? gm.mechanic[0] : (gm.mechanic || {});
         return {
