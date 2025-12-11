@@ -39,13 +39,15 @@ export async function GET(
       { data: mechanics },
       { data: descriptions },
       { data: rules },
-      { data: expansions }
+      { data: expansions },
+      { data: shopItems }
     ] = await Promise.all([
       supabaseAdmin.from('game_categories').select('*, category:categories(*)').eq('gameId', gameId),
       supabaseAdmin.from('game_mechanics').select('*, mechanic:mechanics(*)').eq('gameId', gameId),
       supabaseAdmin.from('game_descriptions').select('*').eq('gameId', gameId),
       supabaseAdmin.from('game_rules').select('*').eq('gameId', gameId),
-      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId)
+      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId),
+      supabaseAdmin.from('game_shop_items').select('*').eq('gameId', gameId)
     ]);
 
     // Transform to match expected format
@@ -65,7 +67,14 @@ export async function GET(
       })),
       descriptions: descriptions || [],
       rules: rules || [],
-      baseGameExpansions: expansions || []
+      baseGameExpansions: expansions || [],
+      shopItems: (shopItems || []).map((item: any) => ({
+        id: item.id,
+        gameId: item.gameId ?? item.game_id,
+        title: item.title,
+        imageUrl: item.imageUrl ?? item.image_url,
+        link: item.link
+      }))
     };
 
     return NextResponse.json({ 
@@ -295,7 +304,14 @@ export async function PUT(
       })),
       descriptions: descriptions || [],
       rules: rules || [],
-      baseGameExpansions: expansions || []
+      baseGameExpansions: expansions || [],
+      shopItems: (shopItems || []).map((item: any) => ({
+        id: item.id,
+        gameId: item.gameId ?? item.game_id,
+        title: item.title,
+        imageUrl: item.imageUrl ?? item.image_url,
+        link: item.link
+      }))
     };
 
     // Update description if provided

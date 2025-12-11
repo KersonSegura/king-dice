@@ -690,12 +690,16 @@ function BoardGameDatabaseContent() {
       // Success message
       alert(`✅ Juego "${responseData.game.nameEn}" actualizado exitosamente!`);
       
-      // Refresh the games list to show updated data
-      await fetchGames(pagination.page, searchTerm, showOnlyWithoutRules);
-      
-      // Reset editing state
+      // Update local games list with new data (including shop items) and refetch to stay in sync
+      setGames(prev => prev.map(g => g.id === gameId ? { ...g, ...responseData.game } : g));
       setEditingGame(prev => ({ ...prev, [gameId]: false }));
       setEditingGameData(prev => ({ ...prev, [gameId]: {} }));
+      setEditingShopItems(prev => {
+        const updated = { ...prev };
+        delete updated[gameId];
+        return updated;
+      });
+      await fetchGames(pagination.page, searchTerm, showOnlyWithoutRules);
       
     } catch (error) {
       console.error('Error saving game properties:', error);
