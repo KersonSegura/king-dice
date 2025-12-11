@@ -17,11 +17,6 @@ interface ShopItem {
   uniqueKey?: string;
 }
 
-interface Game {
-  id: number;
-  nameEn?: string;
-  shopItems?: ShopItem[];
-}
 
 export default function ShopPage() {
   const [shopItems, setShopItems] = useState<(ShopItem & { uniqueKey?: string })[]>([]);
@@ -34,56 +29,26 @@ export default function ShopPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch all games with their shop items
-        // We'll need to fetch multiple pages since the API paginates
-        const allGames: Game[] = [];
-        let page = 1;
-        const limit = 100; // Fetch larger batches
-        let hasMore = true;
-
-        while (hasMore) {
-          const response = await fetch(`/api/boardgames?page=${page}&limit=${limit}`);
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch games');
-          }
-
-          const data = await response.json();
-          
-          if (data.games && data.games.length > 0) {
-            allGames.push(...data.games);
-            // If we got fewer results than the limit, we've reached the end
-            if (data.games.length < limit) {
-              hasMore = false;
-            } else {
-              page++;
-            }
-          } else {
-            hasMore = false;
-          }
+        // Fetch all shop items directly from the dedicated API endpoint
+        const response = await fetch('/api/shop-items');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch shop items');
         }
 
-        // Extract all shop items from all games
-        const allShopItems: (ShopItem & { uniqueKey?: string })[] = [];
-        allGames.forEach((game) => {
-          if (game.shopItems && game.shopItems.length > 0) {
-            // Add shop items with their order and game context
-            game.shopItems.forEach((item, itemIdx) => {
-              allShopItems.push({
-                ...item,
-                // Preserve order if it exists, otherwise use 999
-                order: item.order ?? 999,
-                // Create unique key for React
-                uniqueKey: item.id ? `shop-${item.id}` : `shop-${game.id}-${itemIdx}`
-              });
-            });
-          }
-        });
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
 
-        // Sort by order (ascending)
-        allShopItems.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+        // Transform shop items with unique keys
+        const shopItemsWithKeys: (ShopItem & { uniqueKey?: string })[] = (data.shopItems || []).map((item: ShopItem) => ({
+          ...item,
+          uniqueKey: item.id ? `shop-${item.id}` : `shop-${item.title}`
+        }));
 
-        setShopItems(allShopItems);
+        setShopItems(shopItemsWithKeys);
       } catch (err) {
         console.error('Error fetching shop items:', err);
         setError('Failed to load shop items. Please try again later.');
