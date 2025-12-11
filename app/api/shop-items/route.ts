@@ -56,10 +56,11 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch categories for all games
+    // Try both camelCase and snake_case column names
     const { data: gameCategories, error: categoriesError } = await supabaseAdmin
       .from('game_categories')
       .select(`
-        gameId,
+        *,
         category:categories(*)
       `)
       .in('gameId', gameIds);
@@ -72,11 +73,15 @@ export async function GET(request: NextRequest) {
     const categoriesByGameId: Record<number, any[]> = {};
     (gameCategories || []).forEach((gc: any) => {
       const gameId = gc.gameId ?? gc.game_id;
+      if (!gameId) {
+        console.warn('[SHOP ITEMS API] Category entry missing gameId:', gc);
+        return;
+      }
       if (!categoriesByGameId[gameId]) {
         categoriesByGameId[gameId] = [];
       }
       const cat = Array.isArray(gc.category) ? gc.category[0] : (gc.category || {});
-      if (cat.id) {
+      if (cat && cat.id) {
         categoriesByGameId[gameId].push({
           id: cat.id,
           nameEn: cat.name_en ?? cat.nameEn,
@@ -84,6 +89,8 @@ export async function GET(request: NextRequest) {
         });
       }
     });
+
+    console.log('[SHOP ITEMS API] Categories by game:', Object.keys(categoriesByGameId).length, 'games have categories');
 
     // Collect all unique categories for the filter list
     const allCategoriesMap = new Map<number, { id: number; nameEn: string; nameEs?: string }>();
@@ -116,7 +123,8 @@ export async function GET(request: NextRequest) {
       (a.nameEn || '').localeCompare(b.nameEn || '')
     );
 
-    console.log('[SHOP ITEMS API] Successfully fetched', transformedItems.length, 'shop items with', allCategories.length, 'categories');
+    console.log('[SHOP ITEMS API] Successfully fetched', transformedItems.length, 'shop items with', allCategories.length, 'unique categories');
+    console.log('[SHOP ITEMS API] Category names:', allCategories.map(c => c.nameEn));
 
     return NextResponse.json({ 
       shopItems: transformedItems,
