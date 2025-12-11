@@ -358,7 +358,21 @@ export async function PUT(
 
     // Update shop items if provided: replace all items for this game
     if (Array.isArray(body.shopItems)) {
-      await supabaseAdmin.from('game_shop_items').delete().eq('gameId', gameId);
+      console.log(`[PUT /api/boardgames/${gameId}] Updating shop items:`, body.shopItems);
+      
+      // Delete existing shop items
+      const { error: deleteError } = await supabaseAdmin
+        .from('game_shop_items')
+        .delete()
+        .eq('gameId', gameId);
+      
+      if (deleteError) {
+        console.error('Error deleting shop items:', deleteError);
+      } else {
+        console.log(`[PUT /api/boardgames/${gameId}] Deleted existing shop items`);
+      }
+      
+      // Insert new shop items
       const itemsToInsert = body.shopItems
         .filter((item: any) => item && item.title && item.link)
         .map((item: any) => ({
@@ -367,21 +381,44 @@ export async function PUT(
           imageUrl: item.imageUrl || null,
           link: item.link
         }));
+      
       if (itemsToInsert.length > 0) {
-        const { error: shopInsertError } = await supabaseAdmin
+        console.log(`[PUT /api/boardgames/${gameId}] Inserting ${itemsToInsert.length} shop items:`, itemsToInsert);
+        const { data: insertedItems, error: shopInsertError } = await supabaseAdmin
           .from('game_shop_items')
-          .insert(itemsToInsert);
+          .insert(itemsToInsert)
+          .select('*');
+        
         if (shopInsertError) {
           console.error('Error inserting shop items:', shopInsertError);
+          // Don't throw - return error in response so frontend can handle it
+          return NextResponse.json(
+            { 
+              error: 'Failed to insert shop items', 
+              message: shopInsertError.message,
+              details: shopInsertError
+            },
+            { status: 500 }
+          );
+        } else {
+          console.log(`[PUT /api/boardgames/${gameId}] Successfully inserted shop items:`, insertedItems);
         }
+      } else {
+        console.log(`[PUT /api/boardgames/${gameId}] No shop items to insert (all filtered out)`);
       }
     }
 
     // Fetch shop items AFTER they've been updated
-    const { data: shopItems } = await supabaseAdmin
+    const { data: shopItems, error: shopItemsFetchError } = await supabaseAdmin
       .from('game_shop_items')
       .select('*')
       .eq('gameId', gameId);
+    
+    if (shopItemsFetchError) {
+      console.error('Error fetching shop items after update:', shopItemsFetchError);
+    } else {
+      console.log(`[PUT /api/boardgames/${gameId}] Fetched ${shopItems?.length || 0} shop items after update:`, shopItems);
+    }
 
     // Transform to match expected format
     const transformedGame = {
