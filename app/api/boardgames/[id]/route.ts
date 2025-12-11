@@ -357,6 +357,82 @@ export async function PUT(
       }
     }
 
+    // Update categories if provided: replace all categories for this game
+    if (Array.isArray(body.categories)) {
+      console.log(`[PUT /api/boardgames/${gameId}] Updating categories:`, body.categories);
+      
+      // Delete existing game categories
+      const { error: deleteError } = await supabaseAdmin
+        .from('game_categories')
+        .delete()
+        .eq('gameId', gameId);
+      
+      if (deleteError) {
+        console.error('Error deleting game categories:', deleteError);
+      } else {
+        console.log(`[PUT /api/boardgames/${gameId}] Deleted existing game categories`);
+      }
+      
+      // Process each category name
+      for (const categoryName of body.categories) {
+        if (!categoryName || typeof categoryName !== 'string' || categoryName.trim().length === 0) {
+          continue;
+        }
+        
+        const trimmedName = categoryName.trim();
+        
+        // Find or create category (case-insensitive)
+        let { data: existingCategories, error: findError } = await supabaseAdmin
+          .from('categories')
+          .select('*')
+          .or(`nameEn.ilike.${trimmedName},nameEs.ilike.${trimmedName}`)
+          .limit(1);
+        
+        const existingCategory = existingCategories && existingCategories.length > 0 ? existingCategories[0] : null;
+        
+        if (findError && findError.code !== 'PGRST116') {
+          console.warn(`Error finding category "${trimmedName}":`, findError);
+        }
+        
+        let categoryId: number;
+        
+        if (!existingCategory) {
+          // Create new category
+          const { data: newCategory, error: createError } = await supabaseAdmin
+            .from('categories')
+            .insert({
+              nameEn: trimmedName,
+              nameEs: trimmedName
+            })
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error(`Error creating category "${trimmedName}":`, createError);
+            continue;
+          }
+          
+          categoryId = newCategory.id;
+        } else {
+          categoryId = existingCategory.id;
+        }
+        
+        // Link category to game
+        const { error: linkError } = await supabaseAdmin
+          .from('game_categories')
+          .insert({
+            gameId: gameId,
+            categoryId: categoryId
+          });
+        
+        if (linkError) {
+          console.error(`Error linking category "${trimmedName}" to game:`, linkError);
+        } else {
+          console.log(`[PUT /api/boardgames/${gameId}] Linked category: ${trimmedName}`);
+        }
+      }
+    }
+
     // Update shop items if provided: replace all items for this game
     if (Array.isArray(body.shopItems)) {
       console.log(`[PUT /api/boardgames/${gameId}] Updating shop items:`, body.shopItems);

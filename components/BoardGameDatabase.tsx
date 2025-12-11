@@ -125,7 +125,7 @@ function BoardGameDatabaseContent() {
   const [editingRuleContent, setEditingRuleContent] = useState<{[key: number]: string}>({});
   const [savingRules, setSavingRules] = useState<{[key: number]: boolean}>({});
   const [editingGame, setEditingGame] = useState<{[key: number]: boolean}>({});
-  const [editingGameData, setEditingGameData] = useState<{[key: number]: Partial<Game> & { fullDescription?: string }}>({});
+  const [editingGameData, setEditingGameData] = useState<{[key: number]: Partial<Game> & { fullDescription?: string; categories?: string }}>({});
   const [editingShopItems, setEditingShopItems] = useState<{ [key: number]: ShopItem[] }>({});
   const [savingGame, setSavingGame] = useState<{[key: number]: boolean}>({});
   const [showOnlyWithoutRules, setShowOnlyWithoutRules] = useState(false);
@@ -416,6 +416,11 @@ function BoardGameDatabaseContent() {
     // Get the current description from the game
     const currentDescription = getGameDescription(game);
     
+    // Get current categories as comma-separated string
+    const currentCategories = game.gameCategories && game.gameCategories.length > 0
+      ? game.gameCategories.map(gc => gc.category.nameEn).join(', ')
+      : '';
+
     setEditingGameData(prev => ({ 
       ...prev, 
       [game.id]: {
@@ -433,7 +438,8 @@ function BoardGameDatabaseContent() {
         pdfUrl: game.pdfUrl,
         officialWebsite: game.officialWebsite,
         fullDescription: currentDescription !== 'No description available' ? currentDescription : '',
-        isExpansion: game.isExpansion || false
+        isExpansion: game.isExpansion || false,
+        categories: currentCategories
       }
     }));
 
@@ -611,6 +617,15 @@ function BoardGameDatabaseContent() {
         }));
       if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
       if (gameData.isExpansion !== undefined) cleanGameData.isExpansion = gameData.isExpansion;
+      
+      // Categories - parse comma-separated string
+      if (gameData.categories !== undefined) {
+        const categoryNames = gameData.categories
+          .split(',')
+          .map(cat => cat.trim())
+          .filter(cat => cat.length > 0);
+        cleanGameData.categories = categoryNames;
+      }
 
       // If there's a PDF file (base64), upload it to Supabase Storage first
       if (cleanGameData.pdfFile) {
@@ -2187,6 +2202,16 @@ You can use markdown formatting:
                                 onChange={(e) => setEditingGameData(prev => ({
                                   ...prev,
                                   [game.id]: { ...prev[game.id], videoUrl: e.target.value }
+                                }))}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Categories (comma-separated, e.g., Strategy Games, Economic, Negotiation)"
+                                value={editingGameData[game.id]?.categories || ''}
+                                onChange={(e) => setEditingGameData(prev => ({
+                                  ...prev,
+                                  [game.id]: { ...prev[game.id], categories: e.target.value }
                                 }))}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
                               />
