@@ -1419,14 +1419,14 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                           link: game.amazonUrl || game.shopUrl
                         }]).map((item, idx) => (
                           <div key={idx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                            <div className="relative w-full h-64 bg-gray-200 overflow-hidden">
+                            <div className="relative w-full h-64 bg-gray-200 overflow-hidden flex items-center justify-center">
                               {item.imageUrl ? (
                                 item.imageUrl.startsWith('https://m.media-amazon.com') ? (
                                   <Image
                                     src={item.imageUrl}
                                     alt={item.title}
                                     fill
-                                    className="object-cover"
+                                    className="object-contain"
                                     sizes="(max-width: 768px) 100vw, 400px"
                                     loading="lazy"
                                     referrerPolicy="no-referrer"
@@ -1440,7 +1440,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   <img
                                     src={item.imageUrl}
                                     alt={item.title}
-                                    className="w-full h-full object-cover"
+                                    className="max-w-full max-h-full object-contain"
                                     referrerPolicy="no-referrer"
                                     loading="lazy"
                                     onError={(e) => {
@@ -1480,7 +1480,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 rel="noopener noreferrer sponsored"
                                 className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-2 px-4 rounded-lg transition-colors space-x-2"
                               >
-                                <span>Buy</span>
+                                <span>Buy on Amazon</span>
                                 <ExternalLink className="w-4 h-4" />
                               </a>
                             </div>
