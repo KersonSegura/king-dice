@@ -1538,13 +1538,6 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
-              {activeTab === 'shop' && !game?.shopUrl && !game?.amazonUrl && !(game?.shopItems && game.shopItems.length > 0) && (
-                <div className="text-center py-12">
-                  <img src="/ShopIcon.svg" alt="Shop" className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Shop Link Available</h3>
-                  <p className="text-gray-600">Shop link is not yet available for this game.</p>
-                </div>
-              )}
             </div>
           </div>
         )}

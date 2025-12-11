@@ -2174,16 +2174,6 @@ You can use markdown formatting:
                               />
                               <input
                                 type="url"
-                                placeholder="Amazon Associates Link (optional)"
-                                value={editingGameData[game.id]?.amazonUrl || ''}
-                                onChange={(e) => setEditingGameData(prev => ({
-                                  ...prev,
-                                  [game.id]: { ...prev[game.id], amazonUrl: e.target.value }
-                                }))}
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
-                              />
-                              <input
-                                type="url"
                                 placeholder="Video Tutorial URL (optional)"
                                 value={editingGameData[game.id]?.videoUrl || ''}
                                 onChange={(e) => setEditingGameData(prev => ({
