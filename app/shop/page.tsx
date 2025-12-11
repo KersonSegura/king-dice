@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Search } from 'lucide-react';
 
 // Amazon Associates disclosure - required by Amazon
 // Updated to clarify that prices are the same for consumers
 const AMAZON_DISCLOSURE = "As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links.";
+
+interface Category {
+  id: number;
+  nameEn: string;
+  nameEs?: string;
+}
 
 interface ShopItem {
   id?: number;
@@ -15,13 +21,22 @@ interface ShopItem {
   link?: string;
   order?: number;
   uniqueKey?: string;
+  game?: {
+    id: number;
+    nameEn?: string;
+    nameEs?: string;
+  };
+  categories?: Category[];
 }
 
 
 export default function ShopPage() {
-  const [shopItems, setShopItems] = useState<(ShopItem & { uniqueKey?: string })[]>([]);
+  const [allShopItems, setAllShopItems] = useState<ShopItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchAllShopItems() {
@@ -43,12 +58,13 @@ export default function ShopPage() {
         }
 
         // Transform shop items with unique keys
-        const shopItemsWithKeys: (ShopItem & { uniqueKey?: string })[] = (data.shopItems || []).map((item: ShopItem) => ({
+        const shopItemsWithKeys: ShopItem[] = (data.shopItems || []).map((item: ShopItem) => ({
           ...item,
           uniqueKey: item.id ? `shop-${item.id}` : `shop-${item.title}`
         }));
 
-        setShopItems(shopItemsWithKeys);
+        setAllShopItems(shopItemsWithKeys);
+        setCategories(data.categories || []);
       } catch (err) {
         console.error('Error fetching shop items:', err);
         setError('Failed to load shop items. Please try again later.');
@@ -59,6 +75,31 @@ export default function ShopPage() {
 
     fetchAllShopItems();
   }, []);
+
+  // Filter shop items based on search and category
+  const filteredShopItems = allShopItems.filter((item) => {
+    // Search filter - search in title and game name
+    if (searchQuery.trim()) {
+      const searchLower = searchQuery.toLowerCase();
+      const matchesTitle = item.title?.toLowerCase().includes(searchLower);
+      const matchesGameName = item.game?.nameEn?.toLowerCase().includes(searchLower) || 
+                             item.game?.nameEs?.toLowerCase().includes(searchLower);
+      
+      if (!matchesTitle && !matchesGameName) {
+        return false;
+      }
+    }
+
+    // Category filter
+    if (selectedCategory !== null) {
+      const hasCategory = item.categories?.some((cat) => cat.id === selectedCategory);
+      if (!hasCategory) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pt-8 pb-20">
@@ -77,6 +118,60 @@ export default function ShopPage() {
             <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
           </div>
         </div>
+
+        {/* Search Bar and Filters */}
+        {!loading && !error && (
+          <div className="mb-6 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search shop items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+
+            {/* Category Filters */}
+            {categories.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Categories</h3>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      selectedCategory === null
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                    }`}
+                  >
+                    All Categories
+                  </button>
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        selectedCategory === category.id
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                      }`}
+                    >
+                      {category.nameEn}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Results count */}
+            <div className="text-sm text-gray-600">
+              Showing {filteredShopItems.length} of {allShopItems.length} items
+            </div>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -99,7 +194,7 @@ export default function ShopPage() {
         {!loading && !error && (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
-              {shopItems.map((item) => (
+              {filteredShopItems.map((item) => (
                 <div key={item.uniqueKey || item.id || `shop-item-${item.title}`} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
                     {item.imageUrl ? (
@@ -165,7 +260,28 @@ export default function ShopPage() {
             </div>
 
             {/* Empty State */}
-            {shopItems.length === 0 && (
+            {filteredShopItems.length === 0 && allShopItems.length > 0 && (
+              <div className="text-center py-12">
+                <img
+                  src="/ShopIcon.svg"
+                  alt="Shop Icon"
+                  className="w-16 h-16 text-gray-400 mx-auto mb-4"
+                />
+                <p className="text-gray-600">No shop items match your search criteria.</p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory(null);
+                  }}
+                  className="mt-4 text-primary-500 hover:text-primary-600 underline"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+
+            {/* Empty State - No items at all */}
+            {filteredShopItems.length === 0 && allShopItems.length === 0 && (
               <div className="text-center py-12">
                 <img
                   src="/ShopIcon.svg"

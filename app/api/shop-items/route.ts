@@ -6,39 +6,121 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('[SHOP ITEMS API] Fetching all shop items...');
+    console.log('[SHOP ITEMS API] Fetching all shop items with game and category data...');
 
-    // Fetch all shop items directly from the database, ordered by order field
-    const { data: shopItems, error } = await supabaseAdmin
+    // Fetch all shop items
+    const { data: shopItems, error: shopItemsError } = await supabaseAdmin
       .from('game_shop_items')
       .select('*')
       .order('order', { ascending: true });
 
-    if (error) {
-      console.error('[SHOP ITEMS API] Error fetching shop items:', error);
+    if (shopItemsError) {
+      console.error('[SHOP ITEMS API] Error fetching shop items:', shopItemsError);
       return NextResponse.json(
         { 
           error: 'Failed to fetch shop items', 
-          details: error.message 
+          details: shopItemsError.message 
         },
         { status: 500 }
       );
     }
 
-    // Transform to match expected format
-    const transformedItems = (shopItems || []).map((item: any) => ({
-      id: item.id,
-      gameId: item.gameId ?? item.game_id,
-      title: item.title,
-      imageUrl: item.imageUrl ?? item.image_url,
-      link: item.link,
-      order: item.order ?? 999
-    }));
+    if (!shopItems || shopItems.length === 0) {
+      return NextResponse.json({ 
+        shopItems: [],
+        categories: []
+      });
+    }
 
-    console.log('[SHOP ITEMS API] Successfully fetched', transformedItems.length, 'shop items');
+    // Get all unique game IDs
+    const gameIds = [...new Set(shopItems.map((item: any) => item.gameId ?? item.game_id))];
+
+    // Fetch games for these IDs
+    const { data: games, error: gamesError } = await supabaseAdmin
+      .from('games')
+      .select('id, nameEn, nameEs')
+      .in('id', gameIds);
+
+    if (gamesError) {
+      console.warn('[SHOP ITEMS API] Error fetching games:', gamesError);
+    }
+
+    // Create a map of games by ID
+    const gamesMap = new Map<number, any>();
+    (games || []).forEach((game: any) => {
+      gamesMap.set(game.id, {
+        id: game.id,
+        nameEn: game.nameEn ?? game.name_en,
+        nameEs: game.nameEs ?? game.name_es
+      });
+    });
+
+    // Fetch categories for all games
+    const { data: gameCategories, error: categoriesError } = await supabaseAdmin
+      .from('game_categories')
+      .select(`
+        gameId,
+        category:categories(*)
+      `)
+      .in('gameId', gameIds);
+
+    if (categoriesError) {
+      console.warn('[SHOP ITEMS API] Error fetching categories:', categoriesError);
+    }
+
+    // Group categories by game ID
+    const categoriesByGameId: Record<number, any[]> = {};
+    (gameCategories || []).forEach((gc: any) => {
+      const gameId = gc.gameId ?? gc.game_id;
+      if (!categoriesByGameId[gameId]) {
+        categoriesByGameId[gameId] = [];
+      }
+      const cat = Array.isArray(gc.category) ? gc.category[0] : (gc.category || {});
+      if (cat.id) {
+        categoriesByGameId[gameId].push({
+          id: cat.id,
+          nameEn: cat.name_en ?? cat.nameEn,
+          nameEs: cat.name_es ?? cat.nameEs
+        });
+      }
+    });
+
+    // Collect all unique categories for the filter list
+    const allCategoriesMap = new Map<number, { id: number; nameEn: string; nameEs?: string }>();
+    Object.values(categoriesByGameId).forEach((cats: any[]) => {
+      cats.forEach((cat: any) => {
+        if (!allCategoriesMap.has(cat.id)) {
+          allCategoriesMap.set(cat.id, cat);
+        }
+      });
+    });
+
+    // Transform shop items to include game and category information
+    const transformedItems = shopItems.map((item: any) => {
+      const gameId = item.gameId ?? item.game_id;
+      const game = gamesMap.get(gameId) || null;
+      
+      return {
+        id: item.id,
+        gameId,
+        title: item.title,
+        imageUrl: item.imageUrl ?? item.image_url,
+        link: item.link,
+        order: item.order ?? 999,
+        game: game,
+        categories: categoriesByGameId[gameId] || []
+      };
+    });
+
+    const allCategories = Array.from(allCategoriesMap.values()).sort((a, b) => 
+      (a.nameEn || '').localeCompare(b.nameEn || '')
+    );
+
+    console.log('[SHOP ITEMS API] Successfully fetched', transformedItems.length, 'shop items with', allCategories.length, 'categories');
 
     return NextResponse.json({ 
-      shopItems: transformedItems
+      shopItems: transformedItems,
+      categories: allCategories
     });
 
   } catch (error: any) {
