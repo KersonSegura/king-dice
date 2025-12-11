@@ -1482,14 +1482,6 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             </div>
                             <div className="p-3 space-y-2">
                               <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
-                              <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                                {game.minPlayers && game.maxPlayers && (
-                                  <span className="bg-gray-100 px-2 py-1 rounded">{game.minPlayers}-{game.maxPlayers} players</span>
-                                )}
-                                {game.durationMinutes && (
-                                  <span className="bg-gray-100 px-2 py-1 rounded">{game.durationMinutes} min</span>
-                                )}
-                              </div>
                               <a
                                 href={item.link || '#'}
                                 target="_blank"
