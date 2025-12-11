@@ -278,13 +278,15 @@ export async function PUT(
       { data: mechanics },
       { data: descriptions },
       { data: rules },
-      { data: expansions }
+      { data: expansions },
+      { data: shopItems }
     ] = await Promise.all([
       supabaseAdmin.from('game_categories').select('*, category:categories(*)').eq('gameId', gameId),
       supabaseAdmin.from('game_mechanics').select('*, mechanic:mechanics(*)').eq('gameId', gameId),
       supabaseAdmin.from('game_descriptions').select('*').eq('gameId', gameId),
       supabaseAdmin.from('game_rules').select('*').eq('gameId', gameId),
-      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId)
+      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId),
+      supabaseAdmin.from('game_shop_items').select('*').eq('gameId', gameId)
     ]);
 
     // Transform to match expected format
