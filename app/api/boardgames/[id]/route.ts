@@ -272,49 +272,21 @@ export async function PUT(
     
     console.log('Supabase update successful');
     
-    // Fetch related data - use camelCase (gameId, baseGameId)
+    // Fetch related data (categories, mechanics, descriptions, rules, expansions)
+    // NOTE: Shop items are fetched AFTER they're updated below
     const [
       { data: categories },
       { data: mechanics },
       { data: descriptions },
       { data: rules },
-      { data: expansions },
-      { data: shopItems }
+      { data: expansions }
     ] = await Promise.all([
       supabaseAdmin.from('game_categories').select('*, category:categories(*)').eq('gameId', gameId),
       supabaseAdmin.from('game_mechanics').select('*, mechanic:mechanics(*)').eq('gameId', gameId),
       supabaseAdmin.from('game_descriptions').select('*').eq('gameId', gameId),
       supabaseAdmin.from('game_rules').select('*').eq('gameId', gameId),
-      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId),
-      supabaseAdmin.from('game_shop_items').select('*').eq('gameId', gameId)
+      supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId)
     ]);
-
-    // Transform to match expected format
-    const transformedGame = {
-      ...updatedGame,
-      gameCategories: (categories || []).map((gc: any) => ({
-        id: gc.id,
-        gameId: gc.game_id,
-        categoryId: gc.category_id,
-        category: Array.isArray(gc.category) ? gc.category[0] : gc.category
-      })),
-      gameMechanics: (mechanics || []).map((gm: any) => ({
-        id: gm.id,
-        gameId: gm.game_id,
-        mechanicId: gm.mechanic_id,
-        mechanic: Array.isArray(gm.mechanic) ? gm.mechanic[0] : gm.mechanic
-      })),
-      descriptions: descriptions || [],
-      rules: rules || [],
-      baseGameExpansions: expansions || [],
-      shopItems: (shopItems || []).map((item: any) => ({
-        id: item.id,
-        gameId: item.gameId ?? item.game_id,
-        title: item.title,
-        imageUrl: item.imageUrl ?? item.image_url,
-        link: item.link
-      }))
-    };
 
     // Update description if provided
     if (body.fullDescription !== undefined) {
@@ -404,6 +376,39 @@ export async function PUT(
         }
       }
     }
+
+    // Fetch shop items AFTER they've been updated
+    const { data: shopItems } = await supabaseAdmin
+      .from('game_shop_items')
+      .select('*')
+      .eq('gameId', gameId);
+
+    // Transform to match expected format
+    const transformedGame = {
+      ...updatedGame,
+      gameCategories: (categories || []).map((gc: any) => ({
+        id: gc.id,
+        gameId: gc.game_id,
+        categoryId: gc.category_id,
+        category: Array.isArray(gc.category) ? gc.category[0] : gc.category
+      })),
+      gameMechanics: (mechanics || []).map((gm: any) => ({
+        id: gm.id,
+        gameId: gm.game_id,
+        mechanicId: gm.mechanic_id,
+        mechanic: Array.isArray(gm.mechanic) ? gm.mechanic[0] : gm.mechanic
+      })),
+      descriptions: descriptions || [],
+      rules: rules || [],
+      baseGameExpansions: expansions || [],
+      shopItems: (shopItems || []).map((item: any) => ({
+        id: item.id,
+        gameId: item.gameId ?? item.game_id,
+        title: item.title,
+        imageUrl: item.imageUrl ?? item.image_url,
+        link: item.link
+      }))
+    };
 
     return NextResponse.json({ 
       success: true, 
