@@ -1,51 +1,99 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
-import { boardGames, getGamesByCategory, getCategories, type BoardGame } from '@/data/board-games';
 
 // Amazon Associates disclosure - required by Amazon
 // Updated to clarify that prices are the same for consumers
 const AMAZON_DISCLOSURE = "As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links.";
 
-// Helper function to calculate discount percentage
-function calculateDiscount(originalPrice: string, currentPrice: string): string {
-  const original = parseFloat(originalPrice.replace(/[^0-9.]/g, ''));
-  const current = parseFloat(currentPrice.replace(/[^0-9.]/g, ''));
-  if (original <= current) return '';
-  const discount = ((original - current) / original) * 100;
-  return `${discount.toFixed(0)}%`;
+interface ShopItem {
+  id?: number;
+  title: string;
+  imageUrl?: string;
+  link?: string;
+  order?: number;
+  uniqueKey?: string;
 }
 
-type PriceFilter = 'all' | 'under5' | 'under10' | 'under25' | 'under50' | 'discounted';
+interface Game {
+  id: number;
+  nameEn?: string;
+  shopItems?: ShopItem[];
+}
 
 export default function ShopPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
-  
-  const categories = getCategories();
-  
-  // Filter games by category and price
-  const filteredGames = boardGames.filter((game) => {
-    // Category filter
-    if (selectedCategory && game.category !== selectedCategory) {
-      return false;
+  const [shopItems, setShopItems] = useState<(ShopItem & { uniqueKey?: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchAllShopItems() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch all games with their shop items
+        // We'll need to fetch multiple pages since the API paginates
+        const allGames: Game[] = [];
+        let page = 1;
+        const limit = 100; // Fetch larger batches
+        let hasMore = true;
+
+        while (hasMore) {
+          const response = await fetch(`/api/boardgames?page=${page}&limit=${limit}`);
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch games');
+          }
+
+          const data = await response.json();
+          
+          if (data.games && data.games.length > 0) {
+            allGames.push(...data.games);
+            // If we got fewer results than the limit, we've reached the end
+            if (data.games.length < limit) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+
+        // Extract all shop items from all games
+        const allShopItems: (ShopItem & { uniqueKey?: string })[] = [];
+        allGames.forEach((game) => {
+          if (game.shopItems && game.shopItems.length > 0) {
+            // Add shop items with their order and game context
+            game.shopItems.forEach((item, itemIdx) => {
+              allShopItems.push({
+                ...item,
+                // Preserve order if it exists, otherwise use 999
+                order: item.order ?? 999,
+                // Create unique key for React
+                uniqueKey: item.id ? `shop-${item.id}` : `shop-${game.id}-${itemIdx}`
+              });
+            });
+          }
+        });
+
+        // Sort by order (ascending)
+        allShopItems.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+        setShopItems(allShopItems);
+      } catch (err) {
+        console.error('Error fetching shop items:', err);
+        setError('Failed to load shop items. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
     }
-    
-    // Price filter - Note: We can't filter by price without showing prices
-    // which violates Amazon's terms. So we'll disable price filters for now.
-    // Once PA-API is available, we can re-enable this functionality.
-    // For now, price filters are disabled to comply with Amazon's terms.
-    if (priceFilter !== 'all') {
-      // Price filtering disabled to comply with Amazon Associates terms
-      // Users can still filter by category
-      return false; // Disable all price filters
-    }
-    
-    return true;
-  });
+
+    fetchAllShopItems();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-8 pb-20">
@@ -54,144 +102,115 @@ export default function ShopPage() {
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <img
-              src="/ShopIcon.svg?v=3"
+              src="/ShopIcon.svg"
               alt="Shop Icon"
               className="w-8 h-8"
+              style={{
+                filter: 'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)'
+              }}
             />
             <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-6 space-y-4">
-          {/* Category Filter */}
-          {categories.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Category</h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    selectedCategory === null
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {categories.map(category => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      selectedCategory === category
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Price Filter - Disabled to comply with Amazon Associates terms */}
-          {/* Price filters require showing prices, which violates Amazon's terms without PA-API */}
-          {/* Once PA-API is available, we can re-enable price filtering */}
-          {/* 
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Price & Deals</h3>
-            <div className="flex flex-wrap gap-2">
-              <button>...</button>
-            </div>
-          </div>
-          */}
-        </div>
-
-        {/* Games Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredGames.map((game) => (
-            <div
-              key={game.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              {/* Game Image */}
-              <div className="relative w-full h-64 bg-gray-200 overflow-hidden">
-                {game.imageUrl && game.imageUrl.startsWith('https://') ? (
-                  // External Amazon images - use regular img tag
-                  <img
-                    src={game.imageUrl}
-                    alt={game.name}
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    onError={(e) => {
-                      // Fallback to inline SVG placeholder if image fails to load
-                      const target = e.currentTarget as HTMLImageElement;
-                      // Prevent infinite loop
-                      if (target.src.startsWith('data:image/svg+xml')) return;
-                      
-                      const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${game.name}</text></svg>`;
-                      target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
-                      // Don't log error to console to avoid noise
-                    }}
-                  />
-                ) : (
-                  // Local images or missing images - show placeholder directly
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                    <div className="text-center p-4">
-                      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2">
-                        <rect width="200" height="200" fill="#e5e7e9" rx="8"/>
-                        <text x="50%" y="50%" fontFamily="Arial, sans-serif" fontSize="14" fill="#9ca3af" textAnchor="middle" dominantBaseline="middle">
-                          {game.name}
-                        </text>
-                      </svg>
-                      <p className="text-xs text-gray-500">Image coming soon</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Game Info */}
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{game.name}</h3>
-
-                {/* Game Details */}
-                <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
-                  {game.players && (
-                    <span className="bg-gray-100 px-2 py-1 rounded">{game.players} players</span>
-                  )}
-                  {game.playTime && (
-                    <span className="bg-gray-100 px-2 py-1 rounded">{game.playTime}</span>
-                  )}
-                </div>
-
-                {/* Amazon Link Button - Must open in new tab per Amazon guidelines */}
-                <a
-                  href={game.amazonUrl}
-                  target="_blank"
-                  rel="noopener noreferrer sponsored"
-                  className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                >
-                  <span>Buy on Amazon</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredGames.length === 0 && (
+        {/* Loading State */}
+        {loading && (
           <div className="text-center py-12">
-            <img
-              src="/ShopIcon.svg?v=3"
-              alt="Shop Icon"
-              className="w-16 h-16 text-gray-400 mx-auto mb-4"
-            />
-            <p className="text-gray-600">No games found in this category.</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+            <p className="mt-4 text-gray-600">Loading shop items...</p>
           </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg max-w-md mx-auto">
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Shop Cards Grid */}
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+              {shopItems.map((item) => (
+                <div key={item.uniqueKey || item.id || `shop-item-${item.title}`} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
+                    {item.imageUrl ? (
+                      item.imageUrl.startsWith('https://m.media-amazon.com') ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.title}
+                          fill
+                          className="object-contain"
+                          sizes="(max-width: 768px) 100vw, 400px"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            if (target.src.startsWith('data:image/svg+xml')) return;
+                            const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
+                            target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="max-w-full max-h-full object-contain"
+                          referrerPolicy="no-referrer"
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            if (target.src.startsWith('data:image/svg+xml')) return;
+                            const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
+                            target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
+                          }}
+                        />
+                      )
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                        <div className="text-center p-4">
+                          <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2">
+                            <rect width="200" height="200" fill="#e5e7e9" rx="8"/>
+                            <text x="50%" y="50%" fontFamily="Arial, sans-serif" fontSize="14" fill="#9ca3af" textAnchor="middle" dominantBaseline="middle">
+                              {item.title}
+                            </text>
+                          </svg>
+                          <p className="text-xs text-gray-500">Image coming soon</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
+                    <a
+                      href={item.link || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                      className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs"
+                    >
+                      <span>Buy on Amazon</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {shopItems.length === 0 && (
+              <div className="text-center py-12">
+                <img
+                  src="/ShopIcon.svg"
+                  alt="Shop Icon"
+                  className="w-16 h-16 text-gray-400 mx-auto mb-4"
+                />
+                <p className="text-gray-600">No shop items available at the moment.</p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Amazon Associates Disclosure - Required (at bottom but visible) */}
