@@ -1350,7 +1350,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       style={{
                         filter: activeTab === 'shop' 
                           ? 'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)'
-                          : 'brightness(0) saturate(100%) invert(50%) opacity(0.7)'
+                          : 'brightness(0) saturate(100%) invert(42%) sepia(8%) saturate(414%) hue-rotate(169deg) brightness(96%) contrast(89%)'
                       }}
                     />
                     Shop
