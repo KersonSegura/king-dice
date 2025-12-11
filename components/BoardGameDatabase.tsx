@@ -694,11 +694,10 @@ function BoardGameDatabaseContent() {
       setGames(prev => prev.map(g => g.id === gameId ? { ...g, ...responseData.game } : g));
       setEditingGame(prev => ({ ...prev, [gameId]: false }));
       setEditingGameData(prev => ({ ...prev, [gameId]: {} }));
-      setEditingShopItems(prev => {
-        const updated = { ...prev };
-        delete updated[gameId];
-        return updated;
-      });
+      setEditingShopItems(prev => ({
+        ...prev,
+        [gameId]: responseData.game?.shopItems ?? []
+      }));
       await fetchGames(pagination.page, searchTerm, showOnlyWithoutRules);
       
     } catch (error) {

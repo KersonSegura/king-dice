@@ -1430,6 +1430,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     sizes="(max-width: 768px) 100vw, 400px"
                                     loading="lazy"
                                     referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
+                                      target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
+                                    }}
                                   />
                                 ) : (
                                   <img
@@ -1438,6 +1443,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     className="w-full h-full object-cover"
                                     referrerPolicy="no-referrer"
                                     loading="lazy"
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
+                                      target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
+                                    }}
                                   />
                                 )
                               ) : (
