@@ -1343,7 +1343,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <img src="/ShopIcon.svg" alt="Shop" className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                    <img 
+                      src="/ShopIcon.svg" 
+                      alt="Shop" 
+                      className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"
+                      style={{
+                        filter: activeTab === 'shop' 
+                          ? 'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)'
+                          : 'brightness(0) saturate(100%) invert(50%) opacity(0.7)'
+                      }}
+                    />
                     Shop
                   </button>
                 )}
@@ -1406,13 +1415,20 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               {activeTab === 'shop' && (game?.shopItems?.length || game?.shopUrl || game?.amazonUrl) && (
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <img src="/ShopIcon.svg" alt="Shop" className="w-6 h-6 mr-2" />
+                    <img 
+                      src="/ShopIcon.svg" 
+                      alt="Shop" 
+                      className="w-6 h-6 mr-2"
+                      style={{
+                        filter: 'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)'
+                      }}
+                    />
                     Shop
                   </h2>
                   <div className="prose max-w-none w-full">
                     <div className="text-gray-700 leading-relaxed w-full">
                       {/* Shop cards list */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
                         {(game.shopItems && game.shopItems.length > 0 ? game.shopItems : [{
                           title: game.nameEn,
                           imageUrl: game.imageUrl || game.thumbnailUrl,
@@ -1464,8 +1480,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 </div>
                               )}
                             </div>
-                            <div className="p-4 space-y-3">
-                              <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                            <div className="p-3 space-y-2">
+                              <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
                               <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                                 {game.minPlayers && game.maxPlayers && (
                                   <span className="bg-gray-100 px-2 py-1 rounded">{game.minPlayers}-{game.maxPlayers} players</span>
@@ -1478,10 +1494,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 href={item.link || '#'}
                                 target="_blank"
                                 rel="noopener noreferrer sponsored"
-                                className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-2 px-4 rounded-lg transition-colors space-x-2"
+                                className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs"
                               >
                                 <span>Buy on Amazon</span>
-                                <ExternalLink className="w-4 h-4" />
+                                <ExternalLink className="w-3 h-3" />
                               </a>
                             </div>
                           </div>
