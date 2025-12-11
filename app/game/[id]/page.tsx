@@ -29,6 +29,7 @@ interface Game {
   pdfFile?: string;
   officialWebsite?: string;
   shopUrl?: string;
+  amazonUrl?: string;
   bggId?: number;
   bggRanking?: number;
   bggRating?: number;
@@ -1280,7 +1281,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         )}
 
         {/* Game Resources Section with Tabs */}
-        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl) && (
+        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl || game?.amazonUrl) && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Tab Headers */}
             <div className="border-b border-gray-200 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -1327,7 +1328,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   </button>
                 )}
                 
-                {game?.shopUrl && (
+                {(game?.shopUrl || game?.amazonUrl) && (
                   <button
                     onClick={() => setActiveTab('shop')}
                     className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
@@ -1396,7 +1397,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
-              {activeTab === 'shop' && game?.shopUrl && (
+              {activeTab === 'shop' && (game?.shopUrl || game?.amazonUrl) && (
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <ShoppingCart className="w-6 h-6 mr-2 text-[#fbae17]" />
@@ -1404,22 +1405,86 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   </h2>
                   <div className="prose max-w-none w-full">
                     <div className="text-gray-700 leading-relaxed w-full">
-                      <div className="flex flex-col items-center justify-center py-8">
-                        <div className="bg-gray-50 rounded-lg p-6 w-full max-w-md text-center">
-                          <ShoppingCart className="w-12 h-12 mx-auto text-[#fbae17] mb-4" />
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Purchase {game.nameEn}</h3>
-                          <p className="text-gray-600 mb-6">
-                            Get this game from our shop
-                          </p>
-                          <a
-                            href={game.shopUrl}
-                            target="_blank"
-                            rel="noopener noreferrer sponsored"
-                            className="inline-flex items-center px-6 py-3 bg-[#fbae17] text-white rounded-lg font-medium hover:bg-[#e09915] transition-colors duration-200 shadow-md hover:shadow-lg"
-                          >
-                            <span>Buy Now</span>
-                            <ExternalLink className="w-4 h-4 ml-2" />
-                          </a>
+                      {/* Game Card (similar to Shop page) */}
+                      <div className="flex justify-center mb-8">
+                        <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow w-full max-w-sm">
+                          {/* Game Image */}
+                          <div className="relative w-full h-64 bg-gray-200 overflow-hidden">
+                            {game.imageUrl || game.thumbnailUrl ? (
+                              <img
+                                src={game.imageUrl || game.thumbnailUrl || ''}
+                                alt={game.nameEn}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                loading="lazy"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  if (target.src.startsWith('data:image/svg+xml')) return;
+                                  const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${game.nameEn}</text></svg>`;
+                                  target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                <div className="text-center p-4">
+                                  <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2">
+                                    <rect width="200" height="200" fill="#e5e7e9" rx="8"/>
+                                    <text x="50%" y="50%" fontFamily="Arial, sans-serif" fontSize="14" fill="#9ca3af" textAnchor="middle" dominantBaseline="middle">
+                                      {game.nameEn}
+                                    </text>
+                                  </svg>
+                                  <p className="text-xs text-gray-500">Image coming soon</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Game Info */}
+                          <div className="p-4">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">{game.nameEn}</h3>
+
+                            {/* Game Details */}
+                            <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
+                              {game.minPlayers && game.maxPlayers && (
+                                <span className="bg-gray-100 px-2 py-1 rounded">{game.minPlayers}-{game.maxPlayers} players</span>
+                              )}
+                              {game.durationMinutes && (
+                                <span className="bg-gray-100 px-2 py-1 rounded">{game.durationMinutes} min</span>
+                              )}
+                            </div>
+
+                            {/* Amazon Link Button */}
+                            <a
+                              href={game.amazonUrl || game.shopUrl || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer sponsored"
+                              className="w-full bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                            >
+                              <span>Buy on Amazon</span>
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Amazon Associates Disclosure */}
+                      <div className="mt-8 pt-6 border-t border-gray-200">
+                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h3 className="text-sm font-medium text-blue-800 mb-1">
+                                Amazon Associates Disclosure
+                              </h3>
+                              <p className="text-sm text-blue-700">
+                                As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links.
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -28,6 +28,7 @@ interface Game {
   pdfUrl?: string;
   pdfFile?: string;
   officialWebsite?: string;
+  amazonUrl?: string;
   isExpansion?: boolean;
   gameCategories: Array<{
     category: {
@@ -2136,6 +2137,16 @@ You can use markdown formatting:
                                 onChange={(e) => setEditingGameData(prev => ({
                                   ...prev,
                                   [game.id]: { ...prev[game.id], officialWebsite: e.target.value }
+                                }))}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                              />
+                              <input
+                                type="url"
+                                placeholder="Amazon Associates Link (optional)"
+                                value={editingGameData[game.id]?.amazonUrl || ''}
+                                onChange={(e) => setEditingGameData(prev => ({
+                                  ...prev,
+                                  [game.id]: { ...prev[game.id], amazonUrl: e.target.value }
                                 }))}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
                               />

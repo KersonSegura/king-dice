@@ -29,6 +29,7 @@ model Game {
   pdfUrl             String?
   pdfFile            String?
   officialWebsite    String?
+  amazonUrl          String?
   name               String            @default("")
   year               Int?
   minPlayTime        Int?

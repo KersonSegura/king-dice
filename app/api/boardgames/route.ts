@@ -630,6 +630,7 @@ export async function POST(request: NextRequest) {
         pdfUrl: body.pdfUrl || null,
         pdfFile: body.pdfFile || null,
         officialWebsite: body.officialWebsite || null,
+        amazonUrl: body.amazonUrl || null,
         isExpansion: body.isExpansion || false,
         // Legacy fields
         name: body.nameEn || '',
