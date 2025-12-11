@@ -83,6 +83,7 @@ interface ShopItem {
   title: string;
   imageUrl?: string;
   link: string;
+  order?: number;
 }
 
 interface PaginationInfo {
@@ -438,7 +439,10 @@ function BoardGameDatabaseContent() {
 
     setEditingShopItems(prev => ({
       ...prev,
-      [game.id]: game.shopItems ? [...game.shopItems] : []
+      [game.id]: game.shopItems ? game.shopItems.map((item, idx) => ({
+        ...item,
+        order: item.order ?? idx + 1
+      })) : []
     }));
   };
 
@@ -602,7 +606,8 @@ function BoardGameDatabaseContent() {
         .map(item => ({
           title: item.title,
           imageUrl: cleanString(item.imageUrl, true),
-          link: cleanString(item.link, true)
+          link: cleanString(item.link, true),
+          order: item.order ?? 999
         }));
       if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
       if (gameData.isExpansion !== undefined) cleanGameData.isExpansion = gameData.isExpansion;
@@ -696,7 +701,10 @@ function BoardGameDatabaseContent() {
       setEditingGameData(prev => ({ ...prev, [gameId]: {} }));
       setEditingShopItems(prev => ({
         ...prev,
-        [gameId]: responseData.game?.shopItems ?? []
+        [gameId]: (responseData.game?.shopItems ?? []).map((item, idx) => ({
+          ...item,
+          order: item.order ?? idx + 1
+        }))
       }));
       await fetchGames(pagination.page, searchTerm, showOnlyWithoutRules);
       
@@ -2189,10 +2197,16 @@ You can use markdown formatting:
                                   <span className="text-sm font-semibold text-gray-800">Shop Cards for this Game</span>
                                   <button
                                     type="button"
-                                    onClick={() => setEditingShopItems(prev => ({
-                                      ...prev,
-                                      [game.id]: [ ...(prev[game.id] ?? game.shopItems ?? []), { title: '', imageUrl: '', link: '' } ]
-                                    }))}
+                                    onClick={() => {
+                                      const currentItems = editingShopItems[game.id] ?? game.shopItems ?? [];
+                                      const maxOrder = currentItems.length > 0 
+                                        ? Math.max(...currentItems.map(item => item.order ?? 0))
+                                        : 0;
+                                      setEditingShopItems(prev => ({
+                                        ...prev,
+                                        [game.id]: [ ...(prev[game.id] ?? game.shopItems ?? []), { title: '', imageUrl: '', link: '', order: maxOrder + 1 } ]
+                                      }));
+                                    }}
                                     className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                                   >
                                     Add Card
@@ -2204,8 +2218,30 @@ You can use markdown formatting:
                                 )}
 
                                 <div className="space-y-3">
-                                  {(editingShopItems[game.id] ?? game.shopItems ?? []).map((item, idx) => (
-                                    <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-start bg-white border border-gray-200 rounded-lg p-3">
+                                  {[...(editingShopItems[game.id] ?? game.shopItems ?? [])]
+                                    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+                                    .map((item, idx) => {
+                                      const originalIdx = (editingShopItems[game.id] ?? game.shopItems ?? []).findIndex(i => i === item);
+                                      return (
+                                    <div key={originalIdx} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-start bg-white border border-gray-200 rounded-lg p-3">
+                                      <div className="space-y-1">
+                                        <label className="text-xs text-gray-600">Order</label>
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          value={item.order ?? idx + 1}
+                                          onChange={(e) => {
+                                            const value = parseInt(e.target.value) || 1;
+                                            setEditingShopItems(prev => {
+                                              const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
+                                              list[originalIdx] = { ...list[originalIdx], order: value };
+                                              return { ...prev, [game.id]: list };
+                                            });
+                                          }}
+                                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                                          placeholder="1"
+                                        />
+                                      </div>
                                       <div className="space-y-1">
                                         <label className="text-xs text-gray-600">Title</label>
                                         <input
@@ -2215,7 +2251,7 @@ You can use markdown formatting:
                                             const value = e.target.value;
                                             setEditingShopItems(prev => {
                                               const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
-                                              list[idx] = { ...list[idx], title: value };
+                                              list[originalIdx] = { ...list[originalIdx], title: value };
                                               return { ...prev, [game.id]: list };
                                             });
                                           }}
@@ -2232,7 +2268,7 @@ You can use markdown formatting:
                                             const value = e.target.value;
                                             setEditingShopItems(prev => {
                                               const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
-                                              list[idx] = { ...list[idx], imageUrl: value };
+                                              list[originalIdx] = { ...list[originalIdx], imageUrl: value };
                                               return { ...prev, [game.id]: list };
                                             });
                                           }}
@@ -2247,7 +2283,7 @@ You can use markdown formatting:
                                             type="button"
                                             onClick={() => setEditingShopItems(prev => {
                                               const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
-                                              list.splice(idx, 1);
+                                              list.splice(originalIdx, 1);
                                               return { ...prev, [game.id]: list };
                                             })}
                                             className="text-xs text-red-600 hover:text-red-800"
@@ -2262,7 +2298,7 @@ You can use markdown formatting:
                                             const value = e.target.value;
                                             setEditingShopItems(prev => {
                                               const list = [ ...(prev[game.id] ?? game.shopItems ?? []) ];
-                                              list[idx] = { ...list[idx], link: value };
+                                              list[originalIdx] = { ...list[originalIdx], link: value };
                                               return { ...prev, [game.id]: list };
                                             });
                                           }}
@@ -2271,7 +2307,8 @@ You can use markdown formatting:
                                         />
                                       </div>
                                     </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                               </div>
                               {/* PDF Upload Section */}

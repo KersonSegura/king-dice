@@ -97,11 +97,12 @@ export async function GET(
         .from('expansions')
         .select('*')
         .eq('baseGameId', id),
-      // Shop items
+      // Shop items - sorted by order
       supabaseAdmin
         .from('game_shop_items')
         .select('*')
         .eq('gameId', id)
+        .order('order', { ascending: true })
     ]);
 
     // Log any errors (non-fatal, some relations might be empty)
@@ -221,7 +222,8 @@ export async function GET(
         gameId: item.gameId ?? item.game_id,
         title: item.title,
         imageUrl: item.imageUrl ?? item.image_url,
-        link: item.link
+        link: item.link,
+        order: item.order ?? 999
       })),
       gameMechanics: (gameMechanics || []).map((gm: any) => {
         const mech = Array.isArray(gm.mechanic) ? gm.mechanic[0] : (gm.mechanic || {});

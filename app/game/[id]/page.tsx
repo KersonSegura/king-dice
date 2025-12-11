@@ -35,6 +35,7 @@ interface Game {
     title: string;
     imageUrl?: string;
     link: string;
+    order?: number;
   }>;
   bggId?: number;
   bggRanking?: number;
@@ -1429,11 +1430,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     <div className="text-gray-700 leading-relaxed w-full">
                       {/* Shop cards list */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
-                        {(game.shopItems && game.shopItems.length > 0 ? game.shopItems : [{
+                        {[...(game.shopItems && game.shopItems.length > 0 ? game.shopItems : [{
                           title: game.nameEn,
                           imageUrl: game.imageUrl || game.thumbnailUrl,
                           link: game.amazonUrl || game.shopUrl
-                        }]).map((item, idx) => (
+                        }])]
+                          .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+                          .map((item, idx) => (
                           <div key={idx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                             <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
                               {item.imageUrl ? (

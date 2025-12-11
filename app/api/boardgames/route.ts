@@ -295,7 +295,7 @@ export async function GET(request: NextRequest) {
         supabaseAdmin.from('game_descriptions').select('*').in('gameId', gameIds),
         supabaseAdmin.from('game_rules').select('*').in('gameId', gameIds),
         supabaseAdmin.from('expansions').select('*').in('baseGameId', gameIds),
-        supabaseAdmin.from('game_shop_items').select('*').in('gameId', gameIds)
+        supabaseAdmin.from('game_shop_items').select('*').in('gameId', gameIds).order('order', { ascending: true })
       ]);
 
       // Handle rules query error - try camelCase column name if snake_case failed
@@ -437,7 +437,8 @@ export async function GET(request: NextRequest) {
           gameId,
           title: item.title,
           imageUrl: item.image_url ?? item.imageUrl,
-          link: item.link
+          link: item.link,
+          order: item.order ?? 999
         });
       });
 
@@ -829,13 +830,15 @@ export async function POST(request: NextRequest) {
 
       // Add shop items if provided
       if (Array.isArray(body.shopItems)) {
-        for (const item of body.shopItems) {
+        for (let idx = 0; idx < body.shopItems.length; idx++) {
+          const item = body.shopItems[idx];
           if (!item || !item.title || !item.link) continue;
           const shopItemData: any = {
             gameId,
             title: item.title,
             imageUrl: item.imageUrl || null,
-            link: item.link
+            link: item.link,
+            order: item.order ?? idx + 1
           };
           const shopResult = await supabaseAdmin
             .from('game_shop_items')

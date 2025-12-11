@@ -47,7 +47,7 @@ export async function GET(
       supabaseAdmin.from('game_descriptions').select('*').eq('gameId', gameId),
       supabaseAdmin.from('game_rules').select('*').eq('gameId', gameId),
       supabaseAdmin.from('expansions').select('*').eq('baseGameId', gameId),
-      supabaseAdmin.from('game_shop_items').select('*').eq('gameId', gameId)
+      supabaseAdmin.from('game_shop_items').select('*').eq('gameId', gameId).order('order', { ascending: true })
     ]);
 
     // Transform to match expected format
@@ -73,7 +73,8 @@ export async function GET(
         gameId: item.gameId ?? item.game_id,
         title: item.title,
         imageUrl: item.imageUrl ?? item.image_url,
-        link: item.link
+        link: item.link,
+        order: item.order ?? 999
       }))
     };
 
@@ -379,7 +380,8 @@ export async function PUT(
           gameId,
           title: item.title,
           imageUrl: item.imageUrl || null,
-          link: item.link
+          link: item.link,
+          order: item.order ?? 999
         }));
       
       if (itemsToInsert.length > 0) {
@@ -408,11 +410,12 @@ export async function PUT(
       }
     }
 
-    // Fetch shop items AFTER they've been updated
+    // Fetch shop items AFTER they've been updated, sorted by order
     const { data: shopItems, error: shopItemsFetchError } = await supabaseAdmin
       .from('game_shop_items')
       .select('*')
-      .eq('gameId', gameId);
+      .eq('gameId', gameId)
+      .order('order', { ascending: true });
     
     if (shopItemsFetchError) {
       console.error('Error fetching shop items after update:', shopItemsFetchError);
@@ -443,7 +446,8 @@ export async function PUT(
         gameId: item.gameId ?? item.game_id,
         title: item.title,
         imageUrl: item.imageUrl ?? item.image_url,
-        link: item.link
+        link: item.link,
+        order: item.order ?? 999
       }))
     };
 
