@@ -725,55 +725,91 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         
         let truncated = text;
         if (needsMore) {
-          // SIMPLE APPROACH: Find maximum text where (text + "...See more") fits in EXACTLY 2 lines
-          // Never allow 3 lines. Be strict.
+          // Measure where the second line ends more precisely
+          // Create a test span that mimics the actual button structure
+          const testSpan = document.createElement('span');
+          testSpan.style.fontSize = computedStyle.fontSize;
+          testSpan.style.fontFamily = computedStyle.fontFamily;
+          testSpan.style.fontWeight = computedStyle.fontWeight;
+          testSpan.style.lineHeight = computedStyle.lineHeight || '1.5';
+          testSpan.style.whiteSpace = 'normal';
+          testSpan.style.wordBreak = 'break-word';
+          testSpan.style.width = containerElement.offsetWidth + 'px';
           
+          const buttonSpan = document.createElement('span');
+          buttonSpan.textContent = seeMoreText;
+          buttonSpan.style.fontWeight = '600'; // font-medium
+          buttonSpan.style.color = '#fbae17';
+          buttonSpan.style.textDecoration = 'underline';
+          
+          // Start from where text naturally ends on 2 lines, then work backwards
           let bestFit = '';
           let low = 0;
           let high = text.length;
           
-          // Binary search: find maximum text where (text + "...See more") fits in 2 lines or less
+          // First pass: find where text fits in 2 lines without "...See more"
           while (low <= high) {
             const mid = Math.floor((low + high) / 2);
-            const testText = text.substring(0, mid) + seeMoreText;
-            measureDiv.textContent = testText;
+            testSpan.textContent = text.substring(0, mid);
+            measureDiv.textContent = '';
+            measureDiv.appendChild(testSpan);
             const height = measureDiv.offsetHeight;
             
-            // STRICT: Must be <= 2 lines (maxHeight)
             if (height <= maxHeight) {
               bestFit = text.substring(0, mid);
-              low = mid + 1; // Try to find more text that fits
+              low = mid + 1;
             } else {
-              high = mid - 1; // Too much, reduce
+              high = mid - 1;
             }
           }
           
-          // Verify the best fit and ensure it NEVER exceeds 2 lines
+          // Now work backwards from bestFit to find where text + "...See more" fits in 2 lines
+          let finalFit = '';
           if (bestFit) {
-            let finalFit = bestFit;
-            measureDiv.textContent = finalFit + seeMoreText;
-            let verifyHeight = measureDiv.offsetHeight;
+            // Start from a conservative point (leave room for "...See more")
+            low = Math.max(0, bestFit.length - seeMoreText.length * 3);
+            high = bestFit.length;
             
-            // If it exceeds 2 lines, keep trimming until it fits
-            while (verifyHeight > maxHeight && finalFit.length > 0) {
-              finalFit = finalFit.substring(0, finalFit.length - 1);
-              measureDiv.textContent = finalFit + seeMoreText;
-              verifyHeight = measureDiv.offsetHeight;
-            }
-            
-            // Now try to expand character by character to maximum while staying <= 2 lines
-            for (let i = finalFit.length; i < text.length; i++) {
-              const testText = text.substring(0, i) + seeMoreText;
-              measureDiv.textContent = testText;
-              if (measureDiv.offsetHeight <= maxHeight) {
-                finalFit = text.substring(0, i);
+            while (low <= high) {
+              const mid = Math.floor((low + high) / 2);
+              const testText = text.substring(0, mid);
+              
+              // Create the actual structure: text + button
+              testSpan.textContent = testText;
+              measureDiv.textContent = '';
+              measureDiv.appendChild(testSpan.cloneNode(true));
+              measureDiv.appendChild(buttonSpan.cloneNode(true));
+              
+              const height = measureDiv.offsetHeight;
+              
+              if (height <= maxHeight) {
+                finalFit = testText;
+                low = mid + 1;
               } else {
-                // As soon as it exceeds 2 lines, stop
-                break;
+                high = mid - 1;
               }
             }
             
-            truncated = finalFit;
+            // Final verification and optimization: expand character by character
+            if (finalFit) {
+              let optimizedFit = finalFit;
+              for (let i = finalFit.length; i < text.length; i++) {
+                const testText = text.substring(0, i);
+                testSpan.textContent = testText;
+                measureDiv.textContent = '';
+                measureDiv.appendChild(testSpan.cloneNode(true));
+                measureDiv.appendChild(buttonSpan.cloneNode(true));
+                
+                if (measureDiv.offsetHeight <= maxHeight) {
+                  optimizedFit = testText;
+                } else {
+                  break; // Stop immediately when it exceeds 2 lines
+                }
+              }
+              truncated = optimizedFit;
+            } else {
+              truncated = '';
+            }
           } else {
             truncated = '';
           }
