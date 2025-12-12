@@ -431,8 +431,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [publisherNeedsMore, setPublisherNeedsMore] = useState(false);
   const [designerTruncatedText, setDesignerTruncatedText] = useState(''); // unused after simplifying clamp
   const [publisherTruncatedText, setPublisherTruncatedText] = useState(''); // unused after simplifying clamp
-  const designerRef = useRef<HTMLDivElement>(null);
-  const publisherRef = useRef<HTMLDivElement>(null);
+  const designerRef = useRef<HTMLSpanElement>(null);
+  const publisherRef = useRef<HTMLSpanElement>(null);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -694,42 +694,18 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
       if (designerRef.current && game?.designer && !showFullDesigner) {
         const el = designerRef.current;
-        const needsMore = el.scrollHeight > el.clientHeight + 1;
-        setDesignerNeedsMore(needsMore);
-        if (needsMore) {
-          // Calculate truncated text: 35 chars line 1 + 24 chars line 2 = 59 chars
-          const maxChars = 59;
-          if (game.designer.length > maxChars) {
-            setDesignerTruncatedText(game.designer.substring(0, maxChars));
-          } else {
-            setDesignerTruncatedText(game.designer);
-          }
-        } else {
-          setDesignerTruncatedText('');
-        }
+        // Check if text overflows 1 line
+        setDesignerNeedsMore(el.scrollHeight > el.clientHeight + 1);
       } else {
         setDesignerNeedsMore(false);
-        setDesignerTruncatedText('');
       }
 
       if (publisherRef.current && game?.developer && !showFullPublisher) {
         const el = publisherRef.current;
-        const needsMore = el.scrollHeight > el.clientHeight + 1;
-        setPublisherNeedsMore(needsMore);
-        if (needsMore) {
-          // Calculate truncated text: 35 chars line 1 + 24 chars line 2 = 59 chars
-          const maxChars = 59;
-          if (game.developer.length > maxChars) {
-            setPublisherTruncatedText(game.developer.substring(0, maxChars));
-          } else {
-            setPublisherTruncatedText(game.developer);
-          }
-        } else {
-          setPublisherTruncatedText('');
-        }
+        // Check if text overflows 1 line
+        setPublisherNeedsMore(el.scrollHeight > el.clientHeight + 1);
       } else {
         setPublisherNeedsMore(false);
-        setPublisherTruncatedText('');
       }
     };
 
@@ -1387,11 +1363,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 )}
                               </span>
                             </div>
-                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment exactly */}
+                            {/* Mobile: 1 line with See more button on second line if needed */}
                             <div className="md:hidden">
+                              <span className="font-medium">Publisher:</span>
                               {showFullPublisher ? (
                                 <>
-                                  <span className="font-medium">Publisher:</span>
                                   <span className="ml-2 break-words">{game.developer}</span>
                                   <button
                                     onClick={(e) => {
@@ -1405,37 +1381,37 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <div 
-                                  ref={publisherRef}
-                                  style={{
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                    overflow: 'hidden',
-                                    lineHeight: '1.5em',
-                                    maxHeight: '3em',
-                                    wordBreak: 'break-word'
-                                  }}
-                                >
-                                  <span className="font-medium">Publisher:</span>
-                                  {publisherNeedsMore ? (
-                                    <>
-                                      <span className="ml-2">{publisherTruncatedText}</span>
+                                <>
+                                  <span 
+                                    className="ml-2 break-words" 
+                                    ref={publisherRef}
+                                    style={{
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 1,
+                                      WebkitBoxOrient: 'vertical',
+                                      overflow: 'hidden',
+                                      lineHeight: '1.5em',
+                                      maxHeight: '1.5em',
+                                      wordBreak: 'break-word'
+                                    }}
+                                  >
+                                    {game.developer}
+                                  </span>
+                                  {publisherNeedsMore && (
+                                    <div className="mt-1">
                                       <button
                                         onClick={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
                                           setShowFullPublisher(true);
                                         }}
-                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline ml-1"
+                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                       >
                                         ...See more
                                       </button>
-                                    </>
-                                  ) : (
-                                    <span className="ml-2">{game.developer}</span>
+                                    </div>
                                   )}
-                                </div>
+                                </>
                               )}
                             </div>
                           </div>
