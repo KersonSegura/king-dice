@@ -694,7 +694,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         return;
       }
       
-      // Simple helper: check if text overflows 2 lines and find truncation point
+      // Character-based approach: count characters per line
       const checkText = (text: string, element: HTMLSpanElement | null) => {
         if (!element || !text) return { needsMore: false, truncated: text };
         
@@ -714,6 +714,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         const lineHeight = parseFloat(style.lineHeight || '21');
         const maxHeight = lineHeight * 2;
         const seeMore = '...See more';
+        const seeMoreLength = seeMore.length; // 11 characters
         
         // Check if text overflows 2 lines
         measure.textContent = text;
@@ -721,70 +722,30 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         
         let truncated = text;
         if (needsMore) {
-          // First, find where text naturally uses 2 lines (without "...See more")
-          let twoLinePoint = 0;
-          let low = 0;
-          let high = text.length;
-          
-          while (low <= high) {
-            const mid = Math.floor((low + high) / 2);
-            measure.textContent = text.substring(0, mid);
-            const height = measure.offsetHeight;
-            
-            if (height <= lineHeight) {
-              // Only 1 line, need more
-              low = mid + 1;
-            } else if (height <= maxHeight) {
-              // Uses 2 lines, this is good
-              twoLinePoint = mid;
-              low = mid + 1;
-            } else {
-              // Exceeds 2 lines
-              high = mid - 1;
+          // Find how many characters fit in one line
+          let charsPerLine = 0;
+          for (let i = 1; i <= text.length; i++) {
+            measure.textContent = text.substring(0, i);
+            if (measure.offsetHeight > lineHeight) {
+              charsPerLine = i - 1;
+              break;
             }
           }
           
-          // Now, from twoLinePoint, work backwards to find where text + "...See more" fits in 2 lines
-          // We want to maximize text while ensuring it uses 2 lines and fits with "...See more"
-          let best = '';
-          low = Math.max(0, twoLinePoint - seeMore.length * 2); // Start a bit before 2-line point
-          high = twoLinePoint;
-          
-          while (low <= high) {
-            const mid = Math.floor((low + high) / 2);
-            const testText = text.substring(0, mid) + seeMore;
-            measure.textContent = testText;
-            
-            if (measure.offsetHeight <= maxHeight) {
-              // Check if the text alone uses 2 lines (not just 1)
-              measure.textContent = text.substring(0, mid);
-              const textOnlyHeight = measure.offsetHeight;
-              
-              if (textOnlyHeight > lineHeight) {
-                // Good! Text uses 2 lines and fits with "...See more"
-                best = text.substring(0, mid);
-                low = mid + 1;
-              } else {
-                // Only 1 line, need more text
-                low = mid + 1;
-              }
-            } else {
-              // Exceeds 2 lines
-              high = mid - 1;
-            }
+          // If we couldn't find it, estimate based on width
+          if (charsPerLine === 0) {
+            const avgCharWidth = measure.scrollWidth / text.length;
+            charsPerLine = Math.floor(element.offsetWidth / avgCharWidth);
           }
           
-          // Final safety trim
-          if (best) {
-            let final = best;
-            measure.textContent = final + seeMore;
-            while (measure.offsetHeight > maxHeight && final.length > 0) {
-              final = final.substring(0, final.length - 1);
-              measure.textContent = final + seeMore;
-            }
-            truncated = final;
+          // Calculate: 2 lines = charsPerLine * 2, but replace last 11 chars of line 2 with "...See more"
+          // So we show: charsPerLine + (charsPerLine - 11) = charsPerLine * 2 - 11
+          const maxChars = (charsPerLine * 2) - seeMoreLength;
+          
+          if (text.length > maxChars) {
+            truncated = text.substring(0, maxChars);
           } else {
-            truncated = '';
+            truncated = text;
           }
         }
         
