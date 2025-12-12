@@ -1437,16 +1437,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span 
-                                  className="ml-2 break-words" 
-                                  ref={designerRef}
-                                  style={{
-                                    display: 'inline-block',
-                                    maxHeight: designerNeedsMore ? '3em' : 'none',
-                                    overflow: 'hidden',
-                                    lineHeight: '1.5'
-                                  }}
-                                >
+                                <span className="ml-2 break-words" ref={designerRef}>
                                   {designerNeedsMore ? (
                                     <>
                                       {designerTruncatedText}
@@ -1523,16 +1514,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span 
-                                  className="ml-2 break-words" 
-                                  ref={publisherRef}
-                                  style={{
-                                    display: 'inline-block',
-                                    maxHeight: publisherNeedsMore ? '3em' : 'none',
-                                    overflow: 'hidden',
-                                    lineHeight: '1.5'
-                                  }}
-                                >
+                                <span className="ml-2 break-words" ref={publisherRef}>
                                   {publisherNeedsMore ? (
                                     <>
                                       {publisherTruncatedText}
