@@ -1087,7 +1087,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   )}
 
                   {/* Game Stats and Vote Button - Mobile: side by side, Desktop: stacked */}
-                  <div className="flex flex-col md:block mb-6">
+                  <div className="flex flex-col md:block mt-3 mb-3 md:mb-4">
                     {/* Mobile Layout: Stats left, Vote right */}
                     <div className="flex md:hidden items-start justify-between gap-4 mb-2">
                       {/* Stats on left */}
@@ -1252,7 +1252,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   </div>
 
                   {/* Designer & Publisher */}
-                  <div className="space-y-2 md:mb-6 md:mt-0 -mt-2 mb-6">
+                  <div className="space-y-2 md:mb-6 md:mt-0 -mt-1 mb-4">
                     {game.designer && (() => {
                       const designers = game.designer.split(',').map(d => d.trim()).filter(d => d);
                       const hasMore = designers.length > 3;
