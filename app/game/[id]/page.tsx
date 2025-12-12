@@ -1453,12 +1453,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   className="ml-2 break-words" 
                                   ref={publisherRef}
                                   style={{
-                                    display: publisherNeedsMore ? '-webkit-inline-box' : 'inline',
-                                    WebkitLineClamp: publisherNeedsMore ? 2 : 'none',
-                                    WebkitBoxOrient: publisherNeedsMore ? 'vertical' : 'horizontal',
-                                    overflow: publisherNeedsMore ? 'hidden' : 'visible',
+                                    display: 'inline-block',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden',
                                     lineHeight: '1.5',
-                                    maxHeight: publisherNeedsMore ? '3em' : 'none'
+                                    maxHeight: '3em',
+                                    textOverflow: 'ellipsis'
                                   }}
                                 >
                                   {publisherNeedsMore ? (
