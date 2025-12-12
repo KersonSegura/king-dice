@@ -718,7 +718,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         const maxHeight = lineHeight * 2;
         const seeMoreText = '...See more';
         
-        // Check if original text fits
+        // Check if original text fits in 2 lines
         measureDiv.textContent = text;
         const originalHeight = measureDiv.offsetHeight;
         const needsMore = originalHeight > maxHeight;
@@ -726,12 +726,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         let truncated = text;
         if (needsMore) {
           // Binary search for the right truncation point
+          // We need to find the maximum text that fits WITH "...See more" in exactly 2 lines
           let low = 0;
           let high = text.length;
           let bestFit = '';
           
+          // Binary search: find maximum text that, when combined with "...See more", fits in exactly 2 lines
           while (low <= high) {
             const mid = Math.floor((low + high) / 2);
+            // Test with truncated text + "...See more" appended as plain text
             const testText = text.substring(0, mid) + seeMoreText;
             measureDiv.textContent = testText;
             const height = measureDiv.offsetHeight;
@@ -743,7 +746,23 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               high = mid - 1;
             }
           }
-          truncated = bestFit;
+          
+          // Final verification: ensure bestFit + "...See more" fits in 2 lines
+          if (bestFit) {
+            measureDiv.textContent = bestFit + seeMoreText;
+            let verifyHeight = measureDiv.offsetHeight;
+            
+            // If it's still slightly over, trim character by character until it fits
+            let finalFit = bestFit;
+            while (verifyHeight > maxHeight && finalFit.length > 0) {
+              finalFit = finalFit.substring(0, finalFit.length - 1);
+              measureDiv.textContent = finalFit + seeMoreText;
+              verifyHeight = measureDiv.offsetHeight;
+            }
+            truncated = finalFit;
+          } else {
+            truncated = '';
+          }
         }
         
         document.body.removeChild(measureDiv);
