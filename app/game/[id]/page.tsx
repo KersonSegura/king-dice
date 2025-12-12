@@ -725,97 +725,55 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         
         let truncated = text;
         if (needsMore) {
-          // Strategy: Find where text naturally wraps to 2 lines, then find where to truncate
-          // to fit "...See more" at the end of the 2nd line
+          // SIMPLE APPROACH: Find maximum text where (text + "...See more") fits in EXACTLY 2 lines
+          // Never allow 3 lines. Be strict.
           
-          // First, find approximately where 2 lines of text would end (without "...See more")
-          let twoLineEstimate = '';
+          let bestFit = '';
           let low = 0;
           let high = text.length;
           
-          // Binary search to find where text wraps to exactly 2 lines
-          while (low <= high) {
-            const mid = Math.floor((low + high) / 2);
-            measureDiv.textContent = text.substring(0, mid);
-            const height = measureDiv.offsetHeight;
-            
-            if (height <= maxHeight) {
-              twoLineEstimate = text.substring(0, mid);
-              low = mid + 1;
-            } else {
-              high = mid - 1;
-            }
-          }
-          
-          // Now, working from the 2-line estimate, find where we can truncate
-          // to fit "...See more" at the end of the 2nd line
-          // We want to show as much as possible while ensuring text + "...See more" fits in 2 lines
-          
-          let bestFit = '';
-          low = Math.max(0, twoLineEstimate.length - seeMoreText.length * 2); // Start a bit before the 2-line estimate
-          high = twoLineEstimate.length;
-          
-          // Binary search: find maximum text that, when combined with "...See more", fits in exactly 2 lines
+          // Binary search: find maximum text where (text + "...See more") fits in 2 lines or less
           while (low <= high) {
             const mid = Math.floor((low + high) / 2);
             const testText = text.substring(0, mid) + seeMoreText;
             measureDiv.textContent = testText;
             const height = measureDiv.offsetHeight;
             
+            // STRICT: Must be <= 2 lines (maxHeight)
             if (height <= maxHeight) {
               bestFit = text.substring(0, mid);
-              low = mid + 1;
+              low = mid + 1; // Try to find more text that fits
             } else {
-              high = mid - 1;
+              high = mid - 1; // Too much, reduce
             }
           }
           
-          // Verify and refine: ensure it uses 2 lines (not just 1)
+          // Verify the best fit and ensure it NEVER exceeds 2 lines
           if (bestFit) {
-            measureDiv.textContent = bestFit + seeMoreText;
-            let currentHeight = measureDiv.offsetHeight;
+            let finalFit = bestFit;
+            measureDiv.textContent = finalFit + seeMoreText;
+            let verifyHeight = measureDiv.offsetHeight;
             
-            // If it fits but might only use 1 line, try adding more text
-            if (currentHeight <= lineHeight * 1.5) {
-              // Probably only using 1 line, try to expand
-              let expandedFit = bestFit;
-              for (let i = bestFit.length; i < text.length; i++) {
-                const testText = text.substring(0, i) + seeMoreText;
-                measureDiv.textContent = testText;
-                if (measureDiv.offsetHeight <= maxHeight) {
-                  expandedFit = text.substring(0, i);
-                } else {
-                  break;
-                }
-              }
-              bestFit = expandedFit;
-            } else {
-              // It uses 2 lines, but make sure it fits exactly
-              // Trim if needed
-              let finalFit = bestFit;
+            // If it exceeds 2 lines, keep trimming until it fits
+            while (verifyHeight > maxHeight && finalFit.length > 0) {
+              finalFit = finalFit.substring(0, finalFit.length - 1);
               measureDiv.textContent = finalFit + seeMoreText;
-              currentHeight = measureDiv.offsetHeight;
-              
-              while (currentHeight > maxHeight && finalFit.length > 0) {
-                finalFit = finalFit.substring(0, finalFit.length - 1);
-                measureDiv.textContent = finalFit + seeMoreText;
-                currentHeight = measureDiv.offsetHeight;
-              }
-              
-              // Now try to expand back to maximum while still fitting
-              for (let i = finalFit.length; i < text.length; i++) {
-                const testText = text.substring(0, i) + seeMoreText;
-                measureDiv.textContent = testText;
-                if (measureDiv.offsetHeight <= maxHeight) {
-                  finalFit = text.substring(0, i);
-                } else {
-                  break;
-                }
-              }
-              bestFit = finalFit;
+              verifyHeight = measureDiv.offsetHeight;
             }
             
-            truncated = bestFit;
+            // Now try to expand character by character to maximum while staying <= 2 lines
+            for (let i = finalFit.length; i < text.length; i++) {
+              const testText = text.substring(0, i) + seeMoreText;
+              measureDiv.textContent = testText;
+              if (measureDiv.offsetHeight <= maxHeight) {
+                finalFit = text.substring(0, i);
+              } else {
+                // As soon as it exceeds 2 lines, stop
+                break;
+              }
+            }
+            
+            truncated = finalFit;
           } else {
             truncated = '';
           }
