@@ -1370,10 +1370,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span className="ml-2 break-words" ref={designerRef}>
+                                <span className="ml-2 break-words relative inline-block" ref={designerRef} style={{ maxHeight: designerNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5' }}>
                                   {designerNeedsMore ? (
                                     <>
-                                      {designerTruncatedText}
+                                      <span style={{ display: 'inline' }}>{designerTruncatedText}</span>
                                       <button
                                         onClick={(e) => {
                                           e.preventDefault();
@@ -1381,7 +1381,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                           setShowFullDesigner(true);
                                         }}
                                         className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                        style={{ display: 'inline', whiteSpace: 'nowrap' }}
+                                        style={{ display: 'inline', whiteSpace: 'nowrap', marginLeft: '2px' }}
                                       >
                                         ...See more
                                       </button>
@@ -1447,10 +1447,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span className="ml-2 break-words" ref={publisherRef}>
+                                <span className="ml-2 break-words relative inline-block" ref={publisherRef} style={{ maxHeight: publisherNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5' }}>
                                   {publisherNeedsMore ? (
                                     <>
-                                      {publisherTruncatedText}
+                                      <span style={{ display: 'inline' }}>{publisherTruncatedText}</span>
                                       <button
                                         onClick={(e) => {
                                           e.preventDefault();
@@ -1458,7 +1458,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                           setShowFullPublisher(true);
                                         }}
                                         className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                        style={{ display: 'inline', whiteSpace: 'nowrap' }}
+                                        style={{ display: 'inline', whiteSpace: 'nowrap', marginLeft: '2px' }}
                                       >
                                         ...See more
                                       </button>
