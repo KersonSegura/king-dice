@@ -1084,7 +1084,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   {/* Game Stats and Vote Button - Mobile: side by side, Desktop: stacked */}
                   <div className="flex flex-col md:block mb-6">
                     {/* Mobile Layout: Stats left, Vote right */}
-                    <div className="flex md:hidden items-start justify-between gap-4 mb-4">
+                    <div className="flex md:hidden items-start justify-between gap-4 mb-2">
                       {/* Stats on left */}
                       <div className="flex flex-col gap-2 flex-1">
                         {game.yearRelease && (
@@ -1247,7 +1247,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   </div>
 
                   {/* Designer & Publisher */}
-                  <div className="space-y-2 mb-6">
+                  <div className="space-y-2 md:mb-6 md:mt-0 -mt-2 mb-6">
                     {game.designer && (() => {
                       const designers = game.designer.split(',').map(d => d.trim()).filter(d => d);
                       const hasMore = designers.length > 3;
@@ -1281,29 +1281,29 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 )}
                               </span>
                             </div>
-                            {/* Mobile: inline label with text, 2-line limit */}
+                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment */}
                             <div className="md:hidden">
-                              <div className="flex items-baseline gap-x-1">
-                                <span className="font-medium flex-shrink-0">Designer:</span>
+                              <div className="flex items-start">
+                                <span className="font-medium flex-shrink-0 leading-[1.5]">Designer:</span>
                                 {showFullDesigner ? (
                                   <>
-                                    <span className="flex-1 min-w-0">{game.designer}</span>
+                                    <span className="ml-2 flex-1 min-w-0 leading-[1.5]">{game.designer}</span>
                                     <button
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         setShowFullDesigner(false);
                                       }}
-                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1"
+                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1 leading-[1.5]"
                                     >
                                       See less
                                     </button>
                                   </>
                                 ) : (
-                                  <div className="flex-1 min-w-0 relative">
+                                  <div className="ml-2 flex-1 min-w-0 relative leading-[1.5]">
                                     <div
                                       ref={designerRef}
-                                      className="line-clamp-2"
+                                      className="line-clamp-2 break-words"
                                       style={{ lineHeight: '1.5' }}
                                     >
                                       {game.designer}
@@ -1315,7 +1315,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                           e.stopPropagation();
                                           setShowFullDesigner(true);
                                         }}
-                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1"
+                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1 leading-[1.5]"
                                       >
                                         See more
                                       </button>
@@ -1361,29 +1361,29 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 )}
                               </span>
                             </div>
-                            {/* Mobile: inline label with text, 2-line limit */}
+                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment */}
                             <div className="md:hidden">
-                              <div className="flex items-baseline gap-x-1">
-                                <span className="font-medium flex-shrink-0">Publisher:</span>
+                              <div className="flex items-start">
+                                <span className="font-medium flex-shrink-0 leading-[1.5]">Publisher:</span>
                                 {showFullPublisher ? (
                                   <>
-                                    <span className="flex-1 min-w-0">{game.developer}</span>
+                                    <span className="ml-2 flex-1 min-w-0 leading-[1.5]">{game.developer}</span>
                                     <button
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         setShowFullPublisher(false);
                                       }}
-                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1"
+                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1 leading-[1.5]"
                                     >
                                       See less
                                     </button>
                                   </>
                                 ) : (
-                                  <div className="flex-1 min-w-0 relative">
+                                  <div className="ml-2 flex-1 min-w-0 relative leading-[1.5]">
                                     <div
                                       ref={publisherRef}
-                                      className="line-clamp-2"
+                                      className="line-clamp-2 break-words"
                                       style={{ lineHeight: '1.5' }}
                                     >
                                       {game.developer}
@@ -1395,7 +1395,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                           e.stopPropagation();
                                           setShowFullPublisher(true);
                                         }}
-                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1"
+                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1 leading-[1.5]"
                                       >
                                         See more
                                       </button>
