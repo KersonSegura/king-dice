@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Get all unique game IDs
     const gameIds = [...new Set(shopItems.map((item: any) => item.gameId ?? item.game_id))];
+    console.log('[SHOP ITEMS API] Found shop items from', gameIds.length, 'games. Game IDs:', gameIds.slice(0, 10));
 
     // Fetch games for these IDs
     const { data: games, error: gamesError } = await supabaseAdmin

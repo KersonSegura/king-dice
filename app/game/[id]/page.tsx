@@ -425,6 +425,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [showAllDesigners, setShowAllDesigners] = useState(false);
   const [showAllPublishers, setShowAllPublishers] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showFullDesigner, setShowFullDesigner] = useState(false);
+  const [showFullPublisher, setShowFullPublisher] = useState(false);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -1044,84 +1046,167 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     </h2>
                   )}
 
-                  {/* Game Stats */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    {game.yearRelease && (
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="w-5 h-5 mr-2 text-[#fbae17]" />
-                        <span className="font-medium">{game.yearRelease}</span>
-                      </div>
-                    )}
-                    {game.minPlayers && game.maxPlayers && (
-                      <div className="flex items-center text-gray-600">
-                        <Users className="w-5 h-5 mr-2 text-[#fbae17]" />
-                        <span className="font-medium">
-                          {game.minPlayers === game.maxPlayers 
-                            ? `${game.minPlayers} players`
-                            : `${game.minPlayers}-${game.maxPlayers} players`
-                          }
-                        </span>
-                      </div>
-                    )}
-                    {game.durationMinutes && (
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="w-5 h-5 mr-2 text-[#fbae17]" />
-                        <span className="font-medium">{game.durationMinutes} min</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Ranking Button */}
-                  <div className="mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <button 
-                          type="button"
-                          ref={starButtonRef}
-                          className="p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2 text-white"
-                          style={{ backgroundColor: '#fbae17' }}
-                          onMouseEnter={handleStarMouseEnter}
-                          onMouseLeave={handleStarMouseLeave}
-                          onClick={handleStarClick}
-                          title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
-                        >
-                          <Star 
-                            className={`w-5 h-5 text-white`} 
-                            fill={hasUserVoted ? 'white' : 'none'}
-                            stroke="white"
-                            strokeWidth={hasUserVoted ? 1 : 2}
-                          />
-                          <span className="font-medium text-white">
-                            {hasUserVoted ? 'Update Vote' : 'Vote'}
-                          </span>
-                        </button>
-                        
-                        {/* Tooltip */}
-                        {showTooltip && (
-                          <div 
-                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg z-50"
-                            style={{
-                              transform: 'translateX(-50%)'
-                            }}
-                          >
-                            <div className="flex flex-col items-start space-y-1">
-                              <div className="flex items-center space-x-1">
-                                <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                                <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
-                              </div>
-                              {hasUserVoted && userVoteStars && (
-                                <div className="text-xs text-green-300">
-                                  Your vote: {userVoteStars.toFixed(1)}/5 ⭐
-                                </div>
-                              )}
-                            </div>
+                  {/* Game Stats and Vote Button - Mobile: side by side, Desktop: stacked */}
+                  <div className="flex flex-col md:block mb-6">
+                    {/* Mobile Layout: Stats left, Vote right */}
+                    <div className="flex md:hidden items-start justify-between gap-4 mb-4">
+                      {/* Stats on left */}
+                      <div className="flex flex-col gap-2 flex-1">
+                        {game.yearRelease && (
+                          <div className="flex items-center text-gray-600">
+                            <Calendar className="w-5 h-5 mr-2 text-[#fbae17] flex-shrink-0" />
+                            <span className="font-medium">{game.yearRelease}</span>
+                          </div>
+                        )}
+                        {game.minPlayers && game.maxPlayers && (
+                          <div className="flex items-center text-gray-600">
+                            <Users className="w-5 h-5 mr-2 text-[#fbae17] flex-shrink-0" />
+                            <span className="font-medium">
+                              {game.minPlayers === game.maxPlayers 
+                                ? `${game.minPlayers} players`
+                                : `${game.minPlayers}-${game.maxPlayers} players`
+                              }
+                            </span>
+                          </div>
+                        )}
+                        {game.durationMinutes && (
+                          <div className="flex items-center text-gray-600">
+                            <Clock className="w-5 h-5 mr-2 text-[#fbae17] flex-shrink-0" />
+                            <span className="font-medium">{game.durationMinutes} min</span>
                           </div>
                         )}
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {game.bggVotes && (
-                          <span>Based on {game.bggVotes.toLocaleString()} votes</span>
+                      
+                      {/* Vote button on right */}
+                      <div className="flex-shrink-0">
+                        <div className="relative">
+                          <button 
+                            type="button"
+                            ref={starButtonRef}
+                            className="p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2 text-white"
+                            style={{ backgroundColor: '#fbae17' }}
+                            onMouseEnter={handleStarMouseEnter}
+                            onMouseLeave={handleStarMouseLeave}
+                            onClick={handleStarClick}
+                            title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
+                          >
+                            <Star 
+                              className={`w-5 h-5 text-white`} 
+                              fill={hasUserVoted ? 'white' : 'none'}
+                              stroke="white"
+                              strokeWidth={hasUserVoted ? 1 : 2}
+                            />
+                            <span className="font-medium text-white">
+                              {hasUserVoted ? 'Update Vote' : 'Vote'}
+                            </span>
+                          </button>
+                          
+                          {/* Tooltip */}
+                          {showTooltip && (
+                            <div 
+                              className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg z-50"
+                              style={{
+                                transform: 'translateX(-50%)'
+                              }}
+                            >
+                              <div className="flex flex-col items-start space-y-1">
+                                <div className="flex items-center space-x-1">
+                                  <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                                  <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                                </div>
+                                {hasUserVoted && userVoteStars && (
+                                  <div className="text-xs text-green-300">
+                                    Your vote: {userVoteStars.toFixed(1)}/5 ⭐
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Desktop Layout: Grid stats, then vote button */}
+                    <div className="hidden md:block">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        {game.yearRelease && (
+                          <div className="flex items-center text-gray-600">
+                            <Calendar className="w-5 h-5 mr-2 text-[#fbae17]" />
+                            <span className="font-medium">{game.yearRelease}</span>
+                          </div>
                         )}
+                        {game.minPlayers && game.maxPlayers && (
+                          <div className="flex items-center text-gray-600">
+                            <Users className="w-5 h-5 mr-2 text-[#fbae17]" />
+                            <span className="font-medium">
+                              {game.minPlayers === game.maxPlayers 
+                                ? `${game.minPlayers} players`
+                                : `${game.minPlayers}-${game.maxPlayers} players`
+                              }
+                            </span>
+                          </div>
+                        )}
+                        {game.durationMinutes && (
+                          <div className="flex items-center text-gray-600">
+                            <Clock className="w-5 h-5 mr-2 text-[#fbae17]" />
+                            <span className="font-medium">{game.durationMinutes} min</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Ranking Button */}
+                      <div className="mb-6">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <button 
+                              type="button"
+                              ref={starButtonRef}
+                              className="p-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center space-x-2 text-white"
+                              style={{ backgroundColor: '#fbae17' }}
+                              onMouseEnter={handleStarMouseEnter}
+                              onMouseLeave={handleStarMouseLeave}
+                              onClick={handleStarClick}
+                              title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
+                            >
+                              <Star 
+                                className={`w-5 h-5 text-white`} 
+                                fill={hasUserVoted ? 'white' : 'none'}
+                                stroke="white"
+                                strokeWidth={hasUserVoted ? 1 : 2}
+                              />
+                              <span className="font-medium text-white">
+                                {hasUserVoted ? 'Update Vote' : 'Vote'}
+                              </span>
+                            </button>
+                            
+                            {/* Tooltip */}
+                            {showTooltip && (
+                              <div 
+                                className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg z-50"
+                                style={{
+                                  transform: 'translateX(-50%)'
+                                }}
+                              >
+                                <div className="flex flex-col items-start space-y-1">
+                                  <div className="flex items-center space-x-1">
+                                    <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
+                                    <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                                  </div>
+                                  {hasUserVoted && userVoteStars && (
+                                    <div className="text-xs text-green-300">
+                                      Your vote: {userVoteStars.toFixed(1)}/5 ⭐
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {game.bggVotes && (
+                              <span>Based on {game.bggVotes.toLocaleString()} votes</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1132,14 +1217,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       const designers = game.designer.split(',').map(d => d.trim()).filter(d => d);
                       const hasMore = designers.length > 3;
                       const displayedDesigners = showAllDesigners ? designers : designers.slice(0, 3);
+                      const designerText = displayedDesigners.join(', ');
                       
                       return (
                         <div className="flex items-start text-gray-600">
                           <User className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <span className="font-medium">Designer:</span>
-                            <span className="ml-2">
-                              {displayedDesigners.join(', ')}
+                            {/* Desktop: show with +X more button if needed */}
+                            <span className="hidden md:inline ml-2">
+                              {designerText}
                               {hasMore && !showAllDesigners && (
                                 <button
                                   onClick={() => setShowAllDesigners(true)}
@@ -1157,6 +1244,22 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 </button>
                               )}
                             </span>
+                            {/* Mobile: show with 2-line clamp and see more */}
+                            <div className="md:hidden">
+                              <div className="ml-2">
+                                <span className={showFullDesigner ? '' : 'line-clamp-2 block'}>
+                                  {game.designer}
+                                </span>
+                                {(game.designer.length > 60 || game.designer.includes(',')) && (
+                                  <button
+                                    onClick={() => setShowFullDesigner(!showFullDesigner)}
+                                    className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                  >
+                                    {showFullDesigner ? 'See less' : 'See more'}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1165,14 +1268,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       const publishers = game.developer.split(',').map(p => p.trim()).filter(p => p);
                       const hasMore = publishers.length > 3;
                       const displayedPublishers = showAllPublishers ? publishers : publishers.slice(0, 3);
+                      const publisherText = displayedPublishers.join(', ');
                       
                       return (
                         <div className="flex items-start text-gray-600">
                           <Building2 className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <span className="font-medium">Publisher:</span>
-                            <span className="ml-2">
-                              {displayedPublishers.join(', ')}
+                            {/* Desktop: show with +X more button if needed */}
+                            <span className="hidden md:inline ml-2">
+                              {publisherText}
                               {hasMore && !showAllPublishers && (
                                 <button
                                   onClick={() => setShowAllPublishers(true)}
@@ -1190,6 +1295,22 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 </button>
                               )}
                             </span>
+                            {/* Mobile: show with 2-line clamp and see more */}
+                            <div className="md:hidden">
+                              <div className="ml-2">
+                                <span className={showFullPublisher ? '' : 'line-clamp-2 block'}>
+                                  {game.developer}
+                                </span>
+                                {(game.developer.length > 60 || game.developer.includes(',')) && (
+                                  <button
+                                    onClick={() => setShowFullPublisher(!showFullPublisher)}
+                                    className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                  >
+                                    {showFullPublisher ? 'See less' : 'See more'}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
