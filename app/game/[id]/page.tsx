@@ -1370,7 +1370,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span className="ml-2 break-words relative inline-block" ref={designerRef} style={{ maxHeight: designerNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5' }}>
+                                <span className="ml-2 break-words" ref={designerRef} style={{ display: 'inline', maxHeight: designerNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5', verticalAlign: 'top' }}>
                                   {designerNeedsMore ? (
                                     <>
                                       <span style={{ display: 'inline' }}>{designerTruncatedText}</span>
@@ -1447,7 +1447,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span className="ml-2 break-words relative inline-block" ref={publisherRef} style={{ maxHeight: publisherNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5' }}>
+                                <span className="ml-2 break-words" ref={publisherRef} style={{ display: 'inline', maxHeight: publisherNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5', verticalAlign: 'top' }}>
                                   {publisherNeedsMore ? (
                                     <>
                                       <span style={{ display: 'inline' }}>{publisherTruncatedText}</span>
