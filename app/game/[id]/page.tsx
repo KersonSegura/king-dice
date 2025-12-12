@@ -692,18 +692,44 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         return;
       }
 
-      if (designerRef.current && !showFullDesigner) {
+      if (designerRef.current && game?.designer && !showFullDesigner) {
         const el = designerRef.current;
-        setDesignerNeedsMore(el.scrollHeight > el.clientHeight + 1);
+        const needsMore = el.scrollHeight > el.clientHeight + 1;
+        setDesignerNeedsMore(needsMore);
+        if (needsMore) {
+          // Calculate truncated text: 35 chars line 1 + 24 chars line 2 = 59 chars
+          const maxChars = 59;
+          if (game.designer.length > maxChars) {
+            setDesignerTruncatedText(game.designer.substring(0, maxChars));
+          } else {
+            setDesignerTruncatedText(game.designer);
+          }
+        } else {
+          setDesignerTruncatedText('');
+        }
       } else {
         setDesignerNeedsMore(false);
+        setDesignerTruncatedText('');
       }
 
-      if (publisherRef.current && !showFullPublisher) {
+      if (publisherRef.current && game?.developer && !showFullPublisher) {
         const el = publisherRef.current;
-        setPublisherNeedsMore(el.scrollHeight > el.clientHeight + 1);
+        const needsMore = el.scrollHeight > el.clientHeight + 1;
+        setPublisherNeedsMore(needsMore);
+        if (needsMore) {
+          // Calculate truncated text: 35 chars line 1 + 24 chars line 2 = 59 chars
+          const maxChars = 59;
+          if (game.developer.length > maxChars) {
+            setPublisherTruncatedText(game.developer.substring(0, maxChars));
+          } else {
+            setPublisherTruncatedText(game.developer);
+          }
+        } else {
+          setPublisherTruncatedText('');
+        }
       } else {
         setPublisherNeedsMore(false);
+        setPublisherTruncatedText('');
       }
     };
 
