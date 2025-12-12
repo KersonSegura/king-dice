@@ -1449,10 +1449,21 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span className="ml-2 break-words" ref={publisherRef} style={{ display: 'inline', maxHeight: publisherNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5', verticalAlign: 'top' }}>
+                                <span 
+                                  className="ml-2 break-words" 
+                                  ref={publisherRef}
+                                  style={{
+                                    display: publisherNeedsMore ? '-webkit-inline-box' : 'inline',
+                                    WebkitLineClamp: publisherNeedsMore ? 2 : 'none',
+                                    WebkitBoxOrient: publisherNeedsMore ? 'vertical' : 'horizontal',
+                                    overflow: publisherNeedsMore ? 'hidden' : 'visible',
+                                    lineHeight: '1.5',
+                                    maxHeight: publisherNeedsMore ? '3em' : 'none'
+                                  }}
+                                >
                                   {publisherNeedsMore ? (
                                     <>
-                                      <span style={{ display: 'inline' }}>{publisherTruncatedText}</span>
+                                      {publisherTruncatedText}
                                       <button
                                         onClick={(e) => {
                                           e.preventDefault();
