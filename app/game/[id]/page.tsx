@@ -1087,7 +1087,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   )}
 
                   {/* Game Stats and Vote Button - Mobile: side by side, Desktop: stacked */}
-                  <div className="flex flex-col md:block mt-3 mb-3 md:mb-4">
+                  <div className="flex flex-col md:block mt-6 md:mt-0 mb-3 md:mb-4">
                     {/* Mobile Layout: Stats left, Vote right */}
                     <div className="flex md:hidden items-start justify-between gap-4 mb-2">
                       {/* Stats on left */}
