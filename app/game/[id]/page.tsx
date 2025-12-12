@@ -683,168 +683,103 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     }
   }, [game?.id, game?.userRating, game?.userVotes]);
 
-  // Calculate truncated text and check if "See more" is needed (mobile only)
+  // Simple check: does text overflow 2 lines? (mobile only)
   useEffect(() => {
-    const calculateTruncation = () => {
+    const checkOverflow = () => {
       if (window.innerWidth >= 768) {
         setDesignerNeedsMore(false);
         setPublisherNeedsMore(false);
         setDesignerTruncatedText('');
         setPublisherTruncatedText('');
-        return; // Desktop, skip check
+        return;
       }
       
-      // Helper function to find truncation point for 2 lines
-      const findTruncationPoint = (text: string, containerElement: HTMLSpanElement | null) => {
-        if (!containerElement || !text) return { needsMore: false, truncated: text };
+      // Simple helper: check if text overflows 2 lines and find truncation point
+      const checkText = (text: string, element: HTMLSpanElement | null) => {
+        if (!element || !text) return { needsMore: false, truncated: text };
         
-        // Create a temporary measuring element with same styles
-        const measureDiv = document.createElement('div');
-        const computedStyle = window.getComputedStyle(containerElement);
-        measureDiv.style.position = 'absolute';
-        measureDiv.style.visibility = 'hidden';
-        measureDiv.style.width = containerElement.offsetWidth + 'px';
-        measureDiv.style.fontSize = computedStyle.fontSize;
-        measureDiv.style.fontFamily = computedStyle.fontFamily;
-        measureDiv.style.fontWeight = computedStyle.fontWeight;
-        measureDiv.style.lineHeight = computedStyle.lineHeight || '1.5';
-        measureDiv.style.whiteSpace = 'normal';
-        measureDiv.style.wordBreak = 'break-word';
-        measureDiv.style.padding = '0';
-        measureDiv.style.margin = '0';
-        document.body.appendChild(measureDiv);
+        const measure = document.createElement('div');
+        const style = window.getComputedStyle(element);
+        measure.style.position = 'absolute';
+        measure.style.visibility = 'hidden';
+        measure.style.width = element.offsetWidth + 'px';
+        measure.style.fontSize = style.fontSize;
+        measure.style.fontFamily = style.fontFamily;
+        measure.style.fontWeight = style.fontWeight;
+        measure.style.lineHeight = style.lineHeight || '1.5';
+        measure.style.whiteSpace = 'normal';
+        measure.style.wordBreak = 'break-word';
+        document.body.appendChild(measure);
         
-        const lineHeight = parseFloat(computedStyle.lineHeight || '21');
-        // Use more conservative maxHeight - subtract 2px for safety margin
-        const maxHeight = (lineHeight * 2) - 2;
-        const seeMoreText = '...See more';
+        const lineHeight = parseFloat(style.lineHeight || '21');
+        const maxHeight = lineHeight * 2;
+        const seeMore = '...See more';
         
-        // Check if original text fits in 2 lines
-        measureDiv.textContent = text;
-        const originalHeight = measureDiv.offsetHeight;
-        const needsMore = originalHeight > maxHeight;
+        // Check if text overflows 2 lines
+        measure.textContent = text;
+        const needsMore = measure.offsetHeight > maxHeight;
         
         let truncated = text;
         if (needsMore) {
-          // CRITICAL: We need text to fill 2 lines, then add "...See more" at end of line 2
-          // First, find where text naturally uses 2 lines (without "...See more")
-          let twoLineText = '';
+          // Binary search: find where text + "...See more" fits in 2 lines
           let low = 0;
           let high = text.length;
+          let best = '';
           
-          // Find maximum text that uses exactly 2 lines (or close to it)
           while (low <= high) {
             const mid = Math.floor((low + high) / 2);
-            measureDiv.textContent = text.substring(0, mid);
-            const height = measureDiv.offsetHeight;
+            measure.textContent = text.substring(0, mid) + seeMore;
             
-            if (height <= lineHeight) {
-              // Only 1 line, need more
-              low = mid + 1;
-            } else if (height <= maxHeight) {
-              // Fits in 2 lines, this is good
-              twoLineText = text.substring(0, mid);
+            if (measure.offsetHeight <= maxHeight) {
+              best = text.substring(0, mid);
               low = mid + 1;
             } else {
-              // Exceeds 2 lines
               high = mid - 1;
             }
           }
           
-          // Now, from twoLineText, work backwards to find where we can fit "...See more" at end of line 2
-          // We want to maximize text while ensuring text + "...See more" fits in exactly 2 lines
-          let bestFit = '';
-          if (twoLineText) {
-            // Start from a point that definitely uses 2 lines, then find max that fits with "...See more"
-            low = Math.max(0, Math.floor(twoLineText.length * 0.7)); // Start from 70% of 2-line text
-            high = twoLineText.length;
-            
-            while (low <= high) {
-              const mid = Math.floor((low + high) / 2);
-              const testText = text.substring(0, mid) + seeMoreText;
-              measureDiv.textContent = testText;
-              const height = measureDiv.offsetHeight;
-              
-              if (height <= maxHeight) {
-                // Check if it actually uses 2 lines (not just 1)
-                measureDiv.textContent = text.substring(0, mid);
-                const textOnlyHeight = measureDiv.offsetHeight;
-                
-                if (textOnlyHeight > lineHeight) {
-                  // Good, it uses 2 lines
-                  bestFit = text.substring(0, mid);
-                  low = mid + 1;
-                } else {
-                  // Only 1 line, need more text
-                  low = mid + 1;
-                }
-              } else {
-                // Exceeds 2 lines
-                high = mid - 1;
-              }
+          // Trim a bit more to be safe
+          if (best) {
+            let final = best;
+            measure.textContent = final + seeMore;
+            while (measure.offsetHeight > maxHeight && final.length > 0) {
+              final = final.substring(0, final.length - 1);
+              measure.textContent = final + seeMore;
             }
-            
-            // Final optimization: expand character by character to maximize
-            if (bestFit) {
-              let finalFit = bestFit;
-              for (let i = bestFit.length; i < text.length; i++) {
-                const testText = text.substring(0, i) + seeMoreText;
-                measureDiv.textContent = testText;
-                
-                if (measureDiv.offsetHeight <= maxHeight) {
-                  // Verify it uses 2 lines
-                  measureDiv.textContent = text.substring(0, i);
-                  const textOnlyHeight = measureDiv.offsetHeight;
-                  
-                  if (textOnlyHeight > lineHeight) {
-                    finalFit = text.substring(0, i);
-                  } else {
-                    break;
-                  }
-                } else {
-                  break;
-                }
-              }
-              truncated = finalFit;
-            } else {
-              truncated = '';
-            }
-          } else {
-            truncated = '';
+            truncated = final;
           }
         }
         
-        document.body.removeChild(measureDiv);
+        document.body.removeChild(measure);
         return { needsMore, truncated };
       };
       
-      // Calculate for designer
+      // Check designer
       if (designerRef.current && game?.designer && !showFullDesigner) {
-        const result = findTruncationPoint(game.designer, designerRef.current);
+        const result = checkText(game.designer, designerRef.current);
         setDesignerNeedsMore(result.needsMore);
         setDesignerTruncatedText(result.truncated);
-      } else if (!game?.designer || showFullDesigner) {
+      } else {
         setDesignerNeedsMore(false);
         setDesignerTruncatedText('');
       }
       
-      // Calculate for publisher
+      // Check publisher
       if (publisherRef.current && game?.developer && !showFullPublisher) {
-        const result = findTruncationPoint(game.developer, publisherRef.current);
+        const result = checkText(game.developer, publisherRef.current);
         setPublisherNeedsMore(result.needsMore);
         setPublisherTruncatedText(result.truncated);
-      } else if (!game?.developer || showFullPublisher) {
+      } else {
         setPublisherNeedsMore(false);
         setPublisherTruncatedText('');
       }
     };
     
-    // Check after render
-    const timeoutId = setTimeout(calculateTruncation, 150);
-    window.addEventListener('resize', calculateTruncation);
+    const timeoutId = setTimeout(checkOverflow, 100);
+    window.addEventListener('resize', checkOverflow);
     return () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', calculateTruncation);
+      window.removeEventListener('resize', checkOverflow);
     };
   }, [game?.designer, game?.developer, showFullDesigner, showFullPublisher]);
 
