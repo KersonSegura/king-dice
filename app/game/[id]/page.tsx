@@ -427,6 +427,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullDesigner, setShowFullDesigner] = useState(false);
   const [showFullPublisher, setShowFullPublisher] = useState(false);
+  const [designerNeedsMore, setDesignerNeedsMore] = useState(false);
+  const [publisherNeedsMore, setPublisherNeedsMore] = useState(false);
+  const designerRef = useRef<HTMLDivElement>(null);
+  const publisherRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -676,6 +680,37 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
       setLocalUserVotes(game.userVotes ?? 0);
     }
   }, [game?.id, game?.userRating, game?.userVotes]);
+
+  // Check if designer/publisher text needs "See more" button on mobile
+  useEffect(() => {
+    const checkTextOverflow = () => {
+      if (window.innerWidth >= 768) {
+        setDesignerNeedsMore(false);
+        setPublisherNeedsMore(false);
+        return; // Desktop, skip check
+      }
+      
+      if (designerRef.current && game?.designer && !showFullDesigner) {
+        const element = designerRef.current;
+        const isOverflowing = element.scrollHeight > element.clientHeight;
+        setDesignerNeedsMore(isOverflowing || game.designer.length > 60);
+      }
+      
+      if (publisherRef.current && game?.developer && !showFullPublisher) {
+        const element = publisherRef.current;
+        const isOverflowing = element.scrollHeight > element.clientHeight;
+        setPublisherNeedsMore(isOverflowing || game.developer.length > 60);
+      }
+    };
+    
+    // Check after render
+    const timeoutId = setTimeout(checkTextOverflow, 100);
+    window.addEventListener('resize', checkTextOverflow);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', checkTextOverflow);
+    };
+  }, [game?.designer, game?.developer, showFullDesigner, showFullPublisher]);
 
   // Check if user has voted when component mounts or user changes
   useEffect(() => {
@@ -1223,40 +1258,69 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         <div className="flex items-start text-gray-600">
                           <User className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <span className="font-medium">Designer:</span>
                             {/* Desktop: show with +X more button if needed */}
-                            <span className="hidden md:inline ml-2">
-                              {designerText}
-                              {hasMore && !showAllDesigners && (
-                                <button
-                                  onClick={() => setShowAllDesigners(true)}
-                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                >
-                                  +{designers.length - 3} more
-                                </button>
-                              )}
-                              {hasMore && showAllDesigners && (
-                                <button
-                                  onClick={() => setShowAllDesigners(false)}
-                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                >
-                                  Show less
-                                </button>
-                              )}
-                            </span>
-                            {/* Mobile: show with 2-line clamp and see more */}
-                            <div className="md:hidden">
-                              <div className="ml-2">
-                                <span className={showFullDesigner ? '' : 'line-clamp-2 block'}>
-                                  {game.designer}
-                                </span>
-                                {(game.designer.length > 60 || game.designer.includes(',')) && (
+                            <div className="hidden md:block">
+                              <span className="font-medium">Designer:</span>
+                              <span className="ml-2">
+                                {designerText}
+                                {hasMore && !showAllDesigners && (
                                   <button
-                                    onClick={() => setShowFullDesigner(!showFullDesigner)}
-                                    className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                    onClick={() => setShowAllDesigners(true)}
+                                    className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    {showFullDesigner ? 'See less' : 'See more'}
+                                    +{designers.length - 3} more
                                   </button>
+                                )}
+                                {hasMore && showAllDesigners && (
+                                  <button
+                                    onClick={() => setShowAllDesigners(false)}
+                                    className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                  >
+                                    Show less
+                                  </button>
+                                )}
+                              </span>
+                            </div>
+                            {/* Mobile: inline label with text, 2-line limit */}
+                            <div className="md:hidden">
+                              <div className="flex items-baseline gap-x-1">
+                                <span className="font-medium flex-shrink-0">Designer:</span>
+                                {showFullDesigner ? (
+                                  <>
+                                    <span className="flex-1 min-w-0">{game.designer}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setShowFullDesigner(false);
+                                      }}
+                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1"
+                                    >
+                                      See less
+                                    </button>
+                                  </>
+                                ) : (
+                                  <div className="flex-1 min-w-0 relative">
+                                    <div
+                                      ref={designerRef}
+                                      className="line-clamp-2"
+                                      style={{ lineHeight: '1.5' }}
+                                    >
+                                      {game.designer}
+                                    </div>
+                                    {designerNeedsMore && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setShowFullDesigner(true);
+                                        }}
+                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1"
+                                      >
+                                        See more
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -1274,40 +1338,69 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         <div className="flex items-start text-gray-600">
                           <Building2 className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <span className="font-medium">Publisher:</span>
                             {/* Desktop: show with +X more button if needed */}
-                            <span className="hidden md:inline ml-2">
-                              {publisherText}
-                              {hasMore && !showAllPublishers && (
-                                <button
-                                  onClick={() => setShowAllPublishers(true)}
-                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                >
-                                  +{publishers.length - 3} more
-                                </button>
-                              )}
-                              {hasMore && showAllPublishers && (
-                                <button
-                                  onClick={() => setShowAllPublishers(false)}
-                                  className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                >
-                                  Show less
-                                </button>
-                              )}
-                            </span>
-                            {/* Mobile: show with 2-line clamp and see more */}
-                            <div className="md:hidden">
-                              <div className="ml-2">
-                                <span className={showFullPublisher ? '' : 'line-clamp-2 block'}>
-                                  {game.developer}
-                                </span>
-                                {(game.developer.length > 60 || game.developer.includes(',')) && (
+                            <div className="hidden md:block">
+                              <span className="font-medium">Publisher:</span>
+                              <span className="ml-2">
+                                {publisherText}
+                                {hasMore && !showAllPublishers && (
                                   <button
-                                    onClick={() => setShowFullPublisher(!showFullPublisher)}
-                                    className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                    onClick={() => setShowAllPublishers(true)}
+                                    className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    {showFullPublisher ? 'See less' : 'See more'}
+                                    +{publishers.length - 3} more
                                   </button>
+                                )}
+                                {hasMore && showAllPublishers && (
+                                  <button
+                                    onClick={() => setShowAllPublishers(false)}
+                                    className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                  >
+                                    Show less
+                                  </button>
+                                )}
+                              </span>
+                            </div>
+                            {/* Mobile: inline label with text, 2-line limit */}
+                            <div className="md:hidden">
+                              <div className="flex items-baseline gap-x-1">
+                                <span className="font-medium flex-shrink-0">Publisher:</span>
+                                {showFullPublisher ? (
+                                  <>
+                                    <span className="flex-1 min-w-0">{game.developer}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setShowFullPublisher(false);
+                                      }}
+                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1"
+                                    >
+                                      See less
+                                    </button>
+                                  </>
+                                ) : (
+                                  <div className="flex-1 min-w-0 relative">
+                                    <div
+                                      ref={publisherRef}
+                                      className="line-clamp-2"
+                                      style={{ lineHeight: '1.5' }}
+                                    >
+                                      {game.developer}
+                                    </div>
+                                    {publisherNeedsMore && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setShowFullPublisher(true);
+                                        }}
+                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1"
+                                      >
+                                        See more
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
