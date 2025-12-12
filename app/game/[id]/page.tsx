@@ -715,7 +715,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         document.body.appendChild(measureDiv);
         
         const lineHeight = parseFloat(computedStyle.lineHeight || '21');
-        const maxHeight = lineHeight * 2;
+        // Use slightly less than 2 lines to account for rounding/rendering differences
+        const maxHeight = lineHeight * 2 - 1; // Small margin to ensure it fits
         const seeMoreText = '...See more';
         
         // Check if original text fits in 2 lines
@@ -747,19 +748,48 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             }
           }
           
-          // Final verification: ensure bestFit + "...See more" fits in 2 lines
+          // Final verification: ensure bestFit + "...See more" fits in EXACTLY 2 lines (not 3)
           if (bestFit) {
-            measureDiv.textContent = bestFit + seeMoreText;
+            // Be conservative: trim until it definitely fits in 2 lines
+            let finalFit = bestFit;
+            
+            // Check if it fits
+            measureDiv.textContent = finalFit + seeMoreText;
             let verifyHeight = measureDiv.offsetHeight;
             
-            // If it's still slightly over, trim character by character until it fits
-            let finalFit = bestFit;
+            // If it exceeds 2 lines, trim character by character until it fits
             while (verifyHeight > maxHeight && finalFit.length > 0) {
-              finalFit = finalFit.substring(0, finalFit.length - 1);
+              // Try removing from the end, but prefer word boundaries
+              const lastSpaceIndex = finalFit.lastIndexOf(' ');
+              if (lastSpaceIndex > finalFit.length * 0.7) {
+                // If there's a space in the last 30% of text, remove from there
+                finalFit = finalFit.substring(0, lastSpaceIndex);
+              } else {
+                // Otherwise just remove one character
+                finalFit = finalFit.substring(0, finalFit.length - 1);
+              }
+              
               measureDiv.textContent = finalFit + seeMoreText;
               verifyHeight = measureDiv.offsetHeight;
             }
-            truncated = finalFit;
+            
+            // Double-check: make sure we're not cutting off too much
+            // Try to add back a few characters if possible
+            let expandedFit = finalFit;
+            for (let i = 0; i < 10 && expandedFit.length < bestFit.length; i++) {
+              const nextChar = text[expandedFit.length];
+              if (!nextChar) break;
+              
+              const testText = expandedFit + nextChar + seeMoreText;
+              measureDiv.textContent = testText;
+              if (measureDiv.offsetHeight <= maxHeight) {
+                expandedFit = expandedFit + nextChar;
+              } else {
+                break;
+              }
+            }
+            
+            truncated = expandedFit;
           } else {
             truncated = '';
           }
