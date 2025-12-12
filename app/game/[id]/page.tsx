@@ -431,8 +431,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [publisherNeedsMore, setPublisherNeedsMore] = useState(false);
   const [designerTruncatedText, setDesignerTruncatedText] = useState(''); // unused after simplifying clamp
   const [publisherTruncatedText, setPublisherTruncatedText] = useState(''); // unused after simplifying clamp
-  const designerRef = useRef<HTMLSpanElement>(null);
-  const publisherRef = useRef<HTMLSpanElement>(null);
+  const designerRef = useRef<HTMLDivElement>(null);
+  const publisherRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -1077,7 +1077,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             <div className="md:w-2/3 lg:w-3/4 p-8">
               <div className="flex flex-col h-full">
                 <div>
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                  <h1 className="text-4xl font-bold text-gray-900 mb-4">
                     {game.nameEn}
                   </h1>
                   {game.nameEs && game.nameEs !== game.nameEn && (
@@ -1252,7 +1252,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   </div>
 
                   {/* Designer & Publisher */}
-                  <div className="space-y-2 md:mb-6 md:mt-0 -mt-1 mb-4">
+                  <div className="space-y-2 md:mb-6 md:mt-0 -mt-1 mb-3">
                     {game.designer && (() => {
                       const designers = game.designer.split(',').map(d => d.trim()).filter(d => d);
                       const hasMore = designers.length > 3;
@@ -1286,11 +1286,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 )}
                               </span>
                             </div>
-                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment exactly */}
+                            {/* Mobile: single-line text; See more button on next line if overflow */}
                             <div className="md:hidden">
-                              <span className="font-medium">Designer:</span>
                               {showFullDesigner ? (
-                                <>
+                                <div className="flex flex-wrap items-start">
+                                  <span className="font-medium">Designer:</span>
                                   <span className="ml-2 break-words">{game.designer}</span>
                                   <button
                                     onClick={(e) => {
@@ -1302,28 +1302,38 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   >
                                     See less
                                   </button>
-                                </>
+                                </div>
                               ) : (
-                                <span className="ml-2 break-words" ref={designerRef} style={{ display: 'inline', maxHeight: designerNeedsMore ? '3em' : 'none', overflow: 'hidden', lineHeight: '1.5', verticalAlign: 'top' }}>
-                                  {designerNeedsMore ? (
-                                    <>
-                                      <span style={{ display: 'inline' }}>{designerTruncatedText}</span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          e.stopPropagation();
-                                          setShowFullDesigner(true);
-                                        }}
-                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                        style={{ display: 'inline', whiteSpace: 'nowrap', marginLeft: '2px' }}
-                                      >
-                                        ...See more
-                                      </button>
-                                    </>
-                                  ) : (
-                                    game.designer
+                                <>
+                                  <div
+                                    ref={designerRef}
+                                    className="break-words"
+                                    style={{
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 1,
+                                      WebkitBoxOrient: 'vertical',
+                                      overflow: 'hidden',
+                                      lineHeight: '1.5em',
+                                      maxHeight: '1.5em',
+                                      wordBreak: 'break-word'
+                                    }}
+                                  >
+                                    <span className="font-medium">Designer:</span>
+                                    <span className="ml-1">{game.designer}</span>
+                                  </div>
+                                  {designerNeedsMore && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setShowFullDesigner(true);
+                                      }}
+                                      className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                    >
+                                      ...See more
+                                    </button>
                                   )}
-                                </span>
+                                </>
                               )}
                             </div>
                           </div>
@@ -1363,11 +1373,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 )}
                               </span>
                             </div>
-                            {/* Mobile: 1 line with See more button on second line if needed */}
+                            {/* Mobile: single-line text; See more button on next line if overflow */}
                             <div className="md:hidden">
-                              <span className="font-medium">Publisher:</span>
                               {showFullPublisher ? (
-                                <>
+                                <div className="flex flex-wrap items-start">
+                                  <span className="font-medium">Publisher:</span>
                                   <span className="ml-2 break-words">{game.developer}</span>
                                   <button
                                     onClick={(e) => {
@@ -1379,12 +1389,12 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   >
                                     See less
                                   </button>
-                                </>
+                                </div>
                               ) : (
                                 <>
-                                  <span 
-                                    className="ml-2 break-words" 
+                                  <div
                                     ref={publisherRef}
+                                    className="break-words"
                                     style={{
                                       display: '-webkit-box',
                                       WebkitLineClamp: 1,
@@ -1395,21 +1405,20 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                       wordBreak: 'break-word'
                                     }}
                                   >
-                                    {game.developer}
-                                  </span>
+                                    <span className="font-medium">Publisher:</span>
+                                    <span className="ml-1">{game.developer}</span>
+                                  </div>
                                   {publisherNeedsMore && (
-                                    <div className="mt-1">
-                                      <button
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          e.stopPropagation();
-                                          setShowFullPublisher(true);
-                                        }}
-                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                      >
-                                        ...See more
-                                      </button>
-                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setShowFullPublisher(true);
+                                      }}
+                                      className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                    >
+                                      ...See more
+                                    </button>
                                   )}
                                 </>
                               )}
