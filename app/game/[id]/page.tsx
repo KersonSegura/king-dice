@@ -429,10 +429,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [showFullPublisher, setShowFullPublisher] = useState(false);
   const [designerNeedsMore, setDesignerNeedsMore] = useState(false);
   const [publisherNeedsMore, setPublisherNeedsMore] = useState(false);
-  const [designerTruncatedText, setDesignerTruncatedText] = useState('');
-  const [publisherTruncatedText, setPublisherTruncatedText] = useState('');
-  const designerRef = useRef<HTMLSpanElement>(null);
-  const publisherRef = useRef<HTMLSpanElement>(null);
+  const [designerTruncatedText, setDesignerTruncatedText] = useState(''); // unused after simplifying clamp
+  const [publisherTruncatedText, setPublisherTruncatedText] = useState(''); // unused after simplifying clamp
+  const designerRef = useRef<HTMLDivElement>(null);
+  const publisherRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -683,101 +683,31 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     }
   }, [game?.id, game?.userRating, game?.userVotes]);
 
-  // Simple check: does text overflow 2 lines? (mobile only)
+  // Simple overflow check for 2-line clamp (mobile only)
   useEffect(() => {
     const checkOverflow = () => {
       if (window.innerWidth >= 768) {
         setDesignerNeedsMore(false);
         setPublisherNeedsMore(false);
-        setDesignerTruncatedText('');
-        setPublisherTruncatedText('');
         return;
       }
-      
-      // Character-based approach: count characters per line including label
-      const checkText = (text: string, element: HTMLSpanElement | null, label: string) => {
-        if (!element || !text) return { needsMore: false, truncated: text };
-        
-        const measure = document.createElement('div');
-        const style = window.getComputedStyle(element);
-        measure.style.position = 'absolute';
-        measure.style.visibility = 'hidden';
-        measure.style.width = element.offsetWidth + 'px';
-        measure.style.fontSize = style.fontSize;
-        measure.style.fontFamily = style.fontFamily;
-        measure.style.fontWeight = style.fontWeight;
-        measure.style.lineHeight = style.lineHeight || '1.5';
-        measure.style.whiteSpace = 'normal';
-        measure.style.wordBreak = 'break-word';
-        document.body.appendChild(measure);
-        
-        const lineHeight = parseFloat(style.lineHeight || '21');
-        const maxHeight = lineHeight * 2;
-        const seeMore = '...See more';
-        const seeMoreLength = seeMore.length; // 11 characters
-        
-        // Check if text overflows 2 lines (including label)
-        const fullText = label + ' ' + text;
-        measure.textContent = fullText;
-        const needsMore = measure.offsetHeight > maxHeight;
-        
-        let truncated = text;
-        if (needsMore) {
-          // Find how many characters fit in one line starting from label
-          // Line 1: label + up to 35 chars total
-          // Line 2: up to 35 chars, but last 11 are "...See more"
-          // So we need: label length + 35 (line 1) + 24 (line 2 before see more) = label + 59
-          
-          // First, find where line 1 ends (35 chars from start including label)
-          let line1End = 0;
-          for (let i = label.length; i <= label.length + 35; i++) {
-            measure.textContent = fullText.substring(0, i);
-            if (measure.offsetHeight > lineHeight) {
-              line1End = i - 1;
-              break;
-            }
-          }
-          
-          // If line 1 is exactly 35, line 2 should have 24 chars of text + 11 for "...See more"
-          // Total text to show: (line1End - label.length) + 24
-          const labelLength = label.length + 1; // +1 for space
-          const line1TextChars = line1End - labelLength;
-          const line2TextChars = 24; // Last 11 will be "...See more"
-          const totalTextChars = line1TextChars + line2TextChars;
-          
-          if (text.length > totalTextChars) {
-            truncated = text.substring(0, totalTextChars);
-          } else {
-            truncated = text;
-          }
-        }
-        
-        document.body.removeChild(measure);
-        return { needsMore, truncated };
-      };
-      
-      // Check designer
-      if (designerRef.current && game?.designer && !showFullDesigner) {
-        const result = checkText(game.designer, designerRef.current, 'Designer:');
-        setDesignerNeedsMore(result.needsMore);
-        setDesignerTruncatedText(result.truncated);
+
+      if (designerRef.current && !showFullDesigner) {
+        const el = designerRef.current;
+        setDesignerNeedsMore(el.scrollHeight > el.clientHeight + 1);
       } else {
         setDesignerNeedsMore(false);
-        setDesignerTruncatedText('');
       }
-      
-      // Check publisher
-      if (publisherRef.current && game?.developer && !showFullPublisher) {
-        const result = checkText(game.developer, publisherRef.current, 'Publisher:');
-        setPublisherNeedsMore(result.needsMore);
-        setPublisherTruncatedText(result.truncated);
+
+      if (publisherRef.current && !showFullPublisher) {
+        const el = publisherRef.current;
+        setPublisherNeedsMore(el.scrollHeight > el.clientHeight + 1);
       } else {
         setPublisherNeedsMore(false);
-        setPublisherTruncatedText('');
       }
     };
-    
-    const timeoutId = setTimeout(checkOverflow, 100);
+
+    const timeoutId = setTimeout(checkOverflow, 50);
     window.addEventListener('resize', checkOverflow);
     return () => {
       clearTimeout(timeoutId);
@@ -1433,9 +1363,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             </div>
                             {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment exactly */}
                             <div className="md:hidden">
-                              <span className="font-medium">Publisher:</span>
                               {showFullPublisher ? (
                                 <>
+                                  <span className="font-medium">Publisher:</span>
                                   <span className="ml-2 break-words">{game.developer}</span>
                                   <button
                                     onClick={(e) => {
@@ -1449,8 +1379,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span 
-                                  className="ml-2 break-words" 
+                                <div 
                                   ref={publisherRef}
                                   style={{
                                     display: '-webkit-box',
@@ -1459,29 +1388,28 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     overflow: 'hidden',
                                     lineHeight: '1.5em',
                                     maxHeight: '3em',
-                                    textOverflow: 'ellipsis',
                                     wordBreak: 'break-word'
                                   }}
                                 >
+                                  <span className="font-medium">Publisher:</span>
                                   {publisherNeedsMore ? (
                                     <>
-                                      {publisherTruncatedText}
+                                      <span className="ml-2">{publisherTruncatedText}</span>
                                       <button
                                         onClick={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
                                           setShowFullPublisher(true);
                                         }}
-                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
-                                        style={{ display: 'inline', whiteSpace: 'nowrap', marginLeft: '2px' }}
+                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline ml-1"
                                       >
                                         ...See more
                                       </button>
                                     </>
                                   ) : (
-                                    game.developer
+                                    <span className="ml-2">{game.developer}</span>
                                   )}
-                                </span>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -1554,12 +1482,22 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               About This Game
             </h2>
             <div className="prose max-w-none">
-              <div className="text-gray-700 text-sm leading-relaxed">
+              <div 
+                className="text-gray-700 text-sm leading-relaxed"
+                style={{
+                  display: showFullDescription ? 'block' : '-webkit-box',
+                  WebkitLineClamp: showFullDescription ? 'none' : 3,
+                  WebkitBoxOrient: showFullDescription ? 'horizontal' : 'vertical',
+                  overflow: showFullDescription ? 'visible' : 'hidden',
+                  lineHeight: '1.75em',
+                  maxHeight: showFullDescription ? 'none' : '5.25em' // 3 lines * 1.75em
+                }}
+              >
                 {processMarkdownContent(getDisplayDescription())}
               </div>
               
               {/* Show More/Less Button */}
-              {description.fullDescription && description.fullDescription.length > 500 && (
+              {description.fullDescription && (
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
                   className="mt-4 inline-flex items-center text-[#fbae17] hover:text-[#fbae17]/80 font-medium transition-colors"
