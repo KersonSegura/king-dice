@@ -429,8 +429,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [showFullPublisher, setShowFullPublisher] = useState(false);
   const [designerNeedsMore, setDesignerNeedsMore] = useState(false);
   const [publisherNeedsMore, setPublisherNeedsMore] = useState(false);
-  const designerRef = useRef<HTMLDivElement>(null);
-  const publisherRef = useRef<HTMLDivElement>(null);
+  const [designerTruncatedText, setDesignerTruncatedText] = useState('');
+  const [publisherTruncatedText, setPublisherTruncatedText] = useState('');
+  const designerRef = useRef<HTMLSpanElement>(null);
+  const publisherRef = useRef<HTMLSpanElement>(null);
   const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -681,72 +683,100 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     }
   }, [game?.id, game?.userRating, game?.userVotes]);
 
-  // Check if designer/publisher text needs "See more" button on mobile (only if text would overflow to 3rd line)
+  // Calculate truncated text and check if "See more" is needed (mobile only)
   useEffect(() => {
-    const checkTextOverflow = () => {
+    const calculateTruncation = () => {
       if (window.innerWidth >= 768) {
         setDesignerNeedsMore(false);
         setPublisherNeedsMore(false);
+        setDesignerTruncatedText('');
+        setPublisherTruncatedText('');
         return; // Desktop, skip check
       }
       
-      // Check designer - only show if text would overflow to 3rd line
-      if (designerRef.current && game?.designer && !showFullDesigner) {
-        const element = designerRef.current;
-        // Create a temporary element to measure the actual text height
-        const tempDiv = document.createElement('div');
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.visibility = 'hidden';
-        tempDiv.style.width = element.offsetWidth + 'px';
-        tempDiv.style.fontSize = window.getComputedStyle(element).fontSize;
-        tempDiv.style.fontFamily = window.getComputedStyle(element).fontFamily;
-        tempDiv.style.lineHeight = '1.5';
-        tempDiv.style.padding = '0';
-        tempDiv.style.margin = '0';
-        tempDiv.style.whiteSpace = 'normal';
-        tempDiv.style.wordBreak = 'break-word';
-        tempDiv.textContent = game.designer;
-        document.body.appendChild(tempDiv);
-        const textHeight = tempDiv.offsetHeight;
-        document.body.removeChild(tempDiv);
+      // Helper function to find truncation point for 2 lines
+      const findTruncationPoint = (text: string, containerElement: HTMLSpanElement | null) => {
+        if (!containerElement || !text) return { needsMore: false, truncated: text };
         
-        // Calculate if text would need 3 lines (2 * line-height)
-        const maxHeight = parseFloat(window.getComputedStyle(element).lineHeight) * 2;
-        setDesignerNeedsMore(textHeight > maxHeight);
+        // Create a temporary measuring element with same styles
+        const measureDiv = document.createElement('div');
+        const computedStyle = window.getComputedStyle(containerElement);
+        measureDiv.style.position = 'absolute';
+        measureDiv.style.visibility = 'hidden';
+        measureDiv.style.width = containerElement.offsetWidth + 'px';
+        measureDiv.style.fontSize = computedStyle.fontSize;
+        measureDiv.style.fontFamily = computedStyle.fontFamily;
+        measureDiv.style.fontWeight = computedStyle.fontWeight;
+        measureDiv.style.lineHeight = computedStyle.lineHeight || '1.5';
+        measureDiv.style.whiteSpace = 'normal';
+        measureDiv.style.wordBreak = 'break-word';
+        measureDiv.style.padding = '0';
+        measureDiv.style.margin = '0';
+        document.body.appendChild(measureDiv);
+        
+        const lineHeight = parseFloat(computedStyle.lineHeight || '21');
+        const maxHeight = lineHeight * 2;
+        const seeMoreText = '...See more';
+        
+        // Check if original text fits
+        measureDiv.textContent = text;
+        const originalHeight = measureDiv.offsetHeight;
+        const needsMore = originalHeight > maxHeight;
+        
+        let truncated = text;
+        if (needsMore) {
+          // Binary search for the right truncation point
+          let low = 0;
+          let high = text.length;
+          let bestFit = '';
+          
+          while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            const testText = text.substring(0, mid) + seeMoreText;
+            measureDiv.textContent = testText;
+            const height = measureDiv.offsetHeight;
+            
+            if (height <= maxHeight) {
+              bestFit = text.substring(0, mid);
+              low = mid + 1;
+            } else {
+              high = mid - 1;
+            }
+          }
+          truncated = bestFit;
+        }
+        
+        document.body.removeChild(measureDiv);
+        return { needsMore, truncated };
+      };
+      
+      // Calculate for designer
+      if (designerRef.current && game?.designer && !showFullDesigner) {
+        const result = findTruncationPoint(game.designer, designerRef.current);
+        setDesignerNeedsMore(result.needsMore);
+        setDesignerTruncatedText(result.truncated);
+      } else if (!game?.designer || showFullDesigner) {
+        setDesignerNeedsMore(false);
+        setDesignerTruncatedText('');
       }
       
-      // Check publisher - only show if text would overflow to 3rd line
+      // Calculate for publisher
       if (publisherRef.current && game?.developer && !showFullPublisher) {
-        const element = publisherRef.current;
-        // Create a temporary element to measure the actual text height
-        const tempDiv = document.createElement('div');
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.visibility = 'hidden';
-        tempDiv.style.width = element.offsetWidth + 'px';
-        tempDiv.style.fontSize = window.getComputedStyle(element).fontSize;
-        tempDiv.style.fontFamily = window.getComputedStyle(element).fontFamily;
-        tempDiv.style.lineHeight = '1.5';
-        tempDiv.style.padding = '0';
-        tempDiv.style.margin = '0';
-        tempDiv.style.whiteSpace = 'normal';
-        tempDiv.style.wordBreak = 'break-word';
-        tempDiv.textContent = game.developer;
-        document.body.appendChild(tempDiv);
-        const textHeight = tempDiv.offsetHeight;
-        document.body.removeChild(tempDiv);
-        
-        // Calculate if text would need 3 lines (2 * line-height)
-        const maxHeight = parseFloat(window.getComputedStyle(element).lineHeight) * 2;
-        setPublisherNeedsMore(textHeight > maxHeight);
+        const result = findTruncationPoint(game.developer, publisherRef.current);
+        setPublisherNeedsMore(result.needsMore);
+        setPublisherTruncatedText(result.truncated);
+      } else if (!game?.developer || showFullPublisher) {
+        setPublisherNeedsMore(false);
+        setPublisherTruncatedText('');
       }
     };
     
     // Check after render
-    const timeoutId = setTimeout(checkTextOverflow, 100);
-    window.addEventListener('resize', checkTextOverflow);
+    const timeoutId = setTimeout(calculateTruncation, 150);
+    window.addEventListener('resize', calculateTruncation);
     return () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', checkTextOverflow);
+      window.removeEventListener('resize', calculateTruncation);
     };
   }, [game?.designer, game?.developer, showFullDesigner, showFullPublisher]);
 
@@ -1319,59 +1349,44 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 )}
                               </span>
                             </div>
-                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment */}
+                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment exactly */}
                             <div className="md:hidden">
-                              <div className="flex items-start">
-                                <span className="font-medium flex-shrink-0">Designer:</span>
-                                {showFullDesigner ? (
-                                  <>
-                                    <span className="ml-2 flex-1 min-w-0">{game.designer}</span>
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setShowFullDesigner(false);
-                                      }}
-                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1"
-                                    >
-                                      See less
-                                    </button>
-                                  </>
-                                ) : (
-                                  <div className="ml-2 flex-1 min-w-0 relative">
-                                    <div
-                                      ref={designerRef}
-                                      className="break-words"
-                                      style={{ 
-                                        lineHeight: '1.5',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 2,
-                                        WebkitBoxOrient: 'vertical',
-                                        overflow: 'hidden',
-                                        textAlign: 'left',
-                                        textIndent: 0,
-                                        paddingLeft: 0,
-                                        marginLeft: 0
-                                      }}
-                                    >
-                                      {game.designer}
-                                    </div>
-                                    {designerNeedsMore && (
+                              <span className="font-medium">Designer:</span>
+                              {showFullDesigner ? (
+                                <>
+                                  <span className="ml-2 break-words">{game.designer}</span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setShowFullDesigner(false);
+                                    }}
+                                    className="ml-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                  >
+                                    See less
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="ml-2 break-words" ref={designerRef}>
+                                  {designerNeedsMore ? (
+                                    <>
+                                      {designerTruncatedText}
                                       <button
                                         onClick={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
                                           setShowFullDesigner(true);
                                         }}
-                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1"
-                                        style={{ lineHeight: '1.5' }}
+                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                       >
-                                        See more
+                                        ...See more
                                       </button>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
+                                    </>
+                                  ) : (
+                                    game.designer
+                                  )}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1410,59 +1425,44 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 )}
                               </span>
                             </div>
-                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment */}
+                            {/* Mobile: inline label with text, 2-line limit - matching Official Website alignment exactly */}
                             <div className="md:hidden">
-                              <div className="flex items-start">
-                                <span className="font-medium flex-shrink-0">Publisher:</span>
-                                {showFullPublisher ? (
-                                  <>
-                                    <span className="ml-2 flex-1 min-w-0">{game.developer}</span>
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setShowFullPublisher(false);
-                                      }}
-                                      className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline flex-shrink-0 ml-1"
-                                    >
-                                      See less
-                                    </button>
-                                  </>
-                                ) : (
-                                  <div className="ml-2 flex-1 min-w-0 relative">
-                                    <div
-                                      ref={publisherRef}
-                                      className="break-words"
-                                      style={{ 
-                                        lineHeight: '1.5',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 2,
-                                        WebkitBoxOrient: 'vertical',
-                                        overflow: 'hidden',
-                                        textAlign: 'left',
-                                        textIndent: 0,
-                                        paddingLeft: 0,
-                                        marginLeft: 0
-                                      }}
-                                    >
-                                      {game.developer}
-                                    </div>
-                                    {publisherNeedsMore && (
+                              <span className="font-medium">Publisher:</span>
+                              {showFullPublisher ? (
+                                <>
+                                  <span className="ml-2 break-words">{game.developer}</span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setShowFullPublisher(false);
+                                    }}
+                                    className="ml-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                  >
+                                    See less
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="ml-2 break-words" ref={publisherRef}>
+                                  {publisherNeedsMore ? (
+                                    <>
+                                      {publisherTruncatedText}
                                       <button
                                         onClick={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
                                           setShowFullPublisher(true);
                                         }}
-                                        className="absolute bottom-0 right-0 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline bg-white pl-1"
-                                        style={{ lineHeight: '1.5' }}
+                                        className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                       >
-                                        See more
+                                        ...See more
                                       </button>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
+                                    </>
+                                  ) : (
+                                    game.developer
+                                  )}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
