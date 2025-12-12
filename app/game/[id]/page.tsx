@@ -715,7 +715,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         document.body.appendChild(measureDiv);
         
         const lineHeight = parseFloat(computedStyle.lineHeight || '21');
-        const maxHeight = lineHeight * 2;
+        // Use more conservative maxHeight - subtract 2px for safety margin
+        const maxHeight = (lineHeight * 2) - 2;
         const seeMoreText = '...See more';
         
         // Check if original text fits in 2 lines
@@ -1436,7 +1437,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span className="ml-2 break-words" ref={designerRef}>
+                                <span 
+                                  className="ml-2 break-words" 
+                                  ref={designerRef}
+                                  style={{
+                                    display: 'inline-block',
+                                    maxHeight: designerNeedsMore ? '3em' : 'none',
+                                    overflow: 'hidden',
+                                    lineHeight: '1.5'
+                                  }}
+                                >
                                   {designerNeedsMore ? (
                                     <>
                                       {designerTruncatedText}
@@ -1447,6 +1457,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                           setShowFullDesigner(true);
                                         }}
                                         className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                        style={{ display: 'inline', whiteSpace: 'nowrap' }}
                                       >
                                         ...See more
                                       </button>
@@ -1512,7 +1523,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                   </button>
                                 </>
                               ) : (
-                                <span className="ml-2 break-words" ref={publisherRef}>
+                                <span 
+                                  className="ml-2 break-words" 
+                                  ref={publisherRef}
+                                  style={{
+                                    display: 'inline-block',
+                                    maxHeight: publisherNeedsMore ? '3em' : 'none',
+                                    overflow: 'hidden',
+                                    lineHeight: '1.5'
+                                  }}
+                                >
                                   {publisherNeedsMore ? (
                                     <>
                                       {publisherTruncatedText}
@@ -1523,6 +1543,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                           setShowFullPublisher(true);
                                         }}
                                         className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
+                                        style={{ display: 'inline', whiteSpace: 'nowrap' }}
                                       >
                                         ...See more
                                       </button>
@@ -1541,7 +1562,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       <div className="flex items-start text-gray-600">
                         <Globe className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
                         <div className="flex-1">
-                          <span className="font-medium">Official Website:</span>
+                          <span className="font-medium">Official Link:</span>
                           <a
                             href={game.officialWebsite}
                             target="_blank"
