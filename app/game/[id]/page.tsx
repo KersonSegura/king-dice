@@ -694,8 +694,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         return;
       }
       
-      // Character-based approach: count characters per line
-      const checkText = (text: string, element: HTMLSpanElement | null) => {
+      // Character-based approach: count characters per line including label
+      const checkText = (text: string, element: HTMLSpanElement | null, label: string) => {
         if (!element || !text) return { needsMore: false, truncated: text };
         
         const measure = document.createElement('div');
@@ -716,34 +716,37 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         const seeMore = '...See more';
         const seeMoreLength = seeMore.length; // 11 characters
         
-        // Check if text overflows 2 lines
-        measure.textContent = text;
+        // Check if text overflows 2 lines (including label)
+        const fullText = label + ' ' + text;
+        measure.textContent = fullText;
         const needsMore = measure.offsetHeight > maxHeight;
         
         let truncated = text;
         if (needsMore) {
-          // Find how many characters fit in one line
-          let charsPerLine = 0;
-          for (let i = 1; i <= text.length; i++) {
-            measure.textContent = text.substring(0, i);
+          // Find how many characters fit in one line starting from label
+          // Line 1: label + up to 35 chars total
+          // Line 2: up to 35 chars, but last 11 are "...See more"
+          // So we need: label length + 35 (line 1) + 24 (line 2 before see more) = label + 59
+          
+          // First, find where line 1 ends (35 chars from start including label)
+          let line1End = 0;
+          for (let i = label.length; i <= label.length + 35; i++) {
+            measure.textContent = fullText.substring(0, i);
             if (measure.offsetHeight > lineHeight) {
-              charsPerLine = i - 1;
+              line1End = i - 1;
               break;
             }
           }
           
-          // If we couldn't find it, estimate based on width
-          if (charsPerLine === 0) {
-            const avgCharWidth = measure.scrollWidth / text.length;
-            charsPerLine = Math.floor(element.offsetWidth / avgCharWidth);
-          }
+          // If line 1 is exactly 35, line 2 should have 24 chars of text + 11 for "...See more"
+          // Total text to show: (line1End - label.length) + 24
+          const labelLength = label.length + 1; // +1 for space
+          const line1TextChars = line1End - labelLength;
+          const line2TextChars = 24; // Last 11 will be "...See more"
+          const totalTextChars = line1TextChars + line2TextChars;
           
-          // Calculate: 2 lines = charsPerLine * 2, but replace last 11 chars of line 2 with "...See more"
-          // So we show: charsPerLine + (charsPerLine - 11) = charsPerLine * 2 - 11
-          const maxChars = (charsPerLine * 2) - seeMoreLength;
-          
-          if (text.length > maxChars) {
-            truncated = text.substring(0, maxChars);
+          if (text.length > totalTextChars) {
+            truncated = text.substring(0, totalTextChars);
           } else {
             truncated = text;
           }
@@ -755,7 +758,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
       
       // Check designer
       if (designerRef.current && game?.designer && !showFullDesigner) {
-        const result = checkText(game.designer, designerRef.current);
+        const result = checkText(game.designer, designerRef.current, 'Designer:');
         setDesignerNeedsMore(result.needsMore);
         setDesignerTruncatedText(result.truncated);
       } else {
@@ -765,7 +768,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
       
       // Check publisher
       if (publisherRef.current && game?.developer && !showFullPublisher) {
-        const result = checkText(game.developer, publisherRef.current);
+        const result = checkText(game.developer, publisherRef.current, 'Publisher:');
         setPublisherNeedsMore(result.needsMore);
         setPublisherTruncatedText(result.truncated);
       } else {
