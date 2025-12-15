@@ -1672,7 +1672,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   <div className="prose max-w-none w-full">
                     <div className="text-gray-700 leading-relaxed w-full">
                       {/* Shop cards list */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-8 px-4 sm:px-0">
+                      <div className="flex justify-center md:block">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-8 px-4 sm:px-0 w-full max-w-full">
                         {[...(game.shopItems && game.shopItems.length > 0 ? game.shopItems : [{
                           title: game.nameEn,
                           imageUrl: game.imageUrl || game.thumbnailUrl,
@@ -1741,6 +1742,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             </div>
                           </div>
                         ))}
+                        </div>
                       </div>
 
                       {/* Amazon Associates Disclosure */}
