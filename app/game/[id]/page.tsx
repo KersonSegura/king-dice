@@ -1657,8 +1657,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               )}
 
               {activeTab === 'shop' && (game?.shopItems?.length || game?.shopUrl || game?.amazonUrl) && (
-                <div className="w-full">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <div className="w-full -mx-8 sm:-mx-6 md:mx-0">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center px-8 sm:px-6 md:px-0">
                     <img 
                       src="/ShopIcon.svg" 
                       alt="Shop" 
