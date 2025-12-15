@@ -1657,7 +1657,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               )}
 
               {activeTab === 'shop' && (game?.shopItems?.length || game?.shopUrl || game?.amazonUrl) && (
-                <div className="w-full -mx-8 sm:-mx-6 md:mx-0">
+                <div className="w-screen md:w-full" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center px-8 sm:px-6 md:px-0">
                     <img 
                       src="/ShopIcon.svg" 
@@ -1669,10 +1669,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     />
                     Shop
                   </h2>
-                  <div className="prose max-w-none w-full">
-                    <div className="text-gray-700 leading-relaxed w-full">
-                      {/* Shop cards list */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+                  {/* Shop cards list */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 sm:gap-4 mb-8 px-5 md:px-0">
                         {[...(game.shopItems && game.shopItems.length > 0 ? game.shopItems : [{
                           title: game.nameEn,
                           imageUrl: game.imageUrl || game.thumbnailUrl,
@@ -1741,10 +1739,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             </div>
                           </div>
                         ))}
-                      </div>
+                  </div>
 
-                      {/* Amazon Associates Disclosure */}
-                      <div className="mt-8 pt-6 border-t border-gray-200">
+                  {/* Amazon Associates Disclosure */}
+                  <div className="mt-8 pt-6 border-t border-gray-200 px-8 sm:px-6 md:px-0">
                         <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
                           <div className="flex">
                             <div className="flex-shrink-0">
@@ -1763,8 +1761,6 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
                 </div>
               )}
 
