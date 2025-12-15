@@ -1741,7 +1741,6 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             </div>
                           </div>
                         ))}
-                        </div>
                       </div>
 
                       {/* Amazon Associates Disclosure */}
