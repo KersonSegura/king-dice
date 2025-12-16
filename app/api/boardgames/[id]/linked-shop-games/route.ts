@@ -46,11 +46,36 @@ export async function GET(
     const actualMasterId = masterGameId || gameId;
 
     // Find all games that link to this master (including the master itself)
-    // Use a more robust query that handles both camelCase and snake_case column names
-    const { data: linkedGames, error: linkedGamesError } = await supabaseAdmin
+    // Query for games where: id = master (the master itself), OR shopListMasterGameId = master, OR shop_list_master_game_id = master
+    // Try camelCase first, then fallback to snake_case if needed
+    let linkedGames: any[] | null = null;
+    let linkedGamesError: any = null;
+    
+    // Try querying with camelCase column names
+    const { data: camelCaseGames, error: camelCaseError } = await supabaseAdmin
       .from('games')
-      .select('id, nameEn, nameEs, name_en, name_es, shopListMasterGameId, shop_list_master_game_id')
-      .or(`id.eq.${actualMasterId},shopListMasterGameId.eq.${actualMasterId},shop_list_master_game_id.eq.${actualMasterId}`);
+      .select('id, nameEn, nameEs, shopListMasterGameId')
+      .or(`id.eq.${actualMasterId},shopListMasterGameId.eq.${actualMasterId}`);
+    
+    if (!camelCaseError && camelCaseGames) {
+      linkedGames = camelCaseGames;
+      console.log('[LINKED-SHOP-GAMES API] Found games using camelCase columns:', linkedGames.length);
+    } else {
+      // Try snake_case column names as fallback
+      console.log('[LINKED-SHOP-GAMES API] CamelCase query failed, trying snake_case:', camelCaseError);
+      const { data: snakeCaseGames, error: snakeCaseError } = await supabaseAdmin
+        .from('games')
+        .select('id, name_en, name_es, shop_list_master_game_id')
+        .or(`id.eq.${actualMasterId},shop_list_master_game_id.eq.${actualMasterId}`);
+      
+      if (!snakeCaseError && snakeCaseGames) {
+        linkedGames = snakeCaseGames;
+        console.log('[LINKED-SHOP-GAMES API] Found games using snake_case columns:', linkedGames.length);
+      } else {
+        linkedGamesError = snakeCaseError || camelCaseError;
+        console.error('[LINKED-SHOP-GAMES API] Both queries failed:', linkedGamesError);
+      }
+    }
 
     if (linkedGamesError) {
       console.error('Error fetching linked games:', linkedGamesError);
@@ -63,11 +88,11 @@ export async function GET(
     console.log('[LINKED-SHOP-GAMES API] Found linked games:', linkedGames?.length || 0);
     console.log('[LINKED-SHOP-GAMES API] Actual master ID:', actualMasterId);
 
-    // Transform the results to ensure consistent naming
+    // Transform the results to ensure consistent naming (handle both camelCase and snake_case)
     const transformedGames = (linkedGames || []).map((g: any) => ({
       id: g.id,
-      nameEn: g.nameEn ?? g.name_en,
-      nameEs: g.nameEs ?? g.name_es,
+      nameEn: g.nameEn ?? g.name_en ?? '',
+      nameEs: g.nameEs ?? g.name_es ?? null,
       shopListMasterGameId: g.shopListMasterGameId ?? g.shop_list_master_game_id ?? null
     }));
 
