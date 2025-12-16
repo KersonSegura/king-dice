@@ -1657,7 +1657,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               )}
 
               {activeTab === 'shop' && (game?.shopItems?.length || game?.shopUrl || game?.amazonUrl) && (
-                <div className="w-screen md:w-full" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
+                <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center px-8 sm:px-6 md:px-0">
                     <img 
                       src="/ShopIcon.svg" 
@@ -1669,98 +1669,121 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     />
                     Shop
                   </h2>
-                  {/* Shop cards list */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 sm:gap-4 mb-8 px-5 md:px-0">
-                        {[...(game.shopItems && game.shopItems.length > 0 ? game.shopItems : [{
-                          title: game.nameEn,
-                          imageUrl: game.imageUrl || game.thumbnailUrl,
-                          link: game.amazonUrl || game.shopUrl,
-                          order: 999
-                        }])]
-                          .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
-                          .map((item, idx) => (
-                          <div key={idx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                            <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
-                              {item.imageUrl ? (
-                                item.imageUrl.startsWith('https://m.media-amazon.com') ? (
-                                  <Image
-                                    src={item.imageUrl}
-                                    alt={item.title}
-                                    fill
-                                    className="object-contain"
-                                    sizes="(max-width: 768px) 100vw, 400px"
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      const target = e.currentTarget as HTMLImageElement;
-                                      const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
-                                      target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
-                                    }}
-                                  />
-                                ) : (
-                                  <img
-                                    src={item.imageUrl}
-                                    alt={item.title}
-                                    className="max-w-full max-h-full object-contain"
-                                    referrerPolicy="no-referrer"
-                                    loading="lazy"
-                                    onError={(e) => {
-                                      const target = e.currentTarget as HTMLImageElement;
-                                      const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
-                                      target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
-                                    }}
-                                  />
-                                )
+                  {/* Shop cards list - full width on mobile, normal on desktop */}
+                  {(() => {
+                    const shopItemsList = [...(game.shopItems && game.shopItems.length > 0 ? game.shopItems : [{
+                      title: game.nameEn,
+                      imageUrl: game.imageUrl || game.thumbnailUrl,
+                      link: game.amazonUrl || game.shopUrl,
+                      order: 999
+                    }])].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+                    const renderItem = (item: any, idx: number) => {
+                      return (
+                        <div key={idx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                          <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
+                            {item.imageUrl ? (
+                              item.imageUrl.startsWith('https://m.media-amazon.com') ? (
+                                <Image
+                                  src={item.imageUrl}
+                                  alt={item.title}
+                                  fill
+                                  className="object-contain"
+                                  sizes="(max-width: 768px) 100vw, 400px"
+                                  loading="lazy"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
+                                    target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
+                                  }}
+                                />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                  <div className="text-center p-4">
-                                    <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2">
-                                      <rect width="200" height="200" fill="#e5e7e9" rx="8"/>
-                                      <text x="50%" y="50%" fontFamily="Arial, sans-serif" fontSize="14" fill="#9ca3af" textAnchor="middle" dominantBaseline="middle">
-                                        {item.title}
-                                      </text>
-                                    </svg>
-                                    <p className="text-xs text-gray-500">Image coming soon</p>
-                                  </div>
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.title}
+                                  className="max-w-full max-h-full object-contain"
+                                  referrerPolicy="no-referrer"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    const svgPlaceholder = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="400" fill="#e5e7e9"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${item.title}</text></svg>`;
+                                    target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgPlaceholder)}`;
+                                  }}
+                                />
+                              )
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                <div className="text-center p-4">
+                                  <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2">
+                                    <rect width="200" height="200" fill="#e5e7e9" rx="8"/>
+                                    <text x="50%" y="50%" fontFamily="Arial, sans-serif" fontSize="14" fill="#9ca3af" textAnchor="middle" dominantBaseline="middle">
+                                      {item.title}
+                                    </text>
+                                  </svg>
+                                  <p className="text-xs text-gray-500">Image coming soon</p>
                                 </div>
-                              )}
-                            </div>
-                            <div className="p-3 space-y-2">
-                              <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
-                              <a
-                                href={item.link || '#'}
-                                target="_blank"
-                                rel="noopener noreferrer sponsored"
-                                className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs"
-                              >
-                                <span>Buy on Amazon</span>
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
-                            </div>
+                              </div>
+                            )}
                           </div>
-                        ))}
-                  </div>
+                          <div className="p-3 space-y-2">
+                            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
+                            <a
+                              href={item.link || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer sponsored"
+                              className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs"
+                            >
+                              <span>Buy on Amazon</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <>
+                        {/* Mobile version - breaks out of container */}
+                        <div className="md:hidden" style={{
+                          width: '100vw',
+                          marginLeft: 'calc(-50vw + 50%)',
+                          marginRight: 'calc(-50vw + 50%)'
+                        }}>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-4 mb-8 px-5">
+                            {shopItemsList.map((item, idx) => renderItem(item, idx))}
+                          </div>
+                        </div>
+                        {/* Desktop version - normal container, no breaking out */}
+                        <div className="hidden md:block w-full">
+                          <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8 w-full">
+                            {shopItemsList.map((item, idx) => renderItem(item, idx))}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {/* Amazon Associates Disclosure */}
                   <div className="mt-8 pt-6 border-t border-gray-200 px-8 sm:px-6 md:px-0">
-                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-                          <div className="flex">
-                            <div className="flex-shrink-0">
-                              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                            <div className="ml-3">
-                              <h3 className="text-sm font-medium text-blue-800 mb-1">
-                                Amazon Associates Disclosure
-                              </h3>
-                              <p className="text-sm text-blue-700">
-                                As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links.
-                              </p>
-                            </div>
-                          </div>
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-blue-800 mb-1">
+                            Amazon Associates Disclosure
+                          </h3>
+                          <p className="text-sm text-blue-700">
+                            As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links.
+                          </p>
                         </div>
                       </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
