@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Search } from 'lucide-react';
+import { ExternalLink, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Amazon Associates disclosure - required by Amazon
 // Updated to clarify that prices are the same for consumers
@@ -37,6 +37,8 @@ export default function ShopPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 35;
 
   useEffect(() => {
     async function fetchAllShopItems() {
@@ -104,6 +106,17 @@ export default function ShopPage() {
 
     return true;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredShopItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedShopItems = filteredShopItems.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-8 pb-20">
@@ -174,7 +187,8 @@ export default function ShopPage() {
 
             {/* Results count */}
             <div className="text-sm text-gray-600">
-              Showing {filteredShopItems.length} of {allShopItems.length} items
+              Showing {filteredShopItems.length === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, filteredShopItems.length)} of {filteredShopItems.length} items
+              {filteredShopItems.length !== allShopItems.length && ` (filtered from ${allShopItems.length} total)`}
             </div>
           </div>
         )}
@@ -200,7 +214,7 @@ export default function ShopPage() {
         {!loading && !error && (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
-              {filteredShopItems.map((item) => (
+              {paginatedShopItems.map((item) => (
                 <div key={item.uniqueKey || item.id || `shop-item-${item.title}`} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
                   <div className="relative w-full aspect-square bg-white overflow-hidden flex items-center justify-center">
                     {item.imageUrl ? (
@@ -264,6 +278,84 @@ export default function ShopPage() {
                 </div>
               ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col items-center justify-center mt-8 space-y-4">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                      currentPage === 1
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+
+                  {/* Page numbers */}
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage = 
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 2 && page <= currentPage + 2);
+
+                      if (!showPage) {
+                        // Show ellipsis
+                        const prevPage = page - 1;
+                        const nextPage = page + 1;
+                        if (
+                          (prevPage === 1 || prevPage === currentPage - 3) &&
+                          (nextPage === totalPages || nextPage === currentPage + 3)
+                        ) {
+                          return (
+                            <span key={page} className="px-2 text-gray-400">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                            currentPage === page
+                              ? 'bg-[#fbae17] text-white'
+                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                      currentPage === totalPages
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                    }`}
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="text-sm text-gray-500">
+                  Page {currentPage} of {totalPages}
+                </div>
+              </div>
+            )}
 
             {/* Empty State */}
             {filteredShopItems.length === 0 && allShopItems.length > 0 && (
