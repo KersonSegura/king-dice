@@ -477,9 +477,37 @@ function BoardGameDatabaseContent() {
         }));
         setLinkedShopGames(prev => ({ ...prev, [gameId]: gamesWithMaster }));
         setShopMasterGameId(prev => ({ ...prev, [gameId]: masterId }));
+      } else if (response.status === 404) {
+        // If endpoint doesn't exist, initialize with just the current game as master
+        console.warn('Linked shop games endpoint not found (404), initializing with current game as master');
+        const currentGame = games.find(g => g.id === gameId);
+        setLinkedShopGames(prev => ({ 
+          ...prev, 
+          [gameId]: [{ 
+            id: gameId, 
+            nameEn: currentGame?.nameEn || editingGameData[gameId]?.nameEn || 'Current Game', 
+            isMaster: true 
+          }] 
+        }));
+        setShopMasterGameId(prev => ({ ...prev, [gameId]: gameId }));
+      } else {
+        console.error('Error fetching linked shop games:', response.status, response.statusText);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('Error details:', errorText);
       }
     } catch (error) {
       console.error('Error fetching linked shop games:', error);
+      // Fallback: initialize with current game as master
+      const currentGame = games.find(g => g.id === gameId);
+      setLinkedShopGames(prev => ({ 
+        ...prev, 
+        [gameId]: [{ 
+          id: gameId, 
+          nameEn: currentGame?.nameEn || editingGameData[gameId]?.nameEn || 'Current Game', 
+          isMaster: true 
+        }] 
+      }));
+      setShopMasterGameId(prev => ({ ...prev, [gameId]: gameId }));
     }
   };
 
