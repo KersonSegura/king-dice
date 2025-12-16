@@ -465,27 +465,37 @@ function BoardGameDatabaseContent() {
   };
 
   const fetchLinkedShopGames = async (gameId: number) => {
+    console.log(`[fetchLinkedShopGames] Fetching linked games for game ID: ${gameId}`);
     try {
       const response = await fetch(`/api/boardgames/${gameId}/linked-shop-games`);
+      console.log(`[fetchLinkedShopGames] Response status: ${response.status}`);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log(`[fetchLinkedShopGames] Received data:`, data);
         const masterId = data.masterGameId || gameId;
         // Mark which games are the master
         const gamesWithMaster = (data.linkedGames || []).map((g: any) => ({
           ...g,
           isMaster: g.id === masterId
         }));
+        console.log(`[fetchLinkedShopGames] Setting ${gamesWithMaster.length} linked games`);
         setLinkedShopGames(prev => ({ ...prev, [gameId]: gamesWithMaster }));
         setShopMasterGameId(prev => ({ ...prev, [gameId]: masterId }));
-      } else if (response.status === 404) {
-        // If endpoint doesn't exist, preserve existing linked games or initialize with current game as master
-        console.warn('Linked shop games endpoint not found (404), preserving existing linked games');
+      } else {
+        // For any error (404, 500, etc.), log it but don't overwrite existing state
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error(`[fetchLinkedShopGames] Error ${response.status} fetching linked shop games:`, errorText);
+        
+        // Only initialize with current game if we don't already have linked games for this game
         setLinkedShopGames(prev => {
-          // If we already have linked games, preserve them
+          // If we already have linked games, preserve them (don't overwrite)
           if (prev[gameId] && prev[gameId].length > 0) {
+            console.log(`[fetchLinkedShopGames] Preserving existing ${prev[gameId].length} linked games due to API error`);
             return prev;
           }
-          // Otherwise, initialize with just the current game as master
+          // Otherwise, initialize with just the current game as master (only on first load)
+          console.log(`[fetchLinkedShopGames] Initializing with current game as master due to API error`);
           const currentGame = games.find(g => g.id === gameId);
           return {
             ...prev,
@@ -503,20 +513,18 @@ function BoardGameDatabaseContent() {
           }
           return { ...prev, [gameId]: gameId };
         });
-      } else {
-        console.error('Error fetching linked shop games:', response.status, response.statusText);
-        const errorText = await response.text().catch(() => 'Unknown error');
-        console.error('Error details:', errorText);
       }
     } catch (error) {
-      console.error('Error fetching linked shop games:', error);
+      console.error('[fetchLinkedShopGames] Exception fetching linked shop games:', error);
       // Fallback: preserve existing linked games or initialize with current game as master
       setLinkedShopGames(prev => {
-        // If we already have linked games, preserve them
+        // If we already have linked games, preserve them (don't overwrite)
         if (prev[gameId] && prev[gameId].length > 0) {
+          console.log(`[fetchLinkedShopGames] Preserving existing ${prev[gameId].length} linked games due to exception`);
           return prev;
         }
-        // Otherwise, initialize with just the current game as master
+        // Otherwise, initialize with just the current game as master (only on first load)
+        console.log(`[fetchLinkedShopGames] Initializing with current game as master due to exception`);
         const currentGame = games.find(g => g.id === gameId);
         return {
           ...prev,

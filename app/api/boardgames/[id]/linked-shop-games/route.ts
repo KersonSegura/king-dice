@@ -60,6 +60,9 @@ export async function GET(
       );
     }
 
+    console.log('[LINKED-SHOP-GAMES API] Found linked games:', linkedGames?.length || 0);
+    console.log('[LINKED-SHOP-GAMES API] Actual master ID:', actualMasterId);
+
     // Transform the results to ensure consistent naming
     const transformedGames = (linkedGames || []).map((g: any) => ({
       id: g.id,
@@ -68,17 +71,22 @@ export async function GET(
       shopListMasterGameId: g.shopListMasterGameId ?? g.shop_list_master_game_id ?? null
     }));
 
+    console.log('[LINKED-SHOP-GAMES API] Transformed games:', transformedGames.length);
+
     // Sort: master game first, then others by name
     const masterGame = transformedGames.find(g => g.id === actualMasterId);
     const otherGames = transformedGames.filter(g => g.id !== actualMasterId).sort((a, b) => 
       (a.nameEn || '').localeCompare(b.nameEn || '')
     );
 
-    return NextResponse.json({
+    const result = {
       success: true,
       masterGameId: actualMasterId,
       linkedGames: masterGame ? [masterGame, ...otherGames] : otherGames
-    });
+    };
+
+    console.log('[LINKED-SHOP-GAMES API] Returning result with', result.linkedGames.length, 'games');
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('Error in linked-shop-games endpoint:', error);
