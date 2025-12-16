@@ -184,8 +184,11 @@ function processMarkdownContent(text: string): React.ReactNode {
         );
       } else {
         // Regular line - process for markdown links
+        // Add more bottom margin to create better paragraph spacing
+        const isLastLine = index === lines.length - 1;
+        const nextLineIsEmpty = index < lines.length - 1 && lines[index + 1]?.trim() === '';
         processedLines.push(
-          <div key={`line-${index}`} className="mb-2">
+          <div key={`line-${index}`} className={nextLineIsEmpty ? "mb-2" : "mb-3"}>
             {parseMarkdownLinks(line)}
           </div>
         );
