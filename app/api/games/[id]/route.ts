@@ -97,7 +97,7 @@ export async function GET(
         .from('expansions')
         .select('*')
         .eq('baseGameId', id),
-      // Shop items - sorted by order
+      // Shop items - sorted by order (will be handled after we check for master game)
       supabaseAdmin
         .from('game_shop_items')
         .select('*')
@@ -140,13 +140,36 @@ export async function GET(
     if (expError) console.warn('[GAME API] Error fetching expansions:', expError);
     if (shopItemsError) console.warn('[GAME API] Error fetching shop items:', shopItemsError);
     
+    // Check if this game links to another game's shop items
+    const shopListMasterGameId = (game as any).shopListMasterGameId ?? (game as any).shop_list_master_game_id;
+    let finalShopItems = shopItems || [];
+    
+    // If this game links to a master game's shop list, fetch from the master game instead
+    if (shopListMasterGameId && shopListMasterGameId !== id) {
+      console.log(`[GAME API] Game ${id} links to master game ${shopListMasterGameId} for shop items`);
+      const { data: masterShopItems, error: masterShopItemsError } = await supabaseAdmin
+        .from('game_shop_items')
+        .select('*')
+        .eq('gameId', shopListMasterGameId)
+        .order('order', { ascending: true });
+      
+      if (!masterShopItemsError && masterShopItems) {
+        finalShopItems = masterShopItems;
+        console.log(`[GAME API] Fetched ${masterShopItems.length} shop items from master game ${shopListMasterGameId}`);
+      } else if (masterShopItemsError) {
+        console.warn('[GAME API] Error fetching shop items from master game:', masterShopItemsError);
+      }
+    }
+    
     // Debug: Log what we got
     console.log('[GAME API] Fetched data counts:', {
       gameCategories: gameCategories?.length || 0,
       gameMechanics: gameMechanics?.length || 0,
       descriptions: descriptions?.length || 0,
       rules: rules?.length || 0,
-      expansions: baseGameExpansions?.length || 0
+      expansions: baseGameExpansions?.length || 0,
+      shopItems: finalShopItems?.length || 0,
+      shopListMasterGameId: shopListMasterGameId || null
     });
     
     if (rules && rules.length > 0) {
@@ -217,7 +240,7 @@ export async function GET(
           }
         };
       }),
-      shopItems: (shopItems || []).map((item: any) => ({
+      shopItems: (finalShopItems || []).map((item: any) => ({
         id: item.id,
         gameId: item.gameId ?? item.game_id,
         title: item.title,
@@ -225,6 +248,7 @@ export async function GET(
         link: item.link,
         order: item.order ?? 999
       })),
+      shopListMasterGameId: shopListMasterGameId || null,
       gameMechanics: (gameMechanics || []).map((gm: any) => {
         const mech = Array.isArray(gm.mechanic) ? gm.mechanic[0] : (gm.mechanic || {});
         return {
