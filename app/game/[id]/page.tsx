@@ -37,6 +37,7 @@ interface Game {
     link: string;
     order?: number;
   }>;
+  shopListMasterGameId?: number | null;
   bggId?: number;
   bggRanking?: number;
   bggRating?: number;
@@ -792,7 +793,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     // Check videoUrl - it might be a string or array
     const hasVideo = !!(game.videoUrl && (Array.isArray(game.videoUrl) ? game.videoUrl.length > 0 : game.videoUrl));
     const hasPdf = !!(game.pdfUrl || game.pdfFile);
-    const hasShop = !!(game.shopUrl || game.amazonUrl || (game.shopItems && game.shopItems.length > 0));
+    // Show shop tab if game has shop items, shop URLs, OR if it's linked to a master game's shop list
+    const hasShop = !!(game.shopUrl || game.amazonUrl || (game.shopItems && game.shopItems.length > 0) || game.shopListMasterGameId);
     
     console.log('Setting active tab:', { hasRules, hasVideo, hasPdf, hasShop, videoUrl: game.videoUrl, shopItems: game.shopItems });
     
@@ -1531,7 +1533,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         )}
 
         {/* Game Resources Section with Tabs */}
-        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0)) && (
+        {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0) || game?.shopListMasterGameId) && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Tab Headers */}
             <div className="border-b border-gray-200 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
@@ -1578,7 +1580,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   </button>
                 )}
                 
-                {(game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0)) && (
+                {(game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0) || game?.shopListMasterGameId) && (
                   <button
                     onClick={() => setActiveTab('shop')}
                     className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
@@ -1656,7 +1658,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
-              {activeTab === 'shop' && (game?.shopItems?.length || game?.shopUrl || game?.amazonUrl) && (
+              {activeTab === 'shop' && (game?.shopItems?.length || game?.shopUrl || game?.amazonUrl || game?.shopListMasterGameId) && (
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center px-8 sm:px-6 md:px-0">
                     <img 
