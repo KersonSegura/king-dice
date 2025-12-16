@@ -12,8 +12,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log('[LINKED-SHOP-GAMES API] Route called');
   try {
     const { id: idString } = await params;
+    console.log('[LINKED-SHOP-GAMES API] Game ID:', idString);
     const gameId = parseInt(idString);
 
     if (isNaN(gameId)) {
