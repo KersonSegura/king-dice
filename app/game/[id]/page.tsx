@@ -1682,7 +1682,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
                     const renderItem = (item: any, idx: number) => {
                       return (
-                        <div key={idx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div key={idx} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
                           <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
                             {item.imageUrl ? (
                               item.imageUrl.startsWith('https://m.media-amazon.com') ? (
@@ -1728,13 +1728,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                               </div>
                             )}
                           </div>
-                          <div className="p-3 space-y-2">
-                            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item.title}</h3>
+                          <div className="p-3 flex flex-col flex-1">
+                            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2">{item.title}</h3>
                             <a
                               href={item.link || '#'}
                               target="_blank"
                               rel="noopener noreferrer sponsored"
-                              className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs"
+                              className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs mt-auto"
                             >
                               <span>Buy on Amazon</span>
                               <ExternalLink className="w-3 h-3" />
