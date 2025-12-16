@@ -27,9 +27,10 @@ export async function GET(
 
     // Fetch the game to check if it has a master
     // Use maybeSingle() instead of single() to handle cases where game might not exist more gracefully
+    // Select all columns to avoid issues with column name mismatches
     const { data: game, error: gameError } = await supabaseAdmin
       .from('games')
-      .select('id, shopListMasterGameId, shop_list_master_game_id')
+      .select('*')
       .eq('id', gameId)
       .maybeSingle();
 
