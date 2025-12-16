@@ -31,6 +31,7 @@ interface Game {
   amazonUrl?: string;
   isExpansion?: boolean;
   shopItems?: ShopItem[];
+  shopListMasterGameId?: number | null;
   gameCategories: Array<{
     category: {
       id: number;
@@ -127,6 +128,8 @@ function BoardGameDatabaseContent() {
   const [editingGame, setEditingGame] = useState<{[key: number]: boolean}>({});
   const [editingGameData, setEditingGameData] = useState<{[key: number]: Partial<Game> & { fullDescription?: string; categories?: string }}>({});
   const [editingShopItems, setEditingShopItems] = useState<{ [key: number]: ShopItem[] }>({});
+  const [linkedShopGames, setLinkedShopGames] = useState<{ [key: number]: Array<{ id: number; nameEn: string; nameEs?: string }> }>({});
+  const [shopMasterGameId, setShopMasterGameId] = useState<{ [key: number]: number | null }>({});
   const [savingGame, setSavingGame] = useState<{[key: number]: boolean}>({});
   const [showOnlyWithoutRules, setShowOnlyWithoutRules] = useState(false);
   const [showAddGameForm, setShowAddGameForm] = useState(false);
@@ -450,12 +453,44 @@ function BoardGameDatabaseContent() {
         order: item.order ?? idx + 1
       })) : []
     }));
+
+    // Fetch linked shop games
+    fetchLinkedShopGames(game.id);
+
+    // Set the master game ID (if this game links to another, use that; otherwise this game is the master)
+    const masterId = game.shopListMasterGameId || game.id;
+    setShopMasterGameId(prev => ({ ...prev, [game.id]: masterId === game.id ? null : masterId }));
+  };
+
+  const fetchLinkedShopGames = async (gameId: number) => {
+    try {
+      const response = await fetch(`/api/boardgames/${gameId}/linked-shop-games`);
+      if (response.ok) {
+        const data = await response.json();
+        setLinkedShopGames(prev => ({ ...prev, [gameId]: data.linkedGames || [] }));
+        if (data.masterGameId !== gameId) {
+          setShopMasterGameId(prev => ({ ...prev, [gameId]: data.masterGameId }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching linked shop games:', error);
+    }
   };
 
   const cancelEditingGame = (gameId: number) => {
     setEditingGame(prev => ({ ...prev, [gameId]: false }));
     setEditingGameData(prev => ({ ...prev, [gameId]: {} }));
     setEditingShopItems(prev => {
+      const updated = { ...prev };
+      delete updated[gameId];
+      return updated;
+    });
+    setLinkedShopGames(prev => {
+      const updated = { ...prev };
+      delete updated[gameId];
+      return updated;
+    });
+    setShopMasterGameId(prev => {
       const updated = { ...prev };
       delete updated[gameId];
       return updated;
@@ -604,6 +639,14 @@ function BoardGameDatabaseContent() {
       if (gameData.pdfUrl !== undefined) cleanGameData.pdfUrl = cleanString(gameData.pdfUrl, true);
       if (gameData.pdfFile !== undefined) cleanGameData.pdfFile = gameData.pdfFile; // Don't clean base64 data
       if (gameData.officialWebsite !== undefined) cleanGameData.officialWebsite = cleanString(gameData.officialWebsite, true);
+      // Shop list master game ID (if this game should link to another game's shop items)
+      const masterId = shopMasterGameId[gameId];
+      if (masterId !== undefined && masterId !== gameId) {
+        cleanGameData.shopListMasterGameId = masterId;
+      } else if (masterId === null || masterId === gameId) {
+        cleanGameData.shopListMasterGameId = null;
+      }
+
       // Shop items
       const currentGame = games.find(g => g.id === gameId);
       const shopItems = editingShopItems[gameId] ?? currentGame?.shopItems ?? [];
@@ -2334,6 +2377,110 @@ You can use markdown formatting:
                                     </div>
                                     );
                                   })}
+                                </div>
+
+                                {/* Games linked to this Shop Card list */}
+                                <div className="mt-4 pt-4 border-t border-gray-300">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-semibold text-gray-800">Games linked to this Shop Card list</span>
+                                  </div>
+                                <p className="text-xs text-gray-600">
+                                  Games in this list share the same shop cards. Adding a game here will link its shop list to this game's shop cards.
+                                </p>
+                                <div className="space-y-2">
+                                  {linkedShopGames[game.id] && linkedShopGames[game.id].length > 0 ? (
+                                    linkedShopGames[game.id].map((linkedGame) => (
+                                      <div key={linkedGame.id} className="flex items-center justify-between bg-white border border-gray-200 rounded p-2">
+                                        <span className="text-sm text-gray-800">
+                                          {linkedGame.nameEn}
+                                          {linkedGame.id === (shopMasterGameId[game.id] || game.id) && (
+                                            <span className="ml-2 text-xs text-blue-600 font-medium">(Master)</span>
+                                          )}
+                                        </span>
+                                        {linkedGame.id !== game.id && (
+                                          <button
+                                            type="button"
+                                            onClick={async () => {
+                                              // Remove link by updating the linked game to have no master
+                                              try {
+                                                const response = await fetch(`/api/boardgames/${linkedGame.id}`, {
+                                                  method: 'PUT',
+                                                  headers: { 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify({ shopListMasterGameId: null })
+                                                });
+                                                if (response.ok) {
+                                                  await fetchLinkedShopGames(game.id);
+                                                  showToast('Game link removed successfully', 'success');
+                                                } else {
+                                                  alert('Failed to remove link');
+                                                }
+                                              } catch (error) {
+                                                console.error('Error removing link:', error);
+                                                alert('Error removing link');
+                                              }
+                                            }}
+                                            className="text-xs text-red-600 hover:text-red-800"
+                                          >
+                                            Remove
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-xs text-gray-500">No linked games yet.</p>
+                                  )}
+                                </div>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Search for a game to link (press Enter)..."
+                                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17]"
+                                    onKeyDown={async (e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const searchTerm = (e.currentTarget as HTMLInputElement).value.trim();
+                                        if (!searchTerm) return;
+
+                                        try {
+                                          // Search for games
+                                          const searchResponse = await fetch(`/api/boardgames?search=${encodeURIComponent(searchTerm)}&limit=10`);
+                                          if (searchResponse.ok) {
+                                            const searchData = await searchResponse.json();
+                                            const foundGames = searchData.games || [];
+                                            
+                                            if (foundGames.length === 0) {
+                                              alert('No games found');
+                                              return;
+                                            }
+
+                                            // Link the first found game to the master
+                                            const gameToLink = foundGames[0];
+                                            const masterId = shopMasterGameId[game.id] || game.id;
+                                            
+                                            // Link the found game to the master
+                                            const linkResponse = await fetch(`/api/boardgames/${gameToLink.id}`, {
+                                              method: 'PUT',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ shopListMasterGameId: masterId })
+                                            });
+                                            
+                                            if (linkResponse.ok) {
+                                              (e.currentTarget as HTMLInputElement).value = '';
+                                              await fetchLinkedShopGames(game.id);
+                                              showToast('Game linked successfully', 'success');
+                                            } else {
+                                              const errorData = await linkResponse.json();
+                                              alert(`Failed to link game: ${errorData.message || 'Unknown error'}`);
+                                            }
+                                          }
+                                        } catch (error) {
+                                          console.error('Error linking game:', error);
+                                          alert('Error linking game');
+                                        }
+                                      }
+                                    }}
+                                  />
+                                </div>
                                 </div>
                               </div>
                               {/* PDF Upload Section */}
