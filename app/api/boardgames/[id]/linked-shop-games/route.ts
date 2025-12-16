@@ -26,18 +26,30 @@ export async function GET(
     }
 
     // Fetch the game to check if it has a master
+    // Use maybeSingle() instead of single() to handle cases where game might not exist more gracefully
     const { data: game, error: gameError } = await supabaseAdmin
       .from('games')
       .select('id, shopListMasterGameId, shop_list_master_game_id')
       .eq('id', gameId)
-      .single();
+      .maybeSingle();
 
-    if (gameError || !game) {
+    if (gameError) {
+      console.error('[LINKED-SHOP-GAMES API] Error fetching game:', gameError);
+      return NextResponse.json(
+        { error: 'Failed to fetch game', details: gameError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!game) {
+      console.error(`[LINKED-SHOP-GAMES API] Game ${gameId} not found in database`);
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
       );
     }
+
+    console.log(`[LINKED-SHOP-GAMES API] Found game ${gameId}, master ID:`, (game as any).shopListMasterGameId ?? (game as any).shop_list_master_game_id);
 
     const masterGameId = (game as any).shopListMasterGameId ?? (game as any).shop_list_master_game_id;
     
