@@ -478,18 +478,31 @@ function BoardGameDatabaseContent() {
         setLinkedShopGames(prev => ({ ...prev, [gameId]: gamesWithMaster }));
         setShopMasterGameId(prev => ({ ...prev, [gameId]: masterId }));
       } else if (response.status === 404) {
-        // If endpoint doesn't exist, initialize with just the current game as master
-        console.warn('Linked shop games endpoint not found (404), initializing with current game as master');
-        const currentGame = games.find(g => g.id === gameId);
-        setLinkedShopGames(prev => ({ 
-          ...prev, 
-          [gameId]: [{ 
-            id: gameId, 
-            nameEn: currentGame?.nameEn || editingGameData[gameId]?.nameEn || 'Current Game', 
-            isMaster: true 
-          }] 
-        }));
-        setShopMasterGameId(prev => ({ ...prev, [gameId]: gameId }));
+        // If endpoint doesn't exist, preserve existing linked games or initialize with current game as master
+        console.warn('Linked shop games endpoint not found (404), preserving existing linked games');
+        setLinkedShopGames(prev => {
+          // If we already have linked games, preserve them
+          if (prev[gameId] && prev[gameId].length > 0) {
+            return prev;
+          }
+          // Otherwise, initialize with just the current game as master
+          const currentGame = games.find(g => g.id === gameId);
+          return {
+            ...prev,
+            [gameId]: [{ 
+              id: gameId, 
+              nameEn: currentGame?.nameEn || editingGameData[gameId]?.nameEn || 'Current Game', 
+              isMaster: true 
+            }]
+          };
+        });
+        // Only set master ID if not already set
+        setShopMasterGameId(prev => {
+          if (prev[gameId] !== undefined) {
+            return prev;
+          }
+          return { ...prev, [gameId]: gameId };
+        });
       } else {
         console.error('Error fetching linked shop games:', response.status, response.statusText);
         const errorText = await response.text().catch(() => 'Unknown error');
@@ -497,17 +510,30 @@ function BoardGameDatabaseContent() {
       }
     } catch (error) {
       console.error('Error fetching linked shop games:', error);
-      // Fallback: initialize with current game as master
-      const currentGame = games.find(g => g.id === gameId);
-      setLinkedShopGames(prev => ({ 
-        ...prev, 
-        [gameId]: [{ 
-          id: gameId, 
-          nameEn: currentGame?.nameEn || editingGameData[gameId]?.nameEn || 'Current Game', 
-          isMaster: true 
-        }] 
-      }));
-      setShopMasterGameId(prev => ({ ...prev, [gameId]: gameId }));
+      // Fallback: preserve existing linked games or initialize with current game as master
+      setLinkedShopGames(prev => {
+        // If we already have linked games, preserve them
+        if (prev[gameId] && prev[gameId].length > 0) {
+          return prev;
+        }
+        // Otherwise, initialize with just the current game as master
+        const currentGame = games.find(g => g.id === gameId);
+        return {
+          ...prev,
+          [gameId]: [{ 
+            id: gameId, 
+            nameEn: currentGame?.nameEn || editingGameData[gameId]?.nameEn || 'Current Game', 
+            isMaster: true 
+          }]
+        };
+      });
+      // Only set master ID if not already set
+      setShopMasterGameId(prev => {
+        if (prev[gameId] !== undefined) {
+          return prev;
+        }
+        return { ...prev, [gameId]: gameId };
+      });
     }
   };
 
@@ -2529,26 +2555,22 @@ You can use markdown formatting:
                                         });
                                         
                                         // Try to refresh from the endpoint (but don't fail if it doesn't work)
+                                        // Only refresh if endpoint is available, otherwise keep the manually added game
                                         try {
-                                          await fetchLinkedShopGames(game.id);
+                                          const refreshResponse = await fetch(`/api/boardgames/${game.id}/linked-shop-games`);
+                                          if (refreshResponse.ok) {
+                                            await fetchLinkedShopGames(game.id);
+                                          } else {
+                                            // Endpoint not available, keep the manually added game
+                                            console.warn('Linked shop games endpoint not available, keeping manually added game');
+                                          }
                                         } catch (error) {
                                           console.warn('Could not refresh linked games from endpoint, using manual update:', error);
                                         }
                                         
-                                        // Also refresh the current game data to ensure consistency
-                                        const gameResponse = await fetch(`/api/boardgames/${game.id}`);
-                                        if (gameResponse.ok) {
-                                          const gameData = await gameResponse.json();
-                                          if (gameData.game) {
-                                            setEditingGameData(prev => ({
-                                              ...prev,
-                                              [game.id]: { ...prev[game.id], ...gameData.game }
-                                            }));
-                                          }
-                                        }
-                                        
-                                        setShowLinkGameModal(prev => ({ ...prev, [game.id]: false }));
-                                        showToast('Game linked successfully', 'success');
+                                        // Don't close the modal - allow adding multiple games
+                                        // setShowLinkGameModal(prev => ({ ...prev, [game.id]: false }));
+                                        showToast(`${selectedGame.nameEn || selectedGame.name} linked successfully`, 'success');
                                       } else {
                                         const errorData = await linkResponse.json().catch(() => ({ message: 'Failed to link game' }));
                                         console.error('Link error:', errorData);
