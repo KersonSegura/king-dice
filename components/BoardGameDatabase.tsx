@@ -669,6 +669,35 @@ function BoardGameDatabaseContent() {
         
         return cleaned;
       };
+
+      // Helper function to clean descriptions while preserving newlines and paragraph breaks
+      const cleanDescription = (value: any): string | undefined => {
+        if (value === undefined || value === null) return undefined;
+        if (typeof value !== 'string') return String(value);
+        
+        // Remove null bytes and other problematic characters, but preserve newlines (\n) and carriage returns (\r)
+        let cleaned = value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        
+        // Remove zero-width characters
+        cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
+        
+        // Replace non-breaking spaces with regular spaces
+        cleaned = cleaned.replace(/\u00A0/g, ' ');
+        
+        // Remove problematic characters but preserve newlines
+        cleaned = cleaned.replace(/[<>]/g, ''); // Remove angle brackets but keep everything else including newlines
+        
+        // Normalize line endings: convert \r\n to \n, then convert standalone \r to \n
+        cleaned = cleaned.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        
+        // Preserve multiple newlines (paragraph breaks) but normalize excessive ones (more than 3 consecutive)
+        cleaned = cleaned.replace(/\n{4,}/g, '\n\n\n');
+        
+        // Trim only the start and end, not internal whitespace
+        cleaned = cleaned.trim();
+        
+        return cleaned;
+      };
       
       // Only include defined fields with proper cleaning
       if (gameData.nameEn !== undefined) {
@@ -718,7 +747,7 @@ function BoardGameDatabaseContent() {
           link: cleanString(item.link, true),
           order: item.order ?? 999
         }));
-      if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanString(gameData.fullDescription);
+      if (gameData.fullDescription !== undefined) cleanGameData.fullDescription = cleanDescription(gameData.fullDescription);
       if (gameData.isExpansion !== undefined) cleanGameData.isExpansion = gameData.isExpansion;
       
       // Categories - parse comma-separated string
@@ -1216,6 +1245,14 @@ function BoardGameDatabaseContent() {
     const processedLines: React.ReactNode[] = [];
     
     lines.forEach((line, index) => {
+      // Handle empty lines as paragraph breaks
+      if (line.trim() === '') {
+        processedLines.push(
+          <div key={`break-${index}`} className="mb-4" />
+        );
+        return;
+      }
+      
       // Check if line is a heading with explicit anchor ID (e.g., "## Heading {#anchor-id}")
       const headingWithAnchor = line.match(/^(#{1,6})\s+(.+?)\s+\{#([^}]+)\}$/);
       

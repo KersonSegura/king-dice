@@ -117,6 +117,14 @@ function processMarkdownContent(text: string): React.ReactNode {
   const processedLines: React.ReactNode[] = [];
   
   lines.forEach((line, index) => {
+    // Handle empty lines as paragraph breaks
+    if (line.trim() === '') {
+      processedLines.push(
+        <div key={`break-${index}`} className="mb-4" />
+      );
+      return;
+    }
+    
     // Check if line is a heading with explicit anchor ID (e.g., "## Heading {#anchor-id}")
     const headingWithAnchor = line.match(/^(#{1,6})\s+(.+?)\s+\{#([^}]+)\}$/);
     
