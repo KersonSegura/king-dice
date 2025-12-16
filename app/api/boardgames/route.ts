@@ -34,84 +34,29 @@ export async function GET(request: NextRequest) {
       const searchLimit = 200; // Fetch more results to ensure we don't miss any matches
       const searchPattern = `%${search}%`;
       
-      // Try multiple search strategies and combine results
-      // Use separate queries with error handling
-      let allGames = new Map();
-      let maxCount = 0;
-      let hasError = false;
+      // Try nameEn first (most common), then fallback to name if needed
+      let searchResult = await supabaseAdmin
+        .from('games')
+        .select('*', { count: 'exact' })
+        .ilike('nameEn', searchPattern)
+        .limit(searchLimit);
       
-      // Try nameEn (camelCase)
-      try {
-        const result1 = await supabaseAdmin
-          .from('games')
-          .select('*', { count: 'exact' })
-          .ilike('nameEn', searchPattern)
-          .limit(searchLimit);
-        
-        if (result1.data) {
-          result1.data.forEach((game: any) => {
-            if (!allGames.has(game.id)) {
-              allGames.set(game.id, game);
-            }
-          });
-          maxCount = Math.max(maxCount, result1.count || 0);
-        }
-        if (result1.error && !result1.error.message.includes('column')) {
-          hasError = true;
-        }
-      } catch (e) {
-        console.warn('Search in nameEn failed:', e);
-      }
-      
-      // Try name (legacy)
-      try {
-        const result2 = await supabaseAdmin
+      // If nameEn search fails or returns no results, try name (legacy column)
+      if (searchResult.error || !searchResult.data || searchResult.data.length === 0) {
+        const fallbackResult = await supabaseAdmin
           .from('games')
           .select('*', { count: 'exact' })
           .ilike('name', searchPattern)
           .limit(searchLimit);
         
-        if (result2.data) {
-          result2.data.forEach((game: any) => {
-            if (!allGames.has(game.id)) {
-              allGames.set(game.id, game);
-            }
-          });
-          maxCount = Math.max(maxCount, result2.count || 0);
+        if (!fallbackResult.error && fallbackResult.data) {
+          searchResult = fallbackResult;
         }
-        if (result2.error && !result2.error.message.includes('column')) {
-          hasError = true;
-        }
-      } catch (e) {
-        console.warn('Search in name failed:', e);
       }
       
-      // Try nameEs (camelCase)
-      try {
-        const result3 = await supabaseAdmin
-          .from('games')
-          .select('*', { count: 'exact' })
-          .ilike('nameEs', searchPattern)
-          .limit(searchLimit);
-        
-        if (result3.data) {
-          result3.data.forEach((game: any) => {
-            if (!allGames.has(game.id)) {
-              allGames.set(game.id, game);
-            }
-          });
-          maxCount = Math.max(maxCount, result3.count || 0);
-        }
-        if (result3.error && !result3.error.message.includes('column')) {
-          hasError = true;
-        }
-      } catch (e) {
-        console.warn('Search in nameEs failed:', e);
-      }
-      
-      gamesData = Array.from(allGames.values());
-      totalCount = maxCount;
-      fetchError = hasError ? new Error('Some search queries failed') : null;
+      gamesData = searchResult.data || [];
+      totalCount = searchResult.count || 0;
+      fetchError = searchResult.error;
       
       console.log('[BOARDGAMES API] Combined search results:', {
         totalUnique: gamesData.length,
