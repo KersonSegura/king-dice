@@ -35,56 +35,87 @@ export async function GET(request: NextRequest) {
       const searchPattern = `%${search}%`;
       
       // Try multiple search strategies and combine results
-      // Primary: nameEn (camelCase)
-      const searchQuery1 = supabaseAdmin
-        .from('games')
-        .select('*', { count: 'exact' })
-        .ilike('nameEn', searchPattern)
-        .limit(searchLimit);
+      // Use separate queries with error handling
+      let allGames = new Map();
+      let maxCount = 0;
+      let hasError = false;
       
-      // Fallback 1: name (legacy)
-      const searchQuery2 = supabaseAdmin
-        .from('games')
-        .select('*', { count: 'exact' })
-        .ilike('name', searchPattern)
-        .limit(searchLimit);
-      
-      // Fallback 2: nameEs (camelCase)
-      const searchQuery3 = supabaseAdmin
-        .from('games')
-        .select('*', { count: 'exact' })
-        .ilike('nameEs', searchPattern)
-        .limit(searchLimit);
-      
-      // Execute all searches in parallel
-      const [result1, result2, result3] = await Promise.all([
-        searchQuery1,
-        searchQuery2,
-        searchQuery3
-      ]);
-      
-      // Combine results and deduplicate by ID
-      const allGames = new Map();
-      [result1.data, result2.data, result3.data].forEach((games: any[]) => {
-        if (games) {
-          games.forEach((game: any) => {
+      // Try nameEn (camelCase)
+      try {
+        const result1 = await supabaseAdmin
+          .from('games')
+          .select('*', { count: 'exact' })
+          .ilike('nameEn', searchPattern)
+          .limit(searchLimit);
+        
+        if (result1.data) {
+          result1.data.forEach((game: any) => {
             if (!allGames.has(game.id)) {
               allGames.set(game.id, game);
             }
           });
+          maxCount = Math.max(maxCount, result1.count || 0);
         }
-      });
+        if (result1.error && !result1.error.message.includes('column')) {
+          hasError = true;
+        }
+      } catch (e) {
+        console.warn('Search in nameEn failed:', e);
+      }
+      
+      // Try name (legacy)
+      try {
+        const result2 = await supabaseAdmin
+          .from('games')
+          .select('*', { count: 'exact' })
+          .ilike('name', searchPattern)
+          .limit(searchLimit);
+        
+        if (result2.data) {
+          result2.data.forEach((game: any) => {
+            if (!allGames.has(game.id)) {
+              allGames.set(game.id, game);
+            }
+          });
+          maxCount = Math.max(maxCount, result2.count || 0);
+        }
+        if (result2.error && !result2.error.message.includes('column')) {
+          hasError = true;
+        }
+      } catch (e) {
+        console.warn('Search in name failed:', e);
+      }
+      
+      // Try nameEs (camelCase)
+      try {
+        const result3 = await supabaseAdmin
+          .from('games')
+          .select('*', { count: 'exact' })
+          .ilike('nameEs', searchPattern)
+          .limit(searchLimit);
+        
+        if (result3.data) {
+          result3.data.forEach((game: any) => {
+            if (!allGames.has(game.id)) {
+              allGames.set(game.id, game);
+            }
+          });
+          maxCount = Math.max(maxCount, result3.count || 0);
+        }
+        if (result3.error && !result3.error.message.includes('column')) {
+          hasError = true;
+        }
+      } catch (e) {
+        console.warn('Search in nameEs failed:', e);
+      }
       
       gamesData = Array.from(allGames.values());
-      totalCount = Math.max(result1.count || 0, result2.count || 0, result3.count || 0);
-      fetchError = result1.error || result2.error || result3.error;
+      totalCount = maxCount;
+      fetchError = hasError ? new Error('Some search queries failed') : null;
       
       console.log('[BOARDGAMES API] Combined search results:', {
-        nameEn: result1.data?.length || 0,
-        name: result2.data?.length || 0,
-        nameEs: result3.data?.length || 0,
         totalUnique: gamesData.length,
-        foundCatan: gamesData.some((g: any) => g.id === 8816)
+        totalCount: totalCount
       });
     } else {
       // For non-search, apply pagination directly

@@ -2474,11 +2474,29 @@ You can use markdown formatting:
                                       });
                                       
                                       if (linkResponse.ok) {
+                                        const responseData = await linkResponse.json();
+                                        console.log('Link response:', responseData);
+                                        
+                                        // Refresh the linked games list
                                         await fetchLinkedShopGames(game.id);
+                                        
+                                        // Also refresh the current game data to ensure consistency
+                                        const gameResponse = await fetch(`/api/boardgames/${game.id}`);
+                                        if (gameResponse.ok) {
+                                          const gameData = await gameResponse.json();
+                                          if (gameData.game) {
+                                            setEditingGameData(prev => ({
+                                              ...prev,
+                                              [game.id]: { ...prev[game.id], ...gameData.game }
+                                            }));
+                                          }
+                                        }
+                                        
                                         setShowLinkGameModal(prev => ({ ...prev, [game.id]: false }));
                                         showToast('Game linked successfully', 'success');
                                       } else {
                                         const errorData = await linkResponse.json().catch(() => ({ message: 'Failed to link game' }));
+                                        console.error('Link error:', errorData);
                                         showToast(`Failed to link game: ${errorData.message || 'Unknown error'}`, 'error');
                                       }
                                     } catch (error) {
