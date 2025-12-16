@@ -53,6 +53,7 @@ export async function GET(
     // Transform to match expected format
     const transformedGame = {
       ...game,
+      shopListMasterGameId: (game as any).shopListMasterGameId ?? (game as any).shop_list_master_game_id ?? null,
       gameCategories: (categories || []).map((gc: any) => ({
         id: gc.id,
         gameId: gc.game_id,
@@ -192,6 +193,31 @@ export async function PUT(
     if (body.officialWebsite !== undefined) updateData.officialWebsite = body.officialWebsite;
     if (body.amazonUrl !== undefined) updateData.amazonUrl = body.amazonUrl;
     if (body.isExpansion !== undefined) updateData.isExpansion = body.isExpansion;
+    if (body.shopListMasterGameId !== undefined) {
+      // Validate that the master game ID is not the same as the current game
+      if (body.shopListMasterGameId === gameId) {
+        return NextResponse.json(
+          { error: 'Invalid shop list master', message: 'A game cannot link to its own shop list' },
+          { status: 400 }
+        );
+      }
+      // If setting a master, validate it exists
+      if (body.shopListMasterGameId !== null) {
+        const { data: masterGame, error: masterGameError } = await supabaseAdmin
+          .from('games')
+          .select('id')
+          .eq('id', body.shopListMasterGameId)
+          .single();
+        
+        if (masterGameError || !masterGame) {
+          return NextResponse.json(
+            { error: 'Invalid shop list master', message: 'Master game not found' },
+            { status: 404 }
+          );
+        }
+      }
+      updateData.shopListMasterGameId = body.shopListMasterGameId;
+    }
 
     // Debug: Log the update data
     console.log('Updating game with data:', updateData);
@@ -264,11 +290,15 @@ export async function PUT(
       .update(updateData)
       .eq('id', gameId)
       .select('*')
-      .single();
+      .maybeSingle();
     
     if (updateError) {
       console.error('Supabase update error:', updateError);
       throw new Error(`Failed to update game: ${updateError.message}`);
+    }
+    
+    if (!updatedGame) {
+      throw new Error('Game not found or update returned no data');
     }
     
     console.log('Supabase update successful');
@@ -502,6 +532,7 @@ export async function PUT(
     // Transform to match expected format
     const transformedGame = {
       ...updatedGame,
+      shopListMasterGameId: (updatedGame as any).shopListMasterGameId ?? (updatedGame as any).shop_list_master_game_id ?? null,
       gameCategories: (categories || []).map((gc: any) => ({
         id: gc.id,
         gameId: gc.game_id,
