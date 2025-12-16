@@ -2505,8 +2505,35 @@ You can use markdown formatting:
                                         const responseData = await linkResponse.json();
                                         console.log('Link response:', responseData);
                                         
-                                        // Refresh the linked games list
-                                        await fetchLinkedShopGames(game.id);
+                                        // Manually add the linked game to the state immediately
+                                        const masterId = shopMasterGameId[game.id] || game.id;
+                                        const newLinkedGame = {
+                                          id: selectedGame.id,
+                                          nameEn: selectedGame.nameEn || selectedGame.name,
+                                          nameEs: selectedGame.nameEs,
+                                          isMaster: false
+                                        };
+                                        
+                                        // Update the linked games list to include the new game
+                                        setLinkedShopGames(prev => {
+                                          const currentList = prev[game.id] || [];
+                                          // Check if it's already in the list
+                                          if (currentList.some(g => g.id === selectedGame.id)) {
+                                            return prev;
+                                          }
+                                          // Add the new game to the list
+                                          return {
+                                            ...prev,
+                                            [game.id]: [...currentList, newLinkedGame]
+                                          };
+                                        });
+                                        
+                                        // Try to refresh from the endpoint (but don't fail if it doesn't work)
+                                        try {
+                                          await fetchLinkedShopGames(game.id);
+                                        } catch (error) {
+                                          console.warn('Could not refresh linked games from endpoint, using manual update:', error);
+                                        }
                                         
                                         // Also refresh the current game data to ensure consistency
                                         const gameResponse = await fetch(`/api/boardgames/${game.id}`);
