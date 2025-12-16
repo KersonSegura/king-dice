@@ -202,7 +202,7 @@ export default function ShopPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
               {filteredShopItems.map((item) => (
                 <div key={item.uniqueKey || item.id || `shop-item-${item.title}`} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
-                  <div className="relative w-full aspect-square bg-gray-200 overflow-hidden flex items-center justify-center">
+                  <div className="relative w-full aspect-square bg-white overflow-hidden flex items-center justify-center">
                     {item.imageUrl ? (
                       item.imageUrl.startsWith('https://m.media-amazon.com') ? (
                         <Image
@@ -236,7 +236,7 @@ export default function ShopPage() {
                         />
                       )
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                      <div className="w-full h-full flex items-center justify-center bg-white">
                         <div className="text-center p-4">
                           <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2">
                             <rect width="200" height="200" fill="#e5e7e9" rx="8"/>
