@@ -9,7 +9,7 @@ import { emailService, generateVerificationCode } from '@/lib/email-service';
 
 // JWT Secret - in production, this should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-const JWT_EXPIRES_IN = '7d'; // Token expires in 7 days
+const JWT_EXPIRES_IN = '30d'; // Token expires in 30 days
 
 export interface TokenPayload {
   userId: string;

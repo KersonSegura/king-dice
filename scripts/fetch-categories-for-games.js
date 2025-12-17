@@ -10,11 +10,25 @@
  *   node scripts/fetch-categories-for-games.js 20 50    # 50 games, batch of 20
  */
 
-const { PrismaClient } = require('@prisma/client');
+require('dotenv').config({ path: '.env.local' });
+const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
 const { XMLParser } = require('fast-xml-parser');
 
-const prisma = new PrismaClient();
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('❌ Missing Supabase environment variables!');
+  console.error('Required: NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: { persistSession: false }
+});
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '',
@@ -52,13 +66,29 @@ class CategoryFetcher {
 
   async checkGameHasCategories(gameId) {
     try {
-      const count = await prisma.gameCategory.count({
-        where: { gameId: gameId }
-      });
-      return count > 0;
+      // Try camelCase first
+      const { count, error } = await supabaseAdmin
+        .from('game_categories')
+        .select('*', { count: 'exact', head: true })
+        .eq('gameId', gameId);
+      
+      if (error) {
+        // Try snake_case as fallback
+        const { count: countAlt, error: errorAlt } = await supabaseAdmin
+          .from('game_categories')
+          .select('*', { count: 'exact', head: true })
+          .eq('game_id', gameId);
+        
+        if (errorAlt) {
+          return false; // Silently fail and assume no categories
+        }
+        
+        return (countAlt || 0) > 0;
+      }
+      
+      return (count || 0) > 0;
     } catch (error) {
-      console.error(`Error checking categories for game ${gameId}:`, error.message);
-      return false;
+      return false; // Silently fail
     }
   }
 
@@ -93,12 +123,31 @@ class CategoryFetcher {
       const idsString = bggIds.join(',');
       const url = `https://boardgamegeek.com/xmlapi2/thing?id=${idsString}&stats=0`;
       
+      // Add delay before request to avoid rate limiting
+      await this.delay();
+      
       const response = await axios.get(url, {
-        timeout: 15000,
+        timeout: 20000,
         headers: {
-          'User-Agent': 'KingDice/1.0 (Category Fetcher)'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/xml, text/xml, */*'
+        },
+        validateStatus: function (status) {
+          return status < 500; // Accept any status < 500 (including 401, 429, etc.)
         }
       });
+
+      // Check for rate limiting or errors
+      if (response.status === 401 || response.status === 429) {
+        console.log(`   ⚠️  BGG API rate limited or unauthorized (status ${response.status}). Waiting 5 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return {};
+      }
+
+      if (response.status !== 200) {
+        console.log(`   ⚠️  BGG API returned status ${response.status}`);
+        return {};
+      }
 
       const data = parser.parse(response.data);
       
@@ -119,7 +168,11 @@ class CategoryFetcher {
 
       return gameCategories;
     } catch (error) {
-      console.error(`Error fetching from BGG API:`, error.message);
+      if (error.response) {
+        console.error(`   ❌ BGG API error: ${error.response.status} - ${error.response.statusText}`);
+      } else {
+        console.error(`   ❌ Error fetching from BGG API:`, error.message);
+      }
       return {};
     }
   }
@@ -127,23 +180,35 @@ class CategoryFetcher {
   async findOrCreateCategory(categoryName) {
     try {
       // Try to find existing category
-      let category = await prisma.category.findFirst({
-        where: {
-          OR: [
-            { nameEn: categoryName },
-            { nameEs: categoryName }
-          ]
-        }
-      });
+      const { data: existingCategories, error: findError } = await supabaseAdmin
+        .from('categories')
+        .select('*')
+        .or(`nameEn.eq.${categoryName},nameEs.eq.${categoryName}`)
+        .limit(1);
+      
+      if (findError && findError.code !== 'PGRST116') {
+        console.error(`Error finding category "${categoryName}":`, findError.message);
+      }
+
+      let category = existingCategories && existingCategories.length > 0 ? existingCategories[0] : null;
 
       // Create if not found
       if (!category) {
-        category = await prisma.category.create({
-          data: {
+        const { data: newCategory, error: createError } = await supabaseAdmin
+          .from('categories')
+          .insert({
             nameEn: categoryName,
             nameEs: categoryName // For now, use same name for both languages
-          }
-        });
+          })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error(`Error creating category "${categoryName}":`, createError.message);
+          return null;
+        }
+        
+        category = newCategory;
       }
 
       return category;
@@ -165,23 +230,40 @@ class CategoryFetcher {
         }
 
         // Check if game-category link already exists
-        const existing = await prisma.gameCategory.findUnique({
-          where: {
-            gameId_categoryId: {
-              gameId: gameId,
-              categoryId: category.id
-            }
+        const { data: existing, error: checkError } = await supabaseAdmin
+          .from('game_categories')
+          .select('*')
+          .eq('gameId', gameId)
+          .eq('categoryId', category.id)
+          .limit(1);
+        
+        if (checkError && checkError.code !== 'PGRST116') {
+          // Try with snake_case as fallback
+          const { data: existingAlt } = await supabaseAdmin
+            .from('game_categories')
+            .select('*')
+            .eq('game_id', gameId)
+            .eq('category_id', category.id)
+            .limit(1);
+          
+          if (existingAlt && existingAlt.length > 0) {
+            continue; // Already exists
           }
-        });
+        }
 
-        if (!existing) {
-          await prisma.gameCategory.create({
-            data: {
+        if (!existing || existing.length === 0) {
+          const { error: insertError } = await supabaseAdmin
+            .from('game_categories')
+            .insert({
               gameId: gameId,
               categoryId: category.id
-            }
-          });
-          addedCount++;
+            });
+          
+          if (insertError) {
+            console.error(`Error linking category "${categoryName}" to game ${gameId}:`, insertError.message);
+          } else {
+            addedCount++;
+          }
         }
       }
 
@@ -253,24 +335,47 @@ class CategoryFetcher {
       console.log(`📋 Will process up to ${LIMIT} games`);
       console.log(`📦 Processing in batches of ${BATCH_SIZE} games\n`);
 
-      // Get games that have bggId but might not have categories
-      // Prioritize games that have shop items
-      const games = await prisma.game.findMany({
-        where: {
-          bggId: {
-            not: null
-          }
-        },
-        take: LIMIT,
-        orderBy: {
-          id: 'asc'
-        },
-        select: {
-          id: true,
-          nameEn: true,
-          bggId: true
-        }
-      });
+      // Get games that have shop items but might not have categories
+      // First, get all game IDs that have shop items
+      const { data: shopItemsData, error: shopItemsError } = await supabaseAdmin
+        .from('game_shop_items')
+        .select('*')
+        .limit(1000);
+      
+      if (shopItemsError) {
+        console.error('Error fetching shop items:', shopItemsError);
+        throw shopItemsError;
+      }
+
+      const gameIdsWithShopItems = [...new Set((shopItemsData || []).map(item => {
+        // Handle both camelCase and snake_case
+        return item.gameId || item.game_id;
+      }).filter(Boolean))];
+      
+      console.log(`📦 Found ${gameIdsWithShopItems.length} unique games with shop items`);
+      console.log(`   Game IDs: ${gameIdsWithShopItems.slice(0, 10).join(', ')}${gameIdsWithShopItems.length > 10 ? '...' : ''}`);
+
+      if (gameIdsWithShopItems.length === 0) {
+        console.log('❌ No games with shop items found');
+        return;
+      }
+
+      // Get games that have shop items (check both with and without bggId requirement)
+      const { data: allGames, error: allGamesError } = await supabaseAdmin
+        .from('games')
+        .select('id, nameEn, bggId')
+        .in('id', gameIdsWithShopItems)
+        .limit(LIMIT)
+        .order('id', { ascending: true });
+      
+      if (allGamesError) {
+        throw new Error(`Failed to fetch games: ${allGamesError.message}`);
+      }
+
+      // Filter to only games with bggId
+      const games = (allGames || []).filter(g => g.bggId !== null);
+      
+      console.log(`   Found ${games.length} games with shop items that have bggId (out of ${allGames?.length || 0} total)`);
 
       if (games.length === 0) {
         console.log('❌ No games found to process');
@@ -299,8 +404,6 @@ class CategoryFetcher {
     } catch (error) {
       console.error('❌ Fatal error:', error);
       this.totalErrors++;
-    } finally {
-      await prisma.$disconnect();
     }
   }
 }
