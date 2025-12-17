@@ -38,7 +38,7 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 35;
+  const itemsPerPage = 40;
 
   useEffect(() => {
     async function fetchAllShopItems() {
