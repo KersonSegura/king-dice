@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExternalLink, Search, ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
 
 // Amazon Associates disclosure - required by Amazon
 // Updated to clarify that prices are the same for consumers
@@ -38,7 +38,24 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const categoryModalRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 40;
+
+  // Close category modal when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (categoryModalRef.current && !categoryModalRef.current.contains(event.target as Node)) {
+        setShowCategoryModal(false);
+      }
+    }
+    if (showCategoryModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCategoryModal]);
 
   useEffect(() => {
     async function fetchAllShopItems() {
@@ -151,10 +168,75 @@ export default function ShopPage() {
               />
             </div>
 
-            {/* Category Filters */}
+            {/* Category Filters - Mobile: 2 buttons with modal, Desktop: all buttons */}
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">Filter by Category</h3>
-              <div className="flex flex-wrap gap-2">
+              
+              {/* Mobile view - 2 buttons */}
+              <div className="flex gap-2 md:hidden relative">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    selectedCategory === null
+                      ? 'bg-[#ffb905] text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  All Categories
+                </button>
+                <button
+                  onClick={() => setShowCategoryModal(true)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                    selectedCategory !== null
+                      ? 'bg-[#ffb905] text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  <span>{selectedCategory !== null ? categories.find(c => c.id === selectedCategory)?.nameEn : 'Select Category'}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+
+                {/* Category Modal */}
+                {showCategoryModal && (
+                  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div 
+                      ref={categoryModalRef}
+                      className="bg-white rounded-xl shadow-xl max-w-sm w-full max-h-[70vh] overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between p-4 border-b">
+                        <h3 className="font-semibold text-gray-900">Select Category</h3>
+                        <button
+                          onClick={() => setShowCategoryModal(false)}
+                          className="p-1 hover:bg-gray-100 rounded-full"
+                        >
+                          <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </div>
+                      <div className="overflow-y-auto max-h-[calc(70vh-60px)] p-2">
+                        {categories.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() => {
+                              setSelectedCategory(category.id);
+                              setShowCategoryModal(false);
+                            }}
+                            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors mb-1 ${
+                              selectedCategory === category.id
+                                ? 'bg-[#ffb905] text-white'
+                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            {category.nameEn}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop view - all buttons */}
+              <div className="hidden md:flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
