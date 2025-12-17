@@ -225,7 +225,7 @@ function BoardGameDatabaseContent() {
       const data = await fetchJsonWithRetry(`/api/boardgames?${params}`, {}, {
         maxRetries: 3,
         retryDelay: 1000,
-        timeout: 15000
+        timeout: 30000 // Increased to 30 seconds to handle large datasets
       });
       
       if (data.games && data.pagination) {
@@ -841,6 +841,11 @@ function BoardGameDatabaseContent() {
       if (!response.ok) {
         if (response.status === 409) {
           alert(`❌ Juego duplicado: ${responseData.message}\n\nJuego existente:\n• Nombre: ${responseData.existingGame.nameEn}\n• Año: ${responseData.existingGame.yearRelease || 'N/A'}\n• ID: ${responseData.existingGame.id}`);
+        } else if (response.status === 404) {
+          // Game not found - refresh the games list and show helpful error
+          alert(`❌ Error: ${responseData.message || `Game with ID ${gameId} not found`}\n\nThis may happen if:\n• The game was deleted\n• The games list is out of sync\n\nPlease refresh the page and try again.`);
+          // Refresh games list to sync state
+          await fetchGames(pagination.page, searchTerm, showOnlyWithoutRules);
         } else {
           throw new Error(responseData.message || 'Failed to update game properties');
         }

@@ -120,8 +120,13 @@ export async function PUT(
       .single();
 
     if (existingGameError || !existingGame) {
+      console.error(`[PUT /api/boardgames/${gameId}] Game not found. Error:`, existingGameError);
       return NextResponse.json(
-        { error: 'Game not found' },
+        { 
+          error: 'Game not found',
+          message: `Game with ID ${gameId} does not exist in the database. This may happen if the game was recently created and the games list hasn't refreshed yet, or if the game was deleted.`,
+          gameId: gameId
+        },
         { status: 404 }
       );
     }
