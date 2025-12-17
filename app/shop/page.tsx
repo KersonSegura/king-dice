@@ -168,12 +168,11 @@ export default function ShopPage() {
               />
             </div>
 
-            {/* Category Filters - Mobile: 2 buttons with modal, Desktop: all buttons */}
+            {/* Category Filters - 2 buttons with modal */}
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">Filter by Category</h3>
               
-              {/* Mobile view - 2 buttons */}
-              <div className="flex gap-2 md:hidden relative">
+              <div className="flex gap-2 relative">
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -232,37 +231,6 @@ export default function ShopPage() {
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Desktop view - all buttons */}
-              <div className="hidden md:flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    selectedCategory === null
-                      ? 'bg-[#ffb905] text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {categories.length > 0 ? (
-                  categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                        selectedCategory === category.id
-                          ? 'bg-[#ffb905] text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                      }`}
-                    >
-                      {category.nameEn}
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No categories available</p>
                 )}
               </div>
             </div>
