@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { ExternalLink, Search, ChevronLeft, ChevronRight, ChevronDown, X, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 // Amazon Associates disclosure - required by Amazon
 // Updated to clarify that prices are the same for consumers
@@ -32,6 +33,10 @@ interface ShopItem {
 
 
 export default function ShopPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [allShopItems, setAllShopItems] = useState<ShopItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +47,31 @@ export default function ShopPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const categoryModalRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 40;
+
+  const scrollToTop = () => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const setPageInUrl = (page: number) => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    if (!page || page <= 1) {
+      params.delete('page');
+    } else {
+      params.set('page', String(page));
+    }
+    const qs = params.toString();
+    const url = qs ? `${pathname}?${qs}` : pathname;
+    // Prevent Next.js from auto-scrolling; we'll do it manually for smooth UX
+    router.push(url, { scroll: false });
+  };
+
+  const goToPage = (page: number, opts?: { scroll?: boolean }) => {
+    const clamped = Math.max(1, Math.min(totalPages || 1, page));
+    setCurrentPage(clamped);
+    setPageInUrl(clamped);
+    if (opts?.scroll !== false) scrollToTop();
+  };
 
   // Close category modal when clicking outside
   useEffect(() => {
@@ -131,9 +161,32 @@ export default function ShopPage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedShopItems = filteredShopItems.slice(startIndex, endIndex);
 
+  // Initialize/sync current page from URL (?page=)
+  useEffect(() => {
+    const raw = searchParams?.get('page') || '1';
+    const parsed = parseInt(raw, 10);
+    const pageFromUrl = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+
+    // Defer clamping until we know totalPages (after data loads)
+    setCurrentPage(pageFromUrl);
+  }, [searchParams]);
+
+  // Clamp current page if filters change totalPages (or if URL is out of range)
+  useEffect(() => {
+    if (!totalPages || totalPages < 1) return;
+    if (currentPage > totalPages) {
+      goToPage(totalPages, { scroll: false });
+      return;
+    }
+    if (currentPage < 1) {
+      goToPage(1, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPages]);
+
   // Reset to page 1 when filters change
   useEffect(() => {
-    setCurrentPage(1);
+    goToPage(1, { scroll: false });
   }, [searchQuery, selectedCategory]);
 
   return (
@@ -348,7 +401,7 @@ export default function ShopPage() {
               <div className="flex flex-col items-center justify-center mt-8 space-y-4">
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 1}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
                       currentPage === 1
@@ -389,7 +442,7 @@ export default function ShopPage() {
                       return (
                         <button
                           key={page}
-                          onClick={() => setCurrentPage(page)}
+                          onClick={() => goToPage(page)}
                           className={`px-3 py-2 rounded-lg font-medium transition-colors ${
                             currentPage === page
                               ? 'bg-[#fbae17] text-white'
@@ -403,7 +456,7 @@ export default function ShopPage() {
                   </div>
 
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
                       currentPage === totalPages
