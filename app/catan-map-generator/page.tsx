@@ -576,9 +576,6 @@ export default function CatanMapGeneratorPage() {
           )}
         </div>
         </div>
-      {/* Back to Top Button */}
-      {/* <BackToTopButton /> */}
-
       {/* Footer */}
       <div className="mt-auto">
         <Footer />
