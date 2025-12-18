@@ -8,7 +8,7 @@ import CatanMapGenerator from '@/components/CatanMapGenerator';
 import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { supabaseClient } from '@/lib/supabase';
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
@@ -57,11 +57,12 @@ export default function CatanMapGeneratorPage() {
     }
 
     try {
+      const supabase = await getSupabaseBrowserClient();
       // Fetch all votes for the current user - try both camelCase and snake_case
       let votes: any[] = [];
       
       // Try camelCase first
-      const { data: votesCamel, error: errorCamel } = await supabaseClient
+      const { data: votesCamel, error: errorCamel } = await supabase
         .from('catan_nomination_votes')
         .select('nominationId')
         .eq('userId', user.id);
@@ -70,7 +71,7 @@ export default function CatanMapGeneratorPage() {
         votes = votesCamel;
       } else {
         // Try snake_case
-        const { data: votesSnake, error: errorSnake } = await supabaseClient
+        const { data: votesSnake, error: errorSnake } = await supabase
           .from('catan_nomination_votes')
           .select('nomination_id')
           .eq('user_id', user.id);
