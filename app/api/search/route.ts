@@ -6,6 +6,16 @@ import { cookies } from 'next/headers';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// Normalize text for search: remove punctuation, normalize spaces, lowercase
+function normalizeForSearch(text: string): string {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
+    .replace(/\s+/g, ' ')      // Normalize multiple spaces to single space
+    .trim();
+}
+
 // GET - Search users and games
 export async function GET(request: NextRequest) {
   try {
@@ -267,50 +277,59 @@ export async function GET(request: NextRequest) {
           })));
           
           // Sort results to prioritize exact matches and shorter names (base games before expansions)
-          const sortedGames = dbGames.sort((a: any, b: any) => {
-            const nameA = (a.nameEn || a.name_en || a.name || '').trim();
-            const nameB = (b.nameEn || b.name_en || b.name || '').trim();
-            const searchLower = searchQuery.toLowerCase().trim();
-            const nameALower = nameA.toLowerCase();
-            const nameBLower = nameB.toLowerCase();
-            
-            // Calculate match scores
-            let scoreA = 0;
-            let scoreB = 0;
-            
-            // Exact match (case-insensitive) - highest priority
-            if (nameALower === searchLower) scoreA += 1000;
-            if (nameBLower === searchLower) scoreB += 1000;
-            
-            // Exact match with case match - bonus
-            if (nameA === searchQuery) scoreA += 100;
-            if (nameB === searchQuery) scoreB += 100;
-            
-            // Starts with search term
-            if (nameALower.startsWith(searchLower)) scoreA += 50;
-            if (nameBLower.startsWith(searchLower)) scoreB += 50;
-            
-            // Word boundary match (whole word match)
-            const wordMatchA = new RegExp(`\\b${searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(nameALower);
-            const wordMatchB = new RegExp(`\\b${searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(nameBLower);
-            if (wordMatchA) scoreA += 30;
-            if (wordMatchB) scoreB += 30;
-            
-            // Contains search term
-            if (nameALower.includes(searchLower)) scoreA += 10;
-            if (nameBLower.includes(searchLower)) scoreB += 10;
-            
-            // Shorter names get bonus (base games are usually shorter)
-            scoreA += (100 - Math.min(nameA.length, 100)) / 10;
-            scoreB += (100 - Math.min(nameB.length, 100)) / 10;
-            
-            // If scores are equal, sort alphabetically
-            if (scoreB !== scoreA) {
-              return scoreB - scoreA; // Higher score first
-            }
-            
-            return nameALower.localeCompare(nameBLower);
-          });
+          // Use normalized comparison for better matching with punctuation
+          const normalizedSearch = normalizeForSearch(searchQuery);
+          const sortedGames = dbGames
+            .map((game: any) => {
+              const nameA = (game.nameEn || game.name_en || game.name || '').trim();
+              const nameALower = nameA.toLowerCase();
+              const normalizedNameA = normalizeForSearch(nameA);
+              
+              // Calculate match scores
+              let score = 0;
+              
+              // Normalized exact match (highest priority - handles punctuation differences)
+              if (normalizedNameA === normalizedSearch) score += 1000;
+              
+              // Exact match (case-insensitive) - high priority
+              if (nameALower === searchQuery.toLowerCase().trim()) score += 900;
+              
+              // Exact match with case match - bonus
+              if (nameA === searchQuery) score += 100;
+              
+              // Normalized starts with - handles punctuation
+              if (normalizedNameA.startsWith(normalizedSearch)) score += 500;
+              
+              // Starts with search term (original)
+              if (nameALower.startsWith(searchQuery.toLowerCase().trim())) score += 50;
+              
+              // Normalized contains - handles punctuation
+              if (normalizedNameA.includes(normalizedSearch)) score += 100;
+              
+              // Word boundary match (whole word match)
+              const searchLower = searchQuery.toLowerCase().trim();
+              const wordMatchA = new RegExp(`\\b${searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(nameALower);
+              if (wordMatchA) score += 30;
+              
+              // Contains search term (original)
+              if (nameALower.includes(searchLower)) score += 10;
+              
+              // Shorter names get bonus (base games are usually shorter)
+              score += (100 - Math.min(nameA.length, 100)) / 10;
+              
+              return { game, score };
+            })
+            .filter((item: any) => item.score > 0) // Only keep games with some match
+            .sort((a: any, b: any) => {
+              if (b.score !== a.score) {
+                return b.score - a.score; // Higher score first
+              }
+              // If scores are equal, sort alphabetically
+              const nameA = (a.game.nameEn || a.game.name_en || a.game.name || '').trim().toLowerCase();
+              const nameB = (b.game.nameEn || b.game.name_en || b.game.name || '').trim().toLowerCase();
+              return nameA.localeCompare(nameB);
+            })
+            .map((item: any) => item.game); // Extract games
           
           console.log('[SEARCH API] After sorting, top 5 games:', sortedGames.slice(0, 5).map((g: any) => ({
             id: g.id,

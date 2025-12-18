@@ -3,6 +3,16 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// Normalize text for search: remove punctuation, normalize spaces, lowercase
+function normalizeForSearch(text: string): string {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
+    .replace(/\s+/g, ' ')      // Normalize multiple spaces to single space
+    .trim();
+}
 export async function GET(request: NextRequest) {
   console.log('[BOARDGAMES API] ===== ROUTE CALLED =====');
   
@@ -29,9 +39,16 @@ export async function GET(request: NextRequest) {
     if (search) {
       console.log('[BOARDGAMES API] Using Supabase search for:', search);
       
+      // Normalize search query for better matching (removes punctuation)
+      const normalizedSearch = normalizeForSearch(search);
+      console.log('[BOARDGAMES API] Normalized search:', normalizedSearch);
+      
       // Use camelCase to match database schema (nameEn)
       // For search, fetch up to 200 results to ensure we get all matches, then sort and paginate
       const searchLimit = 200; // Fetch more results to ensure we don't miss any matches
+      
+      // Fetch a broader set of games, then filter in JavaScript for better punctuation handling
+      // Use the original search pattern for initial fetch
       const searchPattern = `%${search}%`;
       
       // Try nameEn first (most common), then fallback to name if needed
@@ -54,8 +71,71 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      gamesData = searchResult.data || [];
-      totalCount = searchResult.count || 0;
+      // Also try searching with normalized query (words separated) to catch more matches
+      if (normalizedSearch && normalizedSearch !== search.toLowerCase()) {
+        const normalizedWords = normalizedSearch.split(/\s+/).filter(w => w.length > 0);
+        if (normalizedWords.length > 0) {
+          // Search for games containing all the normalized words
+          const wordPattern = `%${normalizedWords.join('%')}%`;
+          const additionalResult = await supabaseAdmin
+            .from('games')
+            .select('*', { count: 'exact' })
+            .ilike('nameEn', wordPattern)
+            .limit(searchLimit);
+          
+          if (!additionalResult.error && additionalResult.data) {
+            // Merge results, avoiding duplicates
+            const existingIds = new Set((searchResult.data || []).map((g: any) => g.id));
+            const additionalGames = (additionalResult.data || []).filter((g: any) => !existingIds.has(g.id));
+            searchResult.data = [...(searchResult.data || []), ...additionalGames];
+          }
+        }
+      }
+      
+      // Filter results in JavaScript using normalized comparison for better matching
+      let allGames = searchResult.data || [];
+      if (normalizedSearch && allGames.length > 0) {
+        // Score games based on normalized matching
+        const scoredGames = allGames.map((game: any) => {
+          const gameNameEn = game.nameEn || game.name_en || game.name || '';
+          const normalizedGameName = normalizeForSearch(gameNameEn);
+          const normalizedQuery = normalizedSearch;
+          
+          // Calculate match score
+          let score = 0;
+          
+          // Exact normalized match (highest priority)
+          if (normalizedGameName === normalizedQuery) score += 1000;
+          
+          // Normalized name starts with normalized query
+          if (normalizedGameName.startsWith(normalizedQuery)) score += 500;
+          
+          // Normalized query words all appear in normalized name
+          const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 0);
+          const allWordsMatch = queryWords.every(word => normalizedGameName.includes(word));
+          if (allWordsMatch) score += 300;
+          
+          // Normalized name contains normalized query
+          if (normalizedGameName.includes(normalizedQuery)) score += 100;
+          
+          // Original (non-normalized) exact match bonus
+          const gameNameLower = gameNameEn.toLowerCase();
+          const searchLower = search.toLowerCase();
+          if (gameNameLower === searchLower) score += 200;
+          if (gameNameLower.startsWith(searchLower)) score += 150;
+          if (gameNameLower.includes(searchLower)) score += 50;
+          
+          return { game, score };
+        })
+        .filter((item: any) => item.score > 0) // Only keep games with some match
+        .sort((a: any, b: any) => b.score - a.score) // Sort by score descending
+        .map((item: any) => item.game); // Extract games
+        
+        allGames = scoredGames;
+      }
+      
+      gamesData = allGames;
+      totalCount = allGames.length; // Use filtered count
       fetchError = searchResult.error;
       
       console.log('[BOARDGAMES API] Combined search results:', {
@@ -106,29 +186,45 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort games with smart prioritization (exact matches first, then alphabetical)
+    // Use normalized comparison for better matching with punctuation
     const games = (gamesData || []).sort((a: any, b: any) => {
       const nameA = (a.nameEn || a.name_en || a.name || '').trim();
       const nameB = (b.nameEn || b.name_en || b.name || '').trim();
       const searchLower = search ? search.toLowerCase().trim() : '';
+      const normalizedSearch = search ? normalizeForSearch(search) : '';
       const nameALower = nameA.toLowerCase();
       const nameBLower = nameB.toLowerCase();
+      const normalizedNameA = normalizeForSearch(nameA);
+      const normalizedNameB = normalizeForSearch(nameB);
       
       if (search) {
         // Calculate match scores
         let scoreA = 0;
         let scoreB = 0;
         
-        // Exact match (case-insensitive) - highest priority
-        if (nameALower === searchLower) scoreA += 1000;
-        if (nameBLower === searchLower) scoreB += 1000;
+        // Normalized exact match (highest priority - handles punctuation differences)
+        if (normalizedNameA === normalizedSearch) scoreA += 1000;
+        if (normalizedNameB === normalizedSearch) scoreB += 1000;
+        
+        // Exact match (case-insensitive) - high priority
+        if (nameALower === searchLower) scoreA += 900;
+        if (nameBLower === searchLower) scoreB += 900;
         
         // Exact match with case match - bonus
         if (nameA === search) scoreA += 100;
         if (nameB === search) scoreB += 100;
         
-        // Starts with search term
+        // Normalized starts with - handles punctuation
+        if (normalizedNameA.startsWith(normalizedSearch)) scoreA += 500;
+        if (normalizedNameB.startsWith(normalizedSearch)) scoreB += 500;
+        
+        // Starts with search term (original)
         if (nameALower.startsWith(searchLower)) scoreA += 50;
         if (nameBLower.startsWith(searchLower)) scoreB += 50;
+        
+        // Normalized contains - handles punctuation
+        if (normalizedNameA.includes(normalizedSearch)) scoreA += 100;
+        if (normalizedNameB.includes(normalizedSearch)) scoreB += 100;
         
         // Word boundary match (whole word match)
         const wordMatchA = new RegExp(`\\b${searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(nameALower);
@@ -136,7 +232,7 @@ export async function GET(request: NextRequest) {
         if (wordMatchA) scoreA += 30;
         if (wordMatchB) scoreB += 30;
         
-        // Contains search term
+        // Contains search term (original)
         if (nameALower.includes(searchLower)) scoreA += 10;
         if (nameBLower.includes(searchLower)) scoreB += 10;
         
