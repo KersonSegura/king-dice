@@ -373,7 +373,6 @@ export default function AllGamesPage() {
               </div>
             </div>
           )}
-        </div>
       </div>
     </div>
   );
