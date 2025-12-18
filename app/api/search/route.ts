@@ -218,77 +218,74 @@ export async function GET(request: NextRequest) {
         const normalizedSearch = normalizeForSearch(searchQuery);
         console.log('[SEARCH API] Normalized search:', normalizedSearch);
         
-        // Fetch a broader set of games, then filter in JavaScript for better punctuation handling
-        // Use the original search pattern for initial fetch
-        const searchPattern = `%${searchQuery}%`;
-        const searchLimit = Math.max(limit * 3, 100); // Fetch more to filter in JavaScript
+        // Split normalized search into words for better matching
+        const normalizedWords = normalizedSearch.split(/\s+/).filter(w => w.length > 0);
+        console.log('[SEARCH API] Normalized words:', normalizedWords);
         
-        // Try searching with camelCase first (matches database schema)
+        // Fetch a broader set of games, then filter in JavaScript for better punctuation handling
+        // Strategy: Fetch games that contain any of the search words, then filter/score in JavaScript
+        const searchLimit = Math.max(limit * 5, 200); // Fetch more to filter in JavaScript
         let dbGames: any[] = [];
         let gamesError: any = null;
         
-        // Primary: Try nameEn (camelCase - matches database schema)
-        const result1 = await supabaseAdmin
-          .from('games')
-          .select('*')
-          .ilike('nameEn', searchPattern)
-          .limit(searchLimit);
-        
-        dbGames = result1.data || [];
-        gamesError = result1.error;
-        
-        // If search failed or returned no results, try fallback methods
-        if (gamesError || dbGames.length === 0) {
-          console.log('[SEARCH API] Primary search (nameEn) failed or no results, trying fallbacks...');
+        if (normalizedWords.length > 0) {
+          // Build query to find games containing any of the normalized words
+          // This will catch games like "Catan: Seafarers" when searching for "Catan Seafarers"
+          const wordQueries = normalizedWords.map(word => `nameEn.ilike.%${word}%`);
           
-          // Fallback 1: Try name (legacy field)
-          const result2 = await supabaseAdmin
+          // Try searching with nameEn first
+          const result1 = await supabaseAdmin
             .from('games')
             .select('*')
-            .ilike('name', searchPattern)
+            .or(wordQueries.join(','))
             .limit(searchLimit);
           
-          if (!result2.error && result2.data && result2.data.length > 0) {
-            console.log('[SEARCH API] Fallback 1 (name) succeeded!');
-            dbGames = result2.data;
-            gamesError = null;
-          } else {
-            // Fallback 2: Try nameEs (camelCase)
-            const result3 = await supabaseAdmin
+          dbGames = result1.data || [];
+          gamesError = result1.error;
+          
+          // If that didn't work or returned few results, also try name (legacy field)
+          if (gamesError || dbGames.length < normalizedWords.length) {
+            const wordQueriesName = normalizedWords.map(word => `name.ilike.%${word}%`);
+            const result2 = await supabaseAdmin
               .from('games')
               .select('*')
-              .ilike('nameEs', searchPattern)
+              .or(wordQueriesName.join(','))
               .limit(searchLimit);
             
-            if (!result3.error && result3.data && result3.data.length > 0) {
-              console.log('[SEARCH API] Fallback 2 (nameEs) succeeded!');
-              dbGames = result3.data;
-              gamesError = null;
-            } else if (gamesError) {
-              console.error('[SEARCH API] All search methods failed:', gamesError);
-            }
-          }
-        }
-        
-        // Also try searching with normalized query (words separated) to catch more matches
-        if (normalizedSearch && normalizedSearch !== searchQuery.toLowerCase()) {
-          const normalizedWords = normalizedSearch.split(/\s+/).filter(w => w.length > 0);
-          if (normalizedWords.length > 0) {
-            // Search for games containing all the normalized words
-            const wordPattern = `%${normalizedWords.join('%')}%`;
-            const additionalResult = await supabaseAdmin
-              .from('games')
-              .select('*')
-              .ilike('nameEn', wordPattern)
-              .limit(searchLimit);
-            
-            if (!additionalResult.error && additionalResult.data) {
+            if (!result2.error && result2.data) {
               // Merge results, avoiding duplicates
               const existingIds = new Set(dbGames.map((g: any) => g.id));
-              const additionalGames = (additionalResult.data || []).filter((g: any) => !existingIds.has(g.id));
+              const additionalGames = (result2.data || []).filter((g: any) => !existingIds.has(g.id));
               dbGames = [...dbGames, ...additionalGames];
+              if (gamesError) gamesError = null;
             }
           }
+          
+          // Also try the original search query as a fallback
+          const originalPattern = `%${searchQuery}%`;
+          const result3 = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .ilike('nameEn', originalPattern)
+            .limit(searchLimit);
+          
+          if (!result3.error && result3.data) {
+            // Merge results, avoiding duplicates
+            const existingIds = new Set(dbGames.map((g: any) => g.id));
+            const additionalGames = (result3.data || []).filter((g: any) => !existingIds.has(g.id));
+            dbGames = [...dbGames, ...additionalGames];
+          }
+        } else {
+          // Fallback: use original search pattern if normalization produced no words
+          const searchPattern = `%${searchQuery}%`;
+          const result1 = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .ilike('nameEn', searchPattern)
+            .limit(searchLimit);
+          
+          dbGames = result1.data || [];
+          gamesError = result1.error;
         }
 
         if (gamesError) {
@@ -303,11 +300,21 @@ export async function GET(request: NextRequest) {
           })));
           
           // Filter and sort results using normalized comparison for better matching with punctuation
+          // Only keep games that contain ALL normalized search words
           const sortedGames = dbGames
             .map((game: any) => {
               const nameA = (game.nameEn || game.name_en || game.name || '').trim();
               const nameALower = nameA.toLowerCase();
               const normalizedNameA = normalizeForSearch(nameA);
+              
+              // Check if all normalized words are present in the game name
+              const allWordsMatch = normalizedWords.length > 0 && 
+                normalizedWords.every(word => normalizedNameA.includes(word));
+              
+              // If not all words match, skip this game
+              if (!allWordsMatch && normalizedWords.length > 0) {
+                return { game, score: 0 };
+              }
               
               // Calculate match scores
               let score = 0;
@@ -329,6 +336,20 @@ export async function GET(request: NextRequest) {
               
               // Normalized contains - handles punctuation
               if (normalizedNameA.includes(normalizedSearch)) score += 100;
+              
+              // All words appear in order (bonus for word order matching)
+              const normalizedWordsInOrder = normalizedSearch.split(/\s+/).filter(w => w.length > 0);
+              let wordsInOrder = true;
+              let lastIndex = -1;
+              for (const word of normalizedWordsInOrder) {
+                const index = normalizedNameA.indexOf(word, lastIndex + 1);
+                if (index === -1) {
+                  wordsInOrder = false;
+                  break;
+                }
+                lastIndex = index;
+              }
+              if (wordsInOrder) score += 200;
               
               // Word boundary match (whole word match)
               const searchLower = searchQuery.toLowerCase().trim();
@@ -353,6 +374,7 @@ export async function GET(request: NextRequest) {
               const nameB = (b.game.nameEn || b.game.name_en || b.game.name || '').trim().toLowerCase();
               return nameA.localeCompare(nameB);
             })
+            .slice(0, limit) // Limit results
             .map((item: any) => item.game); // Extract games
           
           console.log('[SEARCH API] After sorting, top 5 games:', sortedGames.slice(0, 5).map((g: any) => ({
