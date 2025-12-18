@@ -511,8 +511,9 @@ export default function CatanMapGeneratorPage() {
         </div>
         </div>
         
-        {/* Map Modal */}
         {isModalOpen && selectedMap && (
+          <>
+            {/* Map Modal */}
          <div 
            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
            onClick={closeModal}
@@ -571,7 +572,8 @@ export default function CatanMapGeneratorPage() {
           </div>
         </div>
       </div>
-      )}
+          </>
+        )}
 
       {/* Back to Top Button */}
       {/* <BackToTopButton /> */}
