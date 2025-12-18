@@ -3,10 +3,10 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, FileText, Play, Download, Globe, X, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, FileText, Play, Download, Globe, X, ExternalLink } from 'lucide-react';
 import VideoLinks from '@/components/VideoLinks';
 import PDFHandler from '@/components/PDFHandler';
-import { useState, useEffect, use, useRef } from 'react';
+import { useState, useEffect, use, useRef, useCallback } from 'react';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -445,8 +445,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [publisherTruncatedText, setPublisherTruncatedText] = useState(''); // unused after simplifying clamp
   const designerRef = useRef<HTMLDivElement>(null);
   const publisherRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('rules');
+  const [activeTab, setActiveTab] = useState<'rules' | 'video' | 'pdf' | 'shop'>('video');
   const [isDesktop, setIsDesktop] = useState(false);
+
+  // Mobile tab overflow indicators
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+  const [tabsCanScrollLeft, setTabsCanScrollLeft] = useState(false);
+  const [tabsCanScrollRight, setTabsCanScrollRight] = useState(false);
   
   // Ranking button state
   const [showTooltip, setShowTooltip] = useState(false);
@@ -482,6 +487,23 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     window.addEventListener('resize', checkDesktop);
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
+
+  const updateTabsScrollIndicators = useCallback(() => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const canScroll = scrollWidth > clientWidth + 1;
+    setTabsCanScrollLeft(canScroll && scrollLeft > 1);
+    setTabsCanScrollRight(canScroll && scrollLeft + clientWidth < scrollWidth - 1);
+  }, []);
+
+  // Show left/right arrows on mobile when tab headers overflow horizontally
+  useEffect(() => {
+    updateTabsScrollIndicators();
+    if (typeof window === 'undefined') return;
+    window.addEventListener('resize', updateTabsScrollIndicators);
+    return () => window.removeEventListener('resize', updateTabsScrollIndicators);
+  }, [updateTabsScrollIndicators]);
 
   // Helper function to clean up URL for display
   const getCleanUrlDisplay = (url: string): string => {
@@ -809,15 +831,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     
     console.log('Setting active tab:', { hasRules, hasVideo, hasPdf, hasShop, videoUrl: game.videoUrl, shopItems: game.shopItems });
     
-    // Set to first available tab in order: rules > video > pdf > shop
-    if (hasRules) {
-      setActiveTab('rules');
-    } else if (hasVideo) {
+    // Set to first available tab in order: video > shop > pdf > rules
+    if (hasVideo) {
       setActiveTab('video');
-    } else if (hasPdf) {
-      setActiveTab('pdf');
     } else if (hasShop) {
       setActiveTab('shop');
+    } else if (hasPdf) {
+      setActiveTab('pdf');
+    } else if (hasRules) {
+      setActiveTab('rules');
     }
     // If no tabs available, the section won't render anyway due to the conditional
   }, [game, loading]);
@@ -1547,73 +1569,110 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0) || game?.shopListMasterGameId) && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Tab Headers */}
-            <div className="border-b border-gray-200 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <nav className="flex space-x-2 sm:space-x-4 md:space-x-8 px-4 sm:px-6 md:px-8 pt-6 min-w-max" aria-label="Tabs">
-                {rules?.rulesText && (
-                  <button
-                    onClick={() => setActiveTab('rules')}
-                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
-                      activeTab === 'rules'
-                        ? 'border-[#fbae17] text-[#fbae17]'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                    Game Rules
-                  </button>
-                )}
-                
-                {game?.videoUrl && (
-                  <button
-                    onClick={() => setActiveTab('video')}
-                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
-                      activeTab === 'video'
-                        ? 'border-[#fbae17] text-[#fbae17]'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                    Video Tutorial
-                  </button>
-                )}
-                
-                {(game?.pdfUrl || game?.pdfFile) && (
-                  <button
-                    onClick={() => setActiveTab('pdf')}
-                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
-                      activeTab === 'pdf'
-                        ? 'border-[#fbae17] text-[#fbae17]'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                    PDF
-                  </button>
-                )}
-                
-                {(game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0) || game?.shopListMasterGameId) && (
-                  <button
-                    onClick={() => setActiveTab('shop')}
-                    className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
-                      activeTab === 'shop'
-                        ? 'border-[#fbae17] text-[#fbae17]'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <img 
-                      src="/ShopIcon.svg" 
-                      alt="Shop" 
-                      className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"
-                      style={{
-                        filter: activeTab === 'shop' 
-                          ? 'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)'
-                          : 'brightness(0) saturate(100%) invert(42%) sepia(8%) saturate(414%) hue-rotate(169deg) brightness(96%) contrast(89%)'
-                      }}
-                    />
-                    Shop
-                  </button>
-                )}
-              </nav>
+            <div className="relative border-b border-gray-200" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div
+                ref={tabsScrollRef}
+                className="overflow-x-auto"
+                onScroll={updateTabsScrollIndicators}
+              >
+                <nav className="flex space-x-2 sm:space-x-4 md:space-x-8 px-4 sm:px-6 md:px-8 pt-6 min-w-max" aria-label="Tabs">
+                  {game?.videoUrl && (
+                    <button
+                      onClick={() => setActiveTab('video')}
+                      className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
+                        activeTab === 'video'
+                          ? 'border-[#fbae17] text-[#fbae17]'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                      Video Tutorial
+                    </button>
+                  )}
+
+                  {(game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0) || game?.shopListMasterGameId) && (
+                    <button
+                      onClick={() => setActiveTab('shop')}
+                      className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
+                        activeTab === 'shop'
+                          ? 'border-[#fbae17] text-[#fbae17]'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <img
+                        src="/ShopIcon.svg"
+                        alt="Shop"
+                        className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"
+                        style={{
+                          filter:
+                            activeTab === 'shop'
+                              ? 'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)'
+                              : 'brightness(0) saturate(100%) invert(42%) sepia(8%) saturate(414%) hue-rotate(169deg) brightness(96%) contrast(89%)',
+                        }}
+                      />
+                      Shop
+                    </button>
+                  )}
+
+                  {(game?.pdfUrl || game?.pdfFile) && (
+                    <button
+                      onClick={() => setActiveTab('pdf')}
+                      className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
+                        activeTab === 'pdf'
+                          ? 'border-[#fbae17] text-[#fbae17]'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                      PDF
+                    </button>
+                  )}
+
+                  {rules?.rulesText && (
+                    <button
+                      onClick={() => setActiveTab('rules')}
+                      className={`py-3 sm:py-4 px-3 sm:px-4 md:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap flex-shrink-0 ${
+                        activeTab === 'rules'
+                          ? 'border-[#fbae17] text-[#fbae17]'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                      Game Rules
+                    </button>
+                  )}
+                </nav>
+              </div>
+
+              {/* Mobile scroll indicators */}
+              {tabsCanScrollLeft && (
+                <button
+                  type="button"
+                  aria-label="Scroll tabs left"
+                  onClick={() => {
+                    const el = tabsScrollRef.current;
+                    if (!el) return;
+                    el.scrollBy({ left: -220, behavior: 'smooth' });
+                  }}
+                  className="md:hidden absolute left-0 top-0 h-full px-2 flex items-center justify-center bg-gradient-to-r from-white via-white/95 to-transparent"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-400" />
+                </button>
+              )}
+              {tabsCanScrollRight && (
+                <button
+                  type="button"
+                  aria-label="Scroll tabs right"
+                  onClick={() => {
+                    const el = tabsScrollRef.current;
+                    if (!el) return;
+                    el.scrollBy({ left: 220, behavior: 'smooth' });
+                  }}
+                  className="md:hidden absolute right-0 top-0 h-full px-2 flex items-center justify-center bg-gradient-to-l from-white via-white/95 to-transparent"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </button>
+              )}
             </div>
 
             {/* Tab Content */}
