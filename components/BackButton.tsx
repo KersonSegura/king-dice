@@ -24,8 +24,9 @@ export default function BackButton({ className = '', fallbackUrl = '/' }: BackBu
   return (
     <button
       onClick={handleBack}
-      className={`flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md ${className}`}
+      className={`flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md aspect-square ${className}`}
       title="Go back"
+      style={{ borderRadius: '50%' }}
     >
       <ArrowLeft className="w-5 h-5 text-gray-600" />
     </button>

@@ -499,7 +499,7 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
       {ratingModal}
       <div className="flex h-48">
         {/* Left Section - Game Image (40% width) */}
-        <div className="relative w-2/5 bg-gray-200 overflow-hidden">
+        <Link href={`/game/${game.id}`} className="relative w-2/5 bg-gray-200 overflow-hidden cursor-pointer">
           {/* Ranking Badge */}
           {game.rank && (
             <div className="absolute top-2 left-2 z-10">
@@ -530,7 +530,7 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
               />
             </div>
           )}
-        </div>
+        </Link>
         
         {/* Right Section - Game Information (60% width) */}
         <div className="w-3/5 bg-white p-4 flex flex-col justify-between relative">
