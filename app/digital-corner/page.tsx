@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ExternalLink, MessageCircle, Gamepad2, Send, Users } from 'lucide-react';
+import { ExternalLink, MessageCircle, Gamepad2, Send, Users, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import LoginModal from '@/components/LoginModal';
-import BackButton from '@/components/BackButton';
 
 interface SteamGame {
   appid: number;
@@ -834,14 +834,26 @@ export default function DigitalCornerPage() {
   };
 
   return (
-    <div className="bg-gray-50">
-      {/* Header */}
+    <div className="bg-gray-50 flex flex-col min-h-screen">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Home
+          </Link>
+        </div>
+      </div>
+
+      {/* Page Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Back Button + Icon + Title */}
+            {/* Left: Icon + Title */}
             <div className="flex items-center space-x-3">
-              <BackButton />
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                 <Image
                   src="/PCIcon.svg"
@@ -872,7 +884,8 @@ export default function DigitalCornerPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4 lg:!mt-5">
+      <div className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4 lg:!mt-5">
         {/* Mobile Badge - Only visible on mobile */}
         <div className="lg:hidden -mt-4 mb-6">
           <div className="rounded-lg px-4 py-3 mx-4" style={{ backgroundColor: '#fbae17' }}>
@@ -1165,6 +1178,7 @@ export default function DigitalCornerPage() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
       

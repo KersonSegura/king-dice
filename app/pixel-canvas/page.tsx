@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
-import { Send, Users, MessageCircle } from 'lucide-react';
+import { Send, Users, MessageCircle, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import PixelCanvas from '@/components/PixelCanvas';
 import LoginModal from '@/components/LoginModal';
 import WeeklyCanvasSnapshot from '@/components/WeeklyCanvasSnapshot';
-import BackButton from '@/components/BackButton';
 
 interface ChatMessage {
   id: string;
@@ -639,13 +639,25 @@ export default function PixelCanvasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Home
+          </Link>
+        </div>
+      </div>
+
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {/* Header */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
-            <BackButton />
             <div className="text-center">
               <h1 className="text-4xl font-bold text-gray-900 mb-2">Pixel Canvas</h1>
               <p className="text-lg text-gray-600">Create pixel art with the community</p>

@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ThumbsUp, User, Trophy, Star } from 'lucide-react';
+import { ThumbsUp, User, Trophy, Star, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import Image from 'next/image';
 import CatanMapGenerator from '@/components/CatanMapGenerator';
 import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
-import BackButton from '@/components/BackButton';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
@@ -255,14 +255,23 @@ export default function CatanMapGeneratorPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col overflow-x-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Home
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1">
         {/* Header */}
         <div className="flex items-center justify-center mb-8 pt-8 sm:pt-0">
-          <div className="flex items-center space-x-4 max-w-full">
-            <div className="hidden sm:block">
-              <BackButton />
-            </div>
-            <div className="text-center flex-1 min-w-0">
+          <div className="text-center flex-1 min-w-0">
               <h1 className="text-4xl font-bold text-gray-900 mb-2 break-words">Catan Map Generator</h1>
               <p className="text-lg text-gray-600 break-words">
                 <span className="block sm:hidden">Create and share your<br />custom Catan maps</span>

@@ -6,7 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 
 import ModernTooltip from "@/components/ModernTooltip";
-import BackButton from "@/components/BackButton";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 type TabKey =
   | "background"
@@ -864,11 +865,23 @@ export default function MyDicePage() {
   const previewLayers = buildPreviewLayers(selected);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Home
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1">
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-2">
-            <BackButton />
             <div className="flex-1 flex items-center justify-between gap-2 sm:justify-start sm:gap-4">
               <h1 className="text-3xl font-bold text-gray-900">
                 My Dice
