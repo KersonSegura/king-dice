@@ -214,18 +214,25 @@ export async function GET(request: NextRequest) {
       try {
         console.log('[SEARCH API] Searching for games with query:', searchQuery);
         
+        // Normalize search query for better matching (removes punctuation)
+        const normalizedSearch = normalizeForSearch(searchQuery);
+        console.log('[SEARCH API] Normalized search:', normalizedSearch);
+        
+        // Fetch a broader set of games, then filter in JavaScript for better punctuation handling
+        // Use the original search pattern for initial fetch
+        const searchPattern = `%${searchQuery}%`;
+        const searchLimit = Math.max(limit * 3, 100); // Fetch more to filter in JavaScript
+        
         // Try searching with camelCase first (matches database schema)
         let dbGames: any[] = [];
         let gamesError: any = null;
         
         // Primary: Try nameEn (camelCase - matches database schema)
-        // Order by name to get exact matches first, then alphabetical
         const result1 = await supabaseAdmin
           .from('games')
           .select('*')
-          .ilike('nameEn', `%${searchQuery}%`)
-          .order('nameEn', { ascending: true })
-          .limit(limit);
+          .ilike('nameEn', searchPattern)
+          .limit(searchLimit);
         
         dbGames = result1.data || [];
         gamesError = result1.error;
@@ -238,9 +245,8 @@ export async function GET(request: NextRequest) {
           const result2 = await supabaseAdmin
             .from('games')
             .select('*')
-            .ilike('name', `%${searchQuery}%`)
-            .order('name', { ascending: true })
-            .limit(limit);
+            .ilike('name', searchPattern)
+            .limit(searchLimit);
           
           if (!result2.error && result2.data && result2.data.length > 0) {
             console.log('[SEARCH API] Fallback 1 (name) succeeded!');
@@ -251,9 +257,8 @@ export async function GET(request: NextRequest) {
             const result3 = await supabaseAdmin
               .from('games')
               .select('*')
-              .ilike('nameEs', `%${searchQuery}%`)
-              .order('nameEs', { ascending: true })
-              .limit(limit);
+              .ilike('nameEs', searchPattern)
+              .limit(searchLimit);
             
             if (!result3.error && result3.data && result3.data.length > 0) {
               console.log('[SEARCH API] Fallback 2 (nameEs) succeeded!');
@@ -261,6 +266,27 @@ export async function GET(request: NextRequest) {
               gamesError = null;
             } else if (gamesError) {
               console.error('[SEARCH API] All search methods failed:', gamesError);
+            }
+          }
+        }
+        
+        // Also try searching with normalized query (words separated) to catch more matches
+        if (normalizedSearch && normalizedSearch !== searchQuery.toLowerCase()) {
+          const normalizedWords = normalizedSearch.split(/\s+/).filter(w => w.length > 0);
+          if (normalizedWords.length > 0) {
+            // Search for games containing all the normalized words
+            const wordPattern = `%${normalizedWords.join('%')}%`;
+            const additionalResult = await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('nameEn', wordPattern)
+              .limit(searchLimit);
+            
+            if (!additionalResult.error && additionalResult.data) {
+              // Merge results, avoiding duplicates
+              const existingIds = new Set(dbGames.map((g: any) => g.id));
+              const additionalGames = (additionalResult.data || []).filter((g: any) => !existingIds.has(g.id));
+              dbGames = [...dbGames, ...additionalGames];
             }
           }
         }
@@ -276,9 +302,7 @@ export async function GET(request: NextRequest) {
             name: g.name
           })));
           
-          // Sort results to prioritize exact matches and shorter names (base games before expansions)
-          // Use normalized comparison for better matching with punctuation
-          const normalizedSearch = normalizeForSearch(searchQuery);
+          // Filter and sort results using normalized comparison for better matching with punctuation
           const sortedGames = dbGames
             .map((game: any) => {
               const nameA = (game.nameEn || game.name_en || game.name || '').trim();
