@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { ThumbsUp, User, Trophy, Star, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import CatanMapGenerator from '@/components/CatanMapGenerator';
 import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
+import { supabaseClient } from '@/lib/supabase';
 import Footer from '@/components/Footer';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
@@ -57,8 +57,6 @@ export default function CatanMapGeneratorPage() {
     }
 
     try {
-      const supabaseClient = await getSupabaseBrowserClient();
-      
       // Fetch all votes for the current user - try both camelCase and snake_case
       let votes: any[] = [];
       
@@ -253,73 +251,12 @@ export default function CatanMapGeneratorPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isLoadingMore, hasMoreMaps, nominations.length, displayedCount]);
 
-  const mapModal = isModalOpen && selectedMap ? (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-      onClick={closeModal}
-    >
-      <div
-        className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={closeModal}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold z-10"
-        >
-          ×
-        </button>
-
-        <div className="p-6">
-          <h3 className="text-xl font-bold text-dark-900 mb-4 text-center">
-            Catan Map by{' '}
-            {selectedMap.username ||
-              (selectedMap.userId ? `User_${selectedMap.userId.slice(-6)}` : 'Anonymous')}
-          </h3>
-
-          <div className="flex justify-center">
-            <img
-              src={selectedMap.imageData}
-              alt={`Catan Map ${selectedMap.id}`}
-              className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
-              style={{
-                width: '615px',
-                height: '532px',
-                maxWidth: '100%',
-                maxHeight: '70vh',
-                objectFit: 'contain',
-              }}
-            />
-          </div>
-
-          <div className="text-center mt-4">
-            <button
-              onClick={() => handleVote(selectedMap.id)}
-              title={userVotedNominations.has(selectedMap.id) ? 'Remove vote' : 'Add vote'}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full transition-colors mx-auto ${
-                userVotedNominations.has(selectedMap.id)
-                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              <ThumbsUp
-                className={`h-5 w-5 ${userVotedNominations.has(selectedMap.id) ? 'fill-current' : ''}`}
-              />
-              <span className="font-medium">
-                {selectedMap.votes} {selectedMap.votes === 1 ? 'like' : 'likes'}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  ) : null;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col overflow-x-hidden">
-      {mapModal}
+      {/* Header with back button */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link 
+          <Link
             href="/"
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
@@ -329,9 +266,11 @@ export default function CatanMapGeneratorPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        {/* Header */}
         <div className="flex items-center justify-center mb-8 pt-8 sm:pt-0">
-          <div className="text-center flex-1 min-w-0">
+          <div className="flex items-center space-x-4 max-w-full">
+            <div className="text-center flex-1 min-w-0">
               <h1 className="text-4xl font-bold text-gray-900 mb-2 break-words">Catan Map Generator</h1>
               <p className="text-lg text-gray-600 break-words">
                 <span className="block sm:hidden">Create and share your<br />custom Catan maps</span>
@@ -344,6 +283,7 @@ export default function CatanMapGeneratorPage() {
         
         <CatanMapGenerator />
         
+                {/* Top 10 Community Favorite Maps */}
         <div className="mt-4 sm:mt-6 bg-white rounded-lg p-8 shadow-md">
           <h2 className="text-2xl font-bold text-dark-900 mb-6 text-center flex items-center justify-center gap-2">
             <Trophy className="w-8 h-8" style={{ color: '#fbae17' }} />
@@ -364,6 +304,7 @@ export default function CatanMapGeneratorPage() {
                     className="bg-gray-50 rounded-lg p-2 border-2 border-transparent hover:border-yellow-400 transition-colors cursor-pointer relative"
                     onClick={() => handleLoadMap(nomination)}
                   >
+                    {/* Ranking Badge */}
                     <div className="absolute top-2 left-2 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10" style={{ backgroundColor: '#fbae17' }}>
                       #{index + 1}
         </div>
@@ -415,6 +356,7 @@ export default function CatanMapGeneratorPage() {
                     </div>
                   </div>
                 ))}
+                                 {/* Show centered icon if no nominations yet */}
                  {nominations.length === 0 && (
                    <div className="col-span-full flex justify-center items-center py-12">
                      <div className="text-center">
@@ -433,6 +375,7 @@ export default function CatanMapGeneratorPage() {
           )}
           </div>
           
+        {/* Community Nominated Maps */}
         <div className="mt-4 sm:mt-6 bg-white rounded-lg p-8 shadow-md">
                      <h2 className="text-2xl font-bold text-dark-900 mb-6 text-center flex items-center justify-center gap-2">
              <Star className="w-8 h-8" style={{ color: '#fbae17' }} />
@@ -442,6 +385,7 @@ export default function CatanMapGeneratorPage() {
           
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {/* Skeleton loaders */}
               {Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="bg-gray-200 rounded-lg p-2 animate-pulse">
                   <div className="w-full h-20 bg-gray-300 rounded mb-2"></div>
@@ -452,6 +396,7 @@ export default function CatanMapGeneratorPage() {
             </div>
           ) : (
             <>
+               {/* Maps Grid - More per row */}
                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 {nominations.slice(0, displayedCount).map((nomination) => (
                                      <div 
@@ -509,6 +454,7 @@ export default function CatanMapGeneratorPage() {
                   </div>
                 ))}
                 
+                {/* Loading indicator for infinite scroll */}
                 {isLoadingMore && (
                   <div className="col-span-full flex justify-center items-center py-8">
                     <div className="flex items-center space-x-2">
@@ -519,12 +465,14 @@ export default function CatanMapGeneratorPage() {
                 )}
                 
                 
+                {/* End of maps message */}
                 {!hasMoreMaps && nominations.length > 0 && (
                   <div className="col-span-full flex justify-center py-4">
                     <span className="text-gray-500 text-sm">You've reached the end! No more maps to load.</span>
                   </div>
                 )}
                 
+                                 {/* Show centered icon if no nominations yet */}
                  {nominations.length === 0 && (
                    <div className="col-span-full flex justify-center items-center py-12">
                      <div className="text-center">
@@ -540,6 +488,7 @@ export default function CatanMapGeneratorPage() {
                  )}
           </div>
           
+               {/* Load More Button */}
                {!isLoadingMore && hasMoreMaps && displayedCount < nominations.length && (
                  <div className="text-center mt-8">
                    <button 
@@ -558,8 +507,75 @@ export default function CatanMapGeneratorPage() {
                )}
             </>
           )}
+          </div>
         </div>
+        
+             {/* Map Modal */}
+       {isModalOpen && selectedMap && (
+         <div 
+           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+           onClick={closeModal}
+         >
+           <div 
+             className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto relative"
+             onClick={(e) => e.stopPropagation()}
+           >
+            {/* Close Button */}
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold z-10"
+            >
+              ×
+            </button>
+            
+            {/* Modal Content */}
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-dark-900 mb-4 text-center">
+                Catan Map by {selectedMap.username || (selectedMap.userId ? `User_${selectedMap.userId.slice(-6)}` : 'Anonymous')}
+              </h3>
+              
+                             {/* Map Image */}
+               <div className="flex justify-center">
+                 <img
+                   src={selectedMap.imageData}
+                   alt={`Catan Map ${selectedMap.id}`}
+                   className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+                   style={{
+                     width: '615px',
+                     height: '532px',
+                     maxWidth: '100%',
+                     maxHeight: '70vh',
+                     objectFit: 'contain'
+                   }}
+                 />
+            </div>
+              
+              {/* Like Button with Count */}
+              <div className="text-center mt-4">
+                <button 
+                  onClick={() => handleVote(selectedMap.id)}
+                  title={userVotedNominations.has(selectedMap.id) ? 'Remove vote' : 'Add vote'}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full transition-colors mx-auto ${
+                    userVotedNominations.has(selectedMap.id)
+                      ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <ThumbsUp className={`h-5 w-5 ${userVotedNominations.has(selectedMap.id) ? 'fill-current' : ''}`} />
+                  <span className="font-medium">
+                    {selectedMap.votes} {selectedMap.votes === 1 ? 'like' : 'likes'}
+                  </span>
+                </button>
+            </div>
+          </div>
         </div>
+      </div>
+      )}
+
+      {/* Back to Top Button */}
+      {/* <BackToTopButton /> */}
+
+      {/* Footer */}
       <div className="mt-auto">
         <Footer />
       </div>
