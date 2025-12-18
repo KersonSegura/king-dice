@@ -180,91 +180,93 @@ export default function AllGamesPage() {
 
             {/* Advanced Filters */}
             {showFilters && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1">Players</label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minPlayers}
-                      onChange={(e) => handleFilterChange('minPlayers', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxPlayers}
-                      onChange={(e) => handleFilterChange('maxPlayers', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-                    />
+              <div className="mt-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="w-full">
+                    <label className="block text-sm font-medium text-dark-700 mb-1">Players</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={filters.minPlayers}
+                        onChange={(e) => handleFilterChange('minPlayers', e.target.value)}
+                        className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={filters.maxPlayers}
+                        onChange={(e) => handleFilterChange('maxPlayers', e.target.value)}
+                        className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full">
+                    <label className="block text-sm font-medium text-dark-700 mb-1">Time (min)</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={filters.minTime}
+                        onChange={(e) => handleFilterChange('minTime', e.target.value)}
+                        className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={filters.maxTime}
+                        onChange={(e) => handleFilterChange('maxTime', e.target.value)}
+                        className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full">
+                    <label className="block text-sm font-medium text-dark-700 mb-1">Year</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        placeholder="From"
+                        value={filters.minYear}
+                        onChange={(e) => handleFilterChange('minYear', e.target.value)}
+                        className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                      />
+                      <input
+                        type="number"
+                        placeholder="To"
+                        value={filters.maxYear}
+                        onChange={(e) => handleFilterChange('maxYear', e.target.value)}
+                        className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full">
+                    <label className="block text-sm font-medium text-dark-700 mb-1">Sort by</label>
+                    <select
+                      value={filters.sortBy}
+                      onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                      className="w-full px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                    >
+                      <option value="name">Name</option>
+                      <option value="year">Year</option>
+                      <option value="ranking">Ranking</option>
+                      <option value="minPlayers">Players</option>
+                    </select>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1">Time (min)</label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minTime}
-                      onChange={(e) => handleFilterChange('minTime', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxTime}
-                      onChange={(e) => handleFilterChange('maxTime', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1">Year</label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="number"
-                      placeholder="From"
-                      value={filters.minYear}
-                      onChange={(e) => handleFilterChange('minYear', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-                    />
-                    <input
-                      type="number"
-                      placeholder="To"
-                      value={filters.maxYear}
-                      onChange={(e) => handleFilterChange('maxYear', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-dark-700 mb-1">Sort by</label>
-                  <select
-                    value={filters.sortBy}
-                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                    className="w-full px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="name">Name</option>
-                    <option value="year">Year</option>
-                    <option value="ranking">Ranking</option>
-                    <option value="minPlayers">Players</option>
-                  </select>
-                </div>
-
-                <div className="md:col-span-2 lg:col-span-4 flex justify-end space-x-2">
+                <div className="flex flex-wrap justify-end gap-2 pt-2">
                   <button
                     onClick={clearFilters}
-                    className="px-4 py-2 text-dark-600 border border-dark-200 rounded-lg hover:bg-dark-50"
+                    className="px-4 py-2 text-dark-600 border border-dark-200 rounded-lg hover:bg-dark-50 transition-colors text-sm"
                   >
                     Clear
                   </button>
                   <button
                     onClick={applyFilters}
-                    className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+                    className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
                   >
                     Apply
                   </button>
