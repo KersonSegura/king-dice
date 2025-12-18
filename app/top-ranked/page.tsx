@@ -116,8 +116,7 @@ export default function TopRankedPage() {
                 Top Ranked Games
               </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                The 25 most played games this month, based on community activity across our data sources.
-              These games are trending with players around the world.
+              The 25 most played games this month, based on community activity
             </p>
             </div>
           </div>

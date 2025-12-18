@@ -116,8 +116,7 @@ export default function HotGamesPage() {
                 Hot Games
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                The 50 hottest games today, curated from community hype and conversations.
-                These games are generating the most buzz and interest right now.
+                The 50 hottest games today
               </p>
             </div>
           </div>
