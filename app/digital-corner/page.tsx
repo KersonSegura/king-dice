@@ -850,8 +850,8 @@ export default function DigitalCornerPage() {
 
       {/* Page Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
-          <div className="flex items-center justify-between w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
             {/* Left: Icon + Title */}
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
@@ -868,7 +868,7 @@ export default function DigitalCornerPage() {
             
             {/* Center: Highlighted Description - Hidden on mobile */}
             <div className="hidden lg:flex flex-1 mx-8 justify-center items-center">
-              <div className="rounded-lg px-4 h-10 flex items-center" style={{ backgroundColor: '#fbae17' }}>
+              <div className="rounded-lg px-4 py-2" style={{ backgroundColor: '#fbae17' }}>
                 <p className="text-sm text-black font-bold text-center leading-none">
                   Discover popular board games in their virtual versions, chat with other players and find friends to play with
                 </p>
