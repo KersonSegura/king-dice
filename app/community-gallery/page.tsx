@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { Image as ImageIcon, Heart, ThumbsUp, MessageCircle, Flag, Plus, User, Calendar, Download, Trash2, Crown, Search, X, ArrowUp } from 'lucide-react';
+import { Image as ImageIcon, Heart, ThumbsUp, MessageCircle, Flag, Plus, User, Calendar, Download, Trash2, Crown, Search, X, ArrowUp, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ModerationAlert from '@/components/ModerationAlert';
 import ReportContent from '@/components/ReportContent';
@@ -15,7 +16,6 @@ import ModernTooltip from '@/components/ModernTooltip';
 import TagSelector from '@/components/TagSelector';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
 import ImageModal from '@/components/ImageModal';
-import BackButton from '@/components/BackButton';
 import ExpandableText from '@/components/ExpandableText';
 import LoadingScreen from '@/components/LoadingScreen';
 
@@ -1065,12 +1065,24 @@ function CommunityGalleryPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-8 flex flex-col">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-hidden pb-20">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Games
+          </Link>
+        </div>
+      </div>
+
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 overflow-x-hidden pb-20">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
-            <BackButton />
             <Image 
               src="/GalleryIcon.svg" 
               alt="Gallery" 

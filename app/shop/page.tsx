@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Search, ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
+import { ExternalLink, Search, ChevronLeft, ChevronRight, ChevronDown, X, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 // Amazon Associates disclosure - required by Amazon
 // Updated to clarify that prices are the same for consumers
@@ -136,8 +137,21 @@ export default function ShopPage() {
   }, [searchQuery, selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-8 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Games
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 pb-20">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">

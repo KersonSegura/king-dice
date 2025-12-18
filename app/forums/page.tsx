@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp } from 'lucide-react';
+import { MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -15,7 +15,6 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import LoginModal from '@/components/LoginModal';
 import ModernTooltip from '@/components/ModernTooltip';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
-import BackButton from '@/components/BackButton';
 import { useGameMentions } from '@/hooks/useGameMentions';
 import { renderContentWithGameLinks } from '@/utils/renderContent';
 import { useRef } from 'react';
@@ -463,12 +462,24 @@ function ForumsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-8 flex flex-col">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Games
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
-            <BackButton />
             <Image 
               src="/ForumsIcon.svg" 
               alt="Forums" 
