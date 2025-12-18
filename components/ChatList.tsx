@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, Plus, Search, Users, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from './Toast';
+import LoadingLogo from './LoadingLogo';
 
 // Color palette for group chats - enough colors to minimize repeats
 const GROUP_COLORS = [
@@ -125,7 +126,7 @@ export default function ChatList({ onSelectChat, onCreateGroup, onStartDirectCha
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <LoadingLogo size={40} text="Loading chats..." />
       </div>
     );
   }

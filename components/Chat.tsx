@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import EmojiPicker from './EmojiPicker';
 import ChatBot from './ChatBot';
 import { useToast } from './Toast';
+import LoadingLogo from './LoadingLogo';
 
 interface Message {
   id: string;
@@ -691,7 +692,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <LoadingLogo size={44} text="Loading chat..." />
       </div>
     );
   }

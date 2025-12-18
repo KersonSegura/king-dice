@@ -11,6 +11,7 @@ import Chat from './Chat';
 import ChatBot from './ChatBot';
 import GroupChatModal from './GroupChatModal';
 import ViewMembersModal from './ViewMembersModal';
+import LoadingLogo from './LoadingLogo';
 
 // Color palette for group chats - enough colors to minimize repeats
 const GROUP_COLORS = [
@@ -445,7 +446,7 @@ function CustomChatList({
         {/* User Search Results */}
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            <LoadingLogo size={36} text="Searching..." />
           </div>
         ) : !hasSearched ? (
           <div className="p-8 text-center text-gray-500">

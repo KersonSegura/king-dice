@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, X, User, Dice6, Clock, Plus, UserPlus, UserMinus, MessageCircle } from 'lucide-react';
 import SuggestGameModal from './SuggestGameModal';
+import LoadingLogo from './LoadingLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { closeChatOnNavigation } from '@/lib/closeChat';
 
@@ -395,8 +396,7 @@ export default function SearchBar() {
             )
           ) : loading ? (
             <div className="px-4 py-3 text-center text-gray-500">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="mt-2 text-sm">Searching...</p>
+              <LoadingLogo size={28} text="Searching..." className="flex flex-col items-center justify-center py-2" />
             </div>
           ) : results.length > 0 ? (
             <div className="py-2">
@@ -551,27 +551,27 @@ export default function SearchBar() {
                       return (
                         <div
                           key={`user-${result.id}`}
-                          className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
                         >
                           <Link
                             href={`/profile/${result.username}`}
                             onClick={handleResultClick}
                             className="flex items-center space-x-3 flex-1 min-w-0"
-                          >
-                            <div className="flex-shrink-0">
-                              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
-                                {result.avatar ? (
-                                  <Image
-                                    src={result.avatar}
-                                    alt={result.username || 'User'}
-                                    width={32}
-                                    height={32}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <Dice6 className="w-4 h-4 text-white" />
-                                )}
-                              </div>
+                >
+                  <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
+                        {result.avatar ? (
+                          <Image
+                            src={result.avatar}
+                            alt={result.username || 'User'}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <Dice6 className="w-4 h-4 text-white" />
+                        )}
+                      </div>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-2">
@@ -652,45 +652,45 @@ export default function SearchBar() {
                         className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
                       >
                         <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center overflow-hidden">
-                            {result.image ? (
-                              <Image
-                                src={result.image}
-                                alt={result.name || 'Board Game'}
-                                width={32}
-                                height={32}
-                                className="w-8 h-8 rounded-lg object-cover"
-                              />
-                            ) : (
-                              <Dice6 className="w-4 h-4 text-white" />
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
+                      <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center overflow-hidden">
+                        {result.image ? (
+                          <Image
+                            src={result.image}
+                            alt={result.name || 'Board Game'}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <Dice6 className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm font-medium text-gray-900 whitespace-normal break-words">
                               {result.name}
                             </p>
-                          </div>
-                          <div className="flex items-center space-x-2 text-xs text-gray-500">
-                            <Dice6 className="w-3 h-3" />
-                            <span>Board Game</span>
-                            {result.year && (
-                              <>
-                                <span>•</span>
-                                <span>{result.year}</span>
-                              </>
-                            )}
-                            {result.players && (
-                              <>
-                                <span>•</span>
-                                <span>{result.players} players</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs text-gray-500">
+                          <Dice6 className="w-3 h-3" />
+                          <span>Board Game</span>
+                          {result.year && (
+                            <>
+                              <span>•</span>
+                              <span>{result.year}</span>
+                            </>
+                          )}
+                          {result.players && (
+                            <>
+                              <span>•</span>
+                              <span>{result.players} players</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
                   </>
                 );
               })()}

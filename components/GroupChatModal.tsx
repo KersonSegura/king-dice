@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Users, Search, Plus, Check } from 'lucide-react';
+import LoadingLogo from './LoadingLogo';
 
 interface User {
   id: string;
@@ -262,8 +263,7 @@ export default function GroupChatModal({
           <div className="flex-1 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Searching...</span>
+                <LoadingLogo size={36} text="Searching..." />
               </div>
             ) : !hasSearched ? (
               <div className="flex items-center justify-center py-8 text-gray-500">
