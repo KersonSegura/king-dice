@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import GameCardWithVote from '@/components/GameCardWithVote';
-import { Search, Filter, Star, Users, Clock, Calendar } from 'lucide-react';
+import { Search, Filter, Star, Users, Clock, Calendar, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import BackButton from '@/components/BackButton';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 
 interface Game {
@@ -135,21 +134,30 @@ export default function AllGamesPage() {
   };
 
   return (
-    <div>
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center mb-4">
-              <BackButton className="mr-4" />
-              <h1 className="text-4xl font-bold text-dark-900">
-                All Games
-              </h1>
-            </div>
-            <p className="text-xl text-dark-600 max-w-3xl mx-auto">
-              Explore our complete collection of {(totalGames || 0).toLocaleString()} board games
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex flex-col">
+      {/* Header with back button */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Games
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-dark-900 mb-4">
+            All Games
+          </h1>
+          <p className="text-xl text-dark-600 max-w-3xl mx-auto">
+            Explore our complete collection of {(totalGames || 0).toLocaleString()} board games
+          </p>
+        </div>
 
           {/* Search and Filters */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
