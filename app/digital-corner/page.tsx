@@ -853,7 +853,7 @@ export default function DigitalCornerPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Icon + Title */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 h-full">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                 <Image
                   src="/PCIcon.svg"
@@ -867,7 +867,7 @@ export default function DigitalCornerPage() {
             </div>
             
             {/* Center: Highlighted Description - Hidden on mobile */}
-            <div className="hidden lg:flex flex-1 mx-8 justify-center items-center">
+            <div className="hidden lg:flex flex-1 mx-8 justify-center items-center h-full">
               <div className="rounded-lg px-4 h-10 flex items-center" style={{ backgroundColor: '#fbae17' }}>
                 <p className="text-sm text-black font-bold text-center leading-none">
                   Discover popular board games in their virtual versions, chat with other players and find friends to play with
@@ -876,7 +876,7 @@ export default function DigitalCornerPage() {
             </div>
             
             {/* Right: Connection Status */}
-            <div className="flex items-center space-x-2 text-sm text-gray-500 h-10">
+            <div className="flex items-center space-x-2 text-sm text-gray-500 h-full">
               <div className={`w-2 h-2 rounded-full ${isAuthenticated && rtConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <span className="leading-none">{isAuthenticated && rtConnected ? 'Connected' : 'Not Connected'}</span>
             </div>
