@@ -105,13 +105,13 @@ export default function TopRankedPage() {
           <div className="flex items-center space-x-4">
             <BackButton />
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+              <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2 sm:gap-3">
                 <Image 
                   src="/TrophyIcon.svg" 
                   alt="Trophy Icon" 
                   width={48} 
                   height={48}
-                  className="w-12 h-12"
+                  className="w-8 h-8 sm:w-12 sm:h-12"
                 />
                 Top Ranked Games
               </h1>
