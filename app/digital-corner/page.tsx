@@ -863,22 +863,22 @@ export default function DigitalCornerPage() {
                   className="w-6 h-6"
                 />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">Digital Corner</h1>
+              <h1 className="text-2xl font-bold text-gray-900 leading-none">Digital Corner</h1>
             </div>
             
             {/* Center: Highlighted Description - Hidden on mobile */}
-            <div className="hidden lg:flex flex-1 mx-8 justify-center">
-              <div className="rounded-lg px-4 py-2" style={{ backgroundColor: '#fbae17' }}>
-                <p className="text-sm text-black font-bold text-center">
+            <div className="hidden lg:flex flex-1 mx-8 justify-center items-center">
+              <div className="rounded-lg px-4 h-10 flex items-center" style={{ backgroundColor: '#fbae17' }}>
+                <p className="text-sm text-black font-bold text-center leading-none">
                   Discover popular board games in their virtual versions, chat with other players and find friends to play with
                 </p>
               </div>
             </div>
             
             {/* Right: Connection Status */}
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <div className="flex items-center space-x-2 text-sm text-gray-500 h-10">
               <div className={`w-2 h-2 rounded-full ${isAuthenticated && rtConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span>{isAuthenticated && rtConnected ? 'Connected' : 'Not Connected'}</span>
+              <span className="leading-none">{isAuthenticated && rtConnected ? 'Connected' : 'Not Connected'}</span>
             </div>
           </div>
         </div>
