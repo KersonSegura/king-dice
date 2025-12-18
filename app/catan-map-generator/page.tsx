@@ -253,6 +253,71 @@ export default function CatanMapGeneratorPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isLoadingMore, hasMoreMaps, nominations.length, displayedCount]);
 
+  const mapModal = isModalOpen && selectedMap ? (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+      onClick={closeModal}
+    >
+      <div
+        className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={closeModal}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold z-10"
+        >
+          ×
+        </button>
+
+        {/* Modal Content */}
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-dark-900 mb-4 text-center">
+            Catan Map by{' '}
+            {selectedMap.username ||
+              (selectedMap.userId ? `User_${selectedMap.userId.slice(-6)}` : 'Anonymous')}
+          </h3>
+
+          {/* Map Image */}
+          <div className="flex justify-center">
+            <img
+              src={selectedMap.imageData}
+              alt={`Catan Map ${selectedMap.id}`}
+              className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+              style={{
+                width: '615px',
+                height: '532px',
+                maxWidth: '100%',
+                maxHeight: '70vh',
+                objectFit: 'contain',
+              }}
+            />
+          </div>
+
+          {/* Like Button with Count */}
+          <div className="text-center mt-4">
+            <button
+              onClick={() => handleVote(selectedMap.id)}
+              title={userVotedNominations.has(selectedMap.id) ? 'Remove vote' : 'Add vote'}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full transition-colors mx-auto ${
+                userVotedNominations.has(selectedMap.id)
+                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <ThumbsUp
+                className={`h-5 w-5 ${userVotedNominations.has(selectedMap.id) ? 'fill-current' : ''}`}
+              />
+              <span className="font-medium">
+                {selectedMap.votes} {selectedMap.votes === 1 ? 'like' : 'likes'}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col overflow-x-hidden">
       {/* Header with back button */}
@@ -511,69 +576,7 @@ export default function CatanMapGeneratorPage() {
         </div>
         </div>
         
-        {isModalOpen && selectedMap && (
-          <>
-            {/* Map Modal */}
-         <div 
-           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-           onClick={closeModal}
-         >
-           <div 
-             className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto relative"
-             onClick={(e) => e.stopPropagation()}
-           >
-            {/* Close Button */}
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold z-10"
-            >
-              ×
-            </button>
-            
-            {/* Modal Content */}
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-dark-900 mb-4 text-center">
-                Catan Map by {selectedMap.username || (selectedMap.userId ? `User_${selectedMap.userId.slice(-6)}` : 'Anonymous')}
-              </h3>
-              
-                             {/* Map Image */}
-               <div className="flex justify-center">
-                 <img
-                   src={selectedMap.imageData}
-                   alt={`Catan Map ${selectedMap.id}`}
-                   className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
-                   style={{
-                     width: '615px',
-                     height: '532px',
-                     maxWidth: '100%',
-                     maxHeight: '70vh',
-                     objectFit: 'contain'
-                   }}
-                 />
-            </div>
-              
-              {/* Like Button with Count */}
-              <div className="text-center mt-4">
-                <button 
-                  onClick={() => handleVote(selectedMap.id)}
-                  title={userVotedNominations.has(selectedMap.id) ? 'Remove vote' : 'Add vote'}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full transition-colors mx-auto ${
-                    userVotedNominations.has(selectedMap.id)
-                      ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <ThumbsUp className={`h-5 w-5 ${userVotedNominations.has(selectedMap.id) ? 'fill-current' : ''}`} />
-                  <span className="font-medium">
-                    {selectedMap.votes} {selectedMap.votes === 1 ? 'like' : 'likes'}
-                  </span>
-                </button>
-            </div>
-          </div>
-        </div>
-      </div>
-          </>
-        )}
+        {mapModal}
 
       {/* Back to Top Button */}
       {/* <BackToTopButton /> */}
