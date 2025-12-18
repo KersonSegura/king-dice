@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import GameCardWithVote from '@/components/GameCardWithVote';
-import { Search, Filter, Grid, List, Star, Users, Clock, Calendar } from 'lucide-react';
+import { Search, Filter, Star, Users, Clock, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import BackButton from '@/components/BackButton';
@@ -42,7 +42,6 @@ export default function AllGamesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalGames, setTotalGames] = useState(0);
@@ -167,22 +166,6 @@ export default function AllGamesPage() {
                     className="w-full pl-10 pr-4 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
-              </div>
-
-              {/* View Mode */}
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-dark-400'}`}
-                >
-                  <Grid className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-dark-400'}`}
-                >
-                  <List className="w-5 h-5" />
-                </button>
               </div>
 
               {/* Filters Toggle */}
@@ -314,9 +297,9 @@ export default function AllGamesPage() {
             </p>
           </div>
 
-          {/* Games Grid/List */}
+          {/* Games Grid */}
           {isLoading ? (
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(12)].map((_, i) => (
                 <div key={i} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
                   <div className="h-48 bg-gray-300 rounded mb-4"></div>
@@ -326,7 +309,7 @@ export default function AllGamesPage() {
               ))}
             </div>
           ) : games.length > 0 ? (
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {games.map((game) => (
                 <GameCardWithVote key={game.id} game={game} />
               ))}
