@@ -177,7 +177,7 @@ export default function SearchBar() {
     const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=all&limit=20`);
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=all&limit=40`);
         
         if (response.ok) {
           const data = await response.json();
