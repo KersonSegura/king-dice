@@ -6,11 +6,12 @@ import { cookies } from 'next/headers';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-// Normalize text for search: remove punctuation, normalize spaces, lowercase
+// Normalize text for search: handle "&" vs "and", remove punctuation, normalize spaces, lowercase
 function normalizeForSearch(text: string): string {
   if (!text) return '';
   return text
     .toLowerCase()
+    .replace(/\s*&\s*/g, ' and ') // Treat "&" as "and" so queries match either form
     .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
     .replace(/\s+/g, ' ')      // Normalize multiple spaces to single space
     .trim();
