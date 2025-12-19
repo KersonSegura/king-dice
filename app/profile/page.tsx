@@ -1797,20 +1797,29 @@ export default function ProfilePage() {
               )}
              </div>
 
-            {/* Game Collection Section */}
+            {/* Collection Summary Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">My Collection</h2>
-                <button 
-                  onClick={() => !isEditing && setShowGameSearchModal(true)}
-                  disabled={isEditing}
-                  className={`font-medium ${isEditing 
-                    ? 'text-gray-400 cursor-not-allowed' 
-                    : 'text-[#fbae17] hover:text-[#fbae17]/80'
-                  }`}
-                >
-                  Add Games
-                </button>
+                <h2 className="text-xl font-semibold text-gray-900">Collection Summary</h2>
+                <div className="flex items-center space-x-3">
+                  <Link
+                    href={`/collection/${user?.username}`}
+                    className="px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm font-medium"
+                    style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
+                  >
+                    <span>View Full Collection</span>
+                  </Link>
+                  <button 
+                    onClick={() => !isEditing && setShowGameSearchModal(true)}
+                    disabled={isEditing}
+                    className={`font-medium ${isEditing 
+                      ? 'text-gray-400 cursor-not-allowed' 
+                      : 'text-[#fbae17] hover:text-[#fbae17]/80'
+                    }`}
+                  >
+                    Add Games
+                  </button>
+                </div>
               </div>
               
               {/* Top Row: Games List and Favorite Card */}

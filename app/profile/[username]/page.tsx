@@ -1643,20 +1643,29 @@ export default function UserProfilePage() {
               )}
             </div>
 
-            {/* Game Collection Section */}
+            {/* Collection Summary Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Game Collection</h2>
-                {isOwnProfile && (
-                  <button
-                    onClick={() => setIsEditingCollection(!isEditingCollection)}
-                    className="px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                <h2 className="text-xl font-semibold text-gray-900">Collection Summary</h2>
+                <div className="flex items-center space-x-3">
+                  <Link
+                    href={`/collection/${userProfile.username}`}
+                    className="px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm font-medium"
                     style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                   >
-                    <Edit className="w-4 h-4" />
-                    <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
-                  </button>
-                )}
+                    <span>View Full Collection</span>
+                  </Link>
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => setIsEditingCollection(!isEditingCollection)}
+                      className="px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                      style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
               
               {/* Top Row: Games List and Favorite Card */}
