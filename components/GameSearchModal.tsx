@@ -80,13 +80,50 @@ export default function GameSearchModal({
         popularGames = popularData.games || [];
       }
 
-      // Then get all matching games from the boardgames API
-      const searchResponse = await fetch(`/api/boardgames?search=${encodeURIComponent(query)}&limit=50`);
+      // Then get ALL matching games from the boardgames API (fetch all pages)
+      const limitPerPage = 200;
+      const firstResponse = await fetch(
+        `/api/boardgames?search=${encodeURIComponent(query)}&page=1&limit=${limitPerPage}&lite=true`
+      );
       let searchResults: any[] = [];
-      
-      if (searchResponse.ok) {
-        const searchData = await searchResponse.json();
-        searchResults = searchData.games || [];
+
+      if (firstResponse.ok) {
+        const firstData = await firstResponse.json();
+        searchResults = firstData.games || [];
+
+        const totalPages = firstData.pagination?.totalPages || 1;
+        if (totalPages > 1) {
+          const pagePromises: Promise<Response>[] = [];
+          for (let page = 2; page <= totalPages; page++) {
+            pagePromises.push(
+              fetch(
+                `/api/boardgames?search=${encodeURIComponent(query)}&page=${page}&limit=${limitPerPage}&lite=true`
+              )
+            );
+          }
+
+          const pageResponses = await Promise.all(pagePromises);
+          const pageJsons = await Promise.all(
+            pageResponses
+              .filter(r => r.ok)
+              .map(r => r.json())
+          );
+
+          for (const pageData of pageJsons) {
+            if (Array.isArray(pageData.games)) {
+              searchResults = [...searchResults, ...pageData.games];
+            }
+          }
+
+          // Deduplicate by id (defensive)
+          const seen = new Set<number>();
+          searchResults = searchResults.filter((g: any) => {
+            const id = Number(g?.id);
+            if (!id || seen.has(id)) return false;
+            seen.add(id);
+            return true;
+          });
+        }
       }
 
       // Create a map of popular games for quick lookup
@@ -119,8 +156,7 @@ export default function GameSearchModal({
           
           // Finally sort alphabetically by name
           return a.name.localeCompare(b.name);
-        })
-        .slice(0, 20); // Limit to 20 results
+        });
       
       setGames(transformedGames);
     } catch (error) {

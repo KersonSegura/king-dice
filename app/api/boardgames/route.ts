@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const search = searchParams.get('search') || '';
     const withoutRules = searchParams.get('withoutRules') === 'true';
+    const lite = searchParams.get('lite') === 'true';
     const offset = (page - 1) * limit;
 
     console.log('[BOARDGAMES API] Request params:', { page, limit, search, offset });
@@ -339,7 +340,7 @@ export async function GET(request: NextRequest) {
 
     // Transform games to match expected format (for search, we might skip related data)
     // If this is a search request with small limit, skip related data for performance
-    const skipRelatedData = search && limit <= 10;
+    const skipRelatedData = lite || (search && limit <= 10);
     
     let gamesWithRelations: any[] = [];
     
