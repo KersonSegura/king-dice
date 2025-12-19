@@ -39,7 +39,10 @@ export default function CollectionPage() {
     try {
       setLoading(true);
       
-      const response = await fetch(`/api/users/profile?username=${username}`);
+      // Use no-store cache to ensure fresh data
+      const response = await fetch(`/api/users/profile?username=${username}`, {
+        cache: 'no-store'
+      });
       if (response.ok) {
         const data = await response.json();
         setUserProfile(data.user);
@@ -58,6 +61,30 @@ export default function CollectionPage() {
 
   useEffect(() => {
     loadUserProfile();
+  }, [username]);
+
+  // Refresh data when page comes into focus or becomes visible
+  // This ensures data is fresh when navigating back from the profile page
+  useEffect(() => {
+    if (!username) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadUserProfile();
+      }
+    };
+
+    const handleFocus = () => {
+      loadUserProfile();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [username]);
 
   const handleOpenCollectionPhoto = () => {
