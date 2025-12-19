@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Users, Search, Plus, Check } from 'lucide-react';
 import LoadingLogo from './LoadingLogo';
@@ -40,6 +40,8 @@ export default function GroupChatModal({
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const mousedownStartedInsideRef = useRef(false);
 
   // Search for users
   const searchUsers = async (query: string) => {
@@ -158,18 +160,46 @@ export default function GroupChatModal({
     };
   }, [isOpen]);
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if mousedown started outside the modal content
+    if (!mousedownStartedInsideRef.current) {
+      onClose();
+    }
+    // Reset the ref for next interaction
+    mousedownStartedInsideRef.current = false;
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Mark that mousedown started inside the modal
+    mousedownStartedInsideRef.current = true;
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Reset after click completes
+    mousedownStartedInsideRef.current = false;
+  };
+
   if (!isOpen) return null;
 
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 z-50" 
       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      onMouseDown={(e) => {
+        // If mousedown is on backdrop, mark that it didn't start inside
+        if (e.target === e.currentTarget) {
+          mousedownStartedInsideRef.current = false;
+        }
+      }}
     >
       <div 
+        ref={modalContentRef}
         className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col" 
         style={{ transform: 'translateY(-20vh)' }}
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={handleModalContentMouseDown}
+        onClick={handleModalContentClick}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">

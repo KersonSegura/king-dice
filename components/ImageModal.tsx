@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
 import ExpandableText from './ExpandableText';
@@ -255,6 +255,8 @@ export default function ImageModal({
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [commentToReport, setCommentToReport] = useState<string | null>(null);
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const mousedownStartedInsideRef = useRef(false);
 
   const handleReportComment = (commentId: string) => {
     setCommentToReport(commentId);
@@ -367,16 +369,44 @@ export default function ImageModal({
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if mousedown started outside the modal content
+    if (!mousedownStartedInsideRef.current) {
+      onClose();
+    }
+    // Reset the ref for next interaction
+    mousedownStartedInsideRef.current = false;
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Mark that mousedown started inside the modal
+    mousedownStartedInsideRef.current = true;
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Reset after click completes
+    mousedownStartedInsideRef.current = false;
+  };
+
   return (
     <div 
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
       style={{ pointerEvents: 'auto' }}
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      onMouseDown={(e) => {
+        // If mousedown is on backdrop, mark that it didn't start inside
+        if (e.target === e.currentTarget) {
+          mousedownStartedInsideRef.current = false;
+        }
+      }}
     >
       <div 
+        ref={modalContentRef}
         className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col sm:flex-row"
         style={{ pointerEvents: 'auto' }}
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={handleModalContentMouseDown}
+        onClick={handleModalContentClick}
       >
         {/* Mobile Layout - Instagram Style */}
         <div className="sm:hidden flex flex-col h-full">

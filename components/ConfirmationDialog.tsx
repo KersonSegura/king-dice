@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, AlertTriangle } from 'lucide-react';
 
@@ -24,7 +24,10 @@ export default function ConfirmationDialog({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   type = 'danger'
-}: ConfirmationDialogProps) {
+  }: ConfirmationDialogProps) {
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const mousedownStartedInsideRef = useRef(false);
+
   // Handle escape key and scroll lock
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -81,19 +84,47 @@ export default function ConfirmationDialog({
 
   const styles = getTypeStyles();
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if mousedown started outside the modal content
+    if (!mousedownStartedInsideRef.current) {
+      onClose();
+    }
+    // Reset the ref for next interaction
+    mousedownStartedInsideRef.current = false;
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Mark that mousedown started inside the modal
+    mousedownStartedInsideRef.current = true;
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Reset after click completes
+    mousedownStartedInsideRef.current = false;
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
+        onClick={handleBackdropClick}
+        onMouseDown={(e) => {
+          // If mousedown is on backdrop, mark that it didn't start inside
+          if (e.target === e.currentTarget) {
+            mousedownStartedInsideRef.current = false;
+          }
+        }}
       />
       
       {/* Dialog */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div 
+          ref={modalContentRef}
           className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto transform transition-all"
-          onClick={(e) => e.stopPropagation()}
+          onMouseDown={handleModalContentMouseDown}
+          onClick={handleModalContentClick}
         >
           {/* Close button */}
           <button

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Users, UserPlus, UserMinus } from 'lucide-react';
 import Link from 'next/link';
@@ -31,6 +31,8 @@ export default function ViewMembersModal({
   const { user } = useAuth();
   const [followStatuses, setFollowStatuses] = useState<{[userId: string]: boolean}>({});
   const [updatingUsers, setUpdatingUsers] = useState<Set<string>>(new Set());
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const mousedownStartedInsideRef = useRef(false);
 
   // Check follow status for all members when modal opens
   useEffect(() => {
@@ -128,16 +130,44 @@ export default function ViewMembersModal({
     // Don't close modal on link click, only on button click
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if mousedown started outside the modal content
+    if (!mousedownStartedInsideRef.current) {
+      onClose();
+    }
+    // Reset the ref for next interaction
+    mousedownStartedInsideRef.current = false;
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Mark that mousedown started inside the modal
+    mousedownStartedInsideRef.current = true;
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Reset after click completes
+    mousedownStartedInsideRef.current = false;
+  };
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 z-50" 
       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      onMouseDown={(e) => {
+        // If mousedown is on backdrop, mark that it didn't start inside
+        if (e.target === e.currentTarget) {
+          mousedownStartedInsideRef.current = false;
+        }
+      }}
     >
       <div 
+        ref={modalContentRef}
         className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col" 
         style={{ transform: 'translateY(-20vh)' }}
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={handleModalContentMouseDown}
+        onClick={handleModalContentClick}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">

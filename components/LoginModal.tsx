@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Mail, Eye, EyeOff } from 'lucide-react';
@@ -33,6 +33,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     email: string;
     username: string;
   } | null>(null);
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const mousedownStartedInsideRef = useRef(false);
 
   // Password requirement checks
   const passwordRequirements = {
@@ -273,16 +275,44 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if mousedown started outside the modal content
+    if (!mousedownStartedInsideRef.current) {
+      onClose();
+    }
+    // Reset the ref for next interaction
+    mousedownStartedInsideRef.current = false;
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Mark that mousedown started inside the modal
+    mousedownStartedInsideRef.current = true;
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Reset after click completes
+    mousedownStartedInsideRef.current = false;
+  };
+
   if (!isOpen) return null;
 
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      onMouseDown={(e) => {
+        // If mousedown is on backdrop, mark that it didn't start inside
+        if (e.target === e.currentTarget) {
+          mousedownStartedInsideRef.current = false;
+        }
+      }}
     >
       <div 
+        ref={modalContentRef}
         className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={handleModalContentMouseDown}
+        onClick={handleModalContentClick}
       >
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-lg sm:text-xl font-semibold">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Users, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,8 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }: Cr
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const mousedownStartedInsideRef = useRef(false);
 
   const handleSearchUsers = async (query: string) => {
     if (!query.trim()) {
@@ -108,17 +110,45 @@ export default function CreateGroupModal({ isOpen, onClose, onGroupCreated }: Cr
     };
   }, [isOpen]);
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if mousedown started outside the modal content
+    if (!mousedownStartedInsideRef.current) {
+      onClose();
+    }
+    // Reset the ref for next interaction
+    mousedownStartedInsideRef.current = false;
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Mark that mousedown started inside the modal
+    mousedownStartedInsideRef.current = true;
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Reset after click completes
+    mousedownStartedInsideRef.current = false;
+  };
+
   if (!isOpen) return null;
 
   return (
     <>
       <div 
         className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-        onClick={onClose}
+        onClick={handleBackdropClick}
+        onMouseDown={(e) => {
+          // If mousedown is on backdrop, mark that it didn't start inside
+          if (e.target === e.currentTarget) {
+            mousedownStartedInsideRef.current = false;
+          }
+        }}
       >
         <div 
+          ref={modalContentRef}
           className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-96"
-          onClick={(e) => e.stopPropagation()}
+          onMouseDown={handleModalContentMouseDown}
+          onClick={handleModalContentClick}
         >
           <div className="flex items-center justify-between p-4 border-b">
             <h3 className="text-lg font-semibold">Create Group Chat</h3>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Mail, Shield, RefreshCw } from 'lucide-react';
 
@@ -28,6 +28,8 @@ export default function TwoFactorModal({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [codeSent, setCodeSent] = useState(false);
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const mousedownStartedInsideRef = useRef(false);
 
   // Auto-send code when modal opens (only for 2FA, not registration)
   // For registration, email is already sent during account creation
@@ -148,16 +150,44 @@ export default function TwoFactorModal({
     setError('');
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if mousedown started outside the modal content
+    if (!mousedownStartedInsideRef.current) {
+      onClose();
+    }
+    // Reset the ref for next interaction
+    mousedownStartedInsideRef.current = false;
+  };
+
+  const handleModalContentMouseDown = (e: React.MouseEvent) => {
+    // Mark that mousedown started inside the modal
+    mousedownStartedInsideRef.current = true;
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Reset after click completes
+    mousedownStartedInsideRef.current = false;
+  };
+
   if (!isOpen) return null;
 
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleBackdropClick}
+      onMouseDown={(e) => {
+        // If mousedown is on backdrop, mark that it didn't start inside
+        if (e.target === e.currentTarget) {
+          mousedownStartedInsideRef.current = false;
+        }
+      }}
     >
       <div 
+        ref={modalContentRef}
         className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6"
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={handleModalContentMouseDown}
+        onClick={handleModalContentClick}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
