@@ -148,7 +148,7 @@ export default function CollectionPage() {
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-gray-900">Favorite Game</h2>
             {favoriteGame ? (
-              <Link href={`/game/${favoriteGame.id}`} className="block">
+              <Link href={`/juego/${favoriteGame.id}`} className="block">
                 <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer">
                   <img
                     src={favoriteGame.image || '/DefaultDiceAvatar.svg'}
@@ -214,7 +214,7 @@ export default function CollectionPage() {
               {userProfile.gamesList.map((game, index) => (
                 <Link
                   key={game.id}
-                  href={`/game/${game.id}`}
+                  href={`/juego/${game.id}`}
                   className="group"
                 >
                   <div className="relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden cursor-pointer">
