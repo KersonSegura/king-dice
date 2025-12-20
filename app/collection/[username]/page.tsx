@@ -176,7 +176,7 @@ export default function CollectionPage() {
             <h2 className="text-xl font-semibold text-gray-900">Favorite Game</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
-                <div className="relative bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center" style={{ minHeight: '300px' }}>
+                <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
                   <img
                     src={favoriteGame.image || '/DefaultDiceAvatar.svg'}
                     alt={favoriteGame.name}
