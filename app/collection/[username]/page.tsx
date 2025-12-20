@@ -176,11 +176,11 @@ export default function CollectionPage() {
             <h2 className="text-xl font-semibold text-gray-900">Favorite Game</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
-                <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer">
+                <div className="relative bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center" style={{ minHeight: '300px' }}>
                   <img
                     src={favoriteGame.image || '/DefaultDiceAvatar.svg'}
                     alt={favoriteGame.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                   <div className="absolute bottom-0 left-0 right-0 p-4">
