@@ -1678,7 +1678,7 @@ export default function UserProfilePage() {
                       {isOwnProfile && (
                         <button
                           onClick={() => setIsEditingCollection(!isEditingCollection)}
-                          className="sm:hidden px-2 py-1 rounded-lg transition-colors flex items-center space-x-1 text-xs whitespace-nowrap"
+                          className="sm:hidden px-2 py-0.5 rounded-lg transition-colors flex items-center space-x-1 text-xs whitespace-nowrap"
                           style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                         >
                           <Edit className="w-3 h-3" />
