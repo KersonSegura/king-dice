@@ -244,11 +244,11 @@ export default function CollectionPage() {
                   href={`/game/${game.id}`}
                   className="group"
                 >
-                  <div className="relative aspect-square sm:aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden cursor-pointer flex items-center justify-center">
+                  <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer flex items-center justify-center">
                     <img
                       src={game.image || '/DefaultDiceAvatar.svg'}
                       alt={game.name}
-                      className="w-full h-full object-cover sm:object-contain sm:max-w-full sm:max-h-full sm:w-auto sm:h-auto group-hover:scale-110 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                     {index === 0 && (
                       <div className="absolute top-2 right-2 bg-[#fbae17] text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center gap-1">
