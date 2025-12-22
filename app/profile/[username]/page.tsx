@@ -1678,10 +1678,10 @@ export default function UserProfilePage() {
                       {isOwnProfile && (
                         <button
                           onClick={() => setIsEditingCollection(!isEditingCollection)}
-                          className="sm:hidden px-2 py-0.5 rounded-lg transition-colors flex items-center space-x-1 text-xs whitespace-nowrap"
+                          className="sm:hidden px-2 py-0.5 rounded-lg transition-colors flex items-center space-x-1 text-[10px] leading-tight whitespace-nowrap h-6"
                           style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                         >
-                          <Edit className="w-3 h-3" />
+                          <Edit className="w-2.5 h-2.5" />
                           <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
                         </button>
                       )}
