@@ -138,16 +138,16 @@ export default function CollectionPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-nowrap">
             <Link 
               href={`/profile/${username}`}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back to Profile</span>
+              <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+              <span className="font-medium text-sm sm:text-base">Back to Profile</span>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{userProfile.username}'s Collection</h1>
-            <div className="w-20"></div> {/* Spacer for centering */}
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{userProfile.username}'s Collection</h1>
+            <div className="w-16 sm:w-20 flex-shrink-0"></div> {/* Spacer for centering */}
           </div>
         </div>
       </div>
