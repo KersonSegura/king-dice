@@ -1801,32 +1801,32 @@ export default function ProfilePage() {
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
               <div className="flex items-center justify-between mb-4 flex-nowrap gap-2">
                 <h2 className="text-base sm:text-xl font-semibold text-gray-900 whitespace-nowrap flex-shrink-0">Collection Summary</h2>
-                <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-                  <Link
-                    href={`/collection/${user?.username}`}
-                    className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap"
-                    style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
-                  >
-                    <span>View Full Collection</span>
-                  </Link>
-                  <button 
-                    onClick={() => !isEditing && setShowGameSearchModal(true)}
-                    disabled={isEditing}
-                    className={`text-xs sm:text-sm font-medium whitespace-nowrap ${isEditing 
-                      ? 'text-gray-400 cursor-not-allowed' 
-                      : 'text-[#fbae17] hover:text-[#fbae17]/80'
-                    }`}
-                  >
-                    Add Games
-                  </button>
-                </div>
+                <Link
+                  href={`/collection/${user?.username}`}
+                  className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap flex-shrink-0"
+                  style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
+                >
+                  <span>View Full Collection</span>
+                </Link>
               </div>
               
               {/* Top Row: Games List and Favorite Card */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Games List */}
                 <div className="space-y-4 flex flex-col h-full">
-                  <h3 className="text-lg font-medium text-gray-900">Games List - Top 10</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-gray-900">Games List - Top 10</h3>
+                    <button 
+                      onClick={() => !isEditing && setShowGameSearchModal(true)}
+                      disabled={isEditing}
+                      className={`text-xs sm:text-sm font-medium whitespace-nowrap ${isEditing 
+                        ? 'text-gray-400 cursor-not-allowed' 
+                        : 'text-[#fbae17] hover:text-[#fbae17]/80'
+                      }`}
+                    >
+                      Add Games
+                    </button>
+                  </div>
                   <div className="space-y-2 flex-1">
                     {gamesList.length > 0 ? (
                       gamesList.slice(0, 10).map((game, index) => (
