@@ -1799,12 +1799,12 @@ export default function ProfilePage() {
 
             {/* Collection Summary Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Collection Summary</h2>
-                <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-between mb-4 flex-nowrap gap-2">
+                <h2 className="text-base sm:text-xl font-semibold text-gray-900 whitespace-nowrap flex-shrink-0">Collection Summary</h2>
+                <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                   <Link
                     href={`/collection/${user?.username}`}
-                    className="px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm font-medium"
+                    className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap"
                     style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                   >
                     <span>View Full Collection</span>
@@ -1812,7 +1812,7 @@ export default function ProfilePage() {
                   <button 
                     onClick={() => !isEditing && setShowGameSearchModal(true)}
                     disabled={isEditing}
-                    className={`font-medium ${isEditing 
+                    className={`text-xs sm:text-sm font-medium whitespace-nowrap ${isEditing 
                       ? 'text-gray-400 cursor-not-allowed' 
                       : 'text-[#fbae17] hover:text-[#fbae17]/80'
                     }`}
