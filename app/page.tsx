@@ -1,6 +1,5 @@
 'use client';
 
-import GameSearch from '@/components/GameSearch';
 import GameCardWithVote from '@/components/GameCardWithVote';
 import ModernTooltip from '@/components/ModernTooltip';
 import PixelCanvasPreview from '@/components/PixelCanvasPreview';
@@ -120,6 +119,14 @@ export default function HomePage() {
   const [galleryLoading, setGalleryLoading] = useState(true);
   const [boardleMode, setBoardleMode] = useState<'title' | 'image' | 'card'>('title');
   const [timeUntilNextGame, setTimeUntilNextGame] = useState('');
+  const [featuredCollections, setFeaturedCollections] = useState<Array<{
+    id: string;
+    username: string;
+    avatar: string | null;
+    collectionPhoto: string | null;
+    gameCount: number;
+    previewGameImage: string | null;
+  }>>([]);
   
   // Modal state
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<GalleryImage | null>(null);
@@ -263,6 +270,22 @@ export default function HomePage() {
       }
     };
     fetchGallery();
+  }, []);
+
+  // Fetch featured collections
+  useEffect(() => {
+    const fetchFeaturedCollections = async () => {
+      try {
+        const res = await fetch('/api/collections/featured?limit=3');
+        if (res.ok) {
+          const data = await res.json();
+          setFeaturedCollections(data.collections || []);
+        }
+      } catch (e) {
+        console.error('❌ Error fetching featured collections:', e);
+      }
+    };
+    fetchFeaturedCollections();
   }, []);
 
   // Handle URL parameters for opening specific image
@@ -598,33 +621,105 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-gray-900 pb-8 pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
-            <span className="text-white">Find your favorite </span>
-            <span className="text-[#fbae17]">board games</span>
-          </h1>
-          
-          <div className="mb-12">
-            <GameSearch />
+      <section className="bg-gray-900 pb-12 pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4" style={{ overflow: 'visible' }}>
+              <span className="text-white">Share your collection with </span>
+              <span className="text-[#fbae17]">the kingdom</span>
+            </h1>
+            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+              Connect with fellow board game enthusiasts, showcase your collection, and discover new games to add to your kingdom
+            </p>
           </div>
+
+          {/* Featured Collections Preview */}
+          {featuredCollections.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
+              {featuredCollections.map((collection) => (
+                <Link
+                  key={collection.id}
+                  href={`/collection/${collection.username}`}
+                  className="group relative bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  {collection.collectionPhoto ? (
+                    <div className="aspect-[4/3] relative overflow-hidden">
+                      <Image
+                        src={collection.collectionPhoto}
+                        alt={`${collection.username}'s collection`}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        unoptimized={collection.collectionPhoto.includes('supabase.co')}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <div className="flex items-center space-x-2 mb-1">
+                          {collection.avatar ? (
+                            <Image
+                              src={collection.avatar}
+                              alt={collection.username}
+                              width={24}
+                              height={24}
+                              className="rounded-full"
+                              unoptimized={collection.avatar.includes('supabase.co')}
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-[#fbae17] flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">
+                                {collection.username.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-white font-semibold text-sm">{collection.username}</span>
+                        </div>
+                        <p className="text-white/90 text-xs">{collection.gameCount} games</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="aspect-[4/3] bg-gradient-to-br from-[#fbae17]/20 to-[#fbae17]/5 flex items-center justify-center">
+                      <div className="text-center">
+                        {collection.avatar ? (
+                          <Image
+                            src={collection.avatar}
+                            alt={collection.username}
+                            width={48}
+                            height={48}
+                            className="rounded-full mx-auto mb-2"
+                            unoptimized={collection.avatar.includes('supabase.co')}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-[#fbae17] flex items-center justify-center mx-auto mb-2">
+                            <span className="text-white text-lg font-bold">
+                              {collection.username.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <p className="text-gray-700 font-semibold">{collection.username}</p>
+                        <p className="text-gray-500 text-sm">{collection.gameCount} games</p>
+                      </div>
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-300">
             <div className="flex items-center space-x-2">
-              <BookOpen className="w-5 h-5 text-[#fbae17]" />
-              <span>+10,000 games</span>
+              <Users className="w-5 h-5 text-[#fbae17]" />
+              <span>Active Community</span>
             </div>
             <div className="flex items-center space-x-2">
-              <Users className="w-5 h-5 text-[#fbae17]" />
-              <span>Live Community</span>
+              <BookOpen className="w-5 h-5 text-[#fbae17]" />
+              <span>Share Collections</span>
             </div>
             <div className="flex items-center space-x-2">
               <Star className="w-5 h-5 text-[#fbae17]" />
-              <span>Verified quality</span>
+              <span>Connect & Discover</span>
             </div>
             <div className="flex items-center space-x-2">
               <Globe className="w-5 h-5 text-[#fbae17]" />
-              <span>Active forums</span>
+              <span>Join the Kingdom</span>
             </div>
           </div>
           
