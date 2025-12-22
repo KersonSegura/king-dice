@@ -1658,7 +1658,7 @@ export default function UserProfilePage() {
                   {isOwnProfile && (
                     <button
                       onClick={() => setIsEditingCollection(!isEditingCollection)}
-                      className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm whitespace-nowrap"
+                      className="hidden sm:flex px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors items-center space-x-1 sm:space-x-2 text-xs sm:text-sm whitespace-nowrap"
                       style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                     >
                       <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1673,19 +1673,31 @@ export default function UserProfilePage() {
                 {/* Games List */}
                 <div className="space-y-4 flex flex-col h-full">
                   <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900">Games List - Top 10</h3>
-                    {isEditingCollection && (
-                      <button
-                        onClick={() => setShowGamesListModal(true)}
-                        className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1"
-                        style={{ color: profileColors.cover }}
-                      >
-                        <span>Edit List</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                      </button>
-                    )}
+                    <h3 className="text-lg font-medium text-gray-900">Games List - Top 10</h3>
+                    <div className="flex items-center space-x-2">
+                      {isOwnProfile && (
+                        <button
+                          onClick={() => setIsEditingCollection(!isEditingCollection)}
+                          className="sm:hidden px-2 py-1.5 rounded-lg transition-colors flex items-center space-x-1 text-xs whitespace-nowrap"
+                          style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
+                        </button>
+                      )}
+                      {isEditingCollection && (
+                        <button
+                          onClick={() => setShowGamesListModal(true)}
+                          className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1"
+                          style={{ color: profileColors.cover }}
+                        >
+                          <span>Edit List</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div 
                     className="space-y-2 flex-1 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
