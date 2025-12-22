@@ -1391,8 +1391,8 @@ function CommunityGalleryPageContent() {
                   </div>
                 </div>
                 
-                {/* Only show detailed info in grid/list/feed mode, not explore mode */}
-                {viewMode !== 'explore' && (
+                {/* Only show detailed info in list/feed mode, not explore or grid mode (grid mode shows only square images) */}
+                {viewMode !== 'explore' && viewMode !== 'grid' && (
                   <div className={`${viewMode === 'feed' ? 'p-2' : 'p-4'}`}>
                     {/* Mobile layout (feed mode) */}
                     {viewMode === 'feed' ? (
