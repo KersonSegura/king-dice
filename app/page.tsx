@@ -1139,7 +1139,7 @@ export default function HomePage() {
                 height={32}
                 className="w-8 h-8"
               />
-              Community Gallery
+              {t('communityGallery')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               The latest highlights from our community.
