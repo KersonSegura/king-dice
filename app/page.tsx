@@ -639,10 +639,10 @@ export default function HomePage() {
         </div>
         
         {/* Infinite Carousels - Full Width */}
-        <div className="space-y-2 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="space-y-1 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
           {/* Hot Games Row - Left to Right */}
           {hotGames.length > 0 && (
-            <div className="relative overflow-hidden w-full" style={{ minHeight: '128px' }}>
+            <div className="relative overflow-hidden w-full">
               <div 
                 ref={hotGamesCarouselRef}
                 className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite"
@@ -683,7 +683,7 @@ export default function HomePage() {
 
               {/* Top Ranked Games Row - Left to Right (reversed array for opposite direction) */}
               {topRankedGames.length > 0 && (
-                <div className="relative overflow-hidden w-full" style={{ minHeight: '128px' }}>
+                <div className="relative overflow-hidden w-full">
                   <div 
                     ref={topRankedCarouselRef}
                     className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite-reverse"
