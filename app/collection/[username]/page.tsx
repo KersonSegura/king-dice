@@ -113,8 +113,28 @@ export default function CollectionPage() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-gray-900 z-50" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#111827',
+          zIndex: 99999
+        }}
+      >
+        <div 
+          style={{
+            backgroundColor: 'transparent',
+            padding: '2rem',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            margin: 0
+          }}
+        >
           <div className="text-center">
             <Image 
               src="/DiceLogo.svg" 
