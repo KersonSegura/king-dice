@@ -681,51 +681,44 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Top Ranked Games Row - Left to Right (reversed array for opposite direction) */}
+              {/* Top Ranked Games Row - Right to Left */}
               {topRankedGames.length > 0 && (
-                <div className="relative overflow-hidden w-full">
+                <div className="relative overflow-hidden w-full" style={{ direction: 'rtl' }}>
                   <div 
                     ref={topRankedCarouselRef}
-                    className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite-reverse"
+                    className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
                       overflowX: 'visible',
-                      transform: 'scaleX(-1)', // Flip horizontally to reverse direction
+                      direction: 'ltr',
                       WebkitOverflowScrolling: 'touch',
                       willChange: 'transform',
                       display: 'inline-flex',
                       width: 'auto'
                     }}
                   >
-                    {/* Duplicate the games array twice - container is flipped so animation appears left-to-right */}
+                    {/* Duplicate the games array twice for seamless loop */}
                     {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
-                      <div
+                      <Link
                         key={`ranked-${game.id}-${index}`}
-                        className="relative flex-shrink-0 flex-grow-0 w-24 h-24 md:w-32 md:h-32"
+                        href={`/game/${game.id}`}
+                        className="relative flex-shrink-0 flex-grow-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
                       >
-                        <Link
-                          href={`/game/${game.id}`}
-                          className="relative w-full h-full rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300 block"
-                          style={{ transform: 'scaleX(-1)' }}
-                        >
-                          <div className="w-full h-full" style={{ transform: 'scaleX(-1)' }}>
-                            {game.image ? (
-                              <Image
-                                src={game.image}
-                                alt={game.name}
-                                fill
-                                className="object-cover"
-                                unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                                <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
-                              </div>
-                            )}
+                        {game.image ? (
+                          <Image
+                            src={game.image}
+                            alt={game.name}
+                            fill
+                            className="object-cover"
+                            unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                            <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
                           </div>
-                        </Link>
-                      </div>
+                        )}
+                      </Link>
                     ))}
                   </div>
                 </div>
