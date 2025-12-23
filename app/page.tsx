@@ -633,13 +633,18 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
-              <span className="text-white">{t('shareCollection')} </span>
+              <span className="text-white">{t('shareCollection')}</span>
               <br className="md:hidden" />
-              <span className="text-[#fbae17]">{t('boardGame')}</span>
-              {t('collection') && (
+              {t('collection') ? (
                 <>
+                  <span className="text-[#fbae17]">{t('boardGame')}</span>
                   <br className="md:hidden" />
                   <span className="text-white"> {t('collection')}</span>
+                </>
+              ) : (
+                <>
+                  <br className="md:hidden" />
+                  <span className="text-[#fbae17]">{t('boardGame')}</span>
                 </>
               )}
             </h1>
