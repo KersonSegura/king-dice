@@ -700,12 +700,16 @@ export default function HomePage() {
                   >
                     {/* Duplicate the games array twice - container is flipped so animation appears left-to-right */}
                     {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
-                      <Link
+                      <div
                         key={`ranked-${game.id}-${index}`}
-                        href={`/game/${game.id}`}
-                        className="relative flex-shrink-0 flex-grow-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
+                        className="relative flex-shrink-0 flex-grow-0 w-24 h-24 md:w-32 md:h-32"
+                        style={{ transform: 'scaleX(-1)' }}
                       >
-                        <div style={{ transform: 'scaleX(-1)' }} className="w-full h-full">
+                        <Link
+                          href={`/game/${game.id}`}
+                          className="relative w-full h-full rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300 block"
+                          style={{ transform: 'scaleX(-1)' }}
+                        >
                           {game.image ? (
                             <Image
                               src={game.image}
@@ -719,8 +723,8 @@ export default function HomePage() {
                               <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
                             </div>
                           )}
-                        </div>
-                      </Link>
+                        </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
