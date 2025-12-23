@@ -648,7 +648,7 @@ export default function HomePage() {
               <span className="text-[#fbae17]">{t('boardGame')}</span>
               {t('collection') && (
                 <>
-                  <br className="md:hidden" />
+                  <br />
                   <span className="text-white"> {t('collection')}</span>
                 </>
               )}
