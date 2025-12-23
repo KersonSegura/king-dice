@@ -865,7 +865,7 @@ export default function Header() {
               
               {/* Mobile Features Section */}
               <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-1">Features</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-1">{t('features')}</h3>
                 
                 {isAuthenticated && (
                   <Link

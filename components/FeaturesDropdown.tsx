@@ -5,9 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronDown, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslations } from 'next-intl';
 
 export default function FeaturesDropdown() {
   const { isAuthenticated } = useAuth();
+  const t = useTranslations('header');
   const [isOpen, setIsOpen] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -105,7 +107,7 @@ export default function FeaturesDropdown() {
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
       >
         <Star className="w-5 h-5" fill="white" />
-        <span>Features</span>
+        <span>{t('features')}</span>
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
