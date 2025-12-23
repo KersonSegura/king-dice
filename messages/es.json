@@ -43,9 +43,9 @@
     "searchPlaceholder": "Buscar usuarios y juegos..."
   },
   "home": {
-    "shareCollection": "Comparte tu",
-    "boardGame": "Colección de Juegos",
-    "collection": "de Mesa",
+    "shareCollection": "Comparte tu colección de",
+    "boardGame": "Juegos de Mesa",
+    "collection": "",
     "hotGames": "Juegos Populares",
     "topRankedGames": "Juegos Mejor Valorados",
     "viewAllHotGames": "Ver Todos los Juegos Populares",

@@ -636,8 +636,12 @@ export default function HomePage() {
               <span className="text-white">{t('shareCollection')} </span>
               <br className="md:hidden" />
               <span className="text-[#fbae17]">{t('boardGame')}</span>
-              <br className="md:hidden" />
-              <span className="text-white"> {t('collection')}</span>
+              {t('collection') && (
+                <>
+                  <br className="md:hidden" />
+                  <span className="text-white"> {t('collection')}</span>
+                </>
+              )}
             </h1>
           </div>
         </div>
