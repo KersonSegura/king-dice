@@ -73,7 +73,7 @@ export default function LanguageSwitcher() {
         className="w-full flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
       >
         <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-          <Image src="/LanguageIcon.svg" alt="Language Icon" width={26} height={26} className="w-6 h-6" />
+          <Image src="/LanguageIcon.svg?v=2" alt="Language Icon" width={26} height={26} className="w-6 h-6" />
         </div>
         <div className="flex-1 text-left">
           <span className="text-sm font-medium block">{t('language')}</span>
