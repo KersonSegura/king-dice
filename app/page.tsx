@@ -745,15 +745,17 @@ export default function HomePage() {
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
-                      overflowX: 'hidden'
+                      overflowX: 'hidden',
+                      direction: 'rtl' // RTL reverses scroll direction so positive speed moves left to right
                     }}
                   >
-                    {/* Duplicate the REVERSED games array twice for seamless loop - reversed for left-to-right visual effect */}
-                    {[...topRankedGames.slice(0, 20).reverse(), ...topRankedGames.slice(0, 20).reverse()].map((game, index) => (
+                    {/* Duplicate the games array twice for seamless loop */}
+                    {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
                       <Link
                         key={`ranked-${game.id}-${index}`}
                         href={`/game/${game.id}`}
                         className="relative flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
+                        style={{ direction: 'ltr' }} // Reset direction on children so content isn't mirrored
                       >
                         {game.image ? (
                           <Image
