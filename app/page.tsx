@@ -418,44 +418,34 @@ export default function HomePage() {
     };
   }, [hotGames]);
 
-  // Infinite carousel animation for Top Ranked Games (right to left)
+  // Infinite carousel animation for Top Ranked Games (left to right)
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    let animationFrameId: number | null = null;
-    let timeoutId: NodeJS.Timeout;
+    const container = topRankedCarouselRef.current;
+    if (!container) return;
 
-    // Small delay to ensure container is rendered
-    timeoutId = setTimeout(() => {
-      const container = topRankedCarouselRef.current;
-      if (!container || container.scrollWidth === 0) return;
+    let animationFrameId: number;
+    const speed = 0.5; // pixels per frame
 
-      const speed = -0.5; // pixels per frame (negative for reverse direction)
-
-      // Initialize scroll position to middle of duplicated content so we can scroll backwards
-      const singleSetWidth = container.scrollWidth / 2;
-      container.scrollLeft = singleSetWidth;
-
-      const animate = () => {
-        if (container && container.scrollWidth > 0) {
-          container.scrollLeft += speed;
-          
-          // Reset scroll position when we reach the beginning (since we're going backwards)
-          const singleSetWidth = container.scrollWidth / 2;
-          if (container.scrollLeft <= 0) {
-            container.scrollLeft += singleSetWidth;
-          }
+    const animate = () => {
+      if (container) {
+        container.scrollLeft += speed;
+        
+        // Reset scroll position when we reach the duplicated content
+        const singleSetWidth = container.scrollWidth / 2;
+        if (container.scrollLeft >= singleSetWidth) {
+          container.scrollLeft -= singleSetWidth;
         }
-
-        animationFrameId = requestAnimationFrame(animate);
-      };
+      }
 
       animationFrameId = requestAnimationFrame(animate);
-    }, 100);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      clearTimeout(timeoutId);
-      if (animationFrameId !== null) {
+      if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
     };
@@ -746,7 +736,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Top Ranked Games Row - Right to Left */}
+              {/* Top Ranked Games Row - Left to Right */}
               {topRankedGames.length > 0 && (
                 <div className="relative overflow-hidden">
                   <div 
@@ -758,8 +748,8 @@ export default function HomePage() {
                       overflowX: 'hidden'
                     }}
                   >
-                    {/* Duplicate the REVERSED games array twice for seamless loop (reverse order for right-to-left effect) */}
-                    {[...topRankedGames.slice(0, 20).reverse(), ...topRankedGames.slice(0, 20).reverse()].map((game, index) => (
+                    {/* Duplicate the games array twice for seamless loop */}
+                    {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
                       <Link
                         key={`ranked-${game.id}-${index}`}
                         href={`/game/${game.id}`}
