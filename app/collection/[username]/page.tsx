@@ -113,10 +113,10 @@ export default function CollectionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fbae17] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading collection...</p>
+          <p className="text-gray-300">Loading collection...</p>
         </div>
       </div>
     );
@@ -124,9 +124,9 @@ export default function CollectionPage() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Collection not found</p>
+          <p className="text-gray-300 mb-4">Collection not found</p>
           <Link href="/" className="text-[#fbae17] hover:underline">Go back home</Link>
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function CollectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
