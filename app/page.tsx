@@ -768,7 +768,7 @@ export default function HomePage() {
                           )}
                           <span className="text-white font-semibold text-sm">{collection.username}</span>
                         </div>
-                        <p className="text-white/90 text-xs">{collection.gameCount} games</p>
+                        <p className="text-white/90 text-xs">{collection.gameCount} {t('games')}</p>
                       </div>
                     </div>
                   ) : (
@@ -924,7 +924,7 @@ export default function HomePage() {
                 height={32}
                 className="w-8 h-8"
               />
-              Hot Games
+              {t('hotGames')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               Games that are currently trending.
