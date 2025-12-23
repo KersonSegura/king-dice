@@ -418,43 +418,42 @@ export default function HomePage() {
     };
   }, [hotGames]);
 
-  // Infinite carousel animation for Top Ranked Games (left to right - reverse direction)
+  // Infinite carousel animation for Top Ranked Games (left to right - using reversed array with forward scroll)
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    let animationFrameId: number | null = null;
+    const container = topRankedCarouselRef.current;
+    if (!container) return;
 
-    // Small delay to ensure container is rendered
-    const timeoutId = setTimeout(() => {
-      const container = topRankedCarouselRef.current;
-      if (!container || container.scrollWidth === 0) return;
+    let animationFrameId: number;
+    const speed = -0.5; // pixels per frame (negative to scroll backwards, giving left-to-right visual effect)
 
-      const speed = -0.5; // pixels per frame (negative for reverse direction - left to right)
-
-      // Initialize scroll position to middle of duplicated content so we can scroll backwards
-      const singleSetWidth = container.scrollWidth / 2;
-      container.scrollLeft = singleSetWidth;
-
-      const animate = () => {
-        if (container && container.scrollWidth > 0) {
-          container.scrollLeft += speed;
-          
-          // Reset scroll position when we reach the beginning (since we're scrolling backwards)
-          const singleSetWidth = container.scrollWidth / 2;
-          if (container.scrollLeft <= 0) {
-            container.scrollLeft += singleSetWidth;
-          }
+    const animate = () => {
+      if (container && container.scrollWidth > 0) {
+        container.scrollLeft += speed;
+        
+        // Reset scroll position when we reach the beginning (since we're scrolling backwards)
+        const singleSetWidth = container.scrollWidth / 2;
+        if (container.scrollLeft <= 0) {
+          container.scrollLeft = singleSetWidth;
         }
-
-        animationFrameId = requestAnimationFrame(animate);
-      };
+      }
 
       animationFrameId = requestAnimationFrame(animate);
-    }, 100);
+    };
+
+    // Wait for container to be fully rendered before starting
+    const initTimeout = setTimeout(() => {
+      if (container.scrollWidth > 0) {
+        // Start from the end of the first set (middle of duplicated content)
+        container.scrollLeft = container.scrollWidth / 2;
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    }, 50);
 
     return () => {
-      clearTimeout(timeoutId);
-      if (animationFrameId !== null) {
+      clearTimeout(initTimeout);
+      if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
     };
@@ -757,8 +756,8 @@ export default function HomePage() {
                       overflowX: 'hidden'
                     }}
                   >
-                    {/* Duplicate the games array twice for seamless loop */}
-                    {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
+                    {/* Duplicate the REVERSED games array twice for seamless loop - reversed for left-to-right visual effect */}
+                    {[...topRankedGames.slice(0, 20).reverse(), ...topRankedGames.slice(0, 20).reverse()].map((game, index) => (
                       <Link
                         key={`ranked-${game.id}-${index}`}
                         href={`/game/${game.id}`}
