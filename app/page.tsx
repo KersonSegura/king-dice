@@ -418,49 +418,34 @@ export default function HomePage() {
     };
   }, [hotGames]);
 
-  // Infinite carousel animation for Top Ranked Games (left to right - reverse direction)
+  // Infinite carousel animation for Top Ranked Games (left to right - using reversed array with regular forward scroll)
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    let animationFrameId: number | null = null;
+    const container = topRankedCarouselRef.current;
+    if (!container) return;
 
-    const startAnimation = () => {
-      const container = topRankedCarouselRef.current;
-      if (!container || container.scrollWidth === 0) {
-        // Retry if container not ready
-        setTimeout(startAnimation, 50);
-        return;
-      }
+    let animationFrameId: number;
+    const speed = 0.5; // pixels per frame (same as top carousel, but array is reversed so it appears left to right)
 
-      const speed = -0.5; // pixels per frame (negative for reverse direction)
-
-      // Initialize scroll position to middle of duplicated content
-      const singleSetWidth = container.scrollWidth / 2;
-      container.scrollLeft = singleSetWidth;
-
-      const animate = () => {
-        if (container && container.scrollWidth > 0) {
-          container.scrollLeft += speed;
-          
-          // Reset scroll position when we reach the beginning
-          const singleSetWidth = container.scrollWidth / 2;
-          if (container.scrollLeft <= 0) {
-            container.scrollLeft = singleSetWidth;
-          }
+    const animate = () => {
+      if (container) {
+        container.scrollLeft += speed;
+        
+        // Reset scroll position when we reach the duplicated content
+        const singleSetWidth = container.scrollWidth / 2;
+        if (container.scrollLeft >= singleSetWidth) {
+          container.scrollLeft -= singleSetWidth;
         }
-
-        animationFrameId = requestAnimationFrame(animate);
-      };
+      }
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Start with a small delay to ensure DOM is ready
-    const timeoutId = setTimeout(startAnimation, 100);
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      clearTimeout(timeoutId);
-      if (animationFrameId !== null) {
+      if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
     };
