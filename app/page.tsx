@@ -642,7 +642,7 @@ export default function HomePage() {
         <div className="space-y-4 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
           {/* Hot Games Row - Left to Right */}
           {hotGames.length > 0 && (
-            <div className="relative overflow-hidden">
+            <div className="relative overflow-hidden w-full">
               <div 
                 ref={hotGamesCarouselRef}
                 className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite"
@@ -650,7 +650,8 @@ export default function HomePage() {
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
                   overflowX: 'hidden',
-                  willChange: 'transform'
+                  willChange: 'transform',
+                  width: 'max-content'
                 }}
               >
                     {/* Duplicate the games array twice for seamless loop */}
@@ -681,7 +682,7 @@ export default function HomePage() {
 
               {/* Top Ranked Games Row - Left to Right (reversed array for opposite direction) */}
               {topRankedGames.length > 0 && (
-                <div className="relative overflow-hidden">
+                <div className="relative overflow-hidden w-full">
                   <div 
                     ref={topRankedCarouselRef}
                     className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite-reverse"
@@ -691,7 +692,8 @@ export default function HomePage() {
                       overflowX: 'hidden',
                       transform: 'scaleX(-1)', // Flip horizontally to reverse direction
                       WebkitOverflowScrolling: 'touch',
-                      willChange: 'transform'
+                      willChange: 'transform',
+                      width: 'max-content'
                     }}
                   >
                     {/* Duplicate the REVERSED games array twice - reversed so forward scroll appears as left-to-right */}

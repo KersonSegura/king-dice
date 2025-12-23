@@ -334,19 +334,19 @@ main, #__next, [data-reactroot] {
 
   /* Infinite carousel animations */
   @keyframes carousel-scroll {
-    0% {
+    from {
       transform: translateX(0);
     }
-    100% {
+    to {
       transform: translateX(-50%);
     }
   }
 
   .carousel-infinite {
-    animation: carousel-scroll 60s linear infinite;
+    animation: carousel-scroll 30s linear infinite;
   }
 
   .carousel-infinite-reverse {
-    animation: carousel-scroll 60s linear infinite reverse;
+    animation: carousel-scroll 30s linear infinite reverse;
   }
 } 
