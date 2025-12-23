@@ -645,11 +645,12 @@ export default function HomePage() {
             <div className="relative overflow-hidden">
               <div 
                 ref={hotGamesCarouselRef}
-                className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8"
+                className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite"
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
-                  overflowX: 'hidden'
+                  overflowX: 'hidden',
+                  willChange: 'transform'
                 }}
               >
                     {/* Duplicate the games array twice for seamless loop */}
