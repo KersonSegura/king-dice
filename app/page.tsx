@@ -422,37 +422,44 @@ export default function HomePage() {
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    const container = topRankedCarouselRef.current;
-    if (!container) return;
+    // Small delay to ensure container is rendered
+    const timeoutId = setTimeout(() => {
+      const container = topRankedCarouselRef.current;
+      if (!container) return;
 
-    let animationFrameId: number;
-    const speed = -0.5; // pixels per frame (negative for reverse direction)
+      let animationFrameId: number;
+      const speed = -0.5; // pixels per frame (negative for reverse direction)
 
-    const animate = () => {
-      if (container) {
-        container.scrollLeft += speed;
-        
-        // Reset scroll position when we reach the beginning (since we're going backwards)
-        // Start from the middle of the duplicated content so we can scroll backwards
-        const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft <= 0) {
-          container.scrollLeft += singleSetWidth;
+      const animate = () => {
+        if (container && container.scrollWidth > 0) {
+          container.scrollLeft += speed;
+          
+          // Reset scroll position when we reach the beginning (since we're going backwards)
+          const singleSetWidth = container.scrollWidth / 2;
+          if (container.scrollLeft <= 0) {
+            container.scrollLeft += singleSetWidth;
+          }
         }
+
+        animationFrameId = requestAnimationFrame(animate);
+      };
+
+      // Initialize scroll position to middle of duplicated content so we can scroll backwards
+      const singleSetWidth = container.scrollWidth / 2;
+      if (singleSetWidth > 0) {
+        container.scrollLeft = singleSetWidth;
+        animationFrameId = requestAnimationFrame(animate);
       }
 
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    // Initialize scroll position to middle of duplicated content so we can scroll backwards
-    const singleSetWidth = container.scrollWidth / 2;
-    container.scrollLeft = singleSetWidth;
-
-    animationFrameId = requestAnimationFrame(animate);
+      return () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      };
+    }, 100);
 
     return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
+      clearTimeout(timeoutId);
     };
   }, [topRankedGames]);
 
