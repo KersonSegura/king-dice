@@ -418,33 +418,62 @@ export default function HomePage() {
     };
   }, [hotGames]);
 
-  // Infinite carousel animation for Top Ranked Games (left to right - using reversed array with regular forward scroll)
+  // Infinite carousel animation for Top Ranked Games (left to right - using RTL direction)
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
     const container = topRankedCarouselRef.current;
-    if (!container) return;
+    if (!container) {
+      console.log('Bottom carousel: container not found');
+      return;
+    }
 
     let animationFrameId: number;
-    const speed = 0.5; // pixels per frame (same as top carousel, but array is reversed so it appears left to right)
+    const speed = 0.5; // pixels per frame
 
+    // With RTL direction, scrollLeft works in reverse, so we still use positive speed
     const animate = () => {
-      if (container) {
-        container.scrollLeft += speed;
+      if (container && container.scrollWidth > 0) {
+        // In RTL, increasing scrollLeft moves content left (visually right to left)
+        // To make it appear left to right, we need to decrease scrollLeft (or use negative speed)
+        // Actually, with RTL direction, scrollLeft 0 is at the right side, and max is at left
+        // So we need to scroll from max towards 0 to get left-to-right effect
         
-        // Reset scroll position when we reach the duplicated content
-        const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft >= singleSetWidth) {
-          container.scrollLeft -= singleSetWidth;
+        // Get the current scroll position (in RTL, 0 is rightmost, scrollWidth is leftmost)
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        
+        // Decrease scrollLeft to move content left-to-right visually
+        container.scrollLeft -= speed;
+        
+        // Reset when we go below 0 (in RTL, this means we've scrolled past the right edge)
+        if (container.scrollLeft <= 0) {
+          container.scrollLeft = maxScroll;
         }
       }
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
+    // Wait a moment for container to be fully rendered
+    const timeoutId = setTimeout(() => {
+      if (container.scrollWidth > 0) {
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        container.scrollLeft = maxScroll; // Start at the leftmost position
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        console.log('Bottom carousel: scrollWidth is 0, retrying...');
+        setTimeout(() => {
+          if (container.scrollWidth > 0) {
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            container.scrollLeft = maxScroll;
+            animationFrameId = requestAnimationFrame(animate);
+          }
+        }, 100);
+      }
+    }, 50);
 
     return () => {
+      clearTimeout(timeoutId);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
