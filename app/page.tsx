@@ -182,9 +182,9 @@ export default function HomePage() {
           setLoading(false);
         }
         
-        // Fetch only 6 top ranked games for main page preview
+        // Fetch top ranked games for carousel
         try {
-          const topRankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=6`, {
+          const topRankedData = await fetchJsonWithRetry(`/api/games/most-played?limit=20`, {
             cache: 'no-store',
             headers: {
               'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -195,8 +195,8 @@ export default function HomePage() {
             retryDelay: 500,
             timeout: 8000
           });
-          console.log('✅ First 6 top ranked games loaded:', { count: topRankedData.games?.length });
-          const mappedTopRanked = (topRankedData.games || []).slice(0, 6).map((game: any) => ({
+          console.log('✅ Top ranked games loaded:', { count: topRankedData.games?.length });
+          const mappedTopRanked = (topRankedData.games || []).slice(0, 20).map((game: any) => ({
             ...game,
             name: game.name || game.nameEn || 'Unknown Game',
             year: game.year || game.yearRelease,
