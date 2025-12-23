@@ -173,7 +173,7 @@ export default function CollectionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Favorite Game Image (Left) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-900">Favorite Game</h2>
+            <h2 className="text-xl font-semibold text-white">Favorite Game</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
                 <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
@@ -197,9 +197,9 @@ export default function CollectionPage() {
               </Link>
             ) : (
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <div className="text-center text-gray-400">
+                <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm">No favorite game</p>
+                  <p className="text-sm text-white">No favorite game</p>
                 </div>
               </div>
             )}
@@ -207,7 +207,7 @@ export default function CollectionPage() {
 
           {/* Favorite Card (Right) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-900">Favorite Card</h2>
+            <h2 className="text-xl font-semibold text-white">Favorite Card</h2>
             {userProfile.favoriteCard ? (
               <div 
                 className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden cursor-pointer group"
@@ -222,9 +222,9 @@ export default function CollectionPage() {
               </div>
             ) : (
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <div className="text-center text-gray-400">
+                <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm">No favorite card</p>
+                  <p className="text-sm text-white">No favorite card</p>
                 </div>
               </div>
             )}
@@ -233,7 +233,7 @@ export default function CollectionPage() {
 
         {/* All Games Grid */}
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold text-gray-900">
+          <h2 className="text-2xl font-semibold text-white">
             All Games ({userProfile.gamesList?.length || 0})
           </h2>
           {userProfile.gamesList && userProfile.gamesList.length > 0 ? (
@@ -267,11 +267,11 @@ export default function CollectionPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
+              <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p className="text-gray-500 text-lg">No games in collection yet</p>
+              <p className="text-white text-lg">No games in collection yet</p>
             </div>
           )}
         </div>
