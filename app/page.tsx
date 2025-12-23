@@ -659,7 +659,7 @@ export default function HomePage() {
                       <Link
                         key={`hot-${game.id}-${index}`}
                         href={`/game/${game.id}`}
-                        className="relative flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
+                        className="relative flex-shrink-0 flex-grow-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
                       >
                         {game.image ? (
                           <Image
@@ -701,7 +701,7 @@ export default function HomePage() {
                       <Link
                         key={`ranked-${game.id}-${index}`}
                         href={`/game/${game.id}`}
-                        className="relative flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
+                        className="relative flex-shrink-0 flex-grow-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
                         style={{ transform: 'scaleX(-1)' }} // Flip back so content isn't mirrored
                       >
                         {game.image ? (
