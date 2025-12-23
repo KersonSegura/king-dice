@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/contexts/ToastContext';
-import { Languages, ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 
 const languages = [
   { code: 'en', name: 'English', nativeName: 'English' },
@@ -71,8 +71,8 @@ export default function LanguageSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
       >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 group-hover:bg-blue-100 transition-colors">
-          <Languages className="w-5 h-5 text-blue-600" />
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+          <img src="/LanguageIcon.svg" alt="Language Icon" className="w-6 h-6" />
         </div>
         <div className="flex-1 text-left">
           <span className="text-sm font-medium block">{t('language')}</span>
