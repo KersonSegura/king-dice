@@ -700,75 +700,85 @@ export default function HomePage() {
               <span className="text-[#fbae17]">the kingdom</span>
             </h1>
             
-            {/* Game Images Carousel */}
-            <div className="relative mb-8">
-              <div 
-                ref={carouselRef}
-                className="flex gap-4 overflow-x-auto px-8 md:px-16 pb-4 [&::-webkit-scrollbar]:hidden"
-                style={{
-                  scrollSnapType: 'x mandatory',
-                  scrollBehavior: 'smooth',
-                  WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
-                }}
-              >
-                {(hotGames.length > 0 ? hotGames : topRankedGames).slice(0, 20).map((game, index) => {
-                  const isCenter = index === carouselIndex;
-                  const isNearCenter = Math.abs(index - carouselIndex) <= 2;
-                  
-                  return (
-                    <Link
-                      key={game.id}
-                      href={`/game/${game.id}`}
-                      className={`
-                        relative flex-shrink-0 rounded-lg overflow-hidden bg-gray-800 transition-all duration-500
-                        ${isCenter 
-                          ? 'w-32 h-32 md:w-40 md:h-40 scale-110 z-10 shadow-2xl ring-4 ring-[#fbae17]' 
-                          : isNearCenter
-                          ? 'w-24 h-24 md:w-32 md:h-32 opacity-80'
-                          : 'w-20 h-20 md:w-24 md:h-24 opacity-50'
-                        }
-                      `}
-                      style={{ scrollSnapAlign: 'center' }}
-                      onMouseEnter={() => {
-                        if (carouselIntervalRef.current) {
-                          clearInterval(carouselIntervalRef.current);
-                        }
-                      }}
-                      onMouseLeave={() => {
-                        carouselIntervalRef.current = setInterval(() => {
-                          setCarouselIndex((prev) => (prev + 1) % (hotGames.length > 0 ? hotGames.length : topRankedGames.length));
-                        }, 3000);
-                      }}
-                    >
-                      {game.image ? (
-                        <Image
-                          src={game.image}
-                          alt={game.name}
-                          fill
-                          className="object-cover"
-                          unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                          <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
-                        </div>
-                      )}
-                      {isCenter && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                      )}
-                      {isCenter && (
-                        <div className="absolute bottom-0 left-0 right-0 p-2">
-                          <p className="text-white font-semibold text-xs md:text-sm truncate drop-shadow-lg">
-                            {game.name}
-                          </p>
-                        </div>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
+            {/* Infinite Carousels */}
+            <div className="space-y-4 mb-8">
+              {/* Hot Games Row - Left to Right */}
+              {hotGames.length > 0 && (
+                <div className="relative overflow-hidden">
+                  <div 
+                    ref={hotGamesCarouselRef}
+                    className="flex gap-4 [&::-webkit-scrollbar]:hidden"
+                    style={{
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      overflowX: 'hidden'
+                    }}
+                  >
+                    {/* Duplicate the games array twice for seamless loop */}
+                    {[...hotGames.slice(0, 20), ...hotGames.slice(0, 20)].map((game, index) => (
+                      <Link
+                        key={`hot-${game.id}-${index}`}
+                        href={`/game/${game.id}`}
+                        className="relative flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
+                      >
+                        {game.image ? (
+                          <Image
+                            src={game.image}
+                            alt={game.name}
+                            fill
+                            className="object-cover"
+                            unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                            <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
+                          </div>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Top Ranked Games Row - Right to Left */}
+              {topRankedGames.length > 0 && (
+                <div className="relative overflow-hidden">
+                  <div 
+                    ref={topRankedCarouselRef}
+                    className="flex gap-4 [&::-webkit-scrollbar]:hidden"
+                    style={{
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      overflowX: 'hidden',
+                      direction: 'rtl'
+                    }}
+                  >
+                    {/* Duplicate the games array twice for seamless loop */}
+                    {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
+                      <Link
+                        key={`ranked-${game.id}-${index}`}
+                        href={`/game/${game.id}`}
+                        className="relative flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
+                        style={{ direction: 'ltr' }}
+                      >
+                        {game.image ? (
+                          <Image
+                            src={game.image}
+                            alt={game.name}
+                            fill
+                            className="object-cover"
+                            unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                            <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
+                          </div>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
