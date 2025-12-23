@@ -43,7 +43,8 @@
     "searchPlaceholder": "Search users and games..."
   },
   "home": {
-    "shareCollection": "Share your",
+    "shareCollection1": "Share your",
+    "shareCollection2": "",
     "boardGame": "Board Game",
     "collection": "collection",
     "hotGames": "Hot Games",

@@ -43,7 +43,8 @@
     "searchPlaceholder": "Buscar usuarios y juegos..."
   },
   "home": {
-    "shareCollection": "Comparte tu colección de",
+    "shareCollection1": "Comparte tu",
+    "shareCollection2": "colección de",
     "boardGame": "Juegos de Mesa",
     "collection": "",
     "hotGames": "Juegos Populares",
