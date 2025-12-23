@@ -979,7 +979,7 @@ export default function HomePage() {
               {t('topRankedGames')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
-              The best board games according to historical ranking.<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>These are the games with the best average rating<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>of all time.
+              {t('topRankedGamesDescription')}
             </p>
           </div>
           

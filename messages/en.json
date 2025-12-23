@@ -52,7 +52,9 @@
     "viewAllTopRankedGames": "View All Top Ranked Games",
     "featuredCollections": "Featured Collections",
     "games": "games",
-    "loadingCollection": "Loading collection..."
+    "loadingCollection": "Loading collection...",
+    "hotGamesDescription": "Games that are currently trending.",
+    "topRankedGamesDescription": "The best board games according to historical ranking. These are the games with the best average rating of all time."
   },
   "profile": {
     "profile": "Profile",

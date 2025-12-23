@@ -52,7 +52,9 @@
     "viewAllTopRankedGames": "Ver Todos los Mejor Valorados",
     "featuredCollections": "Colecciones Destacadas",
     "games": "juegos",
-    "loadingCollection": "Cargando colección..."
+    "loadingCollection": "Cargando colección...",
+    "hotGamesDescription": "Juegos que están de moda actualmente.",
+    "topRankedGamesDescription": "Los mejores juegos de mesa según el ranking histórico. Estos son los juegos con el mejor puntaje promedio de todos los tiempos."
   },
   "profile": {
     "profile": "Perfil",
