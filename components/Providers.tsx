@@ -10,12 +10,15 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   const [locale, setLocale] = useState<string>('en');
   const [messages, setMessages] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // Mark as mounted (client-side only)
+    setIsMounted(true);
+
     // Get locale from cookie or default to 'en'
     const getCookieLocale = () => {
-      if (typeof document === 'undefined') return 'en';
+      if (typeof window === 'undefined') return 'en';
       return document.cookie
         .split('; ')
         .find(row => row.startsWith('locale='))
@@ -39,17 +42,18 @@ export default function Providers({ children }: ProvidersProps) {
           setLocale('en');
         } catch (fallbackError) {
           console.error('Failed to load English messages', fallbackError);
+          // Last resort: empty messages object
+          setMessages({});
         }
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadMessages();
   }, []);
 
-  // Don't render until messages are loaded to prevent hydration issues
-  if (isLoading || !messages) {
+  // During SSR or initial render, just render children without i18n
+  // After client-side hydration, wrap with NextIntlClientProvider
+  if (!isMounted || !messages) {
     return <>{children}</>;
   }
 
