@@ -791,7 +791,7 @@ export default function HomePage() {
                           </div>
                         )}
                         <p className="text-gray-700 font-semibold">{collection.username}</p>
-                        <p className="text-gray-500 text-sm">{collection.gameCount} games</p>
+                        <p className="text-gray-500 text-sm">{collection.gameCount} {t('games')}</p>
                       </div>
                     </div>
                   )}
@@ -927,7 +927,7 @@ export default function HomePage() {
               {t('hotGames')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
-              Games that are currently trending.
+              {t('hotGamesDescription')}
             </p>
           </div>
           
