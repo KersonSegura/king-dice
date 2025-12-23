@@ -343,10 +343,10 @@ main, #__next, [data-reactroot] {
   }
 
   .carousel-infinite {
-    animation: carousel-scroll 20s linear infinite;
+    animation: carousel-scroll 40s linear infinite;
   }
 
   .carousel-infinite-reverse {
-    animation: carousel-scroll 20s linear infinite reverse;
+    animation: carousel-scroll 40s linear infinite reverse;
   }
 } 

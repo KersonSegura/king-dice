@@ -639,7 +639,7 @@ export default function HomePage() {
         </div>
         
         {/* Infinite Carousels - Full Width */}
-        <div className="space-y-4 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="space-y-2 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
           {/* Hot Games Row - Left to Right */}
           {hotGames.length > 0 && (
             <div className="relative overflow-hidden w-full" style={{ minHeight: '128px' }}>
