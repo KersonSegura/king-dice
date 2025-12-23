@@ -57,7 +57,7 @@
     "players": "players",
     "noResultsFound": "No results found for",
     "trySearching": "Try searching for users or board games",
-    "suggestGame": "Suggest \"{query}\" as a game",
+    "suggestGame": "Suggest {query} as a game",
     "removeFromRecent": "Remove from recent searches",
     "allGames": "All Games",
     "browseCollection": "Browse our board game collection",

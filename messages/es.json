@@ -57,7 +57,7 @@
     "players": "jugadores",
     "noResultsFound": "No se encontraron resultados para",
     "trySearching": "Intenta buscar usuarios o juegos de mesa",
-    "suggestGame": "Sugerir \"{query}\" como juego",
+    "suggestGame": "Sugerir {query} como juego",
     "removeFromRecent": "Eliminar de búsquedas recientes",
     "allGames": "Todos los Juegos",
     "browseCollection": "Explora nuestra colección de juegos de mesa",
