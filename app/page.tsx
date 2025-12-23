@@ -418,42 +418,49 @@ export default function HomePage() {
     };
   }, [hotGames]);
 
-  // Infinite carousel animation for Top Ranked Games (left to right - using reversed array with forward scroll)
+  // Infinite carousel animation for Top Ranked Games (left to right - reverse direction)
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    const container = topRankedCarouselRef.current;
-    if (!container) return;
+    let animationFrameId: number | null = null;
 
-    let animationFrameId: number;
-    const speed = -0.5; // pixels per frame (negative to scroll backwards, giving left-to-right visual effect)
-
-    const animate = () => {
-      if (container && container.scrollWidth > 0) {
-        container.scrollLeft += speed;
-        
-        // Reset scroll position when we reach the beginning (since we're scrolling backwards)
-        const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft <= 0) {
-          container.scrollLeft = singleSetWidth;
-        }
+    const startAnimation = () => {
+      const container = topRankedCarouselRef.current;
+      if (!container || container.scrollWidth === 0) {
+        // Retry if container not ready
+        setTimeout(startAnimation, 50);
+        return;
       }
+
+      const speed = -0.5; // pixels per frame (negative for reverse direction)
+
+      // Initialize scroll position to middle of duplicated content
+      const singleSetWidth = container.scrollWidth / 2;
+      container.scrollLeft = singleSetWidth;
+
+      const animate = () => {
+        if (container && container.scrollWidth > 0) {
+          container.scrollLeft += speed;
+          
+          // Reset scroll position when we reach the beginning
+          const singleSetWidth = container.scrollWidth / 2;
+          if (container.scrollLeft <= 0) {
+            container.scrollLeft = singleSetWidth;
+          }
+        }
+
+        animationFrameId = requestAnimationFrame(animate);
+      };
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Wait for container to be fully rendered before starting
-    const initTimeout = setTimeout(() => {
-      if (container.scrollWidth > 0) {
-        // Start from the end of the first set (middle of duplicated content)
-        container.scrollLeft = container.scrollWidth / 2;
-        animationFrameId = requestAnimationFrame(animate);
-      }
-    }, 50);
+    // Start with a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(startAnimation, 100);
 
     return () => {
-      clearTimeout(initTimeout);
-      if (animationFrameId) {
+      clearTimeout(timeoutId);
+      if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
     };
