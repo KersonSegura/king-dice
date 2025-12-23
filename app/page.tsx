@@ -426,25 +426,26 @@ export default function HomePage() {
     if (!container) return;
 
     let animationFrameId: number;
-    const speed = -0.5; // pixels per frame (negative for reverse direction)
+    const speed = 0.5; // pixels per frame
 
     const animate = () => {
       if (container) {
+        // For RTL direction, scrollLeft increases as content moves right (opposite of LTR)
+        // So we increase scrollLeft to make content appear to move left
         container.scrollLeft += speed;
         
-        // Reset scroll position when we reach the beginning (reverse direction)
+        // Reset scroll position when we reach the duplicated content
         const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft <= 0) {
-          container.scrollLeft += singleSetWidth;
+        if (container.scrollLeft >= singleSetWidth) {
+          container.scrollLeft -= singleSetWidth;
         }
       }
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Initialize scroll position to middle of duplicated content
-    const singleSetWidth = container.scrollWidth / 2;
-    container.scrollLeft = singleSetWidth;
+    // Initialize scroll position
+    container.scrollLeft = 0;
 
     animationFrameId = requestAnimationFrame(animate);
 
