@@ -817,25 +817,25 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-300">
             <div className="flex items-center space-x-2">
               <Users className="w-5 h-5 text-[#fbae17]" />
-              <span>Active Community</span>
+              <span>{t('activeCommunity')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <BookOpen className="w-5 h-5 text-[#fbae17]" />
-              <span>Share Collections</span>
+              <span>{t('shareCollections')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <Star className="w-5 h-5 text-[#fbae17]" />
-              <span>Connect & Discover</span>
+              <span>{t('connectDiscover')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <Globe className="w-5 h-5 text-[#fbae17]" />
-              <span>Join the Kingdom</span>
+              <span>{t('joinKingdom')}</span>
             </div>
           </div>
 
           {/* Social Media Buttons */}
           <div className="flex justify-center gap-4 mt-8">
-            <ModernTooltip content="Join our Discord" position="top" bgColor="bg-[#fbae17]" textColor="text-white">
+            <ModernTooltip content={t('joinDiscord')} position="top" bgColor="bg-[#fbae17]" textColor="text-white">
               <a
                 href="https://discord.gg/3xh7yUnnnW"
                 target="_blank"
@@ -848,7 +848,7 @@ export default function HomePage() {
               </a>
             </ModernTooltip>
             
-            <ModernTooltip content="Follow on X" position="top" bgColor="bg-[#fbae17]" textColor="text-white">
+            <ModernTooltip content={t('joinTwitter')} position="top" bgColor="bg-[#fbae17]" textColor="text-white">
               <a
                 href="https://x.com/KingDiceHub"
                 target="_blank"
@@ -861,7 +861,7 @@ export default function HomePage() {
               </a>
             </ModernTooltip>
             
-            <ModernTooltip content="Follow on Instagram" position="top" bgColor="bg-[#fbae17]" textColor="text-white">
+            <ModernTooltip content={t('joinInstagram')} position="top" bgColor="bg-[#fbae17]" textColor="text-white">
               <a
                 href="https://www.instagram.com/kingdice.gg/"
                 target="_blank"
@@ -1042,10 +1042,10 @@ export default function HomePage() {
                 height={32}
                 className="w-8 h-8"
               />
-              Community Forums
+              {t('communityForums')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
-              Join the conversation! Discuss strategies, share experiences, and connect with fellow board game enthusiasts.
+              {t('forumsDescription')}
             </p>
           </div>
           
@@ -1061,14 +1061,14 @@ export default function HomePage() {
                      height={24}
                      className="w-6 h-6"
                    />
-                   <h3 className="text-lg font-semibold text-dark-900">General Discussion</h3>
-                 </div>
+                  <h3 className="text-lg font-semibold text-dark-900">{t('generalDiscussion')}</h3>
+                </div>
                 <p className="text-dark-600 text-sm mb-4">
-                  Share your thoughts on board games, ask questions, and engage in general discussions.
+                  {t('generalDiscussionDescription')}
                 </p>
                 <div className="flex items-center justify-between text-sm text-dark-500">
-                  <span>{forumStats.general.posts} posts</span>
-                  <span>{forumStats.general.replies} replies</span>
+                  <span>{forumStats.general.posts} {t('posts')}</span>
+                  <span>{forumStats.general.replies} {t('replies')}</span>
                 </div>
                </div>
              </Link>
@@ -1083,14 +1083,14 @@ export default function HomePage() {
                      height={24}
                      className="w-6 h-6"
                    />
-                   <h3 className="text-lg font-semibold text-dark-900">Strategy & Tips</h3>
-                 </div>
+                  <h3 className="text-lg font-semibold text-dark-900">{t('strategyTips')}</h3>
+                </div>
                 <p className="text-dark-600 text-sm mb-4">
-                  Discuss winning strategies, share tips, and help others improve their gameplay.
+                  {t('strategyTipsDescription')}
                 </p>
                 <div className="flex items-center justify-between text-sm text-dark-500">
-                  <span>{forumStats.strategy.posts} posts</span>
-                  <span>{forumStats.strategy.replies} replies</span>
+                  <span>{forumStats.strategy.posts} {t('posts')}</span>
+                  <span>{forumStats.strategy.replies} {t('replies')}</span>
                 </div>
                </div>
              </Link>
@@ -1105,23 +1105,23 @@ export default function HomePage() {
                      height={24}
                      className="w-6 h-6"
                    />
-                   <h3 className="text-lg font-semibold text-dark-900">Reviews & Recommendations</h3>
-                 </div>
+                  <h3 className="text-lg font-semibold text-dark-900">{t('reviewsRecommendations')}</h3>
+                </div>
                 <p className="text-dark-600 text-sm mb-4">
-                  Share your game reviews and get recommendations from the community.
+                  {t('reviewsRecommendationsDescription')}
                 </p>
                 <div className="flex items-center justify-between text-sm text-dark-500">
-                  <span>{forumStats.reviews.posts} posts</span>
-                  <span>{forumStats.reviews.replies} replies</span>
+                  <span>{forumStats.reviews.posts} {t('posts')}</span>
+                  <span>{forumStats.reviews.replies} {t('replies')}</span>
                 </div>
                </div>
              </Link>
            </div>
 
                      <div className="text-center mt-8">
-             <Link href="/forums" className="btn-primary">
-               Join the Discussion
-             </Link>
+            <Link href="/forums" className="btn-primary">
+              {t('joinDiscussion')}
+            </Link>
            </div>
            
         </div>
@@ -1350,7 +1350,7 @@ export default function HomePage() {
                   <div className="relative rounded-lg overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 aspect-square cursor-pointer hover:border-[#fbae17] hover:bg-[#fbae17]/5 transition-all duration-200 group">
                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 group-hover:text-[#fbae17] transition-colors">
                       <Plus className="w-8 h-8 mb-2" />
-                      <span className="text-sm font-medium">See More</span>
+                      <span className="text-sm font-medium">{t('seeMore')}</span>
                     </div>
                   </div>
                 </Link>
@@ -1360,7 +1360,7 @@ export default function HomePage() {
 
               <div className="text-center mt-8">
                 <Link href="/community-gallery" className="btn-primary">
-              View All Gallery
+              {t('viewAllGallery')}
                 </Link>
               </div>
         </div>
