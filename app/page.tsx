@@ -632,7 +632,9 @@ export default function HomePage() {
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
               <span className="text-white">Share your </span>
+              <br className="md:hidden" />
               <span className="text-[#fbae17]">Board Game</span>
+              <br className="md:hidden" />
               <span className="text-white"> collection</span>
             </h1>
           </div>
