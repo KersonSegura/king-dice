@@ -39,6 +39,7 @@
     "level": "Nivel",
     "totalPosts": "publicaciones totales",
     "back": "Atrás",
+    "signOut": "Cerrar Sesión",
     "searchPlaceholder": "Buscar usuarios y juegos..."
   },
   "home": {

@@ -39,6 +39,7 @@
     "level": "Level",
     "totalPosts": "total posts",
     "back": "Back",
+    "signOut": "Sign Out",
     "searchPlaceholder": "Search users and games..."
   },
   "home": {
