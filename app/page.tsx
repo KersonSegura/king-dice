@@ -408,8 +408,19 @@ export default function HomePage() {
       if (games.length === 0) return;
 
       const container = carouselRef.current;
-      const gameWidth = 140; // Approximate width of each game card + gap
-      const scrollPosition = carouselIndex * gameWidth - (container.clientWidth / 2 - gameWidth / 2);
+      const gameElements = container.querySelectorAll('a');
+      if (gameElements.length === 0) return;
+      
+      const targetElement = gameElements[carouselIndex] as HTMLElement;
+      if (!targetElement) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = targetElement.getBoundingClientRect();
+      const scrollLeft = container.scrollLeft;
+      const targetOffsetLeft = targetRect.left - containerRect.left + scrollLeft;
+      const targetWidth = targetRect.width;
+      const containerWidth = containerRect.width;
+      const scrollPosition = targetOffsetLeft - (containerWidth / 2) + (targetWidth / 2);
       
       container.scrollTo({
         left: Math.max(0, scrollPosition),
