@@ -135,6 +135,9 @@ export default function HomePage() {
   // ImageModal state and handlers
   const [imageComments, setImageComments] = useState<any[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const carouselIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   
   useEffect(() => {
@@ -143,9 +146,9 @@ export default function HomePage() {
         setLoading(true);
         console.log('🔍 Fetching games...');
         
-        // Fetch only 6 hot games for main page preview
+        // Fetch hot games for hero carousel
         try {
-          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=6`, {
+          const hotData = await fetchJsonWithRetry(`/api/games/hotness?limit=20`, {
             cache: 'no-store',
             headers: {
               'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -157,7 +160,7 @@ export default function HomePage() {
             timeout: 8000
           });
           console.log('✅ First 6 hot games loaded:', { count: hotData.games?.length });
-          const mappedHotGames = (hotData.games || []).slice(0, 6).map((game: any) => ({
+          const mappedHotGames = (hotData.games || []).slice(0, 20).map((game: any) => ({
             ...game,
             name: game.name || game.nameEn || 'Unknown Game',
             year: game.year || game.yearRelease,
@@ -382,7 +385,38 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Carousel auto-advance
+  useEffect(() => {
+    const games = hotGames.length > 0 ? hotGames : topRankedGames;
+    if (games.length === 0) return;
 
+    carouselIntervalRef.current = setInterval(() => {
+      setCarouselIndex((prev) => (prev + 1) % games.length);
+    }, 3000); // Change every 3 seconds
+
+    return () => {
+      if (carouselIntervalRef.current) {
+        clearInterval(carouselIntervalRef.current);
+      }
+    };
+  }, [hotGames, topRankedGames]);
+
+  // Scroll carousel to center the selected game
+  useEffect(() => {
+    if (carouselRef.current) {
+      const games = hotGames.length > 0 ? hotGames : topRankedGames;
+      if (games.length === 0) return;
+
+      const container = carouselRef.current;
+      const gameWidth = 140; // Approximate width of each game card + gap
+      const scrollPosition = carouselIndex * gameWidth - (container.clientWidth / 2 - gameWidth / 2);
+      
+      container.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: 'smooth'
+      });
+    }
+  }, [carouselIndex, hotGames, topRankedGames]);
 
   const formatPlayers = (min: number | null, max: number | null) => {
     if (!min || !max) return 'N/A';
@@ -629,30 +663,75 @@ export default function HomePage() {
               <span className="text-[#fbae17]">the kingdom</span>
             </h1>
             
-            {/* Game Images Grid */}
-            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-3 max-w-6xl mx-auto mb-8">
-              {(hotGames.length > 0 ? hotGames : topRankedGames).slice(0, 16).map((game) => (
-                <Link
-                  key={game.id}
-                  href={`/game/${game.id}`}
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
-                >
-                  {game.image ? (
-                    <Image
-                      src={game.image}
-                      alt={game.name}
-                      fill
-                      className="object-cover group-hover:opacity-90 transition-opacity"
-                      unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                      <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </Link>
-              ))}
+            {/* Game Images Carousel */}
+            <div className="relative mb-8">
+              <div 
+                ref={carouselRef}
+                className="flex gap-4 overflow-x-auto px-8 md:px-16 pb-4 [&::-webkit-scrollbar]:hidden"
+                style={{
+                  scrollSnapType: 'x mandatory',
+                  scrollBehavior: 'smooth',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
+              >
+                {(hotGames.length > 0 ? hotGames : topRankedGames).slice(0, 20).map((game, index) => {
+                  const isCenter = index === carouselIndex;
+                  const isNearCenter = Math.abs(index - carouselIndex) <= 2;
+                  
+                  return (
+                    <Link
+                      key={game.id}
+                      href={`/game/${game.id}`}
+                      className={`
+                        relative flex-shrink-0 rounded-lg overflow-hidden bg-gray-800 transition-all duration-500
+                        ${isCenter 
+                          ? 'w-32 h-32 md:w-40 md:h-40 scale-110 z-10 shadow-2xl ring-4 ring-[#fbae17]' 
+                          : isNearCenter
+                          ? 'w-24 h-24 md:w-32 md:h-32 opacity-80'
+                          : 'w-20 h-20 md:w-24 md:h-24 opacity-50'
+                        }
+                      `}
+                      style={{ scrollSnapAlign: 'center' }}
+                      onMouseEnter={() => {
+                        if (carouselIntervalRef.current) {
+                          clearInterval(carouselIntervalRef.current);
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        carouselIntervalRef.current = setInterval(() => {
+                          setCarouselIndex((prev) => (prev + 1) % (hotGames.length > 0 ? hotGames.length : topRankedGames.length));
+                        }, 3000);
+                      }}
+                    >
+                      {game.image ? (
+                        <Image
+                          src={game.image}
+                          alt={game.name}
+                          fill
+                          className="object-cover"
+                          unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                          <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
+                        </div>
+                      )}
+                      {isCenter && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                      )}
+                      {isCenter && (
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <p className="text-white font-semibold text-xs md:text-sm truncate drop-shadow-lg">
+                            {game.name}
+                          </p>
+                        </div>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
