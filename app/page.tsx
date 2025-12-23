@@ -418,62 +418,33 @@ export default function HomePage() {
     };
   }, [hotGames]);
 
-  // Infinite carousel animation for Top Ranked Games (left to right - using RTL direction)
+  // Infinite carousel animation for Top Ranked Games - EXACT SAME AS TOP CAROUSEL
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
     const container = topRankedCarouselRef.current;
-    if (!container) {
-      console.log('Bottom carousel: container not found');
-      return;
-    }
+    if (!container) return;
 
     let animationFrameId: number;
     const speed = 0.5; // pixels per frame
 
-    // With RTL direction, scrollLeft works in reverse, so we still use positive speed
     const animate = () => {
-      if (container && container.scrollWidth > 0) {
-        // In RTL, increasing scrollLeft moves content left (visually right to left)
-        // To make it appear left to right, we need to decrease scrollLeft (or use negative speed)
-        // Actually, with RTL direction, scrollLeft 0 is at the right side, and max is at left
-        // So we need to scroll from max towards 0 to get left-to-right effect
+      if (container) {
+        container.scrollLeft += speed;
         
-        // Get the current scroll position (in RTL, 0 is rightmost, scrollWidth is leftmost)
-        const maxScroll = container.scrollWidth - container.clientWidth;
-        
-        // Decrease scrollLeft to move content left-to-right visually
-        container.scrollLeft -= speed;
-        
-        // Reset when we go below 0 (in RTL, this means we've scrolled past the right edge)
-        if (container.scrollLeft <= 0) {
-          container.scrollLeft = maxScroll;
+        // Reset scroll position when we reach the duplicated content
+        const singleSetWidth = container.scrollWidth / 2;
+        if (container.scrollLeft >= singleSetWidth) {
+          container.scrollLeft -= singleSetWidth;
         }
       }
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Wait a moment for container to be fully rendered
-    const timeoutId = setTimeout(() => {
-      if (container.scrollWidth > 0) {
-        const maxScroll = container.scrollWidth - container.clientWidth;
-        container.scrollLeft = maxScroll; // Start at the leftmost position
-        animationFrameId = requestAnimationFrame(animate);
-      } else {
-        console.log('Bottom carousel: scrollWidth is 0, retrying...');
-        setTimeout(() => {
-          if (container.scrollWidth > 0) {
-            const maxScroll = container.scrollWidth - container.clientWidth;
-            container.scrollLeft = maxScroll;
-            animationFrameId = requestAnimationFrame(animate);
-          }
-        }, 100);
-      }
-    }, 50);
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      clearTimeout(timeoutId);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
@@ -765,7 +736,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Top Ranked Games Row - Left to Right */}
+              {/* Top Ranked Games Row - Left to Right (reversed array for opposite direction) */}
               {topRankedGames.length > 0 && (
                 <div className="relative overflow-hidden">
                   <div 
@@ -775,16 +746,16 @@ export default function HomePage() {
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
                       overflowX: 'hidden',
-                      direction: 'rtl' // RTL reverses scroll direction so positive speed moves left to right
+                      transform: 'scaleX(-1)' // Flip horizontally to reverse direction
                     }}
                   >
-                    {/* Duplicate the games array twice for seamless loop */}
-                    {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
+                    {/* Duplicate the REVERSED games array twice - reversed so forward scroll appears as left-to-right */}
+                    {[...topRankedGames.slice(0, 20).reverse(), ...topRankedGames.slice(0, 20).reverse()].map((game, index) => (
                       <Link
                         key={`ranked-${game.id}-${index}`}
                         href={`/game/${game.id}`}
                         className="relative flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
-                        style={{ direction: 'ltr' }} // Reset direction on children so content isn't mirrored
+                        style={{ transform: 'scaleX(-1)' }} // Flip back so content isn't mirrored
                       >
                         {game.image ? (
                           <Image
