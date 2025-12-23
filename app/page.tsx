@@ -388,33 +388,58 @@ export default function HomePage() {
   useEffect(() => {
     if (hotGames.length === 0) return;
 
-    const container = hotGamesCarouselRef.current;
-    if (!container) return;
+    let animationFrameId: number | null = null;
+    let isRunning = false;
 
-    let animationFrameId: number;
-    const speed = 0.5; // pixels per frame
-
-    const animate = () => {
-      if (container) {
-        container.scrollLeft += speed;
-        
-        // Reset scroll position when we reach the duplicated content
-        // Each game card is approximately 128px wide (120px + 16px gap)
-        const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft >= singleSetWidth) {
-          container.scrollLeft -= singleSetWidth;
-        }
+    const startAnimation = () => {
+      const container = hotGamesCarouselRef.current;
+      if (!container || container.scrollWidth === 0) {
+        // Retry if container not ready (common on mobile)
+        setTimeout(startAnimation, 100);
+        return;
       }
+
+      if (isRunning) return;
+      isRunning = true;
+
+      const speed = 0.5; // pixels per frame
+
+      const animate = () => {
+        if (container && container.scrollWidth > 0 && document.visibilityState === 'visible') {
+          container.scrollLeft += speed;
+          
+          // Reset scroll position when we reach the duplicated content
+          const singleSetWidth = container.scrollWidth / 2;
+          if (container.scrollLeft >= singleSetWidth) {
+            container.scrollLeft -= singleSetWidth;
+          }
+        }
+
+        animationFrameId = requestAnimationFrame(animate);
+      };
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
+    // Start with a delay to ensure DOM is ready (especially on mobile)
+    const timeoutId = setTimeout(startAnimation, 200);
+
+    // Restart animation when page becomes visible (iOS pauses animations when hidden)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !isRunning) {
+        startAnimation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      if (animationFrameId) {
+      clearTimeout(timeoutId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
+      isRunning = false;
     };
   }, [hotGames]);
 
@@ -422,32 +447,58 @@ export default function HomePage() {
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    const container = topRankedCarouselRef.current;
-    if (!container) return;
+    let animationFrameId: number | null = null;
+    let isRunning = false;
 
-    let animationFrameId: number;
-    const speed = 0.5; // pixels per frame
-
-    const animate = () => {
-      if (container) {
-        container.scrollLeft += speed;
-        
-        // Reset scroll position when we reach the duplicated content
-        const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft >= singleSetWidth) {
-          container.scrollLeft -= singleSetWidth;
-        }
+    const startAnimation = () => {
+      const container = topRankedCarouselRef.current;
+      if (!container || container.scrollWidth === 0) {
+        // Retry if container not ready (common on mobile)
+        setTimeout(startAnimation, 100);
+        return;
       }
+
+      if (isRunning) return;
+      isRunning = true;
+
+      const speed = 0.5; // pixels per frame
+
+      const animate = () => {
+        if (container && container.scrollWidth > 0 && document.visibilityState === 'visible') {
+          container.scrollLeft += speed;
+          
+          // Reset scroll position when we reach the duplicated content
+          const singleSetWidth = container.scrollWidth / 2;
+          if (container.scrollLeft >= singleSetWidth) {
+            container.scrollLeft -= singleSetWidth;
+          }
+        }
+
+        animationFrameId = requestAnimationFrame(animate);
+      };
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
+    // Start with a delay to ensure DOM is ready (especially on mobile)
+    const timeoutId = setTimeout(startAnimation, 200);
+
+    // Restart animation when page becomes visible (iOS pauses animations when hidden)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !isRunning) {
+        startAnimation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      if (animationFrameId) {
+      clearTimeout(timeoutId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
+      isRunning = false;
     };
   }, [topRankedGames]);
 
