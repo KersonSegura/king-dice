@@ -640,7 +640,9 @@ export default function HomePage() {
                   <br className="md:hidden" />
                   <span className="md:hidden text-white">{t('shareCollection2')}</span>
                 </>
-              ) : null}
+              ) : (
+                <span className="hidden md:inline text-white"> </span>
+              )}
               <br className="md:hidden" />
               <br className="hidden md:inline" />
               <span className="text-[#fbae17]">{t('boardGame')}</span>
