@@ -4,8 +4,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function BoardgamesDropdown() {
+  const t = useTranslations('header');
   const [isOpen, setIsOpen] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -45,22 +47,22 @@ export default function BoardgamesDropdown() {
 
   const boardgamePages = [
     {
-      name: 'All Games',
+      name: t('allGames'),
       href: '/all-games',
       icon: '/AllIcon.svg',
-      description: 'Browse our board game collection'
+      description: t('browseCollection')
     },
     {
-      name: 'Hot Games',
+      name: t('hotGames'),
       href: '/hot-games',
       icon: '/FireIcon.svg',
-      description: 'Currently trending and popular games'
+      description: t('currentlyTrending')
     },
     {
-      name: 'Top Ranked',
+      name: t('topRanked'),
       href: '/top-ranked',
       icon: '/TrophyIcon.svg',
-      description: 'Highest rated games by the community'
+      description: t('highestRated')
     }
   ];
 
@@ -82,7 +84,7 @@ export default function BoardgamesDropdown() {
           height={24}
           className="w-6 h-6"
         />
-        <span>Board Games</span>
+        <span>{t('boardGames')}</span>
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
