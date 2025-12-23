@@ -649,8 +649,9 @@ export default function HomePage() {
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
-                  overflowX: 'hidden',
+                  overflowX: 'visible',
                   willChange: 'transform',
+                  minWidth: 'max-content',
                   width: 'max-content'
                 }}
               >
@@ -689,10 +690,11 @@ export default function HomePage() {
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
-                      overflowX: 'hidden',
+                      overflowX: 'visible',
                       transform: 'scaleX(-1)', // Flip horizontally to reverse direction
                       WebkitOverflowScrolling: 'touch',
                       willChange: 'transform',
+                      minWidth: 'max-content',
                       width: 'max-content'
                     }}
                   >
