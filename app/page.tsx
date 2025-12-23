@@ -695,21 +695,23 @@ export default function HomePage() {
               <span className="text-white">Share your collection with </span>
               <span className="text-[#fbae17]">the kingdom</span>
             </h1>
-            
-            {/* Infinite Carousels */}
-            <div className="space-y-4 mb-8">
-              {/* Hot Games Row - Left to Right */}
-              {hotGames.length > 0 && (
-                <div className="relative overflow-hidden">
-                  <div 
-                    ref={hotGamesCarouselRef}
-                    className="flex gap-4 [&::-webkit-scrollbar]:hidden"
-                    style={{
-                      scrollbarWidth: 'none',
-                      msOverflowStyle: 'none',
-                      overflowX: 'hidden'
-                    }}
-                  >
+          </div>
+        </div>
+        
+        {/* Infinite Carousels - Full Width */}
+        <div className="space-y-4 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
+          {/* Hot Games Row - Left to Right */}
+          {hotGames.length > 0 && (
+            <div className="relative overflow-hidden">
+              <div 
+                ref={hotGamesCarouselRef}
+                className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  overflowX: 'hidden'
+                }}
+              >
                     {/* Duplicate the games array twice for seamless loop */}
                     {[...hotGames.slice(0, 20), ...hotGames.slice(0, 20)].map((game, index) => (
                       <Link
@@ -741,7 +743,7 @@ export default function HomePage() {
                 <div className="relative overflow-hidden">
                   <div 
                     ref={topRankedCarouselRef}
-                    className="flex gap-4 [&::-webkit-scrollbar]:hidden"
+                    className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
