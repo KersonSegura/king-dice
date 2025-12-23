@@ -426,26 +426,26 @@ export default function HomePage() {
     if (!container) return;
 
     let animationFrameId: number;
-    const speed = 0.5; // pixels per frame
+    const speed = -0.5; // pixels per frame (negative for reverse direction)
 
     const animate = () => {
       if (container) {
-        // For RTL direction, scrollLeft increases as content moves right (opposite of LTR)
-        // So we increase scrollLeft to make content appear to move left
         container.scrollLeft += speed;
         
-        // Reset scroll position when we reach the duplicated content
+        // Reset scroll position when we reach the beginning (since we're going backwards)
+        // Start from the middle of the duplicated content so we can scroll backwards
         const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft >= singleSetWidth) {
-          container.scrollLeft -= singleSetWidth;
+        if (container.scrollLeft <= 0) {
+          container.scrollLeft += singleSetWidth;
         }
       }
 
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Initialize scroll position
-    container.scrollLeft = 0;
+    // Initialize scroll position to middle of duplicated content so we can scroll backwards
+    const singleSetWidth = container.scrollWidth / 2;
+    container.scrollLeft = singleSetWidth;
 
     animationFrameId = requestAnimationFrame(animate);
 
@@ -750,17 +750,15 @@ export default function HomePage() {
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
-                      overflowX: 'hidden',
-                      direction: 'rtl'
+                      overflowX: 'hidden'
                     }}
                   >
-                    {/* Duplicate the games array twice for seamless loop */}
-                    {[...topRankedGames.slice(0, 20), ...topRankedGames.slice(0, 20)].map((game, index) => (
+                    {/* Duplicate the REVERSED games array twice for seamless loop (reverse order for right-to-left effect) */}
+                    {[...topRankedGames.slice(0, 20).reverse(), ...topRankedGames.slice(0, 20).reverse()].map((game, index) => (
                       <Link
                         key={`ranked-${game.id}-${index}`}
                         href={`/game/${game.id}`}
                         className="relative flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
-                        style={{ direction: 'ltr' }}
                       >
                         {game.image ? (
                           <Image
