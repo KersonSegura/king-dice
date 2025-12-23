@@ -113,16 +113,18 @@ export default function CollectionPage() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
-        <div className="text-center">
-          <Image 
-            src="/DiceLogo.svg" 
-            alt="Loading..." 
-            width={64} 
-            height={64} 
-            className="opacity-60 mx-auto mb-4 animate-pulse"
-          />
-          <p className="text-gray-300">Loading collection...</p>
+      <div className="fixed inset-0 bg-gray-900 z-50" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="text-center">
+            <Image 
+              src="/DiceLogo.svg" 
+              alt="Loading..." 
+              width={64} 
+              height={64} 
+              className="opacity-60 mx-auto mb-4 animate-pulse"
+            />
+            <p className="text-gray-300">Loading collection...</p>
+          </div>
         </div>
       </div>
     );
