@@ -706,8 +706,7 @@ export default function HomePage() {
                       >
                         <Link
                           href={`/game/${game.id}`}
-                          className="relative w-full h-full rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300 block"
-                          style={{ transform: 'scaleX(-1)' }}
+                          className="relative w-full h-full rounded-lg overflow-hidden bg-gray-800 transition-transform duration-300 block carousel-item-unflip"
                         >
                           {game.image ? (
                             <Image
