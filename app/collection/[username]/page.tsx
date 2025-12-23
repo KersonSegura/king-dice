@@ -113,7 +113,7 @@ export default function CollectionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
         <div className="text-center">
           <Image 
             src="/DiceLogo.svg" 
