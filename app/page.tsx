@@ -384,175 +384,11 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Infinite carousel animation for Hot Games (left to right)
-  useEffect(() => {
-    if (hotGames.length === 0) return;
+  // Infinite carousel animation for Hot Games - using CSS animations (iOS compatible)
+  // No useEffect needed - CSS handles the animation
 
-    let animationFrameId: number | null = null;
-    let isRunning = false;
-    let scrollPosition = 0;
-
-    const startAnimation = () => {
-      const container = hotGamesCarouselRef.current;
-      if (!container) {
-        setTimeout(startAnimation, 100);
-        return;
-      }
-
-      // Wait for container to have proper dimensions
-      if (container.scrollWidth === 0 || container.offsetWidth === 0) {
-        setTimeout(startAnimation, 100);
-        return;
-      }
-
-      if (isRunning) return;
-      isRunning = true;
-
-      const speed = 0.5; // pixels per frame
-      const singleSetWidth = container.scrollWidth / 2;
-
-      const animate = () => {
-        if (!container || container.scrollWidth === 0) {
-          animationFrameId = requestAnimationFrame(animate);
-          return;
-        }
-
-        if (document.visibilityState === 'visible') {
-          scrollPosition += speed;
-          
-          // Reset scroll position when we reach the duplicated content
-          if (scrollPosition >= singleSetWidth) {
-            scrollPosition -= singleSetWidth;
-          }
-
-          // Use scrollTo for better iOS compatibility
-          try {
-            container.scrollTo({
-              left: scrollPosition,
-              behavior: 'auto'
-            });
-          } catch (e) {
-            // Fallback for older browsers
-            container.scrollLeft = scrollPosition;
-          }
-        }
-
-        animationFrameId = requestAnimationFrame(animate);
-      };
-
-      // Initialize scroll position
-      scrollPosition = 0;
-      container.scrollLeft = 0;
-      
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    // Start with a delay to ensure DOM is ready (especially on mobile/iOS)
-    const timeoutId = setTimeout(startAnimation, 300);
-
-    // Restart animation when page becomes visible (iOS pauses animations when hidden)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && !isRunning) {
-        setTimeout(startAnimation, 100);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      isRunning = false;
-    };
-  }, [hotGames]);
-
-  // Infinite carousel animation for Top Ranked Games - EXACT SAME AS TOP CAROUSEL
-  useEffect(() => {
-    if (topRankedGames.length === 0) return;
-
-    let animationFrameId: number | null = null;
-    let isRunning = false;
-    let scrollPosition = 0;
-
-    const startAnimation = () => {
-      const container = topRankedCarouselRef.current;
-      if (!container) {
-        setTimeout(startAnimation, 100);
-        return;
-      }
-
-      // Wait for container to have proper dimensions
-      if (container.scrollWidth === 0 || container.offsetWidth === 0) {
-        setTimeout(startAnimation, 100);
-        return;
-      }
-
-      if (isRunning) return;
-      isRunning = true;
-
-      const speed = 0.5; // pixels per frame
-      const singleSetWidth = container.scrollWidth / 2;
-
-      const animate = () => {
-        if (!container || container.scrollWidth === 0) {
-          animationFrameId = requestAnimationFrame(animate);
-          return;
-        }
-
-        if (document.visibilityState === 'visible') {
-          scrollPosition += speed;
-          
-          // Reset scroll position when we reach the duplicated content
-          if (scrollPosition >= singleSetWidth) {
-            scrollPosition -= singleSetWidth;
-          }
-
-          // Use scrollTo for better iOS compatibility
-          try {
-            container.scrollTo({
-              left: scrollPosition,
-              behavior: 'auto'
-            });
-          } catch (e) {
-            // Fallback for older browsers
-            container.scrollLeft = scrollPosition;
-          }
-        }
-
-        animationFrameId = requestAnimationFrame(animate);
-      };
-
-      // Initialize scroll position
-      scrollPosition = 0;
-      container.scrollLeft = 0;
-      
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    // Start with a delay to ensure DOM is ready (especially on mobile/iOS)
-    const timeoutId = setTimeout(startAnimation, 300);
-
-    // Restart animation when page becomes visible (iOS pauses animations when hidden)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && !isRunning) {
-        setTimeout(startAnimation, 100);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      isRunning = false;
-    };
-  }, [topRankedGames]);
+  // Infinite carousel animation for Top Ranked Games - using CSS animations (iOS compatible)
+  // No useEffect needed - CSS handles the animation
 
   const formatPlayers = (min: number | null, max: number | null) => {
     if (!min || !max) return 'N/A';
@@ -847,14 +683,14 @@ export default function HomePage() {
                 <div className="relative overflow-hidden">
                   <div 
                     ref={topRankedCarouselRef}
-                    className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8"
+                    className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite-reverse"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
                       overflowX: 'hidden',
                       transform: 'scaleX(-1)', // Flip horizontally to reverse direction
                       WebkitOverflowScrolling: 'touch',
-                      willChange: 'scroll-position'
+                      willChange: 'transform'
                     }}
                   >
                     {/* Duplicate the REVERSED games array twice - reversed so forward scroll appears as left-to-right */}
