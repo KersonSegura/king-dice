@@ -778,9 +778,9 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Featured Collections Preview */}
+        
+        {/* Featured Collections Preview */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {featuredCollections.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
               {featuredCollections.map((collection) => (
@@ -869,7 +869,6 @@ export default function HomePage() {
               <span>Join the Kingdom</span>
             </div>
           </div>
-          
 
           {/* Social Media Buttons */}
           <div className="flex justify-center gap-4 mt-8">
