@@ -45,7 +45,14 @@
   "home": {
     "shareCollection": "Share your",
     "boardGame": "Board Game",
-    "collection": "collection"
+    "collection": "collection",
+    "hotGames": "Hot Games",
+    "topRankedGames": "Top Ranked Games",
+    "viewAllHotGames": "View All Hot Games",
+    "viewAllTopRankedGames": "View All Top Ranked Games",
+    "featuredCollections": "Featured Collections",
+    "games": "games",
+    "loadingCollection": "Loading collection..."
   },
   "profile": {
     "profile": "Profile",

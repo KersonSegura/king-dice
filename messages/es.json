@@ -45,7 +45,14 @@
   "home": {
     "shareCollection": "Comparte tu",
     "boardGame": "Colección de Juegos",
-    "collection": "de Mesa"
+    "collection": "de Mesa",
+    "hotGames": "Juegos Populares",
+    "topRankedGames": "Juegos Mejor Valorados",
+    "viewAllHotGames": "Ver Todos los Juegos Populares",
+    "viewAllTopRankedGames": "Ver Todos los Mejor Valorados",
+    "featuredCollections": "Colecciones Destacadas",
+    "games": "juegos",
+    "loadingCollection": "Cargando colección..."
   },
   "profile": {
     "profile": "Perfil",

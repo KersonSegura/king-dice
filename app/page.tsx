@@ -16,6 +16,7 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
+import { useTranslations } from 'next-intl';
 
 const BOARDLE_ASSET_BASE =
   'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images/boardle-images';
@@ -103,6 +104,7 @@ type GalleryImage = {
 };
 
 export default function HomePage() {
+  const t = useTranslations('home');
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -631,11 +633,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
-              <span className="text-white">Share your </span>
+              <span className="text-white">{t('shareCollection')} </span>
               <br className="md:hidden" />
-              <span className="text-[#fbae17]">Board Game</span>
+              <span className="text-[#fbae17]">{t('boardGame')}</span>
               <br className="md:hidden" />
-              <span className="text-white"> collection</span>
+              <span className="text-white"> {t('collection')}</span>
             </h1>
           </div>
         </div>
@@ -956,7 +958,7 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-8">
             <Link href="/hot-games" className="btn-primary">
-              View All Hot Games
+              {t('viewAllHotGames')}
             </Link>
           </div>
         </div>
@@ -974,7 +976,7 @@ export default function HomePage() {
                 height={32}
                 className="w-8 h-8"
               />
-              Top Ranked Games
+              {t('topRankedGames')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               The best board games according to historical ranking.<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>These are the games with the best average rating<span className="sm:hidden"><br /></span><span className="hidden sm:inline"> </span>of all time.
@@ -1008,7 +1010,7 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-8">
             <Link href="/top-ranked" className="btn-primary">
-              View All Top Ranked Games
+              {t('viewAllTopRankedGames')}
             </Link>
           </div>
         </div>
