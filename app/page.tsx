@@ -1142,7 +1142,7 @@ export default function HomePage() {
               {t('communityGallery')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
-              The latest highlights from our community.
+              {t('galleryDescription')}
             </p>
           </div>
 
