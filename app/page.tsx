@@ -681,17 +681,16 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Top Ranked Games Row - Right to Left */}
+              {/* Top Ranked Games Row - Left to Right */}
               {topRankedGames.length > 0 && (
-                <div className="relative overflow-hidden w-full" style={{ direction: 'rtl' }}>
+                <div className="relative overflow-hidden w-full">
                   <div 
                     ref={topRankedCarouselRef}
-                    className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite"
+                    className="flex gap-4 [&::-webkit-scrollbar]:hidden px-4 sm:px-6 lg:px-8 carousel-infinite-reverse"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
                       overflowX: 'visible',
-                      direction: 'ltr',
                       WebkitOverflowScrolling: 'touch',
                       willChange: 'transform',
                       display: 'inline-flex',
