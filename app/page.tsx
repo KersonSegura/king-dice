@@ -418,7 +418,7 @@ export default function HomePage() {
     };
   }, [hotGames]);
 
-  // Infinite carousel animation for Top Ranked Games (left to right)
+  // Infinite carousel animation for Top Ranked Games (left to right - reverse direction)
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
@@ -426,21 +426,25 @@ export default function HomePage() {
     if (!container) return;
 
     let animationFrameId: number;
-    const speed = 0.5; // pixels per frame
+    const speed = -0.5; // pixels per frame (negative for reverse direction - left to right)
 
     const animate = () => {
       if (container) {
         container.scrollLeft += speed;
         
-        // Reset scroll position when we reach the duplicated content
+        // Reset scroll position when we reach the beginning (since we're scrolling backwards)
         const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft >= singleSetWidth) {
-          container.scrollLeft -= singleSetWidth;
+        if (container.scrollLeft <= 0) {
+          container.scrollLeft += singleSetWidth;
         }
       }
 
       animationFrameId = requestAnimationFrame(animate);
     };
+
+    // Initialize scroll position to middle of duplicated content so we can scroll backwards
+    const singleSetWidth = container.scrollWidth / 2;
+    container.scrollLeft = singleSetWidth;
 
     animationFrameId = requestAnimationFrame(animate);
 
