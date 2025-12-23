@@ -349,13 +349,4 @@ main, #__next, [data-reactroot] {
   .carousel-infinite-reverse {
     animation: carousel-scroll 50s linear infinite reverse;
   }
-
-  /* Fix for bottom carousel images - un-flip content while keeping hover */
-  .carousel-item-unflip {
-    transform: scaleX(-1);
-  }
-
-  .carousel-item-unflip:hover {
-    transform: scaleX(-1) scale(1.1);
-  }
 } 

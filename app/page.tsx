@@ -706,21 +706,24 @@ export default function HomePage() {
                       >
                         <Link
                           href={`/game/${game.id}`}
-                          className="relative w-full h-full rounded-lg overflow-hidden bg-gray-800 transition-transform duration-300 block carousel-item-unflip"
+                          className="relative w-full h-full rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300 block"
+                          style={{ transform: 'scaleX(-1)' }}
                         >
-                          {game.image ? (
-                            <Image
-                              src={game.image}
-                              alt={game.name}
-                              fill
-                              className="object-cover"
-                              unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                              <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
-                            </div>
-                          )}
+                          <div className="w-full h-full" style={{ transform: 'scaleX(-1)' }}>
+                            {game.image ? (
+                              <Image
+                                src={game.image}
+                                alt={game.name}
+                                fill
+                                className="object-cover"
+                                unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                                <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
+                              </div>
+                            )}
+                          </div>
                         </Link>
                       </div>
                     ))}
