@@ -623,14 +623,37 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="bg-gray-900 pb-12 pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4" style={{ overflow: 'visible' }}>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-8" style={{ overflow: 'visible' }}>
               <span className="text-white">Share your collection with </span>
               <span className="text-[#fbae17]">the kingdom</span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-              Connect with fellow board game enthusiasts, showcase your collection, and discover new games to add to your kingdom
-            </p>
+            
+            {/* Game Images Grid */}
+            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-3 max-w-6xl mx-auto mb-8">
+              {(hotGames.length > 0 ? hotGames : topRankedGames).slice(0, 16).map((game) => (
+                <Link
+                  key={game.id}
+                  href={`/game/${game.id}`}
+                  className="group relative aspect-square rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
+                >
+                  {game.image ? (
+                    <Image
+                      src={game.image}
+                      alt={game.name}
+                      fill
+                      className="object-cover group-hover:opacity-90 transition-opacity"
+                      unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                      <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Featured Collections Preview */}
