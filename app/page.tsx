@@ -422,13 +422,19 @@ export default function HomePage() {
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    // Small delay to ensure container is rendered
-    const timeoutId = setTimeout(() => {
-      const container = topRankedCarouselRef.current;
-      if (!container) return;
+    let animationFrameId: number | null = null;
+    let timeoutId: NodeJS.Timeout;
 
-      let animationFrameId: number;
+    // Small delay to ensure container is rendered
+    timeoutId = setTimeout(() => {
+      const container = topRankedCarouselRef.current;
+      if (!container || container.scrollWidth === 0) return;
+
       const speed = -0.5; // pixels per frame (negative for reverse direction)
+
+      // Initialize scroll position to middle of duplicated content so we can scroll backwards
+      const singleSetWidth = container.scrollWidth / 2;
+      container.scrollLeft = singleSetWidth;
 
       const animate = () => {
         if (container && container.scrollWidth > 0) {
@@ -444,22 +450,14 @@ export default function HomePage() {
         animationFrameId = requestAnimationFrame(animate);
       };
 
-      // Initialize scroll position to middle of duplicated content so we can scroll backwards
-      const singleSetWidth = container.scrollWidth / 2;
-      if (singleSetWidth > 0) {
-        container.scrollLeft = singleSetWidth;
-        animationFrameId = requestAnimationFrame(animate);
-      }
-
-      return () => {
-        if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
-        }
-      };
+      animationFrameId = requestAnimationFrame(animate);
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
   }, [topRankedGames]);
 
