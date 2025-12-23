@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Search, Menu, X, User, Settings, LogOut } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 
 import { getUserPostCount } from '@/lib/user-posts';
@@ -13,10 +14,12 @@ import LoginModal from './LoginModal';
 import FeaturesDropdown from './FeaturesDropdown';
 import BoardgamesDropdown from './BoardgamesDropdown';
 import SearchBar from './SearchBar';
+import LanguageSwitcher from './LanguageSwitcher';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLoginModal } from '@/hooks/useLoginModal';
 
 export default function Header() {
+  const t = useTranslations('header');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useLoginModal();
@@ -335,7 +338,7 @@ export default function Header() {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span>Home</span>
+                  <span>{t('home')}</span>
                 </Link>
                 <BoardgamesDropdown />
                 <Link href="/forums" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
@@ -346,7 +349,7 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span>Forums</span>
+                  <span>{t('forums')}</span>
                 </Link>
                 <Link href="/community-gallery" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
                   <Image
@@ -356,7 +359,7 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span>Gallery</span>
+                  <span>{t('gallery')}</span>
                 </Link>
                 <Link href="/shop" className="text-dark-700 hover:text-primary-500 transition-colors font-medium flex items-center space-x-2">
                   <img
@@ -364,7 +367,7 @@ export default function Header() {
                     alt="Shop Icon"
                     className="w-6 h-6"
                   />
-                  <span>Shop</span>
+                  <span>{t('shop')}</span>
                 </Link>
               </>
             )}
@@ -552,22 +555,22 @@ export default function Header() {
                               aria-label="Back"
                             >
                               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                              <span className="text-sm">Back</span>
+                              <span className="text-sm">{t('back')}</span>
                             </button>
                             <div className="flex items-center gap-2">
                               <Image src="/NotificationsIcon.svg" alt="Notifications" width={18} height={18} className="opacity-80" />
-                              <span className="text-sm font-semibold tracking-wide">Notifications</span>
+                              <span className="text-sm font-semibold tracking-wide">{t('notifications')}</span>
                               {notifUnread > 0 && (
                                 <span className="ml-1 bg-red-500 text-white text-[10px] leading-4 px-1.5 rounded-full min-w-[16px] text-center">{notifUnread > 99 ? '99+' : notifUnread}</span>
                               )}
                             </div>
                             {notifUnread > 0 ? (
-                              <button className="text-xs text-blue-600 hover:underline" onClick={markAllRead}>Mark all</button>
+                              <button className="text-xs text-blue-600 hover:underline" onClick={markAllRead}>{t('markAll')}</button>
                             ) : <span className="text-xs text-gray-400"></span>}
                           </div>
                           <div className="max-h-96 overflow-y-auto">
                             {notifItems.length === 0 ? (
-                              <div className="p-4 text-sm text-gray-500">No notifications yet</div>
+                              <div className="p-4 text-sm text-gray-500">{t('noNotifications')}</div>
                             ) : (
                               <ul className="divide-y">
                                 {notifItems.map((n) => (
@@ -601,9 +604,9 @@ export default function Header() {
                                 <p className="text-sm font-semibold text-gray-900 truncate">{user?.username}</p>
                                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                                 <div className="flex items-center space-x-2">
-                                  <span className="text-xs text-gray-600">Level {userStats.level}</span>
+                                  <span className="text-xs text-gray-600">{t('level')} {userStats.level}</span>
                                   <span className="text-xs text-gray-400">•</span>
-                                  <span className="text-xs text-gray-600">{userStats.posts} total posts</span>
+                                  <span className="text-xs text-gray-600">{userStats.posts} {t('totalPosts')}</span>
                                 </div>
                               </div>
                             </div>
@@ -614,9 +617,9 @@ export default function Header() {
                             {notifItems.length > 0 && (
                               <div className="px-6 pb-3">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-sm font-medium">Notifications</span>
+                                  <span className="text-sm font-medium">{t('notifications')}</span>
                                   {notifUnread > 0 && (
-                                    <button className="text-xs text-blue-600" onClick={markAllRead}>Mark all read</button>
+                                    <button className="text-xs text-blue-600" onClick={markAllRead}>{t('markAllRead')}</button>
                                   )}
                                 </div>
                                 <ul className="max-h-56 overflow-y-auto divide-y rounded-lg border border-gray-100">
@@ -637,8 +640,8 @@ export default function Header() {
                                 <Image src="/ProfileIconOn.svg" alt="Profile Icon" width={26} height={26} className="w-6 h-6" />
                               </div>
                               <div className="flex-1">
-                                <span className="text-sm font-medium">Profile</span>
-                                <p className="text-xs text-gray-500">View your profile</p>
+                                <span className="text-sm font-medium">{t('profile')}</span>
+                                <p className="text-xs text-gray-500">{t('viewProfile')}</p>
                               </div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -651,8 +654,8 @@ export default function Header() {
                                 </svg>
                               </div>
                               <div className="flex-1">
-                                <span className="text-sm font-medium">My Collection</span>
-                                <p className="text-xs text-gray-500">View your game collection</p>
+                                <span className="text-sm font-medium">{t('myCollection')}</span>
+                                <p className="text-xs text-gray-500">{t('viewCollection')}</p>
                               </div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -667,14 +670,17 @@ export default function Header() {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex-1 text-left"><span className="text-sm font-medium">Notifications</span><p className="text-xs text-gray-500">View all notifications</p></div>
+                              <div className="flex-1 text-left"><span className="text-sm font-medium">{t('notifications')}</span><p className="text-xs text-gray-500">{t('viewNotifications')}</p></div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                             </button>
                             <Link href="/settings" className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center"><Image src="/SettingsIcon.svg" alt="Settings Icon" width={26} height={26} className="w-6 h-6" /></div>
-                              <div className="flex-1"><span className="text-sm font-medium">Settings</span><p className="text-xs text-gray-500">Manage your account</p></div>
+                              <div className="flex-1"><span className="text-sm font-medium">{t('settings')}</span><p className="text-xs text-gray-500">{t('manageAccount')}</p></div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                             </Link>
+                            {/* Language Switcher */}
+                            <div className="border-t border-gray-100 my-2"></div>
+                            <LanguageSwitcher />
                           </div>
                         </>
                       )}
@@ -693,7 +699,7 @@ export default function Header() {
                                 <Image src="/SingOutIcon.svg" alt="Sign Out Icon" width={30} height={30} className="w-7 h-7 ml-2" />
                               </div>
                               <div className="flex-1 text-left">
-                                <span className="text-sm font-medium">Sign Out</span>
+                                <span className="text-sm font-medium">{t('signOut')}</span>
                                 <p className="text-xs text-red-500">Log out of your account</p>
                               </div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity">

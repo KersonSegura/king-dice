@@ -10,6 +10,7 @@ import { ChatStateProvider } from '@/contexts/ChatStateContext'
 import ToastContainer from '@/components/ToastContainer'
 import FloatingChat from '@/components/FloatingChat'
 import BackToTopButton from '@/components/BackToTopButton'
+import Providers from '@/components/Providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -43,21 +44,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className}`} suppressHydrationWarning={true}>
-        <LevelUpProvider>
-          <AuthProvider>
-            <SocketProvider>
-              <ChatStateProvider>
-                <ToastProvider>
-                  <Header />
-                  {children}
-                  <FloatingChat />
-                  <BackToTopButton />
-                  <ToastContainer />
-                </ToastProvider>
-              </ChatStateProvider>
-            </SocketProvider>
-          </AuthProvider>
-        </LevelUpProvider>
+        <Providers>
+          <LevelUpProvider>
+            <AuthProvider>
+              <SocketProvider>
+                <ChatStateProvider>
+                  <ToastProvider>
+                    <Header />
+                    {children}
+                    <FloatingChat />
+                    <BackToTopButton />
+                    <ToastContainer />
+                  </ToastProvider>
+                </ChatStateProvider>
+              </SocketProvider>
+            </AuthProvider>
+          </LevelUpProvider>
+        </Providers>
       </body>
     </html>
   )
