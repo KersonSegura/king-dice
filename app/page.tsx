@@ -704,21 +704,22 @@ export default function HomePage() {
                         key={`ranked-${game.id}-${index}`}
                         href={`/game/${game.id}`}
                         className="relative flex-shrink-0 flex-grow-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-800 hover:scale-110 transition-transform duration-300"
-                        style={{ transform: 'scaleX(-1)' }} // Flip back so content isn't mirrored (container is flipped)
                       >
-                        {game.image ? (
-                          <Image
-                            src={game.image}
-                            alt={game.name}
-                            fill
-                            className="object-cover"
-                            unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                            <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
-                          </div>
-                        )}
+                        <div style={{ transform: 'scaleX(-1)' }} className="w-full h-full">
+                          {game.image ? (
+                            <Image
+                              src={game.image}
+                              alt={game.name}
+                              fill
+                              className="object-cover"
+                              unoptimized={game.image.includes('supabase.co') || game.image.includes('geekdo-images.com')}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                              <span className="text-gray-400 text-xs text-center px-1 line-clamp-2">{game.name}</span>
+                            </div>
+                          )}
+                        </div>
                       </Link>
                     ))}
                   </div>
