@@ -634,6 +634,12 @@ export default function HomePage() {
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight" style={{ overflow: 'visible' }}>
               <span className="text-white">{t('shareCollection')}</span>
+              {!t('collection') && (
+                <>
+                  <br className="md:hidden" />
+                  <br className="md:hidden" />
+                </>
+              )}
               <br className="md:hidden" />
               <span className="text-[#fbae17]">{t('boardGame')}</span>
               {t('collection') && (
