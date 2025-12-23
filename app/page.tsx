@@ -135,9 +135,8 @@ export default function HomePage() {
   // ImageModal state and handlers
   const [imageComments, setImageComments] = useState<any[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const carouselIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hotGamesCarouselRef = useRef<HTMLDivElement>(null);
+  const topRankedCarouselRef = useRef<HTMLDivElement>(null);
   
   
   useEffect(() => {
@@ -385,49 +384,76 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Carousel auto-advance
+  // Infinite carousel animation for Hot Games (left to right)
   useEffect(() => {
-    const games = hotGames.length > 0 ? hotGames : topRankedGames;
-    if (games.length === 0) return;
+    if (hotGames.length === 0) return;
 
-    carouselIntervalRef.current = setInterval(() => {
-      setCarouselIndex((prev) => (prev + 1) % games.length);
-    }, 3000); // Change every 3 seconds
+    const container = hotGamesCarouselRef.current;
+    if (!container) return;
+
+    let animationFrameId: number;
+    const speed = 0.5; // pixels per frame
+
+    const animate = () => {
+      if (container) {
+        container.scrollLeft += speed;
+        
+        // Reset scroll position when we reach the duplicated content
+        // Each game card is approximately 128px wide (120px + 16px gap)
+        const singleSetWidth = container.scrollWidth / 2;
+        if (container.scrollLeft >= singleSetWidth) {
+          container.scrollLeft -= singleSetWidth;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      if (carouselIntervalRef.current) {
-        clearInterval(carouselIntervalRef.current);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [hotGames, topRankedGames]);
+  }, [hotGames]);
 
-  // Scroll carousel to center the selected game
+  // Infinite carousel animation for Top Ranked Games (right to left)
   useEffect(() => {
-    if (carouselRef.current) {
-      const games = hotGames.length > 0 ? hotGames : topRankedGames;
-      if (games.length === 0) return;
+    if (topRankedGames.length === 0) return;
 
-      const container = carouselRef.current;
-      const gameElements = container.querySelectorAll('a');
-      if (gameElements.length === 0) return;
-      
-      const targetElement = gameElements[carouselIndex] as HTMLElement;
-      if (!targetElement) return;
+    const container = topRankedCarouselRef.current;
+    if (!container) return;
 
-      const containerRect = container.getBoundingClientRect();
-      const targetRect = targetElement.getBoundingClientRect();
-      const scrollLeft = container.scrollLeft;
-      const targetOffsetLeft = targetRect.left - containerRect.left + scrollLeft;
-      const targetWidth = targetRect.width;
-      const containerWidth = containerRect.width;
-      const scrollPosition = targetOffsetLeft - (containerWidth / 2) + (targetWidth / 2);
-      
-      container.scrollTo({
-        left: Math.max(0, scrollPosition),
-        behavior: 'smooth'
-      });
-    }
-  }, [carouselIndex, hotGames, topRankedGames]);
+    let animationFrameId: number;
+    const speed = -0.5; // pixels per frame (negative for reverse direction)
+
+    const animate = () => {
+      if (container) {
+        container.scrollLeft += speed;
+        
+        // Reset scroll position when we reach the beginning (reverse direction)
+        const singleSetWidth = container.scrollWidth / 2;
+        if (container.scrollLeft <= 0) {
+          container.scrollLeft += singleSetWidth;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    // Initialize scroll position to middle of duplicated content
+    const singleSetWidth = container.scrollWidth / 2;
+    container.scrollLeft = singleSetWidth;
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [topRankedGames]);
 
   const formatPlayers = (min: number | null, max: number | null) => {
     if (!min || !max) return 'N/A';
