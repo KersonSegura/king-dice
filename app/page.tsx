@@ -422,34 +422,39 @@ export default function HomePage() {
   useEffect(() => {
     if (topRankedGames.length === 0) return;
 
-    const container = topRankedCarouselRef.current;
-    if (!container) return;
+    let animationFrameId: number | null = null;
 
-    let animationFrameId: number;
-    const speed = -0.5; // pixels per frame (negative for reverse direction - left to right)
+    // Small delay to ensure container is rendered
+    const timeoutId = setTimeout(() => {
+      const container = topRankedCarouselRef.current;
+      if (!container || container.scrollWidth === 0) return;
 
-    const animate = () => {
-      if (container) {
-        container.scrollLeft += speed;
-        
-        // Reset scroll position when we reach the beginning (since we're scrolling backwards)
-        const singleSetWidth = container.scrollWidth / 2;
-        if (container.scrollLeft <= 0) {
-          container.scrollLeft += singleSetWidth;
+      const speed = -0.5; // pixels per frame (negative for reverse direction - left to right)
+
+      // Initialize scroll position to middle of duplicated content so we can scroll backwards
+      const singleSetWidth = container.scrollWidth / 2;
+      container.scrollLeft = singleSetWidth;
+
+      const animate = () => {
+        if (container && container.scrollWidth > 0) {
+          container.scrollLeft += speed;
+          
+          // Reset scroll position when we reach the beginning (since we're scrolling backwards)
+          const singleSetWidth = container.scrollWidth / 2;
+          if (container.scrollLeft <= 0) {
+            container.scrollLeft += singleSetWidth;
+          }
         }
-      }
+
+        animationFrameId = requestAnimationFrame(animate);
+      };
 
       animationFrameId = requestAnimationFrame(animate);
-    };
-
-    // Initialize scroll position to middle of duplicated content so we can scroll backwards
-    const singleSetWidth = container.scrollWidth / 2;
-    container.scrollLeft = singleSetWidth;
-
-    animationFrameId = requestAnimationFrame(animate);
+    }, 100);
 
     return () => {
-      if (animationFrameId) {
+      clearTimeout(timeoutId);
+      if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
     };
