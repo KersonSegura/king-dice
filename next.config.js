@@ -1,7 +1,7 @@
 const { withSentryConfig } = require("@sentry/nextjs");
-const createNextIntlPlugin = require('next-intl/plugin');
-
-const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
+// Note: We're handling i18n client-side, so we don't need the next-intl plugin
+// const createNextIntlPlugin = require('next-intl/plugin');
+// const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -132,7 +132,7 @@ const nextConfig = {
   },
 }
 
-module.exports = withSentryConfig(withNextIntl(nextConfig), {
+module.exports = withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
