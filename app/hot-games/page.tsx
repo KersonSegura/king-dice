@@ -28,6 +28,8 @@ interface Game {
 }
 
 export default function HotGamesPage() {
+  const t = useTranslations('common');
+  const tHotGames = useTranslations('hotGames');
   // Initialize with 50 placeholder slots (null = loading skeleton)
   const [games, setGames] = useState<(Game | null)[]>(Array(50).fill(null));
   const [loading, setLoading] = useState(true);

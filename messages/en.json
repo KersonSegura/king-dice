@@ -410,6 +410,7 @@
     "selectAStar": "Select a star"
   },
   "allGames": {
+    "title": "All Games",
     "exploreCollection": "Explore our complete collection of {count} board games",
     "searchGames": "Search games...",
     "filters": "Filters",

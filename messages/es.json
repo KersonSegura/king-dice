@@ -416,6 +416,7 @@
     "selectAStar": "Selecciona una estrella"
   },
   "allGames": {
+    "title": "Todos los Juegos",
     "exploreCollection": "Explora nuestra colección completa de {count} juegos de mesa",
     "searchGames": "Buscar juegos...",
     "filters": "Filtros",
