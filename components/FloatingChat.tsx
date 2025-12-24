@@ -1402,7 +1402,7 @@ export default function FloatingChat() {
 
       {/* Auto Tooltip - appears once per session */}
       {!isChatOpen && showAutoTooltip && (
-        <div className="fixed bottom-4 right-20 sm:bottom-20 sm:right-4 z-50 px-3 py-2 pr-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg max-w-md w-[28rem] tooltip-bounce relative">
+        <div className="fixed bottom-4 right-20 sm:bottom-20 sm:right-4 z-50 pl-3 pr-8 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg max-w-md w-[28rem] tooltip-bounce relative">
           <div className="w-full">
             <div className="font-medium mb-1 flex items-center space-x-2">
               <img
