@@ -28,6 +28,8 @@ interface Game {
 }
 
 export default function TopRankedPage() {
+  const t = useTranslations('common');
+  const tTopRanked = useTranslations('topRanked');
   // Initialize with 25 placeholder slots (null = loading skeleton)
   const [games, setGames] = useState<(Game | null)[]>(Array(25).fill(null));
   // Vote data is now loaded on-demand when users interact with star buttons
