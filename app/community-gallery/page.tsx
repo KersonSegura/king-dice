@@ -90,7 +90,8 @@ interface GalleryCategory {
 }
 
 function CommunityGalleryPageContent() {
-  const t = useTranslations('home');
+  const t = useTranslations('gallery');
+  const tHome = useTranslations('home');
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -1076,7 +1077,7 @@ function CommunityGalleryPageContent() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -1092,22 +1093,22 @@ function CommunityGalleryPageContent() {
               height={32}
               className="w-8 h-8"
             />
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Community Gallery</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('communityGallery')}</h1>
           </div>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button
               onClick={() => setShowGuidelines(true)}
               className="btn-secondary text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2"
             >
-              <span className="hidden sm:inline">Community Guidelines</span>
-              <span className="sm:hidden">Guidelines</span>
+              <span className="hidden sm:inline">{t('communityGuidelines')}</span>
+              <span className="sm:hidden">{t('guidelines')}</span>
             </button>
             <button
               onClick={() => setShowUploadModal(true)}
               className="btn-primary flex items-center justify-center space-x-2 text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2"
             >
               <Plus className="w-4 h-4" />
-              <span>Upload Image</span>
+              <span>{t('uploadImage')}</span>
             </button>
           </div>
         </div>
@@ -1120,7 +1121,7 @@ function CommunityGalleryPageContent() {
             </div>
             <input
               type="text"
-              placeholder="Search username or description..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#fbae17] focus:border-[#fbae17] sm:text-sm"
@@ -1145,9 +1146,9 @@ function CommunityGalleryPageContent() {
               <div className="flex items-center space-x-2">
                 <Search className="w-5 h-5 text-blue-600" />
                 <span className="text-blue-800 font-medium">
-                  Search results for: <span className="font-semibold">"{searchQuery}"</span>
+                  {t('searchResultsFor')} <span className="font-semibold">"{searchQuery}"</span>
                   <span className="ml-2 text-sm text-blue-600">
-                    ({filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''} found)
+                    ({filteredImages.length} {filteredImages.length !== 1 ? t('images') : t('image')} {t('found', {ns: 'common'})})
                   </span>
                 </span>
               </div>
