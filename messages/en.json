@@ -291,7 +291,9 @@
     "describeImage": "Describe your image...",
     "imageFile": "Image File",
     "chooseFile": "Choose file...",
-    "browse": "Browse"
+    "browse": "Browse",
+    "reachedEnd": "You've reached the end!",
+    "noMoreImages": "No more images to load"
   },
   "forums": {
     "communityForums": "Community Forums",

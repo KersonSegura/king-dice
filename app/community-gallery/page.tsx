@@ -1364,7 +1364,7 @@ function CommunityGalleryPageContent() {
                       }`}>
                         <Crown className={`${viewMode === 'explore' ? 'w-4 h-4' : 'w-3 h-3'} fill-current`} />
                         {viewMode !== 'explore' && (
-                          <span>{image.category === 'the-kings-card' ? t('cardOfTheWeek') : t('diceOfTheWeek')}</span>
+                          <span>{image.category === 'the-kings-card' ? tHome('cardOfTheWeek') : tHome('diceOfTheWeek')}</span>
                         )}
                       </span>
                     </div>
@@ -1665,7 +1665,7 @@ function CommunityGalleryPageContent() {
                         {featuredIds.has(image.id) && (
                           <span className="px-2 py-1 rounded-full text-xs font-bold bg-[#fbae17] text-white flex items-center gap-1">
                             <Crown className="w-3 h-3 fill-current" />
-                            {image.category === 'the-kings-card' ? t('cardOfTheWeek') : t('diceOfTheWeek')}
+                            {image.category === 'the-kings-card' ? tHome('cardOfTheWeek') : tHome('diceOfTheWeek')}
                           </span>
                         )}
                       </div>
@@ -1801,8 +1801,8 @@ function CommunityGalleryPageContent() {
         {/* End of content indicator */}
         {!hasMoreImages && displayedImages.length > 0 && (
           <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">You've reached the end!</p>
-            <p className="text-sm mt-2">No more images to load</p>
+            <p className="text-lg">{t('reachedEnd')}</p>
+            <p className="text-sm mt-2">{t('noMoreImages')}</p>
           </div>
         )}
 
