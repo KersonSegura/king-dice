@@ -778,7 +778,7 @@ export default function Header() {
               
               {/* Mobile Boardgames Section */}
               <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-1">Board Games</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-1">{t('boardGames')}</h3>
                 <Link 
                   href="/all-games" 
                   className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
