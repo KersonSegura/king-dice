@@ -158,7 +158,7 @@ export default function AllGamesPage() {
             {tAllGames('title') || t('allGames', {ns: 'header'}) || 'All Games'}
           </h1>
           <p className="text-xl text-dark-600 max-w-3xl mx-auto">
-            {tAllGames('exploreCollection') || `Explore our complete collection of ${(totalGames || 0).toLocaleString()} board games`}
+            {tAllGames('exploreCollection', { count: (totalGames || 0).toLocaleString() }) || `Explore our complete collection of ${(totalGames || 0).toLocaleString()} board games`}
           </p>
         </div>
 

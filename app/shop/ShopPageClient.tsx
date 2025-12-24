@@ -6,6 +6,7 @@ import { ExternalLink, Search, ChevronLeft, ChevronRight, ChevronDown, X, ArrowL
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import LoadingScreen from '@/components/LoadingScreen';
 
 // Amazon Associates disclosure - will be translated in component
 
@@ -314,14 +315,6 @@ export default function ShopPageClient() {
                 filtered: filteredShopItems.length !== allShopItems.length ? ` (${tShop('filteredFrom')} ${allShopItems.length} ${tShop('total')})` : ''
               })}
             </div>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <p className="mt-4 text-gray-600">{tShop('loadingItems')}</p>
           </div>
         )}
 
