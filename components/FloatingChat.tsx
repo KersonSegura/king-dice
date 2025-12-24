@@ -1410,10 +1410,10 @@ export default function FloatingChat() {
                   alt="Dice-Bot"
                   className="w-4 h-4"
                 />
-                <span>Ask Dice-Bot!</span>
+                <span>{t('askDiceBot')}</span>
               </div>
               <div className="text-xs opacity-90">
-                Chat with Dice-Bot for rules, strategies, and game recommendations!
+                {t('askDiceBotDescription')}
               </div>
             </div>
             <button

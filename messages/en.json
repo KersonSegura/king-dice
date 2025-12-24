@@ -244,7 +244,9 @@
     "createGroupChat": "Create Group Chat",
     "addPeople": "Add People",
     "moreOptions": "More options",
-    "startDirectChat": "Start Direct Chat"
+    "startDirectChat": "Start Direct Chat",
+    "askDiceBot": "Ask Dice-Bot!",
+    "askDiceBotDescription": "Chat with Dice-Bot for rules, strategies, and game recommendations!"
   },
   "gallery": {
     "communityGallery": "Community Gallery",
@@ -308,7 +310,12 @@
     "deleteComment": "Delete comment",
     "reportComment": "Report comment",
     "deleteReply": "Delete reply",
-    "reportReply": "Report reply"
+    "reportReply": "Report reply",
+    "categoryDiceThrone": "Dice Throne",
+    "categoryTheKingsCard": "The King's Card",
+    "categoryGameCollections": "Game Collections",
+    "categoryGameSetups": "Game Setups",
+    "categoryGameEvents": "Game Events"
   },
   "forums": {
     "communityForums": "Community Forums",

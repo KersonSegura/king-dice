@@ -1000,6 +1000,17 @@ function CommunityGalleryPageContent() {
     return allImages.filter(image => image.category === categoryId).length;
   };
 
+  const translateCategoryName = (categoryName: string): string => {
+    const categoryMap: { [key: string]: string } = {
+      'Dice Throne': t('categoryDiceThrone'),
+      "The King's Card": t('categoryTheKingsCard'),
+      'Game Collections': t('categoryGameCollections'),
+      'Game Setups': t('categoryGameSetups'),
+      'Game Events': t('categoryGameEvents')
+    };
+    return categoryMap[categoryName] || categoryName;
+  };
+
   // Compute featured images (most weekly likes received) for The King's Card and Dice Throne
   const featuredKingsCard = useMemo(() => {
     const candidates = allImages.filter(img => img.category === 'the-kings-card');
@@ -1238,14 +1249,7 @@ function CommunityGalleryPageContent() {
                   )}
                 </div>
                 <h3 className="font-semibold text-gray-900 text-xs sm:text-base">
-                  {category.name === 'Game Collections' ? (
-                    <>
-                      <span className="sm:hidden">Collections</span>
-                      <span className="hidden sm:inline">{category.name}</span>
-                    </>
-                  ) : (
-                    category.name
-                  )}
+                  {translateCategoryName(category.name)}
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600">{getCategoryCount(category.id)} {t('images')}</p>
               </div>

@@ -244,7 +244,9 @@
     "createGroupChat": "Crear Chat Grupal",
     "addPeople": "Agregar Personas",
     "moreOptions": "Más opciones",
-    "startDirectChat": "Iniciar Chat Directo"
+    "startDirectChat": "Iniciar Chat Directo",
+    "askDiceBot": "¡Pregunta a Dice-Bot!",
+    "askDiceBotDescription": "¡Chatea con Dice-Bot para reglas, estrategias y recomendaciones de juegos!"
   },
   "gallery": {
     "communityGallery": "Galería de la Comunidad",
@@ -308,7 +310,12 @@
     "deleteComment": "Eliminar comentario",
     "reportComment": "Reportar comentario",
     "deleteReply": "Eliminar respuesta",
-    "reportReply": "Reportar respuesta"
+    "reportReply": "Reportar respuesta",
+    "categoryDiceThrone": "Trono de Dados",
+    "categoryTheKingsCard": "La Carta del Rey",
+    "categoryGameCollections": "Colecciones de Juegos",
+    "categoryGameSetups": "Setups de Juegos",
+    "categoryGameEvents": "Eventos"
   },
   "forums": {
     "communityForums": "Foros de la Comunidad",
