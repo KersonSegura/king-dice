@@ -8,6 +8,7 @@ import { ArrowLeft, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import ImageModal from '@/components/ImageModal';
+import { useTranslations } from 'next-intl';
 
 interface UserProfile {
   id: string;
@@ -18,6 +19,7 @@ interface UserProfile {
 }
 
 export default function CollectionPage() {
+  const t = useTranslations('profile');
   const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
@@ -91,7 +93,7 @@ export default function CollectionPage() {
     if (userProfile?.collectionPhoto) {
       setSelectedImage({
         url: userProfile.collectionPhoto,
-        title: 'Collection Photo'
+        title: t('collectionPhoto')
       });
       setShowImageModal(true);
     }
@@ -101,7 +103,7 @@ export default function CollectionPage() {
     if (userProfile?.favoriteCard) {
       setSelectedImage({
         url: userProfile.favoriteCard,
-        title: 'Favorite Card'
+        title: t('favoriteCard')
       });
       setShowImageModal(true);
     }
@@ -143,7 +145,7 @@ export default function CollectionPage() {
               height={64} 
               className="opacity-60 mx-auto mb-4 animate-pulse"
             />
-            <p className="text-gray-300">Loading collection...</p>
+            <p className="text-gray-300">{t('loadingCollection')}</p>
           </div>
         </div>
       </div>
@@ -172,9 +174,9 @@ export default function CollectionPage() {
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium text-sm sm:text-base">Back to Profile</span>
+              <span className="font-medium text-sm sm:text-base">{t('backToProfile')}</span>
             </Link>
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{userProfile.username}'s Collection</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{t('collectionTitle', { username: userProfile.username })}</h1>
             <div className="w-16 sm:w-20 flex-shrink-0"></div> {/* Spacer for centering */}
           </div>
         </div>
@@ -201,7 +203,7 @@ export default function CollectionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Favorite Game Image (Left) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">Favorite Game</h2>
+            <h2 className="text-xl font-semibold text-white">{t('favoriteGame')}</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
                 <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
@@ -219,7 +221,7 @@ export default function CollectionPage() {
                     <svg className="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
-                    Favorite
+                    {t('favorite')}
                   </div>
                 </div>
               </Link>
@@ -227,7 +229,7 @@ export default function CollectionPage() {
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
                 <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm text-white">No favorite game</p>
+                  <p className="text-sm text-white">{t('noFavoriteGame')}</p>
                 </div>
               </div>
             )}
@@ -235,7 +237,7 @@ export default function CollectionPage() {
 
           {/* Favorite Card (Right) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">Favorite Card</h2>
+            <h2 className="text-xl font-semibold text-white">{t('favoriteCard')}</h2>
             {userProfile.favoriteCard ? (
               <div 
                 className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden cursor-pointer group"

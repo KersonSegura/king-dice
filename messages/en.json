@@ -132,7 +132,20 @@
     "collectionSummary": "Collection Summary",
     "viewFullCollection": "View Full Collection",
     "gamesList": "Games List",
-    "top10": "Top 10"
+    "top10": "Top 10",
+    "backToProfile": "Back to Profile",
+    "collectionTitle": "{username}'s Collection",
+    "favoriteGame": "Favorite Game",
+    "favoriteCard": "Favorite Card",
+    "allGames": "All Games",
+    "noFavoriteGame": "No favorite game",
+    "noFavoriteCard": "No favorite card",
+    "collectionPhoto": "Collection Photo",
+    "favorite": "Favorite",
+    "collectionNotFound": "Collection not found",
+    "goBackHome": "Go back home",
+    "failedToLoadCollection": "Failed to load collection",
+    "userNotFound": "User not found"
   },
   "auth": {
     "signIn": "Sign In",
