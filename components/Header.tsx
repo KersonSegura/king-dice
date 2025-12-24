@@ -962,7 +962,7 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span className="font-medium">Digital Corner</span>
+                  <span className="font-medium">{t('digitalCorner')}</span>
                 </Link>
               </div>
               
