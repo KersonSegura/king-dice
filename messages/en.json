@@ -287,7 +287,11 @@
     "pleaseSignInToUpload": "Please sign in to upload images",
     "draft": "Draft",
     "published": "Published",
-    "beFirstToShare": "Be the first to share an image in this category!"
+    "beFirstToShare": "Be the first to share an image in this category!",
+    "describeImage": "Describe your image...",
+    "imageFile": "Image File",
+    "chooseFile": "Choose file...",
+    "browse": "Browse"
   },
   "forums": {
     "communityForums": "Community Forums",

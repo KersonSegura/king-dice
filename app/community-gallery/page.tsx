@@ -1854,21 +1854,21 @@ function CommunityGalleryPageContent() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description ({newImage.description.length}/500)
+                  {t('description')} ({newImage.description.length}/500)
                 </label>
                 <textarea
                   value={newImage.description}
                   onChange={(e) => setNewImage({...newImage, description: e.target.value.slice(0, 500)})}
                   rows={4}
                   className="w-full p-2 border border-gray-300 rounded-md"
-                  placeholder="Describe your image..."
+                  placeholder={t('describeImage', {ns: 'gallery'}) || 'Describe your image...'}
                   maxLength={500}
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tags
+                  {t('tags')}
                 </label>
                 <TagSelector
                   selectedTags={newImage.tags}
@@ -1879,7 +1879,7 @@ function CommunityGalleryPageContent() {
               
                              <div>
                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                   Image File
+                   {t('imageFile', {ns: 'gallery'}) || 'Image File'}
                  </label>
                  <div className="relative">
                    <input
@@ -1891,14 +1891,14 @@ function CommunityGalleryPageContent() {
                    />
                    <div className="flex items-center justify-between p-2 border border-gray-300 rounded-md bg-white">
                      <span className="text-gray-500">
-                       {newImage.file ? newImage.file.name : "Choose file..."}
+                       {newImage.file ? newImage.file.name : t('chooseFile')}
                      </span>
                      <button
                        type="button"
                        onClick={() => document.getElementById('file-upload')?.click()}
                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
                      >
-                       Browse
+                       {t('browse')}
                      </button>
                    </div>
                  </div>
@@ -1910,14 +1910,14 @@ function CommunityGalleryPageContent() {
                 onClick={() => setShowUploadModal(false)}
                 className="btn-secondary w-full sm:w-auto"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={handleUploadImage}
                 disabled={isUploadingImage}
                 className={`btn-primary w-full sm:w-auto ${isUploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+                {isUploadingImage ? t('uploading') : t('uploadImage')}
               </button>
             </div>
           </div>

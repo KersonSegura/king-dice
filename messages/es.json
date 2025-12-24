@@ -287,7 +287,11 @@
     "pleaseSignInToUpload": "Por favor inicia sesión para subir imágenes",
     "draft": "Borrador",
     "published": "Publicado",
-    "beFirstToShare": "¡Sé el primero en compartir una imagen en esta categoría!"
+    "beFirstToShare": "¡Sé el primero en compartir una imagen en esta categoría!",
+    "describeImage": "Describe tu imagen...",
+    "imageFile": "Archivo de Imagen",
+    "chooseFile": "Elegir archivo...",
+    "browse": "Explorar"
   },
   "forums": {
     "communityForums": "Foros de la Comunidad",

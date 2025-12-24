@@ -522,7 +522,7 @@ function ForumsPageContent() {
               <div className="flex items-center space-x-2">
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 <span className="text-blue-800 font-medium text-sm sm:text-base">
-                  Showing posts by: <span className="font-semibold">{selectedAuthor}</span>
+                  {t('showingPostsBy')} <span className="font-semibold">{selectedAuthor}</span>
                 </span>
               </div>
               <button
@@ -535,7 +535,7 @@ function ForumsPageContent() {
                 }}
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium self-start sm:self-auto"
               >
-                Clear Filter
+                {t('clearFilter')}
               </button>
             </div>
           </div>
@@ -561,8 +561,8 @@ function ForumsPageContent() {
                   className="w-6 h-6 sm:w-8 sm:h-8"
                 />
               </div>
-              <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">All Posts</h3>
-              <p className="text-xs text-gray-600">{posts.length} posts</p>
+              <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">{t('allPosts')}</h3>
+              <p className="text-xs text-gray-600">{posts.length} {t('posts')}</p>
             </div>
           </button>
           
