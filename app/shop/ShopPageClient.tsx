@@ -196,6 +196,11 @@ export default function ShopPageClient() {
     goToPage(1, { scroll: false });
   }, [searchQuery, selectedCategory]);
 
+  // Show full-page loading screen while loading
+  if (loading) {
+    return <LoadingScreen message={tShop('loading')} subMessage={tShop('loadingItems')} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header with back button */}
