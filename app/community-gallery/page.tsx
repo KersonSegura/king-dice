@@ -1064,7 +1064,7 @@ function CommunityGalleryPageContent() {
   };
 
   if (loading) {
-    return <LoadingScreen message="Loading Gallery" subMessage="Fetching images and categories..." />;
+    return <LoadingScreen message={t('loadingGallery')} subMessage={t('fetchingImages')} />;
   }
 
   return (
@@ -1156,7 +1156,7 @@ function CommunityGalleryPageContent() {
                 onClick={() => setSearchQuery('')}
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
-                Clear Search
+                {t('clearSearch')}
               </button>
             </div>
           </div>
@@ -1169,7 +1169,7 @@ function CommunityGalleryPageContent() {
               <div className="flex items-center space-x-2">
                 <User className="w-5 h-5 text-green-600" />
                 <span className="text-green-800 font-medium">
-                  Showing images by: <span className="font-semibold">{selectedAuthor}</span>
+                  {t('showingImagesBy')} <span className="font-semibold">{selectedAuthor}</span>
                 </span>
               </div>
               <button
@@ -1182,7 +1182,7 @@ function CommunityGalleryPageContent() {
                 }}
                 className="text-green-600 hover:text-green-800 text-sm font-medium"
               >
-                Clear Filter
+                {t('clearFilter')}
               </button>
             </div>
           </div>
@@ -1208,8 +1208,8 @@ function CommunityGalleryPageContent() {
                   className="w-6 h-6 sm:w-10 sm:h-10"
                 />
               </div>
-              <h3 className="font-semibold text-gray-900 text-xs sm:text-base">All Images</h3>
-              <p className="text-xs sm:text-sm text-gray-600">{getCategoryCount('all')} images</p>
+              <h3 className="font-semibold text-gray-900 text-xs sm:text-base">{t('allImages')}</h3>
+              <p className="text-xs sm:text-sm text-gray-600">{getCategoryCount('all')} {t('images')}</p>
             </div>
           </button>
           
@@ -1247,7 +1247,7 @@ function CommunityGalleryPageContent() {
                     category.name
                   )}
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-600">{getCategoryCount(category.id)} images</p>
+                <p className="text-xs sm:text-sm text-gray-600">{getCategoryCount(category.id)} {t('images')}</p>
               </div>
             </button>
           ))}
@@ -1277,7 +1277,7 @@ function CommunityGalleryPageContent() {
                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                }`}
              >
-               Feed
+               {t('feed')}
              </button>
              {/* Mobile Explore Button */}
              <button
@@ -1288,7 +1288,7 @@ function CommunityGalleryPageContent() {
                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                }`}
              >
-               Explore
+               {t('explore')}
              </button>
              {/* Desktop Grid/List Toggle */}
              <button
@@ -1299,7 +1299,7 @@ function CommunityGalleryPageContent() {
                    : 'text-gray-600 hover:text-gray-900'
                }`}
              >
-               Grid
+               {t('grid')}
              </button>
              <button
                onClick={() => setViewMode('list')}
@@ -1309,7 +1309,7 @@ function CommunityGalleryPageContent() {
                    : 'text-gray-600 hover:text-gray-900'
                }`}
              >
-               List
+               {t('list')}
              </button>
            </div>
          </div>
@@ -1457,7 +1457,7 @@ function CommunityGalleryPageContent() {
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <div className="flex items-center space-x-1">
                             <User className="w-3 h-3" />
-                            <span>{image.author?.name ?? 'Unknown Artist'}</span>
+                            <span>{image.author?.name ?? t('unknownArtist')}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             {/* Action buttons - only show for image owner */}
