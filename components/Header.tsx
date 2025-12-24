@@ -408,13 +408,13 @@ export default function Header() {
                          height={20}
                          className="w-5 h-5"
                        />
-                       <span>Home</span>
+                       <span>{t('home')}</span>
                      </Link>
                      
                      {/* Board Games Section */}
                      <div className="border-t border-gray-200 my-2"></div>
                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                       Board Games
+                       {t('boardGames')}
                      </div>
                      <Link
                        href="/all-games"
@@ -428,7 +428,7 @@ export default function Header() {
                          height={24}
                          className="w-6 h-6"
                        />
-                       <span>All Games</span>
+                       <span>{t('allGames')}</span>
                      </Link>
                      <Link
                        href="/hot-games"
@@ -442,7 +442,7 @@ export default function Header() {
                          height={24}
                          className="w-6 h-6"
                        />
-                       <span>Hot Games</span>
+                       <span>{t('hotGames')}</span>
                      </Link>
                      <Link
                        href="/top-ranked"
@@ -456,7 +456,7 @@ export default function Header() {
                          height={24}
                          className="w-6 h-6"
                        />
-                       <span>Top Ranked</span>
+                       <span>{t('topRanked')}</span>
                      </Link>
                      
                      <div className="border-t border-gray-200 my-2"></div>
@@ -473,7 +473,7 @@ export default function Header() {
                          height={24}
                          className="w-6 h-6"
                        />
-                       <span>Forums</span>
+                       <span>{t('forums')}</span>
                      </Link>
                      <Link
                        href="/community-gallery"
@@ -487,7 +487,7 @@ export default function Header() {
                          height={24}
                          className="w-6 h-6"
                        />
-                       <span>Gallery</span>
+                       <span>{t('gallery')}</span>
                      </Link>
                      <Link
                        href="/shop"
@@ -499,7 +499,7 @@ export default function Header() {
                          alt="Shop Icon"
                          className="w-6 h-6"
                        />
-                       <span>Shop</span>
+                       <span>{t('shop')}</span>
                      </Link>
                    </div>
                  )}
@@ -773,7 +773,7 @@ export default function Header() {
                   height={24}
                   className="w-6 h-6"
                 />
-                <span className="font-medium">Home</span>
+                <span className="font-medium">{t('home')}</span>
               </Link>
               
               {/* Mobile Boardgames Section */}
@@ -791,7 +791,7 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span className="font-medium">All Games</span>
+                  <span className="font-medium">{t('allGames')}</span>
                 </Link>
                 <Link 
                   href="/hot-games" 
@@ -819,7 +819,7 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span className="font-medium">Top Ranked</span>
+                  <span className="font-medium">{t('topRanked')}</span>
                 </Link>
               </div>
               <Link 
@@ -834,7 +834,7 @@ export default function Header() {
                   height={24}
                   className="w-6 h-6"
                 />
-                <span className="font-medium">Forums</span>
+                <span className="font-medium">{t('forums')}</span>
               </Link>
               <Link 
                 href="/community-gallery" 
@@ -848,7 +848,7 @@ export default function Header() {
                   height={24}
                   className="w-6 h-6"
                 />
-                <span className="font-medium">Gallery</span>
+                <span className="font-medium">{t('gallery')}</span>
               </Link>
               <Link 
                 href="/shop" 
@@ -860,7 +860,7 @@ export default function Header() {
                   alt="Shop Icon"
                   className="w-6 h-6"
                 />
-                <span className="font-medium">Shop</span>
+                <span className="font-medium">{t('shop')}</span>
               </Link>
               
               {/* Mobile Features Section */}
