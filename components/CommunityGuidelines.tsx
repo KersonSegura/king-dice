@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Shield, Users, Heart, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface CommunityGuidelinesProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface CommunityGuidelinesProps {
 }
 
 export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidelinesProps) {
+  const t = useTranslations('gallery');
   if (!isOpen) return null;
 
   return (
@@ -24,14 +26,14 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
           <div className="flex items-center">
             <Shield className="w-6 h-6 text-primary-500 mr-3" />
             <h2 className="text-2xl font-bold text-gray-900">
-              Community Guidelines
+              {t('communityGuidelines')}
             </h2>
           </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
           >
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('guidelinesClose')}</span>
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -45,11 +47,10 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
               <Heart className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
               <div>
                 <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                  Welcome to King Dice!
+                  {t('guidelinesWelcome')}
                 </h3>
                 <p className="text-blue-700">
-                  Our community is dedicated to sharing the passion for board games. 
-                  Help us maintain a respectful and welcoming environment for everyone.
+                  {t('guidelinesWelcomeDescription')}
                 </p>
               </div>
             </div>
@@ -59,28 +60,28 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-              Allowed Content
+              {t('guidelinesAllowedContent')}
             </h3>
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-start">
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
-                <span>Discussions about board games and strategies</span>
+                <span>{t('guidelinesAllowed1')}</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
-                <span>Photos of game collections and setups</span>
+                <span>{t('guidelinesAllowed2')}</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
-                <span>Game reviews and recommendations</span>
+                <span>{t('guidelinesAllowed3')}</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
-                <span>Questions about rules and mechanics</span>
+                <span>{t('guidelinesAllowed4')}</span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5" />
-                <span>Board game events and meetups</span>
+                <span>{t('guidelinesAllowed5')}</span>
               </li>
             </ul>
           </div>
@@ -89,28 +90,28 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
-              Prohibited Content
+              {t('guidelinesProhibitedContent')}
             </h3>
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-start">
                 <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5" />
-                <span>Sexual, violent, or inappropriate content</span>
+                <span>{t('guidelinesProhibited1')}</span>
               </li>
               <li className="flex items-start">
                 <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5" />
-                <span>Spam, unauthorized advertising, or commercial content</span>
+                <span>{t('guidelinesProhibited2')}</span>
               </li>
               <li className="flex items-start">
                 <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5" />
-                <span>Hate speech, discrimination, or harassment</span>
+                <span>{t('guidelinesProhibited3')}</span>
               </li>
               <li className="flex items-start">
                 <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5" />
-                <span>Personal information of other users</span>
+                <span>{t('guidelinesProhibited4')}</span>
               </li>
               <li className="flex items-start">
                 <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5" />
-                <span>Content that promotes illegal activities</span>
+                <span>{t('guidelinesProhibited5')}</span>
               </li>
             </ul>
           </div>
@@ -119,20 +120,17 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
               <Shield className="w-5 h-5 text-gray-600 mr-2" />
-              Moderation System
+              {t('guidelinesModerationSystem')}
             </h3>
             <div className="space-y-3 text-sm text-gray-700">
               <p>
-                <strong>Automatic Moderation:</strong> All content is automatically reviewed 
-                before being published to detect inappropriate content.
+                {t('guidelinesAutoModeration')}
               </p>
               <p>
-                <strong>User Reports:</strong> You can report content that you consider 
-                inappropriate. Our team will review each report.
+                {t('guidelinesUserReports')}
               </p>
               <p>
-                <strong>Reputation System:</strong> Users with good reputation have 
-                more privileges in the community.
+                {t('guidelinesReputationSystem')}
               </p>
             </div>
           </div>
@@ -140,32 +138,32 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
           {/* Consequences */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Consequences for Violations
+              {t('guidelinesConsequences')}
             </h3>
             <div className="space-y-3 text-sm text-gray-700">
               <div className="flex items-start">
                 <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium mr-3">
-                  1st Warning
+                  {t('guidelinesFirstWarningLabel')}
                 </span>
-                <span>Warning and content removed</span>
+                <span>{t('guidelinesFirstWarning')}</span>
               </div>
               <div className="flex items-start">
                 <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium mr-3">
-                  2nd Warning
+                  {t('guidelinesSecondWarningLabel')}
                 </span>
-                <span>Temporary suspension of 24 hours</span>
+                <span>{t('guidelinesSecondWarning')}</span>
               </div>
               <div className="flex items-start">
                 <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium mr-3">
-                  3rd Warning
+                  {t('guidelinesThirdWarningLabel')}
                 </span>
-                <span>Temporary suspension of 7 days</span>
+                <span>{t('guidelinesThirdWarning')}</span>
               </div>
               <div className="flex items-start">
                 <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium mr-3">
-                  Serious Violation
+                  {t('guidelinesSeriousViolationLabel')}
                 </span>
-                <span>Permanent account ban</span>
+                <span>{t('guidelinesSeriousViolation')}</span>
               </div>
             </div>
           </div>
@@ -173,11 +171,10 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
           {/* Contact */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-green-900 mb-2">
-              Need Help?
+              {t('guidelinesNeedHelp')}
             </h3>
             <p className="text-green-700 text-sm">
-              If you have questions about the guidelines or want to report an issue, 
-              contact our moderation team through the report button on any content.
+              {t('guidelinesNeedHelpDescription')}
             </p>
           </div>
         </div>
@@ -187,7 +184,7 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
             onClick={onClose}
             className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors"
           >
-            Understood
+            {t('guidelinesUnderstood')}
           </button>
         </div>
       </div>
