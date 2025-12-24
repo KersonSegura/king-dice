@@ -1362,7 +1362,7 @@ function CommunityGalleryPageContent() {
                       }`}>
                         <Crown className={`${viewMode === 'explore' ? 'w-4 h-4' : 'w-3 h-3'} fill-current`} />
                         {viewMode !== 'explore' && (
-                          <span>{image.category === 'the-kings-card' ? 'Card of the Week' : 'Dice of the Week'}</span>
+                          <span>{image.category === 'the-kings-card' ? t('cardOfTheWeek') : t('diceOfTheWeek')}</span>
                         )}
                       </span>
                     </div>
