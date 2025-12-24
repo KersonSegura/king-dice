@@ -765,7 +765,7 @@ function ForumsPageContent() {
                   value={newPost.title}
                   onChange={(e) => setNewPost({...newPost, title: e.target.value})}
                   className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
-                  placeholder="Enter your post title..."
+                  placeholder={t('enterPostTitle', {ns: 'forums'}) || 'Enter your post title...'}
                 />
               </div>
               
@@ -781,7 +781,7 @@ function ForumsPageContent() {
                     onKeyDown={handleContentKeyPress}
                     rows={6}
                     className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
-                    placeholder="Write your post content... (use @ to mention games)"
+                    placeholder={t('writePostContent', {ns: 'forums'}) || 'Write your post content... (use @ to mention games)'}
                   />
                   
                   {/* Game Mention Dropdown */}
@@ -791,7 +791,7 @@ function ForumsPageContent() {
                       className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
                     >
                       <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
-                        Search game...
+                        {t('searchGame', {ns: 'chat'})}
                       </div>
                       {mentionResults.length > 0 ? (
                         <div className="py-1">
@@ -816,11 +816,11 @@ function ForumsPageContent() {
                         </div>
                       ) : mentionQuery.length > 0 ? (
                         <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                          No games found
+                          {t('noGamesFound', {ns: 'chat'})}
                         </div>
                       ) : (
                         <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                          Type to search games...
+                          {t('typeToSearchGames', {ns: 'chat'})}
                         </div>
                       )}
                     </div>
@@ -835,7 +835,7 @@ function ForumsPageContent() {
                 className="btn-secondary w-full sm:w-auto"
                 disabled={isCreatingPost}
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 onClick={handleCreatePost}
