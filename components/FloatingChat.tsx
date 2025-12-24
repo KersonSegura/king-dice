@@ -1413,7 +1413,7 @@ export default function FloatingChat() {
                  />
                  <span>{t('askDiceBot')}</span>
                </div>
-               <div className="text-xs opacity-90">
+               <div className="text-xs opacity-90 whitespace-pre-line">
                  {t('askDiceBotDescription')}
                </div>
              </div>
