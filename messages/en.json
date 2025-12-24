@@ -213,6 +213,11 @@
     "replyingTo": "Replying to",
     "typeAMessage": "Type a message...",
     "verified": "Verified",
-    "admin": "Admin"
+    "admin": "Admin",
+    "searchGame": "Search game...",
+    "noGamesFound": "No games found",
+    "typeToSearchGames": "Type to search games...",
+    "addEmoji": "Add emoji",
+    "sendMessage": "Send message"
   }
 }

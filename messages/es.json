@@ -213,6 +213,11 @@
     "replyingTo": "Respondiendo a",
     "typeAMessage": "Escribe un mensaje...",
     "verified": "Verificado",
-    "admin": "Administrador"
+    "admin": "Administrador",
+    "searchGame": "Buscar juego...",
+    "noGamesFound": "No se encontraron juegos",
+    "typeToSearchGames": "Escribe para buscar juegos...",
+    "addEmoji": "Agregar emoji",
+    "sendMessage": "Enviar mensaje"
   }
 }
