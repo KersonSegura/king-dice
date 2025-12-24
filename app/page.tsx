@@ -1183,7 +1183,7 @@ export default function HomePage() {
                       {featuredDiceThrone ? (
                         <>
                           <div className="absolute inset-0 bottom-8">
-                            <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title || 'Dice of the Week'} fill className="object-cover" loading="lazy" />
+                            <Image src={featuredDiceThrone.thumbnailUrl} alt={featuredDiceThrone.title || t('diceOfTheWeek')} fill className="object-cover" loading="lazy" />
                           </div>
                           
                           {/* Instagram-style hover overlay */}
@@ -1249,7 +1249,7 @@ export default function HomePage() {
                       {featuredKingsCard ? (
                         <>
                           <div className="absolute inset-0 bottom-8">
-                            <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title || 'Card of the Week'} fill className="object-cover" loading="lazy" />
+                            <Image src={featuredKingsCard.thumbnailUrl} alt={featuredKingsCard.title || t('cardOfTheWeek')} fill className="object-cover" loading="lazy" />
                           </div>
                           
                           {/* Instagram-style hover overlay */}
