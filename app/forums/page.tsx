@@ -18,6 +18,7 @@ import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { useGameMentions } from '@/hooks/useGameMentions';
 import { renderContentWithGameLinks } from '@/utils/renderContent';
 import { useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 function ForumsPageContent() {
   const t = useTranslations('forums');
