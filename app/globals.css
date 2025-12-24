@@ -3,15 +3,7 @@
 @tailwind utilities;
 
 /* Chat container height override */
-/* Force tooltip to be smaller on all screen sizes */
-.tooltip-bounce {
-  height: 80px !important;
-  max-height: 80px !important;
-  min-height: 80px !important;
-  width: 280px !important;
-  max-width: 280px !important;
-  overflow: hidden !important;
-}
+/* Animation only - width/height now controlled by component */
 
 /* Mobile chat full height */
 .mobile-chat-full-height {
