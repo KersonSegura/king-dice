@@ -5,9 +5,12 @@ import { BoardleGame } from '@/components/BoardleGame';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
+import { useTranslations } from 'next-intl';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 export default function BoardlePage() {
+  const t = useTranslations('common');
+  const tHome = useTranslations('home');
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header with back button */}
@@ -18,7 +21,7 @@ export default function BoardlePage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -28,7 +31,7 @@ export default function BoardlePage() {
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Boardle</h1>
             <p className="text-lg text-gray-600">
-              Guess the daily board game in 6 tries!
+              {tHome('boardleDescription')}
             </p>
           </div>
         </div>

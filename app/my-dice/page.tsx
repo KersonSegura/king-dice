@@ -379,6 +379,8 @@ function isBlocked(selectedDice: string | null, tab: TabKey, assetName: string):
 
 
 export default function MyDicePage() {
+  const t = useTranslations('common');
+  const tHeader = useTranslations('header');
   const { user, updateAvatar, syncUserData } = useAuth();
   const { showToast } = useToast();
   
@@ -874,7 +876,7 @@ export default function MyDicePage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -884,14 +886,14 @@ export default function MyDicePage() {
           <div className="flex items-center space-x-3 mb-2">
             <div className="flex-1 flex items-center justify-between gap-2 sm:justify-start sm:gap-4">
               <h1 className="text-3xl font-bold text-gray-900">
-                My Dice
+                {tHeader('myDice')}
               </h1>
             {user && (
                 <button
                   onClick={() => setShowXPHelp(true)}
                   className="px-2 py-1 text-xs bg-[#fbae17] text-white rounded-full hover:bg-[#e6a015] transition-colors flex-shrink-0"
                 >
-                  How do I earn XP?
+                  {t('howDoIEarnXP', {ns: 'common'}) || 'How do I earn XP?'}
                 </button>
               )}
             </div>

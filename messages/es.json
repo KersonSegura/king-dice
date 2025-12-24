@@ -330,7 +330,8 @@
     "deletePost": "Eliminar publicación",
     "reportPost": "Reportar publicación",
     "enterPostTitle": "Ingresa el título de tu publicación...",
-    "writePostContent": "Escribe el contenido de tu publicación... (usa @ para mencionar juegos)"
+    "writePostContent": "Escribe el contenido de tu publicación... (usa @ para mencionar juegos)",
+    "deletePostConfirm": "¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer."
   },
   "common": {
     "backToHome": "Volver al Inicio",

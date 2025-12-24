@@ -842,7 +842,7 @@ function ForumsPageContent() {
                 className={`btn-primary w-full sm:w-auto ${isCreatingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={isCreatingPost}
               >
-                {isCreatingPost ? 'Creating...' : 'Create Post'}
+                {isCreatingPost ? t('submitting') : t('createPost')}
               </button>
             </div>
           </div>
@@ -892,9 +892,9 @@ function ForumsPageContent() {
           setPostToDelete(null);
         }}
         onConfirm={confirmDeletePost}
-        title="Delete Post"
-        message="Are you sure you want to delete this post? This action cannot be undone."
-        confirmText="Delete"
+        title={t('delete') + ' ' + t('post')}
+        message={t('deletePostConfirm', {ns: 'forums'}) || 'Are you sure you want to delete this post? This action cannot be undone.'}
+        confirmText={t('delete')}
         cancelText="Cancel"
         type="danger"
       />
