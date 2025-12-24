@@ -69,7 +69,7 @@ function CustomChatList({
   chatsWithUnread?: Map<string, number>;
   onChatOpened?: (chatId: string) => void;
   onStartGroupChatWithUser?: (targetUser: any) => void;
-  setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => Map<string, number>) => void;
+  setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => void;
 }) {
   const t = useTranslations('chat');
   const [searchQuery, setSearchQuery] = useState('');
