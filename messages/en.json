@@ -145,7 +145,8 @@
     "collectionNotFound": "Collection not found",
     "goBackHome": "Go back home",
     "failedToLoadCollection": "Failed to load collection",
-    "userNotFound": "User not found"
+    "userNotFound": "User not found",
+    "noGamesInCollection": "No games in collection yet"
   },
   "auth": {
     "signIn": "Sign In",

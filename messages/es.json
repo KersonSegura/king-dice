@@ -145,7 +145,8 @@
     "collectionNotFound": "Colección no encontrada",
     "goBackHome": "Volver al inicio",
     "failedToLoadCollection": "Error al cargar la colección",
-    "userNotFound": "Usuario no encontrado"
+    "userNotFound": "Usuario no encontrado",
+    "noGamesInCollection": "Aún no hay juegos en la colección"
   },
   "auth": {
     "signIn": "Iniciar Sesión",

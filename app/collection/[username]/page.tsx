@@ -49,12 +49,12 @@ export default function CollectionPage() {
         const data = await response.json();
         setUserProfile(data.user);
       } else {
-        showToast('User not found', 'error');
+        showToast(t('userNotFound'), 'error');
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      showToast('Failed to load collection', 'error');
+      showToast(t('failedToLoadCollection'), 'error');
       router.push('/');
     } finally {
       setLoading(false);
@@ -156,8 +156,8 @@ export default function CollectionPage() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-300 mb-4">Collection not found</p>
-          <Link href="/" className="text-[#fbae17] hover:underline">Go back home</Link>
+          <p className="text-gray-300 mb-4">{t('collectionNotFound')}</p>
+          <Link href="/" className="text-[#fbae17] hover:underline">{t('goBackHome')}</Link>
         </div>
       </div>
     );
@@ -254,7 +254,7 @@ export default function CollectionPage() {
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
                 <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm text-white">No favorite card</p>
+                  <p className="text-sm text-white">{t('noFavoriteCard')}</p>
                 </div>
               </div>
             )}
@@ -264,7 +264,7 @@ export default function CollectionPage() {
         {/* All Games Grid */}
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold text-white">
-            All Games ({userProfile.gamesList?.length || 0})
+            {t('allGames')} ({userProfile.gamesList?.length || 0})
           </h2>
           {userProfile.gamesList && userProfile.gamesList.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
@@ -301,7 +301,7 @@ export default function CollectionPage() {
               <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p className="text-white text-lg">No games in collection yet</p>
+              <p className="text-white text-lg">{t('noGamesInCollection')}</p>
             </div>
           )}
         </div>
