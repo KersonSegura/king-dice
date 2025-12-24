@@ -525,6 +525,7 @@ function CustomChatList({
 export default function FloatingChat() {
   const { user, isAuthenticated } = useAuth();
   const contextChatState = useChatState();
+  const t = useTranslations('chat');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
