@@ -1139,8 +1139,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             <Users className="w-5 h-5 mr-2 text-[#fbae17] flex-shrink-0" />
                             <span className="font-medium">
                               {game.minPlayers === game.maxPlayers 
-                                ? `${game.minPlayers} players`
-                                : `${game.minPlayers}-${game.maxPlayers} players`
+                                ? `${game.minPlayers} ${tGame('players')}`
+                                : `${game.minPlayers}-${game.maxPlayers} ${tGame('players')}`
                               }
                             </span>
                           </div>
@@ -1148,7 +1148,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         {game.durationMinutes && (
                           <div className="flex items-center text-gray-600">
                             <Clock className="w-5 h-5 mr-2 text-[#fbae17] flex-shrink-0" />
-                            <span className="font-medium">{game.durationMinutes} min</span>
+                            <span className="font-medium">{game.durationMinutes} {tGame('min')}</span>
                           </div>
                         )}
                       </div>
@@ -1216,8 +1216,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             <Users className="w-5 h-5 mr-2 text-[#fbae17]" />
                             <span className="font-medium">
                               {game.minPlayers === game.maxPlayers 
-                                ? `${game.minPlayers} players`
-                                : `${game.minPlayers}-${game.maxPlayers} players`
+                                ? `${game.minPlayers} ${tGame('players')}`
+                                : `${game.minPlayers}-${game.maxPlayers} ${tGame('players')}`
                               }
                             </span>
                           </div>
@@ -1225,7 +1225,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         {game.durationMinutes && (
                           <div className="flex items-center text-gray-600">
                             <Clock className="w-5 h-5 mr-2 text-[#fbae17]" />
-                            <span className="font-medium">{game.durationMinutes} min</span>
+                            <span className="font-medium">{game.durationMinutes} {tGame('min')}</span>
                           </div>
                         )}
                       </div>
