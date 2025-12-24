@@ -1,4 +1,4 @@
-Ok 'use client';
+'use client';
 
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
