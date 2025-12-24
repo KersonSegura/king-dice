@@ -1263,7 +1263,7 @@ function CommunityGalleryPageContent() {
              {searchQuery.trim() ? (
                <span>Search results for "{searchQuery}" ({filteredImages.length} images)</span>
              ) : selectedCategory === 'all' ? (
-               <span>Showing all {getCategoryCount('all')} images from the community</span>
+               <span>{t('showingAllImages', { count: getCategoryCount('all') })}</span>
              ) : (
                <span>
                  {categories.find(c => c.id === selectedCategory)?.description || 'Category description'}

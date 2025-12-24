@@ -260,6 +260,7 @@
     "imagesFound": "{count} imagen{plural} encontrada{plural}",
     "clearSearch": "Limpiar Búsqueda",
     "showingImagesBy": "Mostrando imágenes de:",
+    "showingAllImages": "Mostrando todas las {count} imágenes de la comunidad",
     "clearFilter": "Limpiar Filtro",
     "allImages": "Todas las Imágenes",
     "images": "imágenes",
