@@ -12,6 +12,7 @@ import ChatBot from './ChatBot';
 import GroupChatModal from './GroupChatModal';
 import ViewMembersModal from './ViewMembersModal';
 import LoadingLogo from './LoadingLogo';
+import { useTranslations } from 'next-intl';
 
 // Color palette for group chats - enough colors to minimize repeats
 const GROUP_COLORS = [
@@ -68,8 +69,9 @@ function CustomChatList({
   chatsWithUnread?: Map<string, number>;
   onChatOpened?: (chatId: string) => void;
   onStartGroupChatWithUser?: (targetUser: any) => void;
-  setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => void;
+  setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => Map<string, number>) => void;
 }) {
+  const t = useTranslations('chat');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [existingChats, setExistingChats] = useState<any[]>([]);
@@ -278,13 +280,13 @@ function CustomChatList({
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
     if (diffInMinutes < 1) {
-      return 'just now';
+      return t('justNow');
     } else if (diffInMinutes < 60) {
       return `${diffInMinutes}m`;
     } else if (diffInHours < 24) {
       return `${diffInHours}h`;
     } else if (diffInDays === 1) {
-      return 'yesterday';
+      return t('yesterday');
     } else if (diffInDays < 7) {
       return `${diffInDays}d`;
     } else {
@@ -300,7 +302,7 @@ function CustomChatList({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search for users..."
+            placeholder={t('searchForUsers')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -328,7 +330,7 @@ function CustomChatList({
                     Dice-Bot
                   </h3>
                   <p className="text-sm text-gray-500">
-                    AI Assistant - Always available
+                    {t('aiAssistant')}
                   </p>
                 </div>
               </div>
@@ -338,7 +340,7 @@ function CustomChatList({
         {!hasSearched && isInitialLoad && existingChats.length === 0 && (
           <div className="border-b border-gray-100">
             <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Recent Chats
+              {t('recentChats')}
             </div>
             {[1, 2, 3].map((i) => (
               <div key={i} className="p-4 border-b border-gray-50 animate-pulse">
@@ -358,7 +360,7 @@ function CustomChatList({
         {!hasSearched && existingChats.length > 0 && (
           <div className="border-b border-gray-100">
             <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Recent Chats
+              {t('recentChats')}
             </div>
             {existingChats.slice(0, 5).map((chat) => {
               // Get unread count from chat data or from real-time updates
@@ -409,7 +411,7 @@ function CustomChatList({
                     <div className="flex items-center space-x-2">
                       {chat.type === 'group' && (
                         <span className="text-xs text-green-600">
-                          {chat.participants?.length || 0} members
+                          {chat.participants?.length || 0} {t('members')}
                         </span>
                       )}
                       {chat.lastMessage && (
@@ -426,7 +428,7 @@ function CustomChatList({
                       )}
                       {!chat.lastMessage && (
                         <p className="text-sm text-gray-400 italic">
-                          No messages yet
+                          {t('noMessagesYet')}
                         </p>
                       )}
                     </div>
@@ -446,22 +448,22 @@ function CustomChatList({
         {/* User Search Results */}
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <LoadingLogo size={36} text="Searching..." />
+            <LoadingLogo size={36} text={t('searching')} />
           </div>
         ) : !hasSearched ? (
           <div className="p-8 text-center text-gray-500">
             <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">Search for users to start chatting</p>
+            <p className="text-sm">{t('searchToStartChatting')}</p>
             <p className="text-xs text-gray-400 mt-1">
-              Type a username to find people
+              {t('typeUsername')}
             </p>
           </div>
         ) : searchResults.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">No users found</p>
+            <p className="text-sm">{t('noUsersFound')}</p>
             <p className="text-xs text-gray-400 mt-1">
-              Try a different search term
+              {t('tryDifferentSearch')}
             </p>
           </div>
         ) : (
@@ -491,13 +493,13 @@ function CustomChatList({
                   </h3>
                   <div className="flex items-center space-x-2">
                     {foundUser.isVerified && (
-                      <span className="text-xs text-blue-500">✓ Verified</span>
+                      <span className="text-xs text-blue-500">✓ {t('verified')}</span>
                     )}
                     {foundUser.isAdmin && (
-                      <span className="text-xs text-red-500">Admin</span>
+                      <span className="text-xs text-red-500">{t('admin')}</span>
                     )}
                     <p className="text-sm text-gray-500">
-                      Click to start chat
+                      {t('clickToStartChat')}
                     </p>
                   </div>
                 </div>
@@ -507,7 +509,7 @@ function CustomChatList({
                     createGroupWithUser(foundUser);
                   }}
                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-                  title="Create group with this user"
+                  title={t('createGroupWithUser')}
                 >
                   <Plus className="w-5 h-5" />
                 </button>

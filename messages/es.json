@@ -193,5 +193,26 @@
     "credits": "Créditos",
     "madeWithLove": "Hecho con {heart} para amantes de juegos de mesa",
     "joinDiscord": "Unirse a Discord"
+  },
+  "chat": {
+    "searchForUsers": "Buscar usuarios...",
+    "searching": "Buscando...",
+    "searchToStartChatting": "Busca usuarios para comenzar a chatear",
+    "typeUsername": "Escribe un nombre de usuario para encontrar personas",
+    "noUsersFound": "No se encontraron usuarios",
+    "tryDifferentSearch": "Intenta con un término de búsqueda diferente",
+    "clickToStartChat": "Haz clic para iniciar chat",
+    "createGroupWithUser": "Crear grupo con este usuario",
+    "noMessagesYet": "Aún no hay mensajes",
+    "recentChats": "Chats Recientes",
+    "aiAssistant": "Asistente IA - Siempre disponible",
+    "members": "miembros",
+    "justNow": "ahora mismo",
+    "yesterday": "ayer",
+    "loadingChat": "Cargando chat...",
+    "replyingTo": "Respondiendo a",
+    "typeAMessage": "Escribe un mensaje...",
+    "verified": "Verificado",
+    "admin": "Administrador"
   }
 }

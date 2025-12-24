@@ -193,5 +193,26 @@
     "credits": "Credits",
     "madeWithLove": "Made with {heart} for board game lovers",
     "joinDiscord": "Join Discord"
+  },
+  "chat": {
+    "searchForUsers": "Search for users...",
+    "searching": "Searching...",
+    "searchToStartChatting": "Search for users to start chatting",
+    "typeUsername": "Type a username to find people",
+    "noUsersFound": "No users found",
+    "tryDifferentSearch": "Try a different search term",
+    "clickToStartChat": "Click to start chat",
+    "createGroupWithUser": "Create group with this user",
+    "noMessagesYet": "No messages yet",
+    "recentChats": "Recent Chats",
+    "aiAssistant": "AI Assistant - Always available",
+    "members": "members",
+    "justNow": "just now",
+    "yesterday": "yesterday",
+    "loadingChat": "Loading chat...",
+    "replyingTo": "Replying to",
+    "typeAMessage": "Type a message...",
+    "verified": "Verified",
+    "admin": "Admin"
   }
 }

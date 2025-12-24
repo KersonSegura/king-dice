@@ -44,6 +44,7 @@ interface ChatProps {
 }
 
 export default function Chat({ chatId, chatName, chatType, participants, onClose, onMessageSent }: ChatProps) {
+  const t = useTranslations('chat');
   const { socket, isConnected } = useSocket();
   const { user } = useAuth();
   const { showToast, ToastContainer } = useToast();
@@ -692,7 +693,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <LoadingLogo size={44} text="Loading chat..." />
+        <LoadingLogo size={44} text={t('loadingChat')} />
       </div>
     );
   }
@@ -743,7 +744,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                   <div className={`text-xs mb-1 p-2 rounded ${
                     message.senderId === user?.id ? 'bg-blue-400' : 'bg-gray-200'
                   }`}>
-                    <div className="font-semibold">Replying to {message.replyTo.sender.username}</div>
+                    <div className="font-semibold">{t('replyingTo')} {message.replyTo.sender.username}</div>
                     <div className="truncate">{message.replyTo.content}</div>
                   </div>
                 )}
