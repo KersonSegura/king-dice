@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Mail, MessageCircle, Users, Gamepad2, Star, Shield, Crown, Coffee, Zap } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function HomePageFooter() {
+  const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -14,18 +16,18 @@ export default function HomePageFooter() {
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <Crown className="w-16 h-16 mx-auto mb-4 text-[#fbae17]" />
-            <h2 className="text-4xl font-bold text-white mb-4">Love King Dice?</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">{t('loveKingDice')}</h2>
             <p className="text-xl text-gray-300 mb-8">
-              Support our mission to build the ultimate board game community
+              {t('supportMission')}
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="text-center">
               <Coffee className="w-12 h-12 mx-auto mb-4 text-[#fbae17]" />
-              <h3 className="text-xl font-semibold text-white mb-2">Community Supporter</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('communitySupporter')}</h3>
               <p className="text-gray-400 text-sm mb-4">
-                Help keep King Dice running 24/7<br />and maintaining the platform
+                {t('helpKeepRunning')}
               </p>
               <button className="bg-[#fbae17] hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
                 $5/month
@@ -34,9 +36,9 @@ export default function HomePageFooter() {
             
             <div className="text-center">
               <Star className="w-12 h-12 mx-auto mb-4 text-[#fbae17]" />
-              <h3 className="text-xl font-semibold text-white mb-2">Dice Collector</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('diceCollector')}</h3>
               <p className="text-gray-400 text-sm mb-4">
-                Unlock exclusive clothing and accessories for your dice
+                {t('unlockExclusive')}
               </p>
               <button className="bg-[#fbae17] hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
                 $10/month
@@ -66,9 +68,9 @@ export default function HomePageFooter() {
                   <circle cx="16" cy="16" r="0.7" fill="currentColor" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">King Dice Patron</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('kingDicePatron')}</h3>
               <p className="text-gray-400 text-sm mb-4">
-                Previous perks + extra XP + premium badge and frame + credits mention
+                {t('previousPerks')}
               </p>
               <button className="bg-[#fbae17] hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
                 $25/month
@@ -78,7 +80,7 @@ export default function HomePageFooter() {
           
           <div className="text-center">
             <p className="text-gray-400 text-sm">
-              Secure payment processing • Cancel anytime • 100% goes to King Dice
+              {t('securePayment')}
             </p>
           </div>
         </div>
@@ -101,8 +103,7 @@ export default function HomePageFooter() {
               <span className="text-xl font-bold">King Dice</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">
-              Your ultimate destination for board game rules, community discussions, and gaming tools. 
-              Join thousands of players discovering their next favorite game.
+              {t('kingDiceDescription')}
             </p>
             <div className="flex space-x-4">
               <a
@@ -173,27 +174,27 @@ export default function HomePageFooter() {
                   <circle cx="16" cy="16" r="0.7" fill="currentColor" />
                 </svg>
               </div>
-              Games
+              {t('games')}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/all-games" className="text-gray-400 hover:text-white transition-colors">
-                  All Games
+                  {t('allGames')}
                 </Link>
               </li>
               <li>
                 <Link href="/hot-games" className="text-gray-400 hover:text-white transition-colors">
-                  Hot Games
+                  {t('hotGames')}
                 </Link>
               </li>
               <li>
                 <Link href="/top-ranked" className="text-gray-400 hover:text-white transition-colors">
-                  Top Ranked
+                  {t('topRanked')}
                 </Link>
               </li>
               <li>
                 <Link href="/boardgames" className="text-gray-400 hover:text-white transition-colors">
-                  Game Database
+                  {t('gameDatabase')}
                 </Link>
               </li>
             </ul>
@@ -203,22 +204,22 @@ export default function HomePageFooter() {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Users className="w-5 h-5 mr-2 text-[#fbae17]" />
-              Community
+              {t('community')}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/forums" className="text-gray-400 hover:text-white transition-colors">
-                  Forums
+                  {t('forums')}
                 </Link>
               </li>
               <li>
                 <Link href="/community-gallery" className="text-gray-400 hover:text-white transition-colors">
-                  Gallery
+                  {t('gallery')}
                 </Link>
               </li>
               <li>
                 <Link href="/#community-feed" className="text-gray-400 hover:text-white transition-colors">
-                  Feed
+                  {t('feed')}
                 </Link>
               </li>
               <li>
@@ -228,7 +229,7 @@ export default function HomePageFooter() {
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Discord Server
+                  {t('discordServer')}
                 </a>
               </li>
             </ul>
@@ -238,27 +239,27 @@ export default function HomePageFooter() {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Star className="w-5 h-5 mr-2 text-[#fbae17]" />
-              Tools & Features
+              {t('toolsFeatures')}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/my-dice" className="text-gray-400 hover:text-white transition-colors">
-                  My Dice
+                  {t('myDice')}
                 </Link>
               </li>
               <li>
                 <Link href="/pixel-canvas" className="text-gray-400 hover:text-white transition-colors">
-                  Pixel Canvas
+                  {t('pixelCanvas')}
                 </Link>
               </li>
               <li>
                 <Link href="/boardle" className="text-gray-400 hover:text-white transition-colors">
-                  Boardle Game
+                  {t('boardleGame')}
                 </Link>
               </li>
               <li>
                 <Link href="/catan-map-generator" className="text-gray-400 hover:text-white transition-colors">
-                  Catan Maps
+                  {t('catanMaps')}
                 </Link>
               </li>
             </ul>
@@ -268,18 +269,18 @@ export default function HomePageFooter() {
         {/* Newsletter Signup */}
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="max-w-md mx-auto text-center">
-            <h3 className="text-lg font-semibold mb-2">Stay Updated</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('stayUpdated')}</h3>
             <p className="text-gray-400 text-sm mb-4">
-              Get notified about new features and updates
+              {t('getNotified')}
             </p>
             <div className="flex">
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t('enterEmail')}
                 className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] text-white placeholder-gray-400"
               />
               <button className="px-6 py-2 bg-[#fbae17] hover:bg-yellow-600 text-white rounded-r-lg transition-colors font-medium">
-                Subscribe
+                {t('subscribe')}
               </button>
             </div>
           </div>
@@ -292,27 +293,27 @@ export default function HomePageFooter() {
           <div className="md:flex md:items-center md:justify-between">
             <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-6">
               <p className="text-gray-400 text-sm">
-                © {currentYear} King Dice. All rights reserved.
+                © {currentYear} King Dice. {t('allRightsReserved')}
               </p>
               <div className="flex items-center space-x-4 text-sm">
                 <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                  Privacy Policy
+                  {t('privacyPolicy')}
                 </Link>
                 <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
-                  Terms of Service
+                  {t('termsOfService')}
                 </Link>
                 <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
-                  Community Rules
+                  {t('communityRules')}
                 </Link>
                 <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
-                  Credits
+                  {t('credits')}
                 </Link>
               </div>
             </div>
             <div className="mt-4 md:mt-0">
               <p className="text-gray-400 text-sm flex items-center">
-                Made with <Heart className="w-4 h-4 mx-1 text-red-500" /> for board game lovers
+                {t('madeWithLove', { heart: '❤️' })}
               </p>
             </div>
           </div>
