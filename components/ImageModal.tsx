@@ -118,6 +118,9 @@ export default function ImageModal({
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description || '');
 
+  // Translation hooks
+  const t = useTranslations('home');
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
