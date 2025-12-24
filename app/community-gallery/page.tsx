@@ -1443,7 +1443,7 @@ function CommunityGalleryPageContent() {
                           </div>
                           <div className="flex items-center space-x-2 mr-2">
                             <span className="text-sm text-gray-500">
-                              {categories.find(c => c.id === image.category)?.name || image.category}
+                              {translateCategoryName(categories.find(c => c.id === image.category)?.name || image.category)}
                             </span>
                           </div>
                         </div>
