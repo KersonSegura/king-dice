@@ -474,6 +474,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   // Auth and toast hooks
   const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
+  
+  // Translation hooks
+  const t = useTranslations('common');
+  const tGame = useTranslations('game');
 
   // Check if desktop view and calculate available width
   useEffect(() => {
