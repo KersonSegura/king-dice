@@ -1664,7 +1664,7 @@ function CommunityGalleryPageContent() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="text-sm text-gray-500">
-                          {categories.find(c => c.id === image.category)?.name || image.category}
+                          {translateCategoryName(categories.find(c => c.id === image.category)?.name || image.category)}
                         </span>
                         {featuredIds.has(image.id) && (
                           <span className="px-2 py-1 rounded-full text-xs font-bold bg-[#fbae17] text-white flex items-center gap-1">
