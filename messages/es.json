@@ -324,7 +324,11 @@
     "postDeleted": "Publicación eliminada exitosamente",
     "postUpdated": "Publicación actualizada exitosamente",
     "communityGuidelines": "Reglas de la Comunidad",
-    "guidelines": "Reglas"
+    "guidelines": "Reglas",
+    "beFirstToDiscuss": "¡Sé el primero en iniciar una discusión en esta categoría!",
+    "signInToReport": "Inicia sesión para reportar",
+    "deletePost": "Eliminar publicación",
+    "reportPost": "Reportar publicación"
   },
   "common": {
     "backToHome": "Volver al Inicio",

@@ -601,7 +601,7 @@ function ForumsPageContent() {
                     />
                   </div>
                   <h3 className="font-semibold text-gray-900 text-xs sm:text-sm">{category.name}</h3>
-                  <p className="text-xs text-gray-600">{category.postCount} posts</p>
+                  <p className="text-xs text-gray-600">{category.postCount} {t('posts')}</p>
                 </div>
               </button>
             );
@@ -662,7 +662,7 @@ function ForumsPageContent() {
                       {/* Replies */}
                       <div className="flex items-center space-x-1">
                         <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>{post.replies} replies</span>
+                        <span>{post.replies} {t('replies')}</span>
                       </div>
                       
                       {/* Date */}
@@ -673,7 +673,7 @@ function ForumsPageContent() {
                       
                       {/* Delete button - only show to post author */}
                       {isAuthenticated && user && post.author.id === user.id && (
-                        <ModernTooltip content="Delete post" position="top">
+                        <ModernTooltip content={t('delete') + ' ' + t('post')} position="top">
                           <button
                             onClick={() => handleDeletePost(post.id)}
                             className="p-1 text-gray-400 hover:text-red-600 transition-colors"
@@ -685,7 +685,7 @@ function ForumsPageContent() {
                     </div>
                     
                     {/* Report button - far right */}
-                    <ModernTooltip content={!isAuthenticated ? 'Sign in to report' : 'Report post'} position="top">
+                    <ModernTooltip content={!isAuthenticated ? tCommon('pleaseSignIn') + ' to ' + t('report').toLowerCase() : t('report') + ' ' + t('post')} position="top">
                       <button
                         onClick={() => {
                           if (isAuthenticated) {
@@ -709,8 +709,8 @@ function ForumsPageContent() {
         {filteredPosts.length === 0 && (
           <div className="text-center py-12">
             <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
-            <p className="text-gray-600">Be the first to start a discussion in this category!</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noPostsFound')}</h3>
+            <p className="text-gray-600">{t('beFirstToDiscuss', {ns: 'forums'}) || 'Be the first to start a discussion in this category!'}</p>
           </div>
         )}
 
@@ -736,12 +736,12 @@ function ForumsPageContent() {
       {showCreatePost && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg sm:text-xl font-semibold mb-4">Create New Post</h2>
+            <h2 className="text-lg sm:text-xl font-semibold mb-4">{t('createPost')}</h2>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  {t('category')}
                 </label>
                 <select
                   value={newPost.category}
@@ -771,7 +771,7 @@ function ForumsPageContent() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Content
+                  {t('content')}
                 </label>
                 <div className="relative">
                   <textarea
