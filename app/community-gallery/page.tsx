@@ -1403,7 +1403,7 @@ function CommunityGalleryPageContent() {
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1">
                             {/* Combined likes counter and like button */}
-                            <ModernTooltip content={!isAuthenticated ? 'Sign in to vote' : 'Like'} position="top">
+                            <ModernTooltip content={!isAuthenticated ? t('signInToVote') : t('like')} position="top">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1424,7 +1424,7 @@ function CommunityGalleryPageContent() {
                               </button>
                             </ModernTooltip>
                             {/* Comments counter */}
-                            <ModernTooltip content="View comments" position="top">
+                            <ModernTooltip content={t('viewComments')} position="top">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1465,7 +1465,7 @@ function CommunityGalleryPageContent() {
                               <div className="flex items-center gap-1">
                                 {/* Publish button - only show for drafts by the current user */}
                                 {image.isDraft && (
-                                  <ModernTooltip content="Publish draft" position="top">
+                                  <ModernTooltip content={t('publishDraft')} position="top">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -1478,7 +1478,7 @@ function CommunityGalleryPageContent() {
                                   </ModernTooltip>
                                 )}
                                 {/* Delete button - only show to image author */}
-                                <ModernTooltip content="Delete image" position="top">
+                                <ModernTooltip content={t('deleteImage')} position="top">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1493,7 +1493,7 @@ function CommunityGalleryPageContent() {
                             )}
                             {/* Report button - show to all authenticated users */}
                             {isAuthenticated && user && (
-                              <ModernTooltip content="Report image" position="top">
+                              <ModernTooltip content={t('reportImage')} position="top">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1514,7 +1514,7 @@ function CommunityGalleryPageContent() {
                         {/* First line: Likes and Comments buttons */}
                         <div className="flex items-center gap-1 mb-2">
                           {/* Combined likes counter and like button */}
-                          <ModernTooltip content={!isAuthenticated ? 'Sign in to vote' : 'Like'} position="top">
+                          <ModernTooltip content={!isAuthenticated ? t('signInToVote') : t('like')} position="top">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1535,7 +1535,7 @@ function CommunityGalleryPageContent() {
                             </button>
                           </ModernTooltip>
                           {/* Comments counter */}
-                          <ModernTooltip content="View comments" position="top">
+                          <ModernTooltip content={t('viewComments')} position="top">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1573,7 +1573,7 @@ function CommunityGalleryPageContent() {
                               <>
                                 {/* Publish button - only show for drafts by the current user */}
                                 {image.isDraft && (
-                                  <ModernTooltip content="Publish draft" position="top">
+                                  <ModernTooltip content={t('publishDraft')} position="top">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -1586,7 +1586,7 @@ function CommunityGalleryPageContent() {
                                   </ModernTooltip>
                                 )}
                                 {/* Delete button - only show to image author */}
-                                <ModernTooltip content="Delete image" position="top">
+                                <ModernTooltip content={t('deleteImage')} position="top">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1601,7 +1601,7 @@ function CommunityGalleryPageContent() {
                             )}
                             {/* Report button - show to all authenticated users */}
                             {isAuthenticated && user && (
-                              <ModernTooltip content="Report image" position="top">
+                              <ModernTooltip content={t('reportImage')} position="top">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1700,7 +1700,7 @@ function CommunityGalleryPageContent() {
                       
                       <div className="flex items-center gap-2">
                         {/* Combined likes counter and like button on the left */}
-                        <ModernTooltip content={!isAuthenticated ? 'Sign in to vote' : 'Like'} position="top">
+                        <ModernTooltip content={!isAuthenticated ? t('signInToVote') : t('like')} position="top">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1724,7 +1724,7 @@ function CommunityGalleryPageContent() {
                         </ModernTooltip>
                         
                         {/* Comments counter */}
-                        <ModernTooltip content="View comments" position="top">
+                        <ModernTooltip content={t('viewComments')} position="top">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1810,12 +1810,12 @@ function CommunityGalleryPageContent() {
           <div className="text-center py-12">
             <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery.trim() ? 'No images found' : 'No images found'}
+              {t('noImagesFound')}
             </h3>
             <p className="text-gray-600">
               {searchQuery.trim() 
-                ? `No images found for "${searchQuery}". Try searching by username or photo description.`
-                : 'Be the first to share an image in this category!'
+                ? t('noImagesFound') + ` for "${searchQuery}"`
+                : t('beFirstToShare', {ns: 'gallery'}) || 'Be the first to share an image in this category!'
               }
             </p>
           </div>

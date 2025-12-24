@@ -286,7 +286,8 @@
     "pleaseSelectImage": "Por favor selecciona una imagen",
     "pleaseSignInToUpload": "Por favor inicia sesión para subir imágenes",
     "draft": "Borrador",
-    "published": "Publicado"
+    "published": "Publicado",
+    "beFirstToShare": "¡Sé el primero en compartir una imagen en esta categoría!"
   },
   "forums": {
     "communityForums": "Foros de la Comunidad",
