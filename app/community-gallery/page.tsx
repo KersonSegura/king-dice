@@ -90,6 +90,7 @@ interface GalleryCategory {
 }
 
 function CommunityGalleryPageContent() {
+  const t = useTranslations('home');
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
