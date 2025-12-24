@@ -111,7 +111,9 @@
     "imageMode": "Modo Imagen",
     "cardMode": "Modo Carta",
     "todaysMysteryGame": "Juego Misterioso de Hoy",
-    "playBoardleNow": "Jugar Boardle Ahora"
+    "playBoardleNow": "Jugar Boardle Ahora",
+    "newGameIn": "Nuevo juego en",
+    "calculating": "calculando..."
   },
   "profile": {
     "profile": "Perfil",
