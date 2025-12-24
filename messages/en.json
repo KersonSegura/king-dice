@@ -239,7 +239,12 @@
     "noGamesFound": "No games found",
     "typeToSearchGames": "Type to search games...",
     "addEmoji": "Add emoji",
-    "sendMessage": "Send message"
+    "sendMessage": "Send message",
+    "backToSearch": "Back to search",
+    "createGroupChat": "Create Group Chat",
+    "addPeople": "Add People",
+    "moreOptions": "More options",
+    "startDirectChat": "Start Direct Chat"
   },
   "gallery": {
     "communityGallery": "Community Gallery",
@@ -293,7 +298,17 @@
     "chooseFile": "Choose file...",
     "browse": "Browse",
     "reachedEnd": "You've reached the end!",
-    "noMoreImages": "No more images to load"
+    "noMoreImages": "No more images to load",
+    "comments": "Comments",
+    "writeComment": "Write a comment...",
+    "writeReply": "Write a reply...",
+    "writeDescription": "Write a description...",
+    "reply": "Reply",
+    "editDescription": "Edit description",
+    "deleteComment": "Delete comment",
+    "reportComment": "Report comment",
+    "deleteReply": "Delete reply",
+    "reportReply": "Report reply"
   },
   "forums": {
     "communityForums": "Community Forums",
@@ -316,6 +331,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "report": "Report",
+    "deletePost": "Delete Post",
+    "deleteComment": "Delete Comment",
     "signInToPost": "Please sign in to create a post",
     "title": "Title",
     "content": "Content",
@@ -351,7 +368,17 @@
     "loadingGame": "Loading game...",
     "gameNotFound": "Game not found",
     "goBackHome": "Go back home",
-    "howDoIEarnXP": "How do I earn XP?"
+    "howDoIEarnXP": "How do I earn XP?",
+    "goBack": "Go back",
+    "deleteImage": "Delete Image",
+    "deletePost": "Delete Post",
+    "deleteComment": "Delete Comment",
+    "startChat": "Start a chat",
+    "viewFullSize": "Click to view full size",
+    "removeFromCollection": "Remove from collection",
+    "removeFavoriteCard": "Remove favorite card",
+    "removeCollectionPhoto": "Remove collection photo",
+    "dragToReorder": "Drag to reorder"
   },
   "game": {
     "gameNotFoundDescription": "Sorry, we couldn't find the game you're looking for. It might have been removed or doesn't exist.",

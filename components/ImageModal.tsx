@@ -120,6 +120,8 @@ export default function ImageModal({
 
   // Translation hooks
   const t = useTranslations('home');
+  const tGallery = useTranslations('gallery');
+  const tCommon = useTranslations('common');
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -514,7 +516,7 @@ export default function ImageModal({
                     <button
                       onClick={handleImageDelete}
                       className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Delete"
+                      title={tCommon('delete')}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -524,7 +526,7 @@ export default function ImageModal({
                     <button
                       onClick={handleImageReport}
                       className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Report"
+                      title={tGallery('reportImage')}
                     >
                       <Flag className="w-5 h-5" />
                     </button>
@@ -542,20 +544,20 @@ export default function ImageModal({
                         onChange={(e) => setEditedDescription(e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
                         rows={3}
-                        placeholder="Write a description..."
+                        placeholder={tGallery('writeDescription')}
                       />
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={handleCancelEdit}
                           className="px-3 py-1 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                         >
-                          Cancel
+                          {tCommon('cancel')}
                         </button>
                         <button
                           onClick={handleSaveDescription}
                           className="px-3 py-1 text-xs text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                         >
-                          Save
+                          {tCommon('save')}
                         </button>
                       </div>
                     </div>
@@ -568,7 +570,7 @@ export default function ImageModal({
                         <button
                           onClick={handleEditDescription}
                           className="absolute top-0 right-0 p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="Edit description"
+                          title={tGallery('editDescription')}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -760,21 +762,21 @@ export default function ImageModal({
                         onChange={(e) => setEditedDescription(e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                         rows={4}
-                        placeholder="Write a description..."
+                        placeholder={tGallery('writeDescription')}
                       />
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={handleCancelEdit}
                           className="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                         >
-                          Cancel
+                          {tCommon('cancel')}
                         </button>
                         <button
                           onClick={handleSaveDescription}
                           className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center space-x-1"
                         >
                           <Check className="w-4 h-4" />
-                          <span>Save</span>
+                          <span>{tCommon('save')}</span>
                         </button>
                       </div>
                     </div>
@@ -789,7 +791,7 @@ export default function ImageModal({
                         <button
                           onClick={handleEditDescription}
                           className="absolute top-0 right-0 p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="Edit description"
+                          title={tGallery('editDescription')}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -821,7 +823,7 @@ export default function ImageModal({
                     <button
                       onClick={handleImageDelete}
                       className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Delete"
+                      title={tCommon('delete')}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -831,7 +833,7 @@ export default function ImageModal({
                     <button
                       onClick={handleImageReport}
                       className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                      title="Report"
+                      title={tGallery('reportImage')}
                     >
                       <Flag className="w-5 h-5" />
                     </button>
@@ -842,7 +844,7 @@ export default function ImageModal({
               {/* Comments Section */}
               <div className="border-t border-gray-200 pt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Comments ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
+                  {tGallery('comments')} ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
                 </h3>
                 
                 {/* Add Comment Form */}
@@ -865,7 +867,7 @@ export default function ImageModal({
                           <textarea
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Write a comment..."
+                            placeholder={tGallery('writeComment')}
                             className="w-full p-3 pr-10 border border-gray-300 rounded-full focus:border-blue-500 focus:outline-none resize-none bg-gray-50 focus:bg-white transition-colors [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                             rows={1}
                             style={{ 
@@ -953,7 +955,7 @@ export default function ImageModal({
                                     className="flex items-center space-x-1 text-xs text-gray-500 hover:text-blue-500 transition-colors"
                                   >
                                     <MessageCircle className="w-3 h-3" />
-                                    <span>{replyingTo === comment.id ? 'Cancel' : 'Reply'}</span>
+                                    <span>{replyingTo === comment.id ? tCommon('cancel') : tGallery('reply')}</span>
                                   </button>
                                 )}
                               </div>
@@ -967,7 +969,7 @@ export default function ImageModal({
                                     <button 
                                       onClick={() => requestDeleteComment(comment.id)}
                                       className="text-gray-500 hover:text-red-500 text-xs p-1 hover:bg-red-50 rounded transition-colors"
-                                      title="Delete comment"
+                                      title={tGallery('deleteComment')}
                                     >
                                       <Trash2 className="w-3 h-3" />
                                     </button>
@@ -978,7 +980,7 @@ export default function ImageModal({
                                     <button
                                       onClick={() => handleReportComment(comment.id)}
                                       className="text-gray-500 hover:text-red-500 text-xs p-1 hover:bg-red-50 rounded transition-colors"
-                                      title="Report comment"
+                                      title={tGallery('reportComment')}
                                     >
                                       <Flag className="w-3 h-3" />
                                     </button>
@@ -1008,7 +1010,7 @@ export default function ImageModal({
                                     <textarea
                                   value={replyContent}
                                   onChange={(e) => setReplyContent(e.target.value)}
-                                  placeholder="Write a reply..."
+                                  placeholder={tGallery('writeReply')}
                                       className="w-full p-3 pr-10 border border-gray-300 rounded-full focus:border-blue-500 focus:outline-none resize-none bg-gray-50 focus:bg-white transition-colors [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                                       rows={1}
                                       style={{ 
@@ -1095,7 +1097,7 @@ export default function ImageModal({
                                         <button
                                           onClick={() => requestDeleteComment(reply.id)}
                                           className="text-gray-500 hover:text-red-500 text-xs p-1 hover:bg-red-50 rounded transition-colors"
-                                          title="Delete reply"
+                                          title={tGallery('deleteReply')}
                                         >
                                           <Trash2 className="w-3 h-3" />
                                         </button>
@@ -1106,7 +1108,7 @@ export default function ImageModal({
                                         <button
                                           onClick={() => handleReportComment(reply.id)}
                                           className="text-gray-500 hover:text-red-500 text-xs p-1 hover:bg-red-50 rounded transition-colors"
-                                          title="Report reply"
+                                          title={tGallery('reportReply')}
                                         >
                                           <Flag className="w-3 h-3" />
                                         </button>
@@ -1165,7 +1167,7 @@ export default function ImageModal({
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 onClick={confirmDeleteComment}
@@ -1221,7 +1223,7 @@ export default function ImageModal({
                 onClick={() => setShowImageDeleteConfirm(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 onClick={confirmImageDelete}

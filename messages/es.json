@@ -239,7 +239,12 @@
     "noGamesFound": "No se encontraron juegos",
     "typeToSearchGames": "Escribe para buscar juegos...",
     "addEmoji": "Agregar emoji",
-    "sendMessage": "Enviar mensaje"
+    "sendMessage": "Enviar mensaje",
+    "backToSearch": "Volver a buscar",
+    "createGroupChat": "Crear Chat Grupal",
+    "addPeople": "Agregar Personas",
+    "moreOptions": "Más opciones",
+    "startDirectChat": "Iniciar Chat Directo"
   },
   "gallery": {
     "communityGallery": "Galería de la Comunidad",
@@ -293,7 +298,17 @@
     "chooseFile": "Elegir archivo...",
     "browse": "Explorar",
     "reachedEnd": "¡Has llegado al final!",
-    "noMoreImages": "No hay más imágenes para cargar"
+    "noMoreImages": "No hay más imágenes para cargar",
+    "comments": "Comentarios",
+    "writeComment": "Escribe un comentario...",
+    "writeReply": "Escribe una respuesta...",
+    "writeDescription": "Escribe una descripción...",
+    "reply": "Responder",
+    "editDescription": "Editar descripción",
+    "deleteComment": "Eliminar comentario",
+    "reportComment": "Reportar comentario",
+    "deleteReply": "Eliminar respuesta",
+    "reportReply": "Reportar respuesta"
   },
   "forums": {
     "communityForums": "Foros de la Comunidad",
@@ -357,7 +372,17 @@
     "pleaseSignIn": "Por favor inicia sesión",
     "loadingGame": "Cargando juego...",
     "gameNotFound": "Juego no encontrado",
-    "goBackHome": "Volver al inicio"
+    "goBackHome": "Volver al inicio",
+    "goBack": "Volver",
+    "deleteImage": "Eliminar Imagen",
+    "deletePost": "Eliminar Publicación",
+    "deleteComment": "Eliminar Comentario",
+    "startChat": "Iniciar un chat",
+    "viewFullSize": "Haz clic para ver tamaño completo",
+    "removeFromCollection": "Eliminar de la colección",
+    "removeFavoriteCard": "Eliminar tarjeta favorita",
+    "removeCollectionPhoto": "Eliminar foto de colección",
+    "dragToReorder": "Arrastra para reordenar"
   },
   "game": {
     "gameNotFoundDescription": "Lo sentimos, no pudimos encontrar el juego que buscas. Puede que haya sido eliminado o no exista.",
