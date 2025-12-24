@@ -883,10 +883,10 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
               <Users className="w-8 h-8 text-primary-500" />
-              Community Feed
+              {t('communityFeed')}
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
-              Discover what the community is sharing - from game setups, new games, and more!
+              {t('communityFeedDescription')}
             </p>
           </div>
           

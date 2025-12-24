@@ -70,7 +70,8 @@
     "pixelCanvas": "Pixel Canvas",
     "boardle": "Boardle",
     "diceRoller": "Dice Roller",
-    "digitalCorner": "Digital Corner"
+    "digitalCorner": "Digital Corner",
+    "seeMore": "See More"
   },
   "home": {
     "shareCollection1": "Share your",
@@ -108,6 +109,8 @@
     "galleryDescription": "The latest highlights from our community.",
     "seeMore": "See More",
     "viewAllGallery": "View All Gallery",
+    "communityFeed": "Community Feed",
+    "communityFeedDescription": "Discover what the community is sharing - from game setups, new games, and more!",
     "pixelCanvas": "Pixel Canvas",
     "pixelCanvasDescription": "Create pixel art together with the community! Each pixel you place helps build a collaborative masterpiece.",
     "startCreating": "Start Creating",

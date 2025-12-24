@@ -70,7 +70,8 @@
     "pixelCanvas": "Lienzo de Píxeles",
     "boardle": "Boardle",
     "diceRoller": "Lanzador de Dados",
-    "digitalCorner": "Rincón Digital"
+    "digitalCorner": "Rincón Digital",
+    "seeMore": "Ver Más"
   },
   "home": {
     "shareCollection1": "Comparte tu",
@@ -108,6 +109,8 @@
     "galleryDescription": "Los últimos destacados de nuestra comunidad.",
     "seeMore": "Ver Más",
     "viewAllGallery": "Ver Toda la Galería",
+    "communityFeed": "Feed de la Comunidad",
+    "communityFeedDescription": "Descubre lo que la comunidad está compartiendo: desde configuraciones de juegos, nuevos juegos y más!",
     "pixelCanvas": "Lienzo de Píxeles",
     "pixelCanvasDescription": "¡Crea arte pixelado junto con la comunidad! Cada píxel que coloques ayuda a construir una obra maestra colaborativa.",
     "startCreating": "Comenzar a Crear",
