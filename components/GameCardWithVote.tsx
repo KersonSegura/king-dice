@@ -6,6 +6,7 @@ import { Star, Users, Clock, Calendar, Package, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslations } from 'next-intl';
 
 interface Game {
   id: number;
@@ -45,6 +46,7 @@ interface GameCardWithVoteProps {
 }
 
 export default function GameCardWithVote({ game, voteData, imagePriority = false }: GameCardWithVoteProps) {
+  const t = useTranslations('header');
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -565,7 +567,7 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
           {/* Action Buttons */}
           <div className="flex gap-2 mt-4">
             <Link href={`/game/${game.id}`} className="flex-1 text-white text-sm font-medium p-2 rounded transition-colors flex items-center justify-center h-8 hover:opacity-90" style={{ backgroundColor: '#fbae17' }}>
-              {game.ranking ? `#${game.ranking}` : 'See More'}
+              {game.ranking ? `#${game.ranking}` : t('seeMore')}
             </Link>
             <div className="relative">
               <button 
