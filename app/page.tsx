@@ -1373,10 +1373,10 @@ export default function HomePage() {
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
                 <Square className="w-8 h-8 text-primary-500" />
-                Pixel Canvas
+                {t('pixelCanvas')}
               </h2>
               <p className="text-dark-600 max-w-2xl mx-auto">
-                Create pixel art together with the community! Each pixel you place helps build a collaborative masterpiece.
+                {t('pixelCanvasDescription')}
               </p>
             </div>
             
@@ -1384,7 +1384,7 @@ export default function HomePage() {
                 
             <div className="text-center mt-8">
                   <Link href="/pixel-canvas" className="btn-primary">
-                Start Creating
+                {t('startCreating')}
                   </Link>
             </div>
           </div>
@@ -1404,10 +1404,10 @@ export default function HomePage() {
                   height={32}
                   className="w-8 h-8"
                 />
-                Boardle
+                {t('boardle')}
               </h2>
               <p className="text-dark-600 max-w-2xl mx-auto">
-                Guess the board game! A daily word-guessing game inspired by Wordle, but for board game enthusiasts.
+                {t('boardleDescription')}
               </p>
             </div>
             
@@ -1423,7 +1423,7 @@ export default function HomePage() {
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Title Mode
+                    {t('titleMode')}
                   </button>
                   <button 
                     onClick={() => setBoardleMode('image')}
@@ -1433,7 +1433,7 @@ export default function HomePage() {
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Image Mode
+                    {t('imageMode')}
                   </button>
                   <button 
                     onClick={() => setBoardleMode('card')}
@@ -1443,14 +1443,14 @@ export default function HomePage() {
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    Card Mode
+                    {t('cardMode')}
                   </button>
                 </div>
               </div>
               
               {/* Game Content Preview */}
               <div className="mb-8">
-                <div className="text-center text-sm text-gray-500 mb-4">Today's Mystery Game</div>
+                <div className="text-center text-sm text-gray-500 mb-4">{t('todaysMysteryGame')}</div>
                 
                 {boardleMode === 'title' && (
                     <div className="space-y-2 mb-4">
@@ -1712,7 +1712,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <Link href="/boardle" className="btn-primary text-lg px-8 py-3">
-                  Play Boardle Now
+                  {t('playBoardleNow')}
               </Link>
             </div>
           </div>

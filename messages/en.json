@@ -101,7 +101,17 @@
     "communityGallery": "Community Gallery",
     "galleryDescription": "The latest highlights from our community.",
     "seeMore": "See More",
-    "viewAllGallery": "View All Gallery"
+    "viewAllGallery": "View All Gallery",
+    "pixelCanvas": "Pixel Canvas",
+    "pixelCanvasDescription": "Create pixel art together with the community! Each pixel you place helps build a collaborative masterpiece.",
+    "startCreating": "Start Creating",
+    "boardle": "Boardle",
+    "boardleDescription": "Guess the board game! A daily word-guessing game inspired by Wordle, but for board game enthusiasts.",
+    "titleMode": "Title Mode",
+    "imageMode": "Image Mode",
+    "cardMode": "Card Mode",
+    "todaysMysteryGame": "Today's Mystery Game",
+    "playBoardleNow": "Play Boardle Now"
   },
   "profile": {
     "profile": "Profile",

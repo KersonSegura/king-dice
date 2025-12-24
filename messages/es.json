@@ -72,7 +72,7 @@
     "boardGame": "Juegos de Mesa",
     "collection": "",
     "hotGames": "Juegos Populares",
-    "topRankedGames": "Juegos Mejor Valorados",
+    "topRankedGames": "Mejor Valorados",
     "viewAllHotGames": "Ver Todos los Juegos Populares",
     "viewAllTopRankedGames": "Ver Todos los Mejor Valorados",
     "featuredCollections": "Colecciones Destacadas",
@@ -101,7 +101,17 @@
     "communityGallery": "Galería de la Comunidad",
     "galleryDescription": "Los últimos destacados de nuestra comunidad.",
     "seeMore": "Ver Más",
-    "viewAllGallery": "Ver Toda la Galería"
+    "viewAllGallery": "Ver Toda la Galería",
+    "pixelCanvas": "Lienzo de Píxeles",
+    "pixelCanvasDescription": "¡Crea arte pixelado junto con la comunidad! Cada píxel que coloques ayuda a construir una obra maestra colaborativa.",
+    "startCreating": "Comenzar a Crear",
+    "boardle": "Boardle",
+    "boardleDescription": "¡Adivina el juego de mesa! Un juego diario de adivinanzas inspirado en Wordle, pero para entusiastas de juegos de mesa.",
+    "titleMode": "Modo Título",
+    "imageMode": "Modo Imagen",
+    "cardMode": "Modo Carta",
+    "todaysMysteryGame": "Juego Misterioso de Hoy",
+    "playBoardleNow": "Jugar Boardle Ahora"
   },
   "profile": {
     "profile": "Perfil",
