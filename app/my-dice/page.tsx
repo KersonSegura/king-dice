@@ -8,6 +8,7 @@ import { useToast } from "@/contexts/ToastContext";
 import ModernTooltip from "@/components/ModernTooltip";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from 'next-intl';
 
 type TabKey =
   | "background"
