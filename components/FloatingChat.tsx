@@ -1402,26 +1402,28 @@ export default function FloatingChat() {
 
       {/* Auto Tooltip - appears once per session */}
       {!isChatOpen && showAutoTooltip && (
-        <div className="fixed bottom-4 right-20 sm:bottom-20 sm:right-4 z-50 pl-3 pr-8 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg max-w-md w-[28rem] tooltip-bounce relative">
-          <div className="w-full">
-            <div className="font-medium mb-1 flex items-center space-x-2">
-              <img
-                src="/DiceBotIconSmallWhite.svg"
-                alt="Dice-Bot"
-                className="w-4 h-4"
-              />
-              <span>{t('askDiceBot')}</span>
-            </div>
-            <div className="text-xs opacity-90">
-              {t('askDiceBotDescription')}
-            </div>
-          </div>
-          <button
-            onClick={() => setShowAutoTooltip(false)}
-            className="absolute top-2 right-2 text-white hover:text-gray-200 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <div className="fixed bottom-4 right-20 sm:bottom-20 sm:right-4 z-50 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg max-w-md w-[28rem] tooltip-bounce">
+           <div className="flex items-start gap-2">
+             <div className="flex-1 min-w-0">
+               <div className="font-medium mb-1 flex items-center space-x-2">
+                 <img
+                   src="/DiceBotIconSmallWhite.svg"
+                   alt="Dice-Bot"
+                   className="w-4 h-4"
+                 />
+                 <span>{t('askDiceBot')}</span>
+               </div>
+               <div className="text-xs opacity-90">
+                 {t('askDiceBotDescription')}
+               </div>
+             </div>
+             <button
+               onClick={() => setShowAutoTooltip(false)}
+               className="flex-shrink-0 text-white hover:text-gray-200 transition-colors p-0.5"
+             >
+               <X className="w-4 h-4" />
+             </button>
+           </div>
           {/* Mobile: Arrow pointing right, Desktop: Arrow pointing up */}
           <div className="absolute bottom-1/2 -right-2 sm:bottom-auto sm:-right-2 sm:top-full sm:right-6 w-0 h-0 border-t-4 border-b-4 border-l-4 sm:border-l-4 sm:border-r-4 sm:border-t-4 border-transparent border-l-blue-600 sm:border-t-blue-600 transform translate-y-1/2 sm:translate-y-0"></div>
         </div>
