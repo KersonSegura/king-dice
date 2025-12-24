@@ -322,12 +322,12 @@ function CommunityGalleryPageContent() {
 
   const handleUploadImage = async () => {
     if (!newImage.file) {
-      showToast('Please select an image', 'error');
+      showToast(t('pleaseSelectImage'), 'error');
       return;
     }
 
     if (!isAuthenticated || !user) {
-      showToast('Please sign in to upload images', 'error');
+      showToast(t('pleaseSignInToUpload'), 'error');
       return;
     }
 
@@ -368,7 +368,7 @@ function CommunityGalleryPageContent() {
         setNewImage({ description: '', category: 'collections', tags: [], file: null });
         setShowUploadModal(false);
         
-        showToast('Image uploaded successfully!', 'success');
+        showToast(t('uploadSuccess'), 'success');
       } else {
         const errorData = await response.json();
         console.error('Failed to upload image:', errorData);
@@ -383,7 +383,7 @@ function CommunityGalleryPageContent() {
         } else if (errorData.error && errorData.error.includes('Image was flagged')) {
           showToast('Upload rejected: Image flagged as inappropriate', 'error');
         } else {
-          showToast(errorData.error || 'Failed to upload image. Please try again.', 'error');
+          showToast(errorData.error || t('uploadFailed'), 'error');
         }
       }
     } catch (error) {
@@ -1832,12 +1832,12 @@ function CommunityGalleryPageContent() {
             className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-semibold mb-4">Upload Image</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('uploadImage')}</h2>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  {t('category')}
                 </label>
                 <select
                   value={newImage.category}

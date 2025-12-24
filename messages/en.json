@@ -318,7 +318,9 @@
     "submitting": "Submitting...",
     "postCreated": "Post created successfully!",
     "postDeleted": "Post deleted successfully",
-    "postUpdated": "Post updated successfully"
+    "postUpdated": "Post updated successfully",
+    "communityGuidelines": "Community Guidelines",
+    "guidelines": "Guidelines"
   },
   "common": {
     "backToHome": "Back to Home",

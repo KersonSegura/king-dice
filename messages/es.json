@@ -318,7 +318,9 @@
     "submitting": "Enviando...",
     "postCreated": "¡Publicación creada exitosamente!",
     "postDeleted": "Publicación eliminada exitosamente",
-    "postUpdated": "Publicación actualizada exitosamente"
+    "postUpdated": "Publicación actualizada exitosamente",
+    "communityGuidelines": "Reglas de la Comunidad",
+    "guidelines": "Reglas"
   },
   "common": {
     "backToHome": "Volver al Inicio",

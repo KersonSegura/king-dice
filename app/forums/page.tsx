@@ -20,6 +20,8 @@ import { renderContentWithGameLinks } from '@/utils/renderContent';
 import { useRef } from 'react';
 
 function ForumsPageContent() {
+  const t = useTranslations('forums');
+  const tCommon = useTranslations('common');
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -448,8 +450,8 @@ function ForumsPageContent() {
       >
         <div className="text-center px-4">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Forums</h2>
-          <p className="text-gray-600">Fetching posts and categories...</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('loadingForums')}</h2>
+          <p className="text-gray-600">{t('fetchingPosts')}</p>
           <div className="mt-4 flex justify-center space-x-1">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -471,7 +473,7 @@ function ForumsPageContent() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -487,15 +489,15 @@ function ForumsPageContent() {
               height={32}
               className="w-8 h-8"
             />
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Community Forums</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('communityForums')}</h1>
           </div>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <button
               onClick={() => setShowGuidelines(true)}
               className="btn-secondary text-sm sm:text-base"
             >
-              <span className="hidden sm:inline">Community Guidelines</span>
-              <span className="sm:hidden">Guidelines</span>
+              <span className="hidden sm:inline">{t('communityGuidelines')}</span>
+              <span className="sm:hidden">{t('guidelines')}</span>
             </button>
             <button
               onClick={() => {
@@ -508,7 +510,7 @@ function ForumsPageContent() {
               className="btn-primary flex items-center justify-center space-x-2"
             >
               <Plus className="w-4 h-4" />
-              <span>New Post</span>
+              <span>{t('newPost')}</span>
             </button>
           </div>
         </div>
