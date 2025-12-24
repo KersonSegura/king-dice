@@ -5,6 +5,7 @@ import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
 import ExpandableText from './ExpandableText';
 import ReportContent from './ReportContent';
+import { useTranslations } from 'next-intl';
 
 interface Comment {
   id: string;
@@ -743,7 +744,7 @@ export default function ImageModal({
                     <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
                       <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2.7 0l1.4-5.9L12 14l2.9-3.9L16.3 16H7.7z"/>
                     </svg>
-                          {category === 'the-kings-card' ? 'Card of the Week' : 'Dice of the Week'}
+                          {category === 'the-kings-card' ? t('cardOfTheWeek') : t('diceOfTheWeek')}
                         </span>
                       )}
                     </div>

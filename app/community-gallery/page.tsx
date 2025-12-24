@@ -18,6 +18,7 @@ import ConfirmationDialog from '@/components/ConfirmationDialog';
 import ImageModal from '@/components/ImageModal';
 import ExpandableText from '@/components/ExpandableText';
 import LoadingScreen from '@/components/LoadingScreen';
+import { useTranslations } from 'next-intl';
 
 interface GalleryImage {
   id: string;
@@ -1662,7 +1663,7 @@ function CommunityGalleryPageContent() {
                         {featuredIds.has(image.id) && (
                           <span className="px-2 py-1 rounded-full text-xs font-bold bg-[#fbae17] text-white flex items-center gap-1">
                             <Crown className="w-3 h-3 fill-current" />
-                            {image.category === 'the-kings-card' ? 'Card of the Week' : 'Dice of the Week'}
+                            {image.category === 'the-kings-card' ? t('cardOfTheWeek') : t('diceOfTheWeek')}
                           </span>
                         )}
                       </div>

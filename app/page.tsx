@@ -1210,7 +1210,7 @@ export default function HomePage() {
                           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
                             <div className="flex items-center space-x-2 text-white text-sm font-semibold">
                               <Crown className="w-4 h-4" />
-                              <span>Dice of the Week</span>
+                              <span>{t('diceOfTheWeek')}</span>
                             </div>
                           </div>
                         </>
@@ -1276,7 +1276,7 @@ export default function HomePage() {
                           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center">
                             <div className="flex items-center space-x-2 text-white text-sm font-semibold">
                               <Crown className="w-4 h-4" />
-                              <span>Card of the Week</span>
+                              <span>{t('cardOfTheWeek')}</span>
                             </div>
                           </div>
                         </>

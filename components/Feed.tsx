@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslations } from 'next-intl';
 
 interface FeedItem {
   id: string;
@@ -48,6 +49,7 @@ interface FeedProps {
 }
 
 export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThroneId, featuredKingsCardId }: FeedProps) {
+  const t = useTranslations('home');
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
@@ -381,7 +383,7 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
             disabled={loading}
             className="px-6 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#e0990e] transition-colors disabled:opacity-50"
           >
-            {loading ? 'Loading...' : 'Load More'}
+            {loading ? t('loading') : t('loadMore')}
           </button>
         </div>
       )}
