@@ -5,11 +5,9 @@ import Image from 'next/image';
 import { ExternalLink, Search, ChevronLeft, ChevronRight, ChevronDown, X, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
-// Amazon Associates disclosure - required by Amazon
-// Updated to clarify that prices are the same for consumers
-const AMAZON_DISCLOSURE =
-  'As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links.';
+// Amazon Associates disclosure - will be translated in component
 
 interface Category {
   id: number;
@@ -33,6 +31,8 @@ interface ShopItem {
 }
 
 export default function ShopPageClient() {
+  const t = useTranslations('common');
+  const tShop = useTranslations('shop');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -126,7 +126,7 @@ export default function ShopPageClient() {
         );
       } catch (err) {
         console.error('Error fetching shop items:', err);
-        setError('Failed to load shop items. Please try again later.');
+        setError(tShop('errorLoadingItems'));
       } finally {
         setLoading(false);
       }
@@ -202,7 +202,7 @@ export default function ShopPageClient() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function ShopPageClient() {
                   'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)',
               }}
             />
-            <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{tShop('title')}</h1>
           </div>
         </div>
 
@@ -232,7 +232,7 @@ export default function ShopPageClient() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search shop items..."
+                placeholder={tShop('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -241,7 +241,7 @@ export default function ShopPageClient() {
 
             {/* Category Filters - 2 buttons with modal */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Filter by Category</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">{tShop('filterByCategory')}</h3>
 
               <div className="flex gap-2 relative">
                 <button
@@ -252,7 +252,7 @@ export default function ShopPageClient() {
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                   }`}
                 >
-                  All Categories
+                  {tShop('allCategories')}
                 </button>
                 <button
                   onClick={() => setShowCategoryModal(true)}
@@ -263,7 +263,7 @@ export default function ShopPageClient() {
                   }`}
                 >
                   <span>
-                    {selectedCategory !== null ? categories.find((c) => c.id === selectedCategory)?.nameEn : 'Select Category'}
+                    {selectedCategory !== null ? categories.find((c) => c.id === selectedCategory)?.nameEn : tShop('selectCategory')}
                   </span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -276,7 +276,7 @@ export default function ShopPageClient() {
                       className="bg-white rounded-xl shadow-xl max-w-sm w-full max-h-[70vh] overflow-hidden"
                     >
                       <div className="flex items-center justify-between p-4 border-b">
-                        <h3 className="font-semibold text-gray-900">Select Category</h3>
+                        <h3 className="font-semibold text-gray-900">{tShop('selectCategory')}</h3>
                         <button onClick={() => setShowCategoryModal(false)} className="p-1 hover:bg-gray-100 rounded-full">
                           <X className="w-5 h-5 text-gray-500" />
                         </button>
@@ -307,9 +307,12 @@ export default function ShopPageClient() {
 
             {/* Results count */}
             <div className="text-sm text-gray-600">
-              Showing {filteredShopItems.length === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, filteredShopItems.length)} of{' '}
-              {filteredShopItems.length} items
-              {filteredShopItems.length !== allShopItems.length && ` (filtered from ${allShopItems.length} total)`}
+              {tShop('showingItems', {
+                start: filteredShopItems.length === 0 ? 0 : startIndex + 1,
+                end: Math.min(endIndex, filteredShopItems.length),
+                total: filteredShopItems.length,
+                filtered: filteredShopItems.length !== allShopItems.length ? ` (${tShop('filteredFrom')} ${allShopItems.length} ${tShop('total')})` : ''
+              })}
             </div>
           </div>
         )}
@@ -318,7 +321,7 @@ export default function ShopPageClient() {
         {loading && (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <p className="mt-4 text-gray-600">Loading shop items...</p>
+            <p className="mt-4 text-gray-600">{tShop('loadingItems')}</p>
           </div>
         )}
 
@@ -390,7 +393,7 @@ export default function ShopPageClient() {
                               {item.title}
                             </text>
                           </svg>
-                          <p className="text-xs text-gray-500">Image coming soon</p>
+                          <p className="text-xs text-gray-500">{tShop('imageComingSoon')}</p>
                         </div>
                       </div>
                     )}
@@ -403,7 +406,7 @@ export default function ShopPageClient() {
                       rel="noopener noreferrer sponsored"
                       className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs mt-auto"
                     >
-                      <span>Buy on Amazon</span>
+                      <span>{tShop('buyOnAmazon')}</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -425,7 +428,7 @@ export default function ShopPageClient() {
                     }`}
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    <span>Previous</span>
+                    <span>{t('previous')}</span>
                   </button>
 
                   {/* Page numbers */}
@@ -476,12 +479,12 @@ export default function ShopPageClient() {
                         : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                     }`}
                   >
-                    <span>Next</span>
+                    <span>{t('next')}</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="text-sm text-gray-500">
-                  Page {currentPage} of {totalPages}
+                  {tShop('page')} {currentPage} {tShop('of')} {totalPages}
                 </div>
               </div>
             )}
@@ -490,7 +493,7 @@ export default function ShopPageClient() {
             {filteredShopItems.length === 0 && allShopItems.length > 0 && (
               <div className="text-center py-12">
                 <img src="/ShopIcon.svg" alt="Shop Icon" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No shop items match your search criteria.</p>
+                <p className="text-gray-600">{tShop('noItemsMatch')}</p>
                 <button
                   onClick={() => {
                     setSearchQuery('');
@@ -498,7 +501,7 @@ export default function ShopPageClient() {
                   }}
                   className="mt-4 text-primary-500 hover:text-primary-600 underline"
                 >
-                  Clear filters
+                  {tShop('clearFilters')}
                 </button>
               </div>
             )}
@@ -507,7 +510,7 @@ export default function ShopPageClient() {
             {filteredShopItems.length === 0 && allShopItems.length === 0 && (
               <div className="text-center py-12">
                 <img src="/ShopIcon.svg" alt="Shop Icon" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No shop items available at the moment.</p>
+                <p className="text-gray-600">{tShop('noItemsAvailable')}</p>
               </div>
             )}
           </>
@@ -527,8 +530,8 @@ export default function ShopPageClient() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800 mb-1">Amazon Associates Disclosure</h3>
-                <p className="text-sm text-blue-700">{AMAZON_DISCLOSURE}</p>
+                <h3 className="text-sm font-medium text-blue-800 mb-1">{tShop('amazonDisclosure')}</h3>
+                <p className="text-sm text-blue-700">{tShop('amazonDisclosureText')}</p>
               </div>
             </div>
           </div>

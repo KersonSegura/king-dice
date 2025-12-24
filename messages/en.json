@@ -475,5 +475,27 @@
     "failedToUpdate": "Failed to update",
     "accountDeleted": "Account deleted successfully. Redirecting...",
     "adminUsernameNote": "Admin username (can contain KingDice variations)"
+  },
+  "shop": {
+    "loading": "Loading Shop",
+    "title": "Shop",
+    "searchPlaceholder": "Search shop items...",
+    "filterByCategory": "Filter by Category",
+    "allCategories": "All Categories",
+    "selectCategory": "Select Category",
+    "showingItems": "Showing {start} to {end} of {total} items{filtered}",
+    "filteredFrom": "filtered from",
+    "total": "total",
+    "loadingItems": "Loading shop items...",
+    "errorLoadingItems": "Failed to load shop items. Please try again later.",
+    "buyOnAmazon": "Buy on Amazon",
+    "imageComingSoon": "Image coming soon",
+    "page": "Page",
+    "of": "of",
+    "noItemsMatch": "No shop items match your search criteria.",
+    "clearFilters": "Clear filters",
+    "noItemsAvailable": "No shop items available at the moment.",
+    "amazonDisclosure": "Amazon Associates Disclosure",
+    "amazonDisclosureText": "As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links."
   }
 }

@@ -481,5 +481,27 @@
     "failedToUpdate": "Error al actualizar",
     "accountDeleted": "Cuenta eliminada exitosamente. Redirigiendo...",
     "adminUsernameNote": "Nombre de usuario de administrador (puede contener variaciones de KingDice)"
+  },
+  "shop": {
+    "loading": "Cargando Tienda",
+    "title": "Tienda",
+    "searchPlaceholder": "Buscar productos...",
+    "filterByCategory": "Filtrar por Categoría",
+    "allCategories": "Todas las Categorías",
+    "selectCategory": "Seleccionar Categoría",
+    "showingItems": "Mostrando {start} a {end} de {total} productos{filtered}",
+    "filteredFrom": "filtrados de",
+    "total": "total",
+    "loadingItems": "Cargando productos...",
+    "errorLoadingItems": "Error al cargar productos. Por favor intenta de nuevo más tarde.",
+    "buyOnAmazon": "Comprar en Amazon",
+    "imageComingSoon": "Imagen próximamente",
+    "page": "Página",
+    "of": "de",
+    "noItemsMatch": "No hay productos que coincidan con tu búsqueda.",
+    "clearFilters": "Limpiar filtros",
+    "noItemsAvailable": "No hay productos disponibles en este momento.",
+    "amazonDisclosure": "Divulgación de Asociados de Amazon",
+    "amazonDisclosureText": "Como Asociados de Amazon, ganamos con las compras calificadas. Los precios mostrados son los mismos para ti: no hay costo adicional al comprar a través de nuestros enlaces."
   }
 }
