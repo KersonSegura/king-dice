@@ -6,6 +6,7 @@ import GameCardWithVote from '@/components/GameCardWithVote';
 import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Game {
@@ -108,7 +109,7 @@ export default function HotGamesPage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -123,10 +124,10 @@ export default function HotGamesPage() {
                   height={48}
                   className="w-12 h-12"
                 />
-                Hot Games
+                {tHotGames('title') || t('hotGames', {ns: 'header'}) || 'Hot Games'}
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                The 50 hottest games today
+                {tHotGames('description') || 'The 50 hottest games today'}
               </p>
         </div>
 

@@ -8,8 +8,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import PrivacySettings from '@/components/PrivacySettings';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
+import { useTranslations } from 'next-intl';
 
 export default function SettingsPage() {
+  const t = useTranslations('common');
+  const tSettings = useTranslations('settings');
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -77,9 +80,9 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to access settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{tSettings('pleaseSignIn') || t('pleaseSignIn')}</h1>
           <Link href="/" className="btn-primary">
-            Go Home
+            {t('goBackHome')}
           </Link>
         </div>
       </div>
@@ -245,7 +248,7 @@ export default function SettingsPage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Profile
+            {tSettings('backToProfile') || t('backToProfile')}
           </Link>
         </div>
 

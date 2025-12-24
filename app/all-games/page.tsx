@@ -6,6 +6,7 @@ import { Search, Filter, Star, Users, Clock, Calendar, ArrowLeft } from 'lucide-
 import Link from 'next/link';
 import Image from 'next/image';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
+import { useTranslations } from 'next-intl';
 
 interface Game {
   id: number;
@@ -37,6 +38,8 @@ interface GameFilters {
 }
 
 export default function AllGamesPage() {
+  const t = useTranslations('common');
+  const tAllGames = useTranslations('allGames');
   const [games, setGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,10 +155,10 @@ export default function AllGamesPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-dark-900 mb-4">
-            All Games
+            {t('allGames')}
           </h1>
           <p className="text-xl text-dark-600 max-w-3xl mx-auto">
-            Explore our complete collection of {(totalGames || 0).toLocaleString()} board games
+            {tAllGames('exploreCollection') || `Explore our complete collection of ${(totalGames || 0).toLocaleString()} board games`}
           </p>
         </div>
 
@@ -168,7 +171,7 @@ export default function AllGamesPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Search games..."
+                    placeholder={tAllGames('searchGames') || 'Search games...'}
                     value={filters.query}
                     onChange={(e) => handleFilterChange('query', e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -183,7 +186,7 @@ export default function AllGamesPage() {
                 aria-label="Filters"
               >
                 <Filter className="w-5 h-5" />
-                <span className="hidden sm:inline">Filters</span>
+                <span className="hidden sm:inline">{tAllGames('filters') || 'Filters'}</span>
               </button>
             </div>
 
@@ -192,18 +195,18 @@ export default function AllGamesPage() {
               <div className="mt-6 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   <div className="w-full">
-                    <label className="block text-sm font-medium text-dark-700 mb-1">Players</label>
+                    <label className="block text-sm font-medium text-dark-700 mb-1">{tAllGames('players') || 'Players'}</label>
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        placeholder="Min"
+                        placeholder={tAllGames('min') || 'Min'}
                         value={filters.minPlayers}
                         onChange={(e) => handleFilterChange('minPlayers', e.target.value)}
                         className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                       />
                       <input
                         type="number"
-                        placeholder="Max"
+                        placeholder={tAllGames('max') || 'Max'}
                         value={filters.maxPlayers}
                         onChange={(e) => handleFilterChange('maxPlayers', e.target.value)}
                         className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
@@ -212,18 +215,18 @@ export default function AllGamesPage() {
                   </div>
 
                   <div className="w-full">
-                    <label className="block text-sm font-medium text-dark-700 mb-1">Time (min)</label>
+                    <label className="block text-sm font-medium text-dark-700 mb-1">{tAllGames('timeMin') || 'Time (min)'}</label>
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        placeholder="Min"
+                        placeholder={tAllGames('min') || 'Min'}
                         value={filters.minTime}
                         onChange={(e) => handleFilterChange('minTime', e.target.value)}
                         className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                       />
                       <input
                         type="number"
-                        placeholder="Max"
+                        placeholder={tAllGames('max') || 'Max'}
                         value={filters.maxTime}
                         onChange={(e) => handleFilterChange('maxTime', e.target.value)}
                         className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
@@ -232,18 +235,18 @@ export default function AllGamesPage() {
                   </div>
 
                   <div className="w-full">
-                    <label className="block text-sm font-medium text-dark-700 mb-1">Year</label>
+                    <label className="block text-sm font-medium text-dark-700 mb-1">{tAllGames('year') || 'Year'}</label>
                     <div className="flex space-x-2">
                       <input
                         type="number"
-                        placeholder="From"
+                        placeholder={tAllGames('from') || 'From'}
                         value={filters.minYear}
                         onChange={(e) => handleFilterChange('minYear', e.target.value)}
                         className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                       />
                       <input
                         type="number"
-                        placeholder="To"
+                        placeholder={tAllGames('to') || 'To'}
                         value={filters.maxYear}
                         onChange={(e) => handleFilterChange('maxYear', e.target.value)}
                         className="flex-1 min-w-0 px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
@@ -252,16 +255,16 @@ export default function AllGamesPage() {
                   </div>
 
                   <div className="w-full">
-                    <label className="block text-sm font-medium text-dark-700 mb-1">Sort by</label>
+                    <label className="block text-sm font-medium text-dark-700 mb-1">{tAllGames('sortBy') || 'Sort by'}</label>
                     <select
                       value={filters.sortBy}
                       onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                       className="w-full px-3 py-2 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                     >
-                      <option value="name">Name</option>
-                      <option value="year">Year</option>
-                      <option value="ranking">Ranking</option>
-                      <option value="minPlayers">Players</option>
+                      <option value="name">{tAllGames('name') || 'Name'}</option>
+                      <option value="year">{tAllGames('year') || 'Year'}</option>
+                      <option value="ranking">{tAllGames('ranking') || 'Ranking'}</option>
+                      <option value="minPlayers">{tAllGames('players') || 'Players'}</option>
                     </select>
                   </div>
                 </div>
@@ -271,13 +274,13 @@ export default function AllGamesPage() {
                     onClick={clearFilters}
                     className="px-4 py-2 text-dark-600 border border-dark-200 rounded-lg hover:bg-dark-50 transition-colors text-sm"
                   >
-                    Clear
+                    {tAllGames('clear') || t('clear') || 'Clear'}
                   </button>
                   <button
                     onClick={applyFilters}
                     className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
                   >
-                    Apply
+                    {tAllGames('apply') || t('apply') || 'Apply'}
                   </button>
                 </div>
               </div>
@@ -301,10 +304,10 @@ export default function AllGamesPage() {
           {/* Results Info */}
           <div className="flex justify-between items-center mb-6">
             <p className="text-dark-600">
-              Showing {games.length} of {(totalGames || 0).toLocaleString()} games
+              {tAllGames('showingGames') || `Showing ${games.length} of ${(totalGames || 0).toLocaleString()} games`}
             </p>
             <p className="text-dark-600">
-              Page {currentPage} of {totalPages}
+              {tAllGames('page') || 'Page'} {currentPage} {tAllGames('of') || 'of'} {totalPages}
             </p>
           </div>
 
@@ -328,8 +331,8 @@ export default function AllGamesPage() {
           ) : (
             <div className="text-center py-12">
               <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-                <p className="font-bold">No games found</p>
-                <p>Try adjusting the search filters.</p>
+                <p className="font-bold">{tAllGames('noGamesFound') || 'No games found'}</p>
+                <p>{tAllGames('tryAdjustingFilters') || 'Try adjusting the search filters.'}</p>
               </div>
             </div>
           )}
@@ -343,7 +346,7 @@ export default function AllGamesPage() {
                   disabled={currentPage === 1}
                   className="px-4 py-2 border border-dark-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-50"
                 >
-                  Previous
+                  {t('previous')}
                 </button>
                 
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -368,7 +371,7 @@ export default function AllGamesPage() {
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 border border-dark-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-50"
                 >
-                  Next
+                  {t('next')}
                 </button>
               </div>
             </div>
