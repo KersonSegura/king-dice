@@ -1168,7 +1168,7 @@ export default function FloatingChat() {
                 <button
                   onClick={handleBackToChatList}
                   className="text-white hover:text-gray-200"
-                  title="Back to search"
+                  title={t('backToSearch')}
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -1241,7 +1241,7 @@ export default function FloatingChat() {
                 <button
                   onClick={() => setShowAddPeople(true)}
                   className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-                  title="Add People"
+                  title={t('addPeople')}
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -1255,7 +1255,7 @@ export default function FloatingChat() {
                       setShowDropdown(!showDropdown);
                     }}
                     className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-                    title="More options"
+                    title={t('moreOptions')}
                   >
                     <MoreVertical className="w-5 h-5" />
                   </button>

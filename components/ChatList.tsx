@@ -5,6 +5,7 @@ import { MessageCircle, Plus, Search, Users, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from './Toast';
 import LoadingLogo from './LoadingLogo';
+import { useTranslations } from 'next-intl';
 
 // Color palette for group chats - enough colors to minimize repeats
 const GROUP_COLORS = [
@@ -142,14 +143,14 @@ export default function ChatList({ onSelectChat, onCreateGroup, onStartDirectCha
               <button
                 onClick={onStartDirectChat}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-                title="Start Direct Chat"
+                title={t('startDirectChat')}
               >
                 <User className="w-5 h-5" />
               </button>
               <button
                 onClick={onCreateGroup}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-                title="Create Group Chat"
+                title={t('createGroupChat')}
               >
                 <Users className="w-5 h-5" />
               </button>

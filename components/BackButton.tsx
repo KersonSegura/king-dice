@@ -2,6 +2,7 @@
 
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface BackButtonProps {
   className?: string;
@@ -10,6 +11,7 @@ interface BackButtonProps {
 
 export default function BackButton({ className = '', fallbackUrl = '/' }: BackButtonProps) {
   const router = useRouter();
+  const t = useTranslations('common');
 
   const handleBack = () => {
     // Check if there's history to go back to
@@ -25,7 +27,7 @@ export default function BackButton({ className = '', fallbackUrl = '/' }: BackBu
     <button
       onClick={handleBack}
       className={`flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md aspect-square ${className}`}
-      title="Go back"
+      title={t('goBack')}
       style={{ borderRadius: '50%' }}
     >
       <ArrowLeft className="w-5 h-5 text-gray-600" />
