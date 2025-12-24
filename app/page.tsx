@@ -1708,7 +1708,7 @@ export default function HomePage() {
                 <div className="mb-4">
                   <div className="inline-flex items-center space-x-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
                     <Clock className="w-4 h-4" />
-                    <span>New game in {timeUntilNextGame || 'calculating...'}</span>
+                    <span>{t('newGameIn')} {timeUntilNextGame || t('calculating')}</span>
                   </div>
                 </div>
                 <Link href="/boardle" className="btn-primary text-lg px-8 py-3">
