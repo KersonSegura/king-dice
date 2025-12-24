@@ -106,10 +106,19 @@ function ForumsPageContent() {
       }
     };
 
+    const translateCategoryName = (categoryId: string): string => {
+      const categoryMap: { [key: string]: string } = {
+        'general': t('categoryGeneral'),
+        'strategy': t('categoryStrategy'),
+        'reviews': t('categoryReviews')
+      };
+      return categoryMap[categoryId] || categoryId;
+    };
+
     const categories: ForumCategory[] = [
       {
         id: 'general',
-        name: 'General Discussion',
+        name: translateCategoryName('general'),
         description: 'Share your thoughts on board games',
         icon: '💬',
         color: 'bg-blue-100 text-blue-600',
@@ -117,7 +126,7 @@ function ForumsPageContent() {
       },
       {
         id: 'strategy',
-        name: 'Strategy & Tips',
+        name: translateCategoryName('strategy'),
         description: 'Discuss winning strategies and tips',
         icon: '🎯',
         color: 'bg-[#fbae17]/10 text-[#fbae17]',
@@ -125,7 +134,7 @@ function ForumsPageContent() {
       },
       {
         id: 'reviews',
-        name: 'Reviews & Recommendations',
+        name: translateCategoryName('reviews'),
         description: 'Share game reviews and recommendations',
         icon: '⭐',
         color: 'bg-purple-100 text-purple-600',
