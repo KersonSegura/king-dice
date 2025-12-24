@@ -70,6 +70,7 @@ interface ChatListProps {
 export default function ChatList({ onSelectChat, onCreateGroup, onStartDirectChat }: ChatListProps) {
   const { user } = useAuth();
   const { showToast, ToastContainer } = useToast();
+  const t = useTranslations('chat');
   
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
