@@ -64,7 +64,13 @@
     "hotGames": "Juegos Populares",
     "currentlyTrending": "Juegos que están de moda y son populares actualmente",
     "topRanked": "Mejor Valorados",
-    "highestRated": "Juegos mejor valorados por la comunidad"
+    "highestRated": "Juegos mejor valorados por la comunidad",
+    "myDice": "Mis Dados",
+    "catanMaps": "Mapas de Catan",
+    "pixelCanvas": "Lienzo de Píxeles",
+    "boardle": "Boardle",
+    "diceRoller": "Lanzador de Dados",
+    "digitalCorner": "Rincón Digital"
   },
   "home": {
     "shareCollection1": "Comparte tu",

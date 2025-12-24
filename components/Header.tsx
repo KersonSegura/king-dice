@@ -882,7 +882,7 @@ export default function Header() {
                         className="w-5 h-5"
                       />
                     </div>
-                    <span className="font-medium">My Dice</span>
+                    <span className="font-medium">{t('myDice')}</span>
                   </Link>
                 )}
                 
@@ -900,7 +900,7 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span className="font-medium">Catan Maps</span>
+                  <span className="font-medium">{t('catanMaps')}</span>
                 </Link>
                 
                 <Link
@@ -911,7 +911,7 @@ export default function Header() {
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <div className="w-4 h-4 bg-white rounded-sm"></div>
                   </div>
-                  <span className="font-medium">Pixel Canvas</span>
+                  <span className="font-medium">{t('pixelCanvas')}</span>
                 </Link>
                 
                 <Link
@@ -928,7 +928,7 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span className="font-medium">Boardle</span>
+                  <span className="font-medium">{t('boardle')}</span>
                 </Link>
                 
                 <Link
@@ -945,7 +945,7 @@ export default function Header() {
                       className="w-5 h-5"
                     />
                   </div>
-                  <span className="font-medium">Dice Roller</span>
+                  <span className="font-medium">{t('diceRoller')}</span>
                 </Link>
                 
                 <Link

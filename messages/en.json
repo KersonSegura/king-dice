@@ -64,7 +64,13 @@
     "hotGames": "Hot Games",
     "currentlyTrending": "Currently trending and popular games",
     "topRanked": "Top Ranked",
-    "highestRated": "Highest rated games by the community"
+    "highestRated": "Highest rated games by the community",
+    "myDice": "My Dice",
+    "catanMaps": "Catan Maps",
+    "pixelCanvas": "Pixel Canvas",
+    "boardle": "Boardle",
+    "diceRoller": "Dice Roller",
+    "digitalCorner": "Digital Corner"
   },
   "home": {
     "shareCollection1": "Share your",

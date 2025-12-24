@@ -49,42 +49,42 @@ export default function FeaturesDropdown() {
 
   const features = [
     ...(isAuthenticated ? [{
-      name: 'My Dice',
+      name: t('myDice'),
       href: '/my-dice',
       icon: '/MyDiceIcon.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
     }] : []),
     {
-      name: 'Catan Maps',
+      name: t('catanMaps'),
       href: '/catan-map-generator',
       icon: '/CatanIcon.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
     },
     {
-      name: 'Pixel Canvas',
+      name: t('pixelCanvas'),
       href: '/pixel-canvas',
       icon: null, // Custom icon
       color: '#fbae17',
       hoverColor: '#e0990f'
     },
     {
-      name: 'Boardle',
+      name: t('boardle'),
       href: '/boardle',
       icon: '/BoardleIcon.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
     },
     {
-      name: 'Dice Roller',
+      name: t('diceRoller'),
       href: '/dice-roller',
       icon: '/DiceRollerIcon.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
     },
     {
-      name: 'Digital Corner',
+      name: t('digitalCorner'),
       href: '/digital-corner',
       icon: '/PCIcon.svg',
       color: '#fbae17',
