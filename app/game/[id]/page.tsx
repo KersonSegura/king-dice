@@ -1,4 +1,4 @@
-'use client';
+Ok 'use client';
 
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -10,6 +10,7 @@ import { useState, useEffect, use, useRef, useCallback } from 'react';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslations } from 'next-intl';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -856,7 +857,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               height={64} 
               className="opacity-60 mx-auto mb-4"
             />
-            <p className="text-gray-600">Loading game...</p>
+            <p className="text-gray-600">{t('loadingGame')}</p>
           </div>
         </div>
       </div>
@@ -869,9 +870,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <div className="text-center">
             <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
-            <h2 className="text-2xl font-semibold text-gray-700 mb-6">Game Not Found</h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-6">{t('gameNotFound')}</h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Sorry, we couldn't find the game you're looking for. It might have been removed or doesn't exist.
+              {tGame('gameNotFoundDescription') || "Sorry, we couldn't find the game you're looking for. It might have been removed or doesn't exist."}
             </p>
             <div className="space-x-4">
               <Link
@@ -879,14 +880,14 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/90 transition-colors"
               >
                 <Home className="w-4 h-4 mr-2" />
-                Go Home
+                {t('goBackHome')}
               </Link>
               <Link
                 href="/boardgames"
                 className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Browse Games
+                {tGame('browseGames') || t('browseGames', {ns: 'header'}) || 'Browse Games'}
               </Link>
             </div>
           </div>
@@ -1017,34 +1018,34 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         </button>
 
         <div className="text-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Rate {game.nameEn}</h3>
+          <h3 className="text-xl font-semibold text-gray-900">{tGame('rate')} {game.nameEn}</h3>
           <p className="text-sm text-gray-500 mt-1">
             {existingUserRatingStars 
-              ? `Your current rating: ${existingUserRatingStars.toFixed(1)}/5. You can change it.`
-              : 'Share your rating with the community'}
+              ? `${tGame('yourCurrentRating')} ${existingUserRatingStars.toFixed(1)}/5. ${tGame('youCanChangeIt')}`
+              : tGame('shareYourRating')}
           </p>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-4 mb-4 text-center">
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Overall Rating</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">{tGame('overallRating')}</p>
           <p className="text-2xl font-bold text-gray-900 mb-1">
             {combinedRating ? `${combinedRating.toFixed(1)}/10` : 'N/A'}
           </p>
           <p className="text-sm text-gray-600">
             {((game.bggVotes || 0) + (localUserVotes || 0)) > 0 
-              ? `${((game.bggVotes || 0) + (localUserVotes || 0)).toLocaleString()} vote${((game.bggVotes || 0) + (localUserVotes || 0)) === 1 ? '' : 's'}`
-              : 'No votes yet'}
+              ? `${((game.bggVotes || 0) + (localUserVotes || 0)).toLocaleString()} ${((game.bggVotes || 0) + (localUserVotes || 0)) === 1 ? tGame('votePlural') : tGame('votesPlural')}`
+              : tGame('noVotesYet')}
           </p>
         </div>
 
         {modalLoading ? (
-          <div className="py-8 text-center text-gray-500">Loading…</div>
+          <div className="py-8 text-center text-gray-500">{tGame('loading')}</div>
         ) : (
           <>
             {starButtons}
             {!isAuthenticated && (
               <p className="text-sm text-gray-500 text-center">
-                Sign in to save your rating.
+                {tGame('signInToSave')}
               </p>
             )}
             {modalError && <p className="text-sm text-red-500 text-center">{modalError}</p>}
@@ -1055,10 +1056,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               className="mt-4 w-full rounded-xl bg-[#fbae17] py-3 text-white font-semibold hover:opacity-90 disabled:opacity-60"
             >
               {isSubmittingVote 
-                ? 'Saving...' 
+                ? tGame('saving')
                 : selectedStars 
-                  ? `${existingUserRatingStars ? 'Update' : 'Submit'} ${selectedStars.toFixed(1)} ★` 
-                  : 'Select a star'}
+                  ? `${existingUserRatingStars ? tGame('update') : tGame('submit')} ${selectedStars.toFixed(1)} ★` 
+                  : tGame('selectAStar')}
             </button>
           </>
         )}
@@ -1077,7 +1078,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -1101,7 +1102,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   <div className="flex items-center justify-center h-full text-gray-400">
                     <div className="text-center">
                       <Eye className="w-16 h-16 mx-auto mb-2 opacity-50" />
-                      <p>No Image Available</p>
+                      <p>{tGame('noImageAvailable')}</p>
                     </div>
                   </div>
                 )}
@@ -1241,7 +1242,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                               onMouseEnter={handleStarMouseEnter}
                               onMouseLeave={handleStarMouseLeave}
                               onClick={handleStarClick}
-                              title={hasUserVoted ? `You voted ${userVoteStars?.toFixed(1)}/5 stars` : 'Rate this game'}
+                              title={hasUserVoted ? `${tGame('youVoted')} ${userVoteStars?.toFixed(1)}/5 ${tGame('stars')}` : tGame('rateThisGame')}
                             >
                               <Star 
                                 className={`w-5 h-5 text-white`} 
@@ -1250,7 +1251,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 strokeWidth={hasUserVoted ? 1 : 2}
                               />
                               <span className="font-medium text-white">
-                                {hasUserVoted ? 'Update Vote' : 'Vote'}
+                                {hasUserVoted ? tGame('updateVote') : tGame('vote')}
                               </span>
                             </button>
                             
@@ -1265,11 +1266,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 <div className="flex flex-col items-start space-y-1">
                                   <div className="flex items-center space-x-1">
                                     <Star className="w-3 h-3 text-yellow-400" fill="currentColor" />
-                                    <span>Rank #{game.bggRanking || 'N/A'} • Rating: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
+                                    <span>{tGame('rank')} #{game.bggRanking || 'N/A'} • {tGame('rating')}: {game.bggRating ? `${game.bggRating.toFixed(1)}/10` : 'N/A'}</span>
                                   </div>
                                   {hasUserVoted && userVoteStars && (
                                     <div className="text-xs text-green-300">
-                                      Your vote: {userVoteStars.toFixed(1)}/5 ⭐
+                                      {tGame('yourVote')}: {userVoteStars.toFixed(1)}/5 ⭐
                                     </div>
                                   )}
                                 </div>
@@ -1278,7 +1279,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                           </div>
                           <div className="text-sm text-gray-600">
                             {game.bggVotes && (
-                              <span>Based on {game.bggVotes.toLocaleString()} votes</span>
+                              <span>{tGame('basedOn')} {game.bggVotes.toLocaleString()} {game.bggVotes === 1 ? tGame('votePlural') : tGame('votesPlural')}</span>
                             )}
                           </div>
                         </div>
@@ -1300,7 +1301,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                           <div className="flex-1 min-w-0">
                             {/* Desktop: show with +X more button if needed */}
                             <div className="hidden md:block">
-                              <span className="font-medium">Designer:</span>
+                              <span className="font-medium">{tGame('designer')}:</span>
                               <span className="ml-2">
                                 {designerText}
                                 {hasMore && !showAllDesigners && (
@@ -1308,7 +1309,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     onClick={() => setShowAllDesigners(true)}
                                     className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    +{designers.length - 3} more
+                                    +{designers.length - 3} {tGame('more')}
                                   </button>
                                 )}
                                 {hasMore && showAllDesigners && (
@@ -1316,7 +1317,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     onClick={() => setShowAllDesigners(false)}
                                     className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    Show less
+                                    {tGame('showLess')}
                                   </button>
                                 )}
                               </span>
@@ -1325,7 +1326,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             <div className="md:hidden">
                               {showFullDesigner ? (
                                 <div className="flex flex-wrap items-start">
-                                  <span className="font-medium">Designer:</span>
+                                  <span className="font-medium">{tGame('designer')}:</span>
                                   <span className="ml-2 break-words">{game.designer}</span>
                                   <button
                                     onClick={(e) => {
@@ -1335,7 +1336,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     }}
                                     className="ml-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    See less
+                                    {tGame('seeLess')}
                                   </button>
                                 </div>
                               ) : (
@@ -1353,7 +1354,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                       wordBreak: 'break-word'
                                     }}
                                   >
-                                    <span className="font-medium">Designer:</span>
+                                    <span className="font-medium">{tGame('designer')}:</span>
                                     <span className="ml-1">{game.designer}</span>
                                   </div>
                                   {designerNeedsMore && (
@@ -1365,7 +1366,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                       }}
                                       className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                     >
-                                      ...See more
+                                      {tGame('seeMore')}
                                     </button>
                                   )}
                                 </>
@@ -1387,7 +1388,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                           <div className="flex-1 min-w-0">
                             {/* Desktop: show with +X more button if needed */}
                             <div className="hidden md:block">
-                              <span className="font-medium">Publisher:</span>
+                              <span className="font-medium">{tGame('publisher')}:</span>
                               <span className="ml-2">
                                 {publisherText}
                                 {hasMore && !showAllPublishers && (
@@ -1395,7 +1396,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     onClick={() => setShowAllPublishers(true)}
                                     className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    +{publishers.length - 3} more
+                                    +{publishers.length - 3} {tGame('more')}
                                   </button>
                                 )}
                                 {hasMore && showAllPublishers && (
@@ -1403,7 +1404,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     onClick={() => setShowAllPublishers(false)}
                                     className="ml-2 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    Show less
+                                    {tGame('showLess')}
                                   </button>
                                 )}
                               </span>
@@ -1412,7 +1413,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             <div className="md:hidden">
                               {showFullPublisher ? (
                                 <div className="flex flex-wrap items-start">
-                                  <span className="font-medium">Publisher:</span>
+                                  <span className="font-medium">{tGame('publisher')}:</span>
                                   <span className="ml-2 break-words">{game.developer}</span>
                                   <button
                                     onClick={(e) => {
@@ -1422,7 +1423,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     }}
                                     className="ml-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                   >
-                                    See less
+                                    {tGame('seeLess')}
                                   </button>
                                 </div>
                               ) : (
@@ -1440,7 +1441,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                       wordBreak: 'break-word'
                                     }}
                                   >
-                                    <span className="font-medium">Publisher:</span>
+                                    <span className="font-medium">{tGame('publisher')}:</span>
                                     <span className="ml-1">{game.developer}</span>
                                   </div>
                                   {publisherNeedsMore && (
@@ -1452,7 +1453,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                       }}
                                       className="mt-1 text-[#fbae17] hover:text-[#fbae17]/80 font-medium underline"
                                     >
-                                      ...See more
+                                      {tGame('seeMore')}
                                     </button>
                                   )}
                                 </>
@@ -1466,7 +1467,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       <div className="flex items-start text-gray-600">
                         <Globe className="w-5 h-5 mr-2 text-[#fbae17] mt-0.5 flex-shrink-0" />
                         <div className="flex-1">
-                          <span className="font-medium">Official Link:</span>
+                          <span className="font-medium">{tGame('officialLink')}:</span>
                           <a
                             href={game.officialWebsite}
                             target="_blank"
@@ -1485,7 +1486,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 <div className="mt-auto">
                   {game.gameCategories.length > 0 && (
                     <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Categories</h3>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">{tGame('categories')}</h3>
                       <div className="flex flex-wrap gap-2">
                         {game.gameCategories.map((gc) => (
                           <span
@@ -1501,7 +1502,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   
                   {game.gameMechanics.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Mechanics</h3>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">{tGame('mechanics')}</h3>
                       <div className="flex flex-wrap gap-2">
                         {game.gameMechanics.map((gm) => (
                           <span
@@ -1525,7 +1526,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
               <Star className="w-6 h-6 mr-2 text-[#fbae17]" />
-              About This Game
+              {tGame('aboutThisGame')}
             </h2>
             <div className="prose max-w-none">
               <div 
@@ -1550,12 +1551,12 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 >
                   {showFullDescription ? (
                     <>
-                      <span>Show Less</span>
+                      <span>{tGame('showLess')}</span>
                       <ChevronUp className="w-4 h-4 ml-1" />
                     </>
                   ) : (
                     <>
-                      <span>Show More</span>
+                      <span>{tGame('showMore')}</span>
                       <ChevronDown className="w-4 h-4 ml-1" />
                     </>
                   )}
@@ -1586,7 +1587,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       }`}
                     >
                       <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                      Video Tutorial
+                      {tGame('videoTutorial')}
                     </button>
                   )}
 
@@ -1610,7 +1611,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                               : 'brightness(0) saturate(100%) invert(42%) sepia(8%) saturate(414%) hue-rotate(169deg) brightness(96%) contrast(89%)',
                         }}
                       />
-                      Shop
+                      {tGame('shop')}
                     </button>
                   )}
 
@@ -1624,7 +1625,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       }`}
                     >
                       <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                      PDF
+                      {tGame('pdf')}
                     </button>
                   )}
 
@@ -1638,7 +1639,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       }`}
                     >
                       <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-                      Game Rules
+                      {tGame('gameRules')}
                     </button>
                   )}
                 </nav>
@@ -1695,7 +1696,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <Play className="w-6 h-6 mr-2 text-[#fbae17]" />
-                    Video Tutorials
+                    {tGame('videoTutorials')}
                   </h2>
                   <div className="prose max-w-none w-full">
                     <div className="text-gray-700 leading-relaxed w-full">
@@ -1712,7 +1713,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <Download className="w-6 h-6 mr-2 text-[#fbae17]" />
-                    PDF Rules
+                    {tGame('pdfRules')}
                   </h2>
                   <div className="prose max-w-none w-full">
                     <div className="text-gray-700 leading-relaxed w-full">
@@ -1793,7 +1794,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                       {item.title}
                                     </text>
                                   </svg>
-                                  <p className="text-xs text-gray-500">Image coming soon</p>
+                                  <p className="text-xs text-gray-500">{tGame('imageComingSoon')}</p>
                                 </div>
                               </div>
                             )}
@@ -1806,7 +1807,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                               rel="noopener noreferrer sponsored"
                               className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs mt-auto"
                             >
-                              <span>Buy on Amazon</span>
+                              <span>{tGame('buyOnAmazon')}</span>
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           </div>
@@ -1847,10 +1848,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         </div>
                         <div className="ml-3">
                           <h3 className="text-sm font-medium text-blue-800 mb-1">
-                            Amazon Associates Disclosure
+                            {tGame('amazonAssociatesDisclosure')}
                           </h3>
                           <p className="text-sm text-blue-700">
-                            As Amazon Associates, we earn from qualifying purchases. The prices shown are the same for you - there is no additional cost when purchasing through our links.
+                            {tGame('amazonAssociatesDescription')}
                           </p>
                         </div>
                       </div>
@@ -1863,24 +1864,24 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               {activeTab === 'rules' && !rules?.rulesText && (
                 <div className="text-center py-12">
                   <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Rules Available</h3>
-                  <p className="text-gray-600">Game rules are not yet available for this game.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{tGame('noRulesAvailable')}</h3>
+                  <p className="text-gray-600">{tGame('noRulesAvailableDescription')}</p>
                 </div>
               )}
 
               {activeTab === 'video' && !game?.videoUrl && (
                 <div className="text-center py-12">
                   <Play className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Video Tutorial Available</h3>
-                  <p className="text-gray-600">Video tutorial is not yet available for this game.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{tGame('noVideoAvailable')}</h3>
+                  <p className="text-gray-600">{tGame('noVideoAvailableDescription')}</p>
                 </div>
               )}
 
               {activeTab === 'pdf' && !game?.pdfUrl && !game?.pdfFile && (
                 <div className="text-center py-12">
                   <Download className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No PDF Available</h3>
-                  <p className="text-gray-600">PDF rules are not yet available for this game.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{tGame('noPdfAvailable')}</h3>
+                  <p className="text-gray-600">{tGame('noPdfAvailableDescription')}</p>
                 </div>
               )}
 
