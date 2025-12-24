@@ -327,7 +327,7 @@ function CustomChatList({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-semibold text-gray-900">
-                    Dice-Bot
+                    {t('diceBotName')}
                   </h3>
                   <p className="text-sm text-gray-500">
                     {t('aiAssistant')}
@@ -1101,7 +1101,7 @@ export default function FloatingChat() {
   const handleStartBotChat = () => {
     const botChat = {
       id: 'dice-bot',
-      name: 'Dice-Bot',
+      name: t('diceBotName'),
       type: 'bot' as const,
       participants: [],
       createdAt: new Date().toISOString(),
@@ -1413,7 +1413,7 @@ export default function FloatingChat() {
                 />
                 <span>{t('askDiceBot')}</span>
               </div>
-              <div className="text-xs opacity-90">
+              <div className="text-xs opacity-90 line-clamp-2">
                 {t('askDiceBotDescription')}
               </div>
             </div>

@@ -246,7 +246,8 @@
     "moreOptions": "More options",
     "startDirectChat": "Start Direct Chat",
     "askDiceBot": "Ask Dice-Bot!",
-    "askDiceBotDescription": "Chat with Dice-Bot for rules, strategies, and game recommendations!"
+    "askDiceBotDescription": "Chat with Dice-Bot for rules, strategies, and game recommendations!",
+    "diceBotName": "Dice-Bot"
   },
   "gallery": {
     "communityGallery": "Community Gallery",

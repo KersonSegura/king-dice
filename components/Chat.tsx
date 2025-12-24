@@ -8,6 +8,7 @@ import EmojiPicker from './EmojiPicker';
 import ChatBot from './ChatBot';
 import { useToast } from './Toast';
 import LoadingLogo from './LoadingLogo';
+import { useTranslations } from 'next-intl';
 
 interface Message {
   id: string;
@@ -711,7 +712,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
              {/* Avatar for other users */}
              {message.senderId !== user?.id && (
                <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex-shrink-0 overflow-hidden">
-                 {message.sender.username === 'Dice-Bot' ? (
+                 {message.sender.username === 'Dice-Bot' || message.sender.username === t('diceBotName') ? (
                    <div className="w-full h-full bg-white flex items-center justify-center">
                      <img
                        src="/DiceBotIcon.svg"

@@ -246,7 +246,8 @@
     "moreOptions": "Más opciones",
     "startDirectChat": "Iniciar Chat Directo",
     "askDiceBot": "¡Pregunta a Dado-Bot!",
-    "askDiceBotDescription": "¡Chatea con Dado-Bot para reglas, estrategias y recomendaciones de juegos!"
+    "askDiceBotDescription": "¡Chatea con Dado-Bot para reglas, estrategias y recomendaciones de juegos!",
+    "diceBotName": "Dado-Bot"
   },
   "gallery": {
     "communityGallery": "Galería de la Comunidad",
