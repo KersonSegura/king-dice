@@ -144,7 +144,7 @@ function ForumsPageContent() {
 
     setCategories(categories);
     loadPosts();
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, t]);
 
   // Infinite scroll functionality
   useEffect(() => {
