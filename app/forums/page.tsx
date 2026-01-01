@@ -144,7 +144,8 @@ function ForumsPageContent() {
 
     setCategories(categories);
     loadPosts();
-  }, [isAuthenticated, user?.id, t]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]);
 
   // Infinite scroll functionality
   useEffect(() => {
