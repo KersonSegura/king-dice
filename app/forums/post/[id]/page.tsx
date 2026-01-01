@@ -43,6 +43,8 @@ export default function PostDetailPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
+  const t = useTranslations('forums');
+  const tCommon = useTranslations('common');
   const postId = params?.id as string;
   
   const [post, setPost] = useState<ForumPost | null>(null);
@@ -146,7 +148,7 @@ export default function PostDetailPage() {
 
   const handleVote = async (contentId: string, voteType: 'up' | 'down', contentType: 'post' | 'comment') => {
     if (!isAuthenticated || !user) {
-      showToast('Please sign in to vote', 'error');
+      showToast(tCommon('pleaseSignIn'), 'error');
       return;
     }
 
@@ -282,12 +284,12 @@ export default function PostDetailPage() {
 
   const handleCreateComment = async () => {
     if (!newComment.trim()) {
-      showToast('Please enter a comment', 'error');
+      showToast(t('pleaseEnterComment'), 'error');
       return;
     }
 
     if (!isAuthenticated || !user) {
-      showToast('Please sign in to comment', 'error');
+      showToast(tCommon('pleaseSignIn'), 'error');
       return;
     }
 
@@ -506,7 +508,7 @@ export default function PostDetailPage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Forums
+            {t('backToForums')}
           </Link>
         </div>
 
@@ -522,9 +524,9 @@ export default function PostDetailPage() {
                 <div className="mb-4">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600">
-                      {post.category === 'general' ? 'General Discussion' : 
-                       post.category === 'strategy' ? 'Strategy & Tips' : 
-                       post.category === 'reviews' ? 'Reviews & Recommendations' : post.category}
+                      {post.category === 'general' ? t('categoryGeneral') : 
+                       post.category === 'strategy' ? t('categoryStrategy') : 
+                       post.category === 'reviews' ? t('categoryReviews') : post.category}
                     </span>
                     <div className="flex items-center space-x-1 text-xs text-gray-500">
                       <Calendar className="w-3 h-3" />
@@ -576,7 +578,7 @@ export default function PostDetailPage() {
                         </ModernTooltip>
                       )}
                       
-                      <ModernTooltip content="Report post" position="top">
+                      <ModernTooltip content={t('reportPostTooltip')} position="top">
                         <button
                           onClick={() => handleReport('post', post.id)}
                           className="p-1 text-gray-400 hover:text-red-500 transition-colors"
@@ -663,9 +665,9 @@ export default function PostDetailPage() {
                   <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 mb-4">
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600">
-                      {post.category === 'general' ? 'General Discussion' : 
-                       post.category === 'strategy' ? 'Strategy & Tips' : 
-                       post.category === 'reviews' ? 'Reviews & Recommendations' : post.category}
+                      {post.category === 'general' ? t('categoryGeneral') : 
+                       post.category === 'strategy' ? t('categoryStrategy') : 
+                       post.category === 'reviews' ? t('categoryReviews') : post.category}
                     </span>
                     {post.isModerated && post.moderationResult?.isAppropriate && (
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600 flex items-center space-x-1">
@@ -731,7 +733,7 @@ export default function PostDetailPage() {
                         </ModernTooltip>
                       )}
                       
-                      <ModernTooltip content="Report post" position="top">
+                      <ModernTooltip content={t('reportPostTooltip')} position="top">
                         <button
                           onClick={() => handleReport('post', post.id)}
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
@@ -768,7 +770,7 @@ export default function PostDetailPage() {
                       value={newComment}
                       onChange={handleCommentTyping}
                       onKeyDown={handleCommentKeyPress}
-                      placeholder={isAuthenticated ? "Write a comment... (use @ to mention games)" : "Please sign in to comment"}
+                      placeholder={isAuthenticated ? t('writeCommentMention') : t('pleaseSignInToComment')}
                       rows={3}
                       className="w-full p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-sm sm:text-base"
                       disabled={!isAuthenticated}
@@ -836,7 +838,7 @@ export default function PostDetailPage() {
                     Comments ({comments.length})
                   </h3>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs sm:text-sm text-gray-600">Sort by:</span>
+                    <span className="text-xs sm:text-sm text-gray-600">{t('sortBy')}</span>
                     <select
                       value={commentSortBy}
                       onChange={(e) => {
@@ -845,9 +847,9 @@ export default function PostDetailPage() {
                       }}
                       className="text-xs sm:text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
-                      <option value="best">Best</option>
-                      <option value="newest">Newest</option>
-                      <option value="top">Top</option>
+                      <option value="best">{t('sortBest')}</option>
+                      <option value="newest">{t('sortNewest')}</option>
+                      <option value="top">{t('sortTop')}</option>
                     </select>
                   </div>
                 </div>
@@ -927,7 +929,7 @@ export default function PostDetailPage() {
                         </p>
                         
                         <div className="flex justify-end">
-                          <ModernTooltip content="Report comment" position="top">
+                          <ModernTooltip content={t('reportCommentTooltip')} position="top">
                             <button
                               onClick={() => handleReport('comment', comment.id)}
                               className="p-1 text-gray-400 hover:text-red-500 transition-colors"
@@ -936,7 +938,7 @@ export default function PostDetailPage() {
                             </button>
                           </ModernTooltip>
                           {isAuthenticated && user && comment.author.id === user.id && (
-                            <ModernTooltip content="Delete comment" position="top">
+                            <ModernTooltip content={t('deleteCommentTooltip')} position="top">
                               <button
                                 onClick={() => handleDeleteComment(comment.id)}
                                 className="p-1 text-gray-400 hover:text-red-500 transition-colors"

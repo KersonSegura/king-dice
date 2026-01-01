@@ -512,6 +512,26 @@
     "title": "Top Ranked Games",
     "description": "The 25 most played games this month"
   },
+  "myDice": {
+    "tabBackground": "Background",
+    "tabDice": "Dice",
+    "tabPattern": "Pattern",
+    "tabCrownsHats": "Crowns & Hats",
+    "tabAccessories": "Accessories",
+    "tabItem": "Item",
+    "tabCompanion": "Companion",
+    "tabTitle": "Title",
+    "noPattern": "No Pattern",
+    "noAccessory": "No Accessory",
+    "nothing": "Nothing",
+    "noItem": "No Item",
+    "noCompanion": "No Companion",
+    "noTitle": "No Title",
+    "reward": "Reward",
+    "level": "Lv.",
+    "specialItem": "Special Item",
+    "unlockAtLevel": "Unlock at level {level}"
+  },
   "settings": {
     "language": "Language",
     "english": "English",

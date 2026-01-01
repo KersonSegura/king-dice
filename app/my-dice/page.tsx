@@ -20,16 +20,7 @@ type TabKey =
   | "companion"
   | "title";
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "background", label: "Background" },
-  { key: "dice", label: "Dice" },
-  { key: "pattern", label: "Pattern" },
-  { key: "hat", label: "Crowns & Hats" },
-  { key: "accessories", label: "Accessories" },
-  { key: "item", label: "Item" },
-  { key: "companion", label: "Companion" },
-  { key: "title", label: "Title" },
-];
+// TABS will be defined inside component to access translations
 
 type Asset = { 
   id: string; 
@@ -55,15 +46,7 @@ const DICE_COMPATIBILITY: Record<string, {
   'safe': { patterns: false, accessories: ['blush'], hats: [] }
 };
 
-// Custom labels for the "None" option per tab
-const NONE_LABEL: Partial<Record<TabKey, string>> = {
-  pattern: "No Pattern",
-  accessories: "No Accessory",
-  hat: "Nothing",
-  item: "No Item",
-  companion: "No Companion",
-  title: "No Title",
-};
+// NONE_LABEL will be defined inside component to access translations
 
 function rankAsset(tab: TabKey, name: string): number {
   // Remove "thumbnail" from the name for ranking purposes
@@ -1245,7 +1228,7 @@ export default function MyDicePage() {
                         }`}>
                           {isLockedByLevel && asset.requiredLevel !== undefined && (
                             <div className="text-[9px] text-black font-semibold mt-0.5">
-                              {asset.requiredLevel === 0 ? 'Special Item' : `Unlock at level ${asset.requiredLevel}`}
+                              {asset.requiredLevel === 0 ? tMyDice('specialItem') : tMyDice('unlockAtLevel', { level: asset.requiredLevel })}
                             </div>
                           )}
                         </div>

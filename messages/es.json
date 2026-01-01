@@ -417,6 +417,8 @@
     "deleteImage": "Eliminar Imagen",
     "deletePost": "Eliminar Publicación",
     "deleteComment": "Eliminar Comentario",
+    "voteFailed": "Error al actualizar el voto",
+    "pleaseEnterComment": "Por favor ingresa un comentario",
     "categoryGeneral": "Discusión General",
     "categoryStrategy": "Estrategia y Consejos",
     "categoryReviews": "Reseñas y Recomendaciones",
@@ -515,6 +517,26 @@
   "topRanked": {
     "title": "Juegos Mejor Valorados",
     "description": "Los 25 juegos más jugados este mes"
+  },
+  "myDice": {
+    "tabBackground": "Fondo",
+    "tabDice": "Dados",
+    "tabPattern": "Patrón",
+    "tabCrownsHats": "Coronas y Sombreros",
+    "tabAccessories": "Accesorios",
+    "tabItem": "Objeto",
+    "tabCompanion": "Compañero",
+    "tabTitle": "Título",
+    "noPattern": "Sin Patrón",
+    "noAccessory": "Sin Accesorio",
+    "nothing": "Nada",
+    "noItem": "Sin Objeto",
+    "noCompanion": "Sin Compañero",
+    "noTitle": "Sin Título",
+    "reward": "Recompensa",
+    "level": "Nv.",
+    "specialItem": "Objeto Especial",
+    "unlockAtLevel": "Desbloquear en nivel {level}"
   },
   "settings": {
     "language": "Idioma",
