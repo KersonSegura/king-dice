@@ -242,7 +242,7 @@ export default function PostDetailPage() {
             }
           } catch {}
           
-          showToast(errorData?.details || errorData?.error || 'Failed to update vote', 'error');
+          showToast(errorData?.details || errorData?.error || t('voteFailed'), 'error');
         }
       } else {
         // Comment voting
