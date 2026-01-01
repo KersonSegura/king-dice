@@ -365,8 +365,29 @@ function isBlocked(selectedDice: string | null, tab: TabKey, assetName: string):
 export default function MyDicePage() {
   const t = useTranslations('common');
   const tHeader = useTranslations('header');
+  const tMyDice = useTranslations('myDice');
   const { user, updateAvatar, syncUserData } = useAuth();
   const { showToast } = useToast();
+  
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: "background", label: tMyDice('tabBackground') },
+    { key: "dice", label: tMyDice('tabDice') },
+    { key: "pattern", label: tMyDice('tabPattern') },
+    { key: "hat", label: tMyDice('tabCrownsHats') },
+    { key: "accessories", label: tMyDice('tabAccessories') },
+    { key: "item", label: tMyDice('tabItem') },
+    { key: "companion", label: tMyDice('tabCompanion') },
+    { key: "title", label: tMyDice('tabTitle') },
+  ];
+
+  const NONE_LABEL: Partial<Record<TabKey, string>> = {
+    pattern: tMyDice('noPattern'),
+    accessories: tMyDice('noAccessory'),
+    hat: tMyDice('nothing'),
+    item: tMyDice('noItem'),
+    companion: tMyDice('noCompanion'),
+    title: tMyDice('noTitle'),
+  };
   
   const [activeTab, setActiveTab] = useState<TabKey>("background");
   const [assets, setAssets] = useState<Record<TabKey, Asset[]>>({
