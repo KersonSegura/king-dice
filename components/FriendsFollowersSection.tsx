@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Users, UserPlus, UserMinus, UserCheck, UserX, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import { useTranslations } from 'next-intl';
 
 interface User {
   id: string;
@@ -43,6 +44,7 @@ export default function FriendsFollowersSection({
   isEditing = false
 }: FriendsFollowersSectionProps) {
   const { showToast, ToastContainer } = useToast();
+  const t = useTranslations('profile');
   const [socialStats, setSocialStats] = useState<SocialStats | null>(null);
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
@@ -141,7 +143,7 @@ export default function FriendsFollowersSection({
   // Handle follow/unfollow
   const handleFollow = async () => {
     if (!currentUserId) {
-      showToast('Please log in to follow users', 'info');
+      showToast(t('pleaseLogInToFollow'), 'info');
       return;
     }
 
@@ -172,27 +174,27 @@ export default function FriendsFollowersSection({
         if (action === 'follow') {
           if (data.isPrivate) {
             setHasRequestPending(true);
-            showToast('Follow request sent!', 'success');
+            showToast(t('followRequestSent'), 'success');
           } else {
             setIsFollowing(true);
-            showToast('Now following user!', 'success');
+            showToast(t('nowFollowingUser'), 'success');
           }
         } else if (action === 'unfollow') {
           setIsFollowing(false);
-          showToast('Unfollowed user', 'success');
+          showToast(t('unfollowedUser'), 'success');
         } else if (action === 'cancel_request') {
           setHasRequestPending(false);
-          showToast('Follow request cancelled', 'success');
+          showToast(t('followRequestCancelled'), 'success');
         }
         
         loadSocialStats();
       } else {
         const errorData = await response.json();
-        showToast(errorData.error || 'Failed to update follow status', 'error');
+        showToast(errorData.error || t('failedToUpdateFollowStatus'), 'error');
       }
     } catch (error) {
       console.error('Error updating follow status:', error);
-      showToast('Failed to update follow status', 'error');
+      showToast(t('failedToUpdateFollowStatus'), 'error');
     }
   };
 
@@ -238,13 +240,13 @@ export default function FriendsFollowersSection({
       <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <h3 className="text-lg font-semibold text-gray-900">Social</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('social')}</h3>
             {isPrivateProfile && (
               <div className="flex items-center text-xs text-gray-500">
                 <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
-                Private
+                {t('private')}
               </div>
             )}
           </div>
@@ -259,7 +261,7 @@ export default function FriendsFollowersSection({
             onClick={() => !isEditing && setActiveTab('followers')}
           >
             <div className="text-2xl font-bold text-gray-900">{socialStats?.followers || 0}</div>
-            <div className="text-sm text-gray-600">Followers</div>
+            <div className="text-sm text-gray-600">{t('followers')}</div>
           </div>
           <div 
             className={`text-center p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -268,7 +270,7 @@ export default function FriendsFollowersSection({
             onClick={() => !isEditing && setActiveTab('following')}
           >
             <div className="text-2xl font-bold text-gray-900">{socialStats?.following || 0}</div>
-            <div className="text-sm text-gray-600">Following</div>
+            <div className="text-sm text-gray-600">{t('following')}</div>
           </div>
         </div>
 
@@ -286,7 +288,7 @@ export default function FriendsFollowersSection({
                   isEditing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                View All
+                {t('viewAll')}
               </button>
             )}
           </div>
@@ -331,7 +333,7 @@ export default function FriendsFollowersSection({
           ) : (
             <div className="text-center py-4 text-gray-500">
               <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">No {activeTab} yet</p>
+              <p className="text-sm">{activeTab === 'followers' ? t('noFollowers') : t('noFollowing')}</p>
             </div>
           )}
         </div>
@@ -344,7 +346,7 @@ export default function FriendsFollowersSection({
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 capitalize">
-                  All {activeTab} ({currentTabCount || 0})
+                  {activeTab === 'followers' ? t('allFollowers') : t('allFollowing')} ({currentTabCount || 0})
                 </h3>
                 <button
                   onClick={() => setShowAllModal(false)}
@@ -400,7 +402,7 @@ export default function FriendsFollowersSection({
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">No {activeTab} yet</p>
+                  <p className="text-sm">{activeTab === 'followers' ? t('noFollowers') : t('noFollowing')}</p>
                 </div>
               )}
             </div>

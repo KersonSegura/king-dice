@@ -242,7 +242,16 @@
     "monthAgo": "{months} month ago",
     "monthsAgo": "{months} months ago",
     "yearAgo": "{years} year ago",
-    "yearsAgo": "{years} years ago"
+    "yearsAgo": "{years} years ago",
+    "social": "Social",
+    "private": "Private",
+    "viewAll": "View All",
+    "noFollowers": "No followers yet",
+    "noFollowing": "No following yet",
+    "allFollowers": "All followers",
+    "allFollowing": "All following",
+    "followRequestSent": "Follow request sent!",
+    "followRequestCancelled": "Follow request cancelled"
   },
   "auth": {
     "signIn": "Sign In",
@@ -667,6 +676,10 @@
     "notificationSettingsUpdated": "Notification settings updated!",
     "twoFactorEnabled": "Two-Factor Authentication enabled!",
     "twoFactorDisabled": "Two-Factor Authentication disabled!",
+    "twoFactorEnabledLabel": "(Enabled)",
+    "twoFactorDisabledLabel": "(Disabled)",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
     "failedToUpdate": "Failed to update",
     "accountDeleted": "Account deleted successfully. Redirecting...",
     "adminUsernameNote": "Admin username (can contain KingDice variations)"

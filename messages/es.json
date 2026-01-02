@@ -242,7 +242,16 @@
     "monthAgo": "hace {months} mes",
     "monthsAgo": "hace {months} meses",
     "yearAgo": "hace {years} año",
-    "yearsAgo": "hace {years} años"
+    "yearsAgo": "hace {years} años",
+    "social": "Social",
+    "private": "Privado",
+    "viewAll": "Ver Todos",
+    "noFollowers": "Aún no hay seguidores",
+    "noFollowing": "Aún no está siguiendo a nadie",
+    "allFollowers": "Todos los seguidores",
+    "allFollowing": "Todos los que sigue",
+    "followRequestSent": "¡Solicitud de seguimiento enviada!",
+    "followRequestCancelled": "Solicitud de seguimiento cancelada"
   },
   "auth": {
     "signIn": "Iniciar Sesión",
@@ -685,6 +694,10 @@
     "notificationSettingsUpdated": "¡Configuración de notificaciones actualizada!",
     "twoFactorEnabled": "¡Autenticación de Dos Factores activada!",
     "twoFactorDisabled": "¡Autenticación de Dos Factores desactivada!",
+    "twoFactorEnabledLabel": "(Activada)",
+    "twoFactorDisabledLabel": "(Desactivada)",
+    "enabled": "Activada",
+    "disabled": "Desactivada",
     "failedToUpdate": "Error al actualizar",
     "accountDeleted": "Cuenta eliminada exitosamente. Redirigiendo...",
     "adminUsernameNote": "Nombre de usuario de administrador (puede contener variaciones de KingDice)"

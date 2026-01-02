@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setIsEditing(false);
-        showNotificationToast('Profile updated successfully!');
+        showNotificationToast(tSettings('profileUpdated'));
         // Send notification
         await fetch('/api/notifications', {
           method: 'POST',
@@ -120,11 +120,11 @@ export default function SettingsPage() {
         });
       } else {
         const errorData = await response.json();
-        showNotificationToast(errorData.message || 'Failed to update profile');
+        showNotificationToast(errorData.message || tSettings('failedToUpdateProfile'));
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      showNotificationToast('Failed to update profile. Please try again.');
+      showNotificationToast(tSettings('failedToUpdateProfile'));
     } finally {
       setLoading(false);
     }
@@ -152,10 +152,10 @@ export default function SettingsPage() {
           settings: { notifications: newNotifications }
         })
       });
-      showNotificationToast('Notification settings updated!');
+      showNotificationToast(tSettings('notificationSettingsUpdated'));
     } catch (error) {
       console.error('Error updating notification settings:', error);
-      showNotificationToast('Failed to update notification settings');
+      showNotificationToast(tSettings('failedToUpdateNotificationSettings'));
     }
   };
 
@@ -178,16 +178,16 @@ export default function SettingsPage() {
         
         showNotificationToast(
           newTwoFactorEnabled 
-            ? 'Two-Factor Authentication enabled!' 
-            : 'Two-Factor Authentication disabled!'
+            ? tSettings('twoFactorEnabled')
+            : tSettings('twoFactorDisabled')
         );
       } else {
         const errorData = await response.json();
-        showNotificationToast(errorData.error || 'Failed to update security settings');
+        showNotificationToast(errorData.error || tSettings('failedToUpdateSecuritySettings'));
       }
     } catch (error) {
       console.error('Error updating 2FA settings:', error);
-      showNotificationToast('Failed to update security settings');
+      showNotificationToast(tSettings('failedToUpdateSecuritySettings'));
     }
   };
 
@@ -220,7 +220,7 @@ export default function SettingsPage() {
         throw new Error(data.error || 'Failed to delete account');
       }
 
-      showNotificationToast('Account deleted successfully. Redirecting...');
+      showNotificationToast(tSettings('accountDeleted'));
       
       // Logout and clear local storage, then redirect to home
       setTimeout(() => {
@@ -232,7 +232,7 @@ export default function SettingsPage() {
       }, 1500);
     } catch (error: any) {
       console.error('Error deleting account:', error);
-      showNotificationToast(error.message || 'Failed to delete account');
+      showNotificationToast(error.message || tSettings('failedToDeleteAccount'));
     } finally {
       setLoading(false);
     }
@@ -265,7 +265,7 @@ export default function SettingsPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <User className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{tSettings('profileInformation')}</h2>
               </div>
               
               <div className="space-y-4">
@@ -281,15 +281,15 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Profile Picture</p>
-                    <p className="text-xs text-gray-500">Customize your dice avatar in <Link href="/my-dice" className="text-blue-600 hover:underline">My Dice</Link></p>
+                    <p className="text-sm text-gray-600">{tSettings('profilePicture')}</p>
+                    <p className="text-xs text-gray-500">{tSettings('customizeDiceAvatar')} <Link href="/my-dice" className="text-blue-600 hover:underline">{tCommon('myDice')}</Link></p>
                   </div>
                 </div>
 
                 {/* Username */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username
+                    {tSettings('username')}
                   </label>
                   <input
                     type="text"
@@ -299,14 +299,14 @@ export default function SettingsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   />
                   {user.isAdmin && (
-                    <p className="text-xs text-green-600 mt-1">✓ Admin username (can contain KingDice variations)</p>
+                    <p className="text-xs text-green-600 mt-1">✓ {tSettings('adminUsernameNote')}</p>
                   )}
                 </div>
 
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                    {tSettings('emailAddress')}
                   </label>
                   <input
                     type="email"
@@ -325,7 +325,7 @@ export default function SettingsPage() {
                       className="flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
                     >
                       <User className="w-4 h-4" />
-                      <span>Edit Profile</span>
+                      <span>{tSettings('editProfile')}</span>
                     </button>
                   ) : (
                     <>
@@ -337,14 +337,14 @@ export default function SettingsPage() {
                         }`}
                       >
                         <Save className="w-4 h-4" />
-                        <span>{loading ? 'Saving...' : 'Save Changes'}</span>
+                        <span>{loading ? tSettings('saving') : tSettings('saveChanges')}</span>
                       </button>
                       <button
                         onClick={handleCancel}
                         className="flex items-center space-x-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
                       >
                         <X className="w-4 h-4" />
-                        <span>Cancel</span>
+                        <span>{tSettings('cancel')}</span>
                       </button>
                     </>
                   )}
@@ -356,14 +356,14 @@ export default function SettingsPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <Bell className="w-5 h-5 text-yellow-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{tSettings('notificationPreferences')}</h2>
               </div>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Email Notifications</p>
-                    <p className="text-xs text-gray-500">Receive notifications via email</p>
+                    <p className="text-sm font-medium text-gray-700">{tSettings('emailNotifications')}</p>
+                    <p className="text-xs text-gray-500">{tSettings('receiveNotificationsViaEmail')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -378,8 +378,8 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Forum Notifications</p>
-                    <p className="text-xs text-gray-500">Get notified about forum activity</p>
+                    <p className="text-sm font-medium text-gray-700">{tSettings('forumNotifications')}</p>
+                    <p className="text-xs text-gray-500">{tSettings('getNotifiedAboutForumActivity')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -394,8 +394,8 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Gallery Notifications</p>
-                    <p className="text-xs text-gray-500">Get notified about new gallery uploads</p>
+                    <p className="text-sm font-medium text-gray-700">{tSettings('galleryNotifications')}</p>
+                    <p className="text-xs text-gray-500">{tSettings('getNotifiedAboutNewGalleryUploads')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -410,8 +410,8 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Marketing Emails</p>
-                    <p className="text-xs text-gray-500">Receive promotional content</p>
+                    <p className="text-sm font-medium text-gray-700">{tSettings('marketingEmails')}</p>
+                    <p className="text-xs text-gray-500">{tSettings('receivePromotionalContent')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -430,7 +430,7 @@ export default function SettingsPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-2 mb-6">
                 <Shield className="w-5 h-5 text-purple-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Privacy Settings</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{tSettings('privacySettings')}</h2>
               </div>
               
               <PrivacySettings
@@ -452,13 +452,13 @@ export default function SettingsPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-2 mb-4">
                 <Lock className="w-5 h-5 text-red-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Security</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{tSettings('accountSecurity')}</h2>
               </div>
               
               <div className="space-y-3">
                 <button className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-                  <p className="text-sm font-medium text-gray-700">Change Password</p>
-                  <p className="text-xs text-gray-500">Update your account password</p>
+                  <p className="text-sm font-medium text-gray-700">{tSettings('changePassword')}</p>
+                  <p className="text-xs text-gray-500">{tSettings('updateYourAccountPassword')}</p>
                 </button>
                 
                 <button 
@@ -473,9 +473,9 @@ export default function SettingsPage() {
                   <p className={`text-sm font-medium ${
                     security.twoFactorEnabled ? 'text-green-700' : 'text-gray-700'
                   }`}>
-                    Two-Factor Authentication {security.twoFactorEnabled ? '(Enabled)' : '(Disabled)'}
+                    {tSettings('twoFactorAuthentication')} {security.twoFactorEnabled ? tSettings('twoFactorEnabled') : tSettings('twoFactorDisabledSettings')}
                   </p>
-                  <p className="text-xs text-gray-500">Add an extra layer of security</p>
+                  <p className="text-xs text-gray-500">{tSettings('addExtraLayerOfSecurity')}</p>
                 </button>
                 
               </div>
@@ -483,7 +483,7 @@ export default function SettingsPage() {
 
             {/* Account Actions */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Account Actions</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">{tSettings('accountActions')}</h2>
               
               <div className="space-y-3">
                 <button 
@@ -493,8 +493,8 @@ export default function SettingsPage() {
                     loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  <p className="text-sm font-medium text-red-700">Delete Account</p>
-                  <p className="text-xs text-red-600">Permanently remove your account</p>
+                  <p className="text-sm font-medium text-red-700">{tSettings('deleteAccount')}</p>
+                  <p className="text-xs text-red-600">{tSettings('permanentlyRemoveYourAccount')}</p>
                 </button>
               </div>
             </div>
@@ -521,10 +521,10 @@ export default function SettingsPage() {
         isOpen={showDeleteConfirm1}
         onClose={() => setShowDeleteConfirm1(false)}
         onConfirm={handleFirstConfirm}
-        title="Delete Account?"
-        message="Are you sure you want to delete your account? This action cannot be undone."
-        confirmText="Yes, Continue"
-        cancelText="Cancel"
+        title={tSettings('deleteAccountQuestion')}
+        message={tSettings('deleteAccountConfirmation')}
+        confirmText={tSettings('yesContinue')}
+        cancelText={tSettings('cancel')}
         type="danger"
       />
 
@@ -533,10 +533,10 @@ export default function SettingsPage() {
         isOpen={showDeleteConfirm2}
         onClose={() => setShowDeleteConfirm2(false)}
         onConfirm={handleFinalDelete}
-        title="Final Confirmation"
-        message="This will permanently delete all your data including posts, images, comments, and messages. Are you absolutely sure?"
-        confirmText="Yes, Delete My Account"
-        cancelText="Cancel"
+        title={tSettings('finalConfirmation')}
+        message={tSettings('deleteAccountFinalMessage')}
+        confirmText={tSettings('yesDeleteMyAccount')}
+        cancelText={tSettings('cancel')}
         type="danger"
       />
     </div>
