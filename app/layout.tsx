@@ -43,7 +43,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
+      <body className={`${inter.className}`} suppressHydrationWarning={true}>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -59,8 +59,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${inter.className}`} suppressHydrationWarning={true}>
         <Providers>
           <LevelUpProvider>
             <AuthProvider>
