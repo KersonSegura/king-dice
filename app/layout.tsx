@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { cookies } from 'next/headers'
 import './globals.css'
 import Header from '@/components/Header'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -11,8 +12,15 @@ import ToastContainer from '@/components/ToastContainer'
 import FloatingChat from '@/components/FloatingChat'
 import BackToTopButton from '@/components/BackToTopButton'
 import Providers from '@/components/Providers'
+import enMessages from '../messages/en.json'
+import esMessages from '../messages/es.json'
 
 const inter = Inter({ subsets: ['latin'] })
+
+const messagesMap: Record<string, any> = {
+  en: enMessages,
+  es: esMessages,
+}
 
 export const metadata: Metadata = {
   title: 'King Dice - Find the rules for your favorite games',
@@ -36,30 +44,30 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Detect locale server-side from cookie
+  let locale = 'en';
+  try {
+    const cookieStore = await cookies();
+    const cookieLocale = cookieStore.get('locale')?.value;
+    if (cookieLocale && (cookieLocale === 'en' || cookieLocale === 'es')) {
+      locale = cookieLocale;
+    }
+  } catch (error) {
+    // If cookies() fails, default to English
+    console.error('Error reading locale cookie:', error);
+  }
+
+  const messages = messagesMap[locale] || enMessages;
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={`${inter.className}`} suppressHydrationWarning={true}>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var cookie = document.cookie.split('; ').find(row => row.startsWith('locale='));
-                  var locale = cookie ? cookie.split('=')[1] : 'en';
-                  window.__NEXT_LOCALE__ = locale;
-                } catch (e) {
-                  window.__NEXT_LOCALE__ = 'en';
-                }
-              })();
-            `,
-          }}
-        />
-        <Providers>
+        <Providers locale={locale} messages={messages}>
           <LevelUpProvider>
             <AuthProvider>
               <SocketProvider>
