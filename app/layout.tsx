@@ -43,6 +43,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var cookie = document.cookie.split('; ').find(row => row.startsWith('locale='));
+                  var locale = cookie ? cookie.split('=')[1] : 'en';
+                  window.__NEXT_LOCALE__ = locale;
+                } catch (e) {
+                  window.__NEXT_LOCALE__ = 'en';
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.className}`} suppressHydrationWarning={true}>
         <Providers>
           <LevelUpProvider>

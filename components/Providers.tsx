@@ -24,10 +24,12 @@ const messagesMap: Record<string, any> = {
 };
 
 export default function Providers({ children }: ProvidersProps) {
-  // Read cookie synchronously on initial render to avoid flash
+  // Read locale from window.__NEXT_LOCALE__ set by inline script (prevents flash)
+  // Fall back to cookie if window.__NEXT_LOCALE__ is not available
   const initialLocale = useMemo(() => {
     if (typeof window !== 'undefined') {
-      return getCookieLocale();
+      // Prefer the value set by the inline script (set before React hydration)
+      return (window as any).__NEXT_LOCALE__ || getCookieLocale();
     }
     return 'en';
   }, []);
