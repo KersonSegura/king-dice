@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslations } from 'next-intl';
 import ImageModal from '@/components/ImageModal';
 import FriendsFollowersSection from '@/components/FriendsFollowersSection';
 import ProfileColorCustomizer from '@/components/ProfileColorCustomizer';
@@ -144,7 +145,7 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove }: { game: any; 
               {...attributes} 
               {...listeners} 
               className="cursor-grab active:cursor-grabbing touch-none p-1 hover:bg-gray-200 rounded"
-              title="Drag to reorder"
+              title={t('dragToReorder')}
             >
               <GripVertical className="w-5 h-5 text-gray-400 hover:text-gray-600 flex-shrink-0" />
             </div>
@@ -175,7 +176,7 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove }: { game: any; 
         {isOwnProfile && (
           <button
             className="text-red-500 hover:text-red-700 transition-colors p-1 opacity-0 group-hover:opacity-100 flex-shrink-0 ml-2"
-            title="Remove from collection"
+            title={t('removeFromCollection')}
             onClick={(e) => {
               e.stopPropagation();
               onRemove(game.id);
@@ -196,6 +197,8 @@ export default function UserProfilePage() {
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user, isAuthenticated } = useAuth();
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
 
   // Drag and drop sensors - optimized for smooth dragging
   const sensors = useSensors(
@@ -264,22 +267,22 @@ export default function UserProfilePage() {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (diffInSeconds < 60) {
-      return 'just now';
+      return t('justNow');
     } else if (diffInSeconds < 3600) {
       const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+      return minutes === 1 ? t('minuteAgo', { minutes }) : t('minutesAgo', { minutes });
     } else if (diffInSeconds < 86400) {
       const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+      return hours === 1 ? t('hourAgo', { hours }) : t('hoursAgo', { hours });
     } else if (diffInSeconds < 2592000) {
       const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days === 1 ? '' : 's'} ago`;
+      return days === 1 ? t('dayAgo', { days }) : t('daysAgo', { days });
     } else if (diffInSeconds < 31536000) {
       const months = Math.floor(diffInSeconds / 2592000);
-      return `${months} month${months === 1 ? '' : 's'} ago`;
+      return months === 1 ? t('monthAgo', { months }) : t('monthsAgo', { months });
     } else {
       const years = Math.floor(diffInSeconds / 31536000);
-      return `${years} year${years === 1 ? '' : 's'} ago`;
+      return years === 1 ? t('yearAgo', { years }) : t('yearsAgo', { years });
     }
   };
 
@@ -344,17 +347,17 @@ export default function UserProfilePage() {
         }
 
         showToast(
-          currentLikeStatus ? 'Removed like' : 'Liked image!', 
+          currentLikeStatus ? t('removedLike') : t('likedImage'), 
           'success', 
           1500
         );
       } else {
         const errorData = await response.json();
-        showToast(errorData.error || 'Failed to update like', 'error', 2000);
+        showToast(errorData.error || t('failedToUpdateLike'), 'error', 2000);
       }
     } catch (error) {
       console.error('Error updating like:', error);
-      showToast('Failed to update like', 'error', 2000);
+      showToast(t('failedToUpdateLike'), 'error', 2000);
     }
   };
 
@@ -386,14 +389,14 @@ export default function UserProfilePage() {
           description: newDescription
         } : null);
 
-        showToast('Description updated successfully', 'success');
+        showToast(t('descriptionUpdatedSuccessfully'), 'success');
       } else {
         const errorData = await response.json();
-        showToast(errorData.message || 'Failed to update description', 'error');
+        showToast(errorData.message || t('failedToUpdateDescription'), 'error');
       }
     } catch (error) {
       console.error('Error updating description:', error);
-      showToast('Failed to update description', 'error');
+      showToast(t('failedToUpdateDescription'), 'error');
     }
   };
 
@@ -444,11 +447,11 @@ export default function UserProfilePage() {
           }
         }
       } else {
-        showToast('User not found', 'error');
+        showToast(t('userNotFound'), 'error');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      showToast('Failed to load user profile', 'error');
+      showToast(t('failedToLoadUserProfile'), 'error');
     } finally {
       setLoading(false);
     }
@@ -475,7 +478,7 @@ export default function UserProfilePage() {
   // Handle follow/unfollow
   const handleFollow = async () => {
     if (!user?.id) {
-      showToast('Please log in to follow users', 'info');
+      showToast(t('pleaseLogInToFollow'), 'info');
       return;
     }
 
@@ -497,23 +500,23 @@ export default function UserProfilePage() {
       if (response.ok) {
         setIsFollowing(!isFollowing);
         showToast(
-          isFollowing ? 'Unfollowed user' : 'Now following user!',
+          isFollowing ? t('unfollowedUser') : t('nowFollowingUser'),
           'success'
         );
       } else {
         const errorData = await response.json();
-        showToast(errorData.error || 'Failed to update follow status', 'error');
+        showToast(errorData.error || t('failedToUpdateFollowStatus'), 'error');
       }
     } catch (error) {
       console.error('Error updating follow status:', error);
-      showToast('Failed to update follow status', 'error');
+      showToast(t('failedToUpdateFollowStatus'), 'error');
     }
   };
 
   // Handle start chat
   const handleStartChat = async () => {
     if (!user?.id) {
-      showToast('Please log in to start a chat', 'info');
+      showToast(t('pleaseLogInToStartChat'), 'info');
       return;
     }
 
@@ -539,7 +542,7 @@ export default function UserProfilePage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('[Profile] Chat API error:', response.status, errorData);
-        showToast('Failed to start chat', 'error');
+        showToast(t('failedToStartChat'), 'error');
         return;
       }
 
@@ -582,10 +585,10 @@ export default function UserProfilePage() {
       window.dispatchEvent(openChatEvent);
       console.log('[Profile] Chat event dispatched');
       
-      showToast('Opening chat...', 'success');
+      showToast(t('openingChat'), 'success');
     } catch (error) {
       console.error('[Profile] Error starting chat:', error);
-      showToast('Failed to start chat', 'error');
+      showToast(t('failedToStartChat'), 'error');
     } finally {
       setIsCreatingChat(false);
     }
@@ -646,7 +649,7 @@ export default function UserProfilePage() {
       }
     } catch (error) {
       console.error('Error searching games:', error);
-      showToast('Error searching games', 'error');
+      showToast(t('errorSearchingGames'), 'error');
     } finally {
       setIsSearching(false);
     }
@@ -661,7 +664,7 @@ export default function UserProfilePage() {
       
       // Check if game already exists
       if (currentGamesList.some(g => g.id === game.id)) {
-        showToast('Game already in collection', 'info');
+        showToast(t('gameAlreadyInCollection'), 'info');
         return;
       }
 
@@ -694,12 +697,12 @@ export default function UserProfilePage() {
           gamesList: updatedGamesList
         } : null);
         
-        showToast('Game added to collection!', 'success');
+        showToast(t('gameAddedToCollection'), 'success');
         setShowAddGameModal(false);
         setSearchQuery('');
         setSearchResults([]);
       } else {
-        showToast('Failed to add game', 'error');
+        showToast(t('failedToAddGame'), 'error');
       }
     } catch (error) {
       console.error('Error adding game:', error);
@@ -761,9 +764,9 @@ export default function UserProfilePage() {
           favoriteGames: editingFavoriteGames
         } : null);
         setIsEditing(false);
-        showToast('Profile updated successfully!', 'success');
+        showToast(t('profileUpdatedSuccessfully'), 'success');
       } else {
-        showToast('Failed to update profile', 'error');
+        showToast(t('failedToUpdateProfile'), 'error');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -899,13 +902,13 @@ export default function UserProfilePage() {
           // Refresh entire profile to show updated image
           await loadUserProfile();
 
-          showToast(`${isCollectionPhoto ? 'Collection photo' : 'Favorite card'} uploaded successfully!`, 'success');
+          showToast(isCollectionPhoto ? t('collectionPhotoUploaded') : t('favoriteCardUploaded'), 'success');
           setShowUploadModal(false);
         }
       }
     } catch (error) {
       console.error(`Error uploading ${uploadCategory}:`, error);
-      showToast(`Failed to upload ${uploadCategory}`, 'error');
+      showToast(t('failedToUpload', { type: uploadCategory }), 'error');
     } finally {
       if (isCollectionPhoto) {
         setUploadingCollectionPhoto(false);
@@ -936,11 +939,11 @@ export default function UserProfilePage() {
         setUserProfile(prev => prev ? { ...prev, favoriteCard: undefined } : null);
         // Refresh entire profile to ensure UI updates
         await loadUserProfile();
-        showToast('Favorite card removed', 'success');
+        showToast(t('favoriteCardRemoved'), 'success');
       }
     } catch (error) {
       console.error('Error removing favorite card:', error);
-      showToast('Failed to remove favorite card', 'error');
+      showToast(t('failedToRemoveFavoriteCard'), 'error');
     }
   };
 
@@ -964,11 +967,11 @@ export default function UserProfilePage() {
         setUserProfile(prev => prev ? { ...prev, collectionPhoto: undefined } : null);
         // Refresh entire profile to ensure UI updates
         await loadUserProfile();
-        showToast('Collection photo removed', 'success');
+        showToast(t('collectionPhotoRemoved'), 'success');
       }
     } catch (error) {
       console.error('Error removing collection photo:', error);
-      showToast('Failed to remove collection photo', 'error');
+      showToast(t('failedToRemoveCollectionPhoto'), 'error');
     }
   };
 
@@ -1050,7 +1053,7 @@ export default function UserProfilePage() {
   // Remove game from collection
   const handleRemoveGame = (gameId: number) => {
     setTempGamesList((items) => items.filter((item) => item.id !== gameId));
-    showToast('Game removed from collection', 'success', 1500);
+        showToast(t('gameRemovedFromCollection'), 'success', 1500);
   };
 
   // Save reordered games list
@@ -1078,7 +1081,7 @@ export default function UserProfilePage() {
         // Update local state with the new order
         setUserProfile(prev => prev ? { ...prev, gamesList: tempGamesList } : null);
         
-        showToast('Games order updated!', 'success');
+        showToast(t('gamesOrderUpdated'), 'success');
         setShowGamesListModal(false);
         
         // Reload profile data to ensure consistency
@@ -1086,7 +1089,7 @@ export default function UserProfilePage() {
       } else {
         const errorData = await response.json();
         console.error('Failed to save games order:', errorData);
-        showToast('Failed to update games order', 'error');
+        showToast(t('failedToUpdateGamesOrder'), 'error');
       }
     } catch (error) {
       console.error('Error updating games order:', error);
@@ -1126,16 +1129,16 @@ export default function UserProfilePage() {
   };
 
   if (loading) {
-    return <LoadingScreen message="Loading Profile" subMessage="Fetching user data..." />;
+    return <LoadingScreen message={t('loadingProfile')} subMessage={t('fetchingUserData')} />;
   }
 
   if (!userProfile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">User not found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('userNotFound')}</h1>
           <Link href="/" className="btn-primary">
-            Go Home
+            {t('goHome')}
           </Link>
         </div>
       </div>
@@ -1237,7 +1240,7 @@ export default function UserProfilePage() {
             className={`inline-flex items-center transition-colors ${getSecondaryTextColorClass()} hover:${getTextColorClass()}`}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -1260,7 +1263,7 @@ export default function UserProfilePage() {
             }`}
           >
             <Settings className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Settings</span>
+            <span className="hidden sm:inline">{t('settings')}</span>
           </Link>
         )}
 
@@ -1293,7 +1296,7 @@ export default function UserProfilePage() {
                   };
                 }
               })()}
-              title="Start a chat"
+              title={t('startChat')}
             >
               <MessageCircle className="w-4 h-4" />
             </button>
@@ -1346,12 +1349,12 @@ export default function UserProfilePage() {
               {isFollowing ? (
                 <>
                   <UserMinus className="w-4 h-4" />
-                  <span>Unfollow</span>
+                  <span>{t('unfollow')}</span>
                 </>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  <span>Follow</span>
+                  <span>{t('follow')}</span>
                 </>
               )}
             </button>
@@ -1382,7 +1385,7 @@ export default function UserProfilePage() {
                   });
                   setShowImageModal(true);
                 }}
-                title="Click to view full size"
+                title={t('clickToViewFullSize')}
               />
             </div>
 
@@ -1393,7 +1396,7 @@ export default function UserProfilePage() {
                 {userProfile.isAdmin && (
                   <div className="flex items-center space-x-1 bg-purple-600 px-3 py-1 rounded-full">
                     <span className="text-white text-sm font-semibold">👑</span>
-                    <span className="text-white text-sm font-semibold">Admin</span>
+                    <span className="text-white text-sm font-semibold">{t('admin')}</span>
                   </div>
                 )}
                 {/* Follow and Chat Buttons - Instagram style - Desktop only */}
@@ -1425,7 +1428,7 @@ export default function UserProfilePage() {
                           };
                         }
                       })()}
-                      title="Start a chat"
+                      title={t('startChat')}
                     >
                       <MessageCircle className="w-4 h-4" />
                     </button>
@@ -1478,12 +1481,12 @@ export default function UserProfilePage() {
                       {isFollowing ? (
                         <>
                           <UserMinus className="w-4 h-4" />
-                          <span>Unfollow</span>
+                          <span>{t('unfollow')}</span>
                         </>
                       ) : (
                         <>
                           <UserPlus className="w-4 h-4" />
-                          <span>Follow</span>
+                          <span>{t('follow')}</span>
                         </>
                       )}
                     </button>
@@ -1491,7 +1494,7 @@ export default function UserProfilePage() {
                 )}
               </div>
               <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>
-                Level {userProfile.levelProgress?.currentLevel || 1}{userProfile.title ? ` ${userProfile.title}` : ` ${userProfile.levelProgress?.currentLevelName || 'Commoner'}`}
+                {t('level')} {userProfile.levelProgress?.currentLevel || 1}{userProfile.title ? ` ${userProfile.title}` : ` ${userProfile.levelProgress?.currentLevelName || 'Commoner'}`}
               </p>
               
               {/* XP Progress Bar */}
@@ -1499,10 +1502,10 @@ export default function UserProfilePage() {
                 <div className="w-full max-w-md">
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span className={`${coverSecondaryTextClass} font-medium`}>
-                      {userProfile.levelProgress.currentXP} XP
+                      {userProfile.levelProgress.currentXP} {t('xp')}
                     </span>
                     <span className={`${coverSecondaryTextClass} font-medium`}>
-                      {userProfile.levelProgress.xpForNextLevel > 0 ? `${userProfile.levelProgress.xpForNextLevel} to next level` : 'Max Level'}
+                      {userProfile.levelProgress.xpForNextLevel > 0 ? t('toNextLevel', { xp: userProfile.levelProgress.xpForNextLevel }) : t('maxLevel')}
                     </span>
                   </div>
                   <div className="w-full bg-black bg-opacity-20 rounded-full h-2">
@@ -1529,7 +1532,7 @@ export default function UserProfilePage() {
             {/* Bio Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">About</h2>
+                <h2 className="text-xl font-semibold text-gray-900">{t('about')}</h2>
                 {isOwnProfile && (
                   <div className="flex items-center space-x-2">
                     {isEditing && (
@@ -1538,7 +1541,7 @@ export default function UserProfilePage() {
                         className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center space-x-2"
                       >
                         <Palette className="w-4 h-4" />
-                        <span>Customize Colors</span>
+                        <span>{t('customizeColors')}</span>
                       </button>
                     )}
                     {!isEditing && (
@@ -1548,7 +1551,7 @@ export default function UserProfilePage() {
                         style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                       >
                         <Edit className="w-4 h-4" />
-                        <span>Edit</span>
+                        <span>{t('edit')}</span>
                       </button>
                     )}
                   </div>
@@ -1558,11 +1561,11 @@ export default function UserProfilePage() {
               {isEditing ? (
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('bio')}</label>
                     <textarea
                       value={editingBio}
                       onChange={(e) => setEditingBio(e.target.value)}
-                      placeholder="Tell us about yourself..."
+                      placeholder={t('tellUsAboutYourself')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-transparent resize-none"
                       rows={4}
                     />
@@ -1570,7 +1573,7 @@ export default function UserProfilePage() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Favorite Game Categories (Select up to 3)
+                      {t('favoriteGameCategories')}
                     </label>
                     <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
                       <div className="grid grid-cols-2 gap-2">
@@ -1605,14 +1608,14 @@ export default function UserProfilePage() {
                       onClick={handleCancelEdit}
                       className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
                     >
-                      Cancel
+                      {tCommon('cancel')}
                     </button>
                     <button
                       onClick={handleSaveProfile}
                       className="px-4 py-2 rounded-lg transition-colors"
                       style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                     >
-                      Save Changes
+                      {tCommon('saveChanges')}
                     </button>
                   </div>
                 </div>
@@ -1636,7 +1639,7 @@ export default function UserProfilePage() {
                       </span>
                     ))
                   ) : (
-                    <p className="text-sm italic text-gray-500">No favorite categories selected yet</p>
+                    <p className="text-sm italic text-gray-500">{t('noFavoriteCategoriesSelected')}</p>
                   )}
                 </div>
               </div>
@@ -1646,14 +1649,14 @@ export default function UserProfilePage() {
             {/* Collection Summary Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
               <div className="flex items-center justify-between mb-4 flex-nowrap gap-2">
-                <h2 className="text-base sm:text-xl font-semibold text-gray-900 whitespace-nowrap flex-shrink-0">Collection Summary</h2>
+                <h2 className="text-base sm:text-xl font-semibold text-gray-900 whitespace-nowrap flex-shrink-0">{t('collectionSummary')}</h2>
                 <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                   <Link
                     href={`/collection/${userProfile.username}`}
                     className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap"
                     style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                   >
-                    <span>View Full Collection</span>
+                    <span>{t('viewFullCollection')}</span>
                   </Link>
                   {isOwnProfile && (
                     <button
@@ -1662,7 +1665,7 @@ export default function UserProfilePage() {
                       style={{ backgroundColor: profileColors.cover, color: getReadableTextColor() }}
                     >
                       <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
+                      <span>{isEditingCollection ? tCommon('cancel') : t('edit')}</span>
                     </button>
                   )}
                 </div>
@@ -1673,7 +1676,7 @@ export default function UserProfilePage() {
                 {/* Games List */}
                 <div className="space-y-4 flex flex-col h-full">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900">Games List - Top 10</h3>
+                    <h3 className="text-lg font-medium text-gray-900">{t('gamesListTop10')}</h3>
                     <div className="flex items-center space-x-2">
                       {isOwnProfile && (
                         <button
@@ -1682,7 +1685,7 @@ export default function UserProfilePage() {
                           style={{ backgroundColor: profileColors.cover, color: getReadableTextColor(), height: '24px' }}
                         >
                           <Edit className="w-3 h-3" />
-                          <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
+                          <span>{isEditingCollection ? tCommon('cancel') : t('edit')}</span>
                         </button>
                       )}
                       {isEditingCollection && (
@@ -1691,7 +1694,7 @@ export default function UserProfilePage() {
                           className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1"
                           style={{ color: profileColors.cover }}
                         >
-                          <span>Edit List</span>
+                          <span>{t('editList')}</span>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                           </svg>
@@ -1718,7 +1721,7 @@ export default function UserProfilePage() {
                               <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 24 24">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                               </svg>
-                              Favorite
+                              {t('favorite')}
                             </div>
                           )}
                           <div className="flex items-center space-x-3">
@@ -1748,7 +1751,7 @@ export default function UserProfilePage() {
                         <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                         </svg>
-                        <p className="text-sm">No games in collection yet</p>
+                        <p className="text-sm">{t('noGamesInCollection')}</p>
                       </div>
                     )}
                   </div>
@@ -1756,14 +1759,14 @@ export default function UserProfilePage() {
 
                 {/* Favorite Card Section */}
                 <div className="space-y-4 flex flex-col h-full">
-                  <h3 className="text-lg font-medium text-gray-900">Favorite Card</h3>
+                  <h3 className="text-lg font-medium text-gray-900">{t('favoriteCard')}</h3>
                   <div className="relative flex-1">
                     <div className="h-full bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 group relative overflow-hidden">
                       {userProfile.favoriteCard ? (
                         <>
                         <img
                           src={userProfile.favoriteCard}
-                          alt="Favorite card"
+                          alt={t('favoriteCard')}
                           className="w-full h-full object-contain rounded-lg cursor-pointer"
                             onClick={handleOpenFavoriteCard}
                           />
@@ -1771,7 +1774,7 @@ export default function UserProfilePage() {
                             <button
                               onClick={handleRemoveFavoriteCard}
                               className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors z-10"
-                              title="Remove favorite card"
+                              title={t('removeFavoriteCard')}
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -1784,7 +1787,7 @@ export default function UserProfilePage() {
                         >
                           <Camera className="w-12 h-12 mb-2" />
                           <span className="text-sm font-medium">
-                            {uploadingFavoriteCard ? 'Uploading...' : 'No favorite card'}
+                            {uploadingFavoriteCard ? t('uploading') : t('noFavoriteCard')}
                           </span>
                         </button>
                       )}
@@ -1795,14 +1798,14 @@ export default function UserProfilePage() {
 
               {/* Bottom Row: Collection Photo */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900">Collection Photo</h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('collectionPhoto')}</h3>
                 <div className="relative">
                   <div className="aspect-[4/3] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 group relative overflow-hidden">
                     {userProfile.collectionPhoto ? (
                       <>
                       <img
                         src={userProfile.collectionPhoto}
-                        alt="Collection photo"
+                        alt={t('collectionPhoto')}
                         className="w-full h-full object-contain rounded-lg cursor-pointer"
                           onClick={handleOpenCollectionPhoto}
                         />
@@ -1810,7 +1813,7 @@ export default function UserProfilePage() {
                           <button
                             onClick={handleRemoveCollectionPhoto}
                             className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors z-10"
-                            title="Remove collection photo"
+                            title={t('removeCollectionPhoto')}
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -1823,7 +1826,7 @@ export default function UserProfilePage() {
                       >
                         <Camera className="w-12 h-12 mb-2" />
                         <span className="text-sm font-medium">
-                          {uploadingCollectionPhoto ? 'Uploading...' : 'No collection photo'}
+                          {uploadingCollectionPhoto ? t('uploading') : t('noCollectionPhoto')}
                         </span>
                       </button>
                     )}
@@ -1834,7 +1837,7 @@ export default function UserProfilePage() {
 
             {/* Photo Gallery Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Photos</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('photos')}</h2>
               <div className="grid grid-cols-3 gap-2">
                 {userImages.length > 0 ? (
                   userImages.slice(0, 6).map((image: GalleryImage) => (
@@ -1891,7 +1894,7 @@ export default function UserProfilePage() {
                     href={`/community-gallery?author=${encodeURIComponent(userProfile.username)}`}
                     className="text-[#fbae17] hover:text-[#fbae17]/80 font-medium"
                   >
-                    View All {userImages.length} Photos
+                    {t('viewAllPhotos', { count: userImages.length })}
                   </Link>
                 </div>
               )}
@@ -1910,7 +1913,7 @@ export default function UserProfilePage() {
 
             {/* Recent Activity */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('recentActivity')}</h3>
               <div className="space-y-3">
                 {userPosts.length > 0 || userImages.length > 0 ? (
                   <>
@@ -1920,7 +1923,7 @@ export default function UserProfilePage() {
                           <MessageCircle className="w-4 h-4 text-blue-600" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm text-gray-900">Created a forum post</p>
+                          <p className="text-sm text-gray-900">{t('createdForumPost')}</p>
                           <p className="text-xs text-gray-500">{post.title}</p>
                           <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(post.createdAt)}</p>
                         </div>
@@ -1934,8 +1937,8 @@ export default function UserProfilePage() {
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm text-gray-900">Uploaded to gallery</p>
-                          <p className="text-xs text-gray-500">{image.title || 'Untitled image'}</p>
+                          <p className="text-sm text-gray-900">{t('uploadedToGallery')}</p>
+                          <p className="text-xs text-gray-500">{image.title || t('untitledImage')}</p>
                           <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(image.createdAt)}</p>
                         </div>
                       </div>
@@ -1943,7 +1946,7 @@ export default function UserProfilePage() {
                   </>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm">No recent activity</p>
+                    <p className="text-sm">{t('noRecentActivity')}</p>
                   </div>
                 )}
               </div>
@@ -2013,7 +2016,7 @@ export default function UserProfilePage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowGamesListModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Game Collection</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{t('gameCollection')}</h2>
               <button
                 onClick={() => setShowGamesListModal(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -2054,7 +2057,7 @@ export default function UserProfilePage() {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
-                            <span className="text-sm font-medium">Add Game</span>
+                            <span className="text-sm font-medium">{t('addGame')}</span>
                           </div>
                         </div>
                       )}
@@ -2066,8 +2069,8 @@ export default function UserProfilePage() {
                   <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                   </svg>
-                  <p className="text-lg">No games in collection yet</p>
-                  <p className="text-sm text-gray-400 mt-2">Add games to your collection to see them here</p>
+                  <p className="text-lg">{t('noGamesInCollection')}</p>
+                  <p className="text-sm text-gray-400 mt-2">{t('addGamesToCollectionDescription')}</p>
                 </div>
               )}
             </div>
@@ -2081,14 +2084,14 @@ export default function UserProfilePage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                   </svg>
-                  <span>Add Games to Collection</span>
+                  <span>{t('addGamesToCollection')}</span>
                 </button>
                 {isOwnProfile && (
                   <button
                     onClick={handleSaveGamesOrder}
                     className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
                   >
-                    Save Order
+                    {t('saveOrder')}
                   </button>
                 )}
               </div>
@@ -2102,7 +2105,7 @@ export default function UserProfilePage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddGameModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Add Games to Collection</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{t('addGamesToCollection')}</h2>
               <button
                 onClick={() => setShowAddGameModal(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -2116,7 +2119,7 @@ export default function UserProfilePage() {
               <div className="mb-6">
                 <input
                   type="text"
-                  placeholder="Search for games..."
+                  placeholder={tCommon('search') + '..."'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-transparent"
@@ -2128,7 +2131,7 @@ export default function UserProfilePage() {
                 {isSearching ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#fbae17]"></div>
-                    <span className="ml-3 text-gray-600">Searching...</span>
+                    <span className="ml-3 text-gray-600">{tCommon('loading')}...</span>
                   </div>
                 ) : searchResults.length > 0 ? (
                   <div className="space-y-2">
@@ -2149,7 +2152,7 @@ export default function UserProfilePage() {
                           onClick={() => addGameToCollection(game)}
                           className="ml-4 px-4 py-2 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-lg font-medium transition-colors"
                         >
-                          Add
+                          {tCommon('add')}
                         </button>
                       </div>
                     ))}
@@ -2160,7 +2163,7 @@ export default function UserProfilePage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    <p>Start typing to search for games...</p>
+                    <p>{tCommon('startTypingToSearch')}</p>
                   </div>
                 )}
               </div>
@@ -2193,7 +2196,7 @@ export default function UserProfilePage() {
 
             if (response.ok) {
               setProfileColors(newColors);
-              showToast('Profile colors updated!', 'success');
+              showToast(t('profileUpdatedSuccessfully'), 'success');
             } else {
               showToast('Failed to update colors', 'error');
             }
