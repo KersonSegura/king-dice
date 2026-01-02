@@ -193,6 +193,7 @@
     "addGamesToCollectionDescription": "Add games to your collection to see them here",
     "loadingProfile": "Loading Profile",
     "fetchingUserData": "Fetching user data...",
+    "loadingCollection": "Loading collection...",
     "goHome": "Go Home",
     "dragToReorder": "Drag to reorder",
     "removeFromCollection": "Remove from collection",

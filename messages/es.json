@@ -193,6 +193,7 @@
     "addGamesToCollectionDescription": "Agrega juegos a tu colección para verlos aquí",
     "loadingProfile": "Cargando perfil",
     "fetchingUserData": "Cargando datos del usuario...",
+    "loadingCollection": "Cargando colección",
     "goHome": "Ir al Inicio",
     "dragToReorder": "Arrastra para reordenar",
     "removeFromCollection": "Eliminar de la colección",
