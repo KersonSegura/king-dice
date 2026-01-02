@@ -278,7 +278,7 @@ export default function FriendsFollowersSection({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-gray-900 capitalize">
-              {activeTab} ({currentTabCount || 0})
+              {activeTab === 'followers' ? t('followers') : t('following')} ({currentTabCount || 0})
             </h4>
             {(currentTabCount || 0) > 0 && (
               <button

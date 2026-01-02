@@ -473,7 +473,7 @@ export default function SettingsPage() {
                   <p className={`text-sm font-medium ${
                     security.twoFactorEnabled ? 'text-green-700' : 'text-gray-700'
                   }`}>
-                    {tSettings('twoFactorAuthentication')} {security.twoFactorEnabled ? tSettings('twoFactorEnabled') : tSettings('twoFactorDisabledSettings')}
+                    {tSettings('twoFactorAuthentication')} {security.twoFactorEnabled ? tSettings('twoFactorEnabledLabel') : tSettings('twoFactorDisabledLabel')}
                   </p>
                   <p className="text-xs text-gray-500">{tSettings('addExtraLayerOfSecurity')}</p>
                 </button>
