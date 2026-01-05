@@ -680,7 +680,22 @@
     "helpOthers": "• <strong>Help others:</strong> Answer questions and provide helpful comments",
     "shareYourCreations": "• <strong>Share your creations:</strong> Upload your best dice designs to the gallery",
     "engageWithContent": "• <strong>Engage with content:</strong> Like and comment on others' posts and images",
-    "gotIt": "Got it!"
+    "gotIt": "Got it!",
+    "titleCommoner": "Commoner",
+    "titleSquire": "Squire",
+    "titleKnight": "Knight",
+    "titleChampion": "Champion",
+    "titleBaron": "Baron",
+    "titleBaroness": "Baroness",
+    "titleLord": "Lord",
+    "titleLady": "Lady",
+    "titleArchmage": "Archmage",
+    "titleDuke": "Duke",
+    "titleDuchess": "Duchess",
+    "titlePrince": "Prince",
+    "titlePrincess": "Princess",
+    "titleKing": "King",
+    "titleQueen": "Queen"
   },
   "settings": {
     "language": "Language",

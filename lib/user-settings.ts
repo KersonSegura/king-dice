@@ -12,6 +12,7 @@ export interface UserSettings {
   security: {
     twoFactorEnabled: boolean;
   };
+  titleGenderPreference?: 'masculine' | 'feminine';
   lastUpdated: string;
 }
 
@@ -51,19 +52,22 @@ const saveSettings = (settings: Record<string, UserSettings>) => {
 };
 
 // Get default settings for a user
-const getDefaultSettings = (userId: string): UserSettings => ({
-  userId,
-  notifications: {
-    emailNotifications: true,
-    forumNotifications: true,
-    galleryNotifications: false,
-    marketingEmails: false
-  },
-  security: {
-    twoFactorEnabled: false
-  },
-  lastUpdated: new Date().toISOString()
-});
+function getDefaultSettings(userId: string): UserSettings {
+  return {
+    userId,
+    notifications: {
+      emailNotifications: true,
+      forumNotifications: true,
+      galleryNotifications: false,
+      marketingEmails: false
+    },
+    security: {
+      twoFactorEnabled: false
+    },
+    titleGenderPreference: 'masculine',
+    lastUpdated: new Date().toISOString()
+  };
+}
 
 // Get user settings
 export function getUserSettings(userId: string): UserSettings {
