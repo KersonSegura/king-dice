@@ -733,7 +733,8 @@
     "privateProfileHelpText": "Tus publicaciones solo son visibles para seguidores aprobados. Los nuevos seguidores necesitan tu aprobación.",
     "profileSetToPrivate": "Perfil configurado como privado",
     "profileSetToPublic": "Perfil configurado como público",
-    "failedToUpdatePrivacySettings": "Error al actualizar configuración de privacidad"
+    "failedToUpdatePrivacySettings": "Error al actualizar configuración de privacidad",
+    "myDiceLink": "Mi Dado"
   },
   "shop": {
     "loading": "Cargando Tienda",

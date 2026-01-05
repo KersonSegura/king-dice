@@ -715,7 +715,8 @@
     "privateProfileHelpText": "Your posts are only visible to approved followers. New followers need your approval.",
     "profileSetToPrivate": "Profile set to private",
     "profileSetToPublic": "Profile set to public",
-    "failedToUpdatePrivacySettings": "Failed to update privacy settings"
+    "failedToUpdatePrivacySettings": "Failed to update privacy settings",
+    "myDiceLink": "My Dice"
   },
   "shop": {
     "loading": "Loading Shop",
