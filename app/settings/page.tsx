@@ -254,8 +254,8 @@ export default function SettingsPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Account Settings</h1>
-          <p className="text-gray-600">Manage your account preferences and privacy settings</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{tSettings('accountSettings')}</h1>
+          <p className="text-gray-600">{tSettings('manageAccountPreferences')}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

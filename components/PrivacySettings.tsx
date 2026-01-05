@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock } from 'lucide-react';
 import { useToast } from './Toast';
+import { useTranslations } from 'next-intl';
 
 interface PrivacySettingsProps {
   userId: string;
@@ -24,6 +25,7 @@ export default function PrivacySettings({
   }
 }: PrivacySettingsProps) {
   const { showToast, ToastContainer } = useToast();
+  const t = useTranslations('settings');
   const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -60,17 +62,17 @@ export default function PrivacySettings({
         setIsPrivate(newPrivacySetting);
         showToast(
           newPrivacySetting 
-            ? 'Profile set to private' 
-            : 'Profile set to public',
+            ? t('profileSetToPrivate') 
+            : t('profileSetToPublic'),
           'success'
         );
       } else {
         const errorData = await response.json();
-        showToast(errorData.error || 'Failed to update privacy settings', 'error');
+        showToast(errorData.error || t('failedToUpdatePrivacySettings'), 'error');
       }
     } catch (error) {
       console.error('Error updating privacy settings:', error);
-      showToast('Failed to update privacy settings', 'error');
+      showToast(t('failedToUpdatePrivacySettings'), 'error');
     } finally {
       setUpdating(false);
     }
@@ -95,7 +97,7 @@ export default function PrivacySettings({
     <>
       <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Privacy</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('profilePrivacy')}</h3>
           
           {/* Privacy Options */}
           <div className="space-y-3">
@@ -120,16 +122,16 @@ export default function PrivacySettings({
                 </div>
                 <Unlock className="w-5 h-5 text-gray-600" />
                 <div>
-                  <h4 className="font-medium text-gray-900">Public Profile</h4>
+                  <h4 className="font-medium text-gray-900">{t('publicProfile')}</h4>
                   <p className="text-sm text-gray-600">
-                    Anyone can follow you and see your posts
+                    {t('publicProfileDescription')}
                   </p>
                 </div>
               </div>
               
               {!isPrivate && (
                 <div className="px-3 py-1 bg-[#fbae17] text-white text-sm font-medium rounded-full">
-                  Active
+                  {t('active')}
                 </div>
               )}
             </div>
@@ -155,16 +157,16 @@ export default function PrivacySettings({
                 </div>
                 <Lock className="w-5 h-5 text-gray-600" />
                 <div>
-                  <h4 className="font-medium text-gray-900">Private Profile</h4>
+                  <h4 className="font-medium text-gray-900">{t('privateProfile')}</h4>
                   <p className="text-sm text-gray-600">
-                    Only approved followers can see your posts and profile details
+                    {t('privateProfileDescription')}
                   </p>
                 </div>
               </div>
               
               {isPrivate && (
                 <div className="px-3 py-1 bg-[#fbae17] text-white text-sm font-medium rounded-full">
-                  Active
+                  {t('active')}
                 </div>
               )}
             </div>
@@ -173,8 +175,8 @@ export default function PrivacySettings({
           {/* Help Text */}
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-xs text-gray-600">
-              <strong>Public Profile:</strong> Your posts and profile are visible to everyone. Anyone can follow you without approval.<br/>
-              <strong>Private Profile:</strong> Your posts are only visible to approved followers. New followers need your approval.
+              <strong>{t('publicProfile')}:</strong> {t('publicProfileHelpText')}<br/>
+              <strong>{t('privateProfile')}:</strong> {t('privateProfileHelpText')}
             </p>
           </div>
         </div>

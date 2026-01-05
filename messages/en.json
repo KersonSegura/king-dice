@@ -704,7 +704,18 @@
     "failedToUpdateProfile": "Failed to update profile",
     "failedToUpdateNotificationSettings": "Failed to update notification settings",
     "failedToUpdateSecuritySettings": "Failed to update security settings",
-    "failedToDeleteAccount": "Failed to delete account"
+    "failedToDeleteAccount": "Failed to delete account",
+    "profilePrivacy": "Profile Privacy",
+    "publicProfile": "Public Profile",
+    "publicProfileDescription": "Anyone can follow you and see your posts",
+    "privateProfile": "Private Profile",
+    "privateProfileDescription": "Only approved followers can see your posts and profile details",
+    "active": "Active",
+    "publicProfileHelpText": "Your posts and profile are visible to everyone. Anyone can follow you without approval.",
+    "privateProfileHelpText": "Your posts are only visible to approved followers. New followers need your approval.",
+    "profileSetToPrivate": "Profile set to private",
+    "profileSetToPublic": "Profile set to public",
+    "failedToUpdatePrivacySettings": "Failed to update privacy settings"
   },
   "shop": {
     "loading": "Loading Shop",
