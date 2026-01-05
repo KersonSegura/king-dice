@@ -722,7 +722,18 @@
     "failedToUpdateProfile": "Error al actualizar perfil",
     "failedToUpdateNotificationSettings": "Error al actualizar configuración de notificaciones",
     "failedToUpdateSecuritySettings": "Error al actualizar configuración de seguridad",
-    "failedToDeleteAccount": "Error al eliminar cuenta"
+    "failedToDeleteAccount": "Error al eliminar cuenta",
+    "profilePrivacy": "Privacidad del Perfil",
+    "publicProfile": "Perfil Público",
+    "publicProfileDescription": "Cualquiera puede seguirte y ver tus publicaciones",
+    "privateProfile": "Perfil Privado",
+    "privateProfileDescription": "Solo los seguidores aprobados pueden ver tus publicaciones y detalles del perfil",
+    "active": "Activo",
+    "publicProfileHelpText": "Tus publicaciones y perfil son visibles para todos. Cualquiera puede seguirte sin aprobación.",
+    "privateProfileHelpText": "Tus publicaciones solo son visibles para seguidores aprobados. Los nuevos seguidores necesitan tu aprobación.",
+    "profileSetToPrivate": "Perfil configurado como privado",
+    "profileSetToPublic": "Perfil configurado como público",
+    "failedToUpdatePrivacySettings": "Error al actualizar configuración de privacidad"
   },
   "shop": {
     "loading": "Cargando Tienda",
