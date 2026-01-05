@@ -282,7 +282,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">{tSettings('profilePicture')}</p>
-                    <p className="text-xs text-gray-500">{tSettings('customizeDiceAvatar')} <Link href="/my-dice" className="text-blue-600 hover:underline">{tCommon('myDice')}</Link></p>
+                    <p className="text-xs text-gray-500">{tSettings('customizeDiceAvatar')} <Link href="/my-dice" className="text-blue-600 hover:underline">My Dice</Link></p>
                   </div>
                 </div>
 
