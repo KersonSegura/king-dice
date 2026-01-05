@@ -898,7 +898,7 @@ export default function MyDicePage() {
                   onClick={() => setShowXPHelp(true)}
                   className="px-2 py-1 text-xs bg-[#fbae17] text-white rounded-full hover:bg-[#e6a015] transition-colors flex-shrink-0"
                 >
-                  {t('howDoIEarnXP', {ns: 'common'}) || 'How do I earn XP?'}
+                  {tMyDice('howDoIEarnXP')}
                 </button>
               )}
             </div>
@@ -906,7 +906,7 @@ export default function MyDicePage() {
           {user && (
             <div className="ml-12 mt-2 flex items-center gap-2 flex-wrap">
                    <span className="text-sm text-gray-600">
-                     Level {levelProgress.currentLevel} {levelProgress.currentLevelName}
+                     {tMyDice('levelLabel')} {levelProgress.currentLevel} {levelProgress.currentLevelName}
                    </span>
                    <div className="flex items-center gap-2">
                    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -917,7 +917,7 @@ export default function MyDicePage() {
                    </div>
                      <span className="text-xs text-gray-500">
                        {levelProgress.currentXP} XP
-                       {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} to next`}
+                       {levelProgress.xpForNextLevel > 0 && ` / ${levelProgress.xpForNextLevel} ${tMyDice('toNext')}`}
                      </span>
                    </div>
                </div>
@@ -942,7 +942,7 @@ export default function MyDicePage() {
                   </div>
                 ) : previewLayers.length === 0 ? (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    No layers selected yet
+                    {tMyDice('noLayersSelected')}
                   </div>
                 ) : (
                   previewLayers.map((src, idx) => (
@@ -1030,7 +1030,7 @@ export default function MyDicePage() {
                   }}
                   className="btn-secondary"
                 >
-                  Share to Gallery
+                  {tMyDice('shareToGallery')}
                 </button>
                 
                                   <button
@@ -1074,20 +1074,20 @@ export default function MyDicePage() {
                             updateAvatar(imageUrl);
                           }
                           
-                          showToast('Dice saved successfully! Your profile image has been updated.', 'success');
+                          showToast(tMyDice('diceSavedSuccessfully'), 'success');
                         } else {
                           const errorData = await saveRes.json();
                           console.error('❌ Failed to save dice:', errorData);
-                          showToast('Failed to save dice. Please try again.', 'error');
+                          showToast(tMyDice('failedToSaveDice'), 'error');
                         }
                       } catch (error) {
                         console.error('❌ Error saving dice:', error);
-                        showToast('Error saving dice. Please try again.', 'error');
+                        showToast(tMyDice('errorSavingDice'), 'error');
                       }
                     }}
                     className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
                   >
-                    Save Dice
+                    {tMyDice('saveConfiguration')}
                   </button>
                   
 
@@ -1238,7 +1238,7 @@ export default function MyDicePage() {
                         {/* Lock badge for level-locked items */}
                         {isLockedByLevel && (
                           <div className="absolute top-1 right-1 bg-primary-500 text-white rounded-lg px-2 py-1 text-xs font-bold shadow-lg">
-                            {asset.requiredLevel === 0 ? 'Reward' : `Lv.${asset.requiredLevel}`}
+                            {asset.requiredLevel === 0 ? tMyDice('reward') : `${tMyDice('level')}${asset.requiredLevel}`}
                           </div>
                         )}
                         
@@ -1343,7 +1343,7 @@ export default function MyDicePage() {
 
                 {assets[activeTab].length === 0 && (
                   <div className="col-span-2 sm:col-span-3 text-center text-gray-500 py-8">
-                    No assets yet for this category
+                    {tMyDice('noAssetsForCategory')}
                   </div>
                 )}
                 </div>
@@ -1370,71 +1370,71 @@ export default function MyDicePage() {
             <div className="space-y-6">
               {/* Daily Actions */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Daily Actions (Resets at midnight)</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">{tMyDice('dailyActionsResetsMidnight')}</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                     <div>
-                      <span className="font-medium text-green-800">Create Forum Posts</span>
-                      <p className="text-sm text-green-600">Share discussions and help the community</p>
+                      <span className="font-medium text-green-800">{tMyDice('createForumPosts')}</span>
+                      <p className="text-sm text-green-600">{tMyDice('shareDiscussionsHelpCommunity')}</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-green-800">5 XP each</span>
-                      <p className="text-xs text-green-600">10 posts/day max</p>
+                      <span className="font-bold text-green-800">{tMyDice('xpEach', { xp: 5 })}</span>
+                      <p className="text-xs text-green-600">{tMyDice('postsPerDayMax', { max: 10 })}</p>
                     </div>
                   </div>
                   
                   <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                     <div>
-                      <span className="font-medium text-blue-800">Upload Images</span>
-                      <p className="text-sm text-blue-600">Share your dice creations in the gallery</p>
+                      <span className="font-medium text-blue-800">{tMyDice('uploadImages')}</span>
+                      <p className="text-sm text-blue-600">{tMyDice('shareDiceCreationsGallery')}</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-blue-800">10 XP each</span>
-                      <p className="text-xs text-blue-600">10 images/day (first 5 give XP)</p>
+                      <span className="font-bold text-blue-800">{tMyDice('xpEach', { xp: 10 })}</span>
+                      <p className="text-xs text-blue-600">{tMyDice('imagesPerDayFirstGiveXP', { max: 10, first: 5 })}</p>
                     </div>
                   </div>
                   
                   <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                     <div>
-                      <span className="font-medium text-purple-800">Write Comments</span>
-                      <p className="text-sm text-purple-600">Engage with posts and gallery images</p>
+                      <span className="font-medium text-purple-800">{tMyDice('writeComments')}</span>
+                      <p className="text-sm text-purple-600">{tMyDice('engageWithPostsGallery')}</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-purple-800">1 XP each</span>
-                      <p className="text-xs text-purple-600">50 comments/day (first 20 give XP)</p>
+                      <span className="font-bold text-purple-800">{tMyDice('xpEach', { xp: 1 })}</span>
+                      <p className="text-xs text-purple-600">{tMyDice('commentsPerDayFirstGiveXP', { max: 50, first: 20 })}</p>
                     </div>
                   </div>
                   
                   <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                     <div>
-                      <span className="font-medium text-yellow-800">Daily Login</span>
-                      <p className="text-sm text-yellow-600">Visit the site regularly</p>
+                      <span className="font-medium text-yellow-800">{tMyDice('dailyLogin')}</span>
+                      <p className="text-sm text-yellow-600">{tMyDice('visitSiteRegularly')}</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-yellow-800">2 XP each</span>
-                      <p className="text-xs text-yellow-600">10 logins/day max</p>
+                      <span className="font-bold text-yellow-800">{tMyDice('xpEach', { xp: 2 })}</span>
+                      <p className="text-xs text-yellow-600">{tMyDice('loginsPerDayMax', { max: 10 })}</p>
                     </div>
                   </div>
                   
                   <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
                     <div>
-                      <span className="font-medium text-red-800">Receive Likes</span>
-                      <p className="text-sm text-red-600">When others like your posts or images</p>
+                      <span className="font-medium text-red-800">{tMyDice('receiveLikes')}</span>
+                      <p className="text-sm text-red-600">{tMyDice('whenOthersLikePostsImages')}</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-red-800">1 XP each</span>
-                      <p className="text-xs text-red-600">Max 100 XP/day from likes</p>
+                      <span className="font-bold text-red-800">{tMyDice('xpEach', { xp: 1 })}</span>
+                      <p className="text-xs text-red-600">{tMyDice('maxXPDayFromLikes', { xp: 100 })}</p>
                     </div>
                   </div>
                   
                   <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
                     <div>
-                      <span className="font-medium text-indigo-800">Vote on Games</span>
-                      <p className="text-sm text-indigo-600">Rate games in the game library</p>
+                      <span className="font-medium text-indigo-800">{tMyDice('voteOnGames')}</span>
+                      <p className="text-sm text-indigo-600">{tMyDice('rateGamesInLibrary')}</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-indigo-800">1 XP each</span>
-                      <p className="text-xs text-indigo-600">Max 50 XP/day from voting</p>
+                      <span className="font-bold text-indigo-800">{tMyDice('xpEach', { xp: 1 })}</span>
+                      <p className="text-xs text-indigo-600">{tMyDice('maxXPDayFromVoting', { xp: 50 })}</p>
                     </div>
                   </div>
                 </div>
@@ -1442,13 +1442,13 @@ export default function MyDicePage() {
               
               {/* Tips */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">💡 Tips for Leveling Up</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">{tMyDice('tipsForLevelingUp')}</h3>
                 <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• <strong>Quality over quantity:</strong> Create engaging posts and beautiful dice images</li>
-                  <li>• <strong>Be active daily:</strong> Login regularly and participate in discussions</li>
-                  <li>• <strong>Help others:</strong> Answer questions and provide helpful comments</li>
-                  <li>• <strong>Share your creations:</strong> Upload your best dice designs to the gallery</li>
-                  <li>• <strong>Engage with content:</strong> Like and comment on others' posts and images</li>
+                  <li>• <strong>{tMyDice('qualityOverQuantity').split(':')[0]}:</strong> {tMyDice('qualityOverQuantity').split(':')[1]}</li>
+                  <li>• <strong>{tMyDice('beActiveDaily').split(':')[0]}:</strong> {tMyDice('beActiveDaily').split(':')[1]}</li>
+                  <li>• <strong>{tMyDice('helpOthers').split(':')[0]}:</strong> {tMyDice('helpOthers').split(':')[1]}</li>
+                  <li>• <strong>{tMyDice('shareYourCreations').split(':')[0]}:</strong> {tMyDice('shareYourCreations').split(':')[1]}</li>
+                  <li>• <strong>{tMyDice('engageWithContent').split(':')[0]}:</strong> {tMyDice('engageWithContent').split(':')[1]}</li>
                 </ul>
               </div>
             </div>
@@ -1458,7 +1458,7 @@ export default function MyDicePage() {
                 onClick={() => setShowXPHelp(false)}
                 className="px-4 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#e6a015] transition-colors"
               >
-                Got it!
+                {tMyDice('gotIt')}
               </button>
             </div>
           </div>

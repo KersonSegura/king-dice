@@ -13,7 +13,7 @@ import { useTranslations } from 'next-intl';
 export default function SettingsPage() {
   const t = useTranslations('common');
   const tSettings = useTranslations('settings');
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,10 +37,11 @@ export default function SettingsPage() {
   const [showDeleteConfirm2, setShowDeleteConfirm2] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Wait for auth to finish loading before redirecting
+    if (!isLoading && !isAuthenticated) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
     if (user) {
