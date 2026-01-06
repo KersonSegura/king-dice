@@ -644,6 +644,8 @@
     "specialItem": "Special Item",
     "unlockAtLevel": "Unlock at level {level}",
     "levelLabel": "Level",
+    "assetDescKingsRoom": "King's Room background - only unlockable by winning Dice of the Week (Dice Throne in gallery)",
+    "assetDescKingsCard": "King's Card - only unlockable by winning Card of the Week (The King's Card in gallery)",
     "toNext": "to next",
     "noLayersSelected": "No layers selected yet",
     "shareToGallery": "Share to Gallery",

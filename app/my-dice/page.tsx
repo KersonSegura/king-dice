@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
 import { getTranslatedAssetName } from '@/lib/asset-name-translations';
 import { getTranslatedTitle } from '@/lib/title-translations';
+import { getTranslatedDescription } from '@/lib/asset-description-translations';
 
 type TabKey =
   | "background"
@@ -268,6 +269,8 @@ function getDisplayName(assetName: string): string {
     displayName = "Prince's Crown";
   } else if (displayName.toLowerCase() === 'kings cape') {
     displayName = "King's Cape";
+  } else if (displayName.toLowerCase() === 'kings room') {
+    displayName = "King's Room";
   }
   
   return displayName;
@@ -1285,7 +1288,7 @@ export default function MyDicePage() {
                       return (
                         <ModernTooltip
                           key={asset.id}
-                          content={asset.description}
+                          content={getTranslatedDescription(asset.description, tMyDice)}
                           position="top"
                         >
                           {buttonElement}
@@ -1354,7 +1357,7 @@ export default function MyDicePage() {
                     return (
                       <ModernTooltip
                         key={asset.id}
-                        content={asset.description}
+                        content={getTranslatedDescription(asset.description, tMyDice)}
                         position="top"
                       >
                         {buttonElement}
