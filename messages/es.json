@@ -664,6 +664,8 @@
     "levelLabel": "Nivel",
     "assetDescKingsRoom": "Fondo de la Habitación del Rey - solo se puede desbloquear ganando Dado de la Semana (Trono de Dados en la galería)",
     "assetDescKingsCard": "Carta del Rey - solo se puede desbloquear ganando Carta de la Semana (La Carta del Rey en la galería)",
+    "assetDescDiceBot": "Dado-Bot - solo se puede desbloquear donando a la página",
+    "assetDescGift": "Dado Regalo - solo se puede desbloquear donando a la página",
     "toNext": "al siguiente",
     "noLayersSelected": "Aún no se han seleccionado capas",
     "shareToGallery": "Compartir en la Galería",

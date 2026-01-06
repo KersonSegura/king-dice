@@ -646,6 +646,8 @@
     "levelLabel": "Level",
     "assetDescKingsRoom": "King's Room background - only unlockable by winning Dice of the Week (Dice Throne in gallery)",
     "assetDescKingsCard": "King's Card - only unlockable by winning Card of the Week (The King's Card in gallery)",
+    "assetDescDiceBot": "Dice-Bot dice - only unlockable by donating to the page",
+    "assetDescGift": "Gift dice - only unlockable by donating to the page",
     "toNext": "to next",
     "noLayersSelected": "No layers selected yet",
     "shareToGallery": "Share to Gallery",

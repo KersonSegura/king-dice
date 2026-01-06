@@ -4,6 +4,8 @@
 const DESCRIPTION_TO_KEY: Record<string, string> = {
   "King's Room background - only unlockable by winning Dice of the Week (Dice Throne in gallery)": 'assetDescKingsRoom',
   "King's Card - only unlockable by winning Card of the Week (The King's Card in gallery)": 'assetDescKingsCard',
+  "Dice-Bot dice - only unlockable by donating to the page": 'assetDescDiceBot',
+  "Gift dice - only unlockable by donating to the page": 'assetDescGift',
 };
 
 /**
