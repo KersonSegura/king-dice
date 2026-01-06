@@ -1328,7 +1328,7 @@ export default function MyDicePage() {
                       {/* Lock badge for level-locked items */}
                       {isLockedByLevel && (
                         <div className="absolute top-1 right-1 bg-primary-500 text-white rounded-lg px-2 py-1 text-xs font-bold shadow-lg">
-                          {asset.requiredLevel === 0 ? 'Reward' : `Lv.${asset.requiredLevel}`}
+                          {asset.requiredLevel === 0 ? tMyDice('reward') : `${tMyDice('level')}${asset.requiredLevel}`}
                         </div>
                       )}
                       
@@ -1342,7 +1342,7 @@ export default function MyDicePage() {
                         </div>
                                                  {isLockedByLevel && asset.requiredLevel !== undefined && (
                            <div className="text-[9px] text-black font-semibold mt-0.5">
-                             {asset.requiredLevel === 0 ? 'Special Item' : `Unlock at level ${asset.requiredLevel}`}
+                             {asset.requiredLevel === 0 ? tMyDice('specialItem') : tMyDice('unlockAtLevel', { level: asset.requiredLevel })}
                            </div>
                          )}
                       </div>
