@@ -7,12 +7,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import ImageModal from '@/components/ImageModal';
 import FriendsFollowersSection from '@/components/FriendsFollowersSection';
 import ProfileColorCustomizer from '@/components/ProfileColorCustomizer';
 import ProfileUploadModal from '@/components/ProfileUploadModal';
 import LoadingScreen from '@/components/LoadingScreen';
+import { getTranslatedTitle } from '@/lib/title-translations';
 import {
   DndContext,
   closestCenter,
@@ -199,6 +200,8 @@ export default function UserProfilePage() {
   const { user, isAuthenticated } = useAuth();
   const t = useTranslations('profile');
   const tCommon = useTranslations('common');
+  const tMyDice = useTranslations('myDice');
+  const locale = useLocale();
 
   // Drag and drop sensors - optimized for smooth dragging
   const sensors = useSensors(
@@ -259,6 +262,7 @@ export default function UserProfilePage() {
     background: '#f5f5f5',
     containers: '#ffffff'
   });
+  const [userSettings, setUserSettings] = useState<{ titleGenderPreference?: 'masculine' | 'feminine' } | null>(null);
 
   // Format relative time
   const formatRelativeTime = (dateString: string) => {
@@ -444,6 +448,15 @@ export default function UserProfilePage() {
           if (galleryResponse.ok) {
             const galleryData = await galleryResponse.json();
             setUserImages(galleryData.images || []);
+          }
+          
+          // Load user settings for title gender preference
+          const settingsResponse = await fetch(`/api/users/settings?userId=${data.user.id}`);
+          if (settingsResponse.ok) {
+            const settingsData = await settingsResponse.json();
+            if (settingsData.settings) {
+              setUserSettings(settingsData.settings);
+            }
           }
         }
       } else {
@@ -1494,7 +1507,7 @@ export default function UserProfilePage() {
                 )}
               </div>
               <p className={`text-lg ${coverSecondaryTextClass} mb-3`}>
-                {t('level')} {userProfile.levelProgress?.currentLevel || 1}{userProfile.title ? ` ${userProfile.title}` : ` ${userProfile.levelProgress?.currentLevelName || 'Commoner'}`}
+                {t('level')} {userProfile.levelProgress?.currentLevel || 1} {userProfile.title ? getTranslatedTitle(userProfile.title, locale, userSettings?.titleGenderPreference, tMyDice) : getTranslatedTitle(userProfile.levelProgress?.currentLevelName || 'Commoner', locale, userSettings?.titleGenderPreference, tMyDice)}
               </p>
               
               {/* XP Progress Bar */}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Settings, User, Lock, Bell, ArrowLeft, Save, X, CheckCircle, Shield } from 'lucide-react';
+import { Settings, User, Lock, Bell, ArrowLeft, Save, X, CheckCircle, Shield, Award } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import PrivacySettings from '@/components/PrivacySettings';
@@ -30,6 +30,7 @@ export default function SettingsPage() {
   const [security, setSecurity] = useState({
     twoFactorEnabled: false
   });
+  const [titleGenderPreference, setTitleGenderPreference] = useState<'masculine' | 'feminine'>('masculine');
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
@@ -64,6 +65,7 @@ export default function SettingsPage() {
         if (data.settings) {
           setNotifications(data.settings.notifications || notifications);
           setSecurity(data.settings.security || security);
+          setTitleGenderPreference(data.settings.titleGenderPreference || 'masculine');
         }
       }
     } catch (error) {
@@ -157,6 +159,29 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error updating notification settings:', error);
       showNotificationToast(tSettings('failedToUpdateNotificationSettings'));
+    }
+  };
+
+  const handleTitleGenderPreferenceChange = async (preference: 'masculine' | 'feminine') => {
+    if (!user?.id) return;
+    const previous = titleGenderPreference;
+    setTitleGenderPreference(preference);
+    
+    try {
+      await fetch('/api/users/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          settings: { titleGenderPreference: preference }
+        })
+      });
+      showNotificationToast(tSettings('titleGenderPreferenceUpdated'));
+    } catch (error) {
+      console.error('Error updating title gender preference:', error);
+      showNotificationToast(tSettings('failedToUpdateTitleGenderPreference'));
+      // Revert on error
+      setTitleGenderPreference(previous);
     }
   };
 
@@ -349,6 +374,50 @@ export default function SettingsPage() {
                       </button>
                     </>
                   )}
+                </div>
+              </div>
+            </div>
+
+            {/* Title Gender Preference */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <Award className="w-5 h-5 text-purple-600" />
+                <h2 className="text-lg font-semibold text-gray-900">{tSettings('titleGenderPreference')}</h2>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 mb-4">{tSettings('titleGenderPreferenceDescription')}</p>
+                
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="titleGender"
+                      value="masculine"
+                      checked={titleGenderPreference === 'masculine'}
+                      onChange={() => handleTitleGenderPreferenceChange('masculine')}
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{tSettings('masculineTitle')}</p>
+                      <p className="text-xs text-gray-500">{tSettings('masculineTitleDescription')}</p>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input
+                      type="radio"
+                      name="titleGender"
+                      value="feminine"
+                      checked={titleGenderPreference === 'feminine'}
+                      onChange={() => handleTitleGenderPreferenceChange('feminine')}
+                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{tSettings('feminineTitle')}</p>
+                      <p className="text-xs text-gray-500">{tSettings('feminineTitleDescription')}</p>
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>

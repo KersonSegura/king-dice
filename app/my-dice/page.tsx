@@ -8,7 +8,7 @@ import { useToast } from "@/contexts/ToastContext";
 import ModernTooltip from "@/components/ModernTooltip";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { getTranslatedAssetName } from '@/lib/asset-name-translations';
 import { getTranslatedTitle } from '@/lib/title-translations';
 
@@ -368,6 +368,7 @@ export default function MyDicePage() {
   const t = useTranslations('common');
   const tHeader = useTranslations('header');
   const tMyDice = useTranslations('myDice');
+  const locale = useLocale();
   const { user, updateAvatar, syncUserData } = useAuth();
   const { showToast } = useToast();
   
@@ -408,6 +409,7 @@ export default function MyDicePage() {
     progressPercentage: 0
   });
   const [showXPHelp, setShowXPHelp] = useState(false);
+  const [userSettings, setUserSettings] = useState<{ titleGenderPreference?: 'masculine' | 'feminine' } | null>(null);
 
   // Load saved configuration from server (user-specific)
   const loadSavedConfiguration = async (): Promise<Record<TabKey, string | null>> => {
@@ -545,6 +547,26 @@ export default function MyDicePage() {
     };
     
     loadXP();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const loadUserSettings = async () => {
+      try {
+        const res = await fetch(`/api/users/settings?userId=${user.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            setUserSettings(data.settings);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user settings:', error);
+      }
+    };
+
+    loadUserSettings();
   }, [user?.id]);
 
   useEffect(() => {
@@ -908,7 +930,7 @@ export default function MyDicePage() {
           {user && (
             <div className="ml-12 mt-2 flex items-center gap-2 flex-wrap">
                    <span className="text-sm text-gray-600">
-                     {tMyDice('levelLabel')} {levelProgress.currentLevel} {levelProgress.currentLevelName}
+                     {tMyDice('levelLabel')} {levelProgress.currentLevel} {getTranslatedTitle(levelProgress.currentLevelName || 'Commoner', locale, userSettings?.titleGenderPreference, tMyDice)}
                    </span>
                    <div className="flex items-center gap-2">
                    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -1234,7 +1256,7 @@ export default function MyDicePage() {
                         <span className={`text-sm sm:text-sm text-base font-medium ${
                           isDisabled ? 'text-gray-400' : 'text-gray-800'
                         }`}>
-                          {getTranslatedTitle(asset.name, locale, undefined, tMyDice)}
+                          {getTranslatedTitle(asset.name, locale, userSettings?.titleGenderPreference, tMyDice)}
                         </span>
                         
                         {/* Lock badge for level-locked items */}

@@ -647,7 +647,7 @@
     "toNext": "to next",
     "noLayersSelected": "No layers selected yet",
     "shareToGallery": "Share to Gallery",
-    "saveConfiguration": "Save Configuration",
+    "saveConfiguration": "Save Dice",
     "diceSavedSuccessfully": "Dice saved successfully! Your profile image has been updated.",
     "failedToSaveDice": "Failed to save dice. Please try again.",
     "errorSavingDice": "Error saving dice. Please try again.",
@@ -853,7 +853,15 @@
     "profileSetToPrivate": "Profile set to private",
     "profileSetToPublic": "Profile set to public",
     "failedToUpdatePrivacySettings": "Failed to update privacy settings",
-    "myDiceLink": "My Dice"
+    "myDiceLink": "My Dice",
+    "titleGenderPreference": "Title Gender Preference",
+    "titleGenderPreferenceDescription": "Choose how your title appears in Spanish (e.g., 'Plebeyo' or 'Plebeya')",
+    "masculineTitle": "Masculine",
+    "masculineTitleDescription": "Use masculine forms (e.g., Plebeyo, Escudero, Caballero)",
+    "feminineTitle": "Feminine",
+    "feminineTitleDescription": "Use feminine forms (e.g., Plebeya, Escudera, Caballera)",
+    "titleGenderPreferenceUpdated": "Title gender preference updated!",
+    "failedToUpdateTitleGenderPreference": "Failed to update title gender preference"
   },
   "shop": {
     "loading": "Loading Shop",

@@ -665,7 +665,7 @@
     "toNext": "al siguiente",
     "noLayersSelected": "Aún no se han seleccionado capas",
     "shareToGallery": "Compartir en la Galería",
-    "saveConfiguration": "Guardar Configuración",
+    "saveConfiguration": "Guardar Dado",
     "diceSavedSuccessfully": "¡Dados guardados exitosamente! Tu imagen de perfil ha sido actualizada.",
     "failedToSaveDice": "Error al guardar los dados. Por favor intenta de nuevo.",
     "errorSavingDice": "Error al guardar los dados. Por favor intenta de nuevo.",
@@ -875,7 +875,15 @@
     "profileSetToPrivate": "Perfil configurado como privado",
     "profileSetToPublic": "Perfil configurado como público",
     "failedToUpdatePrivacySettings": "Error al actualizar configuración de privacidad",
-    "myDiceLink": "Mi Dado"
+    "myDiceLink": "Mi Dado",
+    "titleGenderPreference": "Preferencia de Género del Título",
+    "titleGenderPreferenceDescription": "Elige cómo aparece tu título en español (por ejemplo, 'Plebeyo' o 'Plebeya')",
+    "masculineTitle": "Masculino",
+    "masculineTitleDescription": "Usar formas masculinas (por ejemplo, Plebeyo, Escudero, Caballero)",
+    "feminineTitle": "Femenino",
+    "feminineTitleDescription": "Usar formas femeninas (por ejemplo, Plebeya, Escudera, Caballera)",
+    "titleGenderPreferenceUpdated": "¡Preferencia de género del título actualizada!",
+    "failedToUpdateTitleGenderPreference": "Error al actualizar preferencia de género del título"
   },
   "shop": {
     "loading": "Cargando Tienda",
