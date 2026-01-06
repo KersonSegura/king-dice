@@ -5,6 +5,7 @@ import { Check, X, HelpCircle, RotateCcw, Lightbulb, Type, Image, RectangleHoriz
 import { useAuth } from '@/contexts/AuthContext';
 import { useBoardleStats } from '@/hooks/useBoardleStats';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
+import { useTranslations } from 'next-intl';
 
 
 // Game data type
@@ -115,6 +116,7 @@ export function BoardleGame({}: BoardleGameProps) {
   // User authentication and statistics
   const { user, isAuthenticated } = useAuth();
   const { stats, updateStats, isLoading: statsLoading, error: statsError } = useBoardleStats();
+  const tBoardle = useTranslations('boardle');
 
   // 🎯 DAILY ROTATION SYSTEM: APIs now handle daily rotation directly
   // Each mode gets one game per day, rotating sequentially through the list
@@ -2150,7 +2152,7 @@ export function BoardleGame({}: BoardleGameProps) {
       console.error('Error rendering unified game board:', error);
       return (
         <div className="text-center p-8 text-red-600">
-          Error rendering game board. Please refresh the page.
+          {tBoardle('errorRenderingGameBoard')}
         </div>
       );
     }
@@ -2184,7 +2186,7 @@ export function BoardleGame({}: BoardleGameProps) {
             alt="Loading..." 
             className="inline-block w-16 h-16"
           />
-          <p className="mt-4 text-gray-600">Loading games from database...</p>
+          <p className="mt-4 text-gray-600">{tBoardle('loadingGames')}</p>
         </div>
       </div>
     );
@@ -2195,12 +2197,12 @@ export function BoardleGame({}: BoardleGameProps) {
     return (
       <div className="max-w-full mx-auto px-4 py-8">
         <div className="text-center">
-          <p className="text-red-600">No games available for Boardle. Please try again later.</p>
+          <p className="text-red-600">{tBoardle('noGamesAvailable')}</p>
           <button
             onClick={fetchGames}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            Retry
+            {tBoardle('retry')}
           </button>
         </div>
       </div>
@@ -2257,7 +2259,7 @@ export function BoardleGame({}: BoardleGameProps) {
             style={gameMode === 'title' ? { backgroundColor: '#4B86FE' } : {}}
           >
             <Type className="w-6 h-6 sm:w-4 sm:h-4" />
-            <span>Title Mode</span>
+            <span>{tBoardle('titleMode')}</span>
           </button>
           <button
             onClick={() => switchGameMode('image')}
@@ -2269,7 +2271,7 @@ export function BoardleGame({}: BoardleGameProps) {
             style={gameMode === 'image' ? { backgroundColor: '#4B86FE' } : {}}
           >
             <Image className="w-6 h-6 sm:w-4 sm:h-4" />
-            <span>Image Mode</span>
+            <span>{tBoardle('imageMode')}</span>
           </button>
           <button
             onClick={() => switchGameMode('card')}
@@ -2281,7 +2283,7 @@ export function BoardleGame({}: BoardleGameProps) {
             style={gameMode === 'card' ? { backgroundColor: '#4B86FE' } : {}}
           >
             <RectangleHorizontal className="w-6 h-6 sm:w-4 sm:h-4" style={{ transform: 'rotate(90deg)' }} />
-            <span>Card Mode</span>
+            <span>{tBoardle('cardMode')}</span>
           </button>
         </div>
       </div>
@@ -2291,7 +2293,7 @@ export function BoardleGame({}: BoardleGameProps) {
          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
            <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-bounce">
              <X className="w-5 h-5" />
-             <span className="font-medium">Please fill all letter tiles before submitting your guess!</span>
+             <span className="font-medium">{tBoardle('fillAllTiles')}</span>
            </div>
          </div>
        )}
@@ -2302,7 +2304,7 @@ export function BoardleGame({}: BoardleGameProps) {
         {gameMode === 'image' && (
           <div className="mb-8 flex justify-center lg:hidden">
             <div className="bg-white p-4 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold mb-3 text-center">Guess the Board Game by Image</h3>
+              <h3 className="text-lg font-semibold mb-3 text-center">{tBoardle('guessByImage')}</h3>
                                                                                                                                                                                                                                <div className="flex justify-center">
                 {targetGameData?.imageUrl ? (
                   <div 
@@ -2316,13 +2318,13 @@ export function BoardleGame({}: BoardleGameProps) {
                       <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center z-10">
                         <div className="flex flex-col items-center space-y-2">
                           <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                          <span className="text-sm text-gray-600">Loading image...</span>
+                          <span className="text-sm text-gray-600">{tBoardle('loadingImage')}</span>
                         </div>
                       </div>
                     )}
                     <img
                       src={targetGameData.imageUrl}
-                      alt="Board game to guess"
+                      alt={tBoardle('boardGameToGuess')}
                       className="w-full h-full object-contain pointer-events-none"
                       style={{
                         ...getImageTransform(),
@@ -2343,13 +2345,13 @@ export function BoardleGame({}: BoardleGameProps) {
                     {/* Zoom indicator */}
                     {imageLoaded && (
                       <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                        {gameWon ? 'Full Image' : `Zoom: ${Math.round(getImageZoomLevel())}%`}
+                        {gameWon ? tBoardle('fullImage') : tBoardle('zoom', { percent: Math.round(getImageZoomLevel()) })}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="w-full h-[450px] bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500">No image available</span>
+                    <span className="text-gray-500">{tBoardle('noImageAvailable')}</span>
                   </div>
                 )}
               </div>
@@ -2370,7 +2372,7 @@ export function BoardleGame({}: BoardleGameProps) {
                   <div className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100" style={{ width: '500px', height: '400px' }}>
                     <img
                       src={targetGameData.imageUrl}
-                      alt="Game card to guess"
+                      alt={tBoardle('gameCardToGuess')}
                       className="w-full h-full object-contain"
                       style={{
                         userSelect: 'none',
@@ -2387,12 +2389,12 @@ export function BoardleGame({}: BoardleGameProps) {
                   </div>
                 ) : (
                   <div className="w-full h-[450px] bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500">No image available</span>
+                    <span className="text-gray-500">{tBoardle('noImageAvailable')}</span>
                   </div>
                 )}
               </div>
               <p className="text-center text-sm text-gray-600 mt-2">
-                Each guess reveals a new clue!
+                {tBoardle('cardModeHint')}
               </p>
             </div>
           </div>
@@ -2410,7 +2412,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 {/* Title Mode - Unified Game Board */}
       <div className="mb-6">
                   <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold mb-3">Guess the Board Game</h3>
+                    <h3 className="text-lg font-semibold mb-3">{tBoardle('guessTheBoardGame')}</h3>
                     {renderUnifiedGameBoard()}
                     <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mt-4">
                     <button
@@ -2419,7 +2421,7 @@ export function BoardleGame({}: BoardleGameProps) {
                         className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
                       style={{ backgroundColor: '#4B86FE' }}
                     >
-                      Submit Guess
+                      {tBoardle('submitGuess')}
                     </button>
                       {/* Clues Button for Smartphone View */}
                       <button
@@ -2427,19 +2429,19 @@ export function BoardleGame({}: BoardleGameProps) {
                         className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
                       >
                         <Lightbulb className="w-4 h-4" />
-                        Clues ({revealedClues.length})
+                        {tBoardle('cluesCount', { count: revealedClues.length })}
                     </button>
                     </div>
       </div>
                   <p className="text-center text-sm text-gray-600 mt-2">
-                    Attempts: {guesses.length} / 6
+                    {tBoardle('attempts', { current: guesses.length })}
                   </p>
               </div>
 
                                  {/* Title Mode - Revealed Letters Section */}
                <div className="mb-6">
                    <div>
-                     <h3 className="text-lg font-semibold mb-4 text-center">Revealed Letters</h3>
+                     <h3 className="text-lg font-semibold mb-4 text-center">{tBoardle('revealedLetters')}</h3>
                  <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
                    {renderRevealedLetters()}
                  </div>
@@ -2454,16 +2456,16 @@ export function BoardleGame({}: BoardleGameProps) {
                         <div className="flex flex-col items-center justify-center gap-2 px-4">
                           <div className="flex flex-col sm:flex-row items-center gap-2 justify-center text-center">
                             <img src="/PartyIcon.svg" alt="Party" className="w-12 h-12 sm:w-10 sm:h-10 flex-shrink-0" />
-                            <span className="break-words">Congratulations, you found {targetGameData?.name}!</span>
+                            <span className="break-words">{tBoardle('congratulationsFound', { name: targetGameData?.name })}</span>
                           </div>
-                          <p className="text-xs sm:text-sm text-green-600">Come back tomorrow for a new challenge!</p>
+                          <p className="text-xs sm:text-sm text-green-600">{tBoardle('comeBackTomorrow')}</p>
                         </div>
                       </div>
                     ) : (
                       <div className="text-red-600 font-bold text-lg sm:text-xl mb-2">
                         <div className="flex flex-col items-center justify-center gap-2 px-4">
-                          <div className="break-words">Game Over! The answer was {targetGameData?.name}</div>
-                          <p className="text-xs sm:text-sm text-red-600">Come back tomorrow to try again!</p>
+                          <div className="break-words">{tBoardle('gameOver', { name: targetGameData?.name })}</div>
+                          <p className="text-xs sm:text-sm text-red-600">{tBoardle('comeBackTomorrowTryAgain')}</p>
                         </div>
                       </div>
                     )}
@@ -2475,7 +2477,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 {/* Image Mode - Unified Game Board */}
               <div className="mb-6">
                   <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold mb-3">Guess the Board Game</h3>
+                    <h3 className="text-lg font-semibold mb-3">{tBoardle('guessTheBoardGame')}</h3>
                     {renderUnifiedGameBoard()}
                     <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mt-4">
                     <button
@@ -2484,7 +2486,7 @@ export function BoardleGame({}: BoardleGameProps) {
                         className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
                       style={{ backgroundColor: '#4B86FE' }}
                     >
-                      Submit Guess
+                      {tBoardle('submitGuess')}
                     </button>
                       {/* Clues Button for Smartphone View */}
                       <button
@@ -2492,12 +2494,12 @@ export function BoardleGame({}: BoardleGameProps) {
                         className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
                       >
                         <Lightbulb className="w-4 h-4" />
-                        Clues ({revealedClues.length})
+                        {tBoardle('cluesCount', { count: revealedClues.length })}
                     </button>
                     </div>
                   </div>
                   <p className="text-center text-sm text-gray-600 mt-2">
-                    Attempts: {imageGuesses.length} / 6
+                    {tBoardle('attempts', { current: imageGuesses.length })}
                   </p>
                 </div>
 
@@ -2510,16 +2512,16 @@ export function BoardleGame({}: BoardleGameProps) {
                         <div className="flex flex-col items-center justify-center gap-2 px-4">
                           <div className="flex flex-col sm:flex-row items-center gap-2 justify-center text-center">
                             <img src="/PartyIcon.svg" alt="Party" className="w-12 h-12 sm:w-10 sm:h-10 flex-shrink-0" />
-                            <span className="break-words">Congratulations, you found {targetGameData?.name}!</span>
+                            <span className="break-words">{tBoardle('congratulationsFound', { name: targetGameData?.name })}</span>
                           </div>
-                          <p className="text-xs sm:text-sm text-green-600">Come back tomorrow for a new challenge!</p>
+                          <p className="text-xs sm:text-sm text-green-600">{tBoardle('comeBackTomorrow')}</p>
                         </div>
                       </div>
                     ) : (
                       <div className="text-red-600 font-bold text-lg sm:text-xl mb-2">
                         <div className="flex flex-col items-center justify-center gap-2 px-4">
-                          <div className="break-words">Game Over! The answer was {targetGameData?.name}</div>
-                          <p className="text-xs sm:text-sm text-red-600">Come back tomorrow to try again!</p>
+                          <div className="break-words">{tBoardle('gameOver', { name: targetGameData?.name })}</div>
+                          <p className="text-xs sm:text-sm text-red-600">{tBoardle('comeBackTomorrowTryAgain')}</p>
                         </div>
                       </div>
                     )}
@@ -2531,7 +2533,7 @@ export function BoardleGame({}: BoardleGameProps) {
                               {/* Card Mode - Unified Game Board */}
                <div className="mb-6">
                  <div className="text-center mb-4">
-                   <h3 className="text-lg font-semibold mb-3">Guess the Board Game</h3>
+                   <h3 className="text-lg font-semibold mb-3">{tBoardle('guessTheBoardGame')}</h3>
                    {renderUnifiedGameBoard()}
                    <div className="flex flex-col sm:flex-row gap-3 items-center justify-center mt-4">
                    <button
@@ -2540,7 +2542,7 @@ export function BoardleGame({}: BoardleGameProps) {
                        className="px-6 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
                        style={{ backgroundColor: '#4B86FE' }}
                      >
-                       Submit Guess
+                       {tBoardle('submitGuess')}
                      </button>
                        {/* Clues Button for Smartphone View */}
                        <button
@@ -2548,12 +2550,12 @@ export function BoardleGame({}: BoardleGameProps) {
                          className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
                        >
                          <Lightbulb className="w-4 h-4" />
-                         Clues ({revealedClues.length})
+                         {tBoardle('cluesCount', { count: revealedClues.length })}
                      </button>
                      </div>
                    </div>
                    <p className="text-center text-sm text-gray-600 mt-2">
-                     Attempts: {cardGuesses.length} / 6
+                     {tBoardle('attempts', { current: cardGuesses.length })}
                    </p>
                  </div>
 
@@ -2592,7 +2594,7 @@ export function BoardleGame({}: BoardleGameProps) {
                           <div className="bg-white p-6 rounded-lg shadow-lg">
                             <div className="flex items-center gap-3 mb-4">
                               <Lightbulb className="w-6 h-6 text-yellow-500" />
-                              <h3 className="text-xl font-semibold">Clues</h3>
+                              <h3 className="text-xl font-semibold">{tBoardle('clues')}</h3>
                             </div>
                             
                             <div className="space-y-4">
@@ -2614,7 +2616,7 @@ export function BoardleGame({}: BoardleGameProps) {
                                       {revealedClues.length + 1}
                                     </span>
                                     <p className="text-base text-gray-500 italic">
-                                      Make a guess to reveal the next clue
+                                      {tBoardle('makeGuessToRevealClue')}
                                     </p>
                                   </div>
                                 </div>
@@ -2629,7 +2631,7 @@ export function BoardleGame({}: BoardleGameProps) {
                          <div className="flex-shrink-0 space-y-6 hidden lg:block" style={{ width: '500px' }}>
                           {/* Image Mode - Image Section */}
                           <div className="bg-white p-4 rounded-lg shadow-lg">
-                <h3 className="text-lg font-semibold mb-3 text-center">Guess the Board Game by Image</h3>
+                <h3 className="text-lg font-semibold mb-3 text-center">{tBoardle('guessByImage')}</h3>
                 <div className="flex justify-center">
                   {targetGameData?.imageUrl ? (
                                                                  <div 
@@ -2643,13 +2645,13 @@ export function BoardleGame({}: BoardleGameProps) {
                         <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center z-10">
                           <div className="flex flex-col items-center space-y-2">
                                         <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                            <span className="text-sm text-gray-600">Loading image...</span>
+                            <span className="text-sm text-gray-600">{tBoardle('loadingImage')}</span>
                           </div>
                         </div>
                       )}
                       <img
                         src={targetGameData.imageUrl}
-                        alt="Board game to guess"
+                        alt={tBoardle('boardGameToGuess')}
                                     className="w-full h-full object-contain pointer-events-none"
                         style={{
                           ...getImageTransform(),
@@ -2670,13 +2672,13 @@ export function BoardleGame({}: BoardleGameProps) {
                       {/* Zoom indicator */}
                       {imageLoaded && (
                         <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                                      {gameWon ? 'Full Image' : `Zoom: ${Math.round(getImageZoomLevel())}%`}
+                                      {gameWon ? tBoardle('fullImage') : tBoardle('zoom', { percent: Math.round(getImageZoomLevel()) })}
                         </div>
                       )}
                     </div>
                   ) : (
                                 <div className="w-full h-[450px] bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-500">No image available</span>
+                      <span className="text-gray-500">{tBoardle('noImageAvailable')}</span>
                     </div>
                   )}
                 </div>
@@ -2687,7 +2689,7 @@ export function BoardleGame({}: BoardleGameProps) {
 
                           {/* Image Mode - Revealed Letters Section */}
                           <div className="bg-white p-4 rounded-lg shadow-lg">
-                            <h3 className="text-lg font-semibold mb-4 text-center">Revealed Letters</h3>
+                            <h3 className="text-lg font-semibold mb-4 text-center">{tBoardle('revealedLetters')}</h3>
                             <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
                               {renderImageRevealedLetters()}
                             </div>
@@ -2702,7 +2704,7 @@ export function BoardleGame({}: BoardleGameProps) {
                           <div className="bg-white p-6 rounded-lg shadow-lg">
                             <div className="flex items-center gap-3 mb-4">
                               <Lightbulb className="w-6 h-6 text-yellow-500" />
-                              <h3 className="text-xl font-semibold">Clues</h3>
+                              <h3 className="text-xl font-semibold">{tBoardle('clues')}</h3>
               </div>
 
                             <div className="space-y-4">
@@ -2724,7 +2726,7 @@ export function BoardleGame({}: BoardleGameProps) {
                                       {revealedClues.length + 1}
                                     </span>
                                     <p className="text-base text-gray-500 italic">
-                                      Make a guess to zoom out and reveal the next clue
+                                      {tBoardle('makeGuessToZoomAndReveal')}
                                     </p>
                                   </div>
                                 </div>
@@ -2745,7 +2747,7 @@ export function BoardleGame({}: BoardleGameProps) {
                                                                  <div className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100" style={{ width: '500px', height: '400px' }}>
                       <img
                         src={targetGameData.imageUrl}
-                                    alt="Game card to guess"
+                                    alt={tBoardle('gameCardToGuess')}
                         className="w-full h-full object-contain"
                                     style={{
                                       userSelect: 'none',
@@ -2762,18 +2764,18 @@ export function BoardleGame({}: BoardleGameProps) {
                     </div>
                   ) : (
                                 <div className="w-full h-[450px] bg-gray-200 rounded-lg flex items-center justify-center">
-                                  <span className="text-gray-500">No image available</span>
+                                  <span className="text-gray-500">{tBoardle('noImageAvailable')}</span>
                     </div>
                   )}
                 </div>
                             <p className="text-center text-sm text-gray-600 mt-2">
-                              Each guess reveals a new clue!
+                              {tBoardle('cardModeHint')}
                             </p>
               </div>
 
                           {/* Card Mode - Revealed Letters Section */}
                           <div className="bg-white p-4 rounded-lg shadow-lg">
-                            <h3 className="text-lg font-semibold mb-4 text-center">Revealed Letters</h3>
+                            <h3 className="text-lg font-semibold mb-4 text-center">{tBoardle('revealedLetters')}</h3>
                             <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
                               {renderCardRevealedLetters()}
                             </div>
@@ -2826,7 +2828,7 @@ export function BoardleGame({}: BoardleGameProps) {
        <div className="mb-6 mt-8 flex justify-center">
          <div className="bg-white p-4 rounded-lg shadow" style={{ width: '600px' }}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold">Statistics</h3>
+            <h3 className="text-lg font-semibold">{tBoardle('statistics')}</h3>
             <div className="text-sm text-gray-500">
               {isAuthenticated && user ? (
                 <span className="flex items-center gap-2">
@@ -2834,34 +2836,34 @@ export function BoardleGame({}: BoardleGameProps) {
                   {user.username}
                 </span>
               ) : (
-                <span className="text-gray-400">Guest Mode</span>
+                <span className="text-gray-400">{tBoardle('guestMode')}</span>
               )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-gray-600">Games Played</div>
+              <div className="text-gray-600">{tBoardle('gamesPlayed')}</div>
               <div className="font-bold">{stats.gamesPlayed}</div>
             </div>
             <div>
-              <div className="text-gray-600">Win Rate</div>
+              <div className="text-gray-600">{tBoardle('winRate')}</div>
               <div className="font-bold">
                 {stats.gamesPlayed > 0 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0}%
               </div>
             </div>
             <div>
-              <div className="text-gray-600">Current Streak</div>
+              <div className="text-gray-600">{tBoardle('currentStreak')}</div>
               <div className="font-bold">{stats.currentStreak}</div>
             </div>
             <div>
-              <div className="text-gray-600">Max Streak</div>
+              <div className="text-gray-600">{tBoardle('maxStreak')}</div>
               <div className="font-bold">{stats.maxStreak}</div>
             </div>
           </div>
           
           {/* Guess Distribution */}
           <div className="mt-4">
-            <div className="text-gray-600 mb-2">Guess Distribution</div>
+            <div className="text-gray-600 mb-2">{tBoardle('guessDistribution')}</div>
             <div className="space-y-1">
               {stats.guessDistribution.map((count, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -2885,7 +2887,7 @@ export function BoardleGame({}: BoardleGameProps) {
           {!isAuthenticated && (
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-700">
-                <span className="font-medium">💡 Tip:</span> Create an account to save your statistics permanently and access them from any device!
+                {tBoardle('tipCreateAccount')}
               </p>
             </div>
           )}
@@ -2894,7 +2896,7 @@ export function BoardleGame({}: BoardleGameProps) {
           {statsLoading && (
             <div className="mt-4 text-center text-gray-500">
               <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              Syncing statistics...
+              {tBoardle('syncingStatistics')}
             </div>
           )}
           
@@ -2915,7 +2917,7 @@ export function BoardleGame({}: BoardleGameProps) {
           className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2 mx-auto"
         >
           <HelpCircle className="w-4 h-4" />
-          How to Play
+          {tBoardle('howToPlay')}
         </button>
       </div>
 
@@ -2923,37 +2925,37 @@ export function BoardleGame({}: BoardleGameProps) {
       {showRules && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md mx-4">
-            <h3 className="text-xl font-bold mb-4">How to Play Boardle</h3>
+            <h3 className="text-xl font-bold mb-4">{tBoardle('howToPlayBoardle')}</h3>
             <div className="space-y-3 text-sm">
-                                                           <p><strong>Title Mode:</strong></p>
-              <p>• Guess the board game name in 6 tries</p>
-              <p>• Type letters in individual boxes - cursor automatically advances</p>
-              <p>• Use arrow keys, backspace, or click to navigate between boxes</p>
-              <p>• Each guess reveals a new clue and collects correct letters</p>
-               <p>• Clues are generated based on the game's genre and characteristics</p>
+                                                           <p><strong>{tBoardle('titleModeLabel')}</strong></p>
+              <p>• {tBoardle('titleModeRule1')}</p>
+              <p>• {tBoardle('titleModeRule2')}</p>
+              <p>• {tBoardle('titleModeRule3')}</p>
+              <p>• {tBoardle('titleModeRule4')}</p>
+               <p>• {tBoardle('titleModeRule5')}</p>
               
-              <p><strong>Image Mode:</strong></p>
-              <p>• Start with a very zoomed-in image of the game</p>
-              <p>• Each guess zooms out the image and reveals a new clue</p>
-                              <p>• Letters from your guesses are collected just like Title Mode</p>
+              <p><strong>{tBoardle('imageModeLabel')}</strong></p>
+              <p>• {tBoardle('imageModeRule1')}</p>
+              <p>• {tBoardle('imageModeRule2')}</p>
+                              <p>• {tBoardle('imageModeRule3')}</p>
               
-              <p><strong>Card Mode:</strong></p>
-              <p>• See the full game card/box image from the start</p>
-              <p>• Each guess reveals a new clue and collects correct letters</p>
-              <p>• Same letter tracking and grid system as other modes</p>
+              <p><strong>{tBoardle('cardModeLabel')}</strong></p>
+              <p>• {tBoardle('cardModeRule1')}</p>
+              <p>• {tBoardle('cardModeRule2')}</p>
+              <p>• {tBoardle('cardModeRule3')}</p>
               
-              <p><strong>Letter Colors:</strong></p>
+              <p><strong>{tBoardle('letterColors')}</strong></p>
               <div className="flex gap-2 items-center">
                 <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center text-white text-xs">A</div>
-                <span>Letter is in the correct position</span>
+                <span>{tBoardle('letterCorrectPosition')}</span>
               </div>
               <div className="flex gap-2 items-center">
                 <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center text-white text-xs">A</div>
-                <span>Letter is in the game name but wrong position</span>
+                <span>{tBoardle('letterWrongPosition')}</span>
               </div>
               <div className="flex gap-2 items-center">
                 <div className="w-6 h-6 bg-gray-400 rounded flex items-center justify-center text-white text-xs">A</div>
-                <span>Letter is not in the game name</span>
+                <span>{tBoardle('letterNotInName')}</span>
               </div>
             </div>
             <button
@@ -2961,7 +2963,7 @@ export function BoardleGame({}: BoardleGameProps) {
               className="mt-4 w-full px-4 py-2 text-white rounded hover:opacity-90"
               style={{ backgroundColor: '#4B86FE' }}
             >
-              Got it!
+              {tBoardle('gotIt')}
             </button>
           </div>
         </div>
