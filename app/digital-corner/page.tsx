@@ -636,7 +636,7 @@ export default function DigitalCornerPage() {
   }, []);
 
   const formatResetTime = (utcDate: Date | null) => {
-    if (!utcDate) return 'Calculating...';
+    if (!utcDate) return tDigitalCorner('calculating');
     
     // Convert UTC time to user's local timezone
     const localTime = utcDate.toLocaleTimeString('en-US', {

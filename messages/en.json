@@ -1091,6 +1091,7 @@
     "connecting": "Connecting...",
     "loginToParticipate": "Please log in to participate in the chat",
     "signIn": "Sign In",
-    "chatDisconnected": "Chat is currently disconnected"
+    "chatDisconnected": "Chat is currently disconnected",
+    "calculating": "Calculating..."
   }
 }

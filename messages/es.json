@@ -1113,6 +1113,7 @@
     "connecting": "Conectando...",
     "loginToParticipate": "Por favor inicia sesión para participar en el chat",
     "signIn": "Iniciar Sesión",
-    "chatDisconnected": "El chat está desconectado actualmente"
+    "chatDisconnected": "El chat está desconectado actualmente",
+    "calculating": "Calculando..."
   }
 }
