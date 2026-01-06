@@ -267,10 +267,14 @@ function getDisplayName(assetName: string): string {
     displayName = "King's Crown";
   } else if (displayName.toLowerCase() === 'princes crown') {
     displayName = "Prince's Crown";
+  } else if (displayName.toLowerCase() === 'queens crown') {
+    displayName = "Queen's Crown";
   } else if (displayName.toLowerCase() === 'kings cape') {
     displayName = "King's Cape";
   } else if (displayName.toLowerCase() === 'kings room') {
     displayName = "King's Room";
+  } else if (displayName.toLowerCase() === 'kings card') {
+    displayName = "King's Card";
   }
   
   return displayName;
