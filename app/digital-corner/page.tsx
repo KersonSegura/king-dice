@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import LoginModal from '@/components/LoginModal';
+import { useTranslations } from 'next-intl';
 
 interface SteamGame {
   appid: number;
@@ -69,6 +70,8 @@ interface ChatMessage {
 }
 
 export default function DigitalCornerPage() {
+  const tDigitalCorner = useTranslations('digitalCorner');
+  const tCommon = useTranslations('common');
   const [steamGames, setSteamGames] = useState<SteamGame[]>([]);
   const [filteredGames, setFilteredGames] = useState<SteamGame[]>([]);
   const [loading, setLoading] = useState(true);
@@ -843,7 +846,7 @@ export default function DigitalCornerPage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {tDigitalCorner('backToHome')}
           </Link>
         </div>
       </div>
@@ -857,20 +860,20 @@ export default function DigitalCornerPage() {
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                 <Image
                   src="/PCIcon.svg"
-                  alt="Digital Corner"
+                  alt={tDigitalCorner('title')}
                   width={24}
                   height={24}
                   className="w-6 h-6"
                 />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-none">Digital Corner</h1>
+              <h1 className="text-2xl font-bold text-gray-900 leading-none">{tDigitalCorner('title')}</h1>
             </div>
             
             {/* Center: Highlighted Description - Hidden on mobile */}
             <div className="hidden lg:flex flex-1 mx-8 justify-center items-center">
               <div className="rounded-lg px-4 py-2" style={{ backgroundColor: '#fbae17' }}>
                 <p className="text-sm text-black font-bold text-center leading-none">
-                  Discover popular board games in their virtual versions, chat with other players and find friends to play with
+                  {tDigitalCorner('description')}
                 </p>
               </div>
             </div>
@@ -878,7 +881,7 @@ export default function DigitalCornerPage() {
             {/* Right: Connection Status */}
             <div className="flex items-center space-x-2 text-sm text-gray-500">
               <div className={`w-2 h-2 rounded-full ${isAuthenticated && rtConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="leading-none">{isAuthenticated && rtConnected ? 'Connected' : 'Not Connected'}</span>
+              <span className="leading-none">{isAuthenticated && rtConnected ? tDigitalCorner('connected') : tDigitalCorner('notConnected')}</span>
             </div>
           </div>
         </div>
@@ -890,7 +893,7 @@ export default function DigitalCornerPage() {
         <div className="lg:hidden -mt-4 mb-6">
           <div className="rounded-lg px-4 py-3 mx-4" style={{ backgroundColor: '#fbae17' }}>
             <p className="text-sm text-black font-bold text-center">
-              Discover popular board games in their virtual versions, chat with other players and find friends to play with
+              {tDigitalCorner('description')}
             </p>
           </div>
         </div>
@@ -900,18 +903,18 @@ export default function DigitalCornerPage() {
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border p-6 h-[700px] flex flex-col">
                <div className="mb-4">
-                 <h2 className="text-xl font-semibold text-gray-900 text-center mb-3">Digital Board Games</h2>
+                 <h2 className="text-xl font-semibold text-gray-900 text-center mb-3">{tDigitalCorner('digitalBoardGames')}</h2>
                  <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500">
-                    {steamGames.length} games
+                    {tDigitalCorner('games', { count: steamGames.length })}
                   </div>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'popularity' | 'name')}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="popularity">Most Players Online</option>
-                    <option value="name">Alphabetical</option>
+                    <option value="popularity">{tDigitalCorner('mostPlayersOnline')}</option>
+                    <option value="name">{tDigitalCorner('alphabetical')}</option>
                   </select>
                 </div>
               </div>
@@ -923,7 +926,7 @@ export default function DigitalCornerPage() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     <div className="w-full max-w-md">
                       <div className="flex justify-between text-sm text-gray-600 mb-2">
-                        <span>Loading games...</span>
+                        <span>{tDigitalCorner('loadingGames')}</span>
                         <span>{loadingProgress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -936,8 +939,8 @@ export default function DigitalCornerPage() {
                   </div>
                 ) : filteredGames.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                    <div className="text-gray-500 text-lg">No games found</div>
-                    <div className="text-gray-400 text-sm">Try refreshing the page</div>
+                    <div className="text-gray-500 text-lg">{tDigitalCorner('noGamesFound')}</div>
+                    <div className="text-gray-400 text-sm">{tDigitalCorner('tryRefreshing')}</div>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -964,7 +967,7 @@ export default function DigitalCornerPage() {
                                className="inline-flex items-center justify-center space-x-1 text-sm text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-md transition-colors"
                              >
                                <ExternalLink className="w-3 h-3" />
-                               <span>View on Steam</span>
+                               <span>{tDigitalCorner('viewOnSteam')}</span>
                              </a>
                            </div>
                            
@@ -976,11 +979,11 @@ export default function DigitalCornerPage() {
                              <div className="mb-2">
                                 {!game.price_overview ? (
                                   <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-sm">
-                                    FREE
+                                    {tDigitalCorner('free')}
                                   </span>
                                 ) : game.price_overview.final === 0 ? (
                                   <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-sm">
-                                    FREE
+                                    {tDigitalCorner('free')}
                                   </span>
                                 ) : game.price_overview.final_formatted ? (
                                  <div className="flex flex-wrap items-center gap-2">
@@ -1010,14 +1013,14 @@ export default function DigitalCornerPage() {
                                 {game.current_players !== undefined && (
                                   <span className="flex items-center space-x-1">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    <span>{game.current_players.toLocaleString()} online</span>
+                                    <span>{game.current_players.toLocaleString()} {tDigitalCorner('online')}</span>
                                   </span>
                                 )}
                                 {game.peak_players && (
-                                  <span>Peak: {game.peak_players.toLocaleString()}</span>
+                                  <span>{tDigitalCorner('peak')} {game.peak_players.toLocaleString()}</span>
                                 )}
                                 {game.has_community_visible_stats && (
-                                  <span className="text-green-600">Community</span>
+                                  <span className="text-green-600">{tDigitalCorner('community')}</span>
                                 )}
                             </div>
                           </div>
@@ -1037,15 +1040,15 @@ export default function DigitalCornerPage() {
            <div className="space-y-6 pb-20">
             <div className="bg-white rounded-lg shadow-sm border p-6 h-[700px] flex flex-col">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Live Chat</h2>
+                <h2 className="text-xl font-semibold text-gray-900">{tDigitalCorner('liveChat')}</h2>
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <div className="flex items-center space-x-1">
                             <Users className="w-4 h-4" />
-                            <span>{onlineUsers} online</span>
+                            <span>{onlineUsers} {tDigitalCorner('online')}</span>
                           </div>
                           <div className="flex items-center space-x-1 text-xs text-gray-400">
                             <span>🕐</span>
-                            <span>Resets at midnight</span>
+                            <span>{tDigitalCorner('resetsAtMidnight')}</span>
                           </div>
                         </div>
               </div>
@@ -1056,16 +1059,16 @@ export default function DigitalCornerPage() {
                   <div className="flex items-center justify-center h-full text-center">
                     <div className="text-gray-500">
                       <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-medium mb-2">Join the conversation!</p>
-                      <p className="text-sm">Please log in to see messages and chat with other users.</p>
+                      <p className="text-lg font-medium mb-2">{tDigitalCorner('joinConversation')}</p>
+                      <p className="text-sm">{tDigitalCorner('loginToSeeMessages')}</p>
                     </div>
                   </div>
                 ) : chatMessages.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-center">
                     <div className="text-gray-500">
                       <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-medium mb-2">No messages yet</p>
-                      <p className="text-sm">Be the first to start the conversation!</p>
+                      <p className="text-lg font-medium mb-2">{tDigitalCorner('noMessagesYet')}</p>
+                      <p className="text-sm">{tDigitalCorner('beFirstToChat')}</p>
                     </div>
                   </div>
                 ) : (
@@ -1127,7 +1130,11 @@ export default function DigitalCornerPage() {
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         </div>
-                        <span>{typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...</span>
+                        <span>
+                          {typingUsers.length === 1 
+                            ? tDigitalCorner('isTyping', { user: typingUsers[0] })
+                            : tDigitalCorner('areTyping', { users: typingUsers.join(', ') })}
+                        </span>
                       </div>
                     )}
                     
@@ -1145,7 +1152,7 @@ export default function DigitalCornerPage() {
                       value={newMessage}
                       onChange={handleTyping}
                       onKeyPress={handleKeyPress}
-                      placeholder={rtConnected ? "Type your message..." : "Connecting..."}
+                      placeholder={rtConnected ? tDigitalCorner('typeMessage') : tDigitalCorner('connecting')}
                       disabled={!rtConnected}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                     />
@@ -1159,12 +1166,12 @@ export default function DigitalCornerPage() {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm mb-2">Please log in to participate in the chat</p>
+                    <p className="text-sm mb-2">{tDigitalCorner('loginToParticipate')}</p>
                     <button 
                       onClick={() => setShowLoginModal(true)}
                       className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                      Sign In
+                      {tDigitalCorner('signIn')}
                     </button>
                   </div>
                 )}
@@ -1172,7 +1179,7 @@ export default function DigitalCornerPage() {
                 {isAuthenticated && !rtConnected && (
                   <p className="text-xs text-red-500 mt-2">
                     <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span>
-                    Chat is currently disconnected
+                    {tDigitalCorner('chatDisconnected')}
                   </p>
                 )}
               </div>
