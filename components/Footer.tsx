@@ -239,7 +239,14 @@ export default function Footer() {
             </div>
             <div className="mt-4 md:mt-0">
               <p className="text-gray-400 text-sm flex items-center">
-                {t('madeWithLove', { heart: <Heart className="w-4 h-4 mx-1 text-red-500 inline" /> })}
+                {t('madeWithLove', { heart: '❤️' }).split('❤️').map((part, i, arr) => 
+                  i < arr.length - 1 ? (
+                    <React.Fragment key={i}>
+                      {part}
+                      <Heart className="w-4 h-4 mx-1 text-red-500" />
+                    </React.Fragment>
+                  ) : part
+                )}
               </p>
             </div>
           </div>
