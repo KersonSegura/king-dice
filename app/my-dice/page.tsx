@@ -9,6 +9,8 @@ import ModernTooltip from "@/components/ModernTooltip";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
+import { getTranslatedAssetName } from '@/lib/asset-name-translations';
+import { getTranslatedTitle } from '@/lib/title-translations';
 
 type TabKey =
   | "background"
@@ -1314,7 +1316,7 @@ export default function MyDicePage() {
                           : "bg-white/80 text-gray-700"
                       }`}>
                         <div className="line-clamp-1">
-                          {getDisplayName(asset.name)}
+                          {getTranslatedAssetName(getDisplayName(asset.name), tMyDice)}
                         </div>
                                                  {isLockedByLevel && asset.requiredLevel !== undefined && (
                            <div className="text-[9px] text-black font-semibold mt-0.5">
@@ -1358,7 +1360,7 @@ export default function MyDicePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">How to Earn XP & Level Up</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{tMyDice('howToEarnXPLevelUp')}</h2>
               <button
                 onClick={() => setShowXPHelp(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
