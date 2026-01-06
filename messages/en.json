@@ -40,6 +40,7 @@
     "totalPosts": "total posts",
     "back": "Back",
     "signOut": "Sign Out",
+    "logoutDescription": "Log out of your account",
     "searchPlaceholder": "Search users and games...",
     "searchPlaceholderShort": "Search...",
     "recentSearches": "Recent Searches",

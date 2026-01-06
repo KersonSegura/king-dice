@@ -698,7 +698,7 @@ export default function Header() {
                               </div>
                               <div className="flex-1 text-left">
                                 <span className="text-sm font-medium">{t('signOut')}</span>
-                                <p className="text-xs text-red-500">Log out of your account</p>
+                                <p className="text-xs text-red-500">{t('logoutDescription')}</p>
                               </div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
