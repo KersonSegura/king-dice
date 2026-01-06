@@ -1234,7 +1234,7 @@ export default function MyDicePage() {
                         <span className={`text-sm sm:text-sm text-base font-medium ${
                           isDisabled ? 'text-gray-400' : 'text-gray-800'
                         }`}>
-                          {asset.name}
+                          {getTranslatedTitle(asset.name, locale, undefined, tMyDice)}
                         </span>
                         
                         {/* Lock badge for level-locked items */}
