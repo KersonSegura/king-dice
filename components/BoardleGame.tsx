@@ -5,7 +5,8 @@ import { Check, X, HelpCircle, RotateCcw, Lightbulb, Type, Image, RectangleHoriz
 import { useAuth } from '@/contexts/AuthContext';
 import { useBoardleStats } from '@/hooks/useBoardleStats';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { translateClue } from '@/lib/boardle-clue-translations';
 
 
 // Game data type
@@ -117,6 +118,7 @@ export function BoardleGame({}: BoardleGameProps) {
   const { user, isAuthenticated } = useAuth();
   const { stats, updateStats, isLoading: statsLoading, error: statsError } = useBoardleStats();
   const tBoardle = useTranslations('boardle');
+  const locale = useLocale();
 
   // 🎯 DAILY ROTATION SYSTEM: APIs now handle daily rotation directly
   // Each mode gets one game per day, rotating sequentially through the list
@@ -2356,7 +2358,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 )}
               </div>
               <p className="text-center text-sm text-gray-600 mt-2">
-                Each guess reveals more of the image and a new clue!
+                {tBoardle('imageModeHint')}
               </p>
             </div>
           </div>
@@ -2604,7 +2606,7 @@ export function BoardleGame({}: BoardleGameProps) {
                                     <span className="bg-blue-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                                       {index + 1}
                                     </span>
-                                    <p className="text-base text-gray-700 flex-1 leading-relaxed">{clue}</p>
+                                    <p className="text-base text-gray-700 flex-1 leading-relaxed">{translateClue(clue, locale)}</p>
                                   </div>
                                 </div>
                               ))}
@@ -2683,7 +2685,7 @@ export function BoardleGame({}: BoardleGameProps) {
                   )}
                 </div>
                 <p className="text-center text-sm text-gray-600 mt-2">
-                  Each guess reveals more of the image and a new clue!
+                  {tBoardle('imageModeHint')}
                 </p>
               </div>
 
@@ -2714,7 +2716,7 @@ export function BoardleGame({}: BoardleGameProps) {
                                     <span className="bg-blue-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full min-w-[32px] text-center">
                                       {index + 1}
                                     </span>
-                                    <p className="text-base text-gray-700 flex-1 leading-relaxed">{clue}</p>
+                                    <p className="text-base text-gray-700 flex-1 leading-relaxed">{translateClue(clue, locale)}</p>
                 </div>
               </div>
                               ))}
@@ -2812,7 +2814,7 @@ export function BoardleGame({}: BoardleGameProps) {
                       {revealedClues.length + 1}
                     </span>
                     <p className="text-base text-gray-500 italic">
-                                      Make a guess to reveal the next clue
+                      {tBoardle('makeGuessToRevealClue')}
                     </p>
                   </div>
                 </div>
@@ -3013,7 +3015,7 @@ export function BoardleGame({}: BoardleGameProps) {
                         {revealedClues.length + 1}
                       </span>
                       <p className="text-base text-gray-500 italic">
-                        Make a guess to reveal the next clue
+                        {tBoardle('makeGuessToRevealClue')}
                       </p>
                     </div>
                   </div>

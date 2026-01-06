@@ -1499,3 +1499,7 @@ export default function MyDicePage() {
     </div>
   );
 } 
+      
+    </div>
+  );
+} 
