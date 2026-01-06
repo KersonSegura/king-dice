@@ -5,6 +5,7 @@ import { useUserId } from '@/hooks/useUserId';
 import { useAuth } from '@/contexts/AuthContext';
 import ModernTooltip from './ModernTooltip';
 import { useToast } from './Toast';
+import { useTranslations } from 'next-intl';
 
 interface Hexagon {
   id: number;
@@ -1742,6 +1743,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
   const userId = useUserId();
   const { user } = useAuth();
   const { showToast, ToastContainer } = useToast();
+  const tCatan = useTranslations('catanMapGenerator');
   
   // Detect mobile on mount and resize
   useEffect(() => {
@@ -2526,7 +2528,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               backgroundColor: mapType === 'classic' ? '#fbae17' : undefined
             }}
           >
-            Classic
+            {tCatan('classic')}
           </button>
           
           <button
@@ -2545,7 +2547,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               backgroundColor: mapType === 'expansion' ? '#fbae17' : undefined
             }}
           >
-            Expansion
+            {tCatan('expansion')}
           </button>
         </div>
         
@@ -2565,7 +2567,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 backgroundColor: mapType === 'classic' ? '#fbae17' : undefined
               }}
             >
-              Classic
+              {tCatan('classic')}
             </button>
             
             <button
@@ -2580,7 +2582,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 backgroundColor: mapType === 'expansion' ? '#fbae17' : undefined
               }}
             >
-              Expansion
+              {tCatan('expansion')}
             </button>
           </div>
           
@@ -2590,7 +2592,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               onClick={() => setShowSettingsModal(true)}
               className="w-32 h-14 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-base"
             >
-              Options
+              {tCatan('options')}
             </button>
             
             <button
@@ -2598,7 +2600,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               disabled={isGenerating}
               className="w-32 h-14 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-base"
             >
-              {isGenerating ? 'Generating...' : 'Shuffle'}
+              {isGenerating ? tCatan('generating') : tCatan('shuffle')}
             </button>
           </div>
         </div>
@@ -2611,13 +2613,13 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         {/* Left side content - Generation Custom Rules */}
         <div className="hidden lg:block lg:w-1/3 lg:pr-8">
           <div className="bg-white rounded-lg p-6">
-            <h4 className="text-lg font-semibold text-dark-900 mb-4">Generation Custom Rules</h4>
+            <h4 className="text-lg font-semibold text-dark-900 mb-4">{tCatan('generationCustomRules')}</h4>
             <p className="text-xs text-gray-500 mb-4">
-              Check/Uncheck boxes to customize the rules on your map
+              {tCatan('customizeRulesDescription')}
             </p>
             
             <div className="mb-6">
-              <label className="block text-base font-medium text-dark-700 mb-2">Image Style</label>
+              <label className="block text-base font-medium text-dark-700 mb-2">{tCatan('imageStyle')}</label>
               <div className="flex gap-2">
         <button
                   onClick={() => handleImageStyleChange('classic')}
@@ -2630,7 +2632,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                     backgroundColor: customRules.imageStyle === 'classic' ? '#fbae17' : undefined
                   }}
                 >
-                  Classic
+                  {tCatan('classic')}
                 </button>
                 <button 
                   onClick={() => handleImageStyleChange('king-dice')}
@@ -2643,7 +2645,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                     backgroundColor: customRules.imageStyle === 'king-dice' ? '#fbae17' : undefined
                   }}
                 >
-                  King Dice
+                  {tCatan('kingDice')}
                 </button>
               </div>
             </div>
@@ -2656,7 +2658,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.sixEightCanTouch}
                   onChange={(e) => handleCustomRuleChange('sixEightCanTouch', e.target.checked)}
                 />
-                <span className="text-base text-dark-700">6 & 8 Can Touch</span>
+                <span className="text-base text-dark-700">{tCatan('sixEightCanTouch')}</span>
               </label>
               
               <label className="flex items-center">
@@ -2666,7 +2668,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.twoTwelveCanTouch}
                   onChange={(e) => handleCustomRuleChange('twoTwelveCanTouch', e.target.checked)}
                 />
-                <span className="text-base text-dark-700">2 & 12 Can Touch</span>
+                <span className="text-base text-dark-700">{tCatan('twoTwelveCanTouch')}</span>
               </label>
               
               <label className="flex items-center">
@@ -2676,7 +2678,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.sameNumbersCanTouch}
                   onChange={(e) => handleCustomRuleChange('sameNumbersCanTouch', e.target.checked)}
                 />
-                <span className="text-base text-dark-700">Same Numbers Can Touch</span>
+                <span className="text-base text-dark-700">{tCatan('sameNumbersCanTouch')}</span>
               </label>
               
               {mapType === 'classic' && (
@@ -2687,7 +2689,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   checked={customRules.sameResourceCanTouch}
                   onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
                 />
-                <span className="text-base text-dark-700">Same Resource Can Touch</span>
+                <span className="text-base text-dark-700">{tCatan('sameResourceCanTouch')}</span>
               </label>
               )}
             </div>
@@ -2698,7 +2700,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           disabled={isGenerating}
                 className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isGenerating ? 'Generating...' : 'Generate New Map'}
+          {isGenerating ? tCatan('generating') : tCatan('generateNewMap')}
         </button>
             </div>
           </div>
@@ -2752,7 +2754,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 disabled={isGenerating || hexagons.length === 0 || isNominating}
                 className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
                 id="nomination-star-button-expansion"
-                title="Nominate this Expansion Catan map"
+                title={tCatan('nominateThisExpansionMap')}
                 style={{ fontSize: '0', lineHeight: '1' }}
               >
                 {isNominating ? (
@@ -2973,7 +2975,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 disabled={isGenerating || hexagons.length === 0 || isNominating}
                 className="absolute top-2 right-2 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
                 id="nomination-star-button-mobile"
-                title="Nominate this Classic Catan map"
+                title={tCatan('nominateThisClassicMap')}
                 style={{ zIndex: 99999, pointerEvents: 'auto' }}
               >
                 {isNominating ? (
@@ -3092,7 +3094,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
             disabled={isGenerating || hexagons.length === 0 || isNominating}
             className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
             id="nomination-star-button-expansion"
-            title="Nominate this Expansion Catan map"
+            title={tCatan('nominateThisExpansionMap')}
             style={{ fontSize: '0', lineHeight: '1' }}
           >
             {isNominating ? (

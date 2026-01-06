@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import Footer from '@/components/Footer';
+import { useTranslations } from 'next-intl';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 interface Nomination {
@@ -30,6 +31,8 @@ interface Nomination {
 }
 
 export default function CatanMapGeneratorPage() {
+  const t = useTranslations('common');
+  const tCatan = useTranslations('catanMapGenerator');
   const [nominations, setNominations] = useState<Nomination[]>([]);
   const [loading, setLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(5); // Changed from currentPage to displayedCount
@@ -127,12 +130,12 @@ export default function CatanMapGeneratorPage() {
 
   const handleVote = async (nominationId: number) => {
     if (!isAuthenticated || !user) {
-      alert('Please log in to vote.');
+      alert(tCatan('pleaseLogInToVote'));
       return;
     }
 
     if (!currentUserId) {
-      alert('User ID not available. Please refresh the page and try again.');
+      alert(tCatan('userIdNotAvailable'));
       return;
     }
 
@@ -201,10 +204,10 @@ export default function CatanMapGeneratorPage() {
       const result = await response.json();
       
       // Show success message
-      showToast(hasVoted ? 'Vote removed successfully!' : 'Vote submitted successfully!', 'success');
+      showToast(hasVoted ? tCatan('voteRemovedSuccessfully') : tCatan('voteSubmittedSuccessfully'), 'success');
     } catch (error) {
       console.error('Failed to submit vote:', error);
-      showToast('Failed to submit vote. Please try again.', 'error');
+      showToast(tCatan('failedToSubmitVote'), 'error');
     }
   };
 
@@ -262,7 +265,7 @@ export default function CatanMapGeneratorPage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {tCatan('backToHome')}
           </Link>
         </div>
       </div>
@@ -272,10 +275,13 @@ export default function CatanMapGeneratorPage() {
         <div className="flex items-center justify-center mb-8 pt-8 sm:pt-0">
           <div className="flex items-center space-x-4 max-w-full">
             <div className="text-center flex-1 min-w-0">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2 break-words">Catan Map Generator</h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2 break-words">{tCatan('title')}</h1>
               <p className="text-lg text-gray-600 break-words">
-                <span className="block sm:hidden">Create and share your<br />custom Catan maps</span>
-                <span className="hidden sm:block">Create and share your custom Catan maps</span>
+                <span className="block sm:hidden">
+                  {tCatan('subtitle').split(' ').slice(0, 4).join(' ')}<br />
+                  {tCatan('subtitle').split(' ').slice(4).join(' ')}
+                </span>
+                <span className="hidden sm:block">{tCatan('subtitle')}</span>
               </p>
             </div>
           </div>
@@ -288,13 +294,13 @@ export default function CatanMapGeneratorPage() {
         <div className="mt-4 sm:mt-6 bg-white rounded-lg p-8 shadow-md">
           <h2 className="text-2xl font-bold text-dark-900 mb-6 text-center flex items-center justify-center gap-2">
             <Trophy className="w-8 h-8" style={{ color: '#fbae17' }} />
-            Top 10 Community Favorite Maps
+            {tCatan('top10CommunityFavoriteMaps')}
           </h2>
           
           {loading ? (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderBottomColor: '#fbae17' }}></div>
-              <p className="mt-2 text-dark-600">Loading top maps...</p>
+              <p className="mt-2 text-dark-600">{tCatan('loadingTopMaps')}</p>
             </div>
           ) : (
             <>
@@ -334,7 +340,7 @@ export default function CatanMapGeneratorPage() {
                             e.stopPropagation();
                             handleVote(nomination.id);
                           }}
-                          title={userVotedNominations.has(nomination.id) ? 'Remove vote' : 'Add vote'}
+                          title={userVotedNominations.has(nomination.id) ? tCatan('removeVote') : tCatan('addVote')}
                           className={`text-xs transition-colors ${
                             userVotedNominations.has(nomination.id)
                               ? 'text-green-600 hover:text-green-700'
@@ -350,7 +356,7 @@ export default function CatanMapGeneratorPage() {
                           {nomination.username ? (
                             nomination.username
                           ) : (
-                            nomination.userId ? `User_${nomination.userId.slice(-6)}` : 'Anonymous'
+                            nomination.userId ? `User_${nomination.userId.slice(-6)}` : tCatan('anonymous')
                           )}
                         </span>
                       </div>
@@ -366,8 +372,8 @@ export default function CatanMapGeneratorPage() {
                          alt="No maps available" 
                          className="w-24 h-24 opacity-60 mx-auto mb-4"
                        />
-                       <p className="text-gray-500 text-lg">No maps available yet</p>
-                       <p className="text-gray-400 text-sm">Be the first to create and nominate a map!</p>
+                       <p className="text-gray-500 text-lg">{tCatan('noMapsAvailable')}</p>
+                       <p className="text-gray-400 text-sm">{tCatan('beFirstToCreate')}</p>
                      </div>
                    </div>
                  )}
@@ -380,9 +386,9 @@ export default function CatanMapGeneratorPage() {
         <div className="mt-4 sm:mt-6 bg-white rounded-lg p-8 shadow-md">
                      <h2 className="text-2xl font-bold text-dark-900 mb-6 text-center flex items-center justify-center gap-2">
              <Star className="w-8 h-8" style={{ color: '#fbae17' }} />
-             Community Nominated Maps
+             {tCatan('communityNominatedMaps')}
            </h2>
-          <p className="text-center text-dark-600 mb-8">Discover amazing maps created and nominated by the King Dice community</p>
+          <p className="text-center text-dark-600 mb-8">{tCatan('discoverAmazingMaps')}</p>
           
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
@@ -431,7 +437,7 @@ export default function CatanMapGeneratorPage() {
                             e.stopPropagation();
                             handleVote(nomination.id);
                           }}
-                          title={userVotedNominations.has(nomination.id) ? 'Remove vote' : 'Add vote'}
+                          title={userVotedNominations.has(nomination.id) ? tCatan('removeVote') : tCatan('addVote')}
                           className={`text-xs transition-colors ${
                             userVotedNominations.has(nomination.id)
                               ? 'text-green-600 hover:text-green-700'
@@ -447,7 +453,7 @@ export default function CatanMapGeneratorPage() {
                           {nomination.username ? (
                             nomination.username
                           ) : (
-                            nomination.userId ? `User_${nomination.userId.slice(-6)}` : 'Anonymous'
+                            nomination.userId ? `User_${nomination.userId.slice(-6)}` : tCatan('anonymous')
                           )}
                         </span>
                       </div>
@@ -460,7 +466,7 @@ export default function CatanMapGeneratorPage() {
                   <div className="col-span-full flex justify-center items-center py-8">
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-gray-600">Loading more maps...</span>
+                      <span className="text-gray-600">{tCatan('loadingMoreMaps')}</span>
                     </div>
                   </div>
                 )}
@@ -469,7 +475,7 @@ export default function CatanMapGeneratorPage() {
                 {/* End of maps message */}
                 {!hasMoreMaps && nominations.length > 0 && (
                   <div className="col-span-full flex justify-center py-4">
-                    <span className="text-gray-500 text-sm">You've reached the end! No more maps to load.</span>
+                    <span className="text-gray-500 text-sm">{tCatan('reachedEnd')}</span>
                   </div>
                 )}
                 
@@ -482,8 +488,8 @@ export default function CatanMapGeneratorPage() {
                          alt="No maps available" 
                          className="w-24 h-24 opacity-60 mx-auto mb-4"
                        />
-                       <p className="text-gray-500 text-lg">No maps available yet</p>
-                       <p className="text-gray-400 text-sm">Be the first to create and nominate a map!</p>
+                       <p className="text-gray-500 text-lg">{tCatan('noMapsAvailable')}</p>
+                       <p className="text-gray-400 text-sm">{tCatan('beFirstToCreate')}</p>
                      </div>
                    </div>
                  )}
@@ -502,7 +508,7 @@ export default function CatanMapGeneratorPage() {
                      onClick={loadMoreMaps}
                      disabled={isLoadingMore}
                    >
-                     Show More Maps
+                     {tCatan('showMoreMaps')}
                    </button>
                  </div>
                )}
@@ -532,7 +538,7 @@ export default function CatanMapGeneratorPage() {
             {/* Modal Content */}
             <div className="p-6">
               <h3 className="text-xl font-bold text-dark-900 mb-4 text-center">
-                Catan Map by {selectedMap.username || (selectedMap.userId ? `User_${selectedMap.userId.slice(-6)}` : 'Anonymous')}
+                {tCatan('catanMapBy')} {selectedMap.username || (selectedMap.userId ? `User_${selectedMap.userId.slice(-6)}` : tCatan('anonymous'))}
               </h3>
               
                              {/* Map Image */}
@@ -555,7 +561,7 @@ export default function CatanMapGeneratorPage() {
               <div className="text-center mt-4">
                 <button 
                   onClick={() => handleVote(selectedMap.id)}
-                  title={userVotedNominations.has(selectedMap.id) ? 'Remove vote' : 'Add vote'}
+                  title={userVotedNominations.has(selectedMap.id) ? tCatan('removeVote') : tCatan('addVote')}
                   className={`flex items-center gap-2 px-6 py-3 rounded-full transition-colors mx-auto ${
                     userVotedNominations.has(selectedMap.id)
                       ? 'bg-green-100 text-green-600 hover:bg-green-200'
@@ -564,7 +570,7 @@ export default function CatanMapGeneratorPage() {
                 >
                   <ThumbsUp className={`h-5 w-5 ${userVotedNominations.has(selectedMap.id) ? 'fill-current' : ''}`} />
                   <span className="font-medium">
-                    {selectedMap.votes} {selectedMap.votes === 1 ? 'like' : 'likes'}
+                    {selectedMap.votes} {selectedMap.votes === 1 ? tCatan('like') : tCatan('likes')}
                   </span>
                 </button>
             </div>
