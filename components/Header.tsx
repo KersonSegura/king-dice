@@ -14,7 +14,6 @@ import LoginModal from './LoginModal';
 import FeaturesDropdown from './FeaturesDropdown';
 import BoardgamesDropdown from './BoardgamesDropdown';
 import SearchBar from './SearchBar';
-import LanguageSwitcher from './LanguageSwitcher';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLoginModal } from '@/hooks/useLoginModal';
 
@@ -676,9 +675,6 @@ export default function Header() {
                               <div className="flex-1"><span className="text-sm font-medium">{t('settings')}</span><p className="text-xs text-gray-500">{t('manageAccount')}</p></div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                             </Link>
-                            {/* Language Switcher */}
-                            <div className="border-t border-gray-100 my-2"></div>
-                            <LanguageSwitcher />
                           </div>
                         </>
                       )}

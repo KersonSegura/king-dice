@@ -12,13 +12,18 @@ const languages = [
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ];
 
-export default function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  variant?: 'menu' | 'compact';
+}
+
+export default function LanguageSwitcher({ variant = 'menu' }: LanguageSwitcherProps) {
   const t = useTranslations('settings');
   const router = useRouter();
   const { showToast } = useToast();
   const [currentLocale, setCurrentLocale] = useState<string>('en');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isCompact = variant === 'compact';
 
   useEffect(() => {
     // Get current locale from cookie
@@ -68,30 +73,42 @@ export default function LanguageSwitcher() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
-      >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-          <Image src="/LanguageIcon.svg?v=3" alt="Language Icon" width={26} height={26} className="w-6 h-6" />
-        </div>
-        <div className="flex-1 text-left">
-          <span className="text-sm font-medium block">{t('language')}</span>
-          <span className="text-xs text-gray-500">
-            {currentLanguage.nativeName}
-          </span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+      {isCompact ? (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center space-x-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20"
+        >
+          <span className="text-sm font-semibold">
             {currentLocale.toUpperCase()}
           </span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </div>
-      </button>
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      ) : (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group"
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+            <Image src="/LanguageIcon.svg?v=3" alt="Language Icon" width={26} height={26} className="w-6 h-6" />
+          </div>
+          <div className="flex-1 text-left">
+            <span className="text-sm font-medium block">{t('language')}</span>
+            <span className="text-xs text-gray-500">
+              {currentLanguage.nativeName}
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+              {currentLocale.toUpperCase()}
+            </span>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+      )}
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className={`absolute ${isCompact ? 'top-full right-0 mt-2' : 'bottom-full left-0 right-0 mb-2'} bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden min-w-[200px]`}>
           {languages.map((language) => (
             <button
               key={language.code}

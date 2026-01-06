@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 import { useTranslations } from 'next-intl';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const BOARDLE_ASSET_BASE =
   'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images/boardle-images';
@@ -629,8 +630,12 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-gray-900 pb-12 pt-20">
+      <section className="bg-gray-900 pb-12 pt-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Language Switcher - Top Right Corner */}
+          <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
+            <LanguageSwitcher variant="compact" />
+          </div>
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight" style={{ overflow: 'visible' }}>
               <span className="text-white">{t('shareCollection1')}</span>
