@@ -7,6 +7,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { Palette, Clock, Users, Square, RefreshCw, ZoomIn, ZoomOut, RotateCcw, Pipette } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { saveWeeklySnapshot, shouldTakeWeeklySnapshot, markWeeklySnapshotTaken } from '@/lib/canvas-snapshot';
+import { useTranslations } from 'next-intl';
 
 interface PixelCanvasProps {
   width?: number;
@@ -52,6 +53,7 @@ export default function PixelCanvas({
 }: PixelCanvasProps) {
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
+  const tPixel = useTranslations('pixelCanvas');
   const [canvasData, setCanvasData] = useState<CanvasData | null>(null);
   const [stats, setStats] = useState<CanvasStats | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<number>(0); // Real-time online users viewing the canvas
@@ -415,7 +417,7 @@ export default function PixelCanvas({
       }
     } catch (error) {
       console.error('[PIXEL CANVAS] Error placing pixel:', error);
-      showToast('Failed to place pixel', 'error');
+      showToast(tPixel('failedToPlacePixel'), 'error');
     } finally {
       setIsPlacing(false);
     }
@@ -426,7 +428,7 @@ export default function PixelCanvas({
     console.log('[PIXEL CANVAS] handlePixelClick called:', { x, y, isAuthenticated, hasUser: !!user, countdownTimer });
     
     if (!isAuthenticated || !user) {
-      showToast('Please sign in to place pixels', 'error');
+      showToast(tPixel('pleaseSignInToPlacePixels'), 'error');
       return;
     }
 
@@ -509,7 +511,7 @@ export default function PixelCanvas({
         if (result && result.sRGBHex) {
           setSelectedColor(result.sRGBHex);
           setTempColorCode(result.sRGBHex);
-          showToast('Color picked from screen!', 'success');
+          showToast(tPixel('colorPickedFromScreen'), 'success');
         }
       } else {
         // Fallback to screen capture for browsers without Eyedropper API
@@ -606,7 +608,7 @@ export default function PixelCanvas({
               
               setSelectedColor(color);
               setTempColorCode(color);
-              showToast('Color picked from screen!', 'success');
+              showToast(tPixel('colorPickedFromScreen'), 'success');
             }
             
             // Clean up
@@ -1183,7 +1185,7 @@ export default function PixelCanvas({
     return (
       <div className="flex items-center justify-center p-8">
         <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600">Loading canvas...</span>
+        <span className="ml-2 text-gray-600">{tPixel('loadingCanvas')}</span>
       </div>
     );
   }
@@ -1191,7 +1193,7 @@ export default function PixelCanvas({
   if (!canvasData) {
     return (
       <div className="text-center p-8">
-        <p className="text-red-500">Failed to load canvas</p>
+        <p className="text-red-500">{tPixel('failedToLoadCanvas')}</p>
       </div>
     );
   }
@@ -1203,7 +1205,7 @@ export default function PixelCanvas({
         {/* Title */}
         <div className="flex items-center justify-center space-x-2 mb-3">
           <Square className="w-6 h-6 text-blue-500" />
-          <h2 className="text-xl font-bold text-gray-900">Community Pixel Canvas</h2>
+          <h2 className="text-xl font-bold text-gray-900">{tPixel('communityPixelCanvas')}</h2>
         </div>
         
         {/* Stats - Second Line */}
@@ -1211,11 +1213,11 @@ export default function PixelCanvas({
           <div className="flex items-center justify-center space-x-4 text-sm text-gray-600 flex-wrap gap-2">
             <div className="flex items-center space-x-1">
               <Square className="w-4 h-4" />
-              <span>{width * height} pixels</span>
+              <span>{width * height} {tPixel('pixels')}</span>
             </div>
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
-              <span>{onlineUsers > 0 ? onlineUsers : (stats?.uniqueUsers || 0)} users</span>
+              <span>{onlineUsers > 0 ? onlineUsers : (stats?.uniqueUsers || 0)} {tPixel('users')}</span>
             </div>
           </div>
         )}
@@ -1227,7 +1229,7 @@ export default function PixelCanvas({
         <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-lg">
           <div className="flex items-center space-x-2">
             <Clock className="w-4 h-4" />
-            <span>Cooldown: {cooldownRemaining} minute(s) remaining</span>
+            <span>{tPixel('cooldownMinutesRemaining', { minutes: cooldownRemaining })}</span>
           </div>
         </div>
       )}
@@ -1241,7 +1243,7 @@ export default function PixelCanvas({
               <button
                 onClick={handleZoomOut}
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                title="Zoom Out"
+                title={tPixel('zoomOut')}
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
@@ -1251,14 +1253,14 @@ export default function PixelCanvas({
               <button
                 onClick={handleZoomIn}
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                title="Zoom In"
+                title={tPixel('zoomIn')}
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
               <button
                 onClick={handleResetView}
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                title="Reset View"
+                title={tPixel('resetView')}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -1270,8 +1272,8 @@ export default function PixelCanvas({
                 <Clock className="w-4 h-4" />
                 <span>
                   {countdownTimer ? (
-                    `${countdownTimer}s cooldown`
-                  ) : 'Ready to paint'}
+                    tPixel('cooldownSeconds', { seconds: countdownTimer })
+                  ) : tPixel('readyToPaint')}
                 </span>
               </div>
             )}
@@ -1335,7 +1337,7 @@ export default function PixelCanvas({
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
               <Palette className="w-5 h-5 mr-2 text-blue-500" />
-              Color Palette
+              {tPixel('colorPalette')}
             </h3>
             
             {/* Color Grid */}
@@ -1362,7 +1364,7 @@ export default function PixelCanvas({
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
                 <label className="block text-sm font-semibold text-gray-700">
-                  Color Picker
+                  {tPixel('colorPicker')}
                 </label>
                 <div className="relative">
                   <button
@@ -1373,7 +1375,7 @@ export default function PixelCanvas({
                         ? 'border-blue-500 bg-blue-50 text-blue-600' 
                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                     }`}
-                    title={isEyedropperMode ? "Click to deactivate eyedropper" : "Pick color from anywhere on screen"}
+                    title={isEyedropperMode ? tPixel('deactivateEyedropper') : tPixel('pickColorFromScreen')}
                   >
                     <Pipette className="w-5 h-5" />
                   </button>
@@ -1385,7 +1387,7 @@ export default function PixelCanvas({
                 onClick={handleColorBarClick}
                 className="w-full h-12 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-gray-300 transition-colors flex items-center justify-center mb-4"
                 style={{ backgroundColor: selectedColor }}
-                title="Click to open advanced color picker"
+                title={tPixel('openAdvancedColorPicker')}
               >
                 <span className="text-white font-semibold text-sm drop-shadow-lg">
                   {selectedColor}
@@ -1405,10 +1407,10 @@ export default function PixelCanvas({
               {isEyedropperMode && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-700 font-medium">
-                    🔍 Eyedropper Active
+                    {tPixel('eyedropperActive')}
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
-                    Click anywhere on your screen to pick colors. Press ESC to cancel.
+                    {tPixel('eyedropperInstructions')}
                   </p>
                 </div>
               )}
@@ -1423,7 +1425,7 @@ export default function PixelCanvas({
                   style={{ backgroundColor: selectedColor }}
                 />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900 mb-1">Selected Color</p>
+                  <p className="text-sm font-semibold text-gray-900 mb-1">{tPixel('selectedColor')}</p>
                   {isEditingColor ? (
                     <input
                       type="text"
@@ -1439,7 +1441,7 @@ export default function PixelCanvas({
                     <div 
                       className="text-xs text-gray-600 font-mono bg-white px-2 py-1 rounded border cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={handleColorCodeEdit}
-                      title="Click to edit color code"
+                      title={tPixel('clickToEditColorCode')}
                     >
                       {selectedColor}
                     </div>
@@ -1452,13 +1454,13 @@ export default function PixelCanvas({
           {/* Hint Section */}
           <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-2">Hints:</p>
+              <p className="font-medium mb-2">{tPixel('hints')}</p>
                               <ul className="space-y-1">
-                  <li>• The cooldown to paint a new pixel is<br /><strong>10 seconds.</strong></li>
-                  <li>• Single click on any pixel to place your color.</li>
-                  <li>• Click and drag to move the camera around.</li>
+                  <li>• {tPixel('cooldownHint')}<br /><strong>{tPixel('cooldownSecondsValue')}</strong></li>
+                  <li>• {tPixel('singleClickHint')}</li>
+                  <li>• {tPixel('dragHint')}</li>
                   <li className="bg-yellow-100 border border-yellow-300 rounded-lg p-2 mt-2">
-                    <strong>💬 Use the Live Chat below to cooperate with other artists and coordinate your pixel art!</strong>
+                    <strong>{tPixel('chatHint')}</strong>
                   </li>
                 </ul>
             </div>

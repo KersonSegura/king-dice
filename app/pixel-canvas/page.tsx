@@ -9,6 +9,7 @@ import Link from 'next/link';
 import PixelCanvas from '@/components/PixelCanvas';
 import LoginModal from '@/components/LoginModal';
 import WeeklyCanvasSnapshot from '@/components/WeeklyCanvasSnapshot';
+import { useTranslations } from 'next-intl';
 
 interface ChatMessage {
   id: string;
@@ -35,6 +36,8 @@ interface ChatMessage {
 }
 
 export default function PixelCanvasPage() {
+  const t = useTranslations('common');
+  const tPixel = useTranslations('pixelCanvas');
   const { user, isAuthenticated, isLoading } = useAuth();
   const { socket, isConnected } = useSocket();
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -449,7 +452,7 @@ export default function PixelCanvasPage() {
   }, []);
 
   const formatResetTime = (utcDate: Date | null) => {
-    if (!utcDate) return 'Calculating...';
+    if (!utcDate) return tPixel('calculating');
     
     // Convert UTC time to user's local timezone
     const localTime = utcDate.toLocaleTimeString('en-US', {
@@ -632,7 +635,7 @@ export default function PixelCanvasPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{tPixel('loading')}</p>
         </div>
       </div>
     );
@@ -648,7 +651,7 @@ export default function PixelCanvasPage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Home
+            {tPixel('backToHome')}
           </Link>
         </div>
       </div>
@@ -659,8 +662,8 @@ export default function PixelCanvasPage() {
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Pixel Canvas</h1>
-              <p className="text-lg text-gray-600">Create pixel art with the community</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">{tPixel('title')}</h1>
+              <p className="text-lg text-gray-600">{tPixel('subtitle')}</p>
             </div>
           </div>
         </div>
@@ -680,17 +683,17 @@ export default function PixelCanvasPage() {
             <div className="bg-white rounded-lg shadow-sm border p-6 h-[700px] flex flex-col">
               <div className="mb-4">
                 {/* Title - First Line */}
-                <h2 className="text-xl font-semibold text-gray-900 text-center mb-3">Live Chat</h2>
+                <h2 className="text-xl font-semibold text-gray-900 text-center mb-3">{tPixel('liveChat')}</h2>
                 
                 {/* Stats - Second Line */}
                 <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 flex-wrap gap-2">
                   <div className="flex items-center space-x-1">
                     <Users className="w-4 h-4" />
-                    <span>{onlineUsers} online</span>
+                    <span>{onlineUsers} {tPixel('online')}</span>
                   </div>
                   <div className="flex items-center space-x-1 text-xs text-gray-400">
                     <span>🕐</span>
-                    <span>Resets at midnight</span>
+                    <span>{tPixel('resetsAtMidnight')}</span>
                   </div>
                 </div>
               </div>
@@ -701,16 +704,16 @@ export default function PixelCanvasPage() {
                   <div className="flex items-center justify-center h-full text-center">
                     <div className="text-gray-500">
                       <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-medium mb-2">Join the conversation!</p>
-                      <p className="text-sm">Please log in to see messages and chat with other pixel artists.</p>
+                      <p className="text-lg font-medium mb-2">{tPixel('joinConversation')}</p>
+                      <p className="text-sm">{tPixel('pleaseLogInToSeeMessages')}</p>
                     </div>
                   </div>
                 ) : chatMessages.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-center">
                     <div className="text-gray-500">
                       <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-medium mb-2">No messages yet</p>
-                      <p className="text-sm">Be the first to start the conversation!</p>
+                      <p className="text-lg font-medium mb-2">{tPixel('noMessagesYet')}</p>
+                      <p className="text-sm">{tPixel('beFirstToStart')}</p>
                     </div>
                   </div>
                 ) : (
@@ -772,7 +775,7 @@ export default function PixelCanvasPage() {
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         </div>
-                        <span>{typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...</span>
+                        <span>{typingUsers.join(', ')} {typingUsers.length === 1 ? tPixel('isTyping') : tPixel('areTyping')}</span>
                       </div>
                     )}
                     
@@ -790,7 +793,7 @@ export default function PixelCanvasPage() {
                       value={newMessage}
                       onChange={handleTyping}
                       onKeyPress={handleKeyPress}
-                      placeholder={rtConnected ? "Type your message..." : "Connecting..."}
+                      placeholder={rtConnected ? tPixel('typeYourMessage') : tPixel('connecting')}
                       disabled={!rtConnected}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                     />
@@ -804,12 +807,12 @@ export default function PixelCanvasPage() {
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p className="text-sm mb-2">Please log in to participate in the chat</p>
+                    <p className="text-sm mb-2">{tPixel('pleaseLogInToParticipate')}</p>
                     <button 
                       onClick={() => setShowLoginModal(true)}
                       className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                      Sign In
+                      {tPixel('signIn')}
                     </button>
                   </div>
                 )}
@@ -817,7 +820,7 @@ export default function PixelCanvasPage() {
                 {isAuthenticated && !rtConnected && (
                   <p className="text-xs text-red-500 mt-2">
                     <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span>
-                    Chat is currently disconnected
+                    {tPixel('chatDisconnected')}
                   </p>
                 )}
               </div>
