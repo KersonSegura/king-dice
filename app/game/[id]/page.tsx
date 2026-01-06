@@ -10,7 +10,7 @@ import { useState, useEffect, use, useRef, useCallback } from 'react';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -478,6 +478,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   // Translation hooks
   const t = useTranslations('common');
   const tGame = useTranslations('game');
+  const locale = useLocale();
 
   // Check if desktop view and calculate available width
   useEffect(() => {
@@ -1497,7 +1498,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             key={gc.category.id}
                             className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
                           >
-                            {gc.category.nameEn}
+                            {locale === 'es' ? gc.category.nameEs : gc.category.nameEn}
                           </span>
                         ))}
                       </div>
@@ -1513,7 +1514,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                             key={gm.mechanic.id}
                             className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"
                           >
-                            {gm.mechanic.nameEn}
+                            {locale === 'es' ? gm.mechanic.nameEs : gm.mechanic.nameEn}
                           </span>
                         ))}
                       </div>

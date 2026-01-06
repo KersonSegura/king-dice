@@ -10,6 +10,7 @@ import VideoLinks from './VideoLinks';
 import PDFHandler from './PDFHandler';
 import GameSearchModal from './GameSearchModal';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
+import { useLocale } from 'next-intl';
 // import BackToTopButton from './BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -119,6 +120,7 @@ interface NewGameForm {
 
 function BoardGameDatabaseContent() {
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const [games, setGames] = useState<Game[]>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1478,7 +1480,7 @@ function BoardGameDatabaseContent() {
                           key={gc.category.id}
                           className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                         >
-                          {gc.category.nameEn}
+                          {locale === 'es' ? gc.category.nameEs : gc.category.nameEn}
                         </span>
                       ))}
                     </div>
@@ -1493,7 +1495,7 @@ function BoardGameDatabaseContent() {
                           key={gm.mechanic.id}
                           className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
                         >
-                          {gm.mechanic.nameEn}
+                          {locale === 'es' ? gm.mechanic.nameEs : gm.mechanic.nameEn}
                         </span>
                       ))}
                     </div>
