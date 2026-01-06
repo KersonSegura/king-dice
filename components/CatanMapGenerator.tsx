@@ -2725,7 +2725,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                 disabled={isGenerating || hexagons.length === 0 || isNominating}
                 className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
                 id="nomination-star-button"
-                title="Nominate this Classic Catan map"
+                title={tCatan('nominateThisClassicMap')}
               >
                 {isNominating ? (
                   <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
