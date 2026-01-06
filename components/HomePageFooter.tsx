@@ -30,7 +30,7 @@ export default function HomePageFooter() {
                 {t('helpKeepRunning')}
               </p>
               <button className="bg-[#fbae17] hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                $5/month
+                {t('price5PerMonth')}
               </button>
             </div>
             
@@ -41,7 +41,7 @@ export default function HomePageFooter() {
                 {t('unlockExclusive')}
               </p>
               <button className="bg-[#fbae17] hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                $10/month
+                {t('price10PerMonth')}
               </button>
             </div>
             
@@ -73,7 +73,7 @@ export default function HomePageFooter() {
                 {t('previousPerks')}
               </p>
               <button className="bg-[#fbae17] hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                $25/month
+                {t('price25PerMonth')}
               </button>
             </div>
           </div>

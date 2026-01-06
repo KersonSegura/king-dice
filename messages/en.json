@@ -312,7 +312,10 @@
     "communityRules": "Community Rules",
     "credits": "Credits",
     "madeWithLove": "Made with {heart} for board game lovers",
-    "joinDiscord": "Join Discord"
+    "joinDiscord": "Join Discord",
+    "price5PerMonth": "$5/month",
+    "price10PerMonth": "$10/month",
+    "price25PerMonth": "$25/month"
   },
   "chat": {
     "searchForUsers": "Search for users...",
