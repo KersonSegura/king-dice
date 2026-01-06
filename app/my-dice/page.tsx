@@ -1468,11 +1468,11 @@ export default function MyDicePage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">{tMyDice('tipsForLevelingUp')}</h3>
                 <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• <strong>{tMyDice('qualityOverQuantity').split(':')[0]}:</strong> {tMyDice('qualityOverQuantity').split(':')[1]}</li>
-                  <li>• <strong>{tMyDice('beActiveDaily').split(':')[0]}:</strong> {tMyDice('beActiveDaily').split(':')[1]}</li>
-                  <li>• <strong>{tMyDice('helpOthers').split(':')[0]}:</strong> {tMyDice('helpOthers').split(':')[1]}</li>
-                  <li>• <strong>{tMyDice('shareYourCreations').split(':')[0]}:</strong> {tMyDice('shareYourCreations').split(':')[1]}</li>
-                  <li>• <strong>{tMyDice('engageWithContent').split(':')[0]}:</strong> {tMyDice('engageWithContent').split(':')[1]}</li>
+                  <li dangerouslySetInnerHTML={{ __html: tMyDice('qualityOverQuantity') }} />
+                  <li dangerouslySetInnerHTML={{ __html: tMyDice('beActiveDaily') }} />
+                  <li dangerouslySetInnerHTML={{ __html: tMyDice('helpOthers') }} />
+                  <li dangerouslySetInnerHTML={{ __html: tMyDice('shareYourCreations') }} />
+                  <li dangerouslySetInnerHTML={{ __html: tMyDice('engageWithContent') }} />
                 </ul>
               </div>
             </div>
