@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Square, Calendar, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface WeeklySnapshot {
   id: string;
@@ -11,6 +12,7 @@ interface WeeklySnapshot {
 }
 
 export default function WeeklyCanvasSnapshot() {
+  const tPixel = useTranslations('pixelCanvas');
   const [snapshot, setSnapshot] = useState<WeeklySnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [nextSnapshotTime, setNextSnapshotTime] = useState<string>('');
@@ -266,7 +268,7 @@ export default function WeeklyCanvasSnapshot() {
         <div className="animate-pulse">
           <div className="flex items-center space-x-2 mb-3">
             <Calendar className="w-5 h-5 text-blue-500" />
-            <h3 className="text-lg font-semibold text-gray-900">Loading...</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{tPixel('loading')}</h3>
           </div>
           <div className="bg-gray-200 rounded-lg h-48 w-full"></div>
         </div>
@@ -279,11 +281,11 @@ export default function WeeklyCanvasSnapshot() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Calendar className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-semibold text-gray-900">Our Canvas Last Week</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{tPixel('ourCanvasLastWeek')}</h3>
         </div>
         {nextSnapshotTime && (
           <div className="text-xs text-gray-500">
-            Next: {nextSnapshotTime}
+            {tPixel('next')} {nextSnapshotTime}
           </div>
         )}
       </div>
@@ -294,7 +296,7 @@ export default function WeeklyCanvasSnapshot() {
           <button
             onClick={handleZoomOut}
             className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title="Zoom Out"
+            title={tPixel('zoomOut')}
           >
             <ZoomOut className="w-4 h-4" />
           </button>
@@ -304,14 +306,14 @@ export default function WeeklyCanvasSnapshot() {
           <button
             onClick={handleZoomIn}
             className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title="Zoom In"
+            title={tPixel('zoomIn')}
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={handleResetView}
             className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            title="Reset View"
+            title={tPixel('resetView')}
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -342,7 +344,7 @@ export default function WeeklyCanvasSnapshot() {
           >
             <img 
               src={snapshot.imageData} 
-              alt="Canvas from last week"
+              alt={tPixel('canvasFromLastWeek')}
               className="rounded border border-gray-300"
               style={{ 
                 imageRendering: 'pixelated',
@@ -354,7 +356,7 @@ export default function WeeklyCanvasSnapshot() {
           </div>
         ) : (
           <div className="bg-gray-200 rounded border border-gray-300 h-48 w-48 flex items-center justify-center">
-            <span className="text-gray-500 text-sm">No snapshot yet</span>
+            <span className="text-gray-500 text-sm">{tPixel('noSnapshotYet')}</span>
           </div>
         )}
       </div>

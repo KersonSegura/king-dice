@@ -979,6 +979,10 @@
     "chatHint": "💬 Use the Live Chat below to cooperate with other artists and coordinate your pixel art!",
     "pleaseSignInToPlacePixels": "Please sign in to place pixels",
     "failedToPlacePixel": "Failed to place pixel",
-    "colorPickedFromScreen": "Color picked from screen!"
+    "colorPickedFromScreen": "Color picked from screen!",
+    "ourCanvasLastWeek": "Our Canvas Last Week",
+    "next": "Next:",
+    "canvasFromLastWeek": "Canvas from last week",
+    "noSnapshotYet": "No snapshot yet"
   }
 }

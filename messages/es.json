@@ -1001,6 +1001,10 @@
     "chatHint": "💬 ¡Usa el Chat en Vivo a continuación para cooperar con otros artistas y coordinar tu arte de píxeles!",
     "pleaseSignInToPlacePixels": "Por favor inicia sesión para colocar píxeles",
     "failedToPlacePixel": "Error al colocar el píxel",
-    "colorPickedFromScreen": "¡Color elegido de la pantalla!"
+    "colorPickedFromScreen": "¡Color elegido de la pantalla!",
+    "ourCanvasLastWeek": "Nuestro Lienzo de la Semana Pasada",
+    "next": "Próximo:",
+    "canvasFromLastWeek": "Lienzo de la semana pasada",
+    "noSnapshotYet": "Aún no hay instantánea"
   }
 }
