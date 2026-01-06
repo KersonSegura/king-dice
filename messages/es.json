@@ -1068,5 +1068,19 @@
     "letterWrongPosition": "La letra está en el nombre del juego pero en posición incorrecta",
     "letterNotInName": "La letra no está en el nombre del juego",
     "gotIt": "¡Entendido!"
+  },
+  "diceRoller": {
+    "virtualDiceStudio": "Estudio Virtual de Dados",
+    "addDiceToPool": "Añade dados al grupo y tíralos juntos.",
+    "dieInPool": "{count} dado en el grupo",
+    "diceInPool": "{count} dados en el grupo",
+    "removeDie": "Eliminar dado",
+    "rolling": "Tirando...",
+    "rollDie": "Tirar {count} Dado",
+    "rollDice": "Tirar {count} Dados",
+    "total": "Total: {total}",
+    "faces": "{count} caras",
+    "addToPool": "Añadir {label} al grupo",
+    "maximumDice": "Máximo 10 dados en el grupo"
   }
 }

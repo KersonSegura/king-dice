@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import DiceButton from './DiceButton';
 import diceTypes, { DEFAULT_DICE } from './diceTypes';
 import { getRandomRoll } from './diceLogic';
@@ -9,6 +10,7 @@ import { getRandomRoll } from './diceLogic';
 const DiceScene = dynamic(() => import('./DiceScene'), { ssr: false });
 
 export default function DiceRoller() {
+  const tDiceRoller = useTranslations('diceRoller');
   const [dicePool, setDicePool] = useState([{ ...DEFAULT_DICE, id: Date.now() }]); // Array of dice in the pool with unique IDs
   const [rollResults, setRollResults] = useState([]); // Array of roll results
   const [rollSignal, setRollSignal] = useState(0);
@@ -51,8 +53,8 @@ export default function DiceRoller() {
     <section className="min-h-screen bg-slate-950 text-white px-6 py-16">
       <div className="max-w-5xl mx-auto space-y-10">
         <div className="text-center space-y-2">
-          <p className="text-sm uppercase tracking-[0.25em] text-amber-300/80">Virtual Dice Studio</p>
-          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">Add dice to the pool and roll them together.</h1>
+          <p className="text-sm uppercase tracking-[0.25em] text-amber-300/80">{tDiceRoller('virtualDiceStudio')}</p>
+          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">{tDiceRoller('addDiceToPool')}</h1>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-4xl mx-auto">
@@ -73,7 +75,9 @@ export default function DiceRoller() {
             {/* Pool Info */}
             <div className="mb-4 text-center">
               <p className="text-sm text-white/60">
-                {dicePool.length} {dicePool.length === 1 ? 'die' : 'dice'} in pool
+                {dicePool.length === 1 
+                  ? tDiceRoller('dieInPool', { count: dicePool.length })
+                  : tDiceRoller('diceInPool', { count: dicePool.length })}
               </p>
             </div>
 
@@ -125,7 +129,7 @@ export default function DiceRoller() {
                         lineHeight: '1',
                         textAlign: 'center'
                       }}
-                      title="Remove die"
+                      title={tDiceRoller('removeDie')}
                     >
                       ×
                     </button>
@@ -145,11 +149,15 @@ export default function DiceRoller() {
                     : 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-500/30'
                 }`}
               >
-                {isRolling ? 'Rolling...' : `Roll ${dicePool.length} ${dicePool.length === 1 ? 'Die' : 'Dice'}`}
+                {isRolling 
+                  ? tDiceRoller('rolling')
+                  : dicePool.length === 1
+                    ? tDiceRoller('rollDie', { count: dicePool.length })
+                    : tDiceRoller('rollDice', { count: dicePool.length })}
               </button>
               {rollResults.length > 0 && !isRolling && (
                 <div className="text-white font-bold text-xl whitespace-nowrap">
-                  Total: {total}
+                  {tDiceRoller('total', { total })}
                 </div>
               )}
             </div>

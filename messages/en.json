@@ -1046,5 +1046,19 @@
     "letterWrongPosition": "Letter is in the game name but wrong position",
     "letterNotInName": "Letter is not in the game name",
     "gotIt": "Got it!"
+  },
+  "diceRoller": {
+    "virtualDiceStudio": "Virtual Dice Studio",
+    "addDiceToPool": "Add dice to the pool and roll them together.",
+    "dieInPool": "{count} die in pool",
+    "diceInPool": "{count} dice in pool",
+    "removeDie": "Remove die",
+    "rolling": "Rolling...",
+    "rollDie": "Roll {count} Die",
+    "rollDice": "Roll {count} Dice",
+    "total": "Total: {total}",
+    "faces": "{count} faces",
+    "addToPool": "Add {label} to pool",
+    "maximumDice": "Maximum 10 dice in pool"
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
 // Dynamically import the Canvas component with SSR disabled
@@ -11,6 +12,7 @@ const DiceButtonCanvas = dynamic(() => import('./DiceButtonCanvas'), {
 });
 
 export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
+  const tDiceRoller = useTranslations('diceRoller');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
       </div>
       <div className="flex-1 min-w-0 -ml-2 md:ml-0">
         <p className="font-semibold text-white">{dice.label.toUpperCase()}</p>
-        <p className="text-xs uppercase tracking-wide text-white/60 whitespace-nowrap">{dice.faces} faces</p>
+        <p className="text-xs uppercase tracking-wide text-white/60 whitespace-nowrap">{tDiceRoller('faces', { count: dice.faces })}</p>
       </div>
       <button
         type="button"
@@ -54,7 +56,7 @@ export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
           lineHeight: '1',
           textAlign: 'center'
         }}
-        title={canAdd ? `Add ${dice.label} to pool` : 'Maximum 10 dice in pool'}
+        title={canAdd ? tDiceRoller('addToPool', { label: dice.label }) : tDiceRoller('maximumDice')}
       >
         +
       </button>
