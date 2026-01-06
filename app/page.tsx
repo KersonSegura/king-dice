@@ -961,7 +961,7 @@ export default function HomePage() {
                 </div>
               ))
             ) : (
-              hotGames.map((game, index) => (
+              hotGames.slice(0, 6).map((game, index) => (
                 <GameCardWithVote 
                   key={game.id} 
                   game={game}
@@ -1013,7 +1013,7 @@ export default function HomePage() {
                 </div>
               ))
             ) : (
-              topRankedGames.map((game, index) => (
+              topRankedGames.slice(0, 6).map((game, index) => (
                 <GameCardWithVote 
                   key={game.id} 
                   game={game}
