@@ -1,10 +1,13 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Mail, MessageCircle, Users, Gamepad2, BookOpen, Star, Shield } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function Footer() {
+  const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -26,8 +29,7 @@ export default function Footer() {
               <span className="text-xl font-bold">King Dice</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">
-              Your ultimate destination for board game rules, community discussions, and gaming tools. 
-              Join thousands of players discovering their next favorite game.
+              {t('kingDiceDescription')}
             </p>
             <div className="flex space-x-4">
               <a
@@ -98,27 +100,27 @@ export default function Footer() {
                   <circle cx="17" cy="17" r="0.7" fill="currentColor" />
                 </svg>
               </div>
-              Games
+              {t('games')}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/all-games" className="text-gray-400 hover:text-white transition-colors">
-                  All Games
+                  {t('allGames')}
                 </Link>
               </li>
               <li>
                 <Link href="/hot-games" className="text-gray-400 hover:text-white transition-colors">
-                  Hot Games
+                  {t('hotGames')}
                 </Link>
               </li>
               <li>
                 <Link href="/top-ranked" className="text-gray-400 hover:text-white transition-colors">
-                  Top Ranked
+                  {t('topRanked')}
                 </Link>
               </li>
               <li>
                 <Link href="/boardgames" className="text-gray-400 hover:text-white transition-colors">
-                  Game Database
+                  {t('gameDatabase')}
                 </Link>
               </li>
             </ul>
@@ -128,22 +130,22 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Users className="w-5 h-5 mr-2 text-[#fbae17]" />
-              Community
+              {t('community')}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/forums" className="text-gray-400 hover:text-white transition-colors">
-                  Forums
+                  {t('forums')}
                 </Link>
               </li>
               <li>
                 <Link href="/community-gallery" className="text-gray-400 hover:text-white transition-colors">
-                  Gallery
+                  {t('gallery')}
                 </Link>
               </li>
               <li>
                 <Link href="/#community-feed" className="text-gray-400 hover:text-white transition-colors">
-                  Feed
+                  {t('feed')}
                 </Link>
               </li>
               <li>
@@ -153,7 +155,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
-                  Discord Server
+                  {t('discordServer')}
                 </a>
               </li>
             </ul>
@@ -163,27 +165,27 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Star className="w-5 h-5 mr-2 text-[#fbae17]" />
-              Tools & Features
+              {t('toolsFeatures')}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/my-dice" className="text-gray-400 hover:text-white transition-colors">
-                  My Dice
+                  {t('myDice')}
                 </Link>
               </li>
               <li>
                 <Link href="/pixel-canvas" className="text-gray-400 hover:text-white transition-colors">
-                  Pixel Canvas
+                  {t('pixelCanvas')}
                 </Link>
               </li>
               <li>
                 <Link href="/boardle" className="text-gray-400 hover:text-white transition-colors">
-                  Boardle Game
+                  {t('boardleGame')}
                 </Link>
               </li>
               <li>
                 <Link href="/catan-map-generator" className="text-gray-400 hover:text-white transition-colors">
-                  Catan Maps
+                  {t('catanMaps')}
                 </Link>
               </li>
             </ul>
@@ -193,18 +195,18 @@ export default function Footer() {
         {/* Newsletter Signup */}
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="max-w-lg mx-auto text-center px-4">
-            <h3 className="text-lg font-semibold mb-2">Stay Updated</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('stayUpdated')}</h3>
             <p className="text-gray-400 text-sm mb-4">
-              Get notified about new features and updates
+              {t('getNotified')}
             </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t('enterEmail')}
                 className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg sm:rounded-l-lg sm:rounded-r-none focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] text-white placeholder-gray-400"
               />
               <button className="px-6 py-2 bg-[#fbae17] hover:bg-yellow-600 text-white rounded-lg sm:rounded-l-none sm:rounded-r-lg transition-colors font-medium whitespace-nowrap">
-                Subscribe
+                {t('subscribe')}
               </button>
             </div>
           </div>
@@ -217,27 +219,27 @@ export default function Footer() {
           <div className="md:flex md:items-center md:justify-between">
             <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-6">
               <p className="text-gray-400 text-sm">
-                © {currentYear} King Dice. All rights reserved.
+                © {currentYear} King Dice. {t('allRightsReserved')}
               </p>
               <div className="flex items-center space-x-4 text-sm">
                 <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                  Privacy Policy
+                  {t('privacyPolicy')}
                 </Link>
                 <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
-                  Terms of Service
+                  {t('termsOfService')}
                 </Link>
                 <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
-                  Community Rules
+                  {t('communityRules')}
                 </Link>
                 <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
-                  Credits
+                  {t('credits')}
                 </Link>
               </div>
             </div>
             <div className="mt-4 md:mt-0">
               <p className="text-gray-400 text-sm flex items-center">
-                Made with <Heart className="w-4 h-4 mx-1 text-red-500" /> for board game lovers
+                {t('madeWithLove', { heart: <Heart className="w-4 h-4 mx-1 text-red-500 inline" /> })}
               </p>
             </div>
           </div>
