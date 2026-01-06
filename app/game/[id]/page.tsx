@@ -901,8 +901,12 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  const description = game.descriptions?.find(d => d.language === 'en');
-  const rules = game.rules?.find(r => r.language === 'es') || game.rules?.find(r => r.language === 'en');
+  // Get description based on current locale, fallback to English
+  const description = game.descriptions?.find(d => d.language === locale) || 
+                     game.descriptions?.find(d => d.language === 'en');
+  // Get rules based on current locale, fallback to English
+  const rules = game.rules?.find(r => r.language === locale) || 
+                game.rules?.find(r => r.language === 'en');
 
   // Helper function to truncate description
   const truncateDescription = (text: string, maxLength: number = 500) => {

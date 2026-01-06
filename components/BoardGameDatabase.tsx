@@ -1188,9 +1188,12 @@ function BoardGameDatabaseContent() {
 
   const getGameDescription = (game: Game) => {
     if (game.descriptions && game.descriptions.length > 0) {
+      // Try to find description in current locale, fallback to English
+      const localeDesc = game.descriptions.find(d => d.language === locale);
       const englishDesc = game.descriptions.find(d => d.language === 'en');
-      if (englishDesc) {
-        const description = englishDesc.fullDescription || englishDesc.shortDescription || 'No description available';
+      const desc = localeDesc || englishDesc;
+      if (desc) {
+        const description = desc.fullDescription || desc.shortDescription || 'No description available';
         return cleanHtmlEntities(description);
       }
     }
@@ -1225,9 +1228,12 @@ function BoardGameDatabaseContent() {
 
   const getGameRules = (game: Game) => {
     if (game.rules && game.rules.length > 0) {
+      // Try to find rules in current locale, fallback to English
+      const localeRules = game.rules.find(r => r.language === locale);
       const englishRules = game.rules.find(r => r.language === 'en');
-      if (englishRules) {
-        const rules = englishRules.rulesText || englishRules.rulesHtml || 'No rules available';
+      const rulesObj = localeRules || englishRules;
+      if (rulesObj) {
+        const rules = rulesObj.rulesText || rulesObj.rulesHtml || 'No rules available';
         return cleanHtmlEntities(rules);
       }
     }
