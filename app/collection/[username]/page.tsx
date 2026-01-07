@@ -993,7 +993,8 @@ export default function CollectionPage() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Add Game Modal */}
       {showAddGameModal && (
