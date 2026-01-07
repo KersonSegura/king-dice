@@ -105,21 +105,34 @@ type GalleryImage = {
 };
 
 export default function HomePage() {
+  // HOME PAGE - UNIQUE IDENTIFIER: HOME_PAGE_V2
+  console.log('[HOME_PAGE_V2] Component starting');
+  
   // Hooks must be called unconditionally
   const tResult = useTranslations('home');
+  
+  console.log('[HOME_PAGE_V2] useTranslations result:', { 
+    tResultType: typeof tResult, 
+    tResultIsFunction: typeof tResult === 'function',
+    tResultValue: tResult
+  });
   
   // Ensure t is always a function with fallback
   const t: (key: string, params?: any) => string = typeof tResult === 'function' 
     ? tResult 
     : ((key: string) => {
-        console.warn('[HomePage] t is not a function, using fallback for key:', key);
+        console.warn('[HOME_PAGE_V2] t is not a function, using fallback for key:', key);
         return key;
       });
   
-  // Verify t is a function after assignment
+  // Verify t is a function after assignment - throw immediately if not
   if (typeof t !== 'function') {
-    console.error('[HomePage] FATAL: t is still not a function after assignment:', typeof t, t);
+    const error = new Error(`[HOME_PAGE_V2] FATAL: t is not a function after assignment. Type: ${typeof t}, Value: ${t}`);
+    console.error(error);
+    throw error;
   }
+  
+  console.log('[HOME_PAGE_V2] Component rendering with t:', typeof t);
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
