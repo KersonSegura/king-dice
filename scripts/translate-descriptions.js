@@ -11,7 +11,20 @@
  */
 
 require('dotenv').config({ path: '.env.local' });
-const { supabaseAdmin } = require('../lib/supabase');
+const { createClient } = require('@supabase/supabase-js');
+
+// Create Supabase admin client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('Missing Supabase credentials. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local');
+  process.exit(1);
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: { persistSession: false },
+});
 
 // Simple translation function using Google Translate API (free tier)
 // If you have a Google Translate API key, replace this with the official API
@@ -160,12 +173,12 @@ async function translateDescriptions(options = {}) {
           console.log(`  🔄 Translating description for game ${desc.gameId}...`);
           
           // Translate full description
-          const translatedFull = await translateWithGoogleAPI(desc.fullDescription, 'es');
+          const translatedFull = await translateText(desc.fullDescription, 'es');
           
           // Translate short description if it exists and is different
           let translatedShort = null;
           if (desc.shortDescription && desc.shortDescription !== desc.fullDescription.substring(0, 200)) {
-            translatedShort = await translateWithGoogleAPI(desc.shortDescription, 'es');
+            translatedShort = await translateText(desc.shortDescription, 'es');
           } else {
             // Create short description from translated full description
             translatedShort = createShortDescription(translatedFull);
