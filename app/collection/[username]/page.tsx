@@ -145,8 +145,10 @@ export default function CollectionPage() {
   // If error persists, it's from a different file or cached bundle
   console.log('[CollectionPage] Component rendering - NO t variable defined');
   
-  // Now define other hooks and variables
-  const params = useParams();
+  // Wrap in try-catch to prevent crashes
+  try {
+    // Now define other hooks and variables
+    const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
@@ -899,7 +901,7 @@ export default function CollectionPage() {
       />
 
       {/* Games List Modal */}
-      {showGamesListModal && typeof window !== 'undefined' && (
+      {showGamesListModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowGamesListModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">

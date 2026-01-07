@@ -64,6 +64,22 @@ export default async function RootLayout({
 
   const messages = messagesMap[locale] || enMessages;
 
+  // Add global error handler to catch translation errors
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', (event) => {
+      if (event.message?.includes('t is not defined') || event.message?.includes('ReferenceError: t')) {
+        console.error('[Global Error Handler] Translation error caught:', {
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          error: event.error,
+          stack: event.error?.stack
+        });
+      }
+    });
+  }
+
   return (
     <html lang={locale}>
       <body className={`${inter.className}`} suppressHydrationWarning={true}>
