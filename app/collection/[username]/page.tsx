@@ -192,8 +192,10 @@ export default function CollectionPage() {
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
 
   // Load user profile data
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!username) return;
+    
+    console.log('[loadUserProfile] Starting, t is:', typeof t, t);
     
     try {
       setLoading(true);
@@ -210,17 +212,27 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        showToast(t('userNotFound'), 'error');
+        console.log('[loadUserProfile] Response not ok, about to use t, t is:', typeof t, t);
+        if (typeof t === 'function') {
+          showToast(t('userNotFound'), 'error');
+        } else {
+          showToast('User not found', 'error');
+        }
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      showToast(t('failedToLoadCollection'), 'error');
+      console.log('[loadUserProfile] In catch, about to use t, t is:', typeof t, t);
+      if (typeof t === 'function') {
+        showToast(t('failedToLoadCollection'), 'error');
+      } else {
+        showToast('Failed to load collection', 'error');
+      }
       router.push('/');
     } finally {
       setLoading(false);
     }
-  };
+  }, [username, user?.email, router, showToast, t]);
 
   useEffect(() => {
     loadUserProfile();
