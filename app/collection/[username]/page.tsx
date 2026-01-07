@@ -144,32 +144,20 @@ const fallbackT = (key: string, params?: any) => {
 };
 
 // Define fallback translation function outside component
-const getFallbackT = () => (key: string) => key;
+const fallbackT = (key: string) => key;
 
 export default function CollectionPage() {
-  // CRITICAL: Try-catch around useTranslations to prevent crashes
-  let t: (key: string, params?: any) => string;
-  let tCommon: (key: string, params?: any) => string;
+  // Initialize translations - hooks must be called unconditionally at the top level
+  const tRaw = useTranslations('profile');
+  const tCommonRaw = useTranslations('common');
   
-  try {
-    // Initialize translations - hooks must be called unconditionally at the top level
-    const tRaw = useTranslations('profile');
-    const tCommonRaw = useTranslations('common');
-    
-    // Ensure t is always a function
-    t = typeof tRaw === 'function' ? tRaw : getFallbackT();
-    tCommon = typeof tCommonRaw === 'function' ? tCommonRaw : getFallbackT();
-  } catch (error) {
-    console.error('[CollectionPage] Error initializing translations:', error);
-    // Use fallback if useTranslations fails
-    t = getFallbackT();
-    tCommon = getFallbackT();
-  }
+  // Ensure t is always a function - use fallback if useTranslations returns undefined
+  const t: (key: string, params?: any) => string = (typeof tRaw === 'function' && tRaw) ? tRaw : fallbackT;
+  const tCommon: (key: string, params?: any) => string = (typeof tCommonRaw === 'function' && tCommonRaw) ? tCommonRaw : fallbackT;
   
-  // Verify t is defined
+  // Debug: Log if t is not a function
   if (typeof t !== 'function') {
-    console.error('[CollectionPage] t is not a function after initialization!', t);
-    t = getFallbackT();
+    console.error('[CollectionPage] CRITICAL: t is not a function!', { t, tRaw, type: typeof t });
   }
   
   // Now define other hooks and variables
