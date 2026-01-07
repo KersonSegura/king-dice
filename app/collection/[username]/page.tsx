@@ -145,10 +145,8 @@ export default function CollectionPage() {
   // If error persists, it's from a different file or cached bundle
   console.log('[CollectionPage] Component rendering - NO t variable defined');
   
-  // Wrap in try-catch to prevent crashes
-  try {
-    // Now define other hooks and variables
-    const params = useParams();
+  // Now define other hooks and variables
+  const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
