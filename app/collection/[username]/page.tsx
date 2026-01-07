@@ -151,8 +151,18 @@ export default function CollectionPage() {
   
   // Ensure t is always a function - use fallback if translation hook fails
   // Define t immediately after hooks to ensure it's always available
-  const t: (key: string, params?: any) => string = (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT;
-  const tCommon: (key: string, params?: any) => string = (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT;
+  // Use Object.freeze to prevent accidental reassignment
+  const t: (key: string, params?: any) => string = Object.freeze(
+    (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT
+  );
+  const tCommon: (key: string, params?: any) => string = Object.freeze(
+    (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT
+  );
+  
+  // Debug: Log that t is defined
+  if (typeof t !== 'function') {
+    console.error('CRITICAL: t is not a function!', { t, tRaw, type: typeof t });
+  }
   
   // Now define other hooks and variables
   const params = useParams();
