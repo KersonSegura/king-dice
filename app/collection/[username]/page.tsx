@@ -142,20 +142,37 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
 export default function CollectionPage() {
   // COLLECTION PAGE - Re-enable translations properly
   // Use the same pattern as profile page which works
-  const tResult = useTranslations('profile');
-  const tCommonResult = useTranslations('common');
+  let tResult: any;
+  let tCommonResult: any;
+  
+  try {
+    tResult = useTranslations('profile');
+    tCommonResult = useTranslations('common');
+  } catch (error) {
+    console.error('[CollectionPage] useTranslations failed:', error);
+    tResult = undefined;
+    tCommonResult = undefined;
+  }
   
   // Ensure t is always a function - critical fix for the error
-  const t: (key: string, params?: any) => string = typeof tResult === 'function' 
+  // This MUST be defined before any code that uses t
+  const t: (key: string, params?: any) => string = (typeof tResult === 'function' && tResult !== null && tResult !== undefined)
     ? tResult 
     : ((key: string) => {
-        console.warn('[CollectionPage] t is not a function, using fallback for key:', key);
+        console.warn('[CollectionPage] t is not a function, using fallback for key:', key, 'tResult:', typeof tResult, tResult);
         return key;
       });
   
-  const tCommon: (key: string, params?: any) => string = typeof tCommonResult === 'function'
+  const tCommon: (key: string, params?: any) => string = (typeof tCommonResult === 'function' && tCommonResult !== null && tCommonResult !== undefined)
     ? tCommonResult
     : ((key: string) => key);
+  
+  // Verify t is defined - throw error immediately if not
+  if (typeof t !== 'function') {
+    const error = new Error(`[CollectionPage] FATAL: t is not a function after all checks. Type: ${typeof t}, Value: ${t}`);
+    console.error(error);
+    throw error;
+  }
   
   console.log('[CollectionPage] Component rendering with translations:', typeof t, typeof tCommon);
   
