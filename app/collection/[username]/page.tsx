@@ -38,12 +38,11 @@ interface UserProfile {
 }
 
 // Sortable game item component
-function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: { 
+function SortableGameItem({ game, index, isOwnProfile, onRemove }: { 
   game: any; 
   index: number; 
   isOwnProfile: boolean; 
   onRemove: (gameId: number) => void;
-  t: any;
 }) {
   const {
     attributes,
@@ -926,7 +925,6 @@ export default function CollectionPage() {
                           index={index}
                           isOwnProfile={isOwnProfile}
                           onRemove={handleRemoveGame}
-                          t={t}
                         />
                       ))}
                       
