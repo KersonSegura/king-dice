@@ -207,19 +207,20 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        // t is always defined (fallback ensures it), so we can use it directly
+        // Use t directly - it's available in the closure
         showToast(t('userNotFound'), 'error');
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      // t is always defined (fallback ensures it), so we can use it directly
+      // Use t directly - it's available in the closure
       showToast(t('failedToLoadCollection'), 'error');
       router.push('/');
     } finally {
       setLoading(false);
     }
-  }, [username, user?.email, t, router, showToast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, user?.email, router, showToast]);
 
   useEffect(() => {
     loadUserProfile();
