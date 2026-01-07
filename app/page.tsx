@@ -105,7 +105,19 @@ type GalleryImage = {
 };
 
 export default function HomePage() {
-  const t = useTranslations('home');
+  // Ensure t is always defined with fallback
+  let t: (key: string, params?: any) => string;
+  try {
+    t = useTranslations('home');
+    // Verify t is a function
+    if (typeof t !== 'function') {
+      console.error('[HomePage] t is not a function:', typeof t, t);
+      t = (key: string) => key;
+    }
+  } catch (error) {
+    console.error('[HomePage] useTranslations failed:', error);
+    t = (key: string) => key;
+  }
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
