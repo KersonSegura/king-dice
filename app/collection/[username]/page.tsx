@@ -143,36 +143,18 @@ const fallbackT = (key: string, params?: any) => {
   return key;
 };
 
+// Fallback translation function - defined outside component to ensure it's always available
+const fallbackTranslation = (key: string, params?: any) => key;
+
 export default function CollectionPage() {
   // Initialize translations - hooks must be called unconditionally at the top level
   const tRaw = useTranslations('profile');
   const tCommonRaw = useTranslations('common');
   
-  // Create fallback function that always works
-  const fallbackT = (key: string, params?: any) => key;
-  
-  // Ensure t is ALWAYS a function - use IIFE to guarantee it's defined immediately
-  const t: (key: string, params?: any) => string = (() => {
-    try {
-      if (typeof tRaw === 'function') {
-        return tRaw;
-      }
-    } catch (e) {
-      console.warn('Translation function not available, using fallback', e);
-    }
-    return fallbackT;
-  })();
-  
-  const tCommon: (key: string, params?: any) => string = (() => {
-    try {
-      if (typeof tCommonRaw === 'function') {
-        return tCommonRaw;
-      }
-    } catch (e) {
-      console.warn('Translation function tCommon not available, using fallback', e);
-    }
-    return fallbackT;
-  })();
+  // Define t immediately as a constant - this ensures it's always in scope
+  // Use the translation function if available, otherwise use fallback
+  const t = (typeof tRaw === 'function' && tRaw) ? tRaw : fallbackTranslation;
+  const tCommon = (typeof tCommonRaw === 'function' && tCommonRaw) ? tCommonRaw : fallbackTranslation;
   
   // Now define other hooks and variables
   const params = useParams();
