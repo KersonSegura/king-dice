@@ -12,6 +12,7 @@ import ToastContainer from '@/components/ToastContainer'
 import FloatingChat from '@/components/FloatingChat'
 import BackToTopButton from '@/components/BackToTopButton'
 import Providers from '@/components/Providers'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import enMessages from '../messages/en.json'
 import esMessages from '../messages/es.json'
 
@@ -84,21 +85,23 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className={`${inter.className}`} suppressHydrationWarning={true}>
         <Providers locale={locale} messages={messages}>
-          <LevelUpProvider>
-            <AuthProvider>
-              <SocketProvider>
-                <ChatStateProvider>
-                  <ToastProvider>
-                    <Header />
-                    {children}
-                    <FloatingChat />
-                    <BackToTopButton />
-                    <ToastContainer />
-                  </ToastProvider>
-                </ChatStateProvider>
-              </SocketProvider>
-            </AuthProvider>
-          </LevelUpProvider>
+          <ErrorBoundary>
+            <LevelUpProvider>
+              <AuthProvider>
+                <SocketProvider>
+                  <ChatStateProvider>
+                    <ToastProvider>
+                      <Header />
+                      {children}
+                      <FloatingChat />
+                      <BackToTopButton />
+                      <ToastContainer />
+                    </ToastProvider>
+                  </ChatStateProvider>
+                </SocketProvider>
+              </AuthProvider>
+            </LevelUpProvider>
+          </ErrorBoundary>
         </Providers>
       </body>
     </html>

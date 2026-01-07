@@ -145,9 +145,9 @@ module.exports = withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
-  // Disable source maps to reduce bundle size
-  widenClientFileUpload: false,
-  hideSourceMaps: true,
+  // Temporarily enable source maps to debug translation error
+  widenClientFileUpload: true,
+  hideSourceMaps: false,
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
