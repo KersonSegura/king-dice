@@ -147,15 +147,18 @@ const fallbackT = (key: string, params?: any) => {
 const fallbackTranslation = (key: string, params?: any) => key;
 
 export default function CollectionPage() {
+  // CRITICAL: Define t FIRST as a constant - this ensures it's always in scope
+  // We'll update it after useTranslations is called
+  let t: (key: string, params?: any) => string = fallbackTranslation;
+  let tCommon: (key: string, params?: any) => string = fallbackTranslation;
+  
   // Initialize translations - hooks must be called unconditionally at the top level
   const tRaw = useTranslations('profile');
   const tCommonRaw = useTranslations('common');
   
-  // CRITICAL: Define t as a constant function IMMEDIATELY - no conditionals
-  // This ensures t is ALWAYS defined and never undefined
-  // Double-check: if tRaw is not a function, use fallback
-  const t: (key: string, params?: any) => string = (typeof tRaw === 'function' ? tRaw : fallbackTranslation);
-  const tCommon: (key: string, params?: any) => string = (typeof tCommonRaw === 'function' ? tCommonRaw : fallbackTranslation);
+  // Update t immediately after useTranslations
+  t = (typeof tRaw === 'function' && tRaw) ? tRaw : fallbackTranslation;
+  tCommon = (typeof tCommonRaw === 'function' && tCommonRaw) ? tCommonRaw : fallbackTranslation;
   
   // Verify t is always a function - this should never fail, but helps with debugging
   if (typeof t !== 'function') {
