@@ -106,11 +106,20 @@ type GalleryImage = {
 
 export default function HomePage() {
   // Hooks must be called unconditionally
-  const t = useTranslations('home');
+  let t: (key: string, params?: any) => string;
+  try {
+    const tResult = useTranslations('home');
+    // Ensure t is always a function
+    t = typeof tResult === 'function' ? tResult : ((key: string) => key);
+  } catch (error) {
+    console.error('[HomePage] useTranslations failed:', error);
+    t = (key: string) => key;
+  }
   
-  // Verify t is a function after hook call
+  // Double-check t is a function
   if (typeof t !== 'function') {
-    console.error('[HomePage] FATAL: t is not a function after useTranslations:', typeof t, t);
+    console.error('[HomePage] FATAL: t is still not a function:', typeof t, t);
+    t = (key: string) => key;
   }
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated } = useAuth();
