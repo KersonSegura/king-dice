@@ -141,9 +141,12 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
 // Removed - no longer needed
 
 export default function CollectionPage() {
-  // COLLECTION PAGE - All translations removed for testing
-  // If error persists, it's from a different file or cached bundle
-  console.log('[CollectionPage] Component rendering - NO t variable defined');
+  // COLLECTION PAGE - Re-enable translations properly
+  // Use the same pattern as profile page which works
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
+  
+  console.log('[CollectionPage] Component rendering with translations:', typeof t, typeof tCommon);
   
   // Now define other hooks and variables
   const params = useParams();
