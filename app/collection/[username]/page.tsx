@@ -142,8 +142,20 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
 export default function CollectionPage() {
   // COLLECTION PAGE - Re-enable translations properly
   // Use the same pattern as profile page which works
-  const t = useTranslations('profile');
-  const tCommon = useTranslations('common');
+  const tResult = useTranslations('profile');
+  const tCommonResult = useTranslations('common');
+  
+  // Ensure t is always a function - critical fix for the error
+  const t: (key: string, params?: any) => string = typeof tResult === 'function' 
+    ? tResult 
+    : ((key: string) => {
+        console.warn('[CollectionPage] t is not a function, using fallback for key:', key);
+        return key;
+      });
+  
+  const tCommon: (key: string, params?: any) => string = typeof tCommonResult === 'function'
+    ? tCommonResult
+    : ((key: string) => key);
   
   console.log('[CollectionPage] Component rendering with translations:', typeof t, typeof tCommon);
   
