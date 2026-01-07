@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -149,20 +149,26 @@ export default function CollectionPage() {
   const tRaw = useTranslations('profile');
   const tCommonRaw = useTranslations('common');
   
-  // Ensure t is always a function - use fallback if translation hook fails
-  // Define t immediately after hooks to ensure it's always available
-  // Use Object.freeze to prevent accidental reassignment
-  const t: (key: string, params?: any) => string = Object.freeze(
-    (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT
-  );
-  const tCommon: (key: string, params?: any) => string = Object.freeze(
-    (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT
-  );
+  // Ensure t is always a function - use useMemo to ensure it's stable and always available
+  // This prevents any closure issues or timing problems
+  const t: (key: string, params?: any) => string = useMemo(() => {
+    const translationFn = (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT;
+    // Double-check it's a function
+    if (typeof translationFn !== 'function') {
+      console.error('Translation function is not a function!', { tRaw, translationFn });
+      return fallbackT;
+    }
+    return translationFn;
+  }, [tRaw]);
   
-  // Debug: Log that t is defined
-  if (typeof t !== 'function') {
-    console.error('CRITICAL: t is not a function!', { t, tRaw, type: typeof t });
-  }
+  const tCommon: (key: string, params?: any) => string = useMemo(() => {
+    const translationFn = (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT;
+    if (typeof translationFn !== 'function') {
+      console.error('Translation function tCommon is not a function!', { tCommonRaw, translationFn });
+      return fallbackT;
+    }
+    return translationFn;
+  }, [tCommonRaw]);
   
   // Now define other hooks and variables
   const params = useParams();
