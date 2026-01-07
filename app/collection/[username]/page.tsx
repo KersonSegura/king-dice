@@ -218,7 +218,7 @@ export default function CollectionPage() {
       } else {
         console.log('[loadUserProfile] Response not ok, about to use t, t is:', typeof t, t);
         if (typeof t === 'function') {
-          showToast(t('userNotFound'), 'error');
+          showToast('User not found', 'error');
         } else {
           showToast('User not found', 'error');
         }
@@ -228,7 +228,7 @@ export default function CollectionPage() {
       console.error('Error loading user profile:', error);
       console.log('[loadUserProfile] In catch, about to use t, t is:', typeof t, t);
       if (typeof t === 'function') {
-        showToast(t('failedToLoadCollection'), 'error');
+        showToast('Failed to load collection', 'error');
       } else {
         showToast('Failed to load collection', 'error');
       }
@@ -299,7 +299,7 @@ export default function CollectionPage() {
     if (userProfile?.collectionPhoto) {
       setSelectedImage({
         url: userProfile.collectionPhoto,
-        title: t('collectionPhoto')
+        title: 'Collection Photo'
       });
       setShowImageModal(true);
     }
@@ -309,7 +309,7 @@ export default function CollectionPage() {
     if (userProfile?.favoriteCard) {
       setSelectedImage({
         url: userProfile.favoriteCard,
-        title: t('favoriteCard')
+        title: 'Favorite Card'
       });
       setShowImageModal(true);
     }
@@ -673,7 +673,7 @@ export default function CollectionPage() {
               height={64} 
               className="opacity-60 mx-auto mb-4 animate-pulse"
             />
-            <p className="text-gray-300">{t('loadingCollection')}</p>
+            <p className="text-gray-300">Loading collection...</p>
           </div>
         </div>
       </div>
@@ -684,8 +684,8 @@ export default function CollectionPage() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-300 mb-4">{t('collectionNotFound')}</p>
-          <Link href="/" className="text-[#fbae17] hover:underline">{t('goBackHome')}</Link>
+          <p className="text-gray-300 mb-4">Collection not found</p>
+          <Link href="/" className="text-[#fbae17] hover:underline">Go back home</Link>
         </div>
       </div>
     );
@@ -702,16 +702,16 @@ export default function CollectionPage() {
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium text-sm sm:text-base">{t('backToProfile')}</span>
+              <span className="font-medium text-sm sm:text-base">Back to Profile</span>
             </Link>
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{t('collectionTitle', { username: userProfile.username })}</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{userProfile.username}'s Collection</h1>
             {isOwnProfile && (
               <button
                 onClick={() => setIsEditingCollection(!isEditingCollection)}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap bg-[#fbae17] hover:bg-[#fbae17]/90 text-white"
               >
                 <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{isEditingCollection ? tCommon('cancel') : t('edit')}</span>
+                <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
               </button>
             )}
             {!isOwnProfile && <div className="w-16 sm:w-20 flex-shrink-0"></div>}
@@ -760,7 +760,7 @@ export default function CollectionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Favorite Game Image (Left) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">{t('favoriteGame')}</h2>
+            <h2 className="text-xl font-semibold text-white">Favorite Game</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
                 <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
@@ -778,7 +778,7 @@ export default function CollectionPage() {
                     <svg className="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
-                    {t('favorite')}
+                    Favorite
                   </div>
                 </div>
               </Link>
@@ -786,7 +786,7 @@ export default function CollectionPage() {
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
                 <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm text-white">{t('noFavoriteGame')}</p>
+                  <p className="text-sm text-white">No favorite game</p>
                 </div>
               </div>
             )}
@@ -794,7 +794,7 @@ export default function CollectionPage() {
 
           {/* Favorite Card (Right) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">{t('favoriteCard')}</h2>
+            <h2 className="text-xl font-semibold text-white">Favorite Card</h2>
             {userProfile.favoriteCard ? (
               <div 
                 className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden cursor-pointer group"
@@ -825,13 +825,13 @@ export default function CollectionPage() {
                 className="w-full aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-200 transition-colors"
               >
                 <Camera className="w-12 h-12 mb-2" />
-                <span className="text-sm font-medium">{uploadingFavoriteCard ? 'Uploading...' : t('noFavoriteCard')}</span>
+                <span className="text-sm font-medium">{uploadingFavoriteCard ? 'Uploading...' : 'No favorite card'}</span>
               </button>
             ) : (
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
                 <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm text-white">{t('noFavoriteCard')}</p>
+                  <p className="text-sm text-white">No favorite card</p>
                 </div>
               </div>
             )}
@@ -842,7 +842,7 @@ export default function CollectionPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold text-white">
-              {t('allGames')} ({userProfile.gamesList?.length || 0})
+              All Games ({userProfile.gamesList?.length || 0})
             </h2>
             {isEditingCollection && (
               <button
@@ -891,7 +891,7 @@ export default function CollectionPage() {
               <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p className="text-white text-lg">{t('noGamesInCollection')}</p>
+              <p className="text-white text-lg">No games in collection</p>
             </div>
           )}
         </div>
