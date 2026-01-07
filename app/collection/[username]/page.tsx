@@ -9,7 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import ImageModal from '@/components/ImageModal';
 import ProfileUploadModal from '@/components/ProfileUploadModal';
-import { useTranslations } from 'next-intl';
+// Temporarily comment out useTranslations to test if it's causing the error
+// import { useTranslations } from 'next-intl';
 import {
   DndContext,
   closestCenter,
