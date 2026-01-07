@@ -145,33 +145,31 @@ const fallbackT = (key: string, params?: any) => {
 
 export default function CollectionPage() {
   // Initialize translations - hooks must be called unconditionally at the top level
-  // Use try-catch to ensure we always have a valid function
-  let tRaw: any;
-  let tCommonRaw: any;
-  
-  try {
-    tRaw = useTranslations('profile');
-    tCommonRaw = useTranslations('common');
-  } catch (error) {
-    console.error('Error initializing translations:', error);
-    tRaw = null;
-    tCommonRaw = null;
-  }
+  const tRaw = useTranslations('profile');
+  const tCommonRaw = useTranslations('common');
   
   // Create fallback function that always works
   const fallbackT = (key: string, params?: any) => key;
   
-  // Ensure t is ALWAYS a function - no matter what
+  // Ensure t is ALWAYS a function - use IIFE to guarantee it's defined immediately
   const t: (key: string, params?: any) => string = (() => {
-    if (typeof tRaw === 'function') {
-      return tRaw;
+    try {
+      if (typeof tRaw === 'function') {
+        return tRaw;
+      }
+    } catch (e) {
+      console.warn('Translation function not available, using fallback', e);
     }
     return fallbackT;
   })();
   
   const tCommon: (key: string, params?: any) => string = (() => {
-    if (typeof tCommonRaw === 'function') {
-      return tCommonRaw;
+    try {
+      if (typeof tCommonRaw === 'function') {
+        return tCommonRaw;
+      }
+    } catch (e) {
+      console.warn('Translation function tCommon not available, using fallback', e);
     }
     return fallbackT;
   })();
