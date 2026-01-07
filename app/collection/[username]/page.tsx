@@ -212,20 +212,14 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        if (t) {
-          showToast(t('userNotFound'), 'error');
-        } else {
-          showToast('User not found', 'error');
-        }
+        // t is always defined (fallback ensures it), so we can use it directly
+        showToast(t('userNotFound'), 'error');
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      if (t) {
-        showToast(t('failedToLoadCollection'), 'error');
-      } else {
-        showToast('Failed to load collection', 'error');
-      }
+      // t is always defined (fallback ensures it), so we can use it directly
+      showToast(t('failedToLoadCollection'), 'error');
       router.push('/');
     } finally {
       setLoading(false);
