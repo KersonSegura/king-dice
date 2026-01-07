@@ -153,8 +153,14 @@ export default function CollectionPage() {
   
   // CRITICAL: Define t as a constant function IMMEDIATELY - no conditionals
   // This ensures t is ALWAYS defined and never undefined
-  const t: (key: string, params?: any) => string = tRaw || fallbackTranslation;
-  const tCommon: (key: string, params?: any) => string = tCommonRaw || fallbackTranslation;
+  // Double-check: if tRaw is not a function, use fallback
+  const t: (key: string, params?: any) => string = (typeof tRaw === 'function' ? tRaw : fallbackTranslation);
+  const tCommon: (key: string, params?: any) => string = (typeof tCommonRaw === 'function' ? tCommonRaw : fallbackTranslation);
+  
+  // Verify t is always a function - this should never fail, but helps with debugging
+  if (typeof t !== 'function') {
+    console.error('CRITICAL: t is not a function!', { t, tRaw, type: typeof t });
+  }
   
   // Now define other hooks and variables
   const params = useParams();
