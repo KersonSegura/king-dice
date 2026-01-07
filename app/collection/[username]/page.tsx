@@ -147,23 +147,41 @@ const fallbackT = (key: string, params?: any) => {
 const fallbackTranslation = (key: string, params?: any) => key;
 
 export default function CollectionPage() {
-  // CRITICAL: Define t FIRST as a constant - this ensures it's always in scope
-  // We'll update it after useTranslations is called
-  let t: (key: string, params?: any) => string = fallbackTranslation;
-  let tCommon: (key: string, params?: any) => string = fallbackTranslation;
-  
   // Initialize translations - hooks must be called unconditionally at the top level
   const tRaw = useTranslations('profile');
   const tCommonRaw = useTranslations('common');
   
-  // Update t immediately after useTranslations
-  t = (typeof tRaw === 'function' && tRaw) ? tRaw : fallbackTranslation;
-  tCommon = (typeof tCommonRaw === 'function' && tCommonRaw) ? tCommonRaw : fallbackTranslation;
+  // Use refs to store translation functions - ensures they're always accessible
+  const tRef = useRef<(key: string, params?: any) => string>(fallbackTranslation);
+  const tCommonRef = useRef<(key: string, params?: any) => string>(fallbackTranslation);
   
-  // Verify t is always a function - this should never fail, but helps with debugging
-  if (typeof t !== 'function') {
-    console.error('CRITICAL: t is not a function!', { t, tRaw, type: typeof t });
+  // Update refs immediately
+  if (typeof tRaw === 'function' && tRaw) {
+    tRef.current = tRaw;
   }
+  if (typeof tCommonRaw === 'function' && tCommonRaw) {
+    tCommonRef.current = tCommonRaw;
+  }
+  
+  // Create stable t and tCommon that always reference the refs
+  // This ensures t is always defined and accessible
+  const t: (key: string, params?: any) => string = useCallback((key: string, params?: any) => {
+    return tRef.current(key, params);
+  }, []);
+  
+  const tCommon: (key: string, params?: any) => string = useCallback((key: string, params?: any) => {
+    return tCommonRef.current(key, params);
+  }, []);
+  
+  // Update refs when translations change
+  useEffect(() => {
+    if (typeof tRaw === 'function' && tRaw) {
+      tRef.current = tRaw;
+    }
+    if (typeof tCommonRaw === 'function' && tCommonRaw) {
+      tCommonRef.current = tCommonRaw;
+    }
+  }, [tRaw, tCommonRaw]);
   
   // Now define other hooks and variables
   const params = useParams();
