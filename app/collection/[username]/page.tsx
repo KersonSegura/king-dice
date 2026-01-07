@@ -143,9 +143,6 @@ const fallbackT = (key: string, params?: any) => {
   return key;
 };
 
-// Fallback translation function - defined outside component to ensure it's always available
-const fallbackTranslation = (key: string, params?: any) => key;
-
 export default function CollectionPage() {
   // Initialize translations - hooks must be called unconditionally at the top level
   // Use the same simple pattern as the working profile page
