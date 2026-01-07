@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -140,44 +140,9 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
 // Removed - no longer needed
 
 export default function CollectionPage() {
-  // COLLECTION PAGE - UNIQUE IDENTIFIER: COLLECTION_PAGE_V2
-  // This helps identify if errors are from this file
-  console.log('[COLLECTION_PAGE_V2] Component starting');
-  
-  // Hooks must be called unconditionally
-  const tResult = useTranslations('profile');
-  const tCommonResult = useTranslations('common');
-  
-  console.log('[COLLECTION_PAGE_V2] useTranslations results:', { 
-    tResultType: typeof tResult, 
-    tCommonResultType: typeof tCommonResult,
-    tResultIsFunction: typeof tResult === 'function',
-    tCommonResultIsFunction: typeof tCommonResult === 'function'
-  });
-  
-  // Ensure t is always a function - critical fix for the error
-  // This MUST be defined before any code that uses t
-  const t: (key: string, params?: any) => string = (typeof tResult === 'function' && tResult !== null && tResult !== undefined)
-    ? tResult 
-    : ((key: string) => {
-        console.warn('[COLLECTION_PAGE_V2] t is not a function, using fallback for key:', key, 'tResult:', typeof tResult, tResult);
-        return key;
-      });
-  
-  const tCommon: (key: string, params?: any) => string = (typeof tCommonResult === 'function' && tCommonResult !== null && tCommonResult !== undefined)
-    ? tCommonResult
-    : ((key: string) => key);
-  
-  // Verify t is defined - throw error immediately if not
-  if (typeof t !== 'function') {
-    const error = new Error(`[COLLECTION_PAGE_V2] FATAL: t is not a function after all checks. Type: ${typeof t}, Value: ${t}`);
-    console.error(error);
-    throw error;
-  }
-  
-  console.log('[COLLECTION_PAGE_V2] Component rendering with translations:', typeof t, typeof tCommon);
-  
-  // Now define other hooks and variables
+  // Restore to working version pattern - simple and direct
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
   const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
@@ -216,11 +181,9 @@ export default function CollectionPage() {
   const [uploadingCollectionPhoto, setUploadingCollectionPhoto] = useState(false);
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
 
-  // Load user profile data
-  const loadUserProfile = useCallback(async () => {
+  // Load user profile data - using simple function like the working version
+  const loadUserProfile = async () => {
     if (!username) return;
-    
-    console.log('[loadUserProfile] Starting');
     
     try {
       setLoading(true);
@@ -247,7 +210,7 @@ export default function CollectionPage() {
     } finally {
       setLoading(false);
     }
-  }, [username, user?.email, router, showToast, t]);
+  };
 
   useEffect(() => {
     loadUserProfile();
@@ -956,23 +919,16 @@ export default function CollectionPage() {
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {tempGamesList.map((game, index) => {
-                        // CRITICAL: Ensure t is defined before passing to SortableGameItem
-                        if (typeof t !== 'function') {
-                          console.error('[COLLECTION_PAGE_V2] FATAL: t is not a function when rendering SortableGameItem!', typeof t, t);
-                          throw new Error(`[COLLECTION_PAGE_V2] t is not a function when rendering game ${game.id}. Type: ${typeof t}`);
-                        }
-                        return (
-                          <SortableGameItem
-                            key={game.id}
-                            game={game}
-                            index={index}
-                            isOwnProfile={isOwnProfile}
-                            onRemove={handleRemoveGame}
-                            t={t}
-                          />
-                        );
-                      })}
+                      {tempGamesList.map((game, index) => (
+                        <SortableGameItem
+                          key={game.id}
+                          game={game}
+                          index={index}
+                          isOwnProfile={isOwnProfile}
+                          onRemove={handleRemoveGame}
+                          t={t}
+                        />
+                      ))}
                       
                       {/* Add New Game Tile */}
                       {isOwnProfile && (
