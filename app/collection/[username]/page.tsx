@@ -143,22 +143,11 @@ const fallbackT = (key: string, params?: any) => {
   return key;
 };
 
-// Define fallback translation function outside component
-const fallbackT = (key: string) => key;
-
 export default function CollectionPage() {
   // Initialize translations - hooks must be called unconditionally at the top level
-  const tRaw = useTranslations('profile');
-  const tCommonRaw = useTranslations('common');
-  
-  // Ensure t is always a function - use fallback if useTranslations returns undefined
-  const t: (key: string, params?: any) => string = (typeof tRaw === 'function' && tRaw) ? tRaw : fallbackT;
-  const tCommon: (key: string, params?: any) => string = (typeof tCommonRaw === 'function' && tCommonRaw) ? tCommonRaw : fallbackT;
-  
-  // Debug: Log if t is not a function
-  if (typeof t !== 'function') {
-    console.error('[CollectionPage] CRITICAL: t is not a function!', { t, tRaw, type: typeof t });
-  }
+  // Match the EXACT pattern from the working profile page
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
   
   // Now define other hooks and variables
   const params = useParams();
