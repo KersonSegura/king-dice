@@ -145,15 +145,20 @@ const fallbackT = (key: string, params?: any) => {
 };
 
 export default function CollectionPage() {
-  // TEMPORARY: Disable useTranslations to test if it's causing the error
-  // Initialize translations - hooks must be called unconditionally at the top level
-  // Match the EXACT pattern from the working profile page
-  // const t = useTranslations('profile');
-  // const tCommon = useTranslations('common');
+  // CRITICAL FIX: Define t as a constant function FIRST, before any other code
+  // This ensures t is always in scope and never undefined
+  const t: (key: string, params?: any) => string = (key: string, params?: any) => {
+    // Simple fallback - just return the key
+    return key;
+  };
+  const tCommon: (key: string, params?: any) => string = (key: string, params?: any) => {
+    return key;
+  };
   
-  // Temporary fallback functions - if modal works with these, then useTranslations is the issue
-  const t = (key: string, params?: any) => key;
-  const tCommon = (key: string, params?: any) => key;
+  // Verify t is defined
+  if (typeof t !== 'function') {
+    throw new Error('CRITICAL: t is not a function! This should never happen.');
+  }
   
   // Now define other hooks and variables
   const params = useParams();
