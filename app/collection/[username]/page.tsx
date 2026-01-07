@@ -144,17 +144,16 @@ export default function CollectionPage() {
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
   
-  // Initialize translations with fallback to prevent "t is not defined" errors
-  let tRaw;
-  try {
-    tRaw = useTranslations('profile');
-  } catch (e) {
-    console.error('Error loading translations:', e);
-  }
+  // Initialize translations - hooks must be called unconditionally
+  const tRaw = useTranslations('profile');
   const tCommon = useTranslations('common');
   
   // Ensure t is always a function to prevent "t is not defined" errors
-  const t = (tRaw && typeof tRaw === 'function') ? tRaw : ((key: string, params?: any) => key);
+  // Use a memoized fallback function that's always available
+  const t = typeof tRaw === 'function' ? tRaw : ((key: string, params?: any) => {
+    console.warn('Translation function not available, returning key:', key);
+    return key;
+  });
 
   // Drag and drop sensors
   const sensors = useSensors(
