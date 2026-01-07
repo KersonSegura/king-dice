@@ -138,13 +138,13 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
 }
 
 export default function CollectionPage() {
-  const t = useTranslations('profile');
-  const tCommon = useTranslations('common');
   const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -225,6 +225,8 @@ export default function CollectionPage() {
   useEffect(() => {
     if (showGamesListModal && userProfile?.gamesList) {
       setTempGamesList([...userProfile.gamesList]);
+    } else if (showGamesListModal && (!userProfile?.gamesList || userProfile.gamesList.length === 0)) {
+      setTempGamesList([]);
     }
   }, [showGamesListModal, userProfile?.gamesList]);
 
@@ -889,7 +891,7 @@ export default function CollectionPage() {
       />
 
       {/* Games List Modal */}
-      {showGamesListModal && (
+      {showGamesListModal && t && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowGamesListModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
