@@ -144,41 +144,10 @@ const fallbackT = (key: string, params?: any) => {
 };
 
 export default function CollectionPage() {
-  // Initialize translations FIRST - before any other code that might reference t
-  // Hooks must be called unconditionally at the top level
-  const tRaw = useTranslations('profile');
-  const tCommonRaw = useTranslations('common');
-  
-  // Ensure t is always a function - use useMemo to ensure it's stable and always available
-  // This prevents any closure issues or timing problems
-  const t: (key: string, params?: any) => string = useMemo(() => {
-    const translationFn = (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT;
-    // Double-check it's a function
-    if (typeof translationFn !== 'function') {
-      console.error('Translation function is not a function!', { tRaw, translationFn });
-      return fallbackT;
-    }
-    return translationFn;
-  }, [tRaw]);
-  
-  const tCommon: (key: string, params?: any) => string = useMemo(() => {
-    const translationFn = (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT;
-    if (typeof translationFn !== 'function') {
-      console.error('Translation function tCommon is not a function!', { tCommonRaw, translationFn });
-      return fallbackT;
-    }
-    return translationFn;
-  }, [tCommonRaw]);
-  
-  // Use a ref to ensure t is always accessible, even in closures
-  const tRef = useRef(t);
-  const tCommonRef = useRef(tCommon);
-  
-  // Update refs whenever t changes
-  useEffect(() => {
-    tRef.current = t;
-    tCommonRef.current = tCommon;
-  }, [t, tCommon]);
+  // Initialize translations - hooks must be called unconditionally at the top level
+  // Match the pattern from profile page which works correctly
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
   
   // Now define other hooks and variables
   const params = useParams();
