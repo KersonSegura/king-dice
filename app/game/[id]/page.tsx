@@ -1691,7 +1691,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <FileText className="w-6 h-6 mr-2 text-[#fbae17]" />
-                    Game Rules
+                    {tGame('gameRules')}
                   </h2>
                   <div className="prose max-w-none w-full">
                     <div className="text-gray-700 leading-relaxed w-full">
@@ -1749,7 +1749,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         filter: 'brightness(0) saturate(100%) invert(67%) sepia(93%) saturate(1352%) hue-rotate(1deg) brightness(102%) contrast(101%)'
                       }}
                     />
-                    Shop
+                    {tGame('shop')}
                   </h2>
                   {/* Shop cards list - full width on mobile, normal on desktop */}
                   {(() => {
