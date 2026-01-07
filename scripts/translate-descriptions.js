@@ -138,12 +138,12 @@ async function translateDescriptions(options = {}) {
       .eq('language', 'es');
 
     const existingSpanishGameIds = new Set(
-      (spanishDescriptions || []).map(d => d.gameId)
+      (spanishDescriptions || []).map(d => d.gameId || d.game_id)
     );
 
     // Filter out games that already have Spanish descriptions
     const descriptionsToTranslate = englishDescriptions.filter(
-      desc => !existingSpanishGameIds.has(desc.gameId)
+      desc => !existingSpanishGameIds.has(desc.gameId || desc.game_id)
     );
 
     if (descriptionsToTranslate.length === 0) {
@@ -170,43 +170,56 @@ async function translateDescriptions(options = {}) {
 
       for (const desc of batch) {
         try {
-          console.log(`  🔄 Translating description for game ${desc.gameId}...`);
+          const gameIdValue = desc.gameId || desc.game_id;
+          console.log(`  🔄 Translating description for game ${gameIdValue}...`);
+          
+          // Get the full description text
+          const fullDescText = desc.fullDescription || desc.full_description;
+          if (!fullDescText) {
+            console.log(`  ⏭️  Skipping - no full description`);
+            continue;
+          }
           
           // Translate full description
-          const translatedFull = await translateText(desc.fullDescription, 'es');
+          const translatedFull = await translateText(fullDescText, 'es');
           
           // Translate short description if it exists and is different
           let translatedShort = null;
-          if (desc.shortDescription && desc.shortDescription !== desc.fullDescription.substring(0, 200)) {
-            translatedShort = await translateText(desc.shortDescription, 'es');
+          const shortDescText = desc.shortDescription || desc.short_description;
+          if (shortDescText && shortDescText !== fullDescText.substring(0, 200)) {
+            translatedShort = await translateText(shortDescText, 'es');
           } else {
             // Create short description from translated full description
             translatedShort = createShortDescription(translatedFull);
           }
-
-          // Insert Spanish description
-          const { error: insertError } = await supabaseAdmin
+          
+          // Try camelCase first
+          const { error: upsertError } = await supabaseAdmin
             .from('game_descriptions')
-            .insert({
-              gameId: desc.gameId,
+            .upsert({
+              gameId: gameIdValue,
               language: 'es',
               fullDescription: translatedFull,
               shortDescription: translatedShort,
+            }, {
+              onConflict: 'gameId,language'
             });
 
-          if (insertError) {
+          if (upsertError) {
             // Try with snake_case column names
             const { error: snakeError } = await supabaseAdmin
               .from('game_descriptions')
-              .insert({
-                game_id: desc.gameId || desc.game_id,
+              .upsert({
+                game_id: gameIdValue,
                 language: 'es',
                 full_description: translatedFull,
                 short_description: translatedShort,
+              }, {
+                onConflict: 'game_id,language'
               });
 
             if (snakeError) {
-              throw new Error(`Insert failed: ${insertError.message} / ${snakeError.message}`);
+              throw new Error(`Upsert failed: ${upsertError.message} / ${snakeError.message}`);
             }
           }
 
