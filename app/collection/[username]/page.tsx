@@ -146,8 +146,12 @@ const fallbackT = (key: string, params?: any) => {
 export default function CollectionPage() {
   // Initialize translations - hooks must be called unconditionally at the top level
   // Match the pattern from profile page which works correctly
-  const t = useTranslations('profile');
-  const tCommon = useTranslations('common');
+  const tRaw = useTranslations('profile');
+  const tCommonRaw = useTranslations('common');
+  
+  // Ensure t is always a function - provide fallback to prevent undefined errors
+  const t = typeof tRaw === 'function' ? tRaw : ((key: string) => key);
+  const tCommon = typeof tCommonRaw === 'function' ? tCommonRaw : ((key: string) => key);
   
   // Now define other hooks and variables
   const params = useParams();
