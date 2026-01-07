@@ -143,11 +143,18 @@ export default function CollectionPage() {
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
-  const tRaw = useTranslations('profile');
+  
+  // Initialize translations with fallback to prevent "t is not defined" errors
+  let tRaw;
+  try {
+    tRaw = useTranslations('profile');
+  } catch (e) {
+    console.error('Error loading translations:', e);
+  }
   const tCommon = useTranslations('common');
   
   // Ensure t is always a function to prevent "t is not defined" errors
-  const t = tRaw || ((key: string, params?: any) => key);
+  const t = (tRaw && typeof tRaw === 'function') ? tRaw : ((key: string, params?: any) => key);
 
   // Drag and drop sensors
   const sensors = useSensors(
