@@ -188,7 +188,7 @@ export default function CollectionPage() {
   const loadUserProfile = useCallback(async () => {
     if (!username) return;
     
-    console.log('[loadUserProfile] Starting, t is:', typeof t, t);
+    console.log('[loadUserProfile] Starting');
     
     try {
       setLoading(true);
