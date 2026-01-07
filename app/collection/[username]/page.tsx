@@ -956,16 +956,23 @@ export default function CollectionPage() {
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {tempGamesList.map((game, index) => (
-                        <SortableGameItem
-                          key={game.id}
-                          game={game}
-                          index={index}
-                          isOwnProfile={isOwnProfile}
-                          onRemove={handleRemoveGame}
-                          t={t}
-                        />
-                      ))}
+                      {tempGamesList.map((game, index) => {
+                        // CRITICAL: Ensure t is defined before passing to SortableGameItem
+                        if (typeof t !== 'function') {
+                          console.error('[COLLECTION_PAGE_V2] FATAL: t is not a function when rendering SortableGameItem!', typeof t, t);
+                          throw new Error(`[COLLECTION_PAGE_V2] t is not a function when rendering game ${game.id}. Type: ${typeof t}`);
+                        }
+                        return (
+                          <SortableGameItem
+                            key={game.id}
+                            game={game}
+                            index={index}
+                            isOwnProfile={isOwnProfile}
+                            onRemove={handleRemoveGame}
+                            t={t}
+                          />
+                        );
+                      })}
                       
                       {/* Add New Game Tile */}
                       {isOwnProfile && (

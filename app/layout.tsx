@@ -69,7 +69,7 @@ export default async function RootLayout({
   if (typeof window !== 'undefined') {
     window.addEventListener('error', (event) => {
       if (event.message?.includes('t is not defined') || event.message?.includes('ReferenceError: t')) {
-        console.error('[Global Error Handler] Translation error caught:', {
+        console.error('🔴 [Global Error Handler] Translation error caught:', {
           message: event.message,
           filename: event.filename,
           lineno: event.lineno,
@@ -77,6 +77,17 @@ export default async function RootLayout({
           error: event.error,
           stack: event.error?.stack
         });
+        
+        // Try to get more info from the source
+        console.error('🔴 [Global Error Handler] Full error object:', event);
+        console.error('🔴 [Global Error Handler] Error target:', event.target);
+      }
+    });
+    
+    // Also catch unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason?.message?.includes('t is not defined') || event.reason?.message?.includes('ReferenceError: t')) {
+        console.error('🔴 [Global Error Handler] Unhandled promise rejection with t error:', event.reason);
       }
     });
   }
