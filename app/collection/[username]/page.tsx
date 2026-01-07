@@ -207,19 +207,16 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        // Use t directly - it's available in the closure
-        showToast(t('userNotFound'), 'error');
+        showToast('User not found', 'error');
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      // Use t directly - it's available in the closure
-      showToast(t('failedToLoadCollection'), 'error');
+      showToast('Failed to load collection', 'error');
       router.push('/');
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username, user?.email, router, showToast]);
 
   useEffect(() => {
