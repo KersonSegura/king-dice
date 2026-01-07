@@ -145,8 +145,9 @@ const getTranslationFunction = (): ((key: string, params?: any) => string) => {
 };
 
 export default function CollectionPage() {
-  // TEMPORARY: Removed all translations to test if they're causing the error
-  // All text is now hardcoded
+  // COLLECTION PAGE - All translations removed for testing
+  // If error persists, it's from a different file or cached bundle
+  console.log('[CollectionPage] Component rendering - NO t variable defined');
   
   // Now define other hooks and variables
   const params = useParams();
