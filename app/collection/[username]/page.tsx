@@ -937,20 +937,16 @@ export default function CollectionPage() {
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {tempGamesList.map((game, index) => {
-                        // Ensure t is always defined before passing to SortableGameItem
-                        const safeT = typeof t === 'function' ? t : ((key: string) => key);
-                        return (
-                          <SortableGameItem
-                            key={game.id}
-                            game={game}
-                            index={index}
-                            isOwnProfile={isOwnProfile}
-                            onRemove={handleRemoveGame}
-                            t={safeT}
-                          />
-                        );
-                      })}
+                      {tempGamesList.map((game, index) => (
+                        <SortableGameItem
+                          key={game.id}
+                          game={game}
+                          index={index}
+                          isOwnProfile={isOwnProfile}
+                          onRemove={handleRemoveGame}
+                          t={(key: string) => key}
+                        />
+                      ))}
                       
                       {/* Add New Game Tile */}
                       {isOwnProfile && (
