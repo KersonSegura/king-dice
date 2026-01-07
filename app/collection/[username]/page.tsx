@@ -144,19 +144,22 @@ const fallbackT = (key: string, params?: any) => {
 };
 
 export default function CollectionPage() {
+  // Initialize translations FIRST - before any other code that might reference t
+  // Hooks must be called unconditionally at the top level
+  const tRaw = useTranslations('profile');
+  const tCommonRaw = useTranslations('common');
+  
+  // Ensure t is always a function - use fallback if translation hook fails
+  // Define t immediately after hooks to ensure it's always available
+  const t: (key: string, params?: any) => string = (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT;
+  const tCommon: (key: string, params?: any) => string = (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT;
+  
+  // Now define other hooks and variables
   const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
-  
-  // Initialize translations - hooks must be called unconditionally at the top level
-  const tRaw = useTranslations('profile');
-  const tCommonRaw = useTranslations('common');
-  
-  // Ensure t is always a function - use fallback if translation hook fails
-  const t: (key: string, params?: any) => string = (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT;
-  const tCommon: (key: string, params?: any) => string = (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT;
 
   // Drag and drop sensors
   const sensors = useSensors(
