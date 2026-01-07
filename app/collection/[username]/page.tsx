@@ -137,7 +137,7 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
   );
 }
 
-// Fallback translation function
+// Fallback translation function - defined outside component to ensure it's always available
 const fallbackT = (key: string, params?: any) => {
   console.warn('Translation function not available, returning key:', key);
   return key;
@@ -150,19 +150,13 @@ export default function CollectionPage() {
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
   
-  // Initialize translations - hooks must be called unconditionally
-  let t: (key: string, params?: any) => string = fallbackT;
-  let tCommon: (key: string, params?: any) => string = fallbackT;
+  // Initialize translations - hooks must be called unconditionally at the top level
+  const tRaw = useTranslations('profile');
+  const tCommonRaw = useTranslations('common');
   
-  try {
-    const tRaw = useTranslations('profile');
-    const tCommonRaw = useTranslations('common');
-    t = typeof tRaw === 'function' ? tRaw : fallbackT;
-    tCommon = typeof tCommonRaw === 'function' ? tCommonRaw : fallbackT;
-  } catch (error) {
-    console.error('Error initializing translations:', error);
-    // t and tCommon already set to fallbackT
-  }
+  // Ensure t is always a function - use fallback if translation hook fails
+  const t: (key: string, params?: any) => string = (tRaw && typeof tRaw === 'function') ? tRaw : fallbackT;
+  const tCommon: (key: string, params?: any) => string = (tCommonRaw && typeof tCommonRaw === 'function') ? tCommonRaw : fallbackT;
 
   // Drag and drop sensors
   const sensors = useSensors(
