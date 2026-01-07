@@ -145,16 +145,8 @@ const getTranslationFunction = (): ((key: string, params?: any) => string) => {
 };
 
 export default function CollectionPage() {
-  // CRITICAL: Define t as the VERY FIRST thing - before ANY other code
-  // This ensures it's always in scope, even in closures
-  const t = getTranslationFunction();
-  const tCommon = getTranslationFunction();
-  
-  // Double-check t is defined - if not, throw error immediately
-  if (!t || typeof t !== 'function') {
-    console.error('FATAL: t is not a function!', { t, type: typeof t });
-    throw new Error('Translation function t is not defined');
-  }
+  // TEMPORARY: Removed all translations to test if they're causing the error
+  // All text is now hardcoded
   
   // Now define other hooks and variables
   const params = useParams();
