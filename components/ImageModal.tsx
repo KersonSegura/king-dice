@@ -118,22 +118,11 @@ export default function ImageModal({
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description || '');
 
-  // Translation hooks - with fallback to prevent errors
-  let t: (key: string, params?: any) => string;
-  let tGallery: (key: string, params?: any) => string;
-  let tCommon: (key: string, params?: any) => string;
-  
-  try {
-    t = useTranslations('home');
-    tGallery = useTranslations('gallery');
-    tCommon = useTranslations('common');
-  } catch (error) {
-    // Fallback if translations fail
-    const fallback = (key: string) => key;
-    t = fallback;
-    tGallery = fallback;
-    tCommon = fallback;
-  }
+  // Translation hooks - must be called unconditionally
+  // Wrap in try-catch at usage sites if needed, but hooks must be called
+  const t = useTranslations('home');
+  const tGallery = useTranslations('gallery');
+  const tCommon = useTranslations('common');
 
   // Lock body scroll when modal is open
   useEffect(() => {

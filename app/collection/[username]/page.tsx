@@ -138,11 +138,7 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
   );
 }
 
-// CRITICAL: Define translation functions OUTSIDE the component
-// This ensures they're always available, even if the component fails to initialize
-const getTranslationFunction = (): ((key: string, params?: any) => string) => {
-  return (key: string, params?: any) => key;
-};
+// Removed - no longer needed
 
 export default function CollectionPage() {
   // COLLECTION PAGE - All translations removed for testing
