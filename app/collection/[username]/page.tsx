@@ -145,13 +145,54 @@ const fallbackT = (key: string, params?: any) => {
 
 export default function CollectionPage() {
   // Initialize translations - hooks must be called unconditionally at the top level
-  // Match the pattern from profile page which works correctly
   const tRaw = useTranslations('profile');
   const tCommonRaw = useTranslations('common');
   
-  // Ensure t is always a function - provide fallback to prevent undefined errors
-  const t = typeof tRaw === 'function' ? tRaw : ((key: string) => key);
-  const tCommon = typeof tCommonRaw === 'function' ? tCommonRaw : ((key: string) => key);
+  // Create refs to store translation functions - ensures they're always accessible
+  const tRef = useRef<((key: string, params?: any) => string) | null>(null);
+  const tCommonRef = useRef<((key: string, params?: any) => string) | null>(null);
+  
+  // Helper function that always returns a valid translation function
+  const getT = useCallback(() => {
+    if (tRef.current) return tRef.current;
+    if (typeof tRaw === 'function') {
+      tRef.current = tRaw;
+      return tRaw;
+    }
+    // Fallback function
+    const fallback = (key: string) => key;
+    tRef.current = fallback;
+    return fallback;
+  }, [tRaw]);
+  
+  const getTCommon = useCallback(() => {
+    if (tCommonRef.current) return tCommonRef.current;
+    if (typeof tCommonRaw === 'function') {
+      tCommonRef.current = tCommonRaw;
+      return tCommonRaw;
+    }
+    // Fallback function
+    const fallback = (key: string) => key;
+    tCommonRef.current = fallback;
+    return fallback;
+  }, [tCommonRaw]);
+  
+  // Update refs when translations change
+  useEffect(() => {
+    if (typeof tRaw === 'function') {
+      tRef.current = tRaw;
+    }
+  }, [tRaw]);
+  
+  useEffect(() => {
+    if (typeof tCommonRaw === 'function') {
+      tCommonRef.current = tCommonRaw;
+    }
+  }, [tCommonRaw]);
+  
+  // Create stable t and tCommon that always work
+  const t = useMemo(() => getT(), [getT]);
+  const tCommon = useMemo(() => getTCommon(), [getTCommon]);
   
   // Now define other hooks and variables
   const params = useParams();
