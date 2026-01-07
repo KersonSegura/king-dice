@@ -145,10 +145,15 @@ const fallbackT = (key: string, params?: any) => {
 };
 
 export default function CollectionPage() {
+  // TEMPORARY: Disable useTranslations to test if it's causing the error
   // Initialize translations - hooks must be called unconditionally at the top level
   // Match the EXACT pattern from the working profile page
-  const t = useTranslations('profile');
-  const tCommon = useTranslations('common');
+  // const t = useTranslations('profile');
+  // const tCommon = useTranslations('common');
+  
+  // Temporary fallback functions - if modal works with these, then useTranslations is the issue
+  const t = (key: string, params?: any) => key;
+  const tCommon = (key: string, params?: any) => key;
   
   // Now define other hooks and variables
   const params = useParams();
