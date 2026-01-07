@@ -229,7 +229,7 @@ export default function CollectionPage() {
     } finally {
       setLoading(false);
     }
-  }, [username, user?.email, router, showToast]);
+  }, [username, user?.email, router, showToast, t]);
 
   useEffect(() => {
     loadUserProfile();
