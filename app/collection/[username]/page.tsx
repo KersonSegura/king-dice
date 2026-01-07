@@ -151,10 +151,10 @@ export default function CollectionPage() {
   const tRaw = useTranslations('profile');
   const tCommonRaw = useTranslations('common');
   
-  // Define t immediately as a constant - this ensures it's always in scope
-  // Use the translation function if available, otherwise use fallback
-  const t = (typeof tRaw === 'function' && tRaw) ? tRaw : fallbackTranslation;
-  const tCommon = (typeof tCommonRaw === 'function' && tCommonRaw) ? tCommonRaw : fallbackTranslation;
+  // CRITICAL: Define t as a constant function IMMEDIATELY - no conditionals
+  // This ensures t is ALWAYS defined and never undefined
+  const t: (key: string, params?: any) => string = tRaw || fallbackTranslation;
+  const tCommon: (key: string, params?: any) => string = tCommonRaw || fallbackTranslation;
   
   // Now define other hooks and variables
   const params = useParams();
