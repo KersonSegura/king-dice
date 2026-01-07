@@ -141,18 +141,9 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
 
 export default function CollectionPage() {
   // COLLECTION PAGE - Re-enable translations properly
-  // Use the same pattern as profile page which works
-  let tResult: any;
-  let tCommonResult: any;
-  
-  try {
-    tResult = useTranslations('profile');
-    tCommonResult = useTranslations('common');
-  } catch (error) {
-    console.error('[CollectionPage] useTranslations failed:', error);
-    tResult = undefined;
-    tCommonResult = undefined;
-  }
+  // Hooks must be called unconditionally
+  const tResult = useTranslations('profile');
+  const tCommonResult = useTranslations('common');
   
   // Ensure t is always a function - critical fix for the error
   // This MUST be defined before any code that uses t
