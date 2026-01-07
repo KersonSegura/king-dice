@@ -207,12 +207,12 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        showToast('User not found', 'error');
+        showToast(t('userNotFound'), 'error');
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      showToast('Failed to load collection', 'error');
+      showToast(t('failedToLoadCollection'), 'error');
       router.push('/');
     } finally {
       setLoading(false);
