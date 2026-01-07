@@ -138,27 +138,17 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
   );
 }
 
-// Fallback translation function - defined outside component to ensure it's always available
-const fallbackT = (key: string, params?: any) => {
-  console.warn('Translation function not available, returning key:', key);
-  return key;
+// CRITICAL: Define translation functions OUTSIDE the component
+// This ensures they're always available, even if the component fails to initialize
+const getTranslationFunction = (): ((key: string, params?: any) => string) => {
+  return (key: string, params?: any) => key;
 };
 
 export default function CollectionPage() {
-  // CRITICAL FIX: Define t as a constant function FIRST, before any other code
-  // This ensures t is always in scope and never undefined
-  const t: (key: string, params?: any) => string = (key: string, params?: any) => {
-    // Simple fallback - just return the key
-    return key;
-  };
-  const tCommon: (key: string, params?: any) => string = (key: string, params?: any) => {
-    return key;
-  };
-  
-  // Verify t is defined
-  if (typeof t !== 'function') {
-    throw new Error('CRITICAL: t is not a function! This should never happen.');
-  }
+  // Define t IMMEDIATELY as a const - this must be the first thing in the component
+  // Using a function call ensures it's always defined
+  const t = getTranslationFunction();
+  const tCommon = getTranslationFunction();
   
   // Now define other hooks and variables
   const params = useParams();
