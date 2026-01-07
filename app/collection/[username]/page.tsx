@@ -140,17 +140,27 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove, t }: {
 // Removed - no longer needed
 
 export default function CollectionPage() {
-  // COLLECTION PAGE - Re-enable translations properly
+  // COLLECTION PAGE - UNIQUE IDENTIFIER: COLLECTION_PAGE_V2
+  // This helps identify if errors are from this file
+  console.log('[COLLECTION_PAGE_V2] Component starting');
+  
   // Hooks must be called unconditionally
   const tResult = useTranslations('profile');
   const tCommonResult = useTranslations('common');
+  
+  console.log('[COLLECTION_PAGE_V2] useTranslations results:', { 
+    tResultType: typeof tResult, 
+    tCommonResultType: typeof tCommonResult,
+    tResultIsFunction: typeof tResult === 'function',
+    tCommonResultIsFunction: typeof tCommonResult === 'function'
+  });
   
   // Ensure t is always a function - critical fix for the error
   // This MUST be defined before any code that uses t
   const t: (key: string, params?: any) => string = (typeof tResult === 'function' && tResult !== null && tResult !== undefined)
     ? tResult 
     : ((key: string) => {
-        console.warn('[CollectionPage] t is not a function, using fallback for key:', key, 'tResult:', typeof tResult, tResult);
+        console.warn('[COLLECTION_PAGE_V2] t is not a function, using fallback for key:', key, 'tResult:', typeof tResult, tResult);
         return key;
       });
   
@@ -160,12 +170,12 @@ export default function CollectionPage() {
   
   // Verify t is defined - throw error immediately if not
   if (typeof t !== 'function') {
-    const error = new Error(`[CollectionPage] FATAL: t is not a function after all checks. Type: ${typeof t}, Value: ${t}`);
+    const error = new Error(`[COLLECTION_PAGE_V2] FATAL: t is not a function after all checks. Type: ${typeof t}, Value: ${t}`);
     console.error(error);
     throw error;
   }
   
-  console.log('[CollectionPage] Component rendering with translations:', typeof t, typeof tCommon);
+  console.log('[COLLECTION_PAGE_V2] Component rendering with translations:', typeof t, typeof tCommon);
   
   // Now define other hooks and variables
   const params = useParams();
