@@ -945,7 +945,7 @@ export default function CollectionPage() {
                           index={index}
                           isOwnProfile={isOwnProfile}
                           onRemove={handleRemoveGame}
-                          t={(key: string) => key}
+                          t={t}
                         />
                       ))}
                       
