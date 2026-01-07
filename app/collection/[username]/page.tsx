@@ -143,14 +143,34 @@ const fallbackT = (key: string, params?: any) => {
   return key;
 };
 
+// Define fallback translation function outside component
+const getFallbackT = () => (key: string) => key;
+
 export default function CollectionPage() {
-  // Initialize translations - hooks must be called unconditionally at the top level
-  // Use the exact same pattern as the working profile page
-  console.log('[CollectionPage] Before useTranslations');
-  const t = useTranslations('profile');
-  console.log('[CollectionPage] After useTranslations profile, t:', typeof t, t);
-  const tCommon = useTranslations('common');
-  console.log('[CollectionPage] After useTranslations common, tCommon:', typeof tCommon, tCommon);
+  // CRITICAL: Try-catch around useTranslations to prevent crashes
+  let t: (key: string, params?: any) => string;
+  let tCommon: (key: string, params?: any) => string;
+  
+  try {
+    // Initialize translations - hooks must be called unconditionally at the top level
+    const tRaw = useTranslations('profile');
+    const tCommonRaw = useTranslations('common');
+    
+    // Ensure t is always a function
+    t = typeof tRaw === 'function' ? tRaw : getFallbackT();
+    tCommon = typeof tCommonRaw === 'function' ? tCommonRaw : getFallbackT();
+  } catch (error) {
+    console.error('[CollectionPage] Error initializing translations:', error);
+    // Use fallback if useTranslations fails
+    t = getFallbackT();
+    tCommon = getFallbackT();
+  }
+  
+  // Verify t is defined
+  if (typeof t !== 'function') {
+    console.error('[CollectionPage] t is not a function after initialization!', t);
+    t = getFallbackT();
+  }
   
   // Now define other hooks and variables
   const params = useParams();
