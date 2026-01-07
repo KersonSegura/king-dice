@@ -208,22 +208,12 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        console.log('[loadUserProfile] Response not ok, about to use t, t is:', typeof t, t);
-        if (typeof t === 'function') {
-          showToast('User not found', 'error');
-        } else {
-          showToast('User not found', 'error');
-        }
+        showToast('User not found', 'error');
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      console.log('[loadUserProfile] In catch, about to use t, t is:', typeof t, t);
-      if (typeof t === 'function') {
-        showToast('Failed to load collection', 'error');
-      } else {
-        showToast('Failed to load collection', 'error');
-      }
+      showToast('Failed to load collection', 'error');
       router.push('/');
     } finally {
       setLoading(false);
