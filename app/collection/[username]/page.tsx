@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -169,6 +169,16 @@ export default function CollectionPage() {
     }
     return translationFn;
   }, [tCommonRaw]);
+  
+  // Use a ref to ensure t is always accessible, even in closures
+  const tRef = useRef(t);
+  const tCommonRef = useRef(tCommon);
+  
+  // Update refs whenever t changes
+  useEffect(() => {
+    tRef.current = t;
+    tCommonRef.current = tCommon;
+  }, [t, tCommon]);
   
   // Now define other hooks and variables
   const params = useParams();
