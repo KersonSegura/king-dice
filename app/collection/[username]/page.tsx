@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -143,8 +143,11 @@ export default function CollectionPage() {
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
-  const t = useTranslations('profile');
+  const tRaw = useTranslations('profile');
   const tCommon = useTranslations('common');
+  
+  // Ensure t is always a function to prevent "t is not defined" errors
+  const t = tRaw || ((key: string, params?: any) => key);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -179,7 +182,7 @@ export default function CollectionPage() {
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
 
   // Load user profile data
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!username) return;
     
     try {
@@ -197,21 +200,29 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        showToast(t('userNotFound'), 'error');
+        if (t) {
+          showToast(t('userNotFound'), 'error');
+        } else {
+          showToast('User not found', 'error');
+        }
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      showToast(t('failedToLoadCollection'), 'error');
+      if (t) {
+        showToast(t('failedToLoadCollection'), 'error');
+      } else {
+        showToast('Failed to load collection', 'error');
+      }
       router.push('/');
     } finally {
       setLoading(false);
     }
-  };
+  }, [username, user?.email, t, router, showToast]);
 
   useEffect(() => {
     loadUserProfile();
-  }, [username]);
+  }, [loadUserProfile]);
 
   // Update isOwnProfile when user or userProfile changes
   useEffect(() => {
@@ -287,7 +298,7 @@ export default function CollectionPage() {
   };
 
   // Search for games
-  const searchGames = async (query: string) => {
+  const searchGames = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
@@ -306,7 +317,7 @@ export default function CollectionPage() {
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [showToast]);
 
   // Add game to collection
   const addGameToCollection = async (game: any) => {
