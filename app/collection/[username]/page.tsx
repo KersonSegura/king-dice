@@ -792,7 +792,7 @@ export default function CollectionPage() {
                 className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap bg-[#fbae17] hover:bg-[#fbae17]/90 text-white"
               >
                 <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{isEditingCollection ? 'Cancel' : 'Edit'}</span>
+                <span>{isEditingCollection ? tCommon('cancel') : tCommon('edit')}</span>
               </button>
             )}
             {!isOwnProfile && <div className="w-16 sm:w-20 flex-shrink-0"></div>}
@@ -1005,7 +1005,7 @@ export default function CollectionPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowGamesListModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Game Collection</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{safeT('gameCollection')}</h2>
               <button
                 onClick={() => setShowGamesListModal(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -1046,7 +1046,7 @@ export default function CollectionPage() {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
-                            <span className="text-sm font-medium">Add Game</span>
+                            <span className="text-sm font-medium">{safeT('addGame')}</span>
                           </div>
                         </div>
                       )}
@@ -1058,7 +1058,7 @@ export default function CollectionPage() {
                   <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                   </svg>
-                  <p className="text-lg">No games in collection</p>
+                  <p className="text-lg">{safeT('noGamesInCollection')}</p>
                 </div>
               )}
             </div>
@@ -1072,14 +1072,14 @@ export default function CollectionPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                   </svg>
-                  <span>Add Games</span>
+                  <span>{safeT('addGamesToCollection')}</span>
                 </button>
                 {isOwnProfile && (
                   <button
                     onClick={handleSaveGamesOrder}
                     className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
                   >
-                    Save Order
+                    {safeT('saveOrder')}
                   </button>
                 )}
               </div>
@@ -1093,7 +1093,7 @@ export default function CollectionPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddGameModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Add Games to Collection</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{safeT('addGamesToCollection')}</h2>
               <button
                 onClick={() => setShowAddGameModal(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -1107,7 +1107,7 @@ export default function CollectionPage() {
               <div className="mb-6">
                 <input
                   type="text"
-                  placeholder="Search games..."
+                  placeholder={safeT('searchGamesPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-transparent"
@@ -1119,7 +1119,7 @@ export default function CollectionPage() {
                 {isSearching ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#fbae17]"></div>
-                    <span className="ml-3 text-gray-600">Loading...</span>
+                    <span className="ml-3 text-gray-600">{tCommon('loading')}...</span>
                   </div>
                 ) : searchResults.length > 0 ? (
                   <div className="space-y-2">
@@ -1133,14 +1133,14 @@ export default function CollectionPage() {
                             {game.nameEn || game.name}
                           </h3>
                           <p className="text-sm text-gray-500">
-                            {game.yearRelease || 'Unknown year'}
+                            {game.yearRelease || safeT('unknownYear')}
                           </p>
                         </div>
                         <button
                           onClick={() => addGameToCollection(game)}
                           className="ml-4 px-4 py-2 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-lg font-medium transition-colors"
                         >
-                          Add
+                          {safeT('add')}
                         </button>
                       </div>
                     ))}

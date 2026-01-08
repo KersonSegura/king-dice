@@ -2368,7 +2368,7 @@ export function BoardleGame({}: BoardleGameProps) {
         {gameMode === 'card' && (
           <div className="mb-8 flex justify-center lg:hidden">
             <div className="bg-white p-4 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold mb-3 text-center">Guess which game this card comes from</h3>
+              <h3 className="text-lg font-semibold mb-3 text-center">{tBoardle('guessCardGame')}</h3>
               <div className="flex justify-center">
                 {targetGameData?.imageUrl ? (
                   <div className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100" style={{ width: '500px', height: '400px' }}>
@@ -2743,7 +2743,7 @@ export function BoardleGame({}: BoardleGameProps) {
                          <div className="flex-shrink-0 space-y-6 hidden lg:block" style={{ width: '500px' }}>
                           {/* Card Mode - Card Image Section */}
                           <div className="bg-white p-4 rounded-lg shadow-lg">
-                            <h3 className="text-lg font-semibold mb-3 text-center">Guess which game this card comes from</h3>
+                            <h3 className="text-lg font-semibold mb-3 text-center">{tBoardle('guessCardGame')}</h3>
                 <div className="flex justify-center">
                   {targetGameData?.imageUrl ? (
                                                                  <div className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100" style={{ width: '500px', height: '400px' }}>
