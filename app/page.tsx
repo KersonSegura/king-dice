@@ -16,7 +16,7 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import LoginModal from '@/components/LoginModal';
 import { useLoginModal } from '@/hooks/useLoginModal';
@@ -135,6 +135,8 @@ export default function HomePage() {
   }
   
   console.log('[HOME_PAGE_V2] Component rendering with t:', typeof t);
+  const locale = useLocale();
+  const isSpanish = locale === 'es';
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
@@ -912,14 +914,30 @@ export default function HomePage() {
               <Users className="w-5 h-5 text-[#fbae17]" />
               <span className="whitespace-nowrap">{t('activeCommunity')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-center">
-              <BookOpen className="w-5 h-5 text-[#fbae17]" />
-              <span className="whitespace-nowrap">{t('shareCollections')}</span>
-            </div>
-            <div className="flex items-center space-x-2 justify-center">
-              <Star className="w-5 h-5 text-[#fbae17]" />
-              <span className="whitespace-nowrap">{t('connectDiscover')}</span>
-            </div>
+            {isSpanish ? (
+              <>
+                {/* ES only: swap Share Collections and Connect */}
+                <div className="flex items-center space-x-2 justify-center">
+                  <Star className="w-5 h-5 text-[#fbae17]" />
+                  <span className="whitespace-nowrap">{t('connectDiscover')}</span>
+                </div>
+                <div className="flex items-center space-x-2 justify-center">
+                  <BookOpen className="w-5 h-5 text-[#fbae17]" />
+                  <span className="whitespace-nowrap">{t('shareCollections')}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center space-x-2 justify-center">
+                  <BookOpen className="w-5 h-5 text-[#fbae17]" />
+                  <span className="whitespace-nowrap">{t('shareCollections')}</span>
+                </div>
+                <div className="flex items-center space-x-2 justify-center">
+                  <Star className="w-5 h-5 text-[#fbae17]" />
+                  <span className="whitespace-nowrap">{t('connectDiscover')}</span>
+                </div>
+              </>
+            )}
             <div className="flex items-center space-x-2 justify-center">
               <Globe className="w-5 h-5 text-[#fbae17]" />
               <span className="whitespace-nowrap">{t('joinKingdom')}</span>
