@@ -919,18 +919,18 @@ export default function HomePage() {
 
             {isSpanish ? (
               <>
-                {/* ES only order: Active / Conectar  |  Únete al Reino / Compartir Colecciones */}
+                {/* ES only order: Active / Conectar  |  Compartir Juegos / Únete al Reino */}
                 <div className="flex items-center space-x-2 justify-start w-full">
                   <Star className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('connectDiscover')}</span>
                 </div>
                 <div className="flex items-center space-x-2 justify-start w-full">
-                  <Globe className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
-                  <span className="whitespace-nowrap">{t('joinKingdom')}</span>
-                </div>
-                <div className="flex items-center space-x-2 justify-start w-full">
                   <BookOpen className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('shareCollections')}</span>
+                </div>
+                <div className="flex items-center space-x-2 justify-start w-full">
+                  <Globe className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
+                  <span className="whitespace-nowrap">{t('joinKingdom')}</span>
                 </div>
               </>
             ) : (
