@@ -20,6 +20,7 @@ import { useLoginModal } from '@/hooks/useLoginModal';
 
 export default function Header() {
   const t = useTranslations('header');
+  const tCommon = useTranslations('common');
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -717,7 +718,7 @@ export default function Header() {
               ) : isLoading ? (
                 <div className="flex items-center space-x-2 px-3 py-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
-                  <span className="text-gray-600">Loading...</span>
+                  <span className="text-gray-600">{tCommon('loading')}...</span>
                 </div>
               ) : (
                 <button

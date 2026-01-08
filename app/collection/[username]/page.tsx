@@ -38,6 +38,18 @@ interface UserProfile {
   gamesList?: Array<{id: number, name: string, year: number, image: string}>;
 }
 
+interface GalleryImage {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  author: { id: string; name: string; avatar: string; reputation?: number };
+  category: string;
+  createdAt: string;
+  votes?: { upvotes: number; downvotes: number };
+}
+
 // Sortable game item component - NO t prop needed
 function SortableGameItem({ game, index, isOwnProfile, onRemove }: { 
   game: any; 
@@ -172,6 +184,7 @@ export default function CollectionPage() {
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
+  const isAuthenticated = !!user;
   
   // EXACT pattern from working profile page - simple direct assignment
   const tRaw = useTranslations('profile');
@@ -283,8 +296,18 @@ export default function CollectionPage() {
   const [selectedImage, setSelectedImage] = useState<{
     url: string;
     title: string;
+    description?: string;
+    author?: { name: string; avatar: string };
+    createdAt?: string;
+    category?: string;
+    likeCount?: number;
+    imageId?: string;
   } | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [userImages, setUserImages] = useState<GalleryImage[]>([]);
+  const [imageComments, setImageComments] = useState<any[]>([]);
+  const [imageLikes, setImageLikes] = useState<Record<string, boolean>>({});
+  const [loadingComments, setLoadingComments] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isEditingCollection, setIsEditingCollection] = useState(false);
   const [showGamesListModal, setShowGamesListModal] = useState(false);
@@ -323,6 +346,19 @@ export default function CollectionPage() {
           ...data.user,
           email: data.user.email || user?.email || ''
         });
+
+        // Load user's gallery images so collection photo / favorite card are linked to their posts
+        if (data.user?.id) {
+          try {
+            const galleryResponse = await fetch(`/api/gallery?author=${data.user.id}`);
+            if (galleryResponse.ok) {
+              const galleryData = await galleryResponse.json();
+              setUserImages(galleryData.images || []);
+            }
+          } catch (e) {
+            console.error('Error loading gallery images:', e);
+          }
+        }
       } else {
         // Use hardcoded string to avoid t closure issue in event handlers
         showToast('User not found', 'error');
@@ -418,23 +454,125 @@ export default function CollectionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
+  // Load comments for an image (for ImageModal counters and thread)
+  const loadImageComments = async (imageId: string) => {
+    const viewerId = user?.id;
+    if (!viewerId) return;
+
+    setLoadingComments(true);
+    try {
+      const response = await fetch(`/api/gallery/comments?imageId=${imageId}&userId=${viewerId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setImageComments(data.comments || []);
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleImageLike = async (imageId: string) => {
+    const viewerId = user?.id;
+    if (!viewerId) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const currentLikeStatus = imageLikes[imageId] || false;
+      const newVoteType = currentLikeStatus ? null : 'up';
+
+      const response = await fetch('/api/gallery/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageId,
+          voteType: newVoteType,
+          userId: viewerId
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        setImageLikes(prev => ({
+          ...prev,
+          [imageId]: !currentLikeStatus
+        }));
+
+        setUserImages(prev => prev.map(img =>
+          img.id === imageId
+            ? { ...img, votes: { ...img.votes, upvotes: data.image.votes.upvotes } }
+            : img
+        ));
+
+        if (selectedImage?.imageId === imageId) {
+          setSelectedImage(prev => prev ? { ...prev, likeCount: data.image.votes.upvotes } : null);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
+    }
+  };
+
+  const openImageModal = async (galleryImage: GalleryImage) => {
+    if (!galleryImage) return;
+
+    setSelectedImage({
+      url: galleryImage.imageUrl,
+      title: galleryImage.title || safeT('untitledImage'),
+      description: galleryImage.description,
+      author: {
+        name: galleryImage.author?.name || userProfile?.username || 'Unknown User',
+        avatar: galleryImage.author?.avatar || (userProfile as any)?.avatar || ''
+      },
+      createdAt: galleryImage.createdAt,
+      category: galleryImage.category,
+      likeCount: galleryImage.votes?.upvotes || 0,
+      imageId: galleryImage.id
+    });
+
+    // Load comments + initialize like state
+    if (user?.id) {
+      await loadImageComments(galleryImage.id);
+    } else {
+      setImageComments([]);
+    }
+    setImageLikes(prev => ({ ...prev, [galleryImage.id]: prev[galleryImage.id] || false }));
+    setShowImageModal(true);
+  };
+
   const handleOpenCollectionPhoto = () => {
     if (userProfile?.collectionPhoto) {
-      setSelectedImage({
-        url: userProfile.collectionPhoto,
-        title: tRef.current?.('collectionPhoto') || 'Collection Photo'
-      });
-      setShowImageModal(true);
+      const galleryImage = userImages.find(img => img.imageUrl === userProfile.collectionPhoto);
+      if (galleryImage) {
+        void openImageModal(galleryImage);
+      } else {
+        setSelectedImage({
+          url: userProfile.collectionPhoto,
+          title: tRef.current?.('collectionPhoto') || 'Collection Photo'
+        });
+        setImageComments([]);
+        setShowImageModal(true);
+      }
     }
   };
 
   const handleOpenFavoriteCard = () => {
     if (userProfile?.favoriteCard) {
-      setSelectedImage({
-        url: userProfile.favoriteCard,
-        title: tRef.current?.('favoriteCard') || 'Favorite Card'
-      });
-      setShowImageModal(true);
+      const galleryImage = userImages.find(img => img.imageUrl === userProfile.favoriteCard);
+      if (galleryImage) {
+        void openImageModal(galleryImage);
+      } else {
+        setSelectedImage({
+          url: userProfile.favoriteCard,
+          title: tRef.current?.('favoriteCard') || 'Favorite Card'
+        });
+        setImageComments([]);
+        setShowImageModal(true);
+      }
     }
   };
 
@@ -1011,9 +1149,22 @@ export default function CollectionPage() {
           onClose={() => {
             setShowImageModal(false);
             setSelectedImage(null);
+            setImageComments([]);
           }}
           imageUrl={selectedImage.url}
           title={selectedImage.title}
+          description={selectedImage.description}
+          author={selectedImage.author}
+          createdAt={selectedImage.createdAt}
+          category={selectedImage.category}
+          likeCount={selectedImage.likeCount}
+          imageId={selectedImage.imageId}
+          isAuthenticated={isAuthenticated}
+          currentUser={user}
+          currentUserId={user?.id || ''}
+          comments={imageComments}
+          onLike={() => selectedImage.imageId && handleImageLike(selectedImage.imageId)}
+          onRefreshComments={() => selectedImage.imageId && loadImageComments(selectedImage.imageId)}
         />
       )}
 
