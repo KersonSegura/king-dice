@@ -483,7 +483,10 @@ export default function UserProfilePage() {
           }
           
           // Load user's gallery images
-          const galleryResponse = await fetch(`/api/gallery?author=${data.user.id}`);
+          const galleryUrl = user?.id
+            ? `/api/gallery?author=${data.user.id}&userId=${user.id}`
+            : `/api/gallery?author=${data.user.id}`;
+          const galleryResponse = await fetch(galleryUrl);
           if (galleryResponse.ok) {
             const galleryData = await galleryResponse.json();
             setUserImages(galleryData.images || []);
@@ -1084,13 +1087,11 @@ export default function UserProfilePage() {
     // Load comments and check like status
     await loadImageComments(galleryImage.id);
     
-    // Check if user has liked this image
-    if (userProfile?.id) {
-      setImageLikes(prev => ({
-        ...prev,
-        [galleryImage.id]: false
-      }));
-    }
+    // Initialize like state from API-provided userVote (if available)
+    setImageLikes(prev => ({
+      ...prev,
+      [galleryImage.id]: (galleryImage as any).userVote === 'up'
+    }));
     
     // Update URL with photo ID without triggering Next.js scroll-to-top
     if (typeof window !== 'undefined') {
@@ -1882,7 +1883,7 @@ export default function UserProfilePage() {
                 <div className="space-y-4 flex flex-col h-full">
                   <h3 className="text-lg font-medium text-gray-900">{t('favoriteCard')}</h3>
                   <div className="relative flex-1">
-                    <div className="h-full bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 group relative overflow-hidden">
+                    <div className={`h-full bg-gray-100 rounded-lg group relative overflow-hidden ${userProfile.favoriteCard ? '' : 'border-2 border-dashed border-gray-300'}`}>
                       {userProfile.favoriteCard ? (
                         <>
                         <img
@@ -1921,7 +1922,7 @@ export default function UserProfilePage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-900">{t('collectionPhoto')}</h3>
                 <div className="relative">
-                  <div className="aspect-[4/3] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 group relative overflow-hidden">
+                  <div className={`aspect-[4/3] bg-gray-100 rounded-lg group relative overflow-hidden ${userProfile.collectionPhoto ? '' : 'border-2 border-dashed border-gray-300'}`}>
                     {userProfile.collectionPhoto ? (
                       <>
                       <img

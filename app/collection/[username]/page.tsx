@@ -350,7 +350,10 @@ export default function CollectionPage() {
         // Load user's gallery images so collection photo / favorite card are linked to their posts
         if (data.user?.id) {
           try {
-            const galleryResponse = await fetch(`/api/gallery?author=${data.user.id}`);
+            const galleryUrl = user?.id
+              ? `/api/gallery?author=${data.user.id}&userId=${user.id}`
+              : `/api/gallery?author=${data.user.id}`;
+            const galleryResponse = await fetch(galleryUrl);
             if (galleryResponse.ok) {
               const galleryData = await galleryResponse.json();
               setUserImages(galleryData.images || []);
@@ -540,7 +543,7 @@ export default function CollectionPage() {
     } else {
       setImageComments([]);
     }
-    setImageLikes(prev => ({ ...prev, [galleryImage.id]: prev[galleryImage.id] || false }));
+    setImageLikes(prev => ({ ...prev, [galleryImage.id]: (galleryImage as any).userVote === 'up' }));
     setShowImageModal(true);
   };
 
@@ -1224,6 +1227,7 @@ export default function CollectionPage() {
           onLike={() => selectedImage.imageId && handleImageLike(selectedImage.imageId)}
           onAddComment={handleAddGalleryComment}
           onRefreshComments={() => selectedImage.imageId && loadImageComments(selectedImage.imageId)}
+          isLiked={selectedImage?.imageId ? imageLikes[selectedImage.imageId] || false : false}
         />
       )}
 
