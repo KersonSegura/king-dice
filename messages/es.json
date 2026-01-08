@@ -79,7 +79,7 @@
     "joinDiscord": "Únete a nuestro Discord",
     "joinTwitter": "Síguenos en X",
     "joinInstagram": "Síguenos en Instagram",
-    "communityForums": "Foros de la Comunidad",
+    "communityForums": "Foros",
     "forumsDescription": "¡Únete a la conversación! Discute estrategias, comparte experiencias y conéctate con otros entusiastas de juegos de mesa.",
     "generalDiscussion": "Discusión General",
     "generalDiscussionDescription": "Comparte tus pensamientos sobre juegos de mesa, haz preguntas y participa en discusiones generales.",
@@ -90,11 +90,11 @@
     "posts": "publicaciones",
     "replies": "respuestas",
     "joinDiscussion": "Únete a la Discusión",
-    "communityGallery": "Galería de la Comunidad",
+    "communityGallery": "Galería",
     "galleryDescription": "Los últimos destacados de nuestra comunidad.",
     "seeMore": "Ver Más",
     "viewAllGallery": "Ver Toda la Galería",
-    "communityFeed": "Feed de la Comunidad",
+    "communityFeed": "Feed",
     "communityFeedDescription": "Descubre lo que la comunidad está compartiendo: setups, nuevos juegos y más!",
     "loadMore": "Cargar Más",
     "loading": "Cargando...",
@@ -372,7 +372,7 @@
     "diceBotName": "Dado-Bot"
   },
   "gallery": {
-    "communityGallery": "Galería de la Comunidad",
+    "communityGallery": "Galería",
     "backToHome": "Volver al Inicio",
     "communityGuidelines": "Reglas de la Comunidad",
     "guidelines": "Reglas",
@@ -473,7 +473,7 @@
     "guidelinesClose": "Cerrar"
   },
   "forums": {
-    "communityForums": "Foros de la Comunidad",
+    "communityForums": "Foros",
     "backToHome": "Volver al Inicio",
     "newPost": "Nueva Publicación",
     "createPost": "Crear Publicación",

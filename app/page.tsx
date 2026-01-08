@@ -1516,7 +1516,7 @@ export default function HomePage() {
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
                 <Image 
-                  src="/BoardleIcon.svg" 
+                  src="/BoardleYellowIcon.svg" 
                   alt="Boardle Icon" 
                   width={32} 
                   height={32}
