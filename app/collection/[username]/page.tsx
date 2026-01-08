@@ -137,14 +137,12 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove }: {
 }
 
 export default function CollectionPage() {
-  // Follow EXACT pattern from working profile page - translations FIRST
+  // EXACT order from working profile page - hooks in same sequence
   const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
-  
-  // Simple and direct - EXACTLY like working profile page
   const t = useTranslations('profile');
   const tCommon = useTranslations('common');
 
