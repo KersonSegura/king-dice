@@ -596,11 +596,13 @@
     "reportSubmitting": "Enviando...",
     "reportSubmittedSuccess": "¡Reporte enviado con éxito! Gracias por ayudar a mantener la comunidad segura.",
     "reportSubmitError": "Error al enviar el reporte. Por favor intenta de nuevo.",
-    "reportReason.inappropriate": "Contenido inapropiado",
-    "reportReason.spam": "Spam o contenido comercial",
-    "reportReason.hate": "Discurso de odio",
-    "reportReason.violence": "Violencia o contenido dañino",
-    "reportReason.other": "Otro",
+    "reportReason": {
+      "inappropriate": "Contenido inapropiado",
+      "spam": "Spam o contenido comercial",
+      "hate": "Discurso de odio",
+      "violence": "Violencia o contenido dañino",
+      "other": "Otro"
+    },
     "voteFailed": "Error al actualizar el voto",
     "pleaseEnterComment": "Por favor ingresa un comentario",
     "pleaseSignInToComment": "Por favor inicia sesión para comentar",

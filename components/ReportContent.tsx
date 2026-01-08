@@ -116,7 +116,18 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
             >
               {Object.entries(REPORT_REASONS).map(([key, label]) => (
                 <option key={key} value={key}>
-                  {tCommon(`reportReason.${key}` as any) || label}
+                  {(() => {
+                    const translated = tCommon(`reportReason.${key}` as any) as unknown as string;
+                    // next-intl may return the key string when missing; avoid showing "common.report..."
+                    if (
+                      !translated ||
+                      translated.includes('common.reportReason.') ||
+                      translated.includes('reportReason.')
+                    ) {
+                      return label;
+                    }
+                    return translated;
+                  })()}
                 </option>
               ))}
             </select>

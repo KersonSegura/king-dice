@@ -573,7 +573,7 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
               <button 
                 type="button"
                 ref={starButtonRef}
-                className="p-2 rounded transition-colors h-8 w-8 hover:opacity-90 flex items-center justify-center text-white"
+                className="p-2 rounded transition-colors !h-8 !w-8 !min-h-8 !min-w-8 hover:opacity-90 flex items-center justify-center text-white"
                 style={{ backgroundColor: '#fbae17' }}
                 onMouseEnter={handleStarMouseEnter}
                 onMouseLeave={handleStarMouseLeave}
