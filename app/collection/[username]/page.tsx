@@ -180,8 +180,8 @@ export default function CollectionPage() {
   const [uploadingCollectionPhoto, setUploadingCollectionPhoto] = useState(false);
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
 
-  // Load user profile data - using simple function like the working version
-  const loadUserProfile = async () => {
+  // Load user profile data - wrap in useCallback to avoid closure issues
+  const loadUserProfile = useCallback(async () => {
     if (!username) return;
     
     try {
@@ -209,11 +209,11 @@ export default function CollectionPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [username, user?.email, router, showToast, t]);
 
   useEffect(() => {
     loadUserProfile();
-  }, [username]);
+  }, [username, loadUserProfile]);
 
   // Update isOwnProfile when user or userProfile changes
   useEffect(() => {
@@ -266,7 +266,7 @@ export default function CollectionPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [username]);
+  }, [username, loadUserProfile]);
 
   const handleOpenCollectionPhoto = () => {
     if (userProfile?.collectionPhoto) {
