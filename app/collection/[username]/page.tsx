@@ -143,7 +143,17 @@ export default function CollectionPage() {
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
-  const t = useTranslations('profile');
+  
+  // Ensure t is always defined - critical fix for production builds
+  let t: (key: string, params?: any) => string;
+  try {
+    const tResult = useTranslations('profile');
+    t = typeof tResult === 'function' ? tResult : ((key: string) => key);
+  } catch (e) {
+    console.error('useTranslations failed:', e);
+    t = ((key: string) => key);
+  }
+  
   const tCommon = useTranslations('common');
 
   // Drag and drop sensors
