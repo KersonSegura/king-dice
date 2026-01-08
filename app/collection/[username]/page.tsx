@@ -1010,7 +1010,7 @@ export default function CollectionPage() {
         {/* Collection Photo */}
         <div className="mb-8">
           {userProfile.collectionPhoto ? (
-            <div className="relative w-full aspect-[16/9] bg-gray-100 rounded-xl overflow-hidden cursor-pointer group"
+            <div className="relative w-full aspect-[16/9] bg-transparent rounded-xl overflow-hidden cursor-pointer group"
               onClick={handleOpenCollectionPhoto}
             >
               <img
@@ -1050,7 +1050,7 @@ export default function CollectionPage() {
             <h2 className="text-xl font-semibold text-white">{safeT('favoriteGame')}</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
-                <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
+                <div className="relative aspect-[4/3] bg-transparent rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
                   <img
                     src={favoriteGame.image || '/DefaultDiceAvatar.svg'}
                     alt={favoriteGame.name}
@@ -1084,7 +1084,7 @@ export default function CollectionPage() {
             <h2 className="text-xl font-semibold text-white">{safeT('favoriteCard')}</h2>
             {userProfile.favoriteCard ? (
               <div 
-                className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden cursor-pointer group"
+                className="relative aspect-[4/3] bg-transparent rounded-xl overflow-hidden cursor-pointer group"
                 onClick={handleOpenFavoriteCard}
               >
                 <img
