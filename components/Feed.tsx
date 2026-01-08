@@ -381,7 +381,7 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
           <button
             onClick={() => setPage(prev => prev + 1)}
             disabled={loading}
-            className="px-6 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#e0990e] transition-colors disabled:opacity-50"
+            className="px-6 py-2 bg-[#fbae17] text-black rounded-lg hover:bg-[#e0990e] transition-colors disabled:opacity-50"
           >
             {loading ? t('loading') : t('loadMore')}
           </button>
