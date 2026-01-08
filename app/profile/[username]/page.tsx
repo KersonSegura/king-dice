@@ -1554,7 +1554,11 @@ export default function UserProfilePage() {
               {userProfile.levelProgress && (
                 <div className="w-full max-w-md">
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className={`${coverSecondaryTextClass} font-medium`}>
+                    <span
+                      className={`${coverSecondaryTextClass} font-medium ${
+                        locale === 'es' ? 'hidden sm:inline' : ''
+                      }`}
+                    >
                       {userProfile.levelProgress.currentXP} {t('xp')}
                     </span>
                     <span className={`${coverSecondaryTextClass} font-medium`}>
