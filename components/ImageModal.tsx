@@ -353,23 +353,40 @@ export default function ImageModal({
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffSeconds = Math.floor(diffMs / 1000);
 
-    // Use Intl.RelativeTimeFormat for proper localization
+    if (Number.isNaN(date.getTime())) return '';
+
+    // Treat future timestamps as "just now" (clock skew / server timing)
+    let diffMs = now.getTime() - date.getTime();
+    if (diffMs < 0) diffMs = 0;
+
+    // Bucketed, not overly specific:
+    // <5m -> just now
+    // 5/10/15/30m -> minutes
+    // then hours, days, weeks, months, years
     const rtf = new Intl.RelativeTimeFormat(locale || 'en', { numeric: 'auto' });
+    const minutes = Math.floor(diffMs / (60 * 1000));
 
-    if (diffSeconds < 60) return rtf.format(-diffSeconds, 'second');
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return rtf.format(-diffMinutes, 'minute');
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return rtf.format(-diffHours, 'hour');
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 30) return rtf.format(-diffDays, 'day');
-    const diffMonths = Math.floor(diffDays / 30);
-    if (diffMonths < 12) return rtf.format(-diffMonths, 'month');
-    const diffYears = Math.floor(diffMonths / 12);
-    return rtf.format(-diffYears, 'year');
+    if (minutes < 5) return tCommon('justNow');
+    if (minutes < 10) return rtf.format(-5, 'minute');
+    if (minutes < 15) return rtf.format(-10, 'minute');
+    if (minutes < 30) return rtf.format(-15, 'minute');
+    if (minutes < 60) return rtf.format(-30, 'minute');
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return rtf.format(-hours, 'hour');
+
+    const days = Math.floor(hours / 24);
+    if (days < 7) return rtf.format(-days, 'day');
+
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return rtf.format(-weeks, 'week');
+
+    const months = Math.floor(days / 30);
+    if (months < 12) return rtf.format(-months, 'month');
+
+    const years = Math.max(1, Math.floor(days / 365));
+    return rtf.format(-years, 'year');
   };
 
   if (!isOpen) return null;
@@ -396,7 +413,7 @@ export default function ImageModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
+      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[100] p-0 sm:p-4"
       style={{ pointerEvents: 'auto' }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
@@ -408,7 +425,7 @@ export default function ImageModal({
     >
       <div 
         ref={modalContentRef}
-        className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col sm:flex-row"
+        className="bg-white w-full h-full rounded-none sm:rounded-lg sm:max-w-6xl sm:max-h-[90vh] overflow-hidden flex flex-col sm:flex-row"
         style={{ pointerEvents: 'auto' }}
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}
@@ -441,48 +458,45 @@ export default function ImageModal({
             </button>
           </div>
 
-          {/* Image - Full Width */}
-          <div className="flex-1 bg-gray-100 flex items-center justify-center relative group aspect-square">
-            {/* Navigation Arrows */}
-            {onNavigate && allImages.length > 1 && (
-              <>
-                {/* Previous Arrow */}
-                {currentImageIndex > 0 && (
-                  <button
-                    onClick={() => onNavigate('prev')}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                )}
-                
-                {/* Next Arrow */}
-                {currentImageIndex < allImages.length - 1 && (
-                  <button
-                    onClick={() => onNavigate('next')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                )}
-              </>
-            )}
-            
-          <img
-            src={imageUrl}
-            alt={alt || title || 'Gallery image'}
-            className="w-full h-full"
-            style={{ 
-              objectFit: 'contain',
-              width: '100%',
-              height: '100%',
-              display: 'block'
-            }}
-          />
-          </div>
+          {/* Scrollable body (Instagram-like full screen) */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Image - Full Width */}
+            <div className="w-full bg-gray-100 flex items-center justify-center relative group h-[55dvh] max-h-[70dvh]">
+              {/* Navigation Arrows */}
+              {onNavigate && allImages.length > 1 && (
+                <>
+                  {/* Previous Arrow */}
+                  {currentImageIndex > 0 && (
+                    <button
+                      onClick={() => onNavigate('prev')}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                  )}
+                  
+                  {/* Next Arrow */}
+                  {currentImageIndex < allImages.length - 1 && (
+                    <button
+                      onClick={() => onNavigate('next')}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/20 group-hover:bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  )}
+                </>
+              )}
+              
+              <img
+                src={imageUrl}
+                alt={alt || title || 'Gallery image'}
+                className="w-full h-full object-contain"
+                style={{ display: 'block' }}
+              />
+            </div>
 
-          {/* Actions and Comments - Below Image */}
-          <div className="flex flex-col border-t border-gray-200">
+            {/* Actions and Comments - Below Image */}
+            <div className="flex flex-col border-t border-gray-200">
             {/* Actions Row */}
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
@@ -581,7 +595,7 @@ export default function ImageModal({
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-gray-200 p-4 max-h-48 overflow-y-auto">
+            <div className="border-t border-gray-200 p-4">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">
                 {tGallery('comments')} ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
               </h3>
@@ -621,7 +635,7 @@ export default function ImageModal({
                         <button
                           onClick={handleAddComment}
                           disabled={!newComment.trim() || isSubmittingComment}
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 w-10 h-10 min-h-0 min-w-0 p-0 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 min-h-0 min-w-0 p-1 bg-transparent text-blue-600 hover:text-blue-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
                         >
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -670,6 +684,7 @@ export default function ImageModal({
                 )}
               </div>
             </div>
+          </div>
           </div>
         </div>
 

@@ -603,6 +603,8 @@
     "removeCollectionPhoto": "Eliminar foto de colección",
     "dragToReorder": "Arrastra para reordenar",
     "unknownUser": "Usuario desconocido"
+    ,
+    "justNow": "justo ahora"
   },
   "game": {
     "gameNotFoundDescription": "Lo sentimos, no pudimos encontrar el juego que buscas. Puede que haya sido eliminado o no exista.",
