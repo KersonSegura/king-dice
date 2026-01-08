@@ -999,9 +999,9 @@ export default function HomePage() {
       <section id="community-feed" className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
-              <Users className="w-8 h-8 text-primary-500" />
-              {t('communityFeed')}
+            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
+              <Users className="w-8 h-8 text-primary-500 flex-none" />
+              <span className="inline-block text-center leading-tight">{t('communityFeed')}</span>
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               {t('communityFeedDescription')}
@@ -1048,15 +1048,15 @@ export default function HomePage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
+            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
               <Image 
                 src="/FireIcon.svg" 
                 alt="Fire Icon" 
                 width={32} 
                 height={32}
-                className="w-8 h-8"
+                className="w-8 h-8 flex-none"
               />
-              {t('hotGames')}
+              <span className="inline-block text-center leading-tight">{t('hotGames')}</span>
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               {t('hotGamesDescription')}
@@ -1100,15 +1100,15 @@ export default function HomePage() {
       <section className="py-16 bg-dark-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
+            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
               <Image 
                 src="/TrophyIcon.svg" 
                 alt="Trophy Icon" 
                 width={32} 
                 height={32}
-                className="w-8 h-8"
+                className="w-8 h-8 flex-none"
               />
-              {t('topRankedGames')}
+              <span className="inline-block text-center leading-tight">{t('topRankedGames')}</span>
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               {t('topRankedGamesDescription')}
@@ -1152,15 +1152,15 @@ export default function HomePage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
+            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
               <Image 
                 src="/ForumsIcon.svg" 
                 alt="Forums Icon" 
                 width={32} 
                 height={32}
-                className="w-8 h-8"
+                className="w-8 h-8 flex-none"
               />
-              {t('communityForums')}
+              <span className="inline-block text-center leading-tight">{t('communityForums')}</span>
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               {t('forumsDescription')}
@@ -1249,15 +1249,15 @@ export default function HomePage() {
       <section className="py-16 bg-dark-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
+            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
               <Image 
                 src="/GalleryIcon.svg" 
                 alt="Gallery Icon" 
                 width={32} 
                 height={32}
-                className="w-8 h-8"
+                className="w-8 h-8 flex-none"
               />
-              {t('communityGallery')}
+              <span className="inline-block text-center leading-tight">{t('communityGallery')}</span>
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               {t('galleryDescription')}
@@ -1489,9 +1489,9 @@ export default function HomePage() {
         <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
-                <Square className="w-8 h-8 text-primary-500" />
-                {t('pixelCanvas')}
+              <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
+                <Square className="w-8 h-8 text-primary-500 flex-none" />
+                <span className="inline-block text-center leading-tight">{t('pixelCanvas')}</span>
               </h2>
               <p className="text-dark-600 max-w-2xl mx-auto">
                 {t('pixelCanvasDescription')}
@@ -1514,15 +1514,15 @@ export default function HomePage() {
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3">
+              <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
                 <Image 
                   src="/BoardleIcon.svg" 
                   alt="Boardle Icon" 
                   width={32} 
                   height={32}
-                  className="w-8 h-8"
+                  className="w-8 h-8 flex-none"
                 />
-                {t('boardle')}
+                <span className="inline-block text-center leading-tight">{t('boardle')}</span>
               </h2>
               <p className="text-dark-600 max-w-2xl mx-auto">
                 {t('boardleDescription')}
