@@ -207,7 +207,7 @@ export default function UserProfilePage() {
   const tCommon = useTranslations('common');
   const tMyDice = useTranslations('myDice');
   const locale = useLocale();
-  const isSpanish = locale === 'es';
+  const isSpanish = locale?.startsWith('es');
 
   // Drag and drop sensors - optimized for smooth dragging
   const sensors = useSensors(
@@ -2101,9 +2101,9 @@ export default function UserProfilePage() {
 
       {/* Games List Modal */}
       {showGamesListModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowGamesListModal(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[200] p-4" onClick={() => setShowGamesListModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900">{t('gameCollection')}</h2>
               <button
                 onClick={() => setShowGamesListModal(false)}
@@ -2113,7 +2113,7 @@ export default function UserProfilePage() {
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {tempGamesList && tempGamesList.length > 0 ? (
                 <DndContext
                   sensors={sensors}
@@ -2163,7 +2163,7 @@ export default function UserProfilePage() {
               )}
             </div>
             
-            <div className="p-6 border-t border-gray-200 bg-gray-50">
+            <div className="p-4 sm:p-6 border-t border-gray-200 bg-gray-50 shrink-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowAddGameModal(true)}
@@ -2190,9 +2190,9 @@ export default function UserProfilePage() {
 
       {/* Add Game Modal */}
       {showAddGameModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddGameModal(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[200] p-4" onClick={() => setShowAddGameModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900">{t('addGamesToCollection')}</h2>
               <button
                 onClick={() => setShowAddGameModal(false)}
@@ -2202,7 +2202,7 @@ export default function UserProfilePage() {
               </button>
             </div>
             
-            <div className="p-6">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {/* Search Input */}
               <div className="mb-6">
                 <input
@@ -2215,7 +2215,7 @@ export default function UserProfilePage() {
               </div>
 
               {/* Search Results */}
-              <div className="max-h-[50vh] overflow-y-auto">
+              <div className="overflow-y-auto">
                 {isSearching ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#fbae17]"></div>
