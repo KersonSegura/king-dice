@@ -906,21 +906,21 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Benefits: single-line row (no wrapping). Scroll horizontally on small screens if needed. */}
-          <div className="flex flex-nowrap justify-center gap-8 text-sm text-gray-300 overflow-x-auto px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex items-center space-x-2 justify-center min-w-max">
+          {/* Benefits: 2 rows x 2 columns on mobile, same centered look as English */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-300 place-items-center sm:flex sm:flex-wrap sm:justify-center sm:gap-8">
+            <div className="flex items-center space-x-2 justify-center">
               <Users className="w-5 h-5 text-[#fbae17]" />
               <span className="whitespace-nowrap">{t('activeCommunity')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-center min-w-max">
+            <div className="flex items-center space-x-2 justify-center">
               <BookOpen className="w-5 h-5 text-[#fbae17]" />
               <span className="whitespace-nowrap">{t('shareCollections')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-center min-w-max">
+            <div className="flex items-center space-x-2 justify-center">
               <Star className="w-5 h-5 text-[#fbae17]" />
               <span className="whitespace-nowrap">{t('connectDiscover')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-center min-w-max">
+            <div className="flex items-center space-x-2 justify-center">
               <Globe className="w-5 h-5 text-[#fbae17]" />
               <span className="whitespace-nowrap">{t('joinKingdom')}</span>
             </div>
