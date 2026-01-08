@@ -910,9 +910,9 @@ export default function HomePage() {
 
           {/* Benefits: 2 rows x 2 columns on mobile; keep labels single-line; align indentation consistently */}
           <div
-            className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-300 max-w-md mx-auto w-full justify-items-start sm:flex sm:flex-wrap sm:justify-center sm:gap-8 sm:max-w-none"
+            className="grid grid-cols-[max-content_max-content] gap-x-10 gap-y-4 text-sm text-gray-300 w-fit mx-auto justify-items-start sm:flex sm:flex-wrap sm:justify-center sm:gap-8"
           >
-            <div className="flex items-center space-x-2 justify-start w-full">
+            <div className="flex items-center space-x-2 justify-start">
               <Users className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
               <span className="whitespace-nowrap">{t('activeCommunity')}</span>
             </div>
@@ -920,30 +920,30 @@ export default function HomePage() {
             {isSpanish ? (
               <>
                 {/* ES only order: Active / Conectar  |  Compartir Juegos / Únete al Reino */}
-                <div className="flex items-center space-x-2 justify-start w-full">
+                <div className="flex items-center space-x-2 justify-start">
                   <Star className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('connectDiscover')}</span>
                 </div>
-                <div className="flex items-center space-x-2 justify-start w-full">
+                <div className="flex items-center space-x-2 justify-start">
                   <BookOpen className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('shareCollections')}</span>
                 </div>
-                <div className="flex items-center space-x-2 justify-start w-full">
+                <div className="flex items-center space-x-2 justify-start">
                   <Globe className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('joinKingdom')}</span>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center space-x-2 justify-start w-full">
+                <div className="flex items-center space-x-2 justify-start">
                   <BookOpen className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('shareCollections')}</span>
                 </div>
-                <div className="flex items-center space-x-2 justify-start w-full">
+                <div className="flex items-center space-x-2 justify-start">
                   <Star className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('connectDiscover')}</span>
                 </div>
-                <div className="flex items-center space-x-2 justify-start w-full">
+                <div className="flex items-center space-x-2 justify-start">
                   <Globe className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('joinKingdom')}</span>
                 </div>
