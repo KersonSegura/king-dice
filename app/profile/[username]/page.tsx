@@ -810,14 +810,48 @@ export default function UserProfilePage() {
   };
 
   // Game categories list
+  // Keep `value` in English for storage/backwards compatibility, but display translated labels via `key`.
   const gameCategories = [
-    'Strategy', 'Family', 'Party', 'Cooperative', 'Competitive', 'Deck Building',
-    'Worker Placement', 'Area Control', 'Drafting', 'Engine Building', 'Trading',
-    'Negotiation', 'Deduction', 'Memory', 'Pattern Recognition', 'Social Deduction',
-    'Role Playing', 'Miniatures', 'Legacy', 'Campaign', 'Solo', 'Two Player',
-    'Quick Play', 'Heavy Strategy', 'Light Strategy', 'Euro Game', 'Ameritrash',
-    'Abstract', 'Thematic', 'Historical', 'Fantasy', 'Sci-Fi', 'Horror', 'Adventure'
-  ];
+    { value: 'Strategy', key: 'strategy' },
+    { value: 'Family', key: 'family' },
+    { value: 'Party', key: 'party' },
+    { value: 'Cooperative', key: 'cooperative' },
+    { value: 'Competitive', key: 'competitive' },
+    { value: 'Deck Building', key: 'deckBuilding' },
+    { value: 'Worker Placement', key: 'workerPlacement' },
+    { value: 'Area Control', key: 'areaControl' },
+    { value: 'Drafting', key: 'drafting' },
+    { value: 'Engine Building', key: 'engineBuilding' },
+    { value: 'Trading', key: 'trading' },
+    { value: 'Negotiation', key: 'negotiation' },
+    { value: 'Deduction', key: 'deduction' },
+    { value: 'Memory', key: 'memory' },
+    { value: 'Pattern Recognition', key: 'patternRecognition' },
+    { value: 'Social Deduction', key: 'socialDeduction' },
+    { value: 'Role Playing', key: 'rolePlaying' },
+    { value: 'Miniatures', key: 'miniatures' },
+    { value: 'Legacy', key: 'legacy' },
+    { value: 'Campaign', key: 'campaign' },
+    { value: 'Solo', key: 'solo' },
+    { value: 'Two Player', key: 'twoPlayer' },
+    { value: 'Quick Play', key: 'quickPlay' },
+    { value: 'Heavy Strategy', key: 'heavyStrategy' },
+    { value: 'Light Strategy', key: 'lightStrategy' },
+    { value: 'Euro Game', key: 'euroGame' },
+    { value: 'Ameritrash', key: 'ameritrash' },
+    { value: 'Abstract', key: 'abstract' },
+    { value: 'Thematic', key: 'thematic' },
+    { value: 'Historical', key: 'historical' },
+    { value: 'Fantasy', key: 'fantasy' },
+    { value: 'Sci-Fi', key: 'sciFi' },
+    { value: 'Horror', key: 'horror' },
+    { value: 'Adventure', key: 'adventure' }
+  ] as const;
+
+  const getGameCategoryLabel = (categoryValue: string) => {
+    const match = gameCategories.find(c => c.value === categoryValue);
+    return match ? t(`gameCategories.${match.key}`) : categoryValue;
+  };
 
   // Open upload modal for collection photo
   const handleCollectionPhotoUpload = () => {
@@ -1597,24 +1631,24 @@ export default function UserProfilePage() {
                       <div className="grid grid-cols-2 gap-2">
                         {gameCategories.map((category) => (
                           <button
-                            key={category}
-                            onClick={() => handleToggleFavoriteGame(category)}
-                            disabled={!editingFavoriteGames.includes(category) && editingFavoriteGames.length >= 3}
+                            key={category.value}
+                            onClick={() => handleToggleFavoriteGame(category.value)}
+                            disabled={!editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3}
                             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              editingFavoriteGames.includes(category)
+                              editingFavoriteGames.includes(category.value)
                                 ? 'text-white'
                                 : 'bg-white text-gray-700 hover:bg-gray-100'
                             } ${
-                              !editingFavoriteGames.includes(category) && editingFavoriteGames.length >= 3
+                              !editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3
                                 ? 'opacity-50 cursor-not-allowed'
                                 : 'cursor-pointer'
                             }`}
                             style={{
-                              backgroundColor: editingFavoriteGames.includes(category) ? profileColors.cover : undefined,
-                              borderColor: editingFavoriteGames.includes(category) ? profileColors.cover : undefined
+                              backgroundColor: editingFavoriteGames.includes(category.value) ? profileColors.cover : undefined,
+                              borderColor: editingFavoriteGames.includes(category.value) ? profileColors.cover : undefined
                             }}
                           >
-                            {category}
+                            {t(`gameCategories.${category.key}`)}
                           </button>
                         ))}
                       </div>
@@ -1653,7 +1687,7 @@ export default function UserProfilePage() {
                             color: isLightCover() ? darkenColor(profileColors.cover, 0.5) : profileColors.cover
                           }}
                         >
-                        {category}
+                        {getGameCategoryLabel(category)}
                       </span>
                     ))
                   ) : (

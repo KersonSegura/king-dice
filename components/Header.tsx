@@ -801,7 +801,7 @@ export default function Header() {
                     height={24}
                     className="w-6 h-6"
                   />
-                  <span className="font-medium">Hot Games</span>
+                  <span className="font-medium">{t('hotGames')}</span>
                 </Link>
                 <Link 
                   href="/top-ranked" 
