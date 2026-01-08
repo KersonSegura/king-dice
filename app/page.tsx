@@ -18,6 +18,8 @@ import SplitText from '@/components/SplitText';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 import { useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import LoginModal from '@/components/LoginModal';
+import { useLoginModal } from '@/hooks/useLoginModal';
 
 const BOARDLE_ASSET_BASE =
   'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images/boardle-images';
@@ -134,8 +136,53 @@ export default function HomePage() {
   
   console.log('[HOME_PAGE_V2] Component rendering with t:', typeof t);
   const { isChatOpen, selectedChat } = useChatState();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const [showLoginModal, setShowLoginModal] = useLoginModal();
+
+  const COLLECTION_CTA_INTENT_KEY = 'kingdice_intent_go_to_collection';
+
+  const closeLoginModal = useCallback(() => {
+    setShowLoginModal(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(COLLECTION_CTA_INTENT_KEY);
+    }
+  }, [setShowLoginModal]);
+
+  const handleCollectionCtaClick = useCallback(() => {
+    // If authenticated, go straight to user's collection page
+    if (isAuthenticated && user?.username) {
+      router.push(`/collection/${user.username}`);
+      return;
+    }
+
+    // Otherwise, open login and remember intent to redirect after auth completes
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(COLLECTION_CTA_INTENT_KEY, '1');
+    }
+    setShowLoginModal(true);
+  }, [isAuthenticated, router, setShowLoginModal, user?.username]);
+
+  // If user logs in after clicking CTA (including flows that reload the page), redirect to their collection.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const intent = sessionStorage.getItem(COLLECTION_CTA_INTENT_KEY) === '1';
+    if (!intent) return;
+
+    // If auth finished loading and user is not authenticated, ensure login modal is open
+    if (!isAuthLoading && !isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    // If authenticated, navigate to collection page and clear intent
+    if (!isAuthLoading && isAuthenticated && user?.username) {
+      sessionStorage.removeItem(COLLECTION_CTA_INTENT_KEY);
+      setShowLoginModal(false);
+      router.push(`/collection/${user.username}`);
+    }
+  }, [isAuthenticated, isAuthLoading, router, setShowLoginModal, user?.username]);
   const [hotGames, setHotGames] = useState<Game[]>([]);
   const [topRankedGames, setTopRankedGames] = useState<Game[]>([]);
   // Vote data is now loaded on-demand when users interact with star buttons
@@ -845,6 +892,20 @@ export default function HomePage() {
               ))}
             </div>
           )}
+
+          {/* CTA: Go to your collection */}
+          <div className="flex justify-center mb-8">
+            <button
+              type="button"
+              onClick={handleCollectionCtaClick}
+              className="group inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-[#fbae17] hover:bg-[#fbae17]/90 text-gray-900 font-bold shadow-lg shadow-black/20 transition-all active:scale-[0.99]"
+            >
+              <Crown className="w-5 h-5" />
+              <span className="text-sm sm:text-base">
+                {isAuthenticated ? t('goToMyCollection') : t('startMyCollection')}
+              </span>
+            </button>
+          </div>
 
           <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-300">
             <div className="flex items-center space-x-2">
@@ -1797,6 +1858,9 @@ export default function HomePage() {
           onNavigate={handleNavigate}
         />
       )}
+
+      {/* Login Modal (opened by home CTA) */}
+      <LoginModal isOpen={showLoginModal} onClose={closeLoginModal} />
     </div>
   );
 } 
