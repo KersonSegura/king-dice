@@ -97,6 +97,11 @@ interface UserProfile {
 
 // Sortable game item component
 function SortableGameItem({ game, index, isOwnProfile, onRemove }: { game: any; index: number; isOwnProfile: boolean; onRemove: (gameId: number) => void }) {
+  // IMPORTANT: This component is declared outside `UserProfilePage`, so it cannot
+  // safely reference `t` from `UserProfilePage` scope. It must read translations
+  // itself (or receive `t` via props).
+  const t = useTranslations('profile');
+
   const {
     attributes,
     listeners,
