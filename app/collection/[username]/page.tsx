@@ -37,7 +37,7 @@ interface UserProfile {
   gamesList?: Array<{id: number, name: string, year: number, image: string}>;
 }
 
-// Sortable game item component
+// Sortable game item component - NO t prop needed
 function SortableGameItem({ game, index, isOwnProfile, onRemove }: { 
   game: any; 
   index: number; 
@@ -136,22 +136,15 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove }: {
   );
 }
 
-// Removed - no longer needed
-
 export default function CollectionPage() {
-  // Simple and direct - but ensure t is always a function
-  const tRaw = useTranslations('profile');
-  const tCommonRaw = useTranslations('common');
-  
-  // Ensure t is always a function to prevent undefined errors
-  const t = typeof tRaw === 'function' ? tRaw : ((key: string) => key);
-  const tCommon = typeof tCommonRaw === 'function' ? tCommonRaw : ((key: string) => key);
-  
+  // Follow EXACT pattern from working profile page - translations FIRST
   const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -185,20 +178,18 @@ export default function CollectionPage() {
   const [uploadingCollectionPhoto, setUploadingCollectionPhoto] = useState(false);
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
 
-  // Load user profile data - wrap in useCallback to avoid closure issues
-  const loadUserProfile = useCallback(async () => {
+  // Load user profile data - PLAIN async function like working version
+  const loadUserProfile = async () => {
     if (!username) return;
     
     try {
       setLoading(true);
       
-      // Use no-store cache to ensure fresh data
       const response = await fetch(`/api/users/profile?username=${username}`, {
         cache: 'no-store'
       });
       if (response.ok) {
         const data = await response.json();
-        // Ensure email is included
         setUserProfile({
           ...data.user,
           email: data.user.email || user?.email || ''
@@ -214,13 +205,14 @@ export default function CollectionPage() {
     } finally {
       setLoading(false);
     }
-  }, [username, user?.email, router, showToast, t]);
+  };
 
   useEffect(() => {
     loadUserProfile();
-  }, [username, loadUserProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
-  // Update isOwnProfile when user or userProfile changes
+  // Update isOwnProfile
   useEffect(() => {
     if (user && userProfile) {
       const isOwn = user.id === userProfile.id || user.username === userProfile.username;
@@ -237,63 +229,7 @@ export default function CollectionPage() {
     }
   }, [showGamesListModal, userProfile?.gamesList]);
 
-  // Debounced search
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchQuery.trim()) {
-        searchGames(searchQuery);
-      } else {
-        setSearchResults([]);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
-
-  // Refresh data when page comes into focus or becomes visible
-  useEffect(() => {
-    if (!username) return;
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadUserProfile();
-      }
-    };
-
-    const handleFocus = () => {
-      loadUserProfile();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [username, loadUserProfile]);
-
-  const handleOpenCollectionPhoto = () => {
-    if (userProfile?.collectionPhoto) {
-      setSelectedImage({
-        url: userProfile.collectionPhoto,
-        title: 'Collection Photo'
-      });
-      setShowImageModal(true);
-    }
-  };
-
-  const handleOpenFavoriteCard = () => {
-    if (userProfile?.favoriteCard) {
-      setSelectedImage({
-        url: userProfile.favoriteCard,
-        title: 'Favorite Card'
-      });
-      setShowImageModal(true);
-    }
-  };
-
-  // Search for games
+  // Debounced search - useCallback to prevent recreation
   const searchGames = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -314,6 +250,62 @@ export default function CollectionPage() {
       setIsSearching(false);
     }
   }, [showToast]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchGames(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, searchGames]);
+
+  // Refresh data when page comes into focus - EXACT pattern from working version
+  useEffect(() => {
+    if (!username) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadUserProfile();
+      }
+    };
+
+    const handleFocus = () => {
+      loadUserProfile();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
+
+  const handleOpenCollectionPhoto = () => {
+    if (userProfile?.collectionPhoto) {
+      setSelectedImage({
+        url: userProfile.collectionPhoto,
+        title: t('collectionPhoto')
+      });
+      setShowImageModal(true);
+    }
+  };
+
+  const handleOpenFavoriteCard = () => {
+    if (userProfile?.favoriteCard) {
+      setSelectedImage({
+        url: userProfile.favoriteCard,
+        title: t('favoriteCard')
+      });
+      setShowImageModal(true);
+    }
+  };
 
   // Add game to collection
   const addGameToCollection = async (game: any) => {
@@ -336,7 +328,6 @@ export default function CollectionPage() {
 
       const updatedGamesList = [...currentGamesList, newGame];
 
-      // Ensure we have email - fetch it if missing
       let email = userProfile.email;
       if (!email && userProfile.id) {
         try {
@@ -390,7 +381,6 @@ export default function CollectionPage() {
       setTempGamesList((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -407,7 +397,6 @@ export default function CollectionPage() {
     if (!userProfile?.id) return;
 
     try {
-      // Ensure we have email - fetch it if missing
       let email = userProfile.email;
       if (!email && userProfile.id) {
         try {
@@ -448,19 +437,17 @@ export default function CollectionPage() {
     }
   };
 
-  // Open upload modal for collection photo
+  // Upload handlers
   const handleCollectionPhotoUpload = () => {
     setUploadCategory('collection-photo');
     setShowUploadModal(true);
   };
 
-  // Open upload modal for favorite card
   const handleFavoriteCardUpload = () => {
     setUploadCategory('favorite-card');
     setShowUploadModal(true);
   };
 
-  // Handle upload from modal
   const handleModalUpload = async (file: File, description: string, category: string) => {
     if (!userProfile?.id) return;
 
@@ -485,7 +472,6 @@ export default function CollectionPage() {
       if (uploadResponse.ok) {
         const { url } = await uploadResponse.json();
         
-        // Ensure we have email
         let email = userProfile.email;
         if (!email && userProfile.id) {
           try {
@@ -533,12 +519,10 @@ export default function CollectionPage() {
     }
   };
 
-  // Remove favorite card
   const handleRemoveFavoriteCard = async () => {
     if (!userProfile?.id) return;
 
     try {
-      // Ensure we have email
       let email = userProfile.email;
       if (!email && userProfile.id) {
         try {
@@ -574,12 +558,10 @@ export default function CollectionPage() {
     }
   };
 
-  // Remove collection photo
   const handleRemoveCollectionPhoto = async () => {
     if (!userProfile?.id) return;
 
     try {
-      // Ensure we have email
       let email = userProfile.email;
       if (!email && userProfile.id) {
         try {
@@ -651,7 +633,7 @@ export default function CollectionPage() {
               height={64} 
               className="opacity-60 mx-auto mb-4 animate-pulse"
             />
-            <p className="text-gray-300">Loading collection...</p>
+            <p className="text-gray-300">{t('loadingCollection')}</p>
           </div>
         </div>
       </div>
@@ -662,8 +644,8 @@ export default function CollectionPage() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-300 mb-4">Collection not found</p>
-          <Link href="/" className="text-[#fbae17] hover:underline">Go back home</Link>
+          <p className="text-gray-300 mb-4">{t('collectionNotFound')}</p>
+          <Link href="/" className="text-[#fbae17] hover:underline">{t('goBackHome')}</Link>
         </div>
       </div>
     );
@@ -680,9 +662,9 @@ export default function CollectionPage() {
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium text-sm sm:text-base">Back to Profile</span>
+              <span className="font-medium text-sm sm:text-base">{t('backToProfile')}</span>
             </Link>
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{userProfile.username}'s Collection</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{t('collectionTitle', { username: userProfile.username })}</h1>
             {isOwnProfile && (
               <button
                 onClick={() => setIsEditingCollection(!isEditingCollection)}
@@ -738,7 +720,7 @@ export default function CollectionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Favorite Game Image (Left) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">Favorite Game</h2>
+            <h2 className="text-xl font-semibold text-white">{t('favoriteGame')}</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
                 <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
@@ -756,7 +738,7 @@ export default function CollectionPage() {
                     <svg className="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
-                    Favorite
+                    {t('favorite')}
                   </div>
                 </div>
               </Link>
@@ -764,7 +746,7 @@ export default function CollectionPage() {
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
                 <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm text-white">No favorite game</p>
+                  <p className="text-sm text-white">{t('noFavoriteGame')}</p>
                 </div>
               </div>
             )}
@@ -772,7 +754,7 @@ export default function CollectionPage() {
 
           {/* Favorite Card (Right) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">Favorite Card</h2>
+            <h2 className="text-xl font-semibold text-white">{t('favoriteCard')}</h2>
             {userProfile.favoriteCard ? (
               <div 
                 className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden cursor-pointer group"
@@ -803,13 +785,13 @@ export default function CollectionPage() {
                 className="w-full aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-200 transition-colors"
               >
                 <Camera className="w-12 h-12 mb-2" />
-                <span className="text-sm font-medium">{uploadingFavoriteCard ? 'Uploading...' : 'No favorite card'}</span>
+                <span className="text-sm font-medium">{uploadingFavoriteCard ? 'Uploading...' : t('noFavoriteCard')}</span>
               </button>
             ) : (
               <div className="aspect-[4/3] bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
                 <div className="text-center text-gray-300">
                   <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm text-white">No favorite card</p>
+                  <p className="text-sm text-white">{t('noFavoriteCard')}</p>
                 </div>
               </div>
             )}
@@ -820,7 +802,7 @@ export default function CollectionPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold text-white">
-              All Games ({userProfile.gamesList?.length || 0})
+              {t('allGames')} ({userProfile.gamesList?.length || 0})
             </h2>
             {isEditingCollection && (
               <button
@@ -869,7 +851,7 @@ export default function CollectionPage() {
               <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p className="text-white text-lg">No games in collection</p>
+              <p className="text-white text-lg">{t('noGamesInCollection')}</p>
             </div>
           )}
         </div>
@@ -1061,4 +1043,3 @@ export default function CollectionPage() {
     </div>
   );
 }
-
