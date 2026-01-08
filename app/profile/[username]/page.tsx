@@ -299,11 +299,11 @@ export default function UserProfilePage() {
 
   // Load comments for an image
   const loadImageComments = async (imageId: string) => {
-    if (!userProfile?.id) return;
+    if (!user?.id) return;
     
     setLoadingComments(true);
     try {
-      const response = await fetch(`/api/gallery/comments?imageId=${imageId}&userId=${userProfile.id}`);
+      const response = await fetch(`/api/gallery/comments?imageId=${imageId}&userId=${user.id}`);
       if (response.ok) {
         const data = await response.json();
         setImageComments(data.comments || []);

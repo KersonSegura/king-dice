@@ -991,7 +991,7 @@ export default function ImageModal({
                                   )}
                                   
                                   {/* Report button */}
-                                  {isAuthenticated && onReportComment && currentUserId && (
+                                  {isAuthenticated && onReportComment && (
                                     <button
                                       onClick={() => handleReportComment(comment.id)}
                                       className="text-gray-500 hover:text-red-500 text-xs p-1 hover:bg-red-50 rounded transition-colors"
@@ -1119,7 +1119,7 @@ export default function ImageModal({
                                       )}
                                       
                                       {/* Report button for reply */}
-                                      {isAuthenticated && onReportComment && currentUserId && (
+                                      {isAuthenticated && onReportComment && (
                                         <button
                                           onClick={() => handleReportComment(reply.id)}
                                           className="text-gray-500 hover:text-red-500 text-xs p-1 hover:bg-red-50 rounded transition-colors"

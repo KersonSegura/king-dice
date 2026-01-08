@@ -491,21 +491,49 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        
-        // Update comment in local state
-        setImageComments(prev => prev.map(comment => 
-          comment.id === commentId 
-            ? { ...comment, likes: data.likes, userLiked: data.userLiked }
-            : comment
-        ));
-
+        // Refresh comments so nested replies + userLiked + like counts are always accurate
+        if (selectedImage?.imageId) {
+          await loadImageComments(selectedImage.imageId);
+        }
         showToast('Comment liked!', 'success', 1500);
-        // Refresh recent activity
         loadRecentActivity();
       }
     } catch (error) {
       console.error('Error liking comment:', error);
+    }
+  };
+
+  // Handle comment reply
+  const handleCommentReply = async (commentId: string, content: string) => {
+    if (!user?.id || !selectedImage?.imageId) return;
+    if (!content?.trim()) return;
+
+    try {
+      const response = await fetch('/api/gallery/comments/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId,
+          content,
+          author: {
+            id: user.id,
+            name: user.username,
+            avatar: user.avatar || '/DiceLogo.svg'
+          }
+        })
+      });
+
+      if (response.ok) {
+        await loadImageComments(selectedImage.imageId);
+        showToast('Reply added!', 'success', 1500);
+        loadRecentActivity();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to reply' }));
+        showToast(errorData.error || 'Failed to reply', 'error', 2000);
+      }
+    } catch (error) {
+      console.error('Error replying to comment:', error);
+      showToast('Failed to reply', 'error', 2000);
     }
   };
 
@@ -519,18 +547,9 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        
-        // Remove comment from local state
-        setImageComments(prev => prev.filter(comment => comment.id !== commentId));
-        
-        // Update comment count in userImages
-        setUserImages(prev => prev.map(img => 
-          img.id === selectedImage?.imageId 
-            ? { ...img, comments: data.totalComments }
-            : img
-        ));
-
+        if (selectedImage?.imageId) {
+          await loadImageComments(selectedImage.imageId);
+        }
         showToast('Comment deleted!', 'success', 1500);
       } else {
         const errorData = await response.json();
@@ -2645,6 +2664,7 @@ export default function ProfilePage() {
         onLike={() => selectedImage?.imageId && handleImageLike(selectedImage.imageId)}
         onAddComment={handleAddComment}
         onLikeComment={handleCommentLike}
+        onReplyToComment={handleCommentReply}
         onDeleteComment={handleCommentDelete}
         onReportComment={handleCommentReport}
         onRefreshComments={() => selectedImage?.imageId && loadImageComments(selectedImage.imageId)}
@@ -2659,7 +2679,7 @@ export default function ProfilePage() {
         canDelete={selectedImage?.author?.name === user?.username}
         canReport={selectedImage?.author?.name !== user?.username}
         isLiked={selectedImage?.imageId ? imageLikes[selectedImage.imageId] || false : false}
-        currentUserId={user?.id}
+        currentUserId={user?.id || ''}
       />
 
       {/* Delete Confirmation Dialog */}
