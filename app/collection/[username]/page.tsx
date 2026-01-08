@@ -195,12 +195,14 @@ export default function CollectionPage() {
           email: data.user.email || user?.email || ''
         });
       } else {
-        showToast(t('userNotFound'), 'error');
+        // Use hardcoded string to avoid t closure issue in event handlers
+        showToast('User not found', 'error');
         router.push('/');
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
-      showToast(t('failedToLoadCollection'), 'error');
+      // Use hardcoded string to avoid t closure issue in event handlers
+      showToast('Failed to load collection', 'error');
       router.push('/');
     } finally {
       setLoading(false);
