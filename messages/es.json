@@ -449,6 +449,7 @@
     "noMoreImages": "No hay más imágenes para cargar",
     "comments": "Comentarios",
     "writeComment": "Escribe un comentario...",
+    "viewAllComments": "Ver todos los {count} comentarios",
     "writeReply": "Escribe una respuesta...",
     "writeDescription": "Escribe una descripción...",
     "reply": "Responder",
@@ -600,7 +601,8 @@
     "removeFromCollection": "Eliminar de la colección",
     "removeFavoriteCard": "Eliminar tarjeta favorita",
     "removeCollectionPhoto": "Eliminar foto de colección",
-    "dragToReorder": "Arrastra para reordenar"
+    "dragToReorder": "Arrastra para reordenar",
+    "unknownUser": "Usuario desconocido"
   },
   "game": {
     "gameNotFoundDescription": "Lo sentimos, no pudimos encontrar el juego que buscas. Puede que haya sido eliminado o no exista.",

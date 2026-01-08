@@ -5,7 +5,7 @@ import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
 import ExpandableText from './ExpandableText';
 import ReportContent from './ReportContent';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface Comment {
   id: string;
@@ -123,6 +123,7 @@ export default function ImageModal({
   const t = useTranslations('home');
   const tGallery = useTranslations('gallery');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -340,7 +341,7 @@ export default function ImageModal({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale || 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -352,26 +353,23 @@ export default function ImageModal({
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
 
-    if (diffInSeconds < 60) {
-      return 'just now';
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-    } else if (diffInSeconds < 2592000) {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days === 1 ? '' : 's'} ago`;
-    } else if (diffInSeconds < 31536000) {
-      const months = Math.floor(diffInSeconds / 2592000);
-      return `${months} month${months === 1 ? '' : 's'} ago`;
-    } else {
-      const years = Math.floor(diffInSeconds / 31536000);
-      return `${years} year${years === 1 ? '' : 's'} ago`;
-    }
+    // Use Intl.RelativeTimeFormat for proper localization
+    const rtf = new Intl.RelativeTimeFormat(locale || 'en', { numeric: 'auto' });
+
+    if (diffSeconds < 60) return rtf.format(-diffSeconds, 'second');
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return rtf.format(-diffMinutes, 'minute');
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return rtf.format(-diffHours, 'hour');
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return rtf.format(-diffDays, 'day');
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffMonths < 12) return rtf.format(-diffMonths, 'month');
+    const diffYears = Math.floor(diffMonths / 12);
+    return rtf.format(-diffYears, 'year');
   };
 
   if (!isOpen) return null;
@@ -431,7 +429,7 @@ export default function ImageModal({
                 }}
               />
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">{author?.name || 'Unknown User'}</h3>
+                <h3 className="font-semibold text-gray-900 text-sm">{author?.name || tCommon('unknownUser')}</h3>
                 <p className="text-xs text-gray-500">{createdAt ? formatRelativeTime(createdAt) : ''}</p>
               </div>
             </div>
@@ -507,7 +505,7 @@ export default function ImageModal({
                       <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
                         <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2.7 0l1.4-5.9L12 14l2.9-3.9L16.3 16H7.7z"/>
                       </svg>
-                      {category === 'the-kings-card' ? 'Card of the Week' : 'Dice of the Week'}
+                      {category === 'the-kings-card' ? t('cardOfTheWeek') : t('diceOfTheWeek')}
                     </span>
                   )}
                 </div>
@@ -585,7 +583,7 @@ export default function ImageModal({
             {/* Comments Section */}
             <div className="border-t border-gray-200 p-4 max-h-48 overflow-y-auto">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                Comments ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
+                {tGallery('comments')} ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
               </h3>
               
               {/* Add Comment Form */}
@@ -607,7 +605,7 @@ export default function ImageModal({
                         <textarea
                           value={newComment}
                           onChange={(e) => setNewComment(e.target.value)}
-                          placeholder="Write a comment..."
+                          placeholder={tGallery('writeComment')}
                           className="w-full p-2 pr-8 border border-gray-300 rounded-full focus:border-blue-500 focus:outline-none resize-none bg-gray-50 focus:bg-white transition-colors text-sm"
                           rows={1}
                           style={{ 
@@ -623,7 +621,7 @@ export default function ImageModal({
                         <button
                           onClick={handleAddComment}
                           disabled={!newComment.trim() || isSubmittingComment}
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 w-10 h-10 min-h-0 min-w-0 p-0 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
                         >
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -667,7 +665,7 @@ export default function ImageModal({
                 {/* Show More Comments Button */}
                 {comments.length > 5 && (
                   <button className="text-xs text-blue-500 hover:text-blue-600 w-full text-left">
-                    View all {comments.length} comments
+                    {tGallery('viewAllComments', { count: comments.length })}
                   </button>
                 )}
               </div>
@@ -728,7 +726,7 @@ export default function ImageModal({
                   }}
                 />
               <div>
-                <h3 className="font-semibold text-gray-900">{author?.name || 'Unknown User'}</h3>
+                <h3 className="font-semibold text-gray-900">{author?.name || tCommon('unknownUser')}</h3>
                 <p className="text-sm text-gray-500">{createdAt ? formatDate(createdAt) : ''}</p>
               </div>
             </div>

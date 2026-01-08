@@ -449,6 +449,7 @@
     "noMoreImages": "No more images to load",
     "comments": "Comments",
     "writeComment": "Write a comment...",
+    "viewAllComments": "View all {count} comments",
     "writeReply": "Write a reply...",
     "writeDescription": "Write a description...",
     "reply": "Reply",
@@ -582,7 +583,8 @@
     "removeFavoriteCard": "Remove favorite card",
     "removeCollectionPhoto": "Remove collection photo",
     "dragToReorder": "Drag to reorder",
-    "startTypingToSearch": "Start typing to search"
+    "startTypingToSearch": "Start typing to search",
+    "unknownUser": "Unknown user"
   },
   "game": {
     "gameNotFoundDescription": "Sorry, we couldn't find the game you're looking for. It might have been removed or doesn't exist.",
