@@ -139,9 +139,14 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove }: {
 // Removed - no longer needed
 
 export default function CollectionPage() {
-  // Restore to working version pattern - simple and direct
-  const t = useTranslations('profile');
-  const tCommon = useTranslations('common');
+  // Simple and direct - but ensure t is always a function
+  const tRaw = useTranslations('profile');
+  const tCommonRaw = useTranslations('common');
+  
+  // Ensure t is always a function to prevent undefined errors
+  const t = typeof tRaw === 'function' ? tRaw : ((key: string) => key);
+  const tCommon = typeof tCommonRaw === 'function' ? tCommonRaw : ((key: string) => key);
+  
   const params = useParams();
   const router = useRouter();
   const username = params?.username as string;
