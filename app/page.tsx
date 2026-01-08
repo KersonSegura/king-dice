@@ -16,7 +16,7 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import LoginModal from '@/components/LoginModal';
 import { useLoginModal } from '@/hooks/useLoginModal';
@@ -135,6 +135,8 @@ export default function HomePage() {
   }
   
   console.log('[HOME_PAGE_V2] Component rendering with t:', typeof t);
+  const locale = useLocale();
+  const isSpanish = locale === 'es';
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
@@ -898,7 +900,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={handleCollectionCtaClick}
-              className="group inline-flex items-center px-6 py-3 rounded-full bg-white hover:bg-white/95 text-[#111827] font-bold shadow-lg shadow-black/20 transition-all active:scale-[0.99]"
+              className="group inline-flex items-center px-6 py-3 rounded-full bg-[#fbae17] hover:bg-[#fbae17]/90 text-white font-bold shadow-lg shadow-black/20 transition-all active:scale-[0.99]"
             >
               <span className="text-sm sm:text-base">
                 {isAuthenticated ? t('goToMyCollection') : t('startMyCollection')}
@@ -906,21 +908,27 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Benefits: 2x2 grid on mobile, original wrap layout on larger screens */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-300 sm:flex sm:flex-wrap sm:justify-center sm:gap-8">
-            <div className="flex items-center space-x-2 justify-start sm:justify-center">
+          {/* Benefits: default centered layout; Spanish only uses 2x2 grid on mobile */}
+          <div
+            className={
+              isSpanish
+                ? 'grid grid-cols-2 gap-x-8 gap-y-4 place-items-center text-sm text-gray-300 sm:flex sm:flex-wrap sm:justify-center sm:gap-8'
+                : 'flex flex-wrap justify-center gap-8 text-sm text-gray-300'
+            }
+          >
+            <div className="flex items-center space-x-2 justify-center">
               <Users className="w-5 h-5 text-[#fbae17]" />
               <span>{t('activeCommunity')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-start sm:justify-center">
+            <div className="flex items-center space-x-2 justify-center">
               <BookOpen className="w-5 h-5 text-[#fbae17]" />
               <span>{t('shareCollections')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-start sm:justify-center">
+            <div className="flex items-center space-x-2 justify-center">
               <Star className="w-5 h-5 text-[#fbae17]" />
               <span>{t('connectDiscover')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-start sm:justify-center">
+            <div className="flex items-center space-x-2 justify-center">
               <Globe className="w-5 h-5 text-[#fbae17]" />
               <span>{t('joinKingdom')}</span>
             </div>
