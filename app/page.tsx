@@ -908,40 +908,47 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Benefits: 2 rows x 2 columns on mobile, same centered look as English */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-300 place-items-center sm:flex sm:flex-wrap sm:justify-center sm:gap-8">
-            <div className="flex items-center space-x-2 justify-center">
-              <Users className="w-5 h-5 text-[#fbae17]" />
+          {/* Benefits: 2 rows x 2 columns on mobile; keep labels single-line; align indentation consistently */}
+          <div
+            className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-300 max-w-md mx-auto w-full justify-items-start sm:flex sm:flex-wrap sm:justify-center sm:gap-8 sm:max-w-none"
+          >
+            <div className="flex items-center space-x-2 justify-start w-full">
+              <Users className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
               <span className="whitespace-nowrap">{t('activeCommunity')}</span>
             </div>
+
             {isSpanish ? (
               <>
-                {/* ES only: swap Share Collections and Connect */}
-                <div className="flex items-center space-x-2 justify-center">
-                  <Star className="w-5 h-5 text-[#fbae17]" />
+                {/* ES only order: Active / Conectar  |  Únete al Reino / Compartir Colecciones */}
+                <div className="flex items-center space-x-2 justify-start w-full">
+                  <Star className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('connectDiscover')}</span>
                 </div>
-                <div className="flex items-center space-x-2 justify-center">
-                  <BookOpen className="w-5 h-5 text-[#fbae17]" />
+                <div className="flex items-center space-x-2 justify-start w-full">
+                  <Globe className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
+                  <span className="whitespace-nowrap">{t('joinKingdom')}</span>
+                </div>
+                <div className="flex items-center space-x-2 justify-start w-full">
+                  <BookOpen className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('shareCollections')}</span>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center space-x-2 justify-center">
-                  <BookOpen className="w-5 h-5 text-[#fbae17]" />
+                <div className="flex items-center space-x-2 justify-start w-full">
+                  <BookOpen className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('shareCollections')}</span>
                 </div>
-                <div className="flex items-center space-x-2 justify-center">
-                  <Star className="w-5 h-5 text-[#fbae17]" />
+                <div className="flex items-center space-x-2 justify-start w-full">
+                  <Star className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('connectDiscover')}</span>
+                </div>
+                <div className="flex items-center space-x-2 justify-start w-full">
+                  <Globe className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
+                  <span className="whitespace-nowrap">{t('joinKingdom')}</span>
                 </div>
               </>
             )}
-            <div className="flex items-center space-x-2 justify-center">
-              <Globe className="w-5 h-5 text-[#fbae17]" />
-              <span className="whitespace-nowrap">{t('joinKingdom')}</span>
-            </div>
           </div>
 
           {/* Social Media Buttons */}
