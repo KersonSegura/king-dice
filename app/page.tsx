@@ -898,29 +898,29 @@ export default function HomePage() {
             <button
               type="button"
               onClick={handleCollectionCtaClick}
-              className="group inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-[#fbae17] hover:bg-[#fbae17]/90 text-gray-900 font-bold shadow-lg shadow-black/20 transition-all active:scale-[0.99]"
+              className="group inline-flex items-center px-6 py-3 rounded-full bg-white hover:bg-white/95 text-[#111827] font-bold shadow-lg shadow-black/20 transition-all active:scale-[0.99]"
             >
-              <Crown className="w-5 h-5" />
               <span className="text-sm sm:text-base">
                 {isAuthenticated ? t('goToMyCollection') : t('startMyCollection')}
               </span>
             </button>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-300">
-            <div className="flex items-center space-x-2">
+          {/* Benefits: 2x2 grid on mobile, original wrap layout on larger screens */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-300 sm:flex sm:flex-wrap sm:justify-center sm:gap-8">
+            <div className="flex items-center space-x-2 justify-start sm:justify-center">
               <Users className="w-5 h-5 text-[#fbae17]" />
               <span>{t('activeCommunity')}</span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 justify-start sm:justify-center">
               <BookOpen className="w-5 h-5 text-[#fbae17]" />
               <span>{t('shareCollections')}</span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 justify-start sm:justify-center">
               <Star className="w-5 h-5 text-[#fbae17]" />
               <span>{t('connectDiscover')}</span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 justify-start sm:justify-center">
               <Globe className="w-5 h-5 text-[#fbae17]" />
               <span>{t('joinKingdom')}</span>
             </div>
