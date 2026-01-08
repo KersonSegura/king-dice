@@ -56,7 +56,12 @@ export function lockBodyScroll() {
   
   if (scrollLockCount === 1) {
     // Save current scroll position
-    savedScrollPosition = window.scrollY || window.pageYOffset;
+    savedScrollPosition = Math.max(
+      window.scrollY || 0,
+      window.pageYOffset || 0,
+      document.documentElement?.scrollTop || 0,
+      document.body?.scrollTop || 0
+    );
     
     // Apply scroll lock styles - use !important since globals.css forces body position: relative !important
     document.body.style.setProperty('overflow', 'hidden', 'important');

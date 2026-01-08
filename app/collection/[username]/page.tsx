@@ -380,7 +380,7 @@ export default function CollectionPage() {
   useEffect(() => {
     loadUserProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username]);
+  }, [username, user?.id]);
 
   // Update isOwnProfile
   useEffect(() => {

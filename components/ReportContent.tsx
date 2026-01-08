@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Flag, AlertTriangle, X } from 'lucide-react';
 import { REPORT_REASONS, Report } from '@/lib/moderation';
+import { useTranslations } from 'next-intl';
 
 interface ReportContentProps {
   contentType: Report['contentType'];
@@ -12,6 +13,7 @@ interface ReportContentProps {
 }
 
 export default function ReportContent({ contentType, contentId, onReport, onClose }: ReportContentProps) {
+  const tCommon = useTranslations('common');
   const [reason, setReason] = useState<Report['reason']>('inappropriate');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +22,7 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
     e.preventDefault();
     
     if (!description.trim()) {
-      alert('Please describe the problem.');
+      alert(tCommon('reportPleaseDescribeProblem'));
       return;
     }
 
@@ -56,14 +58,14 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
         await onReport(report);
         
         // Show success message
-        alert('Report submitted successfully! An email has been sent to our moderation team. Thank you for helping keep the community safe.');
+        alert(tCommon('reportSubmittedSuccess'));
         onClose();
       } else {
         throw new Error(result.message || 'Failed to submit report');
       }
     } catch (error) {
       console.error('Error submitting report:', error);
-      alert('Error submitting report. Please try again.');
+      alert(tCommon('reportSubmitError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -82,7 +84,7 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
           <div className="flex items-center">
             <Flag className="w-5 h-5 text-red-600 mr-2" />
             <h3 className="text-lg font-semibold text-gray-900">
-              Report Content
+              {tCommon('reportContentTitle')}
             </h3>
           </div>
           <button
@@ -97,7 +99,7 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
           <div className="flex items-start">
             <AlertTriangle className="w-4 h-4 text-yellow-600 mr-2 mt-0.5" />
             <p className="text-sm text-yellow-700">
-              Only report content that actually violates community guidelines.
+              {tCommon('reportGuidelinesWarning')}
             </p>
           </div>
         </div>
@@ -105,7 +107,7 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Report Reason
+              {tCommon('reportReasonLabel')}
             </label>
             <select
               value={reason}
@@ -122,12 +124,12 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Problem Description
+              {tCommon('reportProblemDescriptionLabel')}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe specifically what problem this content has..."
+              placeholder={tCommon('reportDescribeProblemPlaceholder')}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
@@ -140,14 +142,14 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
               onClick={onClose}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
-              Cancel
+              {tCommon('cancel')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Report'}
+              {isSubmitting ? tCommon('reportSubmitting') : tCommon('reportSubmit')}
             </button>
           </div>
         </form>

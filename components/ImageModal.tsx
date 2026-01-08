@@ -1164,14 +1164,14 @@ export default function ImageModal({
                 <Trash2 className="h-6 w-6 text-red-600" />
               </div>
               <div className="ml-3">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Delete Comment
-                </h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {tCommon('deleteComment')}
+                  </h3>
               </div>
             </div>
             <div className="mb-6">
               <p className="text-sm text-gray-500">
-                Are you sure you want to delete this comment? This action cannot be undone.
+                {tCommon('confirmDeleteComment')}
               </p>
             </div>
             <div className="flex justify-end space-x-3">
@@ -1188,7 +1188,7 @@ export default function ImageModal({
                 onClick={confirmDeleteComment}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
-                Delete
+                {tCommon('delete')}
               </button>
             </div>
           </div>
@@ -1224,13 +1224,13 @@ export default function ImageModal({
               </div>
               <div className="ml-3">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Delete Image
+                  {tCommon('deleteImage')}
                 </h3>
               </div>
             </div>
             <div className="mb-6">
               <p className="text-sm text-gray-500">
-                Are you sure you want to delete this image? This action cannot be undone.
+                {tCommon('confirmDeleteImage')}
               </p>
             </div>
             <div className="flex justify-end space-x-3">
@@ -1244,7 +1244,7 @@ export default function ImageModal({
                 onClick={confirmImageDelete}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
-                Delete
+                {tCommon('delete')}
               </button>
             </div>
           </div>
