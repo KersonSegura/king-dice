@@ -371,6 +371,39 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleAddGalleryComment = async (content: string) => {
+    if (!selectedImage?.imageId) return;
+    if (!user?.id) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/gallery/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageId: selectedImage.imageId,
+          content,
+          author: {
+            id: user.id,
+            name: user.username,
+            avatar: user.avatar || '/DefaultDiceAvatar.svg',
+            reputation: (user as any).reputation || 0
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || tCommon('error'), 'error');
+      }
+    } catch (e) {
+      console.error('Error adding comment:', e);
+      showToast(tCommon('error'), 'error');
+    }
+  };
+
   // Handle edit description
   const handleEditDescription = async (newDescription: string) => {
     if (!userProfile?.id || !selectedImage?.imageId) return;
@@ -2070,7 +2103,7 @@ export default function UserProfilePage() {
         currentUser={user}
         comments={imageComments}
         onLike={() => selectedImage?.imageId && handleImageLike(selectedImage.imageId)}
-        onAddComment={() => showToast('Please log in to comment', 'info')}
+        onAddComment={handleAddGalleryComment}
         onLikeComment={() => showToast('Please log in to like comments', 'info')}
         onDeleteComment={() => showToast('Please log in to delete comments', 'info')}
         onReportComment={() => showToast('Please log in to report comments', 'info')}

@@ -544,6 +544,39 @@ export default function CollectionPage() {
     setShowImageModal(true);
   };
 
+  const handleAddGalleryComment = async (content: string) => {
+    if (!selectedImage?.imageId) return;
+    if (!user?.id) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/gallery/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageId: selectedImage.imageId,
+          content,
+          author: {
+            id: user.id,
+            name: user.username,
+            avatar: user.avatar || '/DefaultDiceAvatar.svg',
+            reputation: (user as any).reputation || 0
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || tCommon('error'), 'error');
+      }
+    } catch (e) {
+      console.error('Error adding comment:', e);
+      showToast(tCommon('error'), 'error');
+    }
+  };
+
   const handleOpenCollectionPhoto = () => {
     if (userProfile?.collectionPhoto) {
       const galleryImage = userImages.find(img => img.imageUrl === userProfile.collectionPhoto);
@@ -1189,6 +1222,7 @@ export default function CollectionPage() {
           currentUserId={user?.id || ''}
           comments={imageComments}
           onLike={() => selectedImage.imageId && handleImageLike(selectedImage.imageId)}
+          onAddComment={handleAddGalleryComment}
           onRefreshComments={() => selectedImage.imageId && loadImageComments(selectedImage.imageId)}
         />
       )}

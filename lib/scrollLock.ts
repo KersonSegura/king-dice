@@ -58,12 +58,12 @@ export function lockBodyScroll() {
     // Save current scroll position
     savedScrollPosition = window.scrollY || window.pageYOffset;
     
-    // Apply scroll lock styles - use position fixed to completely lock scrolling
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${savedScrollPosition}px`;
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
+    // Apply scroll lock styles - use !important since globals.css forces body position: relative !important
+    document.body.style.setProperty('overflow', 'hidden', 'important');
+    document.body.style.setProperty('position', 'fixed', 'important');
+    document.body.style.setProperty('top', `-${savedScrollPosition}px`, 'important');
+    document.body.style.setProperty('width', '100%', 'important');
+    document.body.style.setProperty('height', '100%', 'important');
     
     // Prevent touch scrolling on mobile (but allow scrolling within scrollable containers)
     touchMoveHandler = (e: TouchEvent) => {
@@ -130,12 +130,12 @@ export function unlockBodyScroll() {
   scrollLockCount = Math.max(0, scrollLockCount - 1);
   
   if (scrollLockCount === 0) {
-    // Remove scroll lock styles
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.height = '';
+    // Remove scroll lock styles (restore CSS defaults)
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('position');
+    document.body.style.removeProperty('top');
+    document.body.style.removeProperty('width');
+    document.body.style.removeProperty('height');
     
     // Remove event listeners
     if (touchMoveHandler) {

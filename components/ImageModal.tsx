@@ -620,7 +620,7 @@ export default function ImageModal({
                           value={newComment}
                           onChange={(e) => setNewComment(e.target.value)}
                           placeholder={tGallery('writeComment')}
-                          className="w-full p-2 pr-8 border border-gray-300 rounded-full focus:border-blue-500 focus:outline-none resize-none bg-gray-50 focus:bg-white transition-colors text-sm"
+                          className="w-full p-2 pr-10 border border-gray-300 rounded-full focus:border-blue-500 focus:outline-none resize-none bg-white transition-colors text-sm overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                           rows={1}
                           style={{ 
                             minHeight: '32px', 
@@ -635,9 +635,9 @@ export default function ImageModal({
                         <button
                           onClick={handleAddComment}
                           disabled={!newComment.trim() || isSubmittingComment}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 min-h-0 min-w-0 p-1 bg-transparent text-blue-600 hover:text-blue-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+                          className="absolute right-2 inset-y-0 flex items-center min-h-0 min-w-0 p-1 bg-transparent text-blue-600 hover:text-blue-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
                         >
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 -mt-px" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                           </svg>
                         </button>
