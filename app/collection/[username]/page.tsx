@@ -10,6 +10,7 @@ import { useToast } from '@/contexts/ToastContext';
 import ImageModal from '@/components/ImageModal';
 import ProfileUploadModal from '@/components/ProfileUploadModal';
 import { useTranslations } from 'next-intl';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import {
   DndContext,
   closestCenter,
@@ -296,6 +297,15 @@ export default function CollectionPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadingCollectionPhoto, setUploadingCollectionPhoto] = useState(false);
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
+
+  // Prevent background scrolling when modals are open (mobile + desktop)
+  useEffect(() => {
+    if (showGamesListModal || showAddGameModal) {
+      lockBodyScroll();
+      return () => unlockBodyScroll();
+    }
+    unlockBodyScroll();
+  }, [showGamesListModal, showAddGameModal]);
 
   // Load user profile data - PLAIN async function like working version
   const loadUserProfile = async () => {

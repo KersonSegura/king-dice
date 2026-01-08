@@ -14,6 +14,7 @@ import ProfileColorCustomizer from '@/components/ProfileColorCustomizer';
 import ProfileUploadModal from '@/components/ProfileUploadModal';
 import LoadingScreen from '@/components/LoadingScreen';
 import { getTranslatedTitle } from '@/lib/title-translations';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import {
   DndContext,
   closestCenter,
@@ -1149,6 +1150,15 @@ export default function UserProfilePage() {
     }
   };
 
+  // Prevent background scrolling when modals are open (mobile + desktop)
+  useEffect(() => {
+    if (showGamesListModal || showAddGameModal) {
+      lockBodyScroll();
+      return () => unlockBodyScroll();
+    }
+    unlockBodyScroll();
+  }, [showGamesListModal, showAddGameModal]);
+
   // Initialize temp games list when modal opens
   useEffect(() => {
     if (showGamesListModal && userProfile?.gamesList) {
@@ -2193,7 +2203,7 @@ export default function UserProfilePage() {
               <div className="mb-6">
                 <input
                   type="text"
-                  placeholder={tCommon('search') + '..."'}
+                  placeholder={t('searchGamesPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-transparent"
