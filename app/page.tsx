@@ -713,7 +713,7 @@ export default function HomePage() {
             <LanguageSwitcher variant="compact" />
           </div>
           <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight" style={{ overflow: 'visible' }}>
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-8 leading-snug md:leading-tight" style={{ overflow: 'visible' }}>
               <span className="text-white">{t('shareCollection1')}</span>
               {t('shareCollection2') ? (
                 <>
