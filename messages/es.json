@@ -148,7 +148,7 @@
     "admin": "Administrador",
     "level": "Nivel",
     "xp": "XP",
-    "toNextLevel": "{xp} para el siguiente nivel",
+    "toNextLevel": "{xp}xp para el siguiente nivel",
     "maxLevel": "Nivel Máximo",
     "about": "Acerca de",
     "customizeColors": "Personalizar Colores",
