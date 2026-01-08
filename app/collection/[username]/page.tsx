@@ -1009,6 +1009,7 @@ export default function CollectionPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Collection Photo */}
         <div className="mb-8">
+          <h2 className="text-xl font-semibold text-[#fbae17] mb-2">{safeT('collection')}</h2>
           {userProfile.collectionPhoto ? (
             <div className="relative w-full aspect-[16/9] bg-transparent rounded-xl overflow-hidden cursor-pointer group"
               onClick={handleOpenCollectionPhoto}
@@ -1047,7 +1048,7 @@ export default function CollectionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Favorite Game Image (Left) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">{safeT('favoriteGame')}</h2>
+            <h2 className="text-xl font-semibold text-[#fbae17]">{safeT('favoriteGame')}</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
                 <div className="relative aspect-[4/3] bg-transparent rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
@@ -1056,17 +1057,16 @@ export default function CollectionPage() {
                     alt={favoriteGame.name}
                     className="max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bold text-lg mb-1">{favoriteGame.name}</h3>
-                    <p className="text-white/90 text-sm">{favoriteGame.year}</p>
-                  </div>
                   <div className="absolute top-4 right-4 bg-[#fbae17] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
                     <svg className="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
                     {safeT('favorite')}
                   </div>
+                </div>
+                <div className="mt-2">
+                  <h3 className="text-white font-bold text-lg leading-tight">{favoriteGame.name}</h3>
+                  <p className="text-white/90 text-sm">{favoriteGame.year}</p>
                 </div>
               </Link>
             ) : (
@@ -1081,7 +1081,7 @@ export default function CollectionPage() {
 
           {/* Favorite Card (Right) */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">{safeT('favoriteCard')}</h2>
+            <h2 className="text-xl font-semibold text-[#fbae17]">{safeT('favoriteCard')}</h2>
             {userProfile.favoriteCard ? (
               <div 
                 className="relative aspect-[4/3] bg-transparent rounded-xl overflow-hidden cursor-pointer group"
