@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -145,8 +145,18 @@ export default function CollectionPage() {
   const { user } = useAuth();
   
   // EXACT pattern from working profile page - simple direct assignment
-  const t = useTranslations('profile');
-  const tCommon = useTranslations('common');
+  const tRaw = useTranslations('profile');
+  const tCommonRaw = useTranslations('common');
+  
+  // Ensure t is always a function to prevent undefined errors
+  const t: (key: string, params?: any) => string = typeof tRaw === 'function' ? tRaw : ((key: string) => key);
+  const tCommon: (key: string, params?: any) => string = typeof tCommonRaw === 'function' ? tCommonRaw : ((key: string) => key);
+  
+  // Store t in ref to ensure it's always accessible in callbacks
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -295,7 +305,7 @@ export default function CollectionPage() {
     if (userProfile?.collectionPhoto) {
       setSelectedImage({
         url: userProfile.collectionPhoto,
-        title: t('collectionPhoto')
+        title: tRef.current?.('collectionPhoto') || 'Collection Photo'
       });
       setShowImageModal(true);
     }
@@ -305,7 +315,7 @@ export default function CollectionPage() {
     if (userProfile?.favoriteCard) {
       setSelectedImage({
         url: userProfile.favoriteCard,
-        title: t('favoriteCard')
+        title: tRef.current?.('favoriteCard') || 'Favorite Card'
       });
       setShowImageModal(true);
     }
