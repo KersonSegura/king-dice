@@ -1735,8 +1735,8 @@ export default function UserProfilePage() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium text-gray-900">{t('gamesListTop10')}</h3>
                     <div className="flex items-center space-x-2">
-                      {/* On Spanish only, swap button order while editing: "Editar Lista" left, "Cancelar" right */}
-                      {isEditingCollection && isSpanish && (
+                      {/* While editing (all locales): "Edit List" left, "Cancel" right */}
+                      {isEditingCollection ? (
                         <>
                           <button
                             onClick={() => setShowGamesListModal(true)}
@@ -1750,7 +1750,7 @@ export default function UserProfilePage() {
                           </button>
                           {isOwnProfile && (
                             <button
-                              onClick={() => setIsEditingCollection(!isEditingCollection)}
+                              onClick={() => setIsEditingCollection(false)}
                               className="sm:hidden px-3 py-0.5 rounded-md transition-colors flex items-center space-x-1.5 text-xs whitespace-nowrap"
                               style={{ backgroundColor: profileColors.cover, color: getReadableTextColor(), height: '24px' }}
                             >
@@ -1759,31 +1759,16 @@ export default function UserProfilePage() {
                             </button>
                           )}
                         </>
-                      )}
-
-                      {/* Default order (all locales, and Spanish when not editing) */}
-                      {(!isEditingCollection || !isSpanish) && (
+                      ) : (
                         <>
                           {isOwnProfile && (
                             <button
-                              onClick={() => setIsEditingCollection(!isEditingCollection)}
+                              onClick={() => setIsEditingCollection(true)}
                               className="sm:hidden px-3 py-0.5 rounded-md transition-colors flex items-center space-x-1.5 text-xs whitespace-nowrap"
                               style={{ backgroundColor: profileColors.cover, color: getReadableTextColor(), height: '24px' }}
                             >
                               <Edit className="w-3 h-3" />
-                              <span>{isEditingCollection ? tCommon('cancel') : t('edit')}</span>
-                            </button>
-                          )}
-                          {isEditingCollection && (
-                            <button
-                              onClick={() => setShowGamesListModal(true)}
-                              className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1"
-                              style={{ color: profileColors.cover }}
-                            >
-                              <span>{t('editList')}</span>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                              </svg>
+                              <span>{t('edit')}</span>
                             </button>
                           )}
                         </>
