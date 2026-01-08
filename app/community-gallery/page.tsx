@@ -155,10 +155,19 @@ function CommunityGalleryPageContent() {
 
   // Handle URL parameters for opening specific image
   useEffect(() => {
-    const imageParam = searchParams?.get('image');
+    const imageParam = searchParams?.get('image') || searchParams?.get('photo');
     if (imageParam && images.length > 0) {
       const targetImage = images.find(img => img.id === imageParam);
       if (targetImage) {
+        // Canonicalize legacy `photo` param to `image`
+        try {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get('image') !== imageParam) {
+            url.searchParams.set('image', imageParam);
+          }
+          url.searchParams.delete('photo');
+          window.history.replaceState({}, '', url.toString());
+        } catch {}
         handleImageClick(targetImage);
       }
     }
@@ -612,6 +621,7 @@ function CommunityGalleryPageContent() {
     // Update URL with image parameter
     const currentUrl = new URL(window.location.href);
     currentUrl.searchParams.set('image', image.id);
+    currentUrl.searchParams.delete('photo');
     window.history.pushState({}, '', currentUrl);
     
     // Load comments for this image
@@ -649,6 +659,7 @@ function CommunityGalleryPageContent() {
     // Remove image parameter from URL
     const url = new URL(window.location.href);
     url.searchParams.delete('image');
+    url.searchParams.delete('photo');
     window.history.pushState({}, '', url);
   };
 
@@ -669,6 +680,7 @@ function CommunityGalleryPageContent() {
     // Update URL with new image parameter
     const currentUrl = new URL(window.location.href);
     currentUrl.searchParams.set('image', newImage.id);
+    currentUrl.searchParams.delete('photo');
     window.history.pushState({}, '', currentUrl);
     
     // Load comments for the new image

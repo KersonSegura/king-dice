@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface LazyListProps<T> {
   items: T[];
@@ -25,6 +26,7 @@ export default function LazyList<T>({
   onLoadMore,
   threshold = 200, // Load more when 200px from bottom
 }: LazyListProps<T>) {
+  const tCommon = useTranslations('common');
   const [visibleItems, setVisibleItems] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,11 +110,11 @@ export default function LazyList<T>({
             loadingComponent || (
               <div className="flex items-center space-x-2 text-gray-600">
                 <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-                <span>Loading more...</span>
+                <span>{tCommon('loadingMore')}</span>
               </div>
             )
           ) : (
-            <div className="text-gray-400 text-sm">Scroll to load more</div>
+            <div className="text-gray-400 text-sm">{tCommon('scrollToLoadMore')}</div>
           )}
         </div>
       )}
@@ -123,7 +125,7 @@ export default function LazyList<T>({
           {endMessage || (
             <div>
               <div className="text-2xl mb-2">🎯</div>
-              <div>You've reached the end!</div>
+              <div>{tCommon('reachedEnd')}</div>
             </div>
           )}
         </div>
@@ -133,7 +135,7 @@ export default function LazyList<T>({
       {items.length === 0 && !isLoading && (
         <div className="text-center py-12 text-gray-500">
           <div className="text-4xl mb-4">📭</div>
-          <div className="text-lg">No items to display</div>
+          <div className="text-lg">{tCommon('noItemsToDisplay')}</div>
         </div>
       )}
     </div>

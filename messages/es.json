@@ -624,9 +624,12 @@
     "removeFavoriteCard": "Eliminar tarjeta favorita",
     "removeCollectionPhoto": "Eliminar foto de colección",
     "dragToReorder": "Arrastra para reordenar",
-    "unknownUser": "Usuario desconocido"
-    ,
-    "justNow": "justo ahora"
+    "unknownUser": "Usuario desconocido",
+    "justNow": "justo ahora",
+    "reachedEnd": "¡Has llegado al final!",
+    "loadingMore": "Cargando más...",
+    "scrollToLoadMore": "Desliza para cargar más",
+    "noItemsToDisplay": "No hay elementos para mostrar"
   },
   "game": {
     "gameNotFoundDescription": "Lo sentimos, no pudimos encontrar el juego que buscas. Puede que haya sido eliminado o no exista.",

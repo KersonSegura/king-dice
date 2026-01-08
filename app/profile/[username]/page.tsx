@@ -661,27 +661,36 @@ export default function UserProfilePage() {
     }
   }, [userProfile?.id, user?.id, isOwnProfile]);
 
-  // Handle URL photo parameter (for direct links to photos)
+  // Handle URL image/photo parameter (for direct links to posts)
   useEffect(() => {
-    const photoId = searchParams?.get('photo');
+    const imageId = searchParams?.get('image') || searchParams?.get('photo');
     
     // Only process if:
     // 1. There's a photo ID in the URL
     // 2. Images are loaded
     // 3. Modal is not already open
     // 4. We're not in the process of closing the modal
-    if (photoId && userImages.length > 0 && !showImageModal && !isClosingModal.current) {
+    if (imageId && userImages.length > 0 && !showImageModal && !isClosingModal.current) {
       // Find the image with the matching ID
-      const image = userImages.find(img => img.id === photoId);
+      const image = userImages.find(img => img.id === imageId);
       
       if (image) {
+        // Canonicalize legacy `photo` param to `image`
+        try {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get('image') !== imageId) {
+            url.searchParams.set('image', imageId);
+          }
+          url.searchParams.delete('photo');
+          window.history.replaceState({}, '', url);
+        } catch {}
         // Open the image modal
         openImageModal(image);
       }
     }
     
-    // If there's no photo parameter, we're done closing
-    if (!photoId && isClosingModal.current) {
+    // If there's no image/photo parameter, we're done closing
+    if (!imageId && isClosingModal.current) {
       // Small delay to ensure URL has fully updated
       setTimeout(() => {
         isClosingModal.current = false;
@@ -1094,10 +1103,11 @@ export default function UserProfilePage() {
       [galleryImage.id]: (galleryImage as any).userVote === 'up'
     }));
     
-    // Update URL with photo ID without triggering Next.js scroll-to-top
+    // Update URL with image ID without triggering Next.js scroll-to-top
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      url.searchParams.set('photo', galleryImage.id);
+      url.searchParams.set('image', galleryImage.id);
+      url.searchParams.delete('photo');
       window.history.pushState({}, '', url);
     }
     
@@ -2092,9 +2102,10 @@ export default function UserProfilePage() {
           setSelectedImage(null);
           setImageComments([]);
           
-          // Remove photo parameter from URL without triggering Next.js scroll-to-top
+          // Remove image/photo parameter from URL without triggering Next.js scroll-to-top
           if (typeof window !== 'undefined') {
             const url = new URL(window.location.href);
+            url.searchParams.delete('image');
             url.searchParams.delete('photo');
             window.history.replaceState({}, '', url);
           }

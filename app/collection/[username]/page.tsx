@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Camera, Edit, X, GripVertical } from 'lucide-react';
@@ -181,6 +181,7 @@ export default function CollectionPage() {
   // EXACT order from working profile page - hooks in same sequence
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const username = params?.username as string;
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
@@ -245,6 +246,7 @@ export default function CollectionPage() {
   
   // Store t in ref to ensure it's always accessible in callbacks
   const tRef = useRef(t);
+  const isClosingModal = useRef(false);
   useEffect(() => {
     tRef.current = t;
     // Also store on window for debugging (remove in production if needed)
@@ -457,6 +459,30 @@ export default function CollectionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
+  // Handle URL image/photo parameter (direct links to featured posts)
+  useEffect(() => {
+    const imageId = searchParams?.get('image') || searchParams?.get('photo');
+    if (!imageId) return;
+    if (isClosingModal.current) return;
+    if (showImageModal) return;
+    if (userImages.length === 0) return;
+
+    const image = userImages.find(img => img.id === imageId);
+    if (!image) return;
+
+    // Canonicalize legacy `photo` param to `image`
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('image') !== imageId) {
+        url.searchParams.set('image', imageId);
+      }
+      url.searchParams.delete('photo');
+      window.history.replaceState({}, '', url);
+    } catch {}
+
+    void openImageModal(image);
+  }, [searchParams, userImages, showImageModal]);
+
   // Load comments for an image (for ImageModal counters and thread)
   const loadImageComments = async (imageId: string) => {
     const viewerId = user?.id;
@@ -544,6 +570,15 @@ export default function CollectionPage() {
       setImageComments([]);
     }
     setImageLikes(prev => ({ ...prev, [galleryImage.id]: (galleryImage as any).userVote === 'up' }));
+
+    // Update URL with image id (and keep legacy `photo` links working)
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('image', galleryImage.id);
+      url.searchParams.delete('photo');
+      window.history.pushState({}, '', url);
+    } catch {}
+
     setShowImageModal(true);
   };
 
@@ -1208,9 +1243,20 @@ export default function CollectionPage() {
         <ImageModal
           isOpen={showImageModal}
           onClose={() => {
+            isClosingModal.current = true;
             setShowImageModal(false);
             setSelectedImage(null);
             setImageComments([]);
+            // Remove image/photo parameter from URL without triggering Next.js scroll-to-top
+            try {
+              const url = new URL(window.location.href);
+              url.searchParams.delete('image');
+              url.searchParams.delete('photo');
+              window.history.replaceState({}, '', url);
+            } catch {}
+            setTimeout(() => {
+              isClosingModal.current = false;
+            }, 100);
           }}
           imageUrl={selectedImage.url}
           title={selectedImage.title}

@@ -339,7 +339,8 @@ export default function HomePage() {
     const fetchGallery = async () => {
       try {
         setGalleryLoading(true);
-        const res = await fetch('/api/gallery');
+        const url = user?.id ? `/api/gallery?userId=${user.id}` : '/api/gallery';
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           setGalleryImages(data.images || []);
@@ -351,7 +352,7 @@ export default function HomePage() {
       }
     };
     fetchGallery();
-  }, []);
+  }, [user?.id]);
 
   // Fetch featured collections
   useEffect(() => {
@@ -372,12 +373,21 @@ export default function HomePage() {
   // Handle URL parameters for opening specific image
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const imageParam = urlParams.get('image');
+    const imageParam = urlParams.get('image') || urlParams.get('photo');
     if (imageParam && galleryImages.length > 0) {
       const targetImage = galleryImages.find(img => img.id === imageParam);
       if (targetImage) {
         setSelectedGalleryImage(targetImage);
         setShowGalleryModal(true);
+        // Canonicalize param to `image` (keep old `photo` links working)
+        try {
+          const url = new URL(window.location.href);
+          if (url.searchParams.get('image') !== imageParam) {
+            url.searchParams.set('image', imageParam);
+          }
+          url.searchParams.delete('photo');
+          window.history.replaceState({}, '', url);
+        } catch {}
         // Load comments for this image
         if (user) {
           fetch(`/api/gallery/comments?imageId=${targetImage.id}&userId=${user.id}`)
@@ -488,6 +498,7 @@ export default function HomePage() {
     // Remove image parameter from URL
     const url = new URL(window.location.href);
     url.searchParams.delete('image');
+    url.searchParams.delete('photo');
     window.history.pushState({}, '', url);
   };
 
@@ -906,7 +917,7 @@ export default function HomePage() {
                 {isAuthenticated ? t('goToMyCollection') : t('startMyCollection')}
               </span>
             </button>
-          </div>
+            </div>
 
           {/* Benefits: 2 rows x 2 columns on mobile; keep labels single-line; align indentation consistently */}
           <div
@@ -923,11 +934,11 @@ export default function HomePage() {
                 <div className="flex items-center space-x-2 justify-start">
                   <Star className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('connectDiscover')}</span>
-                </div>
+            </div>
                 <div className="flex items-center space-x-2 justify-start">
                   <BookOpen className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('shareCollections')}</span>
-                </div>
+            </div>
                 <div className="flex items-center space-x-2 justify-start">
                   <Globe className="w-5 h-5 text-[#fbae17] flex-shrink-0" />
                   <span className="whitespace-nowrap">{t('joinKingdom')}</span>
@@ -1025,6 +1036,7 @@ export default function HomePage() {
                   // Update URL with image parameter
                   const currentUrl = new URL(window.location.href);
                   currentUrl.searchParams.set('image', galleryImage.id);
+                  currentUrl.searchParams.delete('photo');
                   window.history.pushState({}, '', currentUrl);
                   
                   // Load comments for this image
@@ -1286,6 +1298,7 @@ export default function HomePage() {
                         // Update URL with image parameter
                         const currentUrl = new URL(window.location.href);
                         currentUrl.searchParams.set('image', featuredDiceThrone.id);
+                        currentUrl.searchParams.delete('photo');
                         window.history.pushState({}, '', currentUrl);
                         
                         // Load comments for this image
@@ -1352,6 +1365,7 @@ export default function HomePage() {
                         // Update URL with image parameter
                         const currentUrl = new URL(window.location.href);
                         currentUrl.searchParams.set('image', featuredKingsCard.id);
+                        currentUrl.searchParams.delete('photo');
                         window.history.pushState({}, '', currentUrl);
                         
                         // Load comments for this image
@@ -1420,6 +1434,7 @@ export default function HomePage() {
                       // Update URL with image parameter
                       const currentUrl = new URL(window.location.href);
                       currentUrl.searchParams.set('image', img.id);
+                      currentUrl.searchParams.delete('photo');
                       window.history.pushState({}, '', currentUrl);
                       
                       // Load comments for this image
@@ -1518,7 +1533,7 @@ export default function HomePage() {
                 {/* Use <img> for SVG to avoid Next/Image SVG optimization issues */}
                 <img
                   src="/BoardleYellowIcon.svg"
-                  alt="Boardle Icon"
+                  alt="Boardle Icon" 
                   className="w-8 h-8 flex-none"
                 />
                 <span className="inline-block text-center leading-tight">{t('boardle')}</span>
