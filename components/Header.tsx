@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Search, Menu, X, User, Settings, LogOut } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
@@ -19,6 +20,7 @@ import { useLoginModal } from '@/hooks/useLoginModal';
 
 export default function Header() {
   const t = useTranslations('header');
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useLoginModal();
@@ -55,6 +57,12 @@ export default function Header() {
     setIsUserMenuOpen(false);
     setShowNotificationsPanel(false);
   };
+
+  // Close the avatar menu when navigating to a new page (Header persists across routes)
+  useEffect(() => {
+    setIsUserMenuOpen(false);
+    setShowNotificationsPanel(false);
+  }, [pathname]);
 
   // Helper function to close menu and chat on mobile navigation
   const handleMobileNavigation = () => {
@@ -634,7 +642,7 @@ export default function Header() {
                                 </ul>
                               </div>
                             )}
-                            <Link href={`/profile/${user?.username}`} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
+                            <Link href={`/profile/${user?.username}`} onClick={closeMenu} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                                 <Image src="/ProfileIconOn.svg" alt="Profile Icon" width={26} height={26} className="w-6 h-6" />
                               </div>
@@ -646,7 +654,7 @@ export default function Header() {
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                               </div>
                             </Link>
-                            <Link href={`/collection/${user?.username}`} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
+                            <Link href={`/collection/${user?.username}`} onClick={closeMenu} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                                 <Image src="/MyCollectionIcon.svg" alt="My Collection Icon" width={26} height={26} className="w-6 h-6" />
                               </div>
@@ -670,7 +678,7 @@ export default function Header() {
                               <div className="flex-1 text-left"><span className="text-sm font-medium">{t('notifications')}</span><p className="text-xs text-gray-500">{t('viewNotifications')}</p></div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                             </button>
-                            <Link href="/settings" className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
+                            <Link href="/settings" onClick={closeMenu} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center"><Image src="/SettingsIcon.svg" alt="Settings Icon" width={26} height={26} className="w-6 h-6" /></div>
                               <div className="flex-1"><span className="text-sm font-medium">{t('settings')}</span><p className="text-xs text-gray-500">{t('manageAccount')}</p></div>
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
@@ -687,7 +695,7 @@ export default function Header() {
                           <div className="py-2">
                             <button 
                               className="flex items-center space-x-3 w-full px-6 py-3 text-red-600 hover:bg-red-50 transition-all duration-200 group"
-                              onClick={() => { logout(); }}
+                              onClick={() => { closeMenu(); logout(); }}
                             >
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                                 <Image src="/SingOutIcon.svg" alt="Sign Out Icon" width={30} height={30} className="w-7 h-7 ml-2" />
