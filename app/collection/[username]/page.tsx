@@ -819,7 +819,7 @@ export default function CollectionPage() {
                     e.stopPropagation();
                     handleRemoveCollectionPhoto();
                   }}
-                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-colors z-10"
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-11 h-11 p-0 min-h-0 min-w-0 flex items-center justify-center shadow-lg transition-colors z-10"
                   title="Remove collection photo"
                 >
                   <X className="w-4 h-4" />
@@ -893,7 +893,7 @@ export default function CollectionPage() {
                       e.stopPropagation();
                       handleRemoveFavoriteCard();
                     }}
-                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-colors z-10"
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-11 h-11 p-0 min-h-0 min-w-0 flex items-center justify-center shadow-lg transition-colors z-10"
                     title="Remove favorite card"
                   >
                     <X className="w-4 h-4" />

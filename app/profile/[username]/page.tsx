@@ -1763,9 +1763,23 @@ export default function UserProfilePage() {
                   )}
 
                   <div 
-                    className="space-y-2 flex-1 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                    className="relative space-y-2 flex-1 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
                     onClick={() => setShowGamesListModal(true)}
                   >
+                    {isEditingCollection && (
+                      <div className="absolute inset-0 bg-white/60 rounded-lg flex items-center justify-center z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowGamesListModal(true);
+                          }}
+                          className="px-5 py-2.5 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-full font-semibold transition-colors flex items-center gap-2 shadow-lg"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span>{t('editList')}</span>
+                        </button>
+                      </div>
+                    )}
                     {userProfile.gamesList && userProfile.gamesList.length > 0 ? (
                       userProfile.gamesList.slice(0, 10).map((game, index) => (
                         <div 
@@ -1833,7 +1847,7 @@ export default function UserProfilePage() {
                           {isEditingCollection && (
                             <button
                               onClick={handleRemoveFavoriteCard}
-                              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors z-10"
+                              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-11 h-11 p-0 min-h-0 min-w-0 flex items-center justify-center shadow-lg transition-colors z-10"
                               title={t('removeFavoriteCard')}
                             >
                               <X className="w-4 h-4" />
@@ -1872,7 +1886,7 @@ export default function UserProfilePage() {
                         {isEditingCollection && (
                           <button
                             onClick={handleRemoveCollectionPhoto}
-                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transition-colors z-10"
+                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-11 h-11 p-0 min-h-0 min-w-0 flex items-center justify-center shadow-lg transition-colors z-10"
                             title={t('removeCollectionPhoto')}
                           >
                             <X className="w-4 h-4" />
