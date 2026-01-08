@@ -2158,14 +2158,14 @@ export default function UserProfilePage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                   </svg>
-                  <span>{t('addGamesToCollection')}</span>
+                  <span>{t('addGames')}</span>
                 </button>
                 {isOwnProfile && (
                   <button
                     onClick={handleSaveGamesOrder}
                     className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
                   >
-                    {t('saveOrder')}
+                    {tCommon('save')}
                   </button>
                 )}
               </div>
@@ -2219,7 +2219,7 @@ export default function UserProfilePage() {
                             {game.nameEn || game.name}
                           </h3>
                           <p className="text-sm text-gray-500">
-                            {game.yearRelease || 'Unknown year'}
+                            {game.yearRelease || t('unknownYear')}
                           </p>
                         </div>
                         <button

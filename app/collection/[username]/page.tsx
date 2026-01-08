@@ -1088,14 +1088,14 @@ export default function CollectionPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                   </svg>
-                  <span>{safeT('addGamesToCollection')}</span>
+                  <span>{safeT('addGames')}</span>
                 </button>
                 {isOwnProfile && (
                   <button
                     onClick={handleSaveGamesOrder}
                     className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
                   >
-                    {safeT('saveOrder')}
+                    {tCommon('save')}
                   </button>
                 )}
               </div>
@@ -1167,7 +1167,7 @@ export default function CollectionPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    <p>Start typing to search for games</p>
+                    <p>{tCommon('startTypingToSearch')}</p>
                   </div>
                 )}
               </div>
