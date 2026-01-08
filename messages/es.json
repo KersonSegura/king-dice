@@ -1,24 +1,4 @@
 {
-  "common": {
-    "loading": "Cargando",
-    "error": "Error",
-    "success": "Éxito",
-    "cancel": "Cancelar",
-    "confirm": "Confirmar",
-    "save": "Guardar",
-    "saveChanges": "Guardar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "close": "Cerrar",
-    "back": "Atrás",
-    "next": "Siguiente",
-    "previous": "Anterior",
-    "search": "Buscar",
-    "submit": "Enviar",
-    "signIn": "Iniciar Sesión",
-    "signOut": "Cerrar Sesión",
-    "signUp": "Registrarse"
-  },
   "header": {
     "home": "Inicio",
     "boardGames": "Juegos de Mesa",
@@ -555,6 +535,7 @@
     "cancel": "Cancelar",
     "confirm": "Confirmar",
     "save": "Guardar",
+    "saveChanges": "Guardar",
     "delete": "Eliminar",
     "edit": "Editar",
     "close": "Cerrar",

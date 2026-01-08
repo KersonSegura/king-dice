@@ -1,24 +1,4 @@
 {
-  "common": {
-    "loading": "Loading",
-    "error": "Error",
-    "success": "Success",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "save": "Save",
-    "saveChanges": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "close": "Close",
-    "back": "Back",
-    "next": "Next",
-    "previous": "Previous",
-    "search": "Search",
-    "submit": "Submit",
-    "signIn": "Sign In",
-    "signOut": "Sign Out",
-    "signUp": "Sign Up"
-  },
   "header": {
     "home": "Home",
     "boardGames": "Board Games",
@@ -550,6 +530,7 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "save": "Save",
+    "saveChanges": "Save",
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
