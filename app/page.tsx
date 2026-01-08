@@ -1528,7 +1528,7 @@ export default function HomePage() {
               </p>
             </div>
             
-            <div className="bg-white rounded-lg p-8 max-w-4xl mx-auto border border-gray-200">
+            <div className="bg-white rounded-lg p-8 max-w-4xl mx-auto">
               {/* Mode Selector */}
               <div className="flex justify-center mb-8 px-4">
                 <div className="bg-gray-50 rounded-lg p-1 shadow-sm grid grid-cols-3 gap-2 w-full max-w-md">
