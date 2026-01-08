@@ -701,7 +701,7 @@ function ForumsPageContent() {
         {/* End of content indicator */}
         {!hasMorePosts && filteredPosts.length > 0 && (
           <div className="text-center py-8 text-gray-500">
-            <p>You've reached the end!</p>
+            <p>{tCommon('reachedEnd')}</p>
           </div>
         )}
       </div>

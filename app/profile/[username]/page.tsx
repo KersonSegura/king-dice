@@ -405,6 +405,120 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleDeleteGalleryComment = async (commentId: string) => {
+    if (!selectedImage?.imageId) return;
+    if (!user?.id) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/gallery/comments/${commentId}?userId=${user.id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || tCommon('error'), 'error');
+        return;
+      }
+      await loadImageComments(selectedImage.imageId);
+    } catch (e) {
+      console.error('Error deleting gallery comment:', e);
+      showToast(tCommon('error'), 'error');
+    }
+  };
+
+  const handleLikeGalleryComment = async (commentId: string) => {
+    if (!user?.id) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/gallery/comments/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId,
+          userId: user.id
+        })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || tCommon('error'), 'error');
+        return;
+      }
+      if (selectedImage?.imageId) {
+        await loadImageComments(selectedImage.imageId);
+      }
+    } catch (e) {
+      console.error('Error liking gallery comment:', e);
+      showToast(tCommon('error'), 'error');
+    }
+  };
+
+  const handleReplyToGalleryComment = async (commentId: string, content: string) => {
+    if (!selectedImage?.imageId) return;
+    if (!user?.id) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/gallery/comments/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId,
+          content,
+          author: {
+            id: user.id,
+            name: user.username,
+            avatar: user.avatar || '/DefaultDiceAvatar.svg'
+          }
+        })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || tCommon('error'), 'error');
+        return;
+      }
+      await loadImageComments(selectedImage.imageId);
+    } catch (e) {
+      console.error('Error replying to gallery comment:', e);
+      showToast(tCommon('error'), 'error');
+    }
+  };
+
+  const handleReportGalleryComment = async (commentId: string, reason: string, details?: string) => {
+    if (!user?.id) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/gallery/comments/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId,
+          reason,
+          details: details || '',
+          reporterId: user.id
+        })
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || tCommon('error'), 'error');
+        return;
+      }
+      showToast(tCommon('reportSubmittedSuccess'), 'success');
+    } catch (e) {
+      console.error('Error reporting gallery comment:', e);
+      showToast(tCommon('reportSubmitError'), 'error');
+    }
+  };
+
   // Handle edit description
   const handleEditDescription = async (newDescription: string) => {
     if (!userProfile?.id || !selectedImage?.imageId) return;
@@ -2130,9 +2244,10 @@ export default function UserProfilePage() {
         comments={imageComments}
         onLike={() => selectedImage?.imageId && handleImageLike(selectedImage.imageId)}
         onAddComment={handleAddGalleryComment}
-        onLikeComment={() => showToast('Please log in to like comments', 'info')}
-        onDeleteComment={() => showToast('Please log in to delete comments', 'info')}
-        onReportComment={() => showToast('Please log in to report comments', 'info')}
+        onLikeComment={handleLikeGalleryComment}
+        onDeleteComment={handleDeleteGalleryComment}
+        onReplyToComment={handleReplyToGalleryComment}
+        onReportComment={handleReportGalleryComment}
         onRefreshComments={() => selectedImage?.imageId && loadImageComments(selectedImage.imageId)}
         onRefreshActivity={() => {}}
         onDelete={() => showToast('Please log in to delete images', 'info')}
