@@ -351,7 +351,10 @@ export default function ImageModal({
   };
 
   const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
+    // If backend returns a timestamp without timezone, treat it as UTC to avoid "in X seconds" bugs
+    const hasTimezone = /([zZ]|[+-]\d{2}:\d{2})$/.test(dateString);
+    const normalized = hasTimezone ? dateString : `${dateString}Z`;
+    const date = new Date(normalized);
     const now = new Date();
 
     if (Number.isNaN(date.getTime())) return '';
@@ -614,18 +617,15 @@ export default function ImageModal({
                         backgroundColor: currentUser?.avatar ? undefined : '#d1d5db'
                       }}
                     />
-                    <div className="flex-1 relative">
-                      <div className="relative">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 border border-gray-300 rounded-full bg-white px-3 py-2 focus-within:border-blue-500 transition-colors">
                         <textarea
                           value={newComment}
                           onChange={(e) => setNewComment(e.target.value)}
                           placeholder={tGallery('writeComment')}
-                          className="w-full p-2 pr-10 border border-gray-300 rounded-full focus:border-blue-500 focus:outline-none resize-none bg-white transition-colors text-sm overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                          className="flex-1 bg-transparent outline-none resize-none text-sm overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                           rows={1}
-                          style={{ 
-                            minHeight: '32px', 
-                            maxHeight: '80px'
-                          }}
+                          style={{ minHeight: '24px', maxHeight: '80px' }}
                           onInput={(e) => {
                             const target = e.target as HTMLTextAreaElement;
                             target.style.height = 'auto';
@@ -635,9 +635,10 @@ export default function ImageModal({
                         <button
                           onClick={handleAddComment}
                           disabled={!newComment.trim() || isSubmittingComment}
-                          className="absolute right-2 inset-y-0 flex items-center min-h-0 min-w-0 p-1 bg-transparent text-blue-600 hover:text-blue-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+                          className="min-h-0 min-w-0 p-1 bg-transparent text-blue-600 hover:text-blue-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors self-center"
+                          aria-label="Send"
                         >
-                          <svg className="w-4 h-4 -mt-px" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 -mt-[2px]" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                           </svg>
                         </button>

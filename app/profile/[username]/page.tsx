@@ -1092,8 +1092,12 @@ export default function UserProfilePage() {
       }));
     }
     
-    // Update URL with photo ID (like Facebook: /profile/username?photo=imageId)
-    router.push(`/profile/${username}?photo=${galleryImage.id}`, { scroll: false });
+    // Update URL with photo ID without triggering Next.js scroll-to-top
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('photo', galleryImage.id);
+      window.history.pushState({}, '', url);
+    }
     
     setShowImageModal(true);
   };
@@ -2086,8 +2090,17 @@ export default function UserProfilePage() {
           setSelectedImage(null);
           setImageComments([]);
           
-          // Remove photo parameter from URL when closing modal
-          router.push(`/profile/${username}`, { scroll: false });
+          // Remove photo parameter from URL without triggering Next.js scroll-to-top
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('photo');
+            window.history.replaceState({}, '', url);
+          }
+
+          // Reset closing flag after a brief delay
+          setTimeout(() => {
+            isClosingModal.current = false;
+          }, 100);
         }}
         imageUrl={selectedImage?.url || userProfile.avatar}
         title={selectedImage?.title || `${userProfile.username}'s Avatar`}
