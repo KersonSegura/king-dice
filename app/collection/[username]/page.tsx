@@ -144,21 +144,9 @@ export default function CollectionPage() {
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
   
-  // Hooks must be called unconditionally - but ensure t is always a function
-  const tResult = useTranslations('profile');
-  const t: (key: string, params?: any) => string = (typeof tResult === 'function' && tResult !== null && tResult !== undefined) 
-    ? tResult 
-    : ((key: string) => {
-        if (typeof window !== 'undefined') {
-          console.warn('[CollectionPage] t is not a function, using fallback for key:', key);
-        }
-        return key;
-      });
-  
-  const tCommonRaw = useTranslations('common');
-  const tCommon: (key: string, params?: any) => string = (typeof tCommonRaw === 'function' && tCommonRaw !== null && tCommonRaw !== undefined)
-    ? tCommonRaw
-    : ((key: string) => key);
+  // Simple and direct - EXACTLY like working profile page
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
 
   // Drag and drop sensors
   const sensors = useSensors(
