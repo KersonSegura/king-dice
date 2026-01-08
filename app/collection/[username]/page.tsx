@@ -144,31 +144,9 @@ export default function CollectionPage() {
   const { showToast, ToastContainer } = useToast();
   const { user } = useAuth();
   
-  // Get translations and ensure they're always functions - useMemo for stability
-  const tRaw = useTranslations('profile');
-  const tCommonRaw = useTranslations('common');
-  
-  const t = useMemo(() => {
-    if (typeof tRaw === 'function' && tRaw !== null && tRaw !== undefined) {
-      return tRaw;
-    }
-    console.warn('[CollectionPage] tRaw is not a function, using fallback', typeof tRaw);
-    return ((key: string) => key);
-  }, [tRaw]);
-  
-  const tCommon = useMemo(() => {
-    if (typeof tCommonRaw === 'function' && tCommonRaw !== null && tCommonRaw !== undefined) {
-      return tCommonRaw;
-    }
-    return ((key: string) => key);
-  }, [tCommonRaw]);
-  
-  // Track if component is mounted to ensure t is ready
-  const [isMounted, setIsMounted] = useState(false);
-  
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // EXACT pattern from working profile page - simple direct assignment
+  const t = useTranslations('profile');
+  const tCommon = useTranslations('common');
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -905,8 +883,8 @@ export default function CollectionPage() {
         isUploading={uploadingCollectionPhoto || uploadingFavoriteCard}
       />
 
-      {/* Games List Modal - only render when mounted and t is ready */}
-      {isMounted && showGamesListModal && typeof t === 'function' && (
+      {/* Games List Modal - EXACT pattern from working profile page */}
+      {showGamesListModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowGamesListModal(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
