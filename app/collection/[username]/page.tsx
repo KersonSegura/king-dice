@@ -770,6 +770,31 @@ export default function CollectionPage() {
             ...prev, 
             [isCollectionPhoto ? 'collectionPhoto' : 'favoriteCard']: url 
           } : null);
+
+          // Post to gallery (so the image has a real post + canonical link)
+          try {
+            const galleryPostResponse = await fetch('/api/gallery', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                imageUrl: url,
+                category,
+                description: description || (isCollectionPhoto ? 'Collection photo' : 'Favorite card'),
+                authorId: userProfile.id
+              })
+            });
+
+            if (galleryPostResponse.ok) {
+              // Refresh user images so clicks link to the same post everywhere
+              const galleryResponse = await fetch(`/api/gallery?author=${userProfile.id}`);
+              if (galleryResponse.ok) {
+                const galleryData = await galleryResponse.json();
+                setUserImages(galleryData.images || []);
+              }
+            }
+          } catch (e) {
+            console.error('Error posting to gallery:', e);
+          }
           
           await loadUserProfile();
           showToast(isCollectionPhoto ? 'Collection photo uploaded!' : 'Favorite card uploaded!', 'success');
