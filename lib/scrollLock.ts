@@ -55,7 +55,7 @@ export function lockBodyScroll() {
   scrollLockCount++;
   
   if (scrollLockCount === 1) {
-    // Save current scroll position
+    // Save current scroll position (for debugging/telemetry; we no longer force-restore)
     savedScrollPosition = Math.max(
       window.scrollY || 0,
       window.pageYOffset || 0,
@@ -63,12 +63,13 @@ export function lockBodyScroll() {
       document.body?.scrollTop || 0
     );
     
-    // Apply scroll lock styles - use !important since globals.css forces body position: relative !important
+    // Apply scroll lock styles
+    // IMPORTANT: Avoid `position: fixed` on body to prevent iOS Safari scroll-jump-to-top behavior.
+    document.documentElement.style.setProperty('overflow', 'hidden', 'important');
     document.body.style.setProperty('overflow', 'hidden', 'important');
-    document.body.style.setProperty('position', 'fixed', 'important');
-    document.body.style.setProperty('top', `-${savedScrollPosition}px`, 'important');
-    document.body.style.setProperty('width', '100%', 'important');
-    document.body.style.setProperty('height', '100%', 'important');
+    // Prevent scroll chaining on modern browsers
+    document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important');
+    document.body.style.setProperty('overscroll-behavior', 'none', 'important');
     
     // Prevent touch scrolling on mobile (but allow scrolling within scrollable containers)
     touchMoveHandler = (e: TouchEvent) => {
@@ -136,11 +137,10 @@ export function unlockBodyScroll() {
   
   if (scrollLockCount === 0) {
     // Remove scroll lock styles (restore CSS defaults)
+    document.documentElement.style.removeProperty('overflow');
     document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('position');
-    document.body.style.removeProperty('top');
-    document.body.style.removeProperty('width');
-    document.body.style.removeProperty('height');
+    document.documentElement.style.removeProperty('overscroll-behavior');
+    document.body.style.removeProperty('overscroll-behavior');
     
     // Remove event listeners
     if (touchMoveHandler) {
@@ -152,7 +152,6 @@ export function unlockBodyScroll() {
       wheelHandler = null;
     }
     
-    // Restore scroll position
-    window.scrollTo(0, savedScrollPosition);
+    // Do NOT force scroll restoration; keep the user's position stable.
   }
 }

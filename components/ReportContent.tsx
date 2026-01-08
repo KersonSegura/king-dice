@@ -116,7 +116,7 @@ export default function ReportContent({ contentType, contentId, onReport, onClos
             >
               {Object.entries(REPORT_REASONS).map(([key, label]) => (
                 <option key={key} value={key}>
-                  {label}
+                  {tCommon(`reportReason.${key}` as any) || label}
                 </option>
               ))}
             </select>
