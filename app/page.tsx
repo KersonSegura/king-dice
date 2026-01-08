@@ -16,7 +16,7 @@ import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SplitText from '@/components/SplitText';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import LoginModal from '@/components/LoginModal';
 import { useLoginModal } from '@/hooks/useLoginModal';
@@ -135,8 +135,6 @@ export default function HomePage() {
   }
   
   console.log('[HOME_PAGE_V2] Component rendering with t:', typeof t);
-  const locale = useLocale();
-  const isSpanish = locale === 'es';
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
@@ -908,29 +906,23 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Benefits: default centered layout; Spanish only uses 2x2 grid on mobile */}
-          <div
-            className={
-              isSpanish
-                ? 'grid grid-cols-2 gap-x-8 gap-y-4 place-items-center text-sm text-gray-300 sm:flex sm:flex-wrap sm:justify-center sm:gap-8'
-                : 'flex flex-wrap justify-center gap-8 text-sm text-gray-300'
-            }
-          >
-            <div className="flex items-center space-x-2 justify-center">
+          {/* Benefits: single-line row (no wrapping). Scroll horizontally on small screens if needed. */}
+          <div className="flex flex-nowrap justify-center gap-8 text-sm text-gray-300 overflow-x-auto px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex items-center space-x-2 justify-center min-w-max">
               <Users className="w-5 h-5 text-[#fbae17]" />
-              <span>{t('activeCommunity')}</span>
+              <span className="whitespace-nowrap">{t('activeCommunity')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-center">
+            <div className="flex items-center space-x-2 justify-center min-w-max">
               <BookOpen className="w-5 h-5 text-[#fbae17]" />
-              <span>{t('shareCollections')}</span>
+              <span className="whitespace-nowrap">{t('shareCollections')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-center">
+            <div className="flex items-center space-x-2 justify-center min-w-max">
               <Star className="w-5 h-5 text-[#fbae17]" />
-              <span>{t('connectDiscover')}</span>
+              <span className="whitespace-nowrap">{t('connectDiscover')}</span>
             </div>
-            <div className="flex items-center space-x-2 justify-center">
+            <div className="flex items-center space-x-2 justify-center min-w-max">
               <Globe className="w-5 h-5 text-[#fbae17]" />
-              <span>{t('joinKingdom')}</span>
+              <span className="whitespace-nowrap">{t('joinKingdom')}</span>
             </div>
           </div>
 
