@@ -1515,11 +1515,10 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
-                <Image 
-                  src="/BoardleYellowIcon.svg" 
-                  alt="Boardle Icon" 
-                  width={32} 
-                  height={32}
+                {/* Use <img> for SVG to avoid Next/Image SVG optimization issues */}
+                <img
+                  src="/BoardleYellowIcon.svg"
+                  alt="Boardle Icon"
                   className="w-8 h-8 flex-none"
                 />
                 <span className="inline-block text-center leading-tight">{t('boardle')}</span>
@@ -1529,13 +1528,13 @@ export default function HomePage() {
               </p>
             </div>
             
-            <div className="bg-gray-50 rounded-lg p-8 max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg p-8 max-w-4xl mx-auto border border-gray-200">
               {/* Mode Selector */}
               <div className="flex justify-center mb-8 px-4">
-                <div className="bg-white rounded-lg p-1 shadow-sm flex items-center space-x-2 overflow-x-auto">
+                <div className="bg-gray-50 rounded-lg p-1 shadow-sm grid grid-cols-3 gap-2 w-full max-w-md">
                   <button 
                     onClick={() => setBoardleMode('title')}
-                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    className={`px-2 sm:px-4 py-2 rounded-md text-[11px] sm:text-sm font-medium transition-colors whitespace-nowrap ${
                       boardleMode === 'title' 
                         ? 'bg-[#fbae17] text-white' 
                         : 'text-gray-600 hover:text-gray-900'
@@ -1545,7 +1544,7 @@ export default function HomePage() {
                   </button>
                   <button 
                     onClick={() => setBoardleMode('image')}
-                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    className={`px-2 sm:px-4 py-2 rounded-md text-[11px] sm:text-sm font-medium transition-colors whitespace-nowrap ${
                       boardleMode === 'image' 
                         ? 'bg-[#fbae17] text-white' 
                         : 'text-gray-600 hover:text-gray-900'
@@ -1555,7 +1554,7 @@ export default function HomePage() {
                   </button>
                   <button 
                     onClick={() => setBoardleMode('card')}
-                    className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    className={`px-2 sm:px-4 py-2 rounded-md text-[11px] sm:text-sm font-medium transition-colors whitespace-nowrap ${
                       boardleMode === 'card' 
                         ? 'bg-[#fbae17] text-white' 
                         : 'text-gray-600 hover:text-gray-900'

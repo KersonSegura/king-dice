@@ -6,7 +6,6 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 export default function BoardlePage() {
@@ -31,11 +30,10 @@ export default function BoardlePage() {
         <div className="flex items-center justify-center mb-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
-              <Image
+              {/* Use <img> for SVG to avoid Next/Image SVG optimization issues */}
+              <img
                 src="/BoardleYellowIcon.svg"
                 alt="Boardle Icon"
-                width={36}
-                height={36}
                 className="w-9 h-9 flex-none"
               />
               <span>Boardle</span>
