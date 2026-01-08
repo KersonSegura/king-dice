@@ -930,7 +930,7 @@ export default function CollectionPage() {
                 onClick={() => setShowGamesListModal(true)}
                 className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1 text-[#fbae17]"
               >
-                <span>Edit List</span>
+                <span>{safeT('editList')}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                 </svg>
@@ -966,6 +966,22 @@ export default function CollectionPage() {
                   </div>
                 </Link>
               ))}
+
+              {/* Add tile (editing only): opens Edit List modal */}
+              {isEditingCollection && isOwnProfile && (
+                <button
+                  type="button"
+                  onClick={() => setShowGamesListModal(true)}
+                  className="group"
+                  aria-label={safeT('editList')}
+                >
+                  <div className="relative aspect-square rounded-lg overflow-hidden flex items-center justify-center border-2 border-dashed border-gray-600 bg-gray-800/40 hover:border-[#fbae17] hover:bg-[#fbae17]/10 transition-colors">
+                    <svg className="w-8 h-8 text-gray-300 group-hover:text-[#fbae17] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                </button>
+              )}
             </div>
           ) : (
             <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
