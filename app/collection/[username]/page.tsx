@@ -87,7 +87,7 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove }: {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {isOwnProfile && (
+          {isOwnProfile ? (
             <div 
               {...attributes} 
               {...listeners} 
@@ -96,7 +96,7 @@ function SortableGameItem({ game, index, isOwnProfile, onRemove }: {
             >
               <GripVertical className="w-5 h-5 text-gray-400 hover:text-gray-600 flex-shrink-0" />
             </div>
-          )}
+          ) : null}
           <span
             className={`text-sm font-bold flex-shrink-0 ${
               index === 0 ? 'text-[#fbae17]' : 'text-gray-500'
