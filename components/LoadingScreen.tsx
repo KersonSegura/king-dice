@@ -45,8 +45,8 @@ export default function LoadingScreen({
               className="mx-auto animate-pulse"
             />
           </div>
-          <h2 className="text-lg font-medium text-gray-900">{message}</h2>
-          <p className="text-sm text-gray-600 mt-2">{subMessage}</p>
+          <h2 className="text-lg font-medium text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{message}</h2>
+          <p className="text-sm text-gray-600 mt-2 whitespace-nowrap overflow-hidden text-ellipsis">{subMessage}</p>
         </div>
       </div>
     </div>
