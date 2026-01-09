@@ -1846,9 +1846,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     );
                   })()}
 
-                  {/* Amazon Associates Disclosure */}
-                  <div className="mt-8 pt-6 border-t border-gray-200 px-0">
-                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 sm:p-5 rounded-r-lg">
+                  {/* Amazon Associates Disclosure - Breaks out of padding for full width */}
+                  <div className="mt-8 pt-6 border-t border-gray-200 -mx-8 px-8">
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-5 rounded-r-lg">
                       <div className="flex">
                         <div className="flex-shrink-0">
                           <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
