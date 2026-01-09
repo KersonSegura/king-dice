@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Shield, Users, Heart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 
 interface CommunityGuidelinesProps {
   isOpen: boolean;
@@ -13,13 +14,20 @@ export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidel
   const t = useTranslations('gallery');
   if (!isOpen) return null;
 
+  // Prevent background scroll when modal is open (also avoids header overlap issues on mobile)
+  // ImageModal already does this; keep guidelines consistent.
+  useEffect(() => {
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, []);
+
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[250] p-0 sm:p-4"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white w-full h-full rounded-none sm:rounded-lg sm:max-w-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain touch-pan-y p-6 sm:mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
