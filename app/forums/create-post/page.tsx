@@ -418,6 +418,129 @@ export default function CreatePostPage() {
     setContentHtml(editor.innerHTML);
   };
 
+  const insertInlineCodeAtSelection = () => {
+    if (typeof window === 'undefined') return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    focusEditor();
+    restoreSelection();
+    const range = getOrCreateRangeInEditor();
+    if (!range) return;
+
+    const codeEl = document.createElement('code');
+    codeEl.className = 'kd-inline-code';
+
+    if (range.collapsed) {
+      // Place caret inside code
+      codeEl.textContent = '\u200B';
+      range.insertNode(codeEl);
+      // caret inside, before the ZWSP
+      const r = document.createRange();
+      r.selectNodeContents(codeEl);
+      r.setStart(codeEl.firstChild || codeEl, 0);
+      r.collapse(true);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(r);
+      saveSelection();
+    } else {
+      const frag = range.extractContents();
+      // If selection contains block nodes, fallback to plain text
+      const hasBlock = Array.from(frag.childNodes).some(n => n.nodeType === Node.ELEMENT_NODE && ['div', 'p', 'blockquote', 'pre', 'ul', 'ol', 'li'].includes((n as Element).tagName.toLowerCase()));
+      if (hasBlock) {
+        codeEl.textContent = (window.getSelection()?.toString() || '').trim();
+      } else {
+        codeEl.appendChild(frag);
+      }
+      range.insertNode(codeEl);
+      placeCaretAfter(codeEl);
+    }
+
+    setContentHtml(editor.innerHTML);
+  };
+
+  const insertQuoteAtSelection = () => {
+    if (typeof window === 'undefined') return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    focusEditor();
+    restoreSelection();
+    const range = getOrCreateRangeInEditor();
+    if (!range) return;
+
+    const block = document.createElement('blockquote');
+    block.className = 'kd-blockquote';
+
+    const selText = (window.getSelection()?.toString() || '').trim();
+    if (!selText) {
+      const p = document.createElement('p');
+      p.innerHTML = '<br/>';
+      block.appendChild(p);
+      range.deleteContents();
+      range.insertNode(block);
+      placeCaretAtStart(p);
+    } else {
+      const p = document.createElement('p');
+      p.textContent = selText;
+      block.appendChild(p);
+      range.deleteContents();
+      range.insertNode(block);
+      // Continue typing after quote by default (like Reddit)
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br/>';
+      block.parentNode?.insertBefore(afterP, block.nextSibling);
+      placeCaretAtStart(afterP);
+    }
+
+    setContentHtml(editor.innerHTML);
+  };
+
+  const insertCodeBlockAtSelection = () => {
+    if (typeof window === 'undefined') return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    focusEditor();
+    restoreSelection();
+    const range = getOrCreateRangeInEditor();
+    if (!range) return;
+
+    const pre = document.createElement('pre');
+    pre.className = 'kd-codeblock';
+    const code = document.createElement('code');
+    code.textContent = '';
+
+    const selText = (window.getSelection()?.toString() || '').trim();
+    if (!selText) {
+      code.textContent = '\u200B';
+    } else {
+      code.textContent = selText;
+    }
+    pre.appendChild(code);
+
+    range.deleteContents();
+    range.insertNode(pre);
+
+    if (!selText) {
+      // caret inside code
+      const r = document.createRange();
+      r.selectNodeContents(code);
+      r.setStart(code.firstChild || code, 0);
+      r.collapse(true);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(r);
+      saveSelection();
+    } else {
+      // caret after block
+      const afterP = document.createElement('p');
+      afterP.innerHTML = '<br/>';
+      pre.parentNode?.insertBefore(afterP, pre.nextSibling);
+      placeCaretAtStart(afterP);
+    }
+
+    setContentHtml(editor.innerHTML);
+  };
+
   const toggleListAtSelection = (type: 'ul' | 'ol') => {
     if (typeof window === 'undefined') return;
     focusEditor();
@@ -497,29 +620,9 @@ export default function CreatePostPage() {
     else if (kind === 'strike') exec('strikeThrough');
     else if (kind === 'bullets') toggleListAtSelection('ul');
     else if (kind === 'numbers') toggleListAtSelection('ol');
-    else if (kind === 'quote') {
-      const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
-      const text = selText.trim();
-      if (!text) {
-        const caretId = String(Date.now());
-        insertHtmlAtCursorWithCaret(`<blockquote><p><span data-kd-caret="${caretId}"></span><br/></p></blockquote><p><br/></p>`);
-      } else {
-        const body = escapeHtml(text).replace(/\n/g, '<br/>');
-        const caretId = String(Date.now());
-        insertHtmlAtCursorWithCaret(`<blockquote><p>${body}</p></blockquote><p><span data-kd-caret="${caretId}"></span></p>`);
-      }
-    } else if (kind === 'code') {
-      const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
-      const text = selText.trim();
-      if (!text) {
-        const caretId = String(Date.now());
-        insertHtmlAtCursorWithCaret(`<pre><code><span data-kd-caret="${caretId}"></span></code></pre><p><br/></p>`);
-      } else {
-        const body = escapeHtml(text);
-        const caretId = String(Date.now());
-        insertHtmlAtCursorWithCaret(`<pre><code>${body}</code></pre><p><span data-kd-caret="${caretId}"></span></p>`);
-      }
-    }
+    else if (kind === 'quote') insertQuoteAtSelection();
+    else if (kind === 'codeInline') insertInlineCodeAtSelection();
+    else if (kind === 'codeBlock') insertCodeBlockAtSelection();
   };
 
   const insertHtmlAtCursor = (html: string) => {
@@ -610,9 +713,51 @@ export default function CreatePostPage() {
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'Enter') return;
 
-    // Inside list item behavior: Enter creates next item; Enter on empty item exits list
     const sel = typeof window !== 'undefined' ? window.getSelection() : null;
     const anchor = sel?.anchorNode ?? null;
+
+    // Quote behavior (Reddit-like):
+    // - Enter creates a new quoted line
+    // - Enter on an empty quote line exits the quote
+    const bq = getClosestEl(anchor, 'blockquote') as HTMLElement | null;
+    if (bq) {
+      if (e.shiftKey) {
+        e.preventDefault();
+        exec('insertHTML', '<br/>');
+        return;
+      }
+
+      e.preventDefault();
+      const p = getClosestEl(anchor, 'p') as HTMLParagraphElement | null;
+      const currentP = p && bq.contains(p) ? p : null;
+      const text = (currentP?.textContent || '').replace(/\u200B/g, '').trim();
+
+      if (!text) {
+        // exit quote
+        if (currentP) currentP.remove();
+        if (bq.querySelectorAll('p').length === 0) {
+          // ensure quote has something to delete cleanly
+          bq.remove();
+        }
+        const afterP = document.createElement('p');
+        afterP.innerHTML = '<br/>';
+        bq.parentNode?.insertBefore(afterP, bq.nextSibling);
+        placeCaretAtStart(afterP);
+        if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+        return;
+      }
+
+      // new quoted line
+      const nextP = document.createElement('p');
+      nextP.innerHTML = '<br/>';
+      if (currentP && currentP.nextSibling) bq.insertBefore(nextP, currentP.nextSibling);
+      else bq.appendChild(nextP);
+      placeCaretAtStart(nextP);
+      if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+      return;
+    }
+
+    // Inside list item behavior: Enter creates next item; Enter on empty item exits list
     const li = getClosestEl(anchor, 'li') as HTMLLIElement | null;
     const list = li ? (li.closest('ul,ol') as (HTMLUListElement | HTMLOListElement | null)) : null;
     if (!li || !list) return;
@@ -971,8 +1116,17 @@ export default function CreatePostPage() {
                   <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('quote')} className="p-2 rounded hover:bg-gray-100" title={t('quote')}>
                     <Quote className="w-4 h-4" />
                   </button>
-                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('code')} className="p-2 rounded hover:bg-gray-100" title={t('codeBlock')}>
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('codeInline')} className="p-2 rounded hover:bg-gray-100" title={t('code')}>
                     <Code className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
+                    onClick={() => onFormat('codeBlock')}
+                    className="p-2 rounded hover:bg-gray-100"
+                    title={t('codeBlock')}
+                  >
+                    <span className="text-xs font-mono text-gray-700">{`</>`}</span>
                   </button>
                   <div className="w-px h-6 bg-gray-200 mx-1" />
                   <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bullets')} className="p-2 rounded hover:bg-gray-100" title={t('bullets')}>
@@ -1076,7 +1230,7 @@ export default function CreatePostPage() {
                     onKeyUp={() => saveSelection()}
                     onMouseUp={() => saveSelection()}
                     onBlur={() => saveSelection()}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
+                  className="kd-editor w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
                     data-placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
                     style={{
                       position: 'relative'
@@ -1087,6 +1241,44 @@ export default function CreatePostPage() {
                       content: attr(data-placeholder);
                       color: #9ca3af;
                     }
+
+                  /* Reddit-ish styling */
+                  .kd-editor :global(blockquote.kd-blockquote) {
+                    border-left: 4px solid #e5e7eb;
+                    margin: 0.25rem 0;
+                    padding-left: 0.75rem;
+                    color: #4b5563;
+                  }
+                  .kd-editor :global(blockquote.kd-blockquote p) {
+                    margin: 0.25rem 0;
+                  }
+
+                  .kd-editor :global(code.kd-inline-code) {
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                    font-size: 0.875rem;
+                    background: #f3f4f6;
+                    border: 1px solid #e5e7eb;
+                    padding: 0.15rem 0.35rem;
+                    border-radius: 0.375rem;
+                    display: inline-block;
+                  }
+
+                  .kd-editor :global(pre.kd-codeblock) {
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                    font-size: 0.875rem;
+                    background: #f3f4f6;
+                    border: 1px solid #e5e7eb;
+                    padding: 0.75rem;
+                    border-radius: 0.5rem;
+                    overflow-x: auto;
+                    margin: 0.5rem 0;
+                  }
+                  .kd-editor :global(pre.kd-codeblock code) {
+                    background: transparent;
+                    border: none;
+                    padding: 0;
+                    display: block;
+                  }
                   `}</style>
                 </div>
               </>
