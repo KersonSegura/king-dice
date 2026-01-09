@@ -35,21 +35,41 @@ export default function RecentGalleryImages({ limit = 4 }: RecentGalleryImagesPr
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const tGallery = useTranslations('gallery');
+  const tHome = useTranslations('home');
   const tCommon = useTranslations('common');
 
+  const tf = (t: any, key: string, fallback: string) => {
+    if (typeof t?.has === 'function') return t.has(key) ? t(key) : fallback;
+    try {
+      return t(key) ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
   const categoryLabel = (category: string) => {
-    // Try gallery translations first, then common (used elsewhere), then raw
-    try {
-      const anyT = tGallery as any;
-      if (typeof anyT?.has === 'function' && anyT.has(category)) return tGallery(category as any);
-    } catch {}
-    if (category === 'the-kings-card') return tGallery('cardOfTheWeek');
-    if (category === 'dice-throne' || category === 'dice-of-the-week') return tGallery('diceOfTheWeek');
-    try {
-      const anyC = tCommon as any;
-      if (typeof anyC?.has === 'function' && anyC.has(`categories.${category}`)) return tCommon(`categories.${category}` as any);
-    } catch {}
+    // Canonical category IDs from gallery content
+    if (category === 'collections') return tf(tGallery as any, 'categoryGameCollections', 'Collections');
+    if (category === 'game-setups') return tf(tGallery as any, 'categoryGameSetups', 'Game Setups');
+    if (category === 'events') return tf(tGallery as any, 'categoryGameEvents', 'Events');
+
+    // Weekly highlights (these strings currently live under "home" messages)
+    if (category === 'the-kings-card') return tf(tHome as any, 'cardOfTheWeek', 'Card of the Week');
+    if (category === 'dice-throne' || category === 'dice-of-the-week') return tf(tHome as any, 'diceOfTheWeek', 'Dice of the Week');
+
+    // Fallback to gallery category keys if present
+    if (category === 'the-kings-card') return tf(tGallery as any, 'categoryTheKingsCard', category);
+    if (category === 'dice-throne' || category === 'dice-of-the-week') return tf(tGallery as any, 'categoryDiceThrone', category);
+
     return category;
+  };
+
+  const likesLabel = () => {
+    // Prefer common.likes, fall back to gallery.like, then plain "likes"
+    const fromCommon = tf(tCommon as any, 'likes', '');
+    if (fromCommon) return fromCommon;
+    const fromGallery = tf(tGallery as any, 'like', '');
+    return fromGallery || 'likes';
   };
 
   useEffect(() => {
@@ -115,7 +135,7 @@ export default function RecentGalleryImages({ limit = 4 }: RecentGalleryImagesPr
             />
           </div>
           <div className="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
-            {image.votes.upvotes - image.votes.downvotes} {tCommon('likes')}
+            {image.votes.upvotes - image.votes.downvotes} {likesLabel()}
           </div>
           <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
             {categoryLabel(image.category)}
