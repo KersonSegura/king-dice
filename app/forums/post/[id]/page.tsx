@@ -15,6 +15,7 @@ import ModernTooltip from '@/components/ModernTooltip';
 import RecentGalleryImages from '@/components/RecentGalleryImages';
 import { useGameMentions } from '@/hooks/useGameMentions';
 import { renderContentWithGameLinks } from '@/utils/renderContent';
+import { useTranslations } from 'next-intl';
 
 interface Comment {
   id: string;
