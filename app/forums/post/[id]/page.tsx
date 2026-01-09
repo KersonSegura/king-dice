@@ -142,9 +142,10 @@ export default function PostDetailPage() {
   }, [postId, router, commentSortBy, isAuthenticated, user?.id]);
 
   // Reload comments when sort changes
-  const reloadComments = async () => {
+  const reloadComments = async (sortOverride?: 'best' | 'newest' | 'top') => {
     try {
-      const commentsResponse = await fetch(`/api/posts/${postId}/comments?sortBy=${commentSortBy}${isAuthenticated && user ? `&userId=${user.id}` : ''}`);
+      const sort = sortOverride || commentSortBy;
+      const commentsResponse = await fetch(`/api/posts/${postId}/comments?sortBy=${sort}${isAuthenticated && user ? `&userId=${user.id}` : ''}`);
       if (commentsResponse.ok) {
         const commentsData = await commentsResponse.json();
         setComments(commentsData.comments);
@@ -718,7 +719,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(post.id, 'up', 'post')}
                           disabled={votingPost}
-                          className={`w-8 h-8 inline-flex items-center justify-center rounded-full transition-colors ${
+                          className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                             localUserVote === 'up'
                               ? 'bg-green-100 text-green-600' 
                               : 'hover:bg-gray-100 text-gray-400'
@@ -730,7 +731,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(post.id, 'down', 'post')}
                           disabled={votingPost}
-                          className={`w-8 h-8 inline-flex items-center justify-center rounded-full transition-colors ${
+                          className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                             localUserVote === 'down'
                               ? 'bg-red-100 text-red-600' 
                               : 'hover:bg-gray-100 text-gray-400'
@@ -760,7 +761,7 @@ export default function PostDetailPage() {
                    <button
                      onClick={() => handleVote(post.id, 'up', 'post')}
                      disabled={votingPost}
-                     className={`w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors ${
+                     className={`w-10 h-10 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                        localUserVote === 'up'
                          ? 'bg-green-100 text-green-600' 
                          : 'hover:bg-gray-100 text-gray-400'
@@ -774,7 +775,7 @@ export default function PostDetailPage() {
                    <button
                      onClick={() => handleVote(post.id, 'down', 'post')}
                      disabled={votingPost}
-                     className={`w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors ${
+                     className={`w-10 h-10 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                        localUserVote === 'down'
                          ? 'bg-red-100 text-red-600' 
                          : 'hover:bg-gray-100 text-gray-400'
@@ -901,7 +902,7 @@ export default function PostDetailPage() {
                       onKeyDown={handleCommentKeyPress}
                       placeholder={isAuthenticated ? t('writeCommentMention') : t('pleaseSignInToComment')}
                       rows={3}
-                      className="w-full p-2 sm:p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-sm sm:text-base"
+                      className="w-full p-2 sm:p-3 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-sm sm:text-base"
                       disabled={!isAuthenticated}
                     />
                     
@@ -963,15 +964,14 @@ export default function PostDetailPage() {
                         )}
                       </div>
                     )}
-                    <div className="flex justify-end mt-2">
-                      <button
-                        onClick={handleCreateComment}
-                        disabled={!newComment.trim() || !isAuthenticated || isSubmittingComment}
-                        className="text-blue-600 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-2"
-                      >
-                        <Send className="w-5 h-5" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleCreateComment}
+                      disabled={!newComment.trim() || !isAuthenticated || isSubmittingComment}
+                      className="absolute right-2 bottom-2 text-blue-600 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-2"
+                      aria-label={t('submit')}
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -988,8 +988,9 @@ export default function PostDetailPage() {
                     <select
                       value={commentSortBy}
                       onChange={(e) => {
-                        setCommentSortBy(e.target.value as 'best' | 'newest' | 'top');
-                        reloadComments();
+                        const next = e.target.value as 'best' | 'newest' | 'top';
+                        setCommentSortBy(next);
+                        reloadComments(next);
                       }}
                       className="text-xs sm:text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
@@ -1008,7 +1009,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(comment.id, 'up', 'comment')}
                           disabled={votingComments.has(comment.id)}
-                          className={`w-7 h-7 inline-flex items-center justify-center rounded-full transition-colors ${
+                          className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                             comment.userVote === 'upvote' 
                               ? 'bg-green-100 text-green-600' 
                               : 'hover:bg-gray-100 text-gray-400'
@@ -1022,7 +1023,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(comment.id, 'down', 'comment')}
                           disabled={votingComments.has(comment.id)}
-                          className={`w-7 h-7 inline-flex items-center justify-center rounded-full transition-colors ${
+                          className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                             comment.userVote === 'downvote' 
                               ? 'bg-red-100 text-red-600' 
                               : 'hover:bg-gray-100 text-gray-400'

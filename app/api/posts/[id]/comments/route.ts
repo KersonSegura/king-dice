@@ -52,8 +52,7 @@ export async function GET(
     const { data: comments, error: commentsError } = await supabaseAdmin
       .from('comments')
       .select('*')
-      .eq('post_id', postId)
-      .order('created_at', { ascending: sortBy !== 'newest' });
+      .eq('post_id', postId);
 
     if (commentsError) {
       throw commentsError;
@@ -158,7 +157,32 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({ comments: formattedComments });
+    const score = (c: any) => (c?.votes?.upvotes || 0) - (c?.votes?.downvotes || 0);
+    const created = (c: any) => new Date(c.createdAt).getTime();
+
+    let sorted = [...formattedComments];
+    if (sortBy === 'newest') {
+      sorted.sort((a, b) => created(b) - created(a));
+    } else if (sortBy === 'top') {
+      sorted.sort((a, b) => {
+        const upDiff = (b.votes.upvotes || 0) - (a.votes.upvotes || 0);
+        if (upDiff !== 0) return upDiff;
+        const scoreDiff = score(b) - score(a);
+        if (scoreDiff !== 0) return scoreDiff;
+        return created(b) - created(a);
+      });
+    } else {
+      // 'best' => highest score first, then higher upvotes, then newest
+      sorted.sort((a, b) => {
+        const scoreDiff = score(b) - score(a);
+        if (scoreDiff !== 0) return scoreDiff;
+        const upDiff = (b.votes.upvotes || 0) - (a.votes.upvotes || 0);
+        if (upDiff !== 0) return upDiff;
+        return created(b) - created(a);
+      });
+    }
+
+    return NextResponse.json({ comments: sorted });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return NextResponse.json(
