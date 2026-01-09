@@ -1386,7 +1386,7 @@ function CommunityGalleryPageContent() {
                       : 'shadow-sm border border-gray-200 hover:shadow-md'
                 } ${viewMode === 'feed' ? 'sm:border border-x-0 sm:border-gray-200' : ''} ${
                   viewMode === 'feed' && featuredIds.has(image.id)
-                    ? "relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[#fbae17] after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-[3px] after:bg-[#fbae17] sm:before:hidden sm:after:hidden"
+                    ? "relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[#fbae17] before:z-20 before:pointer-events-none after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-[3px] after:bg-[#fbae17] after:z-20 after:pointer-events-none sm:before:hidden sm:after:hidden"
                     : ''
                 }`}
                 onClick={() => handleImageClick(image)}
@@ -1478,7 +1478,7 @@ function CommunityGalleryPageContent() {
                 
                 {/* Only show detailed info in list/feed mode, not explore or grid mode (grid mode shows only square images) */}
                 {viewMode !== 'explore' && viewMode !== 'grid' && (
-                  <div className={`${viewMode === 'feed' ? 'p-2' : 'p-4'}`}>
+                  <div className={`${viewMode === 'feed' ? 'px-4 py-3' : 'p-4'}`}>
                     {/* Mobile layout (feed mode) */}
                     {viewMode === 'feed' ? (
                       <>
@@ -1532,9 +1532,11 @@ function CommunityGalleryPageContent() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-1 line-clamp-2 whitespace-pre-wrap">
-                          {image.description}
-                        </p>
+                        <ExpandableText
+                          text={image.description}
+                          maxLength={140}
+                          className="text-sm text-gray-600 mb-2 whitespace-pre-wrap"
+                        />
                         
                         <div className="flex items-center justify-end text-xs text-gray-500">
                           <div className="flex items-center gap-1">

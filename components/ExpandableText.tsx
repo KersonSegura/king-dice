@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ExpandableTextProps {
   text: string;
@@ -14,6 +15,7 @@ export default function ExpandableText({
   className = '' 
 }: ExpandableTextProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const tCommon = useTranslations('common');
   
   if (text.length <= maxLength) {
     return <p className={className}>{text}</p>;
@@ -32,7 +34,7 @@ export default function ExpandableText({
             onClick={() => setIsExpanded(true)}
             className="text-blue-600 hover:text-blue-800 font-medium ml-1"
           >
-            See more
+            {tCommon('seeMore')}
           </button>
         </>
       )}
@@ -41,7 +43,7 @@ export default function ExpandableText({
           onClick={() => setIsExpanded(false)}
           className="text-blue-600 hover:text-blue-800 font-medium ml-1"
         >
-          See less
+          {tCommon('seeLess')}
         </button>
       )}
     </p>

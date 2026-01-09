@@ -581,6 +581,8 @@
     "gameNotFound": "Juego no encontrado",
     "goBackHome": "Volver al inicio",
     "goBack": "Volver",
+    "seeMore": "Ver más",
+    "seeLess": "Ver menos",
     "deleteImage": "Eliminar Imagen",
     "confirmDeleteImage": "¿Seguro que quieres eliminar esta imagen? Esta acción no se puede deshacer.",
     "deletePost": "Eliminar Publicación",
