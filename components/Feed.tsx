@@ -261,7 +261,7 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
   // Loading state
   if (loading && page === 1) {
     return (
-      <div className="max-w-6xl mx-auto p-2">
+      <div className="max-w-6xl mx-auto px-0 py-2 sm:p-2">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1">
           {[...Array(20)].map((_, i) => (
             <div key={i} className="aspect-square bg-gray-200 animate-pulse"></div>
@@ -306,7 +306,7 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-2">
+    <div className="max-w-6xl mx-auto px-0 py-2 sm:p-2">
       {/* Feed Items - Instagram Style Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1">
         {feedItems.map((item) => (

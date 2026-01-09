@@ -1019,40 +1019,42 @@ export default function HomePage() {
             </p>
           </div>
           
-          <Feed 
-            userId={user?.id} 
-            limit={10} 
-            featuredDiceThroneId={featuredDiceThrone?.id}
-            featuredKingsCardId={featuredKingsCard?.id}
-            onItemClick={(item) => {
-              // If it's a gallery image, open with ImageModal
-              if (item.type === 'gallery') {
-                // Find the corresponding gallery image
-                const galleryImage = galleryImages.find(img => img.id === item.id);
-                if (galleryImage) {
-                  setSelectedGalleryImage(galleryImage);
-                  setShowGalleryModal(true);
-                  
-                  // Update URL with image parameter
-                  const currentUrl = new URL(window.location.href);
-                  currentUrl.searchParams.set('image', galleryImage.id);
-                  currentUrl.searchParams.delete('photo');
-                  window.history.pushState({}, '', currentUrl);
-                  
-                  // Load comments for this image
-                  if (user) {
-                    fetch(`/api/gallery/comments?imageId=${galleryImage.id}&userId=${user.id}`)
-                      .then(response => response.json())
-                      .then(data => setImageComments(data.comments || []))
-                      .catch(error => console.error('Error loading comments:', error));
+          <div className="-mx-4 sm:mx-0">
+            <Feed 
+              userId={user?.id} 
+              limit={10} 
+              featuredDiceThroneId={featuredDiceThrone?.id}
+              featuredKingsCardId={featuredKingsCard?.id}
+              onItemClick={(item) => {
+                // If it's a gallery image, open with ImageModal
+                if (item.type === 'gallery') {
+                  // Find the corresponding gallery image
+                  const galleryImage = galleryImages.find(img => img.id === item.id);
+                  if (galleryImage) {
+                    setSelectedGalleryImage(galleryImage);
+                    setShowGalleryModal(true);
+                    
+                    // Update URL with image parameter
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('image', galleryImage.id);
+                    currentUrl.searchParams.delete('photo');
+                    window.history.pushState({}, '', currentUrl);
+                    
+                    // Load comments for this image
+                    if (user) {
+                      fetch(`/api/gallery/comments?imageId=${galleryImage.id}&userId=${user.id}`)
+                        .then(response => response.json())
+                        .then(data => setImageComments(data.comments || []))
+                        .catch(error => console.error('Error loading comments:', error));
+                    }
                   }
+                } else if (item.type === 'post') {
+                  // For forum posts, navigate to the specific post
+                  router.push(`/forums/post/${item.id}`);
                 }
-              } else if (item.type === 'post') {
-                // For forum posts, navigate to the specific post
-                router.push(`/forums/post/${item.id}`);
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
       </section>
 

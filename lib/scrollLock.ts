@@ -5,6 +5,7 @@ let scrollLockCount = 0;
 let savedScrollPosition = 0;
 let touchMoveHandler: ((e: TouchEvent) => void) | null = null;
 let wheelHandler: ((e: WheelEvent) => void) | null = null;
+let extraLockedElements: HTMLElement[] = [];
 
 function findScrollableContainer(element: Element | null): Element | null {
   if (!element) return null;
@@ -70,6 +71,30 @@ export function lockBodyScroll() {
     // Prevent scroll chaining on modern browsers
     document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important');
     document.body.style.setProperty('overscroll-behavior', 'none', 'important');
+
+    // Some layouts scroll on a wrapper element (e.g. main/#__next/body child) instead of body.
+    // Lock those too so background can't scroll behind modals.
+    extraLockedElements = [];
+    try {
+      const candidates: Array<Element | null> = [
+        document.getElementById('__next'),
+        document.querySelector('main'),
+        document.body?.firstElementChild
+      ];
+      for (const el of candidates) {
+        if (!el) continue;
+        if (!(el instanceof HTMLElement)) continue;
+        if (el === document.body) continue;
+        if (el === document.documentElement) continue;
+        // Avoid duplicates
+        if (extraLockedElements.includes(el)) continue;
+        el.style.setProperty('overflow', 'hidden', 'important');
+        el.style.setProperty('overscroll-behavior', 'none', 'important');
+        extraLockedElements.push(el);
+      }
+    } catch {
+      // ignore
+    }
     
     // Prevent touch scrolling on mobile (but allow scrolling within scrollable containers)
     touchMoveHandler = (e: TouchEvent) => {
@@ -141,6 +166,19 @@ export function unlockBodyScroll() {
     document.body.style.removeProperty('overflow');
     document.documentElement.style.removeProperty('overscroll-behavior');
     document.body.style.removeProperty('overscroll-behavior');
+
+    // Restore any extra locked elements
+    if (extraLockedElements.length > 0) {
+      for (const el of extraLockedElements) {
+        try {
+          el.style.removeProperty('overflow');
+          el.style.removeProperty('overscroll-behavior');
+        } catch {
+          // ignore
+        }
+      }
+      extraLockedElements = [];
+    }
     
     // Remove event listeners
     if (touchMoveHandler) {
