@@ -5,6 +5,7 @@ export const useGameMentions = (
   setText: (text: string) => void,
   inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>
 ) => {
+  const MENTION_RESULT_LIMIT = 20;
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
   const [mentionResults, setMentionResults] = useState<any[]>([]);
@@ -21,7 +22,7 @@ export const useGameMentions = (
     }
 
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=games&limit=5`);
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=games&limit=${MENTION_RESULT_LIMIT}`);
       if (response.ok) {
         const data = await response.json();
         setMentionResults(data.games || []);

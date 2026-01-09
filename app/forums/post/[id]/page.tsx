@@ -46,6 +46,7 @@ export default function PostDetailPage() {
   const { showToast } = useToast();
   const t = useTranslations('forums');
   const tCommon = useTranslations('common');
+  const tChat = useTranslations('chat');
   const postId = params?.id as string;
   
   const [post, setPost] = useState<ForumPost | null>(null);
@@ -784,7 +785,7 @@ export default function PostDetailPage() {
                         className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
                       >
                         <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
-                          Search game...
+                          {tChat('linkGames')}
                         </div>
                         {mentionResults.length > 0 ? (
                           <div className="py-1">
@@ -809,11 +810,11 @@ export default function PostDetailPage() {
                           </div>
                         ) : mentionQuery.length > 0 ? (
                           <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                            No games found
+                            {tChat('noGamesFound')}
                           </div>
                         ) : (
                           <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                            Type to search games...
+                            {tChat('typeToSearchGames')}
                           </div>
                         )}
                       </div>

@@ -524,7 +524,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     }
 
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=games&limit=5`);
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=games&limit=20`);
       if (response.ok) {
         const data = await response.json();
         setMentionResults(data.games || []);
@@ -825,7 +825,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                   className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
                 >
                   <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
-                    {t('searchGame')}
+                    {t('linkGames')}
                   </div>
                   {mentionResults.length > 0 ? (
                     <div className="py-1">
