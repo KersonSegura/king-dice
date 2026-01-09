@@ -322,6 +322,7 @@ export default function CollectionPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadingCollectionPhoto, setUploadingCollectionPhoto] = useState(false);
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
+  const [pendingRemoveFeatured, setPendingRemoveFeatured] = useState<null | 'favorite-card' | 'collection-photo'>(null);
 
   // Prevent background scrolling when modals are open (mobile + desktop)
   useEffect(() => {
@@ -1183,7 +1184,7 @@ export default function CollectionPage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleRemoveCollectionPhoto();
+                    setPendingRemoveFeatured('collection-photo');
                   }}
                   className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-11 h-11 p-0 min-h-0 min-w-0 flex items-center justify-center shadow-lg transition-colors z-10"
                   title="Remove collection photo"
@@ -1256,7 +1257,7 @@ export default function CollectionPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRemoveFavoriteCard();
+                      setPendingRemoveFeatured('favorite-card');
                     }}
                     className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-11 h-11 p-0 min-h-0 min-w-0 flex items-center justify-center shadow-lg transition-colors z-10"
                     title="Remove favorite card"
@@ -1566,6 +1567,44 @@ export default function CollectionPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm remove featured image (same as Profile page) */}
+      {pendingRemoveFeatured && (
+        <div className="fixed inset-0 bg-black/50 z-[220] flex items-center justify-center p-4" onClick={() => setPendingRemoveFeatured(null)}>
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {pendingRemoveFeatured === 'favorite-card' ? safeT('confirmRemoveFavoriteCardTitle') : safeT('confirmRemoveCollectionPhotoTitle')}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {safeT('confirmRemoveFeaturedPhotoBody')}
+              </p>
+            </div>
+            <div className="px-6 pb-6 flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                onClick={() => setPendingRemoveFeatured(null)}
+              >
+                {tCommon('cancel')}
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+                onClick={async () => {
+                  const type = pendingRemoveFeatured;
+                  setPendingRemoveFeatured(null);
+                  if (type === 'favorite-card') {
+                    await handleRemoveFavoriteCard();
+                  } else {
+                    await handleRemoveCollectionPhoto();
+                  }
+                }}
+              >
+                {tCommon('confirm')}
+              </button>
             </div>
           </div>
         </div>
