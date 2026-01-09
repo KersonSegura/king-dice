@@ -66,6 +66,7 @@ export default function PostDetailPage() {
   const [showDeletePostConfirm, setShowDeletePostConfirm] = useState(false);
   const [showDeleteCommentConfirm, setShowDeleteCommentConfirm] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [pollVoting, setPollVoting] = useState(false);
   
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -285,6 +286,108 @@ export default function PostDetailPage() {
         });
       }
     }
+  };
+
+  const handlePollVote = async (optionId: string) => {
+    if (!post) return;
+    if (!isAuthenticated || !user) {
+      showToast(tCommon('pleaseSignIn'), 'error');
+      return;
+    }
+    if (pollVoting) return;
+
+    try {
+      setPollVoting(true);
+      const current = (post as any)?.poll?.userVoteOptionId ?? null;
+      const effective = current === optionId ? null : optionId;
+
+      const resp = await fetch('/api/posts/poll/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, optionId: effective, userId: user.id })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        showToast(err?.details || err?.error || t('voteFailed'), 'error');
+        return;
+      }
+
+      const data = await resp.json();
+      const overlay = data?.poll;
+      if (overlay) {
+        setPost(prev => {
+          if (!prev) return prev;
+          return {
+            ...(prev as any),
+            poll: {
+              ...((prev as any).poll || {}),
+              ...overlay
+            }
+          } as any;
+        });
+      }
+    } finally {
+      setPollVoting(false);
+    }
+  };
+
+  const renderPoll = () => {
+    if (!post || (post as any).postType !== 'poll' || !(post as any).poll) return null;
+    const poll = (post as any).poll;
+    const options = Array.isArray(poll.options) ? poll.options : [];
+    if (!options.length) return null;
+
+    const results: Record<string, number> = poll.results || {};
+    const totalVotes: number = typeof poll.totalVotes === 'number' ? poll.totalVotes : Object.values(results).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+    const userVoteOptionId: string | null = poll.userVoteOptionId ?? null;
+
+    return (
+      <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div className="text-sm font-semibold text-gray-900 mb-3">{poll.question}</div>
+        <div className="space-y-2">
+          {options.map((o: any) => {
+            const count = Number(results?.[o.id] ?? 0);
+            const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+            const selected = userVoteOptionId === o.id;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => handlePollVote(String(o.id))}
+                disabled={pollVoting}
+                className={`w-full text-left rounded-lg border px-3 py-2 transition-colors ${
+                  selected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white hover:bg-gray-50'
+                } ${pollVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm text-gray-900 break-words">{o.text}</div>
+                    {(totalVotes > 0 || userVoteOptionId) && (
+                      <div className="mt-1 h-2 w-full rounded bg-gray-100 overflow-hidden">
+                        <div className="h-full bg-primary-500" style={{ width: `${pct}%` }} />
+                      </div>
+                    )}
+                  </div>
+                  {(totalVotes > 0 || userVoteOptionId) && (
+                    <div className="flex items-center gap-2 text-xs text-gray-600 whitespace-nowrap">
+                      <span>{pct}%</span>
+                      <span>·</span>
+                      <span>
+                        {count} {t('pollVotes')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-3 text-xs text-gray-600">
+          {t('pollTotalVotes')}: {totalVotes}
+        </div>
+      </div>
+    );
   };
 
   const handleCreateComment = async () => {
@@ -544,6 +647,8 @@ export default function PostDetailPage() {
                   </h1>
                 </div>
                 
+                {renderPoll()}
+
                 {/* Content */}
                 <div className="prose max-w-none mb-6">
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
@@ -692,6 +797,8 @@ export default function PostDetailPage() {
                     {post.title}
                   </h1>
                   
+                  {renderPoll()}
+
                   <div className="prose max-w-none mb-6">
                       <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
                       {renderContentWithGameLinks(post.content)}

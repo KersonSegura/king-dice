@@ -32,6 +32,9 @@ type Draft = {
   title: string;
   category: string;
   contentHtml: string;
+  postType?: 'text' | 'poll';
+  pollQuestion?: string;
+  pollOptions?: Array<{ id: string; text: string }>;
   updatedAt: string;
 };
 
@@ -43,6 +46,11 @@ const DEFAULT_CATEGORIES = [
   { id: 'strategy', name: 'Strategy & Tips', color: 'bg-green-100 text-green-800' },
   { id: 'reviews', name: 'Reviews & Recommendations', color: 'bg-purple-100 text-purple-800' }
 ];
+
+type PollOption = { id: string; text: string };
+function newOptionId() {
+  return `opt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -207,6 +215,12 @@ export default function CreatePostPage() {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('general');
   const [contentHtml, setContentHtml] = useState('');
+  const [postType, setPostType] = useState<'text' | 'poll'>('text');
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState<PollOption[]>([
+    { id: newOptionId(), text: '' },
+    { id: newOptionId(), text: '' },
+  ]);
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const savedSelectionRef = useRef<Range | null>(null);
@@ -254,15 +268,16 @@ export default function CreatePostPage() {
     autosaveTimer.current = setTimeout(() => {
       // Don’t autosave totally empty drafts
       const contentText = htmlToMarkdown(contentHtml);
-      if (!title.trim() && !contentText.trim()) return;
-      const next: Draft = { id: draftId, title, category, contentHtml, updatedAt: nowIso() };
+      const pollHasAny = postType === 'poll' && (pollQuestion.trim() || pollOptions.some(o => o.text.trim()));
+      if (!title.trim() && !contentText.trim() && !pollHasAny) return;
+      const next: Draft = { id: draftId, title, category, contentHtml, postType, pollQuestion, pollOptions, updatedAt: nowIso() };
       upsertDraft(next);
       setDraftsState(loadDrafts());
     }, DRAFT_AUTOSAVE_MS);
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [title, contentHtml, category, draftId]);
+  }, [title, contentHtml, category, draftId, postType, pollQuestion, pollOptions]);
 
   const focusEditor = () => {
     if (!editorRef.current) return;
@@ -491,7 +506,7 @@ export default function CreatePostPage() {
   };
 
   const handleSaveDraft = () => {
-    const next: Draft = { id: draftId, title, category, contentHtml, updatedAt: nowIso() };
+    const next: Draft = { id: draftId, title, category, contentHtml, postType, pollQuestion, pollOptions, updatedAt: nowIso() };
     upsertDraft(next);
     setDraftsState(loadDrafts());
     showToast(t('draftSaved'), 'success');
@@ -502,6 +517,13 @@ export default function CreatePostPage() {
     setTitle(d.title || '');
     setCategory(d.category || 'general');
     setContentHtml(d.contentHtml || '');
+    setPostType(d.postType || 'text');
+    setPollQuestion(d.pollQuestion || '');
+    setPollOptions(
+      Array.isArray(d.pollOptions) && d.pollOptions.length >= 2
+        ? (d.pollOptions as PollOption[])
+        : [{ id: newOptionId(), text: '' }, { id: newOptionId(), text: '' }]
+    );
     setDraftsOpen(false);
     showToast(t('draftLoaded'), 'success');
     requestAnimationFrame(() => {
@@ -581,6 +603,13 @@ export default function CreatePostPage() {
       showToast(t('fillTitleAndContent'), 'error');
       return;
     }
+    if (postType === 'poll') {
+      const opts = pollOptions.map(o => ({ ...o, text: o.text.trim() })).filter(o => o.text);
+      if (!pollQuestion.trim() || opts.length < 2) {
+        showToast(tf('fillPoll', 'Please fill in the poll question and at least 2 options.'), 'error');
+        return;
+      }
+    }
     if (!isAuthenticated || !user) {
       setShowLoginModal(true);
       return;
@@ -622,7 +651,16 @@ export default function CreatePostPage() {
           name: user.username,
           avatar: user.avatar,
           title: (user as any).title ?? null
-        }
+        },
+        ...(postType === 'poll'
+          ? {
+              postType: 'poll',
+              poll: {
+                question: pollQuestion.trim(),
+                options: pollOptions.map(o => ({ id: o.id, text: o.text.trim() })).filter(o => o.text)
+              }
+            }
+          : {})
       };
 
       const resp = await fetch('/api/posts', {
@@ -738,8 +776,25 @@ export default function CreatePostPage() {
           {/* Header bar */}
           <div className="border-b border-gray-200 bg-gray-50">
             <div className="relative flex items-center p-2">
-              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 px-3 py-2 text-sm font-medium text-gray-700">
-                {t('tabText')}
+              <div className="absolute left-1/2 -translate-x-1/2 flex items-center rounded-lg border border-gray-200 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setPostType('text')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                    postType === 'text' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {tf('postTypeText', 'Text')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPostType('poll')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                    postType === 'poll' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {tf('postTypePoll', 'Poll')}
+                </button>
               </div>
               <button
                 type="button"
@@ -780,6 +835,58 @@ export default function CreatePostPage() {
                 />
               </div>
             </div>
+
+            {postType === 'poll' && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-white space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {tf('pollQuestionLabel', 'Poll question')}
+                  </label>
+                  <input
+                    value={pollQuestion}
+                    onChange={e => setPollQuestion(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder={tf('pollQuestionPlaceholder', 'Ask a question...')}
+                  />
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">{tf('pollOptionsLabel', 'Options')}</div>
+                  <div className="space-y-2">
+                    {pollOptions.map((opt, idx) => (
+                      <div key={opt.id} className="flex items-center gap-2">
+                        <input
+                          value={opt.text}
+                          onChange={e =>
+                            setPollOptions(prev => prev.map(o => (o.id === opt.id ? { ...o, text: e.target.value } : o)))
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                          placeholder={`${tf('pollOptionPlaceholder', 'Option')} ${idx + 1}`}
+                        />
+                        {pollOptions.length > 2 && (
+                          <button
+                            type="button"
+                            className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
+                            onClick={() => setPollOptions(prev => prev.filter(o => o.id !== opt.id))}
+                          >
+                            {tf('removeOption', 'Remove')}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex items-center justify-end">
+                    <button
+                      type="button"
+                      className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm hover:bg-gray-800 disabled:opacity-50"
+                      disabled={pollOptions.length >= 6}
+                      onClick={() => setPollOptions(prev => [...prev, { id: newOptionId(), text: '' }])}
+                    >
+                      {tf('addOption', 'Add option')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Editor toolbar */}
             <div className="flex flex-wrap items-center gap-1 border border-gray-200 rounded-lg p-2 bg-white">

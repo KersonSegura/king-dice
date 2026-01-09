@@ -27,10 +27,22 @@ function parseVotes(raw: any) {
   }
 }
 
+function parsePoll(raw: any) {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw;
+  try {
+    return JSON.parse(String(raw));
+  } catch {
+    return null;
+  }
+}
+
 function mapPostRow(row: AnyRow, authorMap: Map<string, any>) {
   const authorId = row.authorId ?? row.author_id ?? null;
   const createdAt = row.createdAt ?? row.created_at ?? new Date().toISOString();
   const votes = parseVotes(row.votes);
+  const postType = (row.postType ?? row.post_type ?? 'text') as string;
+  const poll = parsePoll(row.poll);
   const author = authorMap.get(authorId || '') || {};
 
   return {
@@ -38,6 +50,8 @@ function mapPostRow(row: AnyRow, authorMap: Map<string, any>) {
     title: row.title ?? '',
     content: row.content ?? '',
     category: row.category ?? 'general',
+    postType,
+    poll: postType === 'poll' ? poll : null,
     author: {
       id: authorId,
       name: author.username || author.name || 'Unknown',
@@ -60,6 +74,8 @@ function buildInsertPayload(useCamel: boolean, payload: {
   category: string;
   authorId: string;
   now: string;
+  postType?: 'text' | 'poll';
+  poll?: any;
 }) {
   const base = {
     id: payload.id,
@@ -73,6 +89,8 @@ function buildInsertPayload(useCamel: boolean, payload: {
   if (useCamel) {
     return {
       ...base,
+      ...(payload.postType ? { postType: payload.postType } : {}),
+      ...(payload.poll ? { poll: JSON.stringify(payload.poll) } : {}),
       authorId: payload.authorId,
       createdAt: payload.now,
       updatedAt: payload.now
@@ -80,6 +98,8 @@ function buildInsertPayload(useCamel: boolean, payload: {
   }
   return {
     ...base,
+    ...(payload.postType ? { post_type: payload.postType } : {}),
+    ...(payload.poll ? { poll: JSON.stringify(payload.poll) } : {}),
     author_id: payload.authorId,
     created_at: payload.now,
     updated_at: payload.now
@@ -230,7 +250,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const { title, content, category, author } = body;
+    const { title, content, category, author, postType, poll } = body;
 
     if (!title?.trim() || !content?.trim() || !category || !author) {
       console.log('Validation failed:', { title, content, category, author });
@@ -238,6 +258,21 @@ export async function POST(request: NextRequest) {
         { error: 'Title, content, category, and author are required' },
         { status: 400 }
       );
+    }
+
+    if (postType === 'poll') {
+      const q = String(poll?.question || '').trim();
+      const opts = Array.isArray(poll?.options) ? poll.options : [];
+      const cleaned = opts
+        .map((o: any) => ({ id: String(o?.id || ''), text: String(o?.text || '').trim() }))
+        .filter((o: any) => o.id && o.text);
+
+      if (!q || cleaned.length < 2) {
+        return NextResponse.json(
+          { error: 'Poll question and at least 2 options are required' },
+          { status: 400 }
+        );
+      }
     }
 
     console.log('Validation passed, moderating title and content...');
@@ -277,7 +312,8 @@ export async function POST(request: NextRequest) {
       content: content.trim(),
       category,
       authorId: author.id,
-      now
+      now,
+      ...(postType === 'poll' ? { postType: 'poll' as const, poll } : {})
     };
 
     const camelPayload = buildInsertPayload(true, payload);

@@ -3,6 +3,16 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+function parsePoll(raw: any) {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw;
+  try {
+    return JSON.parse(String(raw));
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -54,12 +64,16 @@ export async function GET(
     const meVote = Array.isArray((meVoteResult as any).data) ? (meVoteResult as any).data[0] : null;
     const createdAtRaw = dbPost.createdAt ?? dbPost.created_at ?? new Date().toISOString();
     const createdAt = typeof createdAtRaw === 'string' ? createdAtRaw : new Date(createdAtRaw).toISOString();
+    const postType = (dbPost.postType ?? dbPost.post_type ?? 'text') as string;
+    const poll = parsePoll(dbPost.poll);
 
     const post = {
       id: dbPost.id,
       title: dbPost.title,
       content: dbPost.content,
       category: dbPost.category,
+      postType,
+      poll: postType === 'poll' ? poll : null,
       author: {
         id: authorId,
         name: postAuthor?.username || 'Unknown',
@@ -76,6 +90,39 @@ export async function GET(
       userVote: meVote?.vote_type ?? null,
       isModerated: true
     };
+
+    // Overlay poll results + user's poll vote (best-effort; will no-op if table doesn't exist yet)
+    if (postType === 'poll' && poll?.options?.length) {
+      try {
+        const { data: voteRows, error: pollVotesError } = await supabaseAdmin
+          .from('post_poll_votes')
+          .select('option_id, user_id')
+          .eq('post_id', id);
+
+        if (pollVotesError) throw pollVotesError;
+
+        const results: Record<string, number> = {};
+        (poll.options || []).forEach((o: any) => {
+          if (o?.id) results[String(o.id)] = 0;
+        });
+
+        let userVoteOptionId: string | null = null;
+        (voteRows || []).forEach((r: any) => {
+          const oid = String(r.option_id || '');
+          if (oid && results[oid] !== undefined) results[oid] += 1;
+          if (userId && r.user_id === userId) userVoteOptionId = oid;
+        });
+
+        (post as any).poll = {
+          ...(post as any).poll,
+          results,
+          totalVotes: (voteRows || []).length,
+          userVoteOptionId
+        };
+      } catch (e) {
+        // ignore if not configured yet
+      }
+    }
 
     return NextResponse.json({ post });
   } catch (error) {
