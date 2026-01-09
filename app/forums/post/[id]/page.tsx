@@ -577,6 +577,20 @@ export default function PostDetailPage() {
     });
   };
 
+  const formatCommentTimestamp = (dateString: string) => {
+    const d = new Date(dateString);
+    const now = new Date();
+    const diffMs = Math.abs(now.getTime() - d.getTime());
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    // Recent comment: show only time (hour/min)
+    if (diffMs < oneDayMs) {
+      return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    }
+    // Older comment: show date only
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -1095,7 +1109,7 @@ export default function PostDetailPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-400 flex-shrink-0">
-                            <span className="whitespace-nowrap">{formatDate(comment.createdAt)}</span>
+                            <span className="whitespace-nowrap">{formatCommentTimestamp(comment.createdAt)}</span>
                             {comment.isModerated && comment.moderationResult?.isAppropriate && (
                               <span className="text-green-600 flex items-center gap-1">
                                 <Image
