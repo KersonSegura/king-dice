@@ -830,13 +830,13 @@ export default function CreatePostPage() {
         <div className="bg-white border border-gray-200 rounded-none shadow-sm overflow-hidden">
           {/* Header bar */}
           <div className="border-b border-gray-200 bg-gray-50">
-            <div className="relative flex items-center p-2">
-              <div className="absolute left-1/2 -translate-x-1/2 flex items-center rounded-lg border border-gray-200 bg-white p-1">
+            <div className="flex items-center justify-between gap-3 p-2">
+              <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1">
                 <button
                   type="button"
                   onClick={() => setPostType('text')}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-                    postType === 'text' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+                    postType === 'text' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {tf('postTypeText', 'Text')}
@@ -845,7 +845,7 @@ export default function CreatePostPage() {
                   type="button"
                   onClick={() => setPostType('poll')}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-                    postType === 'poll' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+                    postType === 'poll' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {tf('postTypePoll', 'Poll')}
@@ -854,7 +854,7 @@ export default function CreatePostPage() {
               <button
                 type="button"
                 onClick={handleSaveDraft}
-                className="ml-auto px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/60 inline-flex items-center gap-2"
+                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/60 inline-flex items-center gap-2"
                 title={t('saveDraft')}
               >
                 <Save className="w-4 h-4" />

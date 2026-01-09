@@ -98,12 +98,6 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
         if (page === 1) setFeedItems(data.items);
         else setFeedItems(prev => [...prev, ...data.items]);
         setHasMore(data.hasMore);
-        // LOG
-        if (typeof window !== 'undefined') {
-          console.log('[FeedDebug] Feed fetch items:', data.items.map(i => ({
-            id: i.id, type: i.type, userVote: i.userVote, title: i.title, author: i.author?.username
-          })));
-        }
       } else {
         showToast('Failed to load feed', 'error');
       }
