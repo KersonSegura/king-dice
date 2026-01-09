@@ -1035,8 +1035,8 @@ export default function PostDetailPage() {
 
                       {/* Comment content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
-                          <div className="flex items-center space-x-2">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex items-center space-x-2 min-w-0">
                             <div 
                               className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
                               style={{
@@ -1046,19 +1046,17 @@ export default function PostDetailPage() {
                                 backgroundRepeat: 'no-repeat'
                               }}
                             />
-                            <div className="flex items-center space-x-1 text-xs sm:text-sm text-gray-500">
-                              <span className="font-medium">{comment.author.name}</span>
+                            <div className="flex items-center space-x-1 text-xs sm:text-sm text-gray-500 min-w-0">
+                              <span className="font-medium truncate">{comment.author.name}</span>
                               {comment.author.title ? (
-                                <span className="text-xs">({comment.author.title})</span>
+                                <span className="text-xs truncate">({comment.author.title})</span>
                               ) : null}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-1 text-xs text-gray-400">
-                            <span>{formatDate(comment.createdAt)}</span>
-                          {comment.isModerated && comment.moderationResult?.isAppropriate && (
-                            <>
-                                <span>•</span>
-                                <span className="text-green-600 flex items-center space-x-1">
+                          <div className="flex items-center gap-2 text-xs text-gray-400 flex-shrink-0">
+                            <span className="whitespace-nowrap">{formatDate(comment.createdAt)}</span>
+                            {comment.isModerated && comment.moderationResult?.isAppropriate && (
+                              <span className="text-green-600 flex items-center gap-1">
                                 <Image
                                   src="/CheckIcon.svg"
                                   alt="Check Icon"
@@ -1068,8 +1066,7 @@ export default function PostDetailPage() {
                                 />
                                 <span>{t('verified')}</span>
                               </span>
-                            </>
-                          )}
+                            )}
                           </div>
                         </div>
                         

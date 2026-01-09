@@ -692,14 +692,16 @@ export default function ImageModal({
                       />
                       <div className="flex-1">
                         <div className="bg-gray-50 rounded-lg p-2">
-                          <div className="flex items-center space-x-1 mb-1">
-                            <span className="font-semibold text-gray-900 text-xs">{comment.author.name}</span>
-                            {comment.author.title && (
-                              <span className="text-gray-500 text-xs">
-                                • {formatUserTitle(comment.author.title)}
-                              </span>
-                            )}
-                            <span className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</span>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="font-semibold text-gray-900 text-xs truncate">{comment.author.name}</span>
+                              {comment.author.title && (
+                                <span className="text-gray-500 text-xs truncate">
+                                  • {formatUserTitle(comment.author.title)}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-gray-500 text-xs whitespace-nowrap">{formatRelativeTime(comment.createdAt)}</span>
                           </div>
                           <p className="text-gray-700 text-xs">{comment.content}</p>
 
@@ -792,14 +794,16 @@ export default function ImageModal({
                           <div className="mt-2 ml-8 space-y-2">
                             {(comment as any).replies.map((reply: any) => (
                               <div key={reply.id} className="bg-gray-100 rounded-lg p-2">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-semibold text-gray-900 text-xs">{reply.author?.name}</span>
-                                  {reply.author?.title && (
-                                    <span className="text-gray-500 text-xs">
-                                      • {formatUserTitle(reply.author.title)}
-                                    </span>
-                                  )}
-                                  <span className="text-gray-500 text-xs">{formatRelativeTime(reply.createdAt)}</span>
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <div className="flex items-center gap-1 min-w-0">
+                                    <span className="font-semibold text-gray-900 text-xs truncate">{reply.author?.name}</span>
+                                    {reply.author?.title && (
+                                      <span className="text-gray-500 text-xs truncate">
+                                        • {formatUserTitle(reply.author.title)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-gray-500 text-xs whitespace-nowrap">{formatRelativeTime(reply.createdAt)}</span>
                                 </div>
                                 <p className="text-gray-700 text-xs">{reply.content}</p>
                                 <div className="mt-2 flex items-center justify-between">
@@ -1108,14 +1112,16 @@ export default function ImageModal({
                         </div>
                         <div className="flex-1">
                           <div className="bg-gray-50 rounded-lg p-3 relative">
-                        <div className="flex items-center space-x-2 mb-1">
-                              <span className="font-semibold text-gray-900 text-sm">{comment.author.name}</span>
-                          {comment.author.title && (
-                            <span className="text-gray-500 text-xs">
-                              {formatUserTitle(comment.author.title)}
-                            </span>
-                          )}
-                              <span className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</span>
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-semibold text-gray-900 text-sm truncate">{comment.author.name}</span>
+                            {comment.author.title && (
+                              <span className="text-gray-500 text-xs truncate">
+                                {formatUserTitle(comment.author.title)}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-gray-500 text-xs whitespace-nowrap">{formatRelativeTime(comment.createdAt)}</span>
                         </div>
                             <p className="text-gray-700 text-sm pr-8">{comment.content}</p>
                             
