@@ -1488,7 +1488,7 @@ function CommunityGalleryPageContent() {
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-4 text-white">
                         <div className="flex items-center space-x-1">
-                          <Heart className="w-4 h-4" fill={image.userVote === 'up' ? '#ef4444' : 'none'} stroke={image.userVote === 'up' ? '#ef4444' : '#6b7280'} strokeWidth={1.5} />
+                          <Heart className="w-4 h-4" fill={image.userVote === 'up' ? 'currentColor' : 'none'} strokeWidth={2} />
                           <span className={`text-sm font-medium ${image.userVote === 'up' ? 'text-red-500' : 'text-gray-600'}`}>{formatNumber(image.votes.upvotes - image.votes.downvotes)}</span>
                         </div>
                         <div className="flex items-center space-x-1">
@@ -1532,7 +1532,7 @@ function CommunityGalleryPageContent() {
                                     : 'bg-white bg-opacity-80 hover:bg-gray-100 text-gray-600'
                                 }"
                               >
-                                <Heart className="w-5 h-5" fill={image.userVote === 'up' ? '#ef4444' : 'none'} stroke={image.userVote === 'up' ? '#ef4444' : '#6b7280'} strokeWidth={1.5} />
+                                <Heart className="w-5 h-5" fill={image.userVote === 'up' ? 'currentColor' : 'none'} strokeWidth={2} />
                                 <span className={`text-sm ${image.userVote === 'up' ? 'text-red-500' : 'text-gray-600'}`}>{formatNumber(image.votes.upvotes - image.votes.downvotes)}</span>
                               </button>
                             </ModernTooltip>
@@ -1641,7 +1641,7 @@ function CommunityGalleryPageContent() {
                                   : 'bg-white bg-opacity-80 hover:bg-gray-100 text-gray-600'
                               }"
                             >
-                              <Heart className="w-3 h-3" fill={image.userVote === 'up' ? '#ef4444' : 'none'} stroke={image.userVote === 'up' ? '#ef4444' : '#6b7280'} strokeWidth={1.5} />
+                              <Heart className="w-3 h-3" fill={image.userVote === 'up' ? 'currentColor' : 'none'} strokeWidth={2} />
                               <span className={`text-xs ${image.userVote === 'up' ? 'text-red-500' : 'text-gray-600'}`}>{formatNumber(image.votes.upvotes - image.votes.downvotes)}</span>
                             </button>
                           </ModernTooltip>
@@ -1831,7 +1831,7 @@ function CommunityGalleryPageContent() {
                                 : 'hover:bg-gray-100 text-gray-400'
                             }`}
                           >
-                            <Heart className="w-4 h-4" fill={image.userVote === 'up' ? '#ef4444' : 'none'} stroke={image.userVote === 'up' ? '#ef4444' : '#6b7280'} strokeWidth={1.5} />
+                            <Heart className="w-4 h-4" fill={image.userVote === 'up' ? 'currentColor' : 'none'} strokeWidth={2} />
                             <span className={`text-sm font-medium ${image.userVote === 'up' ? 'text-red-500' : 'text-gray-600'}`}>
                               {image.votes.upvotes - image.votes.downvotes}
                             </span>
