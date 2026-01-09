@@ -1129,6 +1129,22 @@ function CommunityGalleryPageContent() {
     return num.toString();
   };
 
+  const formatUserTitle = (rawTitle?: string | null) => {
+    if (!rawTitle) return '';
+    const extracted = rawTitle.includes('/dice/Titles/')
+      ? (rawTitle.split('/').pop() || '').replace('.svg', '')
+      : rawTitle;
+    const key = extracted
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+    try {
+      return tCommon(`titles.${key}` as any);
+    } catch {
+      return extracted;
+    }
+  };
+
   if (loading) {
     return <LoadingScreen message={t('loadingGallery')} subMessage={t('fetchingImages')} />;
   }
@@ -1785,7 +1801,11 @@ function CommunityGalleryPageContent() {
                         <div className="flex items-center space-x-1">
                           <User className="w-4 h-4" />
                           <span>{image.author?.name ?? 'Unknown Artist'}</span>
-                          <span className="text-xs">({image.author?.reputation ?? 0} rep)</span>
+                          {image.author?.title && (
+                            <span className="text-xs text-gray-500">
+                              • {formatUserTitle(image.author.title)}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />

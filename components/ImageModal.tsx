@@ -143,6 +143,22 @@ export default function ImageModal({
     };
   }, [isOpen, description]);
 
+  const formatUserTitle = (rawTitle?: string | null) => {
+    if (!rawTitle) return '';
+    const extracted = rawTitle.includes('/dice/Titles/')
+      ? (rawTitle.split('/').pop() || '').replace('.svg', '')
+      : rawTitle;
+    const key = extracted
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+    try {
+      return tCommon(`titles.${key}` as any);
+    } catch {
+      return extracted;
+    }
+  };
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -670,6 +686,11 @@ export default function ImageModal({
                         <div className="bg-gray-50 rounded-lg p-2">
                           <div className="flex items-center space-x-1 mb-1">
                             <span className="font-semibold text-gray-900 text-xs">{comment.author.name}</span>
+                            {comment.author.title && (
+                              <span className="text-gray-500 text-xs">
+                                • {formatUserTitle(comment.author.title)}
+                              </span>
+                            )}
                             <span className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</span>
                           </div>
                           <p className="text-gray-700 text-xs">{comment.content}</p>
@@ -765,6 +786,11 @@ export default function ImageModal({
                               <div key={reply.id} className="bg-gray-100 rounded-lg p-2">
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="font-semibold text-gray-900 text-xs">{reply.author?.name}</span>
+                                  {reply.author?.title && (
+                                    <span className="text-gray-500 text-xs">
+                                      • {formatUserTitle(reply.author.title)}
+                                    </span>
+                                  )}
                                   <span className="text-gray-500 text-xs">{formatRelativeTime(reply.createdAt)}</span>
                                 </div>
                                 <p className="text-gray-700 text-xs">{reply.content}</p>
@@ -1070,10 +1096,8 @@ export default function ImageModal({
                         <div className="flex items-center space-x-2 mb-1">
                               <span className="font-semibold text-gray-900 text-sm">{comment.author.name}</span>
                           {comment.author.title && (
-                                <span className="text-gray-500 text-xs">
-                                  {comment.author.title.includes('/dice/Titles/') 
-                                ? comment.author.title.split('/').pop()?.replace('.svg', '') 
-                                : comment.author.title}
+                            <span className="text-gray-500 text-xs">
+                              {formatUserTitle(comment.author.title)}
                             </span>
                           )}
                               <span className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</span>
@@ -1215,9 +1239,7 @@ export default function ImageModal({
                                     <span className="font-semibold text-gray-900 text-sm">{reply.author.name}</span>
                                     {reply.author.title && (
                                       <span className="text-gray-500 text-xs">
-                                        {reply.author.title.includes('/dice/Titles/') 
-                                          ? reply.author.title.split('/').pop()?.replace('.svg', '') 
-                                          : reply.author.title}
+                                        {formatUserTitle(reply.author.title)}
                                       </span>
                                     )}
                                     <span className="text-gray-500 text-xs">{formatRelativeTime(reply.createdAt)}</span>
