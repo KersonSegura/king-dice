@@ -252,7 +252,10 @@ export async function POST(request: NextRequest) {
 
     const { title, content, category, author, postType, poll } = body;
 
-    if (!title?.trim() || !content?.trim() || !category || !author) {
+    const normalizedContent = typeof content === 'string' ? content.trim() : '';
+    const isPoll = postType === 'poll';
+
+    if (!title?.trim() || (!isPoll && !normalizedContent) || !category || !author) {
       console.log('Validation failed:', { title, content, category, author });
       return NextResponse.json(
         { error: 'Title, content, category, and author are required' },
@@ -278,7 +281,7 @@ export async function POST(request: NextRequest) {
     console.log('Validation passed, moderating title and content...');
     const [titleModeration, contentModeration] = await Promise.all([
       moderateText(title),
-      moderateText(content)
+      isPoll || !normalizedContent ? Promise.resolve({ isAppropriate: true, flags: [] } as any) : moderateText(normalizedContent)
     ]);
 
     console.log('Title moderation result:', titleModeration);
@@ -309,7 +312,7 @@ export async function POST(request: NextRequest) {
     const payload = {
       id: generatedId,
       title: title.trim(),
-      content: content.trim(),
+      content: normalizedContent,
       category,
       authorId: author.id,
       now,

@@ -653,15 +653,20 @@ export default function CreatePostPage() {
   };
 
   const handlePublish = async () => {
-    const markdownContent = htmlToMarkdown(editorRef.current?.innerHTML || contentHtml);
-    if (!title.trim() || !markdownContent.trim()) {
-      showToast(t('fillTitleAndContent'), 'error');
-      return;
-    }
     if (postType === 'poll') {
       const opts = pollOptions.map(o => ({ ...o, text: o.text.trim() })).filter(o => o.text);
+      if (!title.trim()) {
+        showToast(t('fillTitleAndContent'), 'error');
+        return;
+      }
       if (!pollQuestion.trim() || opts.length < 2) {
         showToast(tf('fillPoll', 'Please fill in the poll question and at least 2 options.'), 'error');
+        return;
+      }
+    } else {
+      const markdownContent = htmlToMarkdown(editorRef.current?.innerHTML || contentHtml);
+      if (!title.trim() || !markdownContent.trim()) {
+        showToast(t('fillTitleAndContent'), 'error');
         return;
       }
     }
@@ -673,7 +678,8 @@ export default function CreatePostPage() {
 
     setLoading(true);
     try {
-      const contentWithLinks = markdownContent;
+      const contentWithLinks =
+        postType === 'poll' ? '' : htmlToMarkdown(editorRef.current?.innerHTML || contentHtml);
 
       // Pre-moderate for UX (API also moderates)
       const [titleRes, contentRes] = await Promise.all([
@@ -682,11 +688,13 @@ export default function CreatePostPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: title })
         }),
-        fetch('/api/moderate/text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: contentWithLinks })
-        })
+        postType === 'poll' || !contentWithLinks.trim()
+          ? Promise.resolve({ json: async () => ({ isAppropriate: true, flags: [] }) } as any)
+          : fetch('/api/moderate/text', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: contentWithLinks })
+            })
       ]);
       const titleModeration = await titleRes.json();
       const contentModeration = await contentRes.json();
@@ -932,7 +940,7 @@ export default function CreatePostPage() {
                   <div className="mt-3 flex items-center justify-end">
                     <button
                       type="button"
-                      className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm hover:bg-gray-800 disabled:opacity-50"
+                      className="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-700 disabled:opacity-50"
                       disabled={pollOptions.length >= 6}
                       onClick={() => setPollOptions(prev => [...prev, { id: newOptionId(), text: '' }])}
                     >
@@ -943,142 +951,146 @@ export default function CreatePostPage() {
               </div>
             )}
 
-            {/* Editor toolbar */}
-            <div className="flex flex-wrap items-center gap-1 border border-gray-200 rounded-lg p-2 bg-white">
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bold')} className="p-2 rounded hover:bg-gray-100" title={t('bold')}>
-                <Bold className="w-4 h-4" />
-              </button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('italic')} className="p-2 rounded hover:bg-gray-100" title={t('italic')}>
-                <Italic className="w-4 h-4" />
-              </button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('underline')} className="p-2 rounded hover:bg-gray-100" title={t('underline')}>
-                <span className="text-sm font-semibold underline">U</span>
-              </button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('strike')} className="p-2 rounded hover:bg-gray-100" title={t('strike')}>
-                <Strikethrough className="w-4 h-4" />
-              </button>
-              <div className="w-px h-6 bg-gray-200 mx-1" />
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('quote')} className="p-2 rounded hover:bg-gray-100" title={t('quote')}>
-                <Quote className="w-4 h-4" />
-              </button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('code')} className="p-2 rounded hover:bg-gray-100" title={t('codeBlock')}>
-                <Code className="w-4 h-4" />
-              </button>
-              <div className="w-px h-6 bg-gray-200 mx-1" />
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bullets')} className="p-2 rounded hover:bg-gray-100" title={t('bullets')}>
-                <List className="w-4 h-4" />
-              </button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('numbers')} className="p-2 rounded hover:bg-gray-100" title={t('numbers')}>
-                <ListOrdered className="w-4 h-4" />
-              </button>
-              <div className="flex-1" />
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
-                onClick={() => imageInputRef.current?.click()}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
-                title={t('addImage')}
-              >
-                <ImageIcon className="w-4 h-4" />
-                {t('addImage')}
-              </button>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
-                onClick={() => {
-                  const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
-                  setLinkText(selText.trim());
-                  setLinkOpen(v => !v);
-                }}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
-                title={t('addLink')}
-              >
-                <LinkIcon className="w-4 h-4" />
-                {t('addLink')}
-              </button>
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                disabled={uploading}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleUploadImage(file);
-                  e.currentTarget.value = '';
-                }}
-              />
-            </div>
-
-            {linkOpen && (
-              <div className="border border-gray-200 rounded-lg p-3 bg-white">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkText')}</label>
-                    <input
-                      value={linkText}
-                      onChange={e => setLinkText(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      placeholder={t('linkTextPlaceholder')}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkUrl')}</label>
-                    <input
-                      value={linkUrl}
-                      onChange={e => setLinkUrl(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setLinkOpen(false)}
-                  >
-                    {tCommon('cancel')}
+            {postType === 'text' && (
+              <>
+                {/* Editor toolbar */}
+                <div className="flex flex-wrap items-center gap-1 border border-gray-200 rounded-lg p-2 bg-white">
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bold')} className="p-2 rounded hover:bg-gray-100" title={t('bold')}>
+                    <Bold className="w-4 h-4" />
                   </button>
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('italic')} className="p-2 rounded hover:bg-gray-100" title={t('italic')}>
+                    <Italic className="w-4 h-4" />
+                  </button>
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('underline')} className="p-2 rounded hover:bg-gray-100" title={t('underline')}>
+                    <span className="text-sm font-semibold underline">U</span>
+                  </button>
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('strike')} className="p-2 rounded hover:bg-gray-100" title={t('strike')}>
+                    <Strikethrough className="w-4 h-4" />
+                  </button>
+                  <div className="w-px h-6 bg-gray-200 mx-1" />
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('quote')} className="p-2 rounded hover:bg-gray-100" title={t('quote')}>
+                    <Quote className="w-4 h-4" />
+                  </button>
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('code')} className="p-2 rounded hover:bg-gray-100" title={t('codeBlock')}>
+                    <Code className="w-4 h-4" />
+                  </button>
+                  <div className="w-px h-6 bg-gray-200 mx-1" />
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bullets')} className="p-2 rounded hover:bg-gray-100" title={t('bullets')}>
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('numbers')} className="p-2 rounded hover:bg-gray-100" title={t('numbers')}>
+                    <ListOrdered className="w-4 h-4" />
+                  </button>
+                  <div className="flex-1" />
                   <button
                     type="button"
-                    className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm hover:bg-gray-800 disabled:opacity-50"
-                    disabled={!linkUrl.trim()}
                     onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
-                    onClick={handleInsertLink}
+                    onClick={() => imageInputRef.current?.click()}
+                    className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
+                    title={t('addImage')}
                   >
-                    {t('insertLink')}
+                    <ImageIcon className="w-4 h-4" />
+                    {t('addImage')}
                   </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
+                    onClick={() => {
+                      const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
+                      setLinkText(selText.trim());
+                      setLinkOpen(v => !v);
+                    }}
+                    className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
+                    title={t('addLink')}
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    {t('addLink')}
+                  </button>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUploadImage(file);
+                      e.currentTarget.value = '';
+                    }}
+                  />
                 </div>
-              </div>
-            )}
 
-            {/* Tab content */}
-            <div className="relative">
-              <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={() => {
-                  if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
-                }}
-                onKeyDown={handleEditorKeyDown}
-                onKeyUp={() => saveSelection()}
-                onMouseUp={() => saveSelection()}
-                onBlur={() => saveSelection()}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
-                data-placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
-                style={{
-                  position: 'relative'
-                }}
-              />
-              <style jsx>{`
-                [contenteditable][data-placeholder]:empty:before {
-                  content: attr(data-placeholder);
-                  color: #9ca3af;
-                }
-              `}</style>
-            </div>
+                {linkOpen && (
+                  <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkText')}</label>
+                        <input
+                          value={linkText}
+                          onChange={e => setLinkText(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          placeholder={t('linkTextPlaceholder')}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkUrl')}</label>
+                        <input
+                          value={linkUrl}
+                          onChange={e => setLinkUrl(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          placeholder="https://..."
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setLinkOpen(false)}
+                      >
+                        {tCommon('cancel')}
+                      </button>
+                      <button
+                        type="button"
+                        className="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-700 disabled:opacity-50"
+                        disabled={!linkUrl.trim()}
+                        onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
+                        onClick={handleInsertLink}
+                      >
+                        {t('insertLink')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab content */}
+                <div className="relative">
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onInput={() => {
+                      if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+                    }}
+                    onKeyDown={handleEditorKeyDown}
+                    onKeyUp={() => saveSelection()}
+                    onMouseUp={() => saveSelection()}
+                    onBlur={() => saveSelection()}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
+                    data-placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
+                    style={{
+                      position: 'relative'
+                    }}
+                  />
+                  <style jsx>{`
+                    [contenteditable][data-placeholder]:empty:before {
+                      content: attr(data-placeholder);
+                      color: #9ca3af;
+                    }
+                  `}</style>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="border-t border-gray-200 bg-white p-4 sm:p-6 flex flex-col sm:flex-row gap-3 justify-end">
