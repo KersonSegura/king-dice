@@ -7,7 +7,11 @@ export const useGameMentions = (
 ) => {
   const MENTION_RESULT_LIMIT = 20;
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  // Text immediately after '@' in the textarea (used for replacement)
   const [mentionQuery, setMentionQuery] = useState('');
+  // Query typed in the dropdown search input (can include spaces)
+  const [mentionSearchQuery, setMentionSearchQuery] = useState('');
+  const [isMentionSearchDirty, setIsMentionSearchDirty] = useState(false);
   const [mentionResults, setMentionResults] = useState<any[]>([]);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionStartPos, setMentionStartPos] = useState(0);
@@ -33,6 +37,22 @@ export const useGameMentions = (
     }
   };
 
+  const scheduleMentionSearch = (query: string) => {
+    if (mentionSearchTimeout) {
+      clearTimeout(mentionSearchTimeout);
+    }
+    const timeout = setTimeout(() => {
+      searchGamesForMention(query);
+    }, 200);
+    setMentionSearchTimeout(timeout);
+  };
+
+  const handleMentionSearchInputChange = (value: string) => {
+    setMentionSearchQuery(value);
+    setIsMentionSearchDirty(true);
+    scheduleMentionSearch(value);
+  };
+
   const insertGameMention = (game: any) => {
     const gameName = game.nameEn || game.name || mentionQuery;
     const beforeMention = text.substring(0, mentionStartPos);
@@ -45,6 +65,8 @@ export const useGameMentions = (
     setText(newText);
     setShowMentionDropdown(false);
     setMentionQuery('');
+    setMentionSearchQuery('');
+    setIsMentionSearchDirty(false);
     setMentionResults([]);
     
     // Focus input and set cursor position after the inserted link
@@ -120,14 +142,15 @@ export const useGameMentions = (
     if (lastAtPos !== -1) {
       // Check if there's a space, newline, or closing bracket after the @ (mention ended or already a link)
       const textAfterAt = textBeforeCursor.substring(lastAtPos + 1);
-      const hasSpaceAfterAt = textAfterAt.includes(' ') || textAfterAt.includes('\n');
+      // Allow spaces in game titles; only newline ends the mention context.
+      const hasNewlineAfterAt = textAfterAt.includes('\n');
       // Check for both markdown format and new cleaner format
       const ZWJ = '\u200D';
       const isAlreadyLink = value.substring(lastAtPos, cursorPos).includes('](/game/') || 
                            value.substring(lastAtPos, cursorPos).includes(`🔗`) ||
                            (textAfterAt.includes(ZWJ) && textAfterAt.split(ZWJ).length > 1);
       
-      if (!hasSpaceAfterAt && !isAlreadyLink) {
+      if (!hasNewlineAfterAt && !isAlreadyLink) {
         // We're in a mention - extract the query (remove zero-width characters and link emoji)
         const query = textAfterAt.replace(new RegExp(ZWJ, 'g'), '').replace(new RegExp('🔗', 'g'), '');
         setMentionStartPos(lastAtPos);
@@ -135,24 +158,25 @@ export const useGameMentions = (
         setShowMentionDropdown(true);
         setSelectedMentionIndex(0);
 
-        // Debounce the search
-        if (mentionSearchTimeout) {
-          clearTimeout(mentionSearchTimeout);
+        // Keep dropdown search synced to what user types after '@' until they type in the search bar.
+        if (!isMentionSearchDirty) {
+          setMentionSearchQuery(query);
+          scheduleMentionSearch(query);
         }
-        const timeout = setTimeout(() => {
-          searchGamesForMention(query);
-        }, 200);
-        setMentionSearchTimeout(timeout);
       } else {
         // Mention ended or already a link
         setShowMentionDropdown(false);
         setMentionQuery('');
+        setMentionSearchQuery('');
+        setIsMentionSearchDirty(false);
         setMentionResults([]);
       }
     } else {
       // No @ found
       setShowMentionDropdown(false);
       setMentionQuery('');
+      setMentionSearchQuery('');
+      setIsMentionSearchDirty(false);
       setMentionResults([]);
     }
   };
@@ -177,6 +201,8 @@ export const useGameMentions = (
         e.preventDefault();
         setShowMentionDropdown(false);
         setMentionQuery('');
+        setMentionSearchQuery('');
+        setIsMentionSearchDirty(false);
         setMentionResults([]);
         return;
       }
@@ -219,6 +245,8 @@ export const useGameMentions = (
   return {
     showMentionDropdown,
     mentionQuery,
+    mentionSearchQuery,
+    handleMentionSearchInputChange,
     mentionResults,
     selectedMentionIndex,
     mentionDropdownRef,

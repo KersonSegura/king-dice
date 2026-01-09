@@ -78,6 +78,8 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   // Game mention dropdown state
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionSearchQuery, setMentionSearchQuery] = useState('');
+  const [isMentionSearchDirty, setIsMentionSearchDirty] = useState(false);
   const [mentionResults, setMentionResults] = useState<any[]>([]);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionStartPos, setMentionStartPos] = useState(0);
@@ -534,6 +536,22 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       setMentionResults([]);
     }
   };
+  
+  const scheduleMentionSearch = (query: string) => {
+    if (mentionSearchTimeout) {
+      clearTimeout(mentionSearchTimeout);
+    }
+    const timeout = setTimeout(() => {
+      searchGamesForMention(query);
+    }, 200);
+    setMentionSearchTimeout(timeout);
+  };
+
+  const handleMentionSearchInputChange = (value: string) => {
+    setMentionSearchQuery(value);
+    setIsMentionSearchDirty(true);
+    scheduleMentionSearch(value);
+  };
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -547,14 +565,14 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     if (lastAtPos !== -1) {
       // Check if there's a space, newline, or closing bracket after the @ (mention ended or already a link)
       const textAfterAt = textBeforeCursor.substring(lastAtPos + 1);
-      const hasSpaceAfterAt = textAfterAt.includes(' ') || textAfterAt.includes('\n');
+      const hasNewlineAfterAt = textAfterAt.includes('\n');
       // Check for both markdown format and new cleaner format
       const ZWJ = '\u200D';
       const isAlreadyLink = value.substring(lastAtPos, cursorPos).includes('](/game/') || 
                            value.substring(lastAtPos, cursorPos).includes(`🔗`) ||
                            (textAfterAt.includes(ZWJ) && textAfterAt.split(ZWJ).length > 1);
       
-      if (!hasSpaceAfterAt && !isAlreadyLink) {
+      if (!hasNewlineAfterAt && !isAlreadyLink) {
         // We're in a mention - extract the query (remove zero-width characters)
         const ZWJ = '\u200D';
         const query = textAfterAt.replace(new RegExp(ZWJ, 'g'), '').replace(/🔗/g, '');
@@ -563,24 +581,24 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         setShowMentionDropdown(true);
         setSelectedMentionIndex(0);
 
-        // Debounce the search
-        if (mentionSearchTimeout) {
-          clearTimeout(mentionSearchTimeout);
+        if (!isMentionSearchDirty) {
+          setMentionSearchQuery(query);
+          scheduleMentionSearch(query);
         }
-        const timeout = setTimeout(() => {
-          searchGamesForMention(query);
-        }, 200);
-        setMentionSearchTimeout(timeout);
       } else {
         // Mention ended or already a link
         setShowMentionDropdown(false);
         setMentionQuery('');
+        setMentionSearchQuery('');
+        setIsMentionSearchDirty(false);
         setMentionResults([]);
       }
     } else {
       // No @ found
       setShowMentionDropdown(false);
       setMentionQuery('');
+      setMentionSearchQuery('');
+      setIsMentionSearchDirty(false);
       setMentionResults([]);
     }
 
@@ -618,6 +636,8 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     setNewMessage(newText);
     setShowMentionDropdown(false);
     setMentionQuery('');
+    setMentionSearchQuery('');
+    setIsMentionSearchDirty(false);
     setMentionResults([]);
     
     // Focus input and set cursor position after the inserted link
@@ -822,13 +842,22 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
               {showMentionDropdown && (
                 <div
                   ref={mentionDropdownRef}
-                  className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+                  className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden"
                 >
                   <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
                     {t('linkGames')}
                   </div>
+                  <div className="px-3 py-2 border-b border-gray-200 bg-white">
+                    <input
+                      value={mentionSearchQuery}
+                      onChange={(e) => handleMentionSearchInputChange(e.target.value)}
+                      onKeyDown={handleKeyPress as any}
+                      placeholder={t('searchGame')}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                   {mentionResults.length > 0 ? (
-                    <div className="py-1">
+                    <div className="py-1 max-h-44 overflow-y-auto">
                       {mentionResults.map((game, index) => (
                         <button
                           key={game.id}

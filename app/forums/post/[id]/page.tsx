@@ -72,6 +72,8 @@ export default function PostDetailPage() {
   const {
     showMentionDropdown,
     mentionQuery,
+    mentionSearchQuery,
+    handleMentionSearchInputChange,
     mentionResults,
     selectedMentionIndex,
     mentionDropdownRef,
@@ -782,13 +784,22 @@ export default function PostDetailPage() {
                     {showMentionDropdown && (
                       <div
                         ref={mentionDropdownRef}
-                        className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+                        className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden"
                       >
                         <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
                           {tChat('linkGames')}
                         </div>
+                        <div className="px-3 py-2 border-b border-gray-200 bg-white">
+                          <input
+                            value={mentionSearchQuery}
+                            onChange={(e) => handleMentionSearchInputChange(e.target.value)}
+                            onKeyDown={(e) => handleCommentKeyPress(e as any)}
+                            placeholder={tChat('searchGame')}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
                         {mentionResults.length > 0 ? (
-                          <div className="py-1">
+                          <div className="py-1 max-h-44 overflow-y-auto">
                             {mentionResults.map((game, index) => (
                               <button
                                 key={game.id}
