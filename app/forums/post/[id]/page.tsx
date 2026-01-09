@@ -1041,7 +1041,7 @@ export default function PostDetailPage() {
                   <div key={comment.id} className="border-b border-gray-200 pb-4 last:border-b-0">
                     <div className="flex items-start">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-center justify-between gap-3 mb-2">
                           <div className="flex items-center space-x-2 min-w-0">
                             <div 
                               className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
@@ -1052,14 +1052,14 @@ export default function PostDetailPage() {
                                 backgroundRepeat: 'no-repeat'
                               }}
                             />
-                            <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 min-w-0">
+                            <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 min-w-0 leading-none">
                               <span className="font-medium truncate">{comment.author.name}</span>
                               {comment.author.title ? (
                                 <span className="text-xs truncate">• {formatUserTitle(comment.author.title)}</span>
                               ) : null}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-gray-400 flex-shrink-0">
+                          <div className="flex items-center gap-2 text-xs text-gray-400 flex-shrink-0 leading-none">
                             <span className="whitespace-nowrap">{formatCommentTimestamp(comment.createdAt)}</span>
                             {comment.isModerated && comment.moderationResult?.isAppropriate && (
                               <span className="text-green-600 flex items-center gap-1">
@@ -1080,9 +1080,9 @@ export default function PostDetailPage() {
                           {renderContentWithGameLinks(comment.content)}
                         </div>
                         
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Vote controls on same line as actions */}
-                          <div className="flex items-center gap-1 mr-2">
+                        <div className="flex items-center justify-between gap-2">
+                          {/* Vote controls (left) */}
+                          <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleVote(comment.id, 'up', 'comment')}
                               disabled={votingComments.has(comment.id)}
@@ -1109,24 +1109,28 @@ export default function PostDetailPage() {
                               <ThumbsDown className="w-3 h-3" />
                             </button>
                           </div>
-                          <ModernTooltip content={t('reportCommentTooltip')} position="top">
-                            <button
-                              onClick={() => handleReport('comment', comment.id)}
-                              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                            >
-                              <Flag className="w-3 h-3" />
-                            </button>
-                          </ModernTooltip>
-                          {isAuthenticated && user && comment.author.id === user.id && (
-                            <ModernTooltip content={t('deleteCommentTooltip')} position="top">
+
+                          {/* Actions (right) - delete then report */}
+                          <div className="flex items-center gap-2">
+                            {isAuthenticated && user && comment.author.id === user.id && (
+                              <ModernTooltip content={t('deleteCommentTooltip')} position="top">
+                                <button
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </ModernTooltip>
+                            )}
+                            <ModernTooltip content={t('reportCommentTooltip')} position="top">
                               <button
-                                onClick={() => handleDeleteComment(comment.id)}
+                                onClick={() => handleReport('comment', comment.id)}
                                 className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <Flag className="w-3 h-3" />
                               </button>
                             </ModernTooltip>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </div>
