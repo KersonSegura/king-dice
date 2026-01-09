@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { Image as ImageIcon, Heart, ThumbsUp, MessageCircle, Flag, Plus, User, Calendar, Download, Trash2, Crown, Search, X, ArrowUp, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
@@ -92,6 +92,7 @@ interface GalleryCategory {
 function CommunityGalleryPageContent() {
   const t = useTranslations('gallery');
   const tHome = useTranslations('home');
+  const tCommon = useTranslations('common');
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -116,6 +117,8 @@ function CommunityGalleryPageContent() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'explore' | 'feed'>('grid');
   const [isMobile, setIsMobile] = useState(false);
+  const viewModeRef = useRef<'grid' | 'list' | 'explore' | 'feed'>('grid');
+  const lastDesktopViewModeRef = useRef<'grid' | 'list'>('grid');
   const [allImages, setAllImages] = useState<GalleryImage[]>([]);
   const [displayedImages, setDisplayedImages] = useState<GalleryImage[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -130,13 +133,38 @@ function CommunityGalleryPageContent() {
     file: null as File | null
   });
 
-  // Detect mobile and set initial view mode
+  // Track view mode for responsive transitions (avoid stale closure issues)
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+    if (viewMode === 'grid' || viewMode === 'list') {
+      lastDesktopViewModeRef.current = viewMode;
+    }
+  }, [viewMode]);
+
+  // Detect mobile and set/restore appropriate view mode on resize
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 640; // sm breakpoint
       setIsMobile(mobile);
-      if (mobile && viewMode === 'grid') {
-        setViewMode('feed');
+      const current = viewModeRef.current;
+
+      if (mobile) {
+        // Mobile defaults to "feed" when coming from desktop modes
+        if (current === 'grid' || current === 'list') {
+          setViewMode('feed');
+        }
+        return;
+      }
+
+      // Desktop should always be grid/list. If we were in mobile-only modes, restore last desktop choice.
+      if (current === 'feed' || current === 'explore') {
+        setViewMode(lastDesktopViewModeRef.current || 'grid');
+        return;
+      }
+
+      // Safety: ensure desktop never ends up with an unselected toggle state
+      if (current !== 'grid' && current !== 'list') {
+        setViewMode('grid');
       }
     };
     
@@ -1338,7 +1366,7 @@ function CommunityGalleryPageContent() {
               : viewMode === 'feed'
               ? 'grid-cols-1'
               : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'
-          } ${viewMode === 'feed' ? '-mx-4 sm:mx-0' : ''}`}>
+          } ${(viewMode === 'feed' || viewMode === 'explore') ? '-mx-4 sm:mx-0' : ''}`}>
             {filteredImages.map(image => {
               const displayUrl = image.imageUrl || image.thumbnailUrl || '';
               const thumbUrl = image.thumbnailUrl || image.imageUrl || 'https://via.placeholder.com/600?text=Image+Unavailable';
@@ -1785,7 +1813,7 @@ function CommunityGalleryPageContent() {
                               </ModernTooltip>
                             )}
                             {/* Delete button - only show to image author */}
-                            <ModernTooltip content="Delete image" position="top">
+                            <ModernTooltip content={t('deleteImage')} position="top">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1996,10 +2024,10 @@ function CommunityGalleryPageContent() {
           setImageToDelete(null);
         }}
         onConfirm={confirmDeleteImage}
-        title="Delete Image"
-        message="Are you sure you want to delete this image? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={tCommon('deleteImage')}
+        message={tCommon('confirmDeleteImage')}
+        confirmText={tCommon('delete')}
+        cancelText={tCommon('cancel')}
         type="danger"
       />
 
