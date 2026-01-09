@@ -693,7 +693,7 @@ function ForumsPageContent() {
                       {/* Vote count display */}
                       <div className="flex items-center space-x-1">
                         <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                        <span className="font-medium">{post.votes.upvotes - post.votes.downvotes}</span>
+                        <span className="font-medium">{Math.max(0, post.votes.upvotes - post.votes.downvotes)}</span>
                       </div>
                       
                       {/* Replies */}

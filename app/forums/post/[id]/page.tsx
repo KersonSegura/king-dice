@@ -734,22 +734,18 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(post.id, 'up', 'post')}
                           disabled={votingPost}
-                          className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                            localUserVote === 'up'
-                              ? 'bg-green-100 text-green-600'
-                              : 'hover:bg-gray-100 text-gray-400'
+                          className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-green-600 ${
+                            localUserVote === 'up' ? 'text-green-600' : 'text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <ThumbsUp className="w-3 h-3" />
                         </button>
-                        <span className="font-medium">{post.votes.upvotes - post.votes.downvotes}</span>
+                        <span className="font-medium">{Math.max(0, post.votes.upvotes - post.votes.downvotes)}</span>
                         <button
                           onClick={() => handleVote(post.id, 'down', 'post')}
                           disabled={votingPost}
-                          className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                            localUserVote === 'down'
-                              ? 'bg-red-100 text-red-600'
-                              : 'hover:bg-gray-100 text-gray-400'
+                          className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-red-600 ${
+                            localUserVote === 'down' ? 'text-red-600' : 'text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <ThumbsDown className="w-3 h-3" />
@@ -795,24 +791,20 @@ export default function PostDetailPage() {
                    <button
                      onClick={() => handleVote(post.id, 'up', 'post')}
                      disabled={votingPost}
-                     className={`w-10 h-10 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                       localUserVote === 'up'
-                         ? 'bg-green-100 text-green-600' 
-                         : 'hover:bg-gray-100 text-gray-400'
+                     className={`w-10 h-10 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-green-600 ${
+                       localUserVote === 'up' ? 'text-green-600' : 'text-gray-400'
                      } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                    >
                      <ThumbsUp className="w-4 h-4" />
                    </button>
                    <span className="text-sm font-medium text-gray-900">
-                     {post.votes.upvotes - post.votes.downvotes}
+                     {Math.max(0, post.votes.upvotes - post.votes.downvotes)}
                    </span>
                    <button
                      onClick={() => handleVote(post.id, 'down', 'post')}
                      disabled={votingPost}
-                     className={`w-10 h-10 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                       localUserVote === 'down'
-                         ? 'bg-red-100 text-red-600' 
-                         : 'hover:bg-gray-100 text-gray-400'
+                     className={`w-10 h-10 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-red-600 ${
+                       localUserVote === 'down' ? 'text-red-600' : 'text-gray-400'
                      } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                    >
                      <ThumbsDown className="w-4 h-4" />
@@ -1086,10 +1078,8 @@ export default function PostDetailPage() {
                             <button
                               onClick={() => handleVote(comment.id, 'up', 'comment')}
                               disabled={votingComments.has(comment.id)}
-                              className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                                comment.userVote === 'upvote'
-                                  ? 'bg-green-100 text-green-600'
-                                  : 'hover:bg-gray-100 text-gray-400'
+                              className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-green-600 ${
+                                comment.userVote === 'upvote' ? 'text-green-600' : 'text-gray-400'
                               } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <ThumbsUp className="w-3 h-3" />
@@ -1100,10 +1090,8 @@ export default function PostDetailPage() {
                             <button
                               onClick={() => handleVote(comment.id, 'down', 'comment')}
                               disabled={votingComments.has(comment.id)}
-                              className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                                comment.userVote === 'downvote'
-                                  ? 'bg-red-100 text-red-600'
-                                  : 'hover:bg-gray-100 text-gray-400'
+                              className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-red-600 ${
+                                comment.userVote === 'downvote' ? 'text-red-600' : 'text-gray-400'
                               } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <ThumbsDown className="w-3 h-3" />
@@ -1182,7 +1170,7 @@ export default function PostDetailPage() {
                         </h3>
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <span className="truncate">{similarPost.author.name}</span>
-                          <span className="flex-shrink-0 ml-2">{similarPost.votes.upvotes - similarPost.votes.downvotes} {t('votes')}</span>
+                          <span className="flex-shrink-0 ml-2">{Math.max(0, similarPost.votes.upvotes - similarPost.votes.downvotes)} {t('votes')}</span>
                         </div>
                       </div>
                     </Link>
