@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ThumbsUp, ThumbsDown, Flag, ArrowLeft, MessageSquare, User, Calendar, Send, TrendingUp, Trash2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Flag, ArrowLeft, MessageSquare, User, Calendar, Send, TrendingUp, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ModerationAlert from '@/components/ModerationAlert';
@@ -74,6 +74,7 @@ export default function PostDetailPage() {
     mentionQuery,
     mentionSearchQuery,
     handleMentionSearchInputChange,
+    closeMentionDropdown,
     mentionResults,
     selectedMentionIndex,
     mentionDropdownRef,
@@ -786,8 +787,16 @@ export default function PostDetailPage() {
                         ref={mentionDropdownRef}
                         className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden"
                       >
-                        <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
-                          {tChat('linkGames')}
+                        <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200 flex items-center justify-between">
+                          <span>{tChat('linkGames')}</span>
+                          <button
+                            type="button"
+                            onClick={closeMentionDropdown}
+                            className="p-1 text-gray-400 hover:text-gray-600"
+                            aria-label={tCommon('close')}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
                         <div className="px-3 py-2 border-b border-gray-200 bg-white">
                           <input

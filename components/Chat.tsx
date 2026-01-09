@@ -9,6 +9,7 @@ import ChatBot from './ChatBot';
 import { useToast } from './Toast';
 import LoadingLogo from './LoadingLogo';
 import { useTranslations } from 'next-intl';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 
 interface Message {
   id: string;
@@ -80,6 +81,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const [mentionQuery, setMentionQuery] = useState('');
   const [mentionSearchQuery, setMentionSearchQuery] = useState('');
   const [isMentionSearchDirty, setIsMentionSearchDirty] = useState(false);
+  const [manuallyClosedAtPos, setManuallyClosedAtPos] = useState<number>(-1);
   const [mentionResults, setMentionResults] = useState<any[]>([]);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionStartPos, setMentionStartPos] = useState(0);
@@ -87,7 +89,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const mentionDropdownRef = useRef<HTMLDivElement>(null);
 
   // Helpers for game mentions (@GameName -> link to /game/:id)
@@ -406,9 +408,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         inputRef.current &&
         !inputRef.current.contains(event.target as Node)
       ) {
-        setShowMentionDropdown(false);
-        setMentionQuery('');
-        setMentionResults([]);
+        closeMentionDropdown();
       }
     };
 
@@ -553,7 +553,16 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     scheduleMentionSearch(value);
   };
 
-  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const closeMentionDropdown = () => {
+    setShowMentionDropdown(false);
+    setMentionResults([]);
+    setSelectedMentionIndex(0);
+    setMentionSearchQuery('');
+    setIsMentionSearchDirty(false);
+    setManuallyClosedAtPos(mentionStartPos);
+  };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart || 0;
     setNewMessage(value);
@@ -561,6 +570,13 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     // Check if we're in a mention context (@...)
     const textBeforeCursor = value.substring(0, cursorPos);
     const lastAtPos = textBeforeCursor.lastIndexOf('@');
+
+    // Reset manual close if @ moved or removed
+    if (manuallyClosedAtPos !== -1) {
+      if (lastAtPos !== manuallyClosedAtPos || value.charAt(manuallyClosedAtPos) !== '@') {
+        setManuallyClosedAtPos(-1);
+      }
+    }
     
     if (lastAtPos !== -1) {
       // Check if there's a space, newline, or closing bracket after the @ (mention ended or already a link)
@@ -573,6 +589,11 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                            (textAfterAt.includes(ZWJ) && textAfterAt.split(ZWJ).length > 1);
       
       if (!hasNewlineAfterAt && !isAlreadyLink) {
+        // If user manually closed for this '@', keep dropdown closed
+        if (manuallyClosedAtPos === lastAtPos) {
+          setShowMentionDropdown(false);
+          return;
+        }
         // We're in a mention - extract the query (remove zero-width characters)
         const ZWJ = '\u200D';
         const query = textAfterAt.replace(new RegExp(ZWJ, 'g'), '').replace(/🔗/g, '');
@@ -591,6 +612,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         setMentionQuery('');
         setMentionSearchQuery('');
         setIsMentionSearchDirty(false);
+        setManuallyClosedAtPos(-1);
         setMentionResults([]);
       }
     } else {
@@ -599,6 +621,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       setMentionQuery('');
       setMentionSearchQuery('');
       setIsMentionSearchDirty(false);
+      setManuallyClosedAtPos(-1);
       setMentionResults([]);
     }
 
@@ -638,6 +661,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     setMentionQuery('');
     setMentionSearchQuery('');
     setIsMentionSearchDirty(false);
+    setManuallyClosedAtPos(-1);
     setMentionResults([]);
     
     // Focus input and set cursor position after the inserted link
@@ -661,9 +685,9 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     });
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (showMentionDropdown && mentionResults.length > 0) {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         insertGameMention(mentionResults[selectedMentionIndex]);
         return;
@@ -679,9 +703,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         return;
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        setShowMentionDropdown(false);
-        setMentionQuery('');
-        setMentionResults([]);
+        closeMentionDropdown();
         return;
       }
     }
@@ -718,6 +740,12 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       </div>
     );
   }
+
+  // Lock background scroll when chat UI is shown (especially on mobile)
+  useEffect(() => {
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, []);
 
   return (
     <>
@@ -827,14 +855,14 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0 relative">
           <div className="flex space-x-2">
             <div className="flex-1 relative">
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={newMessage}
                 onChange={handleTyping}
                 onKeyDown={handleKeyPress}
                 placeholder={t('typeAMessage')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 disabled={false}
               />
               
@@ -844,8 +872,16 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                   ref={mentionDropdownRef}
                   className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden"
                 >
-                  <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
-                    {t('linkGames')}
+                  <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200 flex items-center justify-between">
+                    <span>{t('linkGames')}</span>
+                    <button
+                      type="button"
+                      onClick={closeMentionDropdown}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      aria-label="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                   <div className="px-3 py-2 border-b border-gray-200 bg-white">
                     <input

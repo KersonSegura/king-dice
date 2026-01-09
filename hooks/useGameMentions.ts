@@ -12,6 +12,8 @@ export const useGameMentions = (
   // Query typed in the dropdown search input (can include spaces)
   const [mentionSearchQuery, setMentionSearchQuery] = useState('');
   const [isMentionSearchDirty, setIsMentionSearchDirty] = useState(false);
+  // If the user manually closes the dropdown, don't immediately re-open for the same '@'
+  const [manuallyClosedAtPos, setManuallyClosedAtPos] = useState<number>(-1);
   const [mentionResults, setMentionResults] = useState<any[]>([]);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionStartPos, setMentionStartPos] = useState(0);
@@ -53,6 +55,17 @@ export const useGameMentions = (
     scheduleMentionSearch(value);
   };
 
+  const closeMentionDropdown = () => {
+    // Do NOT change the underlying text (important for emails etc.)
+    setShowMentionDropdown(false);
+    setMentionResults([]);
+    setSelectedMentionIndex(0);
+    setMentionSearchQuery('');
+    setIsMentionSearchDirty(false);
+    // suppress reopening for the current '@' location
+    setManuallyClosedAtPos(mentionStartPos);
+  };
+
   const insertGameMention = (game: any) => {
     const gameName = game.nameEn || game.name || mentionQuery;
     const beforeMention = text.substring(0, mentionStartPos);
@@ -67,6 +80,7 @@ export const useGameMentions = (
     setMentionQuery('');
     setMentionSearchQuery('');
     setIsMentionSearchDirty(false);
+    setManuallyClosedAtPos(-1);
     setMentionResults([]);
     
     // Focus input and set cursor position after the inserted link
@@ -138,8 +152,20 @@ export const useGameMentions = (
     // Check if we're in a mention context (@...)
     const textBeforeCursor = value.substring(0, cursorPos);
     const lastAtPos = textBeforeCursor.lastIndexOf('@');
+
+    // Reset manual close if the cursor moved to a different @ or the @ was removed
+    if (manuallyClosedAtPos !== -1) {
+      if (lastAtPos !== manuallyClosedAtPos || value.charAt(manuallyClosedAtPos) !== '@') {
+        setManuallyClosedAtPos(-1);
+      }
+    }
     
     if (lastAtPos !== -1) {
+      // If user manually closed for this '@', keep dropdown closed
+      if (manuallyClosedAtPos === lastAtPos) {
+        setShowMentionDropdown(false);
+        return;
+      }
       // Check if there's a space, newline, or closing bracket after the @ (mention ended or already a link)
       const textAfterAt = textBeforeCursor.substring(lastAtPos + 1);
       // Allow spaces in game titles; only newline ends the mention context.
@@ -169,6 +195,7 @@ export const useGameMentions = (
         setMentionQuery('');
         setMentionSearchQuery('');
         setIsMentionSearchDirty(false);
+        setManuallyClosedAtPos(-1);
         setMentionResults([]);
       }
     } else {
@@ -177,6 +204,7 @@ export const useGameMentions = (
       setMentionQuery('');
       setMentionSearchQuery('');
       setIsMentionSearchDirty(false);
+      setManuallyClosedAtPos(-1);
       setMentionResults([]);
     }
   };
@@ -199,11 +227,7 @@ export const useGameMentions = (
         return;
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        setShowMentionDropdown(false);
-        setMentionQuery('');
-        setMentionSearchQuery('');
-        setIsMentionSearchDirty(false);
-        setMentionResults([]);
+        closeMentionDropdown();
         return;
       }
     }
@@ -228,9 +252,7 @@ export const useGameMentions = (
         inputRef.current &&
         !inputRef.current.contains(event.target as Node)
       ) {
-        setShowMentionDropdown(false);
-        setMentionQuery('');
-        setMentionResults([]);
+        closeMentionDropdown();
       }
     };
 
@@ -247,6 +269,7 @@ export const useGameMentions = (
     mentionQuery,
     mentionSearchQuery,
     handleMentionSearchInputChange,
+    closeMentionDropdown,
     mentionResults,
     selectedMentionIndex,
     mentionDropdownRef,

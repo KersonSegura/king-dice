@@ -6,6 +6,7 @@ import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical, Tr
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { closeMenusOnChatOpen } from '@/lib/closeChat';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import ChatList from './ChatList';
 import Chat from './Chat';
 import ChatBot from './ChatBot';
@@ -542,6 +543,16 @@ export default function FloatingChat() {
   const [showAddPeople, setShowAddPeople] = useState(false);
   const [showViewMembers, setShowViewMembers] = useState(false);
   const [chatsWithUnread, setChatsWithUnread] = useState<Map<string, number>>(new Map());
+
+  // Lock background scroll while chat UI is open (mobile especially)
+  useEffect(() => {
+    if (isChatOpen) {
+      lockBodyScroll();
+      return () => unlockBodyScroll();
+    }
+    unlockBodyScroll();
+    return;
+  }, [isChatOpen]);
 
   // Prefetch chats on mount for instant access (even when chat is closed)
   useEffect(() => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft } from 'lucide-react';
+import { MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -58,6 +58,7 @@ function ForumsPageContent() {
     mentionQuery,
     mentionSearchQuery,
     handleMentionSearchInputChange,
+    closeMentionDropdown,
     mentionResults,
     selectedMentionIndex,
     mentionDropdownRef,
@@ -770,8 +771,16 @@ function ForumsPageContent() {
                       ref={mentionDropdownRef}
                       className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden"
                     >
-                      <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
-                        {tChat('linkGames')}
+                      <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200 flex items-center justify-between">
+                        <span>{tChat('linkGames')}</span>
+                        <button
+                          type="button"
+                          onClick={closeMentionDropdown}
+                          className="p-1 text-gray-400 hover:text-gray-600"
+                          aria-label={tCommon('close')}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                       <div className="px-3 py-2 border-b border-gray-200 bg-white">
                         <input
