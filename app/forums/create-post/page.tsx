@@ -295,6 +295,36 @@ export default function CreatePostPage() {
     }
   };
 
+  const getClosestEl = (node: Node | null, selector: string) => {
+    if (!node) return null;
+    const el = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : (node.parentElement as Element | null);
+    return el ? el.closest(selector) : null;
+  };
+
+  const placeCaretAtStart = (el: Element) => {
+    if (typeof window === 'undefined') return;
+    const sel = window.getSelection();
+    if (!sel) return;
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    saveSelection();
+  };
+
+  const placeCaretAfter = (node: Node) => {
+    if (typeof window === 'undefined') return;
+    const sel = window.getSelection();
+    if (!sel) return;
+    const r = document.createRange();
+    r.setStartAfter(node);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    saveSelection();
+  };
+
   const insertHtmlAtCursorWithCaret = (html: string) => {
     // expects html to include a unique <span data-kd-caret="..."></span> marker
     focusEditor();
@@ -315,6 +345,59 @@ export default function CreatePostPage() {
       marker.remove();
       saveSelection();
     });
+  };
+
+  const toggleListAtSelection = (type: 'ul' | 'ol') => {
+    if (typeof window === 'undefined') return;
+    focusEditor();
+    restoreSelection();
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const anchor = sel.anchorNode;
+    const li = getClosestEl(anchor, 'li') as HTMLLIElement | null;
+    const list = li ? (li.closest('ul,ol') as HTMLOListElement | HTMLUListElement | null) : null;
+
+    // If already in a list, toggle off or switch type
+    if (list) {
+      const currentType = list.tagName.toLowerCase() as 'ul' | 'ol';
+      if (currentType === type) {
+        // unwrap list -> paragraphs
+        const parent = list.parentNode;
+        if (!parent) return;
+        const after = list.nextSibling;
+        const frag = document.createDocumentFragment();
+        const items = Array.from(list.children).filter(c => (c as Element).tagName?.toLowerCase() === 'li') as HTMLLIElement[];
+        const activeIndex = li ? items.indexOf(li) : 0;
+        const ps: HTMLParagraphElement[] = [];
+
+        for (const item of items) {
+          const p = document.createElement('p');
+          p.innerHTML = item.innerHTML?.trim() ? item.innerHTML : '<br/>';
+          frag.appendChild(p);
+          ps.push(p);
+        }
+        parent.removeChild(list);
+        parent.insertBefore(frag, after);
+
+        const target = ps[Math.max(0, activeIndex)] || ps[0];
+        if (target) placeCaretAtStart(target);
+        if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+        return;
+      }
+
+      // switch list type (ul <-> ol) keeping items
+      const newList = document.createElement(type);
+      while (list.firstChild) newList.appendChild(list.firstChild);
+      list.parentNode?.replaceChild(newList, list);
+      if (li) placeCaretAtStart(li);
+      if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+      return;
+    }
+
+    // Not in a list: insert a new list with one empty item and place caret inside it
+    const caretId = String(Date.now());
+    insertHtmlAtCursorWithCaret(`<${type}><li><span data-kd-caret="${caretId}"></span><br/></li></${type}>`);
   };
 
   const escapeHtml = (s: string) =>
@@ -342,8 +425,8 @@ export default function CreatePostPage() {
     else if (kind === 'italic') exec('italic');
     else if (kind === 'underline') exec('underline');
     else if (kind === 'strike') exec('strikeThrough');
-    else if (kind === 'bullets') exec('insertUnorderedList');
-    else if (kind === 'numbers') exec('insertOrderedList');
+    else if (kind === 'bullets') toggleListAtSelection('ul');
+    else if (kind === 'numbers') toggleListAtSelection('ol');
     else if (kind === 'quote') {
       const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
       const text = selText.trim();
@@ -445,6 +528,51 @@ export default function CreatePostPage() {
     setLinkOpen(false);
     setLinkText('');
     setLinkUrl('');
+  };
+
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter') return;
+
+    // Inside list item behavior: Enter creates next item; Enter on empty item exits list
+    const sel = typeof window !== 'undefined' ? window.getSelection() : null;
+    const anchor = sel?.anchorNode ?? null;
+    const li = getClosestEl(anchor, 'li') as HTMLLIElement | null;
+    const list = li ? (li.closest('ul,ol') as (HTMLUListElement | HTMLOListElement | null)) : null;
+    if (!li || !list) return;
+
+    if (e.shiftKey) {
+      // Shift+Enter => line break inside the same list item
+      e.preventDefault();
+      exec('insertHTML', '<br/>');
+      return;
+    }
+
+    e.preventDefault();
+    const text = (li.textContent || '').replace(/\u200B/g, '').trim();
+    if (!text) {
+      // Exit list: remove empty li, then insert paragraph after list
+      const parent = list.parentNode;
+      if (!parent) return;
+      const after = list.nextSibling;
+      li.remove();
+      if (list.querySelectorAll(':scope > li').length === 0) {
+        list.remove();
+      }
+      const p = document.createElement('p');
+      p.innerHTML = '<br/>';
+      parent.insertBefore(p, after);
+      placeCaretAtStart(p);
+      if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+      return;
+    }
+
+    // Create next list item
+    const next = document.createElement('li');
+    next.innerHTML = '<br/>';
+    if (li.nextSibling) list.insertBefore(next, li.nextSibling);
+    else list.appendChild(next);
+    placeCaretAtStart(next);
+    if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
   };
 
   const handlePublish = async () => {
@@ -772,6 +900,7 @@ export default function CreatePostPage() {
                 onInput={() => {
                   if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
                 }}
+                onKeyDown={handleEditorKeyDown}
                 onKeyUp={() => saveSelection()}
                 onMouseUp={() => saveSelection()}
                 onBlur={() => saveSelection()}
