@@ -660,7 +660,7 @@ function ForumsPageContent() {
                 {/* Title and badges - positioned to the right of avatar */}
                 <div className="ml-16 sm:ml-16">
                   {/* Title */}
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 line-clamp-2 break-words">
                     <Link href={`/forums/post/${post.id}`} className="hover:text-primary-600">
                       {post.title}
                     </Link>

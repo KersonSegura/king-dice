@@ -453,14 +453,14 @@ export default function PostDetailPage() {
           type: 'approved'
         });
         
-        showToast('Comment posted successfully!', 'success');
+        showToast(t('commentPosted'), 'success');
       } else {
         const errorData = await response.json();
-        showToast(errorData.error || 'Failed to create comment. Please try again.', 'error');
+        showToast(errorData.error || t('commentCreateFailed'), 'error');
       }
     } catch (error) {
       console.error('Error creating comment:', error);
-      showToast('Error creating comment. Please try again.', 'error');
+      showToast(t('commentCreateFailed'), 'error');
     } finally {
       setIsSubmittingComment(false);
     }
@@ -468,7 +468,7 @@ export default function PostDetailPage() {
 
   const handleDeleteComment = async (commentId: string) => {
     if (!isAuthenticated || !user) {
-      showToast('Please sign in to delete comments', 'error');
+      showToast(tCommon('pleaseSignIn'), 'error');
       return;
     }
 
@@ -495,7 +495,7 @@ export default function PostDetailPage() {
       if (response.ok) {
         // Remove comment from state
         setComments(prevComments => prevComments.filter(comment => comment.id !== commentToDelete));
-        showToast('Comment deleted successfully', 'success');
+        showToast(t('commentDeleted'), 'success');
 
         try {
           const refreshed = await fetch(`/api/posts/${postId}/comments?sortBy=${commentSortBy}${isAuthenticated && user ? `&userId=${user.id}` : ''}`);
@@ -508,11 +508,11 @@ export default function PostDetailPage() {
         }
       } else {
         const error = await response.json();
-        showToast(error.message || 'Failed to delete comment. You can only delete your own comments.', 'error');
+        showToast(error.message || t('deleteCommentFailed'), 'error');
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
-      showToast('Error deleting comment. Please try again.', 'error');
+      showToast(t('deleteCommentFailed'), 'error');
     } finally {
       setShowDeleteCommentConfirm(false);
       setCommentToDelete(null);
@@ -550,15 +550,15 @@ export default function PostDetailPage() {
 
       if (response.ok) {
         // Redirect to forums after successful deletion
-        showToast('Post deleted successfully', 'success');
+        showToast(t('postDeleted'), 'success');
         router.push('/forums');
       } else {
         const error = await response.json();
-        showToast(error.message || 'Failed to delete post. You can only delete your own posts.', 'error');
+        showToast(error.message || t('deletePostFailed'), 'error');
       }
     } catch (error) {
       console.error('Error deleting post:', error);
-      showToast('Error deleting post. Please try again.', 'error');
+      showToast(t('deletePostFailed'), 'error');
     } finally {
       setShowDeletePostConfirm(false);
     }
@@ -596,9 +596,9 @@ export default function PostDetailPage() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Post not found</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('postNotFound')}</h1>
             <Link href="/forums" className="btn-primary">
-              Back to Forums
+              {t('backToForums')}
             </Link>
           </div>
         </div>
@@ -625,7 +625,7 @@ export default function PostDetailPage() {
           {/* Main Content Area - Post and Comments */}
           <div className="lg:col-span-4 space-y-4 lg:space-y-6">
             {/* Main Post Content - Full Width */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="bg-white rounded-none shadow-sm border border-gray-200 p-4 sm:p-6 -mx-4 sm:mx-0">
               {/* Mobile Layout */}
               <div className="sm:hidden">
                 {/* Top: Title, Category, Date */}
@@ -671,14 +671,14 @@ export default function PostDetailPage() {
                       />
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">{post.author.name}</span>
-                        <span className="text-xs text-gray-500">({post.author.reputation} rep)</span>
+                        <span className="text-xs text-gray-500">({post.author.reputation} {t('repShort')})</span>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-2">
                       {/* Delete button - only show to post author */}
                       {isAuthenticated && user && post.author.id === user.id && (
-                        <ModernTooltip content="Delete post" position="top">
+                        <ModernTooltip content={t('deletePostTooltip')} position="top">
                           <button
                             onClick={handleDeletePost}
                             className="p-1 text-gray-400 hover:text-red-600 transition-colors"
@@ -732,7 +732,9 @@ export default function PostDetailPage() {
                       {/* Comments count */}
                       <div className="flex items-center space-x-1">
                         <MessageSquare className="w-3 h-3" />
-                        <span>{comments.length} comments</span>
+                        <span>
+                          {comments.length} {comments.length === 1 ? t('comment') : t('comments')}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -788,7 +790,7 @@ export default function PostDetailPage() {
                           height={12}
                           className="w-3 h-3"
                         />
-                        <span>Verified</span>
+                        <span>{t('verified')}</span>
                       </span>
                     )}
                   </div>
@@ -819,7 +821,7 @@ export default function PostDetailPage() {
                         />
                           <div className="flex items-center space-x-2">
                             <span className="font-medium">{post.author.name}</span>
-                        <span className="text-xs">({post.author.reputation} rep)</span>
+                        <span className="text-xs">({post.author.reputation} {t('repShort')})</span>
                           </div>
                       </div>
                       <div className="flex items-center space-x-1">
@@ -828,14 +830,16 @@ export default function PostDetailPage() {
                       </div>
                       <div className="flex items-center space-x-1">
                         <MessageSquare className="w-4 h-4" />
-                        <span>{comments.length} comments</span>
+                        <span>
+                          {comments.length} {comments.length === 1 ? t('comment') : t('comments')}
+                        </span>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-2">
                       {/* Delete button - only show to post author */}
                       {isAuthenticated && user && post.author.id === user.id && (
-                        <ModernTooltip content="Delete post" position="top">
+                        <ModernTooltip content={t('deletePostTooltip')} position="top">
                           <button
                             onClick={handleDeletePost}
                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
@@ -861,7 +865,7 @@ export default function PostDetailPage() {
             </div>
 
             {/* Comments section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="bg-white rounded-none shadow-sm border border-gray-200 p-4 sm:p-6 -mx-4 sm:mx-0">
               {/* Add comment */}
               <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
                 <div className="flex space-x-2 sm:space-x-3">
@@ -964,7 +968,7 @@ export default function PostDetailPage() {
                 {/* Sort dropdown */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-4 space-y-2 sm:space-y-0">
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                    Comments ({comments.length})
+                    {t('comments')} ({comments.length})
                   </h3>
                   <div className="flex items-center space-x-2">
                     <span className="text-xs sm:text-sm text-gray-600">{t('sortBy')}</span>
@@ -1030,7 +1034,7 @@ export default function PostDetailPage() {
                             />
                             <div className="flex items-center space-x-1 text-xs sm:text-sm text-gray-500">
                               <span className="font-medium">{comment.author.name}</span>
-                              <span className="text-xs">({comment.author.reputation} rep)</span>
+                              <span className="text-xs">({comment.author.reputation} {t('repShort')})</span>
                             </div>
                           </div>
                           <div className="flex items-center space-x-1 text-xs text-gray-400">
@@ -1046,7 +1050,7 @@ export default function PostDetailPage() {
                                   height={10}
                                   className="w-2.5 h-2.5"
                                 />
-                                <span>Verified</span>
+                                <span>{t('verified')}</span>
                               </span>
                             </>
                           )}
@@ -1127,7 +1131,7 @@ export default function PostDetailPage() {
                         </h3>
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <span className="truncate">{similarPost.author.name}</span>
-                          <span className="flex-shrink-0 ml-2">{similarPost.votes.upvotes - similarPost.votes.downvotes} votes</span>
+                          <span className="flex-shrink-0 ml-2">{similarPost.votes.upvotes - similarPost.votes.downvotes} {t('votes')}</span>
                         </div>
                       </div>
                     </Link>
@@ -1146,7 +1150,7 @@ export default function PostDetailPage() {
                   height={20}
                   className="w-5 h-5"
                 />
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Interact with our community!</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('interactCommunityTitle')}</h2>
               </div>
               <div className="space-y-4">
                 <a 
@@ -1159,8 +1163,8 @@ export default function PostDetailPage() {
                     <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
                   </svg>
                   <div className="min-w-0">
-                    <div className="font-medium text-sm sm:text-base">Join our Discord</div>
-                    <div className="text-xs sm:text-sm opacity-90">Connect with fellow gamers</div>
+                    <div className="font-medium text-sm sm:text-base">{t('communityDiscordTitle')}</div>
+                    <div className="text-xs sm:text-sm opacity-90">{t('communityDiscordSubtitle')}</div>
                   </div>
                 </a>
 
@@ -1174,8 +1178,8 @@ export default function PostDetailPage() {
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                   </svg>
                   <div className="min-w-0">
-                    <div className="font-medium text-sm sm:text-base">Follow on X</div>
-                    <div className="text-xs sm:text-sm opacity-90">Latest updates & news</div>
+                    <div className="font-medium text-sm sm:text-base">{t('communityXTitle')}</div>
+                    <div className="text-xs sm:text-sm opacity-90">{t('communityXSubtitle')}</div>
                   </div>
                 </a>
 
@@ -1189,8 +1193,8 @@ export default function PostDetailPage() {
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                   </svg>
                   <div className="min-w-0">
-                    <div className="font-medium text-sm sm:text-base">Follow on Instagram</div>
-                    <div className="text-xs sm:text-sm opacity-90">Board game photos & stories</div>
+                    <div className="font-medium text-sm sm:text-base">{t('communityInstagramTitle')}</div>
+                    <div className="text-xs sm:text-sm opacity-90">{t('communityInstagramSubtitle')}</div>
                   </div>
                 </a>
               </div>
@@ -1207,13 +1211,13 @@ export default function PostDetailPage() {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">Our Gallery</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('ourGalleryTitle')}</h2>
                 </Link>
                 <Link 
                   href="/community-gallery" 
                   className="text-xs sm:text-sm text-[#fbae17] hover:text-[#e69c0f] font-medium"
                 >
-                  See more
+                  {t('seeMore')}
                 </Link>
               </div>
               <RecentGalleryImages limit={4} />
@@ -1253,10 +1257,10 @@ export default function PostDetailPage() {
           isOpen={showDeletePostConfirm}
           onClose={() => setShowDeletePostConfirm(false)}
           onConfirm={confirmDeletePost}
-          title="Delete Post"
-          message="Are you sure you want to delete this post? This action cannot be undone."
-          confirmText="Delete"
-          cancelText="Cancel"
+          title={t('deletePost')}
+          message={t('deletePostConfirm')}
+          confirmText={tCommon('delete')}
+          cancelText={tCommon('cancel')}
           type="danger"
         />
 
@@ -1268,10 +1272,10 @@ export default function PostDetailPage() {
             setCommentToDelete(null);
           }}
           onConfirm={confirmDeleteComment}
-          title="Delete Comment"
-          message="Are you sure you want to delete this comment? This action cannot be undone."
-          confirmText="Delete"
-          cancelText="Cancel"
+          title={t('deleteComment')}
+          message={t('deleteCommentConfirm')}
+          confirmText={tCommon('delete')}
+          cancelText={tCommon('cancel')}
           type="danger"
         />
       </div>
