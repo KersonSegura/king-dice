@@ -785,7 +785,7 @@ export default function PostDetailPage() {
                     {showMentionDropdown && (
                       <div
                         ref={mentionDropdownRef}
-                        className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden"
+                        className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden flex flex-col"
                       >
                         <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200 flex items-center justify-between">
                           <span>{tChat('linkGames')}</span>
@@ -808,7 +808,7 @@ export default function PostDetailPage() {
                           />
                         </div>
                         {mentionResults.length > 0 ? (
-                          <div className="py-1 max-h-44 overflow-y-auto">
+                          <div className="py-1 overflow-y-auto flex-1 min-h-0 pb-1">
                             {mentionResults.map((game, index) => (
                               <button
                                 key={game.id}
