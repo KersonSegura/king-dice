@@ -157,6 +157,19 @@ export default function CreatePostPage() {
     return DEFAULT_CATEGORIES;
   }, []);
 
+  const tf = (key: string, fallback: string) => {
+    const anyT = t as any;
+    if (typeof anyT?.has === 'function') {
+      return anyT.has(key) ? t(key as any) : fallback;
+    }
+    // If next-intl version doesn't support `has`, just attempt and fallback to avoid crashes
+    try {
+      return t(key as any);
+    } catch {
+      return fallback;
+    }
+  };
+
   const {
     showMentionDropdown,
     mentionQuery,
@@ -537,7 +550,7 @@ export default function CreatePostPage() {
                 <input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder={t('enterPostTitle')}
+                  placeholder={tf('enterPostTitle', 'Enter your post title...')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
               </div>
@@ -597,7 +610,7 @@ export default function CreatePostPage() {
                   value={content}
                   onChange={handleContentTyping}
                   onKeyDown={handleContentKeyPress}
-                  placeholder={t('writePostContent')}
+                  placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
                   rows={10}
                   className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
                 />

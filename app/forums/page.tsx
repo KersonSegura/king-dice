@@ -29,6 +29,17 @@ function ForumsPageContent() {
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
+  const tf = (key: string, fallback: string) => {
+    const anyT = t as any;
+    if (typeof anyT?.has === 'function') {
+      return anyT.has(key) ? t(key as any) : fallback;
+    }
+    try {
+      return t(key as any);
+    } catch {
+      return fallback;
+    }
+  };
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -747,7 +758,7 @@ function ForumsPageContent() {
                   value={newPost.title}
                   onChange={(e) => setNewPost({...newPost, title: e.target.value})}
                   className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
-                  placeholder={t('enterPostTitle', {ns: 'forums'}) || 'Enter your post title...'}
+                    placeholder={tf('enterPostTitle', 'Enter your post title...')}
                 />
               </div>
               
@@ -763,7 +774,7 @@ function ForumsPageContent() {
                     onKeyDown={handleContentKeyPress}
                     rows={6}
                     className="w-full p-2 sm:p-3 border border-gray-300 rounded-md text-sm sm:text-base"
-                    placeholder={t('writePostContent', {ns: 'forums'}) || 'Write your post content... (use @ to mention games)'}
+                    placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
                   />
                   
                   {/* Game Mention Dropdown */}
@@ -892,7 +903,7 @@ function ForumsPageContent() {
         }}
         onConfirm={confirmDeletePost}
         title={t('delete') + ' ' + t('post')}
-        message={t('deletePostConfirm', {ns: 'forums'}) || 'Are you sure you want to delete this post? This action cannot be undone.'}
+        message={tf('deletePostConfirm', 'Are you sure you want to delete this post? This action cannot be undone.')}
         confirmText={t('delete')}
         cancelText="Cancel"
         type="danger"
