@@ -1133,7 +1133,7 @@ export default function CollectionPage() {
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <div className="bg-primary-500 shadow-sm">
+      <div className="bg-gray-900 shadow-sm border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between flex-nowrap">
             <Link 
@@ -1161,14 +1161,14 @@ export default function CollectionPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page title (moved from header) */}
         <div className="mb-6">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight text-center">
             {safeT('collectionTitle', { username: userProfile.username })}
           </h1>
         </div>
 
         {/* Collection Photo */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-[#fbae17] mb-2">{safeT('collection')}</h2>
+          <h2 className="text-xl font-semibold text-[#fbae17] mb-2">{safeT('collectionPhoto')}</h2>
           {userProfile.collectionPhoto ? (
             <div className="relative w-full aspect-[16/9] bg-transparent rounded-xl overflow-hidden cursor-pointer group"
               onClick={handleOpenCollectionPhoto}
