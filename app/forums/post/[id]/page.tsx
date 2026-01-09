@@ -694,7 +694,7 @@ export default function PostDetailPage() {
                     <div className="min-w-0">
                       <div className="font-medium text-sm text-gray-900 truncate">{post.author.name}</div>
                       {post.author.title ? (
-                        <div className="text-xs text-gray-500 truncate">{post.author.title}</div>
+                        <div className="text-xs text-gray-500 truncate">{formatUserTitle(post.author.title)}</div>
                       ) : null}
                     </div>
                   </div>
@@ -828,7 +828,7 @@ export default function PostDetailPage() {
                       <div className="min-w-0">
                         <div className="font-medium text-gray-900 truncate">{post.author.name}</div>
                         {post.author.title ? (
-                          <div className="text-xs text-gray-500 truncate">{post.author.title}</div>
+                          <div className="text-xs text-gray-500 truncate">{formatUserTitle(post.author.title)}</div>
                         ) : null}
                       </div>
                     </div>
