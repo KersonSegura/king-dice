@@ -430,6 +430,7 @@ export default function ImageModal({
       <div 
         ref={modalContentRef}
         className="bg-white w-full h-full rounded-none sm:rounded-lg sm:max-w-6xl sm:max-h-[90vh] overflow-hidden flex flex-col sm:flex-row"
+        data-scroll-lock-root
         style={{ pointerEvents: 'auto' }}
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}

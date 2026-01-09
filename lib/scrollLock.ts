@@ -7,7 +7,7 @@ let touchMoveHandler: ((e: TouchEvent) => void) | null = null;
 let wheelHandler: ((e: WheelEvent) => void) | null = null;
 let extraLockedElements: HTMLElement[] = [];
 
-function findScrollableContainer(element: Element | null): Element | null {
+function findScrollableContainer(element: Element | null, stopAt: Element | null): Element | null {
   if (!element) return null;
   
   let current: Element | null = element;
@@ -27,6 +27,9 @@ function findScrollableContainer(element: Element | null): Element | null {
       if (scrollHeight > clientHeight) {
         return current;
       }
+    }
+    if (stopAt && current === stopAt) {
+      break;
     }
     current = current.parentElement;
   }
@@ -99,7 +102,8 @@ export function lockBodyScroll() {
     // Prevent touch scrolling on mobile (but allow scrolling within scrollable containers)
     touchMoveHandler = (e: TouchEvent) => {
       const target = e.target as Element;
-      const scrollable = findScrollableContainer(target);
+      const root = (target?.closest?.('[data-scroll-lock-root]') as Element | null) ?? null;
+      const scrollable = findScrollableContainer(target, root);
       
       if (!scrollable) {
         // No scrollable container - prevent all scrolling
@@ -128,7 +132,8 @@ export function lockBodyScroll() {
     // Prevent wheel scrolling (but allow scrolling within scrollable containers)
     wheelHandler = (e: WheelEvent) => {
       const target = e.target as Element;
-      const scrollable = findScrollableContainer(target);
+      const root = (target?.closest?.('[data-scroll-lock-root]') as Element | null) ?? null;
+      const scrollable = findScrollableContainer(target, root);
       
       if (!scrollable) {
         // No scrollable container - prevent all scrolling
