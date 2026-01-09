@@ -362,6 +362,62 @@ export default function CreatePostPage() {
     });
   };
 
+  const getOrCreateRangeInEditor = (): Range | null => {
+    if (typeof window === 'undefined') return null;
+    const editor = editorRef.current;
+    if (!editor) return null;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const r = sel.getRangeAt(0);
+      const node = r.commonAncestorContainer;
+      if (editor.contains(node)) return r;
+    }
+    if (savedSelectionRef.current) {
+      const r = savedSelectionRef.current;
+      const node = r.commonAncestorContainer;
+      if (editor.contains(node)) return r;
+    }
+    // default to end of editor
+    const r = document.createRange();
+    r.selectNodeContents(editor);
+    r.collapse(false);
+    return r;
+  };
+
+  const insertListAtSelection = (type: 'ul' | 'ol') => {
+    if (typeof window === 'undefined') return;
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    focusEditor();
+    restoreSelection();
+    const range = getOrCreateRangeInEditor();
+    if (!range) return;
+
+    // If already in list: toggle off / switch type (handled by toggleListAtSelection)
+    const sel = window.getSelection();
+    const anchor = sel?.anchorNode ?? null;
+    const li = getClosestEl(anchor, 'li') as HTMLLIElement | null;
+    const list = li ? (li.closest('ul,ol') as (HTMLUListElement | HTMLOListElement | null)) : null;
+    if (list) return;
+
+    // Build list nodes without execCommand (more reliable on mobile)
+    const listEl = document.createElement(type);
+    listEl.className = type === 'ul' ? 'list-disc pl-6 my-2' : 'list-decimal pl-6 my-2';
+    const liEl = document.createElement('li');
+    liEl.innerHTML = '<br/>';
+    listEl.appendChild(liEl);
+
+    range.deleteContents();
+    range.insertNode(listEl);
+
+    // Put caret inside the first li
+    placeCaretAtStart(liEl);
+
+    // Ensure state reflects DOM
+    setContentHtml(editor.innerHTML);
+  };
+
   const toggleListAtSelection = (type: 'ul' | 'ol') => {
     if (typeof window === 'undefined') return;
     focusEditor();
@@ -410,9 +466,8 @@ export default function CreatePostPage() {
       return;
     }
 
-    // Not in a list: insert a new list with one empty item and place caret inside it
-    const caretId = String(Date.now());
-    insertHtmlAtCursorWithCaret(`<${type}><li><span data-kd-caret="${caretId}"></span><br/></li></${type}>`);
+    // Not in a list: start a new list at the cursor (no execCommand; works on mobile)
+    insertListAtSelection(type);
   };
 
   const escapeHtml = (s: string) =>
