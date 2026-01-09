@@ -26,13 +26,12 @@ import LoadingScreen from '@/components/LoadingScreen';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import LoginModal from '@/components/LoginModal';
-import { useGameMentions } from '@/hooks/useGameMentions';
 
 type Draft = {
   id: string;
   title: string;
   category: string;
-  content: string;
+  contentHtml: string;
   updatedAt: string;
 };
 
@@ -120,6 +119,79 @@ function applyPrefixLines(textarea: HTMLTextAreaElement | null, value: string, p
   return { value: next, nextCursorStart: nextStart, nextCursorEnd: nextEnd };
 }
 
+function htmlToMarkdown(html: string): string {
+  if (!html?.trim()) return '';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  const normalizeText = (s: string) =>
+    s
+      .replace(/\u00a0/g, ' ')
+      .replace(/\r/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+  const walk = (node: Node, listMode: 'ul' | 'ol' | null = null, olIndexRef?: { i: number }): string => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return (node.textContent || '').replace(/\u200D/g, '\u200D'); // keep ZWJ
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    const el = node as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+
+    if (tag === 'br') return '\n';
+    if (tag === 'strong' || tag === 'b') return `**${Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('')}**`;
+    if (tag === 'em' || tag === 'i') return `*${Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('')}*`;
+    if (tag === 'u') return `__${Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('')}__`;
+    if (tag === 's' || tag === 'del' || tag === 'strike') return `~~${Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('')}~~`;
+    if (tag === 'code') return `\`${Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('')}\``;
+    if (tag === 'pre') {
+      const text = el.textContent || '';
+      return `\n\n\`\`\`\n${text.replace(/\n+$/g, '')}\n\`\`\`\n\n`;
+    }
+    if (tag === 'blockquote') {
+      const inner = Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('');
+      return `\n\n${inner.split('\n').map(l => (l.trim() ? `> ${l}` : '>')).join('\n')}\n\n`;
+    }
+    if (tag === 'a') {
+      const href = el.getAttribute('href') || '';
+      const text = Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('') || href;
+      return href ? `[${text}](${href})` : text;
+    }
+    if (tag === 'img') {
+      const src = el.getAttribute('src') || '';
+      const alt = el.getAttribute('alt') || '';
+      return src ? `![${alt}](${src})` : '';
+    }
+    if (tag === 'ul') {
+      const inner = Array.from(el.children).map(li => walk(li, 'ul')).join('');
+      return `\n${inner}\n`;
+    }
+    if (tag === 'ol') {
+      const ref = { i: 1 };
+      const inner = Array.from(el.children).map(li => walk(li, 'ol', ref)).join('');
+      return `\n${inner}\n`;
+    }
+    if (tag === 'li') {
+      const inner = Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('').replace(/\n+/g, ' ').trim();
+      if (listMode === 'ol') {
+        const num = olIndexRef ? olIndexRef.i++ : 1;
+        return `${num}. ${inner}\n`;
+      }
+      return `- ${inner}\n`;
+    }
+    if (tag === 'p' || tag === 'div') {
+      const inner = Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('');
+      return `${inner}\n\n`;
+    }
+
+    return Array.from(el.childNodes).map(n => walk(n, listMode, olIndexRef)).join('');
+  };
+
+  const raw = Array.from(doc.body.childNodes).map(n => walk(n)).join('');
+  return normalizeText(raw);
+}
+
 export default function CreatePostPage() {
   const t = useTranslations('forums');
   const tCommon = useTranslations('common');
@@ -135,8 +207,8 @@ export default function CreatePostPage() {
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('general');
-  const [content, setContent] = useState('');
-  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [contentHtml, setContentHtml] = useState('');
+  const editorRef = useRef<HTMLDivElement>(null);
 
   // Drafts
   const [draftId, setDraftId] = useState<string>(() => `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
@@ -170,21 +242,6 @@ export default function CreatePostPage() {
     }
   };
 
-  const {
-    showMentionDropdown,
-    mentionQuery,
-    mentionSearchQuery,
-    handleMentionSearchInputChange,
-    closeMentionDropdown,
-    mentionResults,
-    selectedMentionIndex,
-    mentionDropdownRef,
-    handleTyping: handleContentTyping,
-    handleKeyPress: handleContentKeyPress,
-    insertGameMention,
-    convertGameMentionsToMarkdown
-  } = useGameMentions(content, setContent, contentRef);
-
   useEffect(() => {
     setDraftsState(loadDrafts());
   }, []);
@@ -194,71 +251,46 @@ export default function CreatePostPage() {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
       // Don’t autosave totally empty drafts
-      if (!title.trim() && !content.trim()) return;
-      const next: Draft = { id: draftId, title, category, content, updatedAt: nowIso() };
+      const contentText = htmlToMarkdown(contentHtml);
+      if (!title.trim() && !contentText.trim()) return;
+      const next: Draft = { id: draftId, title, category, contentHtml, updatedAt: nowIso() };
       upsertDraft(next);
       setDraftsState(loadDrafts());
     }, DRAFT_AUTOSAVE_MS);
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [title, content, category, draftId]);
+  }, [title, contentHtml, category, draftId]);
 
-  const setSelection = (nextStart: number | null, nextEnd: number | null) => {
-    if (!contentRef.current) return;
-    if (nextStart === null || nextEnd === null) return;
-    contentRef.current.focus();
-    contentRef.current.setSelectionRange(nextStart, nextEnd);
+  const focusEditor = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+  };
+
+  const exec = (command: string, value?: string) => {
+    focusEditor();
+    try {
+      document.execCommand(command, false, value);
+    } catch {
+      // ignore
+    }
+    // Sync state from DOM
+    if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
   };
 
   const onFormat = (kind: string) => {
-    if (!contentRef.current) return;
-    if (kind === 'bold') {
-      const r = applyWrap(contentRef.current, content, '**', '**');
-      setContent(r.value);
-      setSelection(r.nextCursorStart, r.nextCursorEnd);
-    } else if (kind === 'italic') {
-      const r = applyWrap(contentRef.current, content, '*', '*');
-      setContent(r.value);
-      setSelection(r.nextCursorStart, r.nextCursorEnd);
-    } else if (kind === 'strike') {
-      const r = applyWrap(contentRef.current, content, '~~', '~~');
-      setContent(r.value);
-      setSelection(r.nextCursorStart, r.nextCursorEnd);
-    } else if (kind === 'quote') {
-      const r = applyPrefixLines(contentRef.current, content, '> ');
-      setContent(r.value);
-      setSelection(r.nextCursorStart, r.nextCursorEnd);
-    } else if (kind === 'code') {
-      const r = applyWrap(contentRef.current, content, '`', '`');
-      setContent(r.value);
-      setSelection(r.nextCursorStart, r.nextCursorEnd);
-    } else if (kind === 'bullets') {
-      const r = applyPrefixLines(contentRef.current, content, '- ');
-      setContent(r.value);
-      setSelection(r.nextCursorStart, r.nextCursorEnd);
-    } else if (kind === 'numbers') {
-      const r = applyPrefixLines(contentRef.current, content, '1. ');
-      setContent(r.value);
-      setSelection(r.nextCursorStart, r.nextCursorEnd);
-    }
+    if (kind === 'bold') exec('bold');
+    else if (kind === 'italic') exec('italic');
+    else if (kind === 'underline') exec('underline');
+    else if (kind === 'strike') exec('strikeThrough');
+    else if (kind === 'quote') exec('formatBlock', 'blockquote');
+    else if (kind === 'code') exec('insertHTML', '<code></code>');
+    else if (kind === 'bullets') exec('insertUnorderedList');
+    else if (kind === 'numbers') exec('insertOrderedList');
   };
 
-  const insertAtCursor = (text: string) => {
-    const ta = contentRef.current;
-    if (!ta) {
-      setContent(prev => prev + text);
-      return;
-    }
-    const start = ta.selectionStart ?? content.length;
-    const end = ta.selectionEnd ?? content.length;
-    const next = content.slice(0, start) + text + content.slice(end);
-    setContent(next);
-    requestAnimationFrame(() => {
-      ta.focus();
-      const cursor = start + text.length;
-      ta.setSelectionRange(cursor, cursor);
-    });
+  const insertHtmlAtCursor = (html: string) => {
+    exec('insertHTML', html);
   };
 
   const handleUploadImage = async (file: File) => {
@@ -285,9 +317,8 @@ export default function CreatePostPage() {
         return;
       }
       setUploadedImages(prev => [{ url, name: file.name }, ...prev]);
-      // Insert markdown image into content (append on a new line)
-      const md = `\n\n![${file.name}](${url})\n`;
-      insertAtCursor(md);
+      // Insert image into rich editor
+      insertHtmlAtCursor(`<p><img src="${url}" alt="${file.name}" style="max-width:100%;height:auto;" /></p><p><br/></p>`);
       setTab('text');
       showToast('Image uploaded', 'success');
     } catch (e) {
@@ -298,7 +329,7 @@ export default function CreatePostPage() {
   };
 
   const handleSaveDraft = () => {
-    const next: Draft = { id: draftId, title, category, content, updatedAt: nowIso() };
+    const next: Draft = { id: draftId, title, category, contentHtml, updatedAt: nowIso() };
     upsertDraft(next);
     setDraftsState(loadDrafts());
     showToast(t('draftSaved'), 'success');
@@ -308,9 +339,14 @@ export default function CreatePostPage() {
     setDraftId(d.id);
     setTitle(d.title || '');
     setCategory(d.category || 'general');
-    setContent(d.content || '');
+    setContentHtml(d.contentHtml || '');
     setDraftsOpen(false);
     showToast(t('draftLoaded'), 'success');
+    requestAnimationFrame(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = d.contentHtml || '';
+      }
+    });
   };
 
   const handleDeleteDraft = (id: string) => {
@@ -322,14 +358,15 @@ export default function CreatePostPage() {
   const handleInsertLink = () => {
     if (!linkUrl.trim()) return;
     const label = (linkText || linkUrl).trim();
-    insertAtCursor(`\n\n[${label}](${linkUrl.trim()})\n`);
+    insertHtmlAtCursor(`<p><a href="${linkUrl.trim()}" target="_blank" rel="noopener noreferrer">${label}</a></p><p><br/></p>`);
     setTab('text');
     setLinkText('');
     setLinkUrl('');
   };
 
   const handlePublish = async () => {
-    if (!title.trim() || !content.trim()) {
+    const markdownContent = htmlToMarkdown(editorRef.current?.innerHTML || contentHtml);
+    if (!title.trim() || !markdownContent.trim()) {
       showToast(t('fillTitleAndContent'), 'error');
       return;
     }
@@ -341,7 +378,7 @@ export default function CreatePostPage() {
 
     setLoading(true);
     try {
-      const contentWithLinks = convertGameMentionsToMarkdown(content);
+      const contentWithLinks = markdownContent;
 
       // Pre-moderate for UX (API also moderates)
       const [titleRes, contentRes] = await Promise.all([
@@ -410,7 +447,7 @@ export default function CreatePostPage() {
     <>
       {loading && <LoadingScreen />}
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 py-6">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="min-w-0">
             <button
@@ -564,6 +601,9 @@ export default function CreatePostPage() {
               <button type="button" onClick={() => onFormat('italic')} className="p-2 rounded hover:bg-gray-100" title={t('italic')}>
                 <Italic className="w-4 h-4" />
               </button>
+              <button type="button" onClick={() => onFormat('underline')} className="p-2 rounded hover:bg-gray-100" title={t('underline')}>
+                <span className="text-sm font-semibold underline">U</span>
+              </button>
               <button type="button" onClick={() => onFormat('strike')} className="p-2 rounded hover:bg-gray-100" title={t('strike')}>
                 <Strikethrough className="w-4 h-4" />
               </button>
@@ -605,64 +645,26 @@ export default function CreatePostPage() {
             {/* Tab content */}
             {tab === 'text' && (
               <div className="relative">
-                <textarea
-                  ref={contentRef}
-                  value={content}
-                  onChange={handleContentTyping}
-                  onKeyDown={handleContentKeyPress}
-                  placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
-                  rows={10}
-                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={() => {
+                    if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+                  }}
+                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
+                  data-placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
+                  style={{
+                    // simple placeholder for contenteditable
+                    position: 'relative'
+                  }}
                 />
-
-                {/* Game Mention Dropdown */}
-                {showMentionDropdown && (
-                  <div
-                    ref={mentionDropdownRef}
-                    className="absolute left-0 bottom-full mb-2 w-full max-w-md bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-hidden flex flex-col"
-                  >
-                    <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200 flex items-center justify-between">
-                      <span>{tChat('linkGames')}</span>
-                      <button
-                        type="button"
-                        onClick={closeMentionDropdown}
-                        className="p-1 text-gray-400 hover:text-gray-600"
-                        aria-label={tCommon('close')}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="px-3 py-2 border-b border-gray-200 bg-white">
-                      <input
-                        value={mentionSearchQuery}
-                        onChange={(e) => handleMentionSearchInputChange(e.target.value)}
-                        onKeyDown={(e) => handleContentKeyPress(e as any)}
-                        placeholder={tChat('searchGame')}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      />
-                    </div>
-                    {mentionResults.length > 0 ? (
-                      <div className="py-1 overflow-y-auto flex-1 min-h-0 pb-1">
-                        {mentionResults.map((game, index) => (
-                          <button
-                            key={game.id}
-                            onClick={() => insertGameMention(game)}
-                            className={`w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors ${
-                              index === selectedMentionIndex ? 'bg-blue-100' : ''
-                            }`}
-                          >
-                            <div className="font-medium text-sm text-gray-900">{game.nameEn || game.name}</div>
-                            {game.yearRelease && <div className="text-xs text-gray-500">{game.yearRelease}</div>}
-                          </button>
-                        ))}
-                      </div>
-                    ) : mentionQuery.length > 0 ? (
-                      <div className="px-3 py-4 text-sm text-gray-500 text-center">{tChat('noGamesFound')}</div>
-                    ) : (
-                      <div className="px-3 py-4 text-sm text-gray-500 text-center">{tChat('typeToSearchGames')}</div>
-                    )}
-                  </div>
-                )}
+                <style jsx>{`
+                  [contenteditable][data-placeholder]:empty:before {
+                    content: attr(data-placeholder);
+                    color: #9ca3af;
+                  }
+                `}</style>
               </div>
             )}
 
