@@ -8,6 +8,7 @@ import Image from 'next/image';
 import ModerationAlert from '@/components/ModerationAlert';
 import ReportContent from '@/components/ReportContent';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
+import Footer from '@/components/Footer';
 import { ForumPost } from '@/types/forum';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -25,6 +26,7 @@ interface Comment {
     name: string;
     avatar: string;
     reputation: number;
+    title?: string | null;
   };
   createdAt: string;
   votes: {
@@ -356,7 +358,7 @@ export default function PostDetailPage() {
                 type="button"
                 onClick={() => handlePollVote(String(o.id))}
                 disabled={pollVoting}
-                className={`w-full text-left rounded-lg border px-3 py-2 transition-colors ${
+                          className={`w-full text-left rounded-lg border px-3 py-2 transition-colors ${
                   selected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white hover:bg-gray-50'
                 } ${pollVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -576,7 +578,8 @@ export default function PostDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="flex-1 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
@@ -587,13 +590,16 @@ export default function PostDetailPage() {
             </div>
           </div>
         </div>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="flex-1 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('postNotFound')}</h1>
@@ -602,12 +608,15 @@ export default function PostDetailPage() {
             </Link>
           </div>
         </div>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-1 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full overflow-x-hidden">
         {/* Back button */}
         <div className="mb-6">
@@ -671,7 +680,9 @@ export default function PostDetailPage() {
                       />
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">{post.author.name}</span>
-                        <span className="text-xs text-gray-500">({post.author.reputation} {t('repShort')})</span>
+                        {post.author.title ? (
+                          <span className="text-xs text-gray-500">({post.author.title})</span>
+                        ) : null}
                       </div>
                     </div>
                     
@@ -707,7 +718,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(post.id, 'up', 'post')}
                           disabled={votingPost}
-                          className={`p-1 rounded-full transition-colors ${
+                          className={`w-8 h-8 inline-flex items-center justify-center rounded-full transition-colors ${
                             localUserVote === 'up'
                               ? 'bg-green-100 text-green-600' 
                               : 'hover:bg-gray-100 text-gray-400'
@@ -719,7 +730,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(post.id, 'down', 'post')}
                           disabled={votingPost}
-                          className={`p-1 rounded-full transition-colors ${
+                          className={`w-8 h-8 inline-flex items-center justify-center rounded-full transition-colors ${
                             localUserVote === 'down'
                               ? 'bg-red-100 text-red-600' 
                               : 'hover:bg-gray-100 text-gray-400'
@@ -749,7 +760,7 @@ export default function PostDetailPage() {
                    <button
                      onClick={() => handleVote(post.id, 'up', 'post')}
                      disabled={votingPost}
-                     className={`p-2 rounded-full transition-colors ${
+                     className={`w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors ${
                        localUserVote === 'up'
                          ? 'bg-green-100 text-green-600' 
                          : 'hover:bg-gray-100 text-gray-400'
@@ -763,7 +774,7 @@ export default function PostDetailPage() {
                    <button
                      onClick={() => handleVote(post.id, 'down', 'post')}
                      disabled={votingPost}
-                     className={`p-2 rounded-full transition-colors ${
+                     className={`w-10 h-10 inline-flex items-center justify-center rounded-full transition-colors ${
                        localUserVote === 'down'
                          ? 'bg-red-100 text-red-600' 
                          : 'hover:bg-gray-100 text-gray-400'
@@ -821,7 +832,9 @@ export default function PostDetailPage() {
                         />
                           <div className="flex items-center space-x-2">
                             <span className="font-medium">{post.author.name}</span>
-                        <span className="text-xs">({post.author.reputation} {t('repShort')})</span>
+                        {post.author.title ? (
+                          <span className="text-xs">({post.author.title})</span>
+                        ) : null}
                           </div>
                       </div>
                       <div className="flex items-center space-x-1">
@@ -995,7 +1008,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(comment.id, 'up', 'comment')}
                           disabled={votingComments.has(comment.id)}
-                          className={`p-1 rounded-full transition-colors ${
+                          className={`w-7 h-7 inline-flex items-center justify-center rounded-full transition-colors ${
                             comment.userVote === 'upvote' 
                               ? 'bg-green-100 text-green-600' 
                               : 'hover:bg-gray-100 text-gray-400'
@@ -1009,7 +1022,7 @@ export default function PostDetailPage() {
                         <button
                           onClick={() => handleVote(comment.id, 'down', 'comment')}
                           disabled={votingComments.has(comment.id)}
-                          className={`p-1 rounded-full transition-colors ${
+                          className={`w-7 h-7 inline-flex items-center justify-center rounded-full transition-colors ${
                             comment.userVote === 'downvote' 
                               ? 'bg-red-100 text-red-600' 
                               : 'hover:bg-gray-100 text-gray-400'
@@ -1034,7 +1047,9 @@ export default function PostDetailPage() {
                             />
                             <div className="flex items-center space-x-1 text-xs sm:text-sm text-gray-500">
                               <span className="font-medium">{comment.author.name}</span>
-                              <span className="text-xs">({comment.author.reputation} {t('repShort')})</span>
+                              {comment.author.title ? (
+                                <span className="text-xs">({comment.author.title})</span>
+                              ) : null}
                             </div>
                           </div>
                           <div className="flex items-center space-x-1 text-xs text-gray-400">
@@ -1279,6 +1294,8 @@ export default function PostDetailPage() {
           type="danger"
         />
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }
