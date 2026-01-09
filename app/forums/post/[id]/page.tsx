@@ -725,52 +725,8 @@ export default function PostDetailPage() {
                   </div>
                 </div>
 
-                {/* Bottom: Author, Likes, Comments, Actions */}
+                {/* Bottom: Likes/Comments + Actions (author shown at top now) */}
                 <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div 
-                        className="w-8 h-8 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
-                        style={{
-                          backgroundImage: `url(${post.author.avatar})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat'
-                        }}
-                      />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{post.author.name}</span>
-                        {post.author.title ? (
-                          <span className="text-xs text-gray-500">• {formatUserTitle(post.author.title)}</span>
-                        ) : null}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {/* Delete button - only show to post author */}
-                      {isAuthenticated && user && post.author.id === user.id && (
-                        <ModernTooltip content={t('deletePostTooltip')} position="top">
-                          <button
-                            onClick={handleDeletePost}
-                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </ModernTooltip>
-                      )}
-                      
-                      <ModernTooltip content={t('reportPostTooltip')} position="top">
-                        <button
-                          onClick={() => handleReport('post', post.id)}
-                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          <Flag className="w-3 h-3" />
-                        </button>
-                      </ModernTooltip>
-                    </div>
-                  </div>
-
-                  {/* Voting buttons and comments */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 text-sm text-gray-500">
                       {/* Vote buttons */}
@@ -780,7 +736,7 @@ export default function PostDetailPage() {
                           disabled={votingPost}
                           className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                             localUserVote === 'up'
-                              ? 'bg-green-100 text-green-600' 
+                              ? 'bg-green-100 text-green-600'
                               : 'hover:bg-gray-100 text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
@@ -792,14 +748,14 @@ export default function PostDetailPage() {
                           disabled={votingPost}
                           className={`w-8 h-8 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
                             localUserVote === 'down'
-                              ? 'bg-red-100 text-red-600' 
+                              ? 'bg-red-100 text-red-600'
                               : 'hover:bg-gray-100 text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <ThumbsDown className="w-3 h-3" />
                         </button>
                       </div>
-                      
+
                       {/* Comments count */}
                       <div className="flex items-center space-x-1">
                         <MessageSquare className="w-3 h-3" />
@@ -807,6 +763,25 @@ export default function PostDetailPage() {
                           {comments.length} {comments.length === 1 ? t('comment') : t('comments')}
                         </span>
                       </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      {isAuthenticated && user && post.author.id === user.id && (
+                        <button
+                          onClick={handleDeletePost}
+                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                          aria-label={t('deletePostTooltip')}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleReport('post', post.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        aria-label={t('reportPostTooltip')}
+                      >
+                        <Flag className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -900,58 +875,38 @@ export default function PostDetailPage() {
                     </div>
                   </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-gray-200 space-y-3 sm:space-y-0">
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{formatDate(post.createdAt)}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <MessageSquare className="w-4 h-4" />
+                          <span>
+                            {comments.length} {comments.length === 1 ? t('comment') : t('comments')}
+                          </span>
+                        </div>
+                      </div>
+
                       <div className="flex items-center space-x-2">
-                        <div 
-                            className="w-12 h-12 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
-                          style={{
-                            backgroundImage: `url(${post.author.avatar})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            backgroundRepeat: 'no-repeat'
-                          }}
-                        />
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">{post.author.name}</span>
-                        {post.author.title ? (
-                          <span className="text-xs">• {formatUserTitle(post.author.title)}</span>
-                        ) : null}
-                          </div>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(post.createdAt)}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <MessageSquare className="w-4 h-4" />
-                        <span>
-                          {comments.length} {comments.length === 1 ? t('comment') : t('comments')}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {/* Delete button - only show to post author */}
-                      {isAuthenticated && user && post.author.id === user.id && (
-                        <ModernTooltip content={t('deletePostTooltip')} position="top">
+                        {isAuthenticated && user && post.author.id === user.id && (
                           <button
                             onClick={handleDeletePost}
                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            aria-label={t('deletePostTooltip')}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        </ModernTooltip>
-                      )}
-                      
-                      <ModernTooltip content={t('reportPostTooltip')} position="top">
+                        )}
+
                         <button
                           onClick={() => handleReport('post', post.id)}
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                          aria-label={t('reportPostTooltip')}
                         >
                           <Flag className="w-4 h-4" />
                         </button>
-                      </ModernTooltip>
                       </div>
                     </div>
                   </div>
