@@ -1847,7 +1847,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                   })()}
 
                   {/* Amazon Associates Disclosure - Breaks out of padding for full width */}
-                  <div className="mt-8 pt-6 border-t border-gray-200 -mx-8 px-8">
+                  <div className="mt-8 pt-6 border-t border-gray-200 -mx-8 px-4">
                     <div className="bg-blue-50 border-l-4 border-blue-400 p-5 rounded-r-lg">
                       <div className="flex">
                         <div className="flex-shrink-0">
