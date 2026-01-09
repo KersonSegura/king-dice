@@ -16,7 +16,7 @@ import ModernTooltip from '@/components/ModernTooltip';
 import RecentGalleryImages from '@/components/RecentGalleryImages';
 import { useGameMentions } from '@/hooks/useGameMentions';
 import { renderContentWithGameLinks } from '@/utils/renderContent';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface Comment {
   id: string;
@@ -49,6 +49,7 @@ export default function PostDetailPage() {
   const t = useTranslations('forums');
   const tCommon = useTranslations('common');
   const tChat = useTranslations('chat');
+  const locale = useLocale();
   const postId = params?.id as string;
   
   const [post, setPost] = useState<ForumPost | null>(null);
@@ -577,18 +578,43 @@ export default function PostDetailPage() {
     });
   };
 
+  const formatUserTitle = (rawTitle?: string | null) => {
+    if (!rawTitle) return '';
+    const extracted = rawTitle.includes('/dice/Titles/')
+      ? (rawTitle.split('/').pop() || '').replace('.svg', '')
+      : rawTitle;
+    const key = extracted
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
+    try {
+      return tCommon(`titles.${key}` as any);
+    } catch {
+      return extracted;
+    }
+  };
+
   const formatCommentTimestamp = (dateString: string) => {
     const d = new Date(dateString);
     const now = new Date();
-    const diffMs = Math.abs(now.getTime() - d.getTime());
-    const oneDayMs = 24 * 60 * 60 * 1000;
 
-    // Recent comment: show only time (hour/min)
-    if (diffMs < oneDayMs) {
-      return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    // When we cross into a different calendar year, show absolute date
+    if (d.getFullYear() !== now.getFullYear()) {
+      return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
     }
-    // Older comment: show date only
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+    const diffMs = d.getTime() - now.getTime(); // negative for past
+    const absSec = Math.abs(diffMs) / 1000;
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+    if (absSec < 60) return rtf.format(Math.round(diffMs / 1000), 'second');
+    if (absSec < 60 * 60) return rtf.format(Math.round(diffMs / (60 * 1000)), 'minute');
+    if (absSec < 24 * 60 * 60) return rtf.format(Math.round(diffMs / (60 * 60 * 1000)), 'hour');
+    if (absSec < 7 * 24 * 60 * 60) return rtf.format(Math.round(diffMs / (24 * 60 * 60 * 1000)), 'day');
+    if (absSec < 30 * 24 * 60 * 60) return rtf.format(Math.round(diffMs / (7 * 24 * 60 * 60 * 1000)), 'week');
+    if (absSec < 365 * 24 * 60 * 60) return rtf.format(Math.round(diffMs / (30 * 24 * 60 * 60 * 1000)), 'month');
+
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   if (loading) {
@@ -715,7 +741,7 @@ export default function PostDetailPage() {
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">{post.author.name}</span>
                         {post.author.title ? (
-                          <span className="text-xs text-gray-500">({post.author.title})</span>
+                          <span className="text-xs text-gray-500">• {formatUserTitle(post.author.title)}</span>
                         ) : null}
                       </div>
                     </div>
@@ -889,7 +915,7 @@ export default function PostDetailPage() {
                           <div className="flex items-center space-x-2">
                             <span className="font-medium">{post.author.name}</span>
                         {post.author.title ? (
-                          <span className="text-xs">({post.author.title})</span>
+                          <span className="text-xs">• {formatUserTitle(post.author.title)}</span>
                         ) : null}
                           </div>
                       </div>
@@ -1058,37 +1084,7 @@ export default function PostDetailPage() {
 
                 {comments.map(comment => (
                   <div key={comment.id} className="border-b border-gray-200 pb-4 last:border-b-0">
-                    <div className="flex items-start space-x-2 sm:space-x-3">
-                      {/* Vote buttons */}
-                      <div className="flex flex-col items-center space-y-1">
-                        <button
-                          onClick={() => handleVote(comment.id, 'up', 'comment')}
-                          disabled={votingComments.has(comment.id)}
-                          className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                            comment.userVote === 'upvote' 
-                              ? 'bg-green-100 text-green-600' 
-                              : 'hover:bg-gray-100 text-gray-400'
-                          } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <ThumbsUp className="w-3 h-3" />
-                        </button>
-                        <span className="text-xs font-medium text-gray-900">
-                          {comment.votes.upvotes - comment.votes.downvotes}
-                        </span>
-                        <button
-                          onClick={() => handleVote(comment.id, 'down', 'comment')}
-                          disabled={votingComments.has(comment.id)}
-                          className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
-                            comment.userVote === 'downvote' 
-                              ? 'bg-red-100 text-red-600' 
-                              : 'hover:bg-gray-100 text-gray-400'
-                          } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <ThumbsDown className="w-3 h-3" />
-                        </button>
-                      </div>
-
-                      {/* Comment content */}
+                    <div className="flex items-start">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3 mb-2">
                           <div className="flex items-center space-x-2 min-w-0">
@@ -1101,10 +1097,10 @@ export default function PostDetailPage() {
                                 backgroundRepeat: 'no-repeat'
                               }}
                             />
-                            <div className="flex items-center space-x-1 text-xs sm:text-sm text-gray-500 min-w-0">
+                            <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 min-w-0">
                               <span className="font-medium truncate">{comment.author.name}</span>
                               {comment.author.title ? (
-                                <span className="text-xs truncate">({comment.author.title})</span>
+                                <span className="text-xs truncate">• {formatUserTitle(comment.author.title)}</span>
                               ) : null}
                             </div>
                           </div>
@@ -1129,7 +1125,35 @@ export default function PostDetailPage() {
                           {renderContentWithGameLinks(comment.content)}
                         </div>
                         
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Vote controls on same line as actions */}
+                          <div className="flex items-center gap-1 mr-2">
+                            <button
+                              onClick={() => handleVote(comment.id, 'up', 'comment')}
+                              disabled={votingComments.has(comment.id)}
+                              className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
+                                comment.userVote === 'upvote'
+                                  ? 'bg-green-100 text-green-600'
+                                  : 'hover:bg-gray-100 text-gray-400'
+                              } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <ThumbsUp className="w-3 h-3" />
+                            </button>
+                            <span className="text-xs font-medium text-gray-700 w-6 text-center">
+                              {comment.votes.upvotes - comment.votes.downvotes}
+                            </span>
+                            <button
+                              onClick={() => handleVote(comment.id, 'down', 'comment')}
+                              disabled={votingComments.has(comment.id)}
+                              className={`w-7 h-7 aspect-square flex-none inline-flex items-center justify-center rounded-full transition-colors ${
+                                comment.userVote === 'downvote'
+                                  ? 'bg-red-100 text-red-600'
+                                  : 'hover:bg-gray-100 text-gray-400'
+                              } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <ThumbsDown className="w-3 h-3" />
+                            </button>
+                          </div>
                           <ModernTooltip content={t('reportCommentTooltip')} position="top">
                             <button
                               onClick={() => handleReport('comment', comment.id)}
