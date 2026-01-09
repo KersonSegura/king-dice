@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ModerationAlert from '@/components/ModerationAlert';
 import ReportContent from '@/components/ReportContent';
 import CommunityGuidelines from '@/components/CommunityGuidelines';
@@ -25,6 +25,7 @@ function ForumsPageContent() {
   const t = useTranslations('forums');
   const tCommon = useTranslations('common');
   const tChat = useTranslations('chat');
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -483,7 +484,7 @@ function ForumsPageContent() {
             <button
               onClick={() => {
                 if (isAuthenticated) {
-                  setShowCreatePost(true);
+                  router.push('/forums/create-post');
                 } else {
                   setShowLoginModal(true);
                 }
