@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ExternalLink, Search, ChevronLeft, ChevronRight, ChevronDown, X, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import LoadingScreen from '@/components/LoadingScreen';
 
 // Amazon Associates disclosure - will be translated in component
@@ -34,9 +34,18 @@ interface ShopItem {
 export default function ShopPageClient() {
   const t = useTranslations('common');
   const tShop = useTranslations('shop');
+  const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Helper function to get translated category name
+  const getCategoryName = (category: Category): string => {
+    if (locale === 'es' && category.nameEs) {
+      return category.nameEs;
+    }
+    return category.nameEn;
+  };
 
   const [allShopItems, setAllShopItems] = useState<ShopItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -269,7 +278,12 @@ export default function ShopPageClient() {
                   }`}
                 >
                   <span className="min-w-0 truncate">
-                    {selectedCategory !== null ? categories.find((c) => c.id === selectedCategory)?.nameEn : tShop('selectCategory')}
+                    {selectedCategory !== null 
+                      ? (() => {
+                          const category = categories.find((c) => c.id === selectedCategory);
+                          return category ? getCategoryName(category) : tShop('selectCategory');
+                        })()
+                      : tShop('selectCategory')}
                   </span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -301,7 +315,7 @@ export default function ShopPageClient() {
                                 : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                             }`}
                           >
-                            {category.nameEn}
+                            {getCategoryName(category)}
                           </button>
                         ))}
                       </div>
@@ -419,14 +433,14 @@ export default function ShopPageClient() {
                   <button
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                    className={`px-3 py-2 rounded-lg font-medium transition-colors flex items-center justify-center ${
                       currentPage === 1
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                     }`}
+                    aria-label={t('previous')}
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    <span>{t('previous')}</span>
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
 
                   {/* Page numbers */}
@@ -471,14 +485,14 @@ export default function ShopPageClient() {
                   <button
                     onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                    className={`px-3 py-2 rounded-lg font-medium transition-colors flex items-center justify-center ${
                       currentPage === totalPages
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                     }`}
+                    aria-label={t('next')}
                   >
-                    <span>{t('next')}</span>
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                 </div>
                 <div className="text-sm text-gray-500">
