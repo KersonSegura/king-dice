@@ -639,9 +639,9 @@ function ForumsPageContent() {
                 
                 {/* Post content - uses full width */}
                 <div className="w-full">
-                  <p className="text-gray-600 mb-4 line-clamp-2 text-sm sm:text-base">
+                  <div className="text-gray-600 mb-4 line-clamp-2 text-sm sm:text-base">
                     {renderContentWithGameLinks(post.content)}
-                  </p>
+                  </div>
 
                   {/* Bottom row: Interactions and actions */}
                   <div className="flex items-center justify-between">

@@ -651,9 +651,9 @@ export default function PostDetailPage() {
 
                 {/* Content */}
                 <div className="prose max-w-none mb-6">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
-                    {renderContentWithGameLinks(post.content)}
-                  </p>
+                  <div className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                    {renderContentWithGameLinks(post.content, false, { renderImages: true })}
+                  </div>
                 </div>
 
                 {/* Bottom: Author, Likes, Comments, Actions */}
@@ -800,9 +800,9 @@ export default function PostDetailPage() {
                   {renderPoll()}
 
                   <div className="prose max-w-none mb-6">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
-                      {renderContentWithGameLinks(post.content)}
-                    </p>
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                      {renderContentWithGameLinks(post.content, false, { renderImages: true })}
+                    </div>
                   </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-gray-200 space-y-3 sm:space-y-0">
@@ -1053,9 +1053,9 @@ export default function PostDetailPage() {
                           </div>
                         </div>
                         
-                        <p className="text-gray-700 mb-2 whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm sm:text-base">
+                        <div className="text-gray-700 mb-2 whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm sm:text-base">
                           {renderContentWithGameLinks(comment.content)}
-                        </p>
+                        </div>
                         
                         <div className="flex justify-end">
                           <ModernTooltip content={t('reportCommentTooltip')} position="top">

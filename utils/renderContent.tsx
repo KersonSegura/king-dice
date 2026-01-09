@@ -6,34 +6,74 @@ import React from 'react';
  */
 export const renderContentWithGameLinks = (
   content: string,
-  isUserContent: boolean = false
+  isUserContent: boolean = false,
+  options?: { renderImages?: boolean }
 ): React.ReactNode => {
+  const renderImages = options?.renderImages ?? false;
   const parts: React.ReactNode[] = [];
-  const linkRegex = /\[([^\]]+)\]\((\/game\/[^\)]+)\)/g;
+
+  // Matches: ![alt](url) OR [text](url)
+  const tokenRegex = /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]+)\]\(([^)]+)\)/g;
   let lastIndex = 0;
   let match;
 
-  // Convert markdown links to anchor tags, keep other text as-is
-  while ((match = linkRegex.exec(content)) !== null) {
+  const isSafeUrl = (url: string) => {
+    const u = url.trim();
+    return /^https?:\/\//i.test(u) || u.startsWith('/') || u.startsWith('#');
+  };
+
+  // Convert markdown tokens to React nodes, keep other text as-is
+  while ((match = tokenRegex.exec(content)) !== null) {
     if (match.index > lastIndex) {
       parts.push(content.slice(lastIndex, match.index));
     }
-    // Use yellow for links in user content (e.g., blue message bubbles), blue for other content
+
+    // Image token
+    if (match[0].startsWith('![')) {
+      const alt = match[1] ?? '';
+      const src = match[2] ?? '';
+      if (renderImages && isSafeUrl(src)) {
+        parts.push(
+          <span key={`${src}-${match.index}`} className="block my-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt={alt} className="max-w-full h-auto rounded-lg border border-gray-200" />
+          </span>
+        );
+      } else {
+        // If images are disabled, drop it from previews (or keep as plain text if desired)
+        parts.push('');
+      }
+      lastIndex = tokenRegex.lastIndex;
+      continue;
+    }
+
+    // Link token
+    const text = match[3] ?? '';
+    const href = match[4] ?? '';
+    if (!isSafeUrl(href)) {
+      parts.push(match[0]);
+      lastIndex = tokenRegex.lastIndex;
+      continue;
+    }
+
+    // Use yellow for links in user content (e.g., blue message bubbles), primary blue for other content
     const linkClassName = isUserContent
-      ? 'underline text-yellow-300 hover:text-yellow-200 break-words'
-      : 'underline text-blue-600 hover:text-blue-700 break-words';
+      ? 'underline text-yellow-300 hover:text-yellow-200 break-words font-medium'
+      : 'underline text-primary-600 hover:text-primary-700 break-words font-medium';
+
     parts.push(
       <a
-        key={`${match[2]}-${match.index}`}
-        href={match[2]}
+        key={`${href}-${match.index}`}
+        href={href}
         className={linkClassName}
-        target="_blank"
-        rel="noreferrer"
+        target={href.startsWith('/') ? undefined : '_blank'}
+        rel={href.startsWith('/') ? undefined : 'noreferrer'}
       >
-        {match[1]}
+        {text || href}
       </a>
     );
-    lastIndex = linkRegex.lastIndex;
+
+    lastIndex = tokenRegex.lastIndex;
   }
 
   if (lastIndex < content.length) {
