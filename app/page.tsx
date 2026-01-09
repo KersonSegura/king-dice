@@ -1869,7 +1869,8 @@ export default function HomePage() {
           description={selectedGalleryImage.description}
           author={{
             name: selectedGalleryImage.author.name,
-            avatar: selectedGalleryImage.author.avatar
+            avatar: selectedGalleryImage.author.avatar,
+            title: (selectedGalleryImage.author as any)?.title ?? null
           }}
           createdAt={selectedGalleryImage.createdAt}
           category={selectedGalleryImage.category}

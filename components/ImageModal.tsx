@@ -38,6 +38,7 @@ interface ImageModalProps {
   author?: {
     name: string;
     avatar: string;
+    title?: string | null;
   };
   createdAt?: string;
   category?: string;
@@ -433,7 +434,7 @@ export default function ImageModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[100] p-0 sm:p-4"
+      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[100] p-0 sm:p-4 overscroll-none touch-none"
       style={{ pointerEvents: 'auto' }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
@@ -445,7 +446,7 @@ export default function ImageModal({
     >
       <div 
         ref={modalContentRef}
-        className="bg-white w-full h-full rounded-none sm:rounded-lg sm:max-w-6xl sm:max-h-[90vh] overflow-hidden flex flex-col sm:flex-row"
+        className="bg-white w-full h-full rounded-none sm:rounded-lg sm:max-w-6xl sm:max-h-[90vh] overflow-hidden flex flex-col sm:flex-row touch-none"
         data-scroll-lock-root
         style={{ pointerEvents: 'auto' }}
         onMouseDown={handleModalContentMouseDown}
@@ -467,7 +468,14 @@ export default function ImageModal({
                 }}
               />
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">{author?.name || tCommon('unknownUser')}</h3>
+                <h3 className="font-semibold text-gray-900 text-sm">
+                  {author?.name || tCommon('unknownUser')}
+                  {author?.title ? (
+                    <span className="font-normal text-gray-500 text-xs ml-1">
+                      • {formatUserTitle(author.title)}
+                    </span>
+                  ) : null}
+                </h3>
                 <p className="text-xs text-gray-500">{createdAt ? formatRelativeTime(createdAt) : ''}</p>
               </div>
             </div>
@@ -480,9 +488,9 @@ export default function ImageModal({
           </div>
 
           {/* Scrollable body (Instagram-like full screen) */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y">
             {/* Image - Full Width */}
-            <div className="w-full bg-gray-100 flex items-center justify-center relative group h-[55dvh] max-h-[70dvh]">
+            <div className="w-full bg-gray-100 flex items-center justify-center relative group h-[55dvh] max-h-[70dvh] touch-none">
               {/* Navigation Arrows */}
               {onNavigate && allImages.length > 1 && (
                 <>
@@ -856,7 +864,7 @@ export default function ImageModal({
         {/* Desktop Layout - Facebook Style */}
         <div className="hidden sm:flex w-full">
         {/* Left Side - Image */}
-        <div className="flex-1 bg-gray-100 flex items-center justify-center relative group min-h-[500px] aspect-square max-w-[576px]">
+        <div className="flex-1 bg-gray-100 flex items-center justify-center relative group min-h-[500px] aspect-square max-w-[576px] touch-none">
           {/* Navigation Arrows */}
           {onNavigate && allImages.length > 1 && (
             <>
@@ -906,7 +914,14 @@ export default function ImageModal({
                   }}
                 />
               <div>
-                <h3 className="font-semibold text-gray-900">{author?.name || tCommon('unknownUser')}</h3>
+                <h3 className="font-semibold text-gray-900">
+                  {author?.name || tCommon('unknownUser')}
+                  {author?.title ? (
+                    <span className="font-normal text-gray-500 text-sm ml-2">
+                      • {formatUserTitle(author.title)}
+                    </span>
+                  ) : null}
+                </h3>
                 <p className="text-sm text-gray-500">{createdAt ? formatDate(createdAt) : ''}</p>
               </div>
             </div>
@@ -921,7 +936,7 @@ export default function ImageModal({
           {/* Content Area */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Post Content */}
-            <div className="p-4 flex-1 overflow-y-auto">
+            <div className="p-4 flex-1 overflow-y-auto overscroll-contain touch-pan-y">
               <div className="flex items-center gap-3 mb-4">
                       {isFeatured && (
                   <span className="px-2 py-1 rounded-full text-xs font-bold bg-[#fbae17] text-white flex items-center gap-1 shadow-sm">

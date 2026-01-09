@@ -2098,7 +2098,8 @@ function CommunityGalleryPageContent() {
           description={selectedImage.description}
           author={{
             name: selectedImage.author.name,
-            avatar: selectedImage.author.avatar
+            avatar: selectedImage.author.avatar,
+            title: (selectedImage.author as any)?.title ?? null
           }}
           createdAt={selectedImage.createdAt}
           category={selectedImage.category}
