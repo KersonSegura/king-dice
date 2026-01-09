@@ -7,6 +7,47 @@ let touchMoveHandler: ((e: TouchEvent) => void) | null = null;
 let wheelHandler: ((e: WheelEvent) => void) | null = null;
 let extraLockedElements: HTMLElement[] = [];
 
+function getEventTargetElement(e: Event): Element | null {
+  const anyEvent = e as any;
+  const rawTarget = anyEvent?.target;
+  if (rawTarget instanceof Element) return rawTarget;
+
+  try {
+    const path = (anyEvent?.composedPath?.() || []) as any[];
+    const firstElement = path.find((n) => n instanceof Element) as Element | undefined;
+    if (firstElement) return firstElement;
+  } catch {
+    // ignore
+  }
+
+  // Fallback: try parentElement if target is a Text node
+  try {
+    if (rawTarget && typeof rawTarget === 'object' && 'parentElement' in rawTarget) {
+      const parent = (rawTarget as any).parentElement;
+      if (parent instanceof Element) return parent;
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
+function findScrollLockRootFromEventTarget(target: Element | null, e: Event): Element | null {
+  if (target?.closest) {
+    const root = target.closest('[data-scroll-lock-root]');
+    if (root) return root;
+  }
+
+  try {
+    const path = ((e as any)?.composedPath?.() || []) as any[];
+    const rootInPath = path.find((n) => n instanceof Element && (n as Element).hasAttribute('data-scroll-lock-root')) as Element | undefined;
+    return rootInPath || null;
+  } catch {
+    return null;
+  }
+}
+
 function findScrollableContainer(element: Element | null, stopAt: Element | null): Element | null {
   if (!element) return null;
   
@@ -101,8 +142,8 @@ export function lockBodyScroll() {
     
     // Prevent touch scrolling on mobile (but allow scrolling within scrollable containers)
     touchMoveHandler = (e: TouchEvent) => {
-      const target = e.target as Element;
-      const root = (target?.closest?.('[data-scroll-lock-root]') as Element | null) ?? null;
+      const target = getEventTargetElement(e);
+      const root = findScrollLockRootFromEventTarget(target, e);
       const scrollable = findScrollableContainer(target, root);
       
       if (!scrollable) {
@@ -131,8 +172,8 @@ export function lockBodyScroll() {
     
     // Prevent wheel scrolling (but allow scrolling within scrollable containers)
     wheelHandler = (e: WheelEvent) => {
-      const target = e.target as Element;
-      const root = (target?.closest?.('[data-scroll-lock-root]') as Element | null) ?? null;
+      const target = getEventTargetElement(e);
+      const root = findScrollLockRootFromEventTarget(target, e);
       const scrollable = findScrollableContainer(target, root);
       
       if (!scrollable) {
