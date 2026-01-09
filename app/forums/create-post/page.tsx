@@ -11,7 +11,6 @@ import {
   Code,
   List,
   ListOrdered,
-  Link as LinkIcon,
   Image as ImageIcon,
   Save,
   Send,
@@ -203,12 +202,12 @@ export default function CreatePostPage() {
   const [loading, setLoading] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [moderationAlert, setModerationAlert] = useState<any>(null);
-  const [tab, setTab] = useState<'text' | 'images' | 'link'>('text');
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('general');
   const [contentHtml, setContentHtml] = useState('');
   const editorRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Drafts
   const [draftId, setDraftId] = useState<string>(() => `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
@@ -216,11 +215,7 @@ export default function CreatePostPage() {
   const [drafts, setDraftsState] = useState<Draft[]>([]);
   const autosaveTimer = useRef<any>(null);
 
-  // Link tab state
-  const [linkText, setLinkText] = useState('');
-  const [linkUrl, setLinkUrl] = useState('');
-
-  // Images tab state
+  // Image upload state (insert into text)
   const [uploading, setUploading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<Array<{ url: string; name: string }>>([]);
 
@@ -267,6 +262,14 @@ export default function CreatePostPage() {
     editorRef.current.focus();
   };
 
+  const escapeHtml = (s: string) =>
+    s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
   const exec = (command: string, value?: string) => {
     focusEditor();
     try {
@@ -283,10 +286,19 @@ export default function CreatePostPage() {
     else if (kind === 'italic') exec('italic');
     else if (kind === 'underline') exec('underline');
     else if (kind === 'strike') exec('strikeThrough');
-    else if (kind === 'quote') exec('formatBlock', 'blockquote');
-    else if (kind === 'code') exec('insertHTML', '<code></code>');
     else if (kind === 'bullets') exec('insertUnorderedList');
     else if (kind === 'numbers') exec('insertOrderedList');
+    else if (kind === 'quote') {
+      const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
+      const text = selText.trim();
+      const body = escapeHtml(text || tf('quote', 'Quote')).replace(/\n/g, '<br/>');
+      exec('insertHTML', `<blockquote><p>${body}</p></blockquote><p><br/></p>`);
+    } else if (kind === 'code') {
+      const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
+      const text = selText.trim();
+      const body = escapeHtml(text || 'code').replace(/\n/g, '\n');
+      exec('insertHTML', `<pre><code>${body}</code></pre><p><br/></p>`);
+    }
   };
 
   const insertHtmlAtCursor = (html: string) => {
@@ -319,7 +331,6 @@ export default function CreatePostPage() {
       setUploadedImages(prev => [{ url, name: file.name }, ...prev]);
       // Insert image into rich editor
       insertHtmlAtCursor(`<p><img src="${url}" alt="${file.name}" style="max-width:100%;height:auto;" /></p><p><br/></p>`);
-      setTab('text');
       showToast('Image uploaded', 'success');
     } catch (e) {
       showToast('Upload failed', 'error');
@@ -353,15 +364,6 @@ export default function CreatePostPage() {
     deleteDraft(id);
     setDraftsState(loadDrafts());
     showToast(t('draftDeleted'), 'success');
-  };
-
-  const handleInsertLink = () => {
-    if (!linkUrl.trim()) return;
-    const label = (linkText || linkUrl).trim();
-    insertHtmlAtCursor(`<p><a href="${linkUrl.trim()}" target="_blank" rel="noopener noreferrer">${label}</a></p><p><br/></p>`);
-    setTab('text');
-    setLinkText('');
-    setLinkUrl('');
   };
 
   const handlePublish = async () => {
@@ -448,7 +450,8 @@ export default function CreatePostPage() {
       {loading && <LoadingScreen />}
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 py-6">
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="px-4 sm:px-0">
+          <div className="flex items-start justify-between gap-4 mb-6">
           <div className="min-w-0">
             <button
               type="button"
@@ -519,39 +522,16 @@ export default function CreatePostPage() {
               </div>
             )}
           </div>
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          {/* Tabs */}
+        <div className="bg-white border border-gray-200 rounded-none shadow-sm overflow-hidden">
+          {/* Header bar */}
           <div className="border-b border-gray-200 bg-gray-50">
             <div className="flex gap-1 p-2">
-              <button
-                type="button"
-                onClick={() => setTab('text')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                  tab === 'text' ? 'bg-white border border-gray-200 text-gray-900' : 'text-gray-600 hover:bg-white/60'
-                }`}
-              >
+              <div className="px-3 py-2 text-sm font-medium text-gray-700">
                 {t('tabText')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab('images')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                  tab === 'images' ? 'bg-white border border-gray-200 text-gray-900' : 'text-gray-600 hover:bg-white/60'
-                }`}
-              >
-                {t('tabImages')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab('link')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium ${
-                  tab === 'link' ? 'bg-white border border-gray-200 text-gray-900' : 'text-gray-600 hover:bg-white/60'
-                }`}
-              >
-                {t('tabLink')}
-              </button>
+              </div>
               <div className="flex-1" />
               <button
                 type="button"
@@ -611,7 +591,7 @@ export default function CreatePostPage() {
               <button type="button" onClick={() => onFormat('quote')} className="p-2 rounded hover:bg-gray-100" title={t('quote')}>
                 <Quote className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => onFormat('code')} className="p-2 rounded hover:bg-gray-100" title={t('code')}>
+              <button type="button" onClick={() => onFormat('code')} className="p-2 rounded hover:bg-gray-100" title={t('codeBlock')}>
                 <Code className="w-4 h-4" />
               </button>
               <div className="w-px h-6 bg-gray-200 mx-1" />
@@ -624,149 +604,49 @@ export default function CreatePostPage() {
               <div className="flex-1" />
               <button
                 type="button"
-                onClick={() => setTab('images')}
+                onClick={() => imageInputRef.current?.click()}
                 className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
-                title={t('tabImages')}
+                title={t('addImage')}
               >
                 <ImageIcon className="w-4 h-4" />
                 {t('addImage')}
               </button>
-              <button
-                type="button"
-                onClick={() => setTab('link')}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
-                title={t('tabLink')}
-              >
-                <LinkIcon className="w-4 h-4" />
-                {t('addLink')}
-              </button>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUploadImage(file);
+                  e.currentTarget.value = '';
+                }}
+              />
             </div>
 
             {/* Tab content */}
-            {tab === 'text' && (
-              <div className="relative">
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  suppressContentEditableWarning
-                  onInput={() => {
-                    if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
-                  }}
-                  className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
-                  data-placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
-                  style={{
-                    // simple placeholder for contenteditable
-                    position: 'relative'
-                  }}
-                />
-                <style jsx>{`
-                  [contenteditable][data-placeholder]:empty:before {
-                    content: attr(data-placeholder);
-                    color: #9ca3af;
-                  }
-                `}</style>
-              </div>
-            )}
-
-            {tab === 'images' && (
-              <div className="space-y-3">
-                <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-white border border-gray-200">
-                      <ImageIcon className="w-5 h-5 text-gray-700" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900">{t('uploadImages')}</div>
-                      <div className="text-xs text-gray-600">{t('uploadImagesHint')}</div>
-                    </div>
-                    <div className="flex-1" />
-                    <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 cursor-pointer text-sm">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={uploading}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUploadImage(file);
-                          e.currentTarget.value = '';
-                        }}
-                      />
-                      <ImageIcon className="w-4 h-4" />
-                      {uploading ? t('uploading') : t('chooseImage')}
-                    </label>
-                  </div>
-                </div>
-
-                {uploadedImages.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-900">{t('uploadedImages')}</div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {uploadedImages.map(img => (
-                        <div key={img.url} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-                          <div className="aspect-video bg-gray-100">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="p-3">
-                            <div className="text-xs text-gray-600 truncate">{img.name}</div>
-                            <div className="mt-2 flex items-center gap-2">
-                              <button
-                                type="button"
-                                className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm hover:bg-gray-800"
-                                onClick={() => {
-                                  insertAtCursor(`\n\n![${img.name}](${img.url})\n`);
-                                  setTab('text');
-                                }}
-                              >
-                                {t('insert')}
-                              </button>
-                              <Link href={img.url} target="_blank" className="text-sm text-primary-600 hover:underline">
-                                {t('open')}
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {tab === 'link' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkText')}</label>
-                    <input
-                      value={linkText}
-                      onChange={e => setLinkText(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      placeholder={t('linkTextPlaceholder')}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkUrl')}</label>
-                    <input
-                      value={linkUrl}
-                      onChange={e => setLinkUrl(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleInsertLink}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50"
-                  disabled={!linkUrl.trim()}
-                >
-                  <LinkIcon className="w-4 h-4" />
-                  {t('insertLink')}
-                </button>
-              </div>
-            )}
+            <div className="relative">
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={() => {
+                  if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
+                }}
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
+                data-placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
+                style={{
+                  position: 'relative'
+                }}
+              />
+              <style jsx>{`
+                [contenteditable][data-placeholder]:empty:before {
+                  content: attr(data-placeholder);
+                  color: #9ca3af;
+                }
+              `}</style>
+            </div>
           </div>
 
           <div className="border-t border-gray-200 bg-white p-4 sm:p-6 flex flex-col sm:flex-row gap-3 justify-end">

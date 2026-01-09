@@ -583,6 +583,7 @@
     "strike": "Strikethrough",
     "quote": "Quote",
     "code": "Inline code",
+    "codeBlock": "Code block",
     "bullets": "Bulleted list",
     "numbers": "Numbered list",
     "enterPostTitle": "Enter your post title...",

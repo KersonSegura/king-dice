@@ -588,6 +588,7 @@
     "strike": "Tachado",
     "quote": "Cita",
     "code": "Código en línea",
+    "codeBlock": "Bloque de código",
     "bullets": "Lista con viñetas",
     "numbers": "Lista numerada",
     "categoryReviews": "Reseñas y Recomendaciones"
