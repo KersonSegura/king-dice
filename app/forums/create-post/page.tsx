@@ -920,12 +920,6 @@ export default function CreatePostPage() {
           </div>
 
           <div className="border-t border-gray-200 bg-white p-4 sm:p-6 flex flex-col sm:flex-row gap-3 justify-end">
-            <Link
-              href="/forums"
-              className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-center"
-            >
-              {tCommon('cancel')}
-            </Link>
             <button
               type="button"
               onClick={handlePublish}
