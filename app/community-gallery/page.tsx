@@ -1099,7 +1099,7 @@ function CommunityGalleryPageContent() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -1391,6 +1391,30 @@ function CommunityGalleryPageContent() {
                 }`}
                 onClick={() => handleImageClick(image)}
               >
+                {/* Mobile feed header (Instagram-like): avatar + username + time */}
+                {viewMode === 'feed' && (
+                  <div className="flex items-center justify-between px-3 py-2 bg-white">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                        {image.author?.avatar ? (
+                          <img
+                            src={image.author.avatar}
+                            alt={image.author.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-gray-900 truncate">
+                          {image.author?.name ?? t('unknownArtist')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {formatDate(image.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="relative aspect-square bg-white">
                   {displayUrl && displayUrl.includes('/gallery/') ? (
                     <div 
@@ -1512,11 +1536,7 @@ function CommunityGalleryPageContent() {
                           {image.description}
                         </p>
                         
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <User className="w-3 h-3" />
-                            <span>{image.author?.name ?? t('unknownArtist')}</span>
-                          </div>
+                        <div className="flex items-center justify-end text-xs text-gray-500">
                           <div className="flex items-center gap-1">
                             {/* Action buttons - only show for image owner */}
                             {isAuthenticated && user && image.author?.id === user.id && (
