@@ -199,13 +199,13 @@ export default function Footer() {
             <p className="text-gray-400 text-sm mb-4">
               {t('getNotified')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 w-full">
               <input
                 type="email"
                 placeholder={t('enterEmail')}
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg sm:rounded-l-lg sm:rounded-r-none focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] text-white placeholder-gray-400"
+                className="w-full min-w-0 flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg sm:rounded-l-lg sm:rounded-r-none focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:border-[#fbae17] text-white placeholder-gray-400"
               />
-              <button className="px-6 py-2 bg-[#fbae17] hover:bg-yellow-600 text-white rounded-lg sm:rounded-l-none sm:rounded-r-lg transition-colors font-medium whitespace-nowrap">
+              <button className="w-full sm:w-auto px-6 py-2 bg-[#fbae17] hover:bg-yellow-600 text-white rounded-lg sm:rounded-l-none sm:rounded-r-lg transition-colors font-medium whitespace-nowrap">
                 {t('subscribe')}
               </button>
             </div>

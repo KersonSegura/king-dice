@@ -95,7 +95,6 @@
     padding: 0;
     width: 100%;
     background-color: #111827; /* gray-900: prevents white flash on iOS overscroll */
-    overscroll-behavior-y: none; /* supported browsers: reduce rubber-band artifacts */
     /* overflow-x: hidden; */ /* Commented out - this was hiding right side content */
     /* height: 100%; */ /* Temporarily commented out - this might be preventing scrolling */
   }
