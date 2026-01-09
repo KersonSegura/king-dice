@@ -202,10 +202,10 @@ export default function ShopPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col w-full overflow-x-hidden">
       {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-white shadow-sm border-b w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full">
           <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
             <ArrowLeft className="w-5 h-5 mr-2" />
             {t('backToHome')}
@@ -213,7 +213,7 @@ export default function ShopPageClient() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 pb-20 w-full min-w-0">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
@@ -234,14 +234,14 @@ export default function ShopPageClient() {
         {!loading && !error && (
           <div className="mb-6 space-y-4">
             {/* Search Bar */}
-            <div className="relative">
+            <div className="relative w-full min-w-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder={tShop('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-0"
               />
             </div>
 
@@ -249,7 +249,7 @@ export default function ShopPageClient() {
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">{tShop('filterByCategory')}</h3>
 
-              <div className="flex flex-col sm:flex-row gap-2 relative">
+              <div className="flex flex-col sm:flex-row gap-2 relative w-full min-w-0">
                 <button
                   onClick={() => setSelectedCategory(null)}
                   className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -335,11 +335,11 @@ export default function ShopPageClient() {
         {/* Shop Cards Grid */}
         {!loading && !error && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8 w-full min-w-0">
               {paginatedShopItems.map((item) => (
                 <div
                   key={item.uniqueKey || item.id || `shop-item-${item.title}`}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full"
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full min-w-0 w-full"
                 >
                   <div className="relative w-full aspect-square bg-white overflow-hidden flex items-center justify-center">
                     {item.imageUrl ? (
