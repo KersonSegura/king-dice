@@ -1133,17 +1133,17 @@ export default function CollectionPage() {
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-primary-500 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between flex-nowrap">
             <Link 
               href={`/profile/${username}`}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
+              className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors whitespace-nowrap flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 flex-shrink-0" />
               <span className="font-medium text-sm sm:text-base">{safeT('backToProfile')}</span>
             </Link>
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate px-2 flex-1 text-center">{safeT('collectionTitle', { username: userProfile.username })}</h1>
+            <div className="flex-1" />
             {isOwnProfile && (
               <button
                 onClick={() => setIsEditingCollection(!isEditingCollection)}
@@ -1159,6 +1159,13 @@ export default function CollectionPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page title (moved from header) */}
+        <div className="mb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+            {safeT('collectionTitle', { username: userProfile.username })}
+          </h1>
+        </div>
+
         {/* Collection Photo */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-[#fbae17] mb-2">{safeT('collection')}</h2>
@@ -1203,11 +1210,11 @@ export default function CollectionPage() {
             <h2 className="text-xl font-semibold text-[#fbae17]">{safeT('favoriteGame')}</h2>
             {favoriteGame ? (
               <Link href={`/game/${favoriteGame.id}`} className="block">
-                <div className="relative aspect-[4/3] bg-transparent rounded-xl overflow-hidden group cursor-pointer flex items-center justify-center">
+                <div className="relative aspect-[4/3] bg-transparent rounded-xl overflow-hidden group cursor-pointer">
                   <img
                     src={favoriteGame.image || '/DefaultDiceAvatar.svg'}
                     alt={favoriteGame.name}
-                    className="max-w-full max-h-full w-auto h-auto object-contain group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-4 right-4 bg-[#fbae17] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
                     <svg className="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
