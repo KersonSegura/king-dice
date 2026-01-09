@@ -109,10 +109,10 @@ function buildInsertPayload(useCamel: boolean, payload: {
 function selectColumns(useCamel: boolean) {
   // Only select columns that exist in the database
   if (useCamel) {
-    return 'id, title, content, category, authorId, votes, replies, createdAt, updatedAt';
+    return 'id, title, content, category, authorId, votes, replies, createdAt, updatedAt, postType, poll';
   }
   // Remove replies_count if it doesn't exist (similar to gallery issue)
-  return 'id, title, content, category, author_id, votes, replies, created_at, updated_at';
+  return 'id, title, content, category, author_id, votes, replies, created_at, updated_at, post_type, poll';
 }
 
 export async function GET(request: NextRequest) {
@@ -228,6 +228,67 @@ export async function GET(request: NextRequest) {
       }
     } catch (voteError) {
       console.warn('Failed to overlay Supabase votes on posts list:', voteError);
+    }
+
+    // Overlay poll results for list preview (best-effort; no-op if table/columns missing)
+    try {
+      const ids = paginatedPosts.map(p => p.id);
+      const pollPostIds = paginatedPosts
+        .filter((p: any) => (p as any).postType === 'poll' && (p as any).poll?.options?.length)
+        .map(p => p.id);
+
+      if (pollPostIds.length > 0) {
+        const { data: pollVoteRows, error: pollVotesError } = await executeSupabaseQuery(
+          () => supabaseAdmin.from('post_poll_votes').select('post_id, option_id, user_id').in('post_id', pollPostIds),
+          { maxRetries: 1, baseDelay: 250, timeout: 8000 }
+        );
+
+        if (pollVotesError) throw pollVotesError;
+
+        const perPostCounts: Record<string, Record<string, number>> = {};
+        const perPostTotal: Record<string, number> = {};
+        const perPostUser: Record<string, string | null> = {};
+
+        pollPostIds.forEach(pid => {
+          perPostCounts[pid] = {};
+          perPostTotal[pid] = 0;
+          perPostUser[pid] = null;
+        });
+
+        (pollVoteRows || []).forEach((r: any) => {
+          const pid = String(r.post_id || '');
+          const oid = String(r.option_id || '');
+          if (!pid || !oid || !perPostCounts[pid]) return;
+          perPostCounts[pid][oid] = (perPostCounts[pid][oid] || 0) + 1;
+          perPostTotal[pid] = (perPostTotal[pid] || 0) + 1;
+          if (userId && r.user_id === userId) {
+            perPostUser[pid] = oid;
+          }
+        });
+
+        for (let i = 0; i < paginatedPosts.length; i++) {
+          const post: any = paginatedPosts[i];
+          if (post?.postType !== 'poll' || !post?.poll?.options?.length) continue;
+          const pid = post.id;
+          const results: Record<string, number> = {};
+          (post.poll.options || []).forEach((o: any) => {
+            const oid = String(o?.id || '');
+            if (!oid) return;
+            results[oid] = perPostCounts[pid]?.[oid] || 0;
+          });
+          paginatedPosts[i] = {
+            ...post,
+            poll: {
+              ...post.poll,
+              results,
+              totalVotes: perPostTotal[pid] || 0,
+              userVoteOptionId: perPostUser[pid] || null
+            }
+          };
+        }
+      }
+    } catch (pollError) {
+      console.warn('Failed to overlay poll results on posts list:', pollError);
     }
 
     return NextResponse.json({ posts: paginatedPosts, cached: false });
