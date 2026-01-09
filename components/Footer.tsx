@@ -4,10 +4,11 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Mail, MessageCircle, Users, Gamepad2, BookOpen, Star, Shield } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function Footer() {
   const t = useTranslations('footer');
+  const locale = useLocale();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -221,21 +222,63 @@ export default function Footer() {
               <p className="text-gray-400 text-sm">
                 © {currentYear} King Dice. {t('allRightsReserved')}
               </p>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:flex md:items-center md:space-x-4 md:gap-0">
-                <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                  {t('privacyPolicy')}
-                </Link>
-                <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
-                  {t('termsOfService')}
-                </Link>
-                <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
-                  <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
-                  {t('communityRules')}
-                </Link>
-                <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
-                  {t('credits')}
-                </Link>
-              </div>
+              {locale === 'es' ? (
+                <>
+                  {/* Mobile: first line 2 cols, second line left/right */}
+                  <div className="text-sm md:hidden space-y-2">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                      <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+                        {t('privacyPolicy')}
+                      </Link>
+                      <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
+                        {t('termsOfService')}
+                      </Link>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                        <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
+                        {t('communityRules')}
+                      </Link>
+                      <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
+                        {t('credits')}
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Desktop: inline */}
+                  <div className="hidden md:flex md:items-center md:space-x-4 text-sm">
+                    <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+                      {t('privacyPolicy')}
+                    </Link>
+                    <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
+                      {t('termsOfService')}
+                    </Link>
+                    <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                      <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
+                      {t('communityRules')}
+                    </Link>
+                    <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
+                      {t('credits')}
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:flex md:items-center md:space-x-4 md:gap-0">
+                  <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+                    {t('privacyPolicy')}
+                  </Link>
+                  <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
+                    {t('termsOfService')}
+                  </Link>
+                  <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                    <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
+                    {t('communityRules')}
+                  </Link>
+                  <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
+                    {t('credits')}
+                  </Link>
+                </div>
+              )}
             </div>
             <div className="mt-4 md:mt-0">
               <p className="text-gray-400 text-sm flex items-center">
