@@ -1337,8 +1337,8 @@ function CommunityGalleryPageContent() {
               ? 'grid-cols-3 gap-0.5' 
               : viewMode === 'feed'
               ? 'grid-cols-1'
-              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4'
-          }`}>
+              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'
+          } ${viewMode === 'feed' ? '-mx-4 sm:mx-0' : ''}`}>
             {filteredImages.map(image => {
               const displayUrl = image.imageUrl || image.thumbnailUrl || '';
               const thumbUrl = image.thumbnailUrl || image.imageUrl || 'https://via.placeholder.com/600?text=Image+Unavailable';
@@ -1346,7 +1346,17 @@ function CommunityGalleryPageContent() {
               return (
               <div 
                 key={image.id} 
-                className={`${viewMode === 'explore' ? 'bg-white overflow-hidden transition-shadow cursor-pointer group' : 'bg-white rounded-lg overflow-hidden transition-shadow cursor-pointer group'} ${featuredIds.has(image.id) ? 'border-2 border-[#fbae17] shadow-lg' : viewMode === 'explore' ? '' : 'shadow-sm border border-gray-200 hover:shadow-md'}`}
+                className={`${
+                  viewMode === 'explore'
+                    ? 'bg-white overflow-hidden transition-shadow cursor-pointer group'
+                    : 'bg-white overflow-hidden transition-shadow cursor-pointer group rounded-none sm:rounded-lg'
+                } ${
+                  featuredIds.has(image.id)
+                    ? 'border-2 border-[#fbae17] shadow-lg'
+                    : viewMode === 'explore'
+                      ? ''
+                      : 'shadow-sm border border-gray-200 hover:shadow-md'
+                } ${viewMode === 'feed' ? 'sm:border border-x-0 sm:border-gray-200' : ''}`}
                 onClick={() => handleImageClick(image)}
               >
                 <div className="relative aspect-square bg-white">

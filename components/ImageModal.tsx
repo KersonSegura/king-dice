@@ -115,6 +115,7 @@ export default function ImageModal({
   const [showImageReportModal, setShowImageReportModal] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [showAllCommentsMobile, setShowAllCommentsMobile] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description || '');
 
@@ -650,7 +651,7 @@ export default function ImageModal({
 
               {/* Comments List - Compact for Mobile */}
               <div className="space-y-3">
-                {comments.slice(0, 5).map((comment) => (
+                {(showAllCommentsMobile ? comments : comments.slice(0, 5)).map((comment) => (
                   <div key={comment.id} className="space-y-2">
                     {/* Main Comment */}
                     <div className="flex space-x-2">
@@ -671,15 +672,151 @@ export default function ImageModal({
                             <span className="text-gray-500 text-xs">{formatRelativeTime(comment.createdAt)}</span>
                           </div>
                           <p className="text-gray-700 text-xs">{comment.content}</p>
+
+                          {/* Comment actions (mobile) */}
+                          <div className="mt-2 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {isAuthenticated && onLikeComment && (
+                                <button
+                                  onClick={() => handleLikeComment(comment.id)}
+                                  className={`flex items-center gap-1 text-[11px] transition-colors ${
+                                    comment.userLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                                  }`}
+                                >
+                                  <Heart className={`w-3 h-3 ${comment.userLiked ? 'fill-current' : ''}`} />
+                                  <span>{comment.likes || 0}</span>
+                                </button>
+                              )}
+
+                              {isAuthenticated && onReplyToComment && (
+                                <button
+                                  onClick={() => {
+                                    setReplyingTo(replyingTo === comment.id ? null : comment.id);
+                                    setReplyContent('');
+                                  }}
+                                  className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-blue-500 transition-colors"
+                                >
+                                  <MessageCircle className="w-3 h-3" />
+                                  <span>{replyingTo === comment.id ? tCommon('cancel') : tGallery('reply')}</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {currentUserId === comment.author.id && onDeleteComment && (
+                                <button
+                                  onClick={() => requestDeleteComment(comment.id)}
+                                  className="text-gray-500 hover:text-red-500 p-1"
+                                  title={tGallery('deleteComment')}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+
+                              {isAuthenticated && onReportComment && (
+                                <button
+                                  onClick={() => handleReportComment(comment.id)}
+                                  className="text-gray-500 hover:text-red-500 p-1"
+                                  title={tGallery('reportComment')}
+                                >
+                                  <Flag className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
+
+                        {/* Reply input (mobile) */}
+                        {replyingTo === comment.id && (
+                          <div className="mt-2 ml-8">
+                            <div className="flex items-center gap-2 border border-gray-300 rounded-full bg-white px-3 py-2 focus-within:border-blue-500 transition-colors">
+                              <textarea
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                placeholder={tGallery('writeReply')}
+                                className="flex-1 bg-transparent outline-none resize-none text-xs overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                                rows={1}
+                                style={{ minHeight: '20px', maxHeight: '80px' }}
+                                onInput={(e) => {
+                                  const target = e.target as HTMLTextAreaElement;
+                                  target.style.height = 'auto';
+                                  target.style.height = target.scrollHeight + 'px';
+                                }}
+                              />
+                              <button
+                                onClick={handleReplySubmit}
+                                disabled={!replyContent.trim() || isSubmittingReply}
+                                className="min-h-0 min-w-0 p-1 bg-transparent text-blue-600 hover:text-blue-700 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors self-center"
+                                aria-label="Send reply"
+                              >
+                                <svg className="w-4 h-4 -mt-[2px]" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Replies (mobile) */}
+                        {(comment as any).replies && (comment as any).replies.length > 0 && (
+                          <div className="mt-2 ml-8 space-y-2">
+                            {(comment as any).replies.map((reply: any) => (
+                              <div key={reply.id} className="bg-gray-100 rounded-lg p-2">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-semibold text-gray-900 text-xs">{reply.author?.name}</span>
+                                  <span className="text-gray-500 text-xs">{formatRelativeTime(reply.createdAt)}</span>
+                                </div>
+                                <p className="text-gray-700 text-xs">{reply.content}</p>
+                                <div className="mt-2 flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    {isAuthenticated && onLikeComment && (
+                                      <button
+                                        onClick={() => handleLikeComment(reply.id)}
+                                        className={`flex items-center gap-1 text-[11px] transition-colors ${
+                                          reply.userLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                                        }`}
+                                      >
+                                        <Heart className={`w-3 h-3 ${reply.userLiked ? 'fill-current' : ''}`} />
+                                        <span>{reply.likes || 0}</span>
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {currentUserId === reply.author?.id && onDeleteComment && (
+                                      <button
+                                        onClick={() => requestDeleteComment(reply.id)}
+                                        className="text-gray-500 hover:text-red-500 p-1"
+                                        title={tGallery('deleteReply')}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                    {isAuthenticated && onReportComment && (
+                                      <button
+                                        onClick={() => handleReportComment(reply.id)}
+                                        className="text-gray-500 hover:text-red-500 p-1"
+                                        title={tGallery('reportReply')}
+                                      >
+                                        <Flag className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
                 
                 {/* Show More Comments Button */}
-                {comments.length > 5 && (
-                  <button className="text-xs text-blue-500 hover:text-blue-600 w-full text-left">
+                {!showAllCommentsMobile && comments.length > 5 && (
+                  <button
+                    onClick={() => setShowAllCommentsMobile(true)}
+                    className="text-xs text-blue-500 hover:text-blue-600 w-full text-left"
+                  >
                     {tGallery('viewAllComments', { count: comments.length })}
                   </button>
                 )}
