@@ -11,6 +11,7 @@ import {
   Code,
   List,
   ListOrdered,
+  Link as LinkIcon,
   Image as ImageIcon,
   Save,
   Send,
@@ -208,6 +209,12 @@ export default function CreatePostPage() {
   const [contentHtml, setContentHtml] = useState('');
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const savedSelectionRef = useRef<Range | null>(null);
+
+  // Link popover state
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkText, setLinkText] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
 
   // Drafts
   const [draftId, setDraftId] = useState<string>(() => `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
@@ -262,6 +269,54 @@ export default function CreatePostPage() {
     editorRef.current.focus();
   };
 
+  const saveSelection = () => {
+    if (typeof window === 'undefined') return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    if (editor.contains(node)) {
+      savedSelectionRef.current = range.cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    if (typeof window === 'undefined') return;
+    const sel = window.getSelection();
+    const range = savedSelectionRef.current;
+    if (!sel || !range) return;
+    try {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch {
+      // ignore
+    }
+  };
+
+  const insertHtmlAtCursorWithCaret = (html: string) => {
+    // expects html to include a unique <span data-kd-caret="..."></span> marker
+    focusEditor();
+    restoreSelection();
+    exec('insertHTML', html);
+    requestAnimationFrame(() => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const marker = editor.querySelector('span[data-kd-caret]') as HTMLSpanElement | null;
+      if (!marker) return;
+      const sel = window.getSelection();
+      if (!sel) return;
+      const r = document.createRange();
+      r.setStartAfter(marker);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      marker.remove();
+      saveSelection();
+    });
+  };
+
   const escapeHtml = (s: string) =>
     s
       .replace(/&/g, '&amp;')
@@ -272,6 +327,7 @@ export default function CreatePostPage() {
 
   const exec = (command: string, value?: string) => {
     focusEditor();
+    restoreSelection();
     try {
       document.execCommand(command, false, value);
     } catch {
@@ -291,13 +347,25 @@ export default function CreatePostPage() {
     else if (kind === 'quote') {
       const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
       const text = selText.trim();
-      const body = escapeHtml(text || tf('quote', 'Quote')).replace(/\n/g, '<br/>');
-      exec('insertHTML', `<blockquote><p>${body}</p></blockquote><p><br/></p>`);
+      if (!text) {
+        const caretId = String(Date.now());
+        insertHtmlAtCursorWithCaret(`<blockquote><p><span data-kd-caret="${caretId}"></span><br/></p></blockquote><p><br/></p>`);
+      } else {
+        const body = escapeHtml(text).replace(/\n/g, '<br/>');
+        const caretId = String(Date.now());
+        insertHtmlAtCursorWithCaret(`<blockquote><p>${body}</p></blockquote><p><span data-kd-caret="${caretId}"></span></p>`);
+      }
     } else if (kind === 'code') {
       const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
       const text = selText.trim();
-      const body = escapeHtml(text || 'code').replace(/\n/g, '\n');
-      exec('insertHTML', `<pre><code>${body}</code></pre><p><br/></p>`);
+      if (!text) {
+        const caretId = String(Date.now());
+        insertHtmlAtCursorWithCaret(`<pre><code><span data-kd-caret="${caretId}"></span></code></pre><p><br/></p>`);
+      } else {
+        const body = escapeHtml(text);
+        const caretId = String(Date.now());
+        insertHtmlAtCursorWithCaret(`<pre><code>${body}</code></pre><p><span data-kd-caret="${caretId}"></span></p>`);
+      }
     }
   };
 
@@ -364,6 +432,19 @@ export default function CreatePostPage() {
     deleteDraft(id);
     setDraftsState(loadDrafts());
     showToast(t('draftDeleted'), 'success');
+  };
+
+  const handleInsertLink = () => {
+    if (!linkUrl.trim()) return;
+    const url = linkUrl.trim();
+    const label = (linkText || (typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '') || url).trim();
+    const caretId = String(Date.now());
+    insertHtmlAtCursorWithCaret(
+      `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a><span data-kd-caret="${caretId}"></span>`
+    );
+    setLinkOpen(false);
+    setLinkText('');
+    setLinkUrl('');
   };
 
   const handlePublish = async () => {
@@ -575,41 +656,56 @@ export default function CreatePostPage() {
 
             {/* Editor toolbar */}
             <div className="flex flex-wrap items-center gap-1 border border-gray-200 rounded-lg p-2 bg-white">
-              <button type="button" onClick={() => onFormat('bold')} className="p-2 rounded hover:bg-gray-100" title={t('bold')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bold')} className="p-2 rounded hover:bg-gray-100" title={t('bold')}>
                 <Bold className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => onFormat('italic')} className="p-2 rounded hover:bg-gray-100" title={t('italic')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('italic')} className="p-2 rounded hover:bg-gray-100" title={t('italic')}>
                 <Italic className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => onFormat('underline')} className="p-2 rounded hover:bg-gray-100" title={t('underline')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('underline')} className="p-2 rounded hover:bg-gray-100" title={t('underline')}>
                 <span className="text-sm font-semibold underline">U</span>
               </button>
-              <button type="button" onClick={() => onFormat('strike')} className="p-2 rounded hover:bg-gray-100" title={t('strike')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('strike')} className="p-2 rounded hover:bg-gray-100" title={t('strike')}>
                 <Strikethrough className="w-4 h-4" />
               </button>
               <div className="w-px h-6 bg-gray-200 mx-1" />
-              <button type="button" onClick={() => onFormat('quote')} className="p-2 rounded hover:bg-gray-100" title={t('quote')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('quote')} className="p-2 rounded hover:bg-gray-100" title={t('quote')}>
                 <Quote className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => onFormat('code')} className="p-2 rounded hover:bg-gray-100" title={t('codeBlock')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('code')} className="p-2 rounded hover:bg-gray-100" title={t('codeBlock')}>
                 <Code className="w-4 h-4" />
               </button>
               <div className="w-px h-6 bg-gray-200 mx-1" />
-              <button type="button" onClick={() => onFormat('bullets')} className="p-2 rounded hover:bg-gray-100" title={t('bullets')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bullets')} className="p-2 rounded hover:bg-gray-100" title={t('bullets')}>
                 <List className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => onFormat('numbers')} className="p-2 rounded hover:bg-gray-100" title={t('numbers')}>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('numbers')} className="p-2 rounded hover:bg-gray-100" title={t('numbers')}>
                 <ListOrdered className="w-4 h-4" />
               </button>
               <div className="flex-1" />
               <button
                 type="button"
+                onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
                 onClick={() => imageInputRef.current?.click()}
                 className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
                 title={t('addImage')}
               >
                 <ImageIcon className="w-4 h-4" />
                 {t('addImage')}
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
+                onClick={() => {
+                  const selText = typeof window !== 'undefined' ? (window.getSelection()?.toString() || '') : '';
+                  setLinkText(selText.trim());
+                  setLinkOpen(v => !v);
+                }}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 inline-flex items-center gap-2"
+                title={t('addLink')}
+              >
+                <LinkIcon className="w-4 h-4" />
+                {t('addLink')}
               </button>
               <input
                 ref={imageInputRef}
@@ -625,6 +721,49 @@ export default function CreatePostPage() {
               />
             </div>
 
+            {linkOpen && (
+              <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkText')}</label>
+                    <input
+                      value={linkText}
+                      onChange={e => setLinkText(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      placeholder={t('linkTextPlaceholder')}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('linkUrl')}</label>
+                    <input
+                      value={linkUrl}
+                      onChange={e => setLinkUrl(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setLinkOpen(false)}
+                  >
+                    {tCommon('cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm hover:bg-gray-800 disabled:opacity-50"
+                    disabled={!linkUrl.trim()}
+                    onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
+                    onClick={handleInsertLink}
+                  >
+                    {t('insertLink')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Tab content */}
             <div className="relative">
               <div
@@ -634,6 +773,9 @@ export default function CreatePostPage() {
                 onInput={() => {
                   if (editorRef.current) setContentHtml(editorRef.current.innerHTML);
                 }}
+                onKeyUp={() => saveSelection()}
+                onMouseUp={() => saveSelection()}
+                onBlur={() => saveSelection()}
                 className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[240px] prose max-w-none"
                 data-placeholder={tf('writePostContent', 'Write your post content... (use @ to mention games)')}
                 style={{
