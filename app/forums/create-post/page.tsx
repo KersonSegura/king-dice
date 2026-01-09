@@ -542,7 +542,7 @@ export default function CreatePostPage() {
               <ArrowLeft className="w-4 h-4" />
               {t('backToForums')}
             </button>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
+            <h1 className="text-xl sm:text-3xl font-semibold text-gray-900 truncate">
               {t('createPostPageTitle')}
             </h1>
           </div>
@@ -551,7 +551,7 @@ export default function CreatePostPage() {
             <button
               type="button"
               onClick={() => setDraftsOpen(v => !v)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap"
             >
               {t('drafts')} ({drafts.length})
               <ChevronDown className="w-4 h-4" />
@@ -609,15 +609,14 @@ export default function CreatePostPage() {
         <div className="bg-white border border-gray-200 rounded-none shadow-sm overflow-hidden">
           {/* Header bar */}
           <div className="border-b border-gray-200 bg-gray-50">
-            <div className="flex gap-1 p-2">
-              <div className="px-3 py-2 text-sm font-medium text-gray-700">
+            <div className="relative flex items-center p-2">
+              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 px-3 py-2 text-sm font-medium text-gray-700">
                 {t('tabText')}
               </div>
-              <div className="flex-1" />
               <button
                 type="button"
                 onClick={handleSaveDraft}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/60 inline-flex items-center gap-2"
+                className="ml-auto px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/60 inline-flex items-center gap-2"
                 title={t('saveDraft')}
               >
                 <Save className="w-4 h-4" />
