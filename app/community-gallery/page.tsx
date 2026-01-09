@@ -1356,7 +1356,11 @@ function CommunityGalleryPageContent() {
                     : viewMode === 'explore'
                       ? ''
                       : 'shadow-sm border border-gray-200 hover:shadow-md'
-                } ${viewMode === 'feed' ? 'sm:border border-x-0 sm:border-gray-200' : ''}`}
+                } ${viewMode === 'feed' ? 'sm:border border-x-0 sm:border-gray-200' : ''} ${
+                  viewMode === 'feed' && featuredIds.has(image.id)
+                    ? "relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[#fbae17] after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-[3px] after:bg-[#fbae17] sm:before:hidden sm:after:hidden"
+                    : ''
+                }`}
                 onClick={() => handleImageClick(image)}
               >
                 <div className="relative aspect-square bg-white">
