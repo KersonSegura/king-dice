@@ -1112,7 +1112,7 @@ export default function CollectionPage() {
               height={64} 
               className="opacity-60 mx-auto mb-4 animate-pulse"
             />
-            <p className="text-gray-300">{safeT('loadingCollection')}</p>
+            <p className="text-gray-300 whitespace-nowrap text-sm">{safeT('loadingCollection')}</p>
           </div>
         </div>
       </div>

@@ -221,7 +221,7 @@ export default function Footer() {
               <p className="text-gray-400 text-sm">
                 © {currentYear} King Dice. {t('allRightsReserved')}
               </p>
-              <div className="flex items-center space-x-4 text-sm">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:flex md:items-center md:space-x-4 md:gap-0">
                 <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
                   {t('privacyPolicy')}
                 </Link>
