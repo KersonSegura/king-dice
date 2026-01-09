@@ -733,6 +733,12 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     return null;
   };
 
+  // Lock background scroll when chat UI is shown (especially on mobile)
+  useEffect(() => {
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -740,12 +746,6 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       </div>
     );
   }
-
-  // Lock background scroll when chat UI is shown (especially on mobile)
-  useEffect(() => {
-    lockBodyScroll();
-    return () => unlockBodyScroll();
-  }, []);
 
   return (
     <>

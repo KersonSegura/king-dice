@@ -584,6 +584,9 @@
     "code": "Inline code",
     "bullets": "Bulleted list",
     "numbers": "Numbered list",
+    "enterPostTitle": "Enter your post title...",
+    "writePostContent": "Write your post content... (use @ to mention games)",
+    "deletePostConfirm": "Are you sure you want to delete this post? This action cannot be undone.",
     "guidelines": "Guidelines"
   },
   "common": {
