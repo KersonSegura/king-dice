@@ -9,6 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import ModerationAlert from '@/components/ModerationAlert';
 import ReportContent from '@/components/ReportContent';
 import CommunityGuidelines from '@/components/CommunityGuidelines';
+import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useChatState } from '@/contexts/ChatStateContext';
@@ -132,6 +133,20 @@ function CommunityGalleryPageContent() {
     tags: [] as string[],
     file: null as File | null
   });
+
+  // Lock background scroll when any modal/popover is open (especially ImageModal)
+  useEffect(() => {
+    const shouldLock =
+      showImageModal || showUploadModal || showGuidelines || showReport || showDeleteConfirm;
+
+    if (shouldLock) lockBodyScroll();
+    else unlockBodyScroll();
+
+    return () => {
+      // Ensure unlock on unmount/navigation
+      unlockBodyScroll();
+    };
+  }, [showImageModal, showUploadModal, showGuidelines, showReport, showDeleteConfirm]);
 
   // Track view mode for responsive transitions (avoid stale closure issues)
   useEffect(() => {
@@ -1535,7 +1550,7 @@ function CommunityGalleryPageContent() {
                         <ExpandableText
                           text={image.description}
                           maxLength={140}
-                          className="text-sm text-gray-600 mb-2 whitespace-pre-wrap"
+                          className="text-sm text-gray-600 mb-2 whitespace-pre-wrap px-2"
                         />
                         
                         <div className="flex items-center justify-end text-xs text-gray-500">
