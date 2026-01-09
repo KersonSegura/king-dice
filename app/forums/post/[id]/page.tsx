@@ -640,6 +640,25 @@ export default function PostDetailPage() {
               <div className="sm:hidden">
                 {/* Top: Title, Category, Date */}
                 <div className="mb-4">
+                  {/* Author (top) */}
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div
+                      className="w-9 h-9 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
+                      style={{
+                        backgroundImage: `url(${post.author.avatar})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat'
+                      }}
+                    />
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm text-gray-900 truncate">{post.author.name}</div>
+                      {post.author.title ? (
+                        <div className="text-xs text-gray-500 truncate">{post.author.title}</div>
+                      ) : null}
+                    </div>
+                  </div>
+
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600">
                       {post.category === 'general' ? t('categoryGeneral') : 
@@ -787,6 +806,28 @@ export default function PostDetailPage() {
 
                 {/* Post content */}
                   <div className="flex-1 min-w-0">
+                  {/* Author (top) */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <div
+                        className="w-12 h-12 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
+                        style={{
+                          backgroundImage: `url(${post.author.avatar})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 truncate">{post.author.name}</div>
+                        {post.author.title ? (
+                          <div className="text-xs text-gray-500 truncate">{post.author.title}</div>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 whitespace-nowrap">{formatDate(post.createdAt)}</div>
+                  </div>
+
                   <div className="flex items-center space-x-2 mb-4">
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600">
                       {post.category === 'general' ? t('categoryGeneral') : 
@@ -1103,13 +1144,13 @@ export default function PostDetailPage() {
                   <div className="text-center py-8">
                     <Image
                       src="/WizardIcon.svg"
-                      alt="Wizard"
+                      alt={t('wizardAlt')}
                       width={96}
                       height={96}
                       className="w-24 h-24 text-gray-400 mx-auto mb-4"
                     />
-                    <p className="text-gray-500">This post is waiting for its first tale.</p>
-                    <p className="text-gray-500">Got something to say? Step into the circle!</p>
+                    <p className="text-gray-500">{t('noCommentsTitle')}</p>
+                    <p className="text-gray-500">{t('noCommentsSubtitle')}</p>
                   </div>
                 )}
               </div>
@@ -1124,12 +1165,12 @@ export default function PostDetailPage() {
                 <div className="flex items-center space-x-2 mb-4">
                   <Image
                     src="/SimilarPostsIcon.svg"
-                    alt="Similar Posts"
+                    alt={t('similarPostsTitle')}
                     width={20}
                     height={20}
                     className="w-5 h-5"
                   />
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">Similar Posts</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('similarPostsTitle')}</h2>
                 </div>
                 <div className="space-y-3">
                   {similarPosts.map(similarPost => (

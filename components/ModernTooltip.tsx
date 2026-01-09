@@ -21,7 +21,22 @@ export default function ModernTooltip({
 }: ModernTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [disabled, setDisabled] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+
+  // Disable tooltips on touch / coarse pointers (prevents "stuck" tooltips on mobile)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const mq = window.matchMedia('(hover: none), (pointer: coarse)');
+      const apply = () => setDisabled(!!mq.matches);
+      apply();
+      mq.addEventListener?.('change', apply);
+      return () => mq.removeEventListener?.('change', apply);
+    } catch {
+      // If matchMedia isn't available, don't disable
+    }
+  }, []);
 
   useEffect(() => {
     if (isVisible && triggerRef.current) {
@@ -29,14 +44,7 @@ export default function ModernTooltip({
       const buttonElement = triggerRef.current.querySelector('button') || triggerRef.current;
       const rect = buttonElement.getBoundingClientRect();
       const tooltipOffset = 8;
-      
-      console.log('Button element positioning:', {
-        isButton: buttonElement.tagName === 'BUTTON',
-        rect,
-        centerX: rect.left + rect.width / 2,
-        centerY: rect.top + rect.height / 2
-      });
-      
+
       switch (position) {
         case 'top':
           setTooltipPosition({
@@ -82,6 +90,10 @@ export default function ModernTooltip({
 
   const arrowColor = getArrowColor();
 
+  if (disabled) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <div 
@@ -89,6 +101,9 @@ export default function ModernTooltip({
         className={`inline-block ${className}`}
         onMouseEnter={showTooltip}
         onMouseLeave={hideTooltip}
+        onClick={hideTooltip}
+        onMouseDown={hideTooltip}
+        onTouchStart={hideTooltip}
       >
         {children}
       </div>
