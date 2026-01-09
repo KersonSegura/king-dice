@@ -538,6 +538,7 @@
     "pollVote": "Vote",
     "pollVotes": "votes",
     "pollTotalVotes": "Total votes",
+    "pollNotConfigured": "Polls aren’t enabled yet. Please try again later.",
     "pleaseEnterComment": "Please enter a comment",
     "pleaseSignInToComment": "Please sign in to comment",
     "writeCommentMention": "Write a comment... (use @ to mention games)",

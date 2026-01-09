@@ -542,6 +542,7 @@
     "pollVote": "Votar",
     "pollVotes": "votos",
     "pollTotalVotes": "Votos totales",
+    "pollNotConfigured": "Las encuestas aún no están habilitadas. Intenta de nuevo más tarde.",
     "pleaseEnterComment": "Por favor ingresa un comentario",
     "pleaseSignInToComment": "Por favor inicia sesión para comentar",
     "writeCommentMention": "Escribe un comentario... (usa @ para mencionar juegos)",

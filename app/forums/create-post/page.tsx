@@ -879,7 +879,14 @@ export default function CreatePostPage() {
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        showToast(err.error || t('postCreateFailed'), 'error');
+        if (err?.errorCode === 'POLL_NOT_CONFIGURED') {
+          showToast(tf('pollNotConfigured', 'Polls are not enabled yet. Please try again later.'), 'error');
+        } else if (err?.errorCode === 'POLL_INVALID') {
+          showToast(tf('fillPoll', 'Please fill in the poll question and at least 2 options.'), 'error');
+        } else {
+          // Always show translated fallback for server failures (prevents English errors leaking into Spanish UI)
+          showToast(t('postCreateFailed'), 'error');
+        }
         return;
       }
 

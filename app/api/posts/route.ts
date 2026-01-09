@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
 
       if (!q || cleaned.length < 2) {
         return NextResponse.json(
-          { error: 'Poll question and at least 2 options are required' },
+          { errorCode: 'POLL_INVALID' },
           { status: 400 }
         );
       }
@@ -360,6 +360,19 @@ export async function POST(request: NextRequest) {
     const { data: newPost, error: createError } = insertResult;
 
     if (createError || !newPost) {
+      const isPoll = postType === 'poll';
+      const msg = createError?.message || '';
+      if (
+        isPoll &&
+        (createError?.code === '42703' ||
+          createError?.code === 'PGRST204' ||
+          /post_type|posttype|poll/i.test(msg))
+      ) {
+        return NextResponse.json(
+          { errorCode: 'POLL_NOT_CONFIGURED' },
+          { status: 500 }
+        );
+      }
       console.error('❌ Failed to create post:', {
         error: createError,
         payload: payload,
@@ -368,7 +381,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { 
-          error: 'Failed to create post',
+          errorCode: 'CREATE_FAILED',
           details: createError?.message || 'Unknown error',
           code: createError?.code
         },
