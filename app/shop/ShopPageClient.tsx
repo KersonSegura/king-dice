@@ -249,10 +249,10 @@ export default function ShopPageClient() {
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">{tShop('filterByCategory')}</h3>
 
-              <div className="flex gap-2 relative">
+              <div className="flex flex-col sm:flex-row gap-2 relative">
                 <button
                   onClick={() => setSelectedCategory(null)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors ${
                     selectedCategory === null
                       ? 'bg-[#ffb905] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
@@ -262,13 +262,13 @@ export default function ShopPageClient() {
                 </button>
                 <button
                   onClick={() => setShowCategoryModal(true)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                  className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-between gap-2 min-w-0 ${
                     selectedCategory !== null
                       ? 'bg-[#ffb905] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                   }`}
                 >
-                  <span>
+                  <span className="min-w-0 truncate">
                     {selectedCategory !== null ? categories.find((c) => c.id === selectedCategory)?.nameEn : tShop('selectCategory')}
                   </span>
                   <ChevronDown className="w-4 h-4" />
