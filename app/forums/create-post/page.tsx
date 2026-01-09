@@ -427,6 +427,37 @@ export default function CreatePostPage() {
     const range = getOrCreateRangeInEditor();
     if (!range) return;
 
+    // Toggle off if already inside inline code (prevent nesting)
+    const sel = window.getSelection();
+    const anchor = sel?.anchorNode ?? null;
+    const existingCode = getClosestEl(anchor, 'code.kd-inline-code') as HTMLElement | null;
+    if (existingCode) {
+      const parent = existingCode.parentNode;
+      if (parent) {
+        const after = existingCode.nextSibling;
+        // Replace with its contents
+        const frag = document.createDocumentFragment();
+        while (existingCode.firstChild) frag.appendChild(existingCode.firstChild);
+        parent.replaceChild(frag, existingCode);
+        // Place caret right after the unwrapped content
+        try {
+          const r = document.createRange();
+          if (after) {
+            r.setStartBefore(after);
+          } else {
+            r.selectNodeContents(parent);
+            r.collapse(false);
+          }
+          r.collapse(true);
+          sel?.removeAllRanges();
+          sel?.addRange(r);
+        } catch {}
+        saveSelection();
+        setContentHtml(editor.innerHTML);
+      }
+      return;
+    }
+
     const codeEl = document.createElement('code');
     codeEl.className = 'kd-inline-code';
 
@@ -468,6 +499,42 @@ export default function CreatePostPage() {
     const range = getOrCreateRangeInEditor();
     if (!range) return;
 
+    // Toggle off if already inside a quote (prevent nesting)
+    const sel = window.getSelection();
+    const anchor = sel?.anchorNode ?? null;
+    const existingBq = getClosestEl(anchor, 'blockquote.kd-blockquote, blockquote') as HTMLElement | null;
+    if (existingBq) {
+      const parent = existingBq.parentNode;
+      if (!parent) return;
+      const after = existingBq.nextSibling;
+      const ps = Array.from(existingBq.querySelectorAll('p'));
+      const currentP = getClosestEl(anchor, 'p') as HTMLParagraphElement | null;
+      const currentIndex = currentP ? ps.indexOf(currentP) : 0;
+
+      const frag = document.createDocumentFragment();
+      const outPs: HTMLParagraphElement[] = [];
+      if (ps.length > 0) {
+        for (const p of ps) {
+          const np = document.createElement('p');
+          np.innerHTML = p.innerHTML?.trim() ? p.innerHTML : '<br/>';
+          frag.appendChild(np);
+          outPs.push(np);
+        }
+      } else {
+        const np = document.createElement('p');
+        np.innerHTML = '<br/>';
+        frag.appendChild(np);
+        outPs.push(np);
+      }
+
+      parent.removeChild(existingBq);
+      parent.insertBefore(frag, after);
+      const target = outPs[Math.max(0, currentIndex)] || outPs[0];
+      if (target) placeCaretAtStart(target);
+      setContentHtml(editor.innerHTML);
+      return;
+    }
+
     const block = document.createElement('blockquote');
     block.className = 'kd-blockquote';
 
@@ -489,52 +556,6 @@ export default function CreatePostPage() {
       const afterP = document.createElement('p');
       afterP.innerHTML = '<br/>';
       block.parentNode?.insertBefore(afterP, block.nextSibling);
-      placeCaretAtStart(afterP);
-    }
-
-    setContentHtml(editor.innerHTML);
-  };
-
-  const insertCodeBlockAtSelection = () => {
-    if (typeof window === 'undefined') return;
-    const editor = editorRef.current;
-    if (!editor) return;
-    focusEditor();
-    restoreSelection();
-    const range = getOrCreateRangeInEditor();
-    if (!range) return;
-
-    const pre = document.createElement('pre');
-    pre.className = 'kd-codeblock';
-    const code = document.createElement('code');
-    code.textContent = '';
-
-    const selText = (window.getSelection()?.toString() || '').trim();
-    if (!selText) {
-      code.textContent = '\u200B';
-    } else {
-      code.textContent = selText;
-    }
-    pre.appendChild(code);
-
-    range.deleteContents();
-    range.insertNode(pre);
-
-    if (!selText) {
-      // caret inside code
-      const r = document.createRange();
-      r.selectNodeContents(code);
-      r.setStart(code.firstChild || code, 0);
-      r.collapse(true);
-      const sel = window.getSelection();
-      sel?.removeAllRanges();
-      sel?.addRange(r);
-      saveSelection();
-    } else {
-      // caret after block
-      const afterP = document.createElement('p');
-      afterP.innerHTML = '<br/>';
-      pre.parentNode?.insertBefore(afterP, pre.nextSibling);
       placeCaretAtStart(afterP);
     }
 
@@ -622,7 +643,6 @@ export default function CreatePostPage() {
     else if (kind === 'numbers') toggleListAtSelection('ol');
     else if (kind === 'quote') insertQuoteAtSelection();
     else if (kind === 'codeInline') insertInlineCodeAtSelection();
-    else if (kind === 'codeBlock') insertCodeBlockAtSelection();
   };
 
   const insertHtmlAtCursor = (html: string) => {
@@ -1125,15 +1145,6 @@ export default function CreatePostPage() {
                   </button>
                   <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('codeInline')} className="p-2 rounded hover:bg-gray-100" title={t('code')}>
                     <Code className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
-                    onClick={() => onFormat('codeBlock')}
-                    className="p-2 rounded hover:bg-gray-100"
-                    title={t('codeBlock')}
-                  >
-                    <span className="text-xs font-mono text-gray-700">{`</>`}</span>
                   </button>
                   <div className="w-px h-6 bg-gray-200 mx-1" />
                   <button type="button" onMouseDown={(e) => { e.preventDefault(); saveSelection(); }} onClick={() => onFormat('bullets')} className="p-2 rounded hover:bg-gray-100" title={t('bullets')}>
