@@ -738,7 +738,7 @@ export default function PostDetailPage() {
                             localUserVote === 'up' ? 'text-green-600' : 'text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <ThumbsUp className="w-3 h-3" />
+                          <ThumbsUp className={`w-3 h-3 ${localUserVote === 'up' ? 'fill-green-200' : 'fill-transparent'}`} />
                         </button>
                         <span className="font-medium">{Math.max(0, post.votes.upvotes - post.votes.downvotes)}</span>
                         <button
@@ -748,7 +748,7 @@ export default function PostDetailPage() {
                             localUserVote === 'down' ? 'text-red-600' : 'text-gray-400'
                           } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <ThumbsDown className="w-3 h-3" />
+                          <ThumbsDown className={`w-3 h-3 ${localUserVote === 'down' ? 'fill-red-200' : 'fill-transparent'}`} />
                         </button>
                       </div>
 
@@ -795,7 +795,7 @@ export default function PostDetailPage() {
                        localUserVote === 'up' ? 'text-green-600' : 'text-gray-400'
                      } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                    >
-                     <ThumbsUp className="w-4 h-4" />
+                     <ThumbsUp className={`w-4 h-4 ${localUserVote === 'up' ? 'fill-green-200' : 'fill-transparent'}`} />
                    </button>
                    <span className="text-sm font-medium text-gray-900">
                      {Math.max(0, post.votes.upvotes - post.votes.downvotes)}
@@ -807,7 +807,7 @@ export default function PostDetailPage() {
                        localUserVote === 'down' ? 'text-red-600' : 'text-gray-400'
                      } ${votingPost ? 'opacity-50 cursor-not-allowed' : ''}`}
                    >
-                     <ThumbsDown className="w-4 h-4" />
+                     <ThumbsDown className={`w-4 h-4 ${localUserVote === 'down' ? 'fill-red-200' : 'fill-transparent'}`} />
                    </button>
                  </div>
 
@@ -1082,7 +1082,7 @@ export default function PostDetailPage() {
                                 comment.userVote === 'upvote' ? 'text-green-600' : 'text-gray-400'
                               } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              <ThumbsUp className="w-3 h-3" />
+                              <ThumbsUp className={`w-3 h-3 ${comment.userVote === 'upvote' ? 'fill-green-200' : 'fill-transparent'}`} />
                             </button>
                             <span className="text-xs font-medium text-gray-700 w-6 text-center">
                               {comment.votes.upvotes - comment.votes.downvotes}
@@ -1094,7 +1094,7 @@ export default function PostDetailPage() {
                                 comment.userVote === 'downvote' ? 'text-red-600' : 'text-gray-400'
                               } ${votingComments.has(comment.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
-                              <ThumbsDown className="w-3 h-3" />
+                              <ThumbsDown className={`w-3 h-3 ${comment.userVote === 'downvote' ? 'fill-red-200' : 'fill-transparent'}`} />
                             </button>
                           </div>
 

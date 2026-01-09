@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface GalleryImage {
   id: string;
@@ -33,6 +34,23 @@ interface RecentGalleryImagesProps {
 export default function RecentGalleryImages({ limit = 4 }: RecentGalleryImagesProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const tGallery = useTranslations('gallery');
+  const tCommon = useTranslations('common');
+
+  const categoryLabel = (category: string) => {
+    // Try gallery translations first, then common (used elsewhere), then raw
+    try {
+      const anyT = tGallery as any;
+      if (typeof anyT?.has === 'function' && anyT.has(category)) return tGallery(category as any);
+    } catch {}
+    if (category === 'the-kings-card') return tGallery('cardOfTheWeek');
+    if (category === 'dice-throne' || category === 'dice-of-the-week') return tGallery('diceOfTheWeek');
+    try {
+      const anyC = tCommon as any;
+      if (typeof anyC?.has === 'function' && anyC.has(`categories.${category}`)) return tCommon(`categories.${category}` as any);
+    } catch {}
+    return category;
+  };
 
   useEffect(() => {
     const fetchRecentImages = async () => {
@@ -97,10 +115,10 @@ export default function RecentGalleryImages({ limit = 4 }: RecentGalleryImagesPr
             />
           </div>
           <div className="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
-            {image.votes.upvotes - image.votes.downvotes} likes
+            {image.votes.upvotes - image.votes.downvotes} {tCommon('likes')}
           </div>
           <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded">
-            {image.category}
+            {categoryLabel(image.category)}
           </div>
         </Link>
       ))}
