@@ -728,11 +728,17 @@ export default function PostDetailPage() {
     );
   }
 
-  const contentStyle = {
-    transform: isDragging ? `translateX(${dragX}px)` : 'translateX(0)',
-    transition: isDragging ? 'none' : 'transform 0.3s ease-out',
-    opacity: isDragging ? Math.max(0.7, 1 - dragX / 600) : 1,
-  };
+  const contentStyle = isDragging
+    ? {
+        transform: `translateX(${dragX}px)`,
+        transition: 'none',
+        opacity: Math.max(0.7, 1 - dragX / 600),
+      }
+    : {
+        transform: 'translateX(0)',
+        transition: 'transform 0.3s ease-out',
+        opacity: 1,
+      };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
