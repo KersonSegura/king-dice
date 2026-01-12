@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import ImageModal from '@/components/ImageModal';
 import ProfileUploadModal from '@/components/ProfileUploadModal';
+import PhotoSelectionModal from '@/components/PhotoSelectionModal';
 import { useTranslations } from 'next-intl';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import {
@@ -320,6 +321,7 @@ export default function CollectionPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<'collection-photo' | 'favorite-card'>('collection-photo');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPhotoSelectionModal, setShowPhotoSelectionModal] = useState(false);
   const [uploadingCollectionPhoto, setUploadingCollectionPhoto] = useState(false);
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
   const [pendingRemoveFeatured, setPendingRemoveFeatured] = useState<null | 'favorite-card' | 'collection-photo'>(null);
@@ -895,12 +897,70 @@ export default function CollectionPage() {
   // Upload handlers
   const handleCollectionPhotoUpload = () => {
     setUploadCategory('collection-photo');
-    setShowUploadModal(true);
+    setShowPhotoSelectionModal(true);
   };
 
   const handleFavoriteCardUpload = () => {
     setUploadCategory('favorite-card');
-    setShowUploadModal(true);
+    setShowPhotoSelectionModal(true);
+  };
+
+  // Handle selecting existing image
+  const handleSelectExistingImage = async (imageUrl: string) => {
+    if (!userProfile?.id) return;
+
+    const isCollectionPhoto = uploadCategory === 'collection-photo';
+    
+    if (isCollectionPhoto) {
+      setUploadingCollectionPhoto(true);
+    } else {
+      setUploadingFavoriteCard(true);
+    }
+
+    try {
+      let email = userProfile.email;
+      if (!email && userProfile.id) {
+        try {
+          const profileResponse = await fetch(`/api/users/profile?username=${userProfile.username}`);
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            email = profileData.user?.email || '';
+          }
+        } catch (e) {
+          console.error('Error fetching email:', e);
+        }
+      }
+
+      const updateResponse = await fetch('/api/users/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userProfile.id,
+          username: userProfile.username,
+          email: email || user?.email || '',
+          [isCollectionPhoto ? 'collectionPhoto' : 'favoriteCard']: imageUrl
+        })
+      });
+
+      if (updateResponse.ok) {
+        setUserProfile(prev => prev ? { 
+          ...prev, 
+          [isCollectionPhoto ? 'collectionPhoto' : 'favoriteCard']: imageUrl 
+        } : null);
+        
+        await loadUserProfile();
+        showToast(isCollectionPhoto ? 'Collection photo updated!' : 'Favorite card updated!', 'success');
+      }
+    } catch (error) {
+      console.error(`Error selecting ${uploadCategory}:`, error);
+      showToast(`Failed to select ${uploadCategory}`, 'error');
+    } finally {
+      if (isCollectionPhoto) {
+        setUploadingCollectionPhoto(false);
+      } else {
+        setUploadingFavoriteCard(false);
+      }
+    }
   };
 
   const handleModalUpload = async (file: File, description: string, category: string) => {
@@ -1193,15 +1253,18 @@ export default function CollectionPage() {
                 </button>
               )}
             </div>
-          ) : isEditingCollection ? (
+          ) : (
             <button 
-              onClick={handleCollectionPhotoUpload}
-              className="w-full aspect-[16/9] bg-gray-800 rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700 transition-colors"
+              onClick={isOwnProfile ? handleCollectionPhotoUpload : undefined}
+              disabled={!isOwnProfile}
+              className={`w-full aspect-[16/9] bg-gray-800 rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center text-gray-400 transition-colors ${
+                isOwnProfile ? 'cursor-pointer hover:bg-gray-700' : 'cursor-default'
+              }`}
             >
               <Camera className="w-12 h-12 mb-2" />
-              <span className="text-sm font-medium">{uploadingCollectionPhoto ? 'Uploading...' : 'Add Collection Photo'}</span>
+              <span className="text-sm font-medium">{isOwnProfile ? (uploadingCollectionPhoto ? 'Uploading...' : 'Add Collection Photo') : safeT('noCollectionPhoto')}</span>
             </button>
-          ) : null}
+          )}
         </div>
 
         {/* Favorite Card and Favorite Game Image Row */}
@@ -1266,21 +1329,17 @@ export default function CollectionPage() {
                   </button>
                 )}
               </div>
-            ) : isEditingCollection ? (
+            ) : (
               <button 
-                onClick={handleFavoriteCardUpload}
-                className="w-full aspect-[4/3] bg-gray-800 rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700 transition-colors"
+                onClick={isOwnProfile ? handleFavoriteCardUpload : undefined}
+                disabled={!isOwnProfile}
+                className={`w-full aspect-[4/3] bg-gray-800 rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center text-gray-400 transition-colors ${
+                  isOwnProfile ? 'cursor-pointer hover:bg-gray-700' : 'cursor-default'
+                }`}
               >
                 <Camera className="w-12 h-12 mb-2" />
                 <span className="text-sm font-medium">{uploadingFavoriteCard ? 'Uploading...' : safeT('noFavoriteCard')}</span>
               </button>
-            ) : (
-              <div className="aspect-[4/3] bg-gray-800 rounded-xl border-2 border-dashed border-gray-700 flex items-center justify-center">
-                <div className="text-center text-gray-400">
-                  <Camera className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm text-gray-300">{safeT('noFavoriteCard')}</p>
-                </div>
-              </div>
             )}
           </div>
         </div>
@@ -1404,6 +1463,19 @@ export default function CollectionPage() {
       )}
 
       {/* Profile Upload Modal */}
+      <PhotoSelectionModal
+        isOpen={showPhotoSelectionModal}
+        onClose={() => setShowPhotoSelectionModal(false)}
+        onSelectExisting={handleSelectExistingImage}
+        onUploadNew={() => {
+          setShowPhotoSelectionModal(false);
+          setShowUploadModal(true);
+        }}
+        category={uploadCategory}
+        userImages={userImages}
+        isLoadingImages={false}
+      />
+
       <ProfileUploadModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}

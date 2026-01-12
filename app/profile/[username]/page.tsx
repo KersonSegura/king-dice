@@ -12,6 +12,7 @@ import ImageModal from '@/components/ImageModal';
 import FriendsFollowersSection from '@/components/FriendsFollowersSection';
 import ProfileColorCustomizer from '@/components/ProfileColorCustomizer';
 import ProfileUploadModal from '@/components/ProfileUploadModal';
+import PhotoSelectionModal from '@/components/PhotoSelectionModal';
 import LoadingScreen from '@/components/LoadingScreen';
 import { getTranslatedTitle } from '@/lib/title-translations';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
@@ -1017,13 +1018,49 @@ export default function UserProfilePage() {
   // Open upload modal for collection photo
   const handleCollectionPhotoUpload = () => {
     setUploadCategory('collection-photo');
-    setShowUploadModal(true);
+    setShowPhotoSelectionModal(true);
   };
 
   // Open upload modal for favorite card
   const handleFavoriteCardUpload = () => {
     setUploadCategory('favorite-card');
-    setShowUploadModal(true);
+    setShowPhotoSelectionModal(true);
+  };
+
+  // Handle selecting existing image
+  const handleSelectExistingImage = async (imageUrl: string) => {
+    if (!userProfile?.id) return;
+
+    const isCollectionPhoto = uploadCategory === 'collection-photo';
+
+    try {
+      // Update user profile
+      const updateResponse = await fetch('/api/users/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userProfile.id,
+          username: userProfile.username,
+          email: userProfile.email,
+          [isCollectionPhoto ? 'collectionPhoto' : 'favoriteCard']: imageUrl
+        })
+      });
+
+      if (updateResponse.ok) {
+        setUserProfile(prev => prev ? { 
+          ...prev, 
+          [isCollectionPhoto ? 'collectionPhoto' : 'favoriteCard']: imageUrl 
+        } : null);
+        
+        // Refresh entire profile to show updated image
+        await loadUserProfile();
+
+        showToast(isCollectionPhoto ? t('collectionPhotoUploaded') : t('favoriteCardUploaded'), 'success');
+      }
+    } catch (error) {
+      console.error(`Error selecting ${uploadCategory}:`, error);
+      showToast(t('failedToUpload', { type: uploadCategory }), 'error');
+    }
   };
 
   // Handle upload from modal
@@ -1212,8 +1249,8 @@ export default function UserProfilePage() {
     await loadImageComments(galleryImage.id);
     
     // Initialize like state from API-provided userVote (if available)
-    setImageLikes(prev => ({
-      ...prev,
+      setImageLikes(prev => ({
+        ...prev,
       [galleryImage.id]: (galleryImage as any).userVote === 'up'
     }));
     
@@ -1922,18 +1959,18 @@ export default function UserProfilePage() {
                   </div>
 
                   {/* When editing: show Edit List button below the title (all locales) */}
-                  {isEditingCollection && (
-                    <button
-                      onClick={() => setShowGamesListModal(true)}
+                      {isEditingCollection && (
+                        <button
+                          onClick={() => setShowGamesListModal(true)}
                       className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1 w-fit"
-                      style={{ color: profileColors.cover }}
-                    >
-                      <span>{t('editList')}</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </button>
-                  )}
+                          style={{ color: profileColors.cover }}
+                        >
+                          <span>{t('editList')}</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                          </svg>
+                        </button>
+                      )}
 
                   <div 
                     className="relative space-y-2 flex-1 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
@@ -2029,8 +2066,11 @@ export default function UserProfilePage() {
                         </>
                       ) : (
                         <button 
-                          onClick={handleFavoriteCardUpload}
-                          className="w-full h-full flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={isOwnProfile ? handleFavoriteCardUpload : undefined}
+                          disabled={!isOwnProfile}
+                          className={`w-full h-full flex flex-col items-center justify-center text-gray-400 transition-colors ${
+                            isOwnProfile ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'
+                          }`}
                         >
                           <Camera className="w-12 h-12 mb-2" />
                           <span className="text-sm font-medium">
@@ -2068,8 +2108,11 @@ export default function UserProfilePage() {
                       </>
                     ) : (
                       <button 
-                        onClick={handleCollectionPhotoUpload}
-                        className="w-full h-full flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={isOwnProfile ? handleCollectionPhotoUpload : undefined}
+                        disabled={!isOwnProfile}
+                        className={`w-full h-full flex flex-col items-center justify-center text-gray-400 transition-colors ${
+                          isOwnProfile ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'
+                        }`}
                       >
                         <Camera className="w-12 h-12 mb-2" />
                         <span className="text-sm font-medium">
@@ -2261,6 +2304,19 @@ export default function UserProfilePage() {
       />
 
       {/* Profile Upload Modal */}
+      <PhotoSelectionModal
+        isOpen={showPhotoSelectionModal}
+        onClose={() => setShowPhotoSelectionModal(false)}
+        onSelectExisting={handleSelectExistingImage}
+        onUploadNew={() => {
+          setShowPhotoSelectionModal(false);
+          setShowUploadModal(true);
+        }}
+        category={uploadCategory}
+        userImages={userImages}
+        isLoadingImages={false}
+      />
+
       <ProfileUploadModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
