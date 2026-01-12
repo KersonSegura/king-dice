@@ -119,6 +119,13 @@ export default function ImageModal({
   const [showAllCommentsMobile, setShowAllCommentsMobile] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description || '');
+  
+  // Swipe down to close gesture state
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [startTime, setStartTime] = useState(0);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Translation hooks - must be called unconditionally
   // Wrap in try-catch at usage sites if needed, but hooks must be called
@@ -432,10 +439,77 @@ export default function ImageModal({
     mousedownStartedInsideRef.current = false;
   };
 
+  // Touch handlers for swipe down to close
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Only allow dragging from the top area (header or image area)
+    // Don't allow dragging if starting from comments section
+    const target = e.target as HTMLElement;
+    const isCommentsArea = target.closest('.comments-section') || 
+                          target.closest('textarea') ||
+                          target.closest('button');
+    
+    if (isCommentsArea) {
+      return; // Don't interfere with comments interaction
+    }
+    
+    const isDraggableArea = target.closest('.drag-handle') || 
+                           target.closest('img') || 
+                           (target.closest('.sm\\:hidden') && 
+                            !target.closest('.comments-section')); // Mobile layout container but not comments
+    
+    if (isDraggableArea) {
+      setIsDragging(true);
+      const touchY = e.touches[0].clientY;
+      setStartY(touchY);
+      setStartTime(Date.now());
+      setDragY(0);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - startY;
+    
+    // Only allow dragging down (positive deltaY)
+    if (deltaY > 0) {
+      setDragY(deltaY);
+      // Prevent scrolling while dragging
+      e.preventDefault();
+    } else {
+      // If dragging up, reset
+      setDragY(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    const threshold = 150; // Minimum drag distance to close
+    const dragDuration = Date.now() - startTime;
+    const velocity = dragY / Math.max(dragDuration, 1); // pixels per ms
+    
+    // Close if dragged down enough or if velocity is high (swipe gesture)
+    if (dragY > threshold || (dragY > 50 && velocity > 0.5)) {
+      onClose();
+    } else {
+      // Animate back to original position
+      setIsDragging(false);
+      setDragY(0);
+      setStartY(0);
+      setStartTime(0);
+    }
+  };
+
   return (
     <div 
       className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[100] p-0 sm:p-4 overscroll-none touch-none"
-      style={{ pointerEvents: 'auto' }}
+      style={{ 
+        pointerEvents: 'auto',
+        opacity: isDragging ? Math.max(0.3, 1 - dragY / 400) : 1,
+        transition: isDragging ? 'none' : 'opacity 0.3s ease-out'
+      }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
         // If mousedown is on backdrop, mark that it didn't start inside
@@ -453,9 +527,22 @@ export default function ImageModal({
         onClick={handleModalContentClick}
       >
         {/* Mobile Layout - Instagram Style */}
-        <div className="sm:hidden flex flex-col h-full">
+        <div 
+          className="sm:hidden flex flex-col h-full drag-handle"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{
+            transform: isDragging ? `translateY(${dragY}px)` : 'translateY(0)',
+            transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+            opacity: isDragging ? Math.max(0.7, 1 - dragY / 600) : 1,
+          }}
+        >
+          {/* Drag indicator bar at top */}
+          <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mt-2 mb-1 drag-handle" />
+          
           {/* Header with Avatar, User, Date, and Close Button */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 drag-handle">
             <div className="flex items-center space-x-3">
               <div 
                 className="w-8 h-8 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
@@ -490,7 +577,7 @@ export default function ImageModal({
           {/* Scrollable body (Instagram-like full screen) */}
           <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y">
             {/* Image - Full Width */}
-            <div className="w-full bg-gray-100 flex items-center justify-center relative group h-[55dvh] max-h-[70dvh] touch-none">
+            <div className="w-full bg-gray-100 flex items-center justify-center relative group h-[55dvh] max-h-[70dvh] touch-none drag-handle">
               {/* Navigation Arrows */}
               {onNavigate && allImages.length > 1 && (
                 <>
@@ -624,7 +711,7 @@ export default function ImageModal({
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-gray-200 p-4">
+            <div className="border-t border-gray-200 p-4 comments-section">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">
                 {tGallery('comments')} ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
               </h3>
