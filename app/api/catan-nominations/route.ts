@@ -238,11 +238,30 @@ export async function DELETE() {
   try {
     console.log('🗑️ API - Clearing all nominations...');
     
+    // First, delete all votes (to avoid foreign key constraints)
+    // Try both possible table names
+    try {
+      await supabaseAdmin
+        .from('catan_nomination_votes')
+        .delete()
+        .neq('id', 0); // Delete all
+    } catch (voteError1) {
+      try {
+        await supabaseAdmin
+          .from('catan_nominations_votes')
+          .delete()
+          .neq('id', 0); // Delete all
+      } catch (voteError2) {
+        console.log('⚠️ Could not clear votes table (may not exist or already empty)');
+      }
+    }
+    
     // Delete all existing nominations
+    // Use a proper delete query - Supabase requires a filter, so we'll use a condition that matches all
     const { data, error } = await supabaseAdmin
       .from('catan_nominations')
       .delete()
-      .neq('id', 0); // Delete all (neq with impossible condition)
+      .gte('id', 0); // Delete all (id is always >= 0)
     
     if (error) {
       console.error('❌ API - Error clearing nominations:', error);
