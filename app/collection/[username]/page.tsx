@@ -1450,64 +1450,64 @@ export default function CollectionPage() {
                 <span className="text-sm font-medium">{uploadingFavoriteCard ? 'Uploading...' : safeT('noFavoriteCard')}</span>
               </button>
             )}
+          </div>
+        </div>
 
-            {/* Favorite Categories */}
-            <div className="mt-6 space-y-2">
-              <h3 className="text-lg font-semibold text-[#fbae17]">{safeT('favoriteGameCategories')}</h3>
-              {isEditingCollection && isOwnProfile ? (
-                <div className="space-y-3">
-                  <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
-                    <div className="grid grid-cols-2 gap-2">
-                      {gameCategories.map((category) => (
-                        <button
-                          key={category.value}
-                          onClick={() => handleToggleFavoriteGame(category.value)}
-                          disabled={!editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            editingFavoriteGames.includes(category.value)
-                              ? 'text-white bg-[#fbae17]'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          } ${
-                            !editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3
-                              ? 'opacity-50 cursor-not-allowed'
-                              : 'cursor-pointer'
-                          }`}
-                        >
-                          {getGameCategoryLabel(category.value)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400">
-                      {safeT('selectFavoriteCategories')} ({editingFavoriteGames.length}/3 {safeT('selected')})
-                    </p>
+        {/* Favorite Categories Section */}
+        <div className="mb-8 space-y-2">
+          <h3 className="text-lg font-semibold text-[#fbae17]">{safeT('favoriteGameCategories')}</h3>
+          {isEditingCollection && isOwnProfile ? (
+            <div className="space-y-3">
+              <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
+                <div className="grid grid-cols-2 gap-2">
+                  {gameCategories.map((category) => (
                     <button
-                      onClick={handleSaveFavoriteGames}
-                      className="px-4 py-2 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-lg text-sm font-medium transition-colors"
+                      key={category.value}
+                      onClick={() => handleToggleFavoriteGame(category.value)}
+                      disabled={!editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        editingFavoriteGames.includes(category.value)
+                          ? 'text-white bg-[#fbae17]'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      } ${
+                        !editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'cursor-pointer'
+                      }`}
                     >
-                      {tCommon('save')}
+                      {getGameCategoryLabel(category.value)}
                     </button>
-                  </div>
+                  ))}
                 </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">
+                  {safeT('selectFavoriteCategories')} ({editingFavoriteGames.length}/3 {safeT('selected')})
+                </p>
+                <button
+                  onClick={handleSaveFavoriteGames}
+                  className="px-4 py-2 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  {tCommon('save')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {userProfile.favoriteGames && userProfile.favoriteGames.length > 0 ? (
+                userProfile.favoriteGames.map((category, index) => (
+                  <span 
+                    key={index} 
+                    className="px-4 py-1.5 rounded-full text-sm font-medium bg-[#fbae17] text-white"
+                  >
+                    {getGameCategoryLabel(category)}
+                  </span>
+                ))
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {userProfile.favoriteGames && userProfile.favoriteGames.length > 0 ? (
-                    userProfile.favoriteGames.map((category, index) => (
-                      <span 
-                        key={index} 
-                        className="px-4 py-1.5 rounded-full text-sm font-medium bg-[#fbae17] text-white"
-                      >
-                        {getGameCategoryLabel(category)}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-sm italic text-gray-400">{safeT('noFavoriteCategoriesSelected')}</p>
-                  )}
-                </div>
+                <p className="text-sm italic text-gray-400">{safeT('noFavoriteCategoriesSelected')}</p>
               )}
             </div>
-          </div>
+          )}
         </div>
 
         {/* All Games Grid */}
