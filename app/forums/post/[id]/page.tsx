@@ -1349,6 +1349,7 @@ export default function PostDetailPage() {
           </div>
         </div>
       </div>
+      <Footer />
 
       {/* Moderation Alert */}
       {moderationAlert && (
@@ -1403,8 +1404,6 @@ export default function PostDetailPage() {
         cancelText={tCommon('cancel')}
         type="danger"
       />
-      </div>
-      <Footer />
     </div>
   );
 }
