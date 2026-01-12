@@ -1235,6 +1235,7 @@ export default function PostDetailPage() {
                 )}
               </div>
             </div>
+            </div>
           </div>
 
           {/* Right Sidebar */}
@@ -1358,6 +1359,7 @@ export default function PostDetailPage() {
             </div>
           </div>
         </div>
+      </div>
       </div>
       <Footer />
       {moderationAlert && (
