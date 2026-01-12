@@ -1772,15 +1772,10 @@ export function BoardleGame({}: BoardleGameProps) {
     return 'w-6 h-6 sm:w-8 sm:h-8'; // 24x24 on mobile, 32x32 on desktop
   };
 
-  // Helper function to get line break positions for smartphone view
-  const getLineBreakPositions = () => {
+  // Store line break positions when game loads - use useMemo to calculate once
+  // This ensures the layout stays consistent (2 lines if needed) even when letters are entered
+  const lineBreakPositions = React.useMemo(() => {
     if (!targetGameData) return [];
-    
-    // Only apply wrapping logic on mobile view (sm and below)
-    // On desktop (lg and above), all games should fit in one line
-    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-      return []; // No line breaks on desktop
-    }
     
     const name = targetGameData.name;
     const breakPositions = [];
@@ -1815,7 +1810,14 @@ export function BoardleGame({}: BoardleGameProps) {
       }
     }
     
+    // Return break positions - they will be used consistently throughout the game
+    // The responsive classes (sm:hidden) will handle desktop vs mobile display
     return breakPositions;
+  }, [targetGameData?.name]);
+
+  // Helper function to get line break positions for smartphone view (now just returns stored value)
+  const getLineBreakPositions = () => {
+    return lineBreakPositions;
   };
 
   // Function to render individual letter inputs
@@ -1833,14 +1835,14 @@ export function BoardleGame({}: BoardleGameProps) {
           const isSpecialChar = ['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar);
           const isFlipping = flippingTiles.includes(index);
           
-          // Add line break at natural break points
+          // Add line break at natural break points - use basis-full to force new line
           const shouldBreakLine = lineBreakPositions.includes(index);
           
           if (isSpace) {
             // Render a space indicator
             return (
               <React.Fragment key={index}>
-                {shouldBreakLine && <div className="w-full" />}
+                {shouldBreakLine && <div className="basis-full w-full h-0" />}
               <div
                   className={`${tileSize} bg-gray-300 border-2 border-gray-400 rounded flex items-center justify-center`}
               />
@@ -1850,7 +1852,7 @@ export function BoardleGame({}: BoardleGameProps) {
             // Render special character (non-editable)
             return (
               <React.Fragment key={index}>
-                {shouldBreakLine && <div className="w-full" />}
+                {shouldBreakLine && <div className="basis-full w-full h-0" />}
               <div
                   className={`${tileSize} bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold`}
               >
@@ -1862,7 +1864,7 @@ export function BoardleGame({}: BoardleGameProps) {
             // Render input for regular letters with flip animation
             return (
               <React.Fragment key={index}>
-                {shouldBreakLine && <div className="w-full" />}
+                {shouldBreakLine && <div className="basis-full w-full h-0" />}
                 <div className="relative">
                 <input
                   id={`letter-input-${index}`}
@@ -2065,7 +2067,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 if (targetChar === ' ') {
                   return (
                     <React.Fragment key={index}>
-                      {shouldBreakLine && <div className="w-full" />}
+                      {shouldBreakLine && <div className="basis-full w-full h-0" />}
                       <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />
                     </React.Fragment>
                   );
@@ -2123,7 +2125,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 if (targetChar === ' ') {
                   return (
                     <React.Fragment key={j}>
-                      {shouldBreakLine && <div className="w-full" />}
+                      {shouldBreakLine && <div className="basis-full w-full h-0" />}
                       <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border-2 border-gray-300 rounded" />
                     </React.Fragment>
                   );
@@ -2428,7 +2430,10 @@ export function BoardleGame({}: BoardleGameProps) {
                       {/* Clues Button for Smartphone View */}
                       <button
                         onClick={() => setShowCluesPopup(true)}
-                        className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                        className="sm:hidden px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2"
+                        style={{ backgroundColor: '#fbae17' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e09d14'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                       >
                         <Lightbulb className="w-4 h-4" />
                         {tBoardle('cluesCount', { count: revealedClues.length })}
@@ -2493,7 +2498,10 @@ export function BoardleGame({}: BoardleGameProps) {
                       {/* Clues Button for Smartphone View */}
                       <button
                         onClick={() => setShowCluesPopup(true)}
-                        className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                        className="sm:hidden px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2"
+                        style={{ backgroundColor: '#fbae17' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e09d14'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                       >
                         <Lightbulb className="w-4 h-4" />
                         {tBoardle('cluesCount', { count: revealedClues.length })}
@@ -2549,7 +2557,10 @@ export function BoardleGame({}: BoardleGameProps) {
                        {/* Clues Button for Smartphone View */}
                        <button
                          onClick={() => setShowCluesPopup(true)}
-                         className="sm:hidden px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                         className="sm:hidden px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2"
+                        style={{ backgroundColor: '#fbae17' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e09d14'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                        >
                          <Lightbulb className="w-4 h-4" />
                          {tBoardle('cluesCount', { count: revealedClues.length })}
@@ -2930,11 +2941,18 @@ export function BoardleGame({}: BoardleGameProps) {
           onClick={() => setShowRules(false)}
         >
           <div 
-            className="bg-white rounded-lg max-w-md w-full max-h-[calc(100vh-2rem)] flex flex-col shadow-2xl"
+            className="bg-white rounded-lg max-w-md w-full max-h-[calc(100vh-2rem)] flex flex-col shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
+            <button
+              onClick={() => setShowRules(false)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors z-10"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <div className="p-6 overflow-y-auto flex-1">
-              <h3 className="text-xl font-bold mb-4">{tBoardle('howToPlayBoardle')}</h3>
+              <h3 className="text-xl font-bold mb-4 pr-6">{tBoardle('howToPlayBoardle')}</h3>
               <div className="space-y-3 text-sm">
                 <p><strong>{tBoardle('titleModeLabel')}</strong></p>
                 <p>• {tBoardle('titleModeRule1')}</p>
