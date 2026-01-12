@@ -194,6 +194,8 @@
     },
     "noBioWrittenYet": "No bio written yet.",
     "noFavoriteCategoriesSelected": "No favorite categories selected yet",
+    "selectFavoriteCategories": "Select your favorite game categories",
+    "selected": "selected",
     "gamesListTop10": "Games List - Top 10",
     "editList": "Edit List",
     "noCollectionPhoto": "No collection photo",

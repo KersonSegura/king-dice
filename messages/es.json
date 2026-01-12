@@ -194,6 +194,8 @@
     },
     "noBioWrittenYet": "Aún no se ha escrito una biografía.",
     "noFavoriteCategoriesSelected": "Aún no se han seleccionado categorías favoritas",
+    "selectFavoriteCategories": "Selecciona tus categorías de juegos favoritas",
+    "selected": "seleccionadas",
     "gamesListTop10": "Lista de Juegos - Top 10",
     "editList": "Editar Lista",
     "noCollectionPhoto": "No hay foto de colección",

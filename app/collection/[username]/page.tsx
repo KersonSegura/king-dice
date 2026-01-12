@@ -36,6 +36,7 @@ interface UserProfile {
   email?: string;
   collectionPhoto?: string;
   favoriteCard?: string;
+  favoriteGames?: string[];
   gamesList?: Array<{id: number, name: string, year: number, image: string}>;
 }
 
@@ -325,6 +326,7 @@ export default function CollectionPage() {
   const [uploadingCollectionPhoto, setUploadingCollectionPhoto] = useState(false);
   const [uploadingFavoriteCard, setUploadingFavoriteCard] = useState(false);
   const [pendingRemoveFeatured, setPendingRemoveFeatured] = useState<null | 'favorite-card' | 'collection-photo'>(null);
+  const [editingFavoriteGames, setEditingFavoriteGames] = useState<string[]>([]);
 
   // Prevent background scrolling when modals are open (mobile + desktop)
   useEffect(() => {
@@ -403,6 +405,15 @@ export default function CollectionPage() {
       setTempGamesList([]);
     }
   }, [showGamesListModal, userProfile?.gamesList]);
+
+  // Initialize editing favorite games when editing starts
+  useEffect(() => {
+    if (isEditingCollection && userProfile?.favoriteGames) {
+      setEditingFavoriteGames([...userProfile.favoriteGames]);
+    } else if (!isEditingCollection) {
+      setEditingFavoriteGames([]);
+    }
+  }, [isEditingCollection, userProfile?.favoriteGames]);
 
   // Debounced search - useCallback to prevent recreation
   const searchGames = useCallback(async (query: string) => {
@@ -847,6 +858,104 @@ export default function CollectionPage() {
   const handleRemoveGame = (gameId: number) => {
     setTempGamesList((items) => items.filter((item) => item.id !== gameId));
     showToast('Game removed from collection', 'success', 1500);
+  };
+
+  // Game categories list (same as profile page)
+  const gameCategories = [
+    { value: 'Strategy', key: 'strategy' },
+    { value: 'Family', key: 'family' },
+    { value: 'Party', key: 'party' },
+    { value: 'Cooperative', key: 'cooperative' },
+    { value: 'Competitive', key: 'competitive' },
+    { value: 'Deck Building', key: 'deckBuilding' },
+    { value: 'Worker Placement', key: 'workerPlacement' },
+    { value: 'Area Control', key: 'areaControl' },
+    { value: 'Drafting', key: 'drafting' },
+    { value: 'Engine Building', key: 'engineBuilding' },
+    { value: 'Trading', key: 'trading' },
+    { value: 'Negotiation', key: 'negotiation' },
+    { value: 'Deduction', key: 'deduction' },
+    { value: 'Memory', key: 'memory' },
+    { value: 'Pattern Recognition', key: 'patternRecognition' },
+    { value: 'Social Deduction', key: 'socialDeduction' },
+    { value: 'Role Playing', key: 'rolePlaying' },
+    { value: 'Miniatures', key: 'miniatures' },
+    { value: 'Legacy', key: 'legacy' },
+    { value: 'Campaign', key: 'campaign' },
+    { value: 'Solo', key: 'solo' },
+    { value: 'Two Player', key: 'twoPlayer' },
+    { value: 'Quick Play', key: 'quickPlay' },
+    { value: 'Heavy Strategy', key: 'heavyStrategy' },
+    { value: 'Light Strategy', key: 'lightStrategy' },
+    { value: 'Euro Game', key: 'euroGame' },
+    { value: 'Ameritrash', key: 'ameritrash' },
+    { value: 'Abstract', key: 'abstract' },
+    { value: 'Thematic', key: 'thematic' },
+    { value: 'Historical', key: 'historical' },
+    { value: 'Fantasy', key: 'fantasy' },
+    { value: 'Sci-Fi', key: 'sciFi' },
+    { value: 'Horror', key: 'horror' },
+    { value: 'Adventure', key: 'adventure' }
+  ] as const;
+
+  const getGameCategoryLabel = (categoryValue: string) => {
+    const match = gameCategories.find(c => c.value === categoryValue);
+    return match ? safeT(`gameCategories.${match.key}`) : categoryValue;
+  };
+
+  const handleToggleFavoriteGame = (category: string) => {
+    setEditingFavoriteGames(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else if (prev.length < 3) {
+        return [...prev, category];
+      } else {
+        showToast('You can only select up to 3 favorite game categories!', 'error');
+        return prev;
+      }
+    });
+  };
+
+  const handleSaveFavoriteGames = async () => {
+    if (!userProfile?.id) return;
+
+    try {
+      let email = userProfile.email;
+      if (!email && userProfile.id) {
+        try {
+          const profileResponse = await fetch(`/api/users/profile?username=${userProfile.username}`);
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            email = profileData.user?.email || '';
+          }
+        } catch (e) {
+          console.error('Error fetching email:', e);
+        }
+      }
+
+      const response = await fetch('/api/users/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userProfile.id,
+          username: userProfile.username,
+          email: email || user?.email || '',
+          favoriteGames: editingFavoriteGames
+        })
+      });
+
+      if (response.ok) {
+        setUserProfile(prev => prev ? { ...prev, favoriteGames: editingFavoriteGames } : null);
+        showToast('Favorite categories updated!', 'success');
+        await loadUserProfile();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(`Failed to update categories: ${errorData.error || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error updating favorite games:', error);
+      showToast('Failed to update favorite categories', 'error');
+    }
   };
 
   // Save reordered games list
@@ -1341,6 +1450,63 @@ export default function CollectionPage() {
                 <span className="text-sm font-medium">{uploadingFavoriteCard ? 'Uploading...' : safeT('noFavoriteCard')}</span>
               </button>
             )}
+
+            {/* Favorite Categories */}
+            <div className="mt-4 space-y-2">
+              <h3 className="text-lg font-semibold text-[#fbae17]">{safeT('favoriteGameCategories')}</h3>
+              {isEditingCollection && isOwnProfile ? (
+                <div className="space-y-3">
+                  <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
+                    <div className="grid grid-cols-2 gap-2">
+                      {gameCategories.map((category) => (
+                        <button
+                          key={category.value}
+                          onClick={() => handleToggleFavoriteGame(category.value)}
+                          disabled={!editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            editingFavoriteGames.includes(category.value)
+                              ? 'text-white bg-[#fbae17]'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          } ${
+                            !editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'cursor-pointer'
+                          }`}
+                        >
+                          {getGameCategoryLabel(category.value)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-400">
+                      {safeT('selectFavoriteCategories')} ({editingFavoriteGames.length}/3 {safeT('selected')})
+                    </p>
+                    <button
+                      onClick={handleSaveFavoriteGames}
+                      className="px-4 py-2 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      {tCommon('save')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {userProfile.favoriteGames && userProfile.favoriteGames.length > 0 ? (
+                    userProfile.favoriteGames.map((category, index) => (
+                      <span 
+                        key={index} 
+                        className="px-3 py-1 rounded-full text-sm font-medium bg-[#fbae17]/20 text-[#fbae17] border border-[#fbae17]/30"
+                      >
+                        {getGameCategoryLabel(category)}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-sm italic text-gray-400">{safeT('noFavoriteCategoriesSelected')}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
