@@ -155,7 +155,7 @@
     "edit": "Edit",
     "bio": "Bio",
     "tellUsAboutYourself": "Tell us about yourself...",
-    "favoriteGameCategories": "Favorite Game Categories (Select up to 3)",
+    "favoriteGameCategories": "Favorite Game Categories",
     "gameCategories": {
       "strategy": "Strategy",
       "family": "Family",

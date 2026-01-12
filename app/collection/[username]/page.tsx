@@ -1452,7 +1452,7 @@ export default function CollectionPage() {
             )}
 
             {/* Favorite Categories */}
-            <div className="mt-4 space-y-2">
+            <div className="mt-6 space-y-2">
               <h3 className="text-lg font-semibold text-[#fbae17]">{safeT('favoriteGameCategories')}</h3>
               {isEditingCollection && isOwnProfile ? (
                 <div className="space-y-3">
@@ -1496,7 +1496,7 @@ export default function CollectionPage() {
                     userProfile.favoriteGames.map((category, index) => (
                       <span 
                         key={index} 
-                        className="px-3 py-1 rounded-full text-sm font-medium bg-[#fbae17]/20 text-[#fbae17] border border-[#fbae17]/30"
+                        className="px-4 py-1.5 rounded-full text-sm font-medium bg-[#fbae17] text-white"
                       >
                         {getGameCategoryLabel(category)}
                       </span>
