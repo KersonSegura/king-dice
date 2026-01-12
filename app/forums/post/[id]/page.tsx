@@ -1351,52 +1351,54 @@ export default function PostDetailPage() {
       </div>
       </div>
       <Footer />
-      {moderationAlert && (
-        <ModerationAlert
-          result={moderationAlert.result}
-          type={moderationAlert.type}
-          onDismiss={() => setModerationAlert(null)}
-          showDetails={true}
+      <>
+        {moderationAlert && (
+          <ModerationAlert
+            result={moderationAlert.result}
+            type={moderationAlert.type}
+            onDismiss={() => setModerationAlert(null)}
+            showDetails={true}
+          />
+        )}
+        {showReport && reportingContent && (
+          <ReportContent
+            contentType={reportingContent.type === 'post' ? 'forum_post' : 'comment'}
+            contentId={reportingContent.id}
+            onReport={(report) => {
+              console.log('Report submitted:', report);
+              setShowReport(false);
+              setReportingContent(null);
+            }}
+            onClose={() => {
+              setShowReport(false);
+              setReportingContent(null);
+            }}
+          />
+        )}
+        <ConfirmationDialog
+          isOpen={showDeletePostConfirm}
+          onClose={() => setShowDeletePostConfirm(false)}
+          onConfirm={confirmDeletePost}
+          title={t('deletePost')}
+          message={t('deletePostConfirm')}
+          confirmText={tCommon('delete')}
+          cancelText={tCommon('cancel')}
+          type="danger"
         />
-      )}
-      {showReport && reportingContent && (
-        <ReportContent
-          contentType={reportingContent.type === 'post' ? 'forum_post' : 'comment'}
-          contentId={reportingContent.id}
-          onReport={(report) => {
-            console.log('Report submitted:', report);
-            setShowReport(false);
-            setReportingContent(null);
-          }}
+        <ConfirmationDialog
+          isOpen={showDeleteCommentConfirm}
           onClose={() => {
-            setShowReport(false);
-            setReportingContent(null);
+            setShowDeleteCommentConfirm(false);
+            setCommentToDelete(null);
           }}
+          onConfirm={confirmDeleteComment}
+          title={t('deleteComment')}
+          message={t('deleteCommentConfirm')}
+          confirmText={tCommon('delete')}
+          cancelText={tCommon('cancel')}
+          type="danger"
         />
-      )}
-      <ConfirmationDialog
-        isOpen={showDeletePostConfirm}
-        onClose={() => setShowDeletePostConfirm(false)}
-        onConfirm={confirmDeletePost}
-        title={t('deletePost')}
-        message={t('deletePostConfirm')}
-        confirmText={tCommon('delete')}
-        cancelText={tCommon('cancel')}
-        type="danger"
-      />
-      <ConfirmationDialog
-        isOpen={showDeleteCommentConfirm}
-        onClose={() => {
-          setShowDeleteCommentConfirm(false);
-          setCommentToDelete(null);
-        }}
-        onConfirm={confirmDeleteComment}
-        title={t('deleteComment')}
-        message={t('deleteCommentConfirm')}
-        confirmText={tCommon('delete')}
-        cancelText={tCommon('cancel')}
-        type="danger"
-      />
+      </>
     </div>
   );
 }
