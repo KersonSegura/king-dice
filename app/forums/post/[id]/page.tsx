@@ -728,6 +728,12 @@ export default function PostDetailPage() {
     );
   }
 
+  const contentStyle = {
+    transform: isDragging ? `translateX(${dragX}px)` : 'translateX(0)',
+    transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+    opacity: isDragging ? Math.max(0.7, 1 - dragX / 600) : 1,
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="flex-1 py-8">
@@ -737,11 +743,7 @@ export default function PostDetailPage() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{
-          transform: isDragging ? `translateX(${dragX}px)` : 'translateX(0)',
-          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
-          opacity: isDragging ? Math.max(0.7, 1 - dragX / 600) : 1,
-        }}
+        style={contentStyle}
       >
         {/* Back button */}
         <div className="mb-6">
@@ -1351,54 +1353,52 @@ export default function PostDetailPage() {
       </div>
       </div>
       <Footer />
-      <>
-        {moderationAlert && (
-          <ModerationAlert
-            result={moderationAlert.result}
-            type={moderationAlert.type}
-            onDismiss={() => setModerationAlert(null)}
-            showDetails={true}
-          />
-        )}
-        {showReport && reportingContent && (
-          <ReportContent
-            contentType={reportingContent.type === 'post' ? 'forum_post' : 'comment'}
-            contentId={reportingContent.id}
-            onReport={(report) => {
-              console.log('Report submitted:', report);
-              setShowReport(false);
-              setReportingContent(null);
-            }}
-            onClose={() => {
-              setShowReport(false);
-              setReportingContent(null);
-            }}
-          />
-        )}
-        <ConfirmationDialog
-          isOpen={showDeletePostConfirm}
-          onClose={() => setShowDeletePostConfirm(false)}
-          onConfirm={confirmDeletePost}
-          title={t('deletePost')}
-          message={t('deletePostConfirm')}
-          confirmText={tCommon('delete')}
-          cancelText={tCommon('cancel')}
-          type="danger"
+      {moderationAlert && (
+        <ModerationAlert
+          result={moderationAlert.result}
+          type={moderationAlert.type}
+          onDismiss={() => setModerationAlert(null)}
+          showDetails={true}
         />
-        <ConfirmationDialog
-          isOpen={showDeleteCommentConfirm}
-          onClose={() => {
-            setShowDeleteCommentConfirm(false);
-            setCommentToDelete(null);
+      )}
+      {showReport && reportingContent && (
+        <ReportContent
+          contentType={reportingContent.type === 'post' ? 'forum_post' : 'comment'}
+          contentId={reportingContent.id}
+          onReport={(report) => {
+            console.log('Report submitted:', report);
+            setShowReport(false);
+            setReportingContent(null);
           }}
-          onConfirm={confirmDeleteComment}
-          title={t('deleteComment')}
-          message={t('deleteCommentConfirm')}
-          confirmText={tCommon('delete')}
-          cancelText={tCommon('cancel')}
-          type="danger"
+          onClose={() => {
+            setShowReport(false);
+            setReportingContent(null);
+          }}
         />
-      </>
+      )}
+      <ConfirmationDialog
+        isOpen={showDeletePostConfirm}
+        onClose={() => setShowDeletePostConfirm(false)}
+        onConfirm={confirmDeletePost}
+        title={t('deletePost')}
+        message={t('deletePostConfirm')}
+        confirmText={tCommon('delete')}
+        cancelText={tCommon('cancel')}
+        type="danger"
+      />
+      <ConfirmationDialog
+        isOpen={showDeleteCommentConfirm}
+        onClose={() => {
+          setShowDeleteCommentConfirm(false);
+          setCommentToDelete(null);
+        }}
+        onConfirm={confirmDeleteComment}
+        title={t('deleteComment')}
+        message={t('deleteCommentConfirm')}
+        confirmText={tCommon('delete')}
+        cancelText={tCommon('cancel')}
+        type="danger"
+      />
     </div>
   );
 }
