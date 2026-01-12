@@ -1493,7 +1493,7 @@ export default function CollectionPage() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
               {userProfile.favoriteGames && userProfile.favoriteGames.length > 0 ? (
                 userProfile.favoriteGames.map((category, index) => (
                   <span 
@@ -1504,7 +1504,7 @@ export default function CollectionPage() {
                   </span>
                 ))
               ) : (
-                <p className="text-sm italic text-gray-400">{safeT('noFavoriteCategoriesSelected')}</p>
+                <p className="text-sm italic text-gray-400 text-center md:text-left">{safeT('noFavoriteCategoriesSelected')}</p>
               )}
             </div>
           )}
