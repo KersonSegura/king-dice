@@ -777,7 +777,8 @@
     "saving": "Saving...",
     "update": "Update",
     "submit": "Submit",
-    "selectAStar": "Select a star"
+    "selectAStar": "Select a star",
+    "selectYourRating": "Select your rating"
   },
   "allGames": {
     "title": "All Games",

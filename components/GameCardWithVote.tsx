@@ -47,6 +47,7 @@ interface GameCardWithVoteProps {
 
 export default function GameCardWithVote({ game, voteData, imagePriority = false }: GameCardWithVoteProps) {
   const t = useTranslations('header');
+  const tGame = useTranslations('game');
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -192,7 +193,7 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
     
     if (!selectedStars || selectedStars < 0.5 || selectedStars > 5.0) {
       console.warn('Invalid rating selected:', selectedStars);
-      showToast('Please select a star rating to vote', 'info');
+      showToast(tGame('selectAStar'), 'info');
       return;
     }
 
@@ -332,6 +333,8 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
   const handleStarClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Close tooltip when clicking (especially important for mobile)
+    setShowTooltip(false);
     console.log('Star button clicked, opening modal...');
     // Ensure vote data is loaded before opening modal
     if (!voteDataLoaded && isAuthenticated && user?.id) {
@@ -423,7 +426,7 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
       </div>
       <div className="text-center mt-2">
         <p className="text-sm font-medium text-gray-700">
-          {displayRating > 0 ? `${displayRating.toFixed(1)} / 5.0` : 'Select your rating'}
+          {displayRating > 0 ? `${displayRating.toFixed(1)} / 5.0` : tGame('selectYourRating')}
         </p>
       </div>
     </div>
@@ -447,34 +450,34 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
         </button>
 
         <div className="text-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Rate {game.name}</h3>
+          <h3 className="text-xl font-semibold text-gray-900">{tGame('rate')} {game.name}</h3>
           <p className="text-sm text-gray-500 mt-1">
             {existingUserRatingStars 
-              ? `Your current rating: ${existingUserRatingStars.toFixed(1)}/5. You can change it.`
-              : 'Share your rating with the community'}
+              ? `${tGame('yourCurrentRating')} ${existingUserRatingStars.toFixed(1)}/5. ${tGame('youCanChangeIt')}`
+              : tGame('shareYourRating')}
           </p>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-4 mb-4 text-center">
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Overall Rating</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">{tGame('overallRating')}</p>
           <p className="text-2xl font-bold text-gray-900 mb-1">
             {combinedRating ? `${combinedRating.toFixed(1)}/10` : 'N/A'}
           </p>
           <p className="text-sm text-gray-600">
             {((game.bggVotes || 0) + (localUserVotes || 0)) > 0 
-              ? `${((game.bggVotes || 0) + (localUserVotes || 0)).toLocaleString()} vote${((game.bggVotes || 0) + (localUserVotes || 0)) === 1 ? '' : 's'}`
-              : 'No votes yet'}
+              ? `${((game.bggVotes || 0) + (localUserVotes || 0)).toLocaleString()} ${((game.bggVotes || 0) + (localUserVotes || 0)) === 1 ? tGame('votePlural') : tGame('votesPlural')}`
+              : tGame('noVotesYet')}
           </p>
         </div>
 
         {modalLoading ? (
-          <div className="py-8 text-center text-gray-500">Loading…</div>
+          <div className="py-8 text-center text-gray-500">{tGame('loading')}</div>
         ) : (
           <>
             {starButtons}
             {!isAuthenticated && (
               <p className="text-sm text-gray-500 text-center">
-                Sign in to save your rating.
+                {tGame('signInToSave')}
               </p>
             )}
             {modalError && <p className="text-sm text-red-500 text-center">{modalError}</p>}
@@ -485,10 +488,10 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
               className="mt-4 w-full rounded-xl bg-[#fbae17] py-3 text-white font-semibold hover:opacity-90 disabled:opacity-60"
             >
               {isSubmittingVote 
-                ? 'Saving...' 
+                ? tGame('saving')
                 : selectedStars 
-                  ? `${existingUserRatingStars ? 'Update' : 'Submit'} ${selectedStars.toFixed(1)} ★` 
-                  : 'Select a star'}
+                  ? `${existingUserRatingStars ? tGame('update') : tGame('submit')} ${selectedStars.toFixed(1)} ★` 
+                  : tGame('selectAStar')}
             </button>
           </>
         )}

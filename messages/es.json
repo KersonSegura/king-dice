@@ -793,7 +793,8 @@
     "saving": "Guardando...",
     "update": "Actualizar",
     "submit": "Enviar",
-    "selectAStar": "Selecciona una estrella"
+    "selectAStar": "Selecciona una estrella",
+    "selectYourRating": "Selecciona tu calificación"
   },
   "allGames": {
     "title": "Todos los Juegos",
