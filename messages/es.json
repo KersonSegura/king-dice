@@ -1300,5 +1300,661 @@
     "signIn": "Iniciar Sesión",
     "chatDisconnected": "El chat está desconectado actualmente",
     "calculating": "Calculando..."
+  },
+  "privacyPolicy": {
+    "title": "Política de Privacidad",
+    "subtitle": "Tu privacidad es importante para nosotros. Aprende cómo recopilamos, usamos y protegemos tus datos en King Dice.",
+    "overview": {
+      "title": "Privacidad en Resumen",
+      "point1": "Recopilamos datos mínimos necesarios para proporcionar nuestros servicios de juegos de mesa",
+      "point2": "Tu información personal nunca se vende a terceros",
+      "point3": "Tienes control total sobre tus datos y puedes eliminar tu cuenta en cualquier momento",
+      "point4": "Usamos cookies para mejorar tu experiencia y recordar tus preferencias",
+      "point5": "Todos los datos se almacenan de forma segura y están protegidos con cifrado de nivel industrial"
+    },
+    "informationWeCollect": {
+      "title": "Información que Recopilamos",
+      "accountInfo": {
+        "title": "Información de la Cuenta",
+        "point1": "Nombre de usuario y dirección de correo electrónico (requerido para crear la cuenta)",
+        "point2": "Información del perfil que elijas compartir (biografía, juegos favoritos, avatar)",
+        "point3": "Fotos de colección de juegos y cartas favoritas (si se suben)",
+        "point4": "Configuración de privacidad y preferencias de personalización del perfil",
+        "point5": "Información del proveedor OAuth (si inicias sesión con Google o Facebook): correo electrónico, nombre y foto de perfil"
+      },
+      "communityActivity": {
+        "title": "Actividad de la Comunidad",
+        "point1": "Publicaciones, comentarios y discusiones del foro que creas",
+        "point2": "Imágenes subidas a la galería de la comunidad",
+        "point3": "Calificaciones y reseñas de juegos que envías",
+        "point4": "Votos e interacciones con el contenido de otros usuarios",
+        "point5": "Mensajes de chat y comunicaciones directas"
+      },
+      "usageData": {
+        "title": "Datos de Uso",
+        "point1": "Páginas visitadas y funciones utilizadas en King Dice",
+        "point2": "Consultas de búsqueda de juegos y reglas",
+        "point3": "Información del dispositivo (tipo de navegador, sistema operativo)",
+        "point4": "Dirección IP y ubicación general (para fines de seguridad)",
+        "point5": "Horarios de inicio de sesión y duración de la sesión"
+      }
+    },
+    "howWeUse": {
+      "title": "Cómo Usamos Tu Información",
+      "serviceProvision": {
+        "title": "Prestación de Servicios",
+        "point1": "Mantener tu cuenta de usuario y perfil",
+        "point2": "Proporcionar acceso a reglas de juegos y bases de datos",
+        "point3": "Habilitar funciones comunitarias e interacciones",
+        "point4": "Procesar tus cargas y envíos de contenido"
+      },
+      "communication": {
+        "title": "Comunicación",
+        "point1": "Enviar notificaciones importantes de la cuenta",
+        "point2": "Responder a tus solicitudes de soporte",
+        "point3": "Compartir actualizaciones de la plataforma y nuevas funciones",
+        "point4": "Moderar contenido e interacciones de la comunidad"
+      },
+      "platformImprovement": {
+        "title": "Mejora de la Plataforma",
+        "point1": "Analizar patrones de uso para mejorar las funciones",
+        "point2": "Personalizar tu experiencia en King Dice",
+        "point3": "Desarrollar nuevas herramientas y recursos de juegos",
+        "point4": "Optimizar el rendimiento y la confiabilidad de la plataforma"
+      },
+      "securitySafety": {
+        "title": "Seguridad y Protección",
+        "point1": "Proteger contra fraude y abuso",
+        "point2": "Hacer cumplir las pautas y términos de la comunidad",
+        "point3": "Investigar violaciones y disputas",
+        "point4": "Mantener la seguridad e integridad de la plataforma"
+      }
+    },
+    "cookies": {
+      "title": "Cookies y Seguimiento",
+      "description": "King Dice usa cookies y tecnologías similares para mejorar tu experiencia de navegación y proporcionar funciones personalizadas.",
+      "essential": {
+        "title": "Cookies Esenciales",
+        "description": "Necesarias para la funcionalidad básica del sitio, autenticación de usuarios y funciones de seguridad."
+      },
+      "preference": {
+        "title": "Cookies de Preferencias",
+        "description": "Recuerdan tu configuración, preferencias de tema y opciones de personalización."
+      },
+      "analytics": {
+        "title": "Cookies de Análisis",
+        "description": "Nos ayudan a entender cómo usas King Dice para mejorar nuestra plataforma y funciones."
+      }
+    },
+    "oauth": {
+      "title": "Autenticación OAuth (Google y Facebook)",
+      "description": "King Dice ofrece la opción de iniciar sesión usando tu cuenta de Google o Facebook por conveniencia. Cuando elijas esta opción:",
+      "whatWeReceive": {
+        "title": "Lo que Recibimos",
+        "point1": "Tu dirección de correo electrónico",
+        "point2": "Tu nombre (de tu proveedor OAuth)",
+        "point3": "Tu foto de perfil (opcional)"
+      },
+      "whatWeDontAccess": {
+        "title": "Lo que No Accedemos",
+        "point1": "Tu contraseña del proveedor OAuth",
+        "point2": "Tu lista de contactos o amigos",
+        "point3": "Cualquier otro dato de tu cuenta OAuth"
+      },
+      "important": "Importante: Tu proveedor OAuth (Google o Facebook) puede recopilar información sobre tu uso de King Dice según sus propias políticas de privacidad. Te recomendamos revisar sus políticas de privacidad para entender cómo manejan tus datos."
+    },
+    "dataSharing": {
+      "title": "Compartir Datos y Terceros",
+      "neverSell": {
+        "title": "Nunca Vendemos Tus Datos",
+        "description": "King Dice no vende, alquila ni comercia tu información personal con terceros para fines de marketing."
+      },
+      "limitedSharing": {
+        "title": "Escenarios de Compartición Limitada",
+        "point1": "Proveedores de Servicios: Socios de confianza que ayudan a operar King Dice (alojamiento, entrega de correo electrónico, análisis)",
+        "point2": "Proveedores OAuth: Cuando inicias sesión con Google o Facebook, compartimos solicitudes de autenticación con estos proveedores (según se requiere para la funcionalidad OAuth)",
+        "point3": "Requisitos Legales: Cuando lo requiera la ley, orden judicial o para proteger derechos y seguridad",
+        "point4": "Transferencias Comerciales: En el caso poco probable de una fusión o adquisición, con notificación al usuario",
+        "point5": "Contenido Público: Información que elijas hacer pública (publicaciones, comentarios, imágenes de la galería)"
+      }
+    },
+    "yourRights": {
+      "title": "Tus Derechos de Privacidad",
+      "dataControl": {
+        "title": "Control de Datos",
+        "access": "Acceso: Solicitar una copia de tus datos personales",
+        "correction": "Corrección: Actualizar información incorrecta o incompleta",
+        "deletion": "Eliminación: Eliminar tu cuenta y datos asociados.",
+        "learnHow": "Aprende cómo eliminar tu cuenta",
+        "portability": "Portabilidad: Exportar tus datos en un formato legible"
+      },
+      "privacyControls": {
+        "title": "Controles de Privacidad",
+        "profilePrivacy": "Privacidad del Perfil: Controla quién puede ver tu perfil y actividad",
+        "communication": "Comunicación: Opta por no recibir correos electrónicos no esenciales",
+        "contentVisibility": "Visibilidad del Contenido: Gestiona quién puede ver tus publicaciones e imágenes",
+        "dataProcessing": "Procesamiento de Datos: Oponerse a ciertos usos de tu información"
+      }
+    },
+    "dataSecurity": {
+      "title": "Seguridad de Datos",
+      "description": "Implementamos medidas de seguridad integrales para proteger tu información personal:",
+      "point1": "Cifrado de datos en tránsito y en reposo",
+      "point2": "Auditorías de seguridad regulares y evaluaciones de vulnerabilidades",
+      "point3": "Autenticación segura y gestión de sesiones",
+      "point4": "Acceso limitado a datos personales solo por personal autorizado",
+      "point5": "Copias de seguridad regulares y procedimientos de recuperación ante desastres",
+      "point6": "Monitoreo de actividad sospechosa y acceso no autorizado",
+      "point7": "Cumplimiento con marcos de seguridad de nivel industrial",
+      "point8": "Procedimientos de respuesta a incidentes para posibles violaciones de datos"
+    },
+    "internationalUsers": {
+      "title": "Usuarios Internacionales",
+      "description": "King Dice da la bienvenida a usuarios de todo el mundo. Cumplimos con las leyes de privacidad aplicables, incluyendo:",
+      "gdpr": {
+        "title": "GDPR (Unión Europea)",
+        "description": "Derechos mejorados para residentes de la UE, incluyendo gestión de consentimiento, portabilidad de datos y el derecho al olvido."
+      },
+      "ccpa": {
+        "title": "CCPA (California)",
+        "description": "Derechos de privacidad adicionales para residentes de California, incluyendo divulgación de recopilación de datos y derechos de eliminación."
+      }
+    },
+    "childrensPrivacy": {
+      "title": "Privacidad de Menores",
+      "description": "King Dice está diseñado para usuarios de 13 años en adelante. No recopilamos intencionalmente información personal de niños menores de 13 años. Si crees que un niño menor de 13 años ha proporcionado información personal, contáctanos inmediatamente para que podamos eliminarla."
+    },
+    "contact": {
+      "title": "Contáctanos Sobre Privacidad",
+      "description": "Si tienes preguntas sobre esta Política de Privacidad o deseas ejercer tus derechos de privacidad, contáctanos:",
+      "email": "Correo Electrónico",
+      "responseTime": "Tiempo de Respuesta",
+      "responseTimeValue": "Respondemos a solicitudes de privacidad dentro de 30 días",
+      "accountDeletion": "Eliminación de Cuenta: Para solicitar la eliminación de tu cuenta y datos, visita nuestra",
+      "dataDeletionPage": "página de Eliminación de Datos",
+      "orEmail": "o envíanos un correo electrónico a"
+    },
+    "policyUpdates": {
+      "title": "Actualizaciones de la Política",
+      "description": "Podemos actualizar esta Política de Privacidad periódicamente para reflejar cambios en nuestras prácticas o leyes aplicables. Cuando hagamos cambios significativos, lo haremos:",
+      "point1": "Notificar a los usuarios por correo electrónico y anuncios en la plataforma",
+      "point2": "Actualizar la fecha de \"Última Actualización\" en la parte superior de esta política",
+      "point3": "Proporcionar un resumen de los cambios clave",
+      "point4": "Dar a los usuarios tiempo para revisar los cambios antes de que entren en vigor",
+      "continuedUse": "Tu uso continuado de King Dice después de las actualizaciones de la política constituye la aceptación de los términos revisados."
+    }
+  },
+  "termsOfService": {
+    "title": "Términos de Servicio",
+    "subtitle": "Las reglas y acuerdos que rigen tu uso de la plataforma y comunidad de King Dice.",
+    "agreementNotice": {
+      "title": "Acuerdo Importante",
+      "description": "Al usar King Dice, aceptas estos Términos de Servicio. Por favor, léelos cuidadosamente. Si no estás de acuerdo con estos términos, por favor no uses nuestra plataforma."
+    },
+    "acceptance": {
+      "title": "1. Aceptación de los Términos",
+      "description": "Estos Términos de Servicio (\"Términos\") rigen tu uso de King Dice (\"nosotros\", \"nos\" o \"nuestro\"), incluyendo nuestro sitio web, aplicaciones móviles y servicios relacionados (colectivamente, el \"Servicio\").",
+      "confirmation": "Al usar King Dice, confirmas que:",
+      "point1": "Tienes al menos 13 años (o la edad mínima en tu jurisdicción)",
+      "point2": "Tienes la capacidad legal para celebrar estos Términos",
+      "point3": "Cumplirás con estos Términos y todas las leyes aplicables",
+      "point4": "Entiendes que tu uso está sujeto a nuestra Política de Privacidad"
+    },
+    "service": {
+      "title": "2. Servicio de King Dice",
+      "whatWeProvide": {
+        "title": "Lo que Proporcionamos",
+        "point1": "Base de datos completa de reglas de juegos de mesa",
+        "point2": "Foros comunitarios y plataformas de discusión",
+        "point3": "Perfiles de usuario y funciones sociales",
+        "point4": "Sistemas de calificación y reseñas de juegos",
+        "point5": "Galería de imágenes y compartir contenido",
+        "point6": "Funciones de chat y mensajería",
+        "point7": "Herramientas de descubrimiento y recomendación de juegos",
+        "point8": "Recursos educativos y tutoriales"
+      },
+      "availability": {
+        "title": "Disponibilidad del Servicio",
+        "description": "Nos esforzamos por proporcionar un servicio continuo pero no podemos garantizar un 100% de tiempo de actividad. Podemos suspender o restringir temporalmente el acceso por mantenimiento, actualizaciones o problemas técnicos."
+      }
+    },
+    "userAccounts": {
+      "title": "3. Cuentas de Usuario y Registro",
+      "requirements": {
+        "title": "Requisitos de la Cuenta",
+        "point1": "Proporcionar información de registro precisa y completa",
+        "point2": "Elegir un nombre de usuario único que no viole los derechos de otros",
+        "point3": "Usar una dirección de correo electrónico válida a la que puedas acceder",
+        "point4": "Mantener tu contraseña segura y confidencial",
+        "point5": "Notificarnos inmediatamente de cualquier uso no autorizado de la cuenta"
+      },
+      "responsibilities": {
+        "title": "Responsabilidades de la Cuenta",
+        "youAreResponsible": "✅ Eres Responsable De:",
+        "responsiblePoint1": "Todas las actividades bajo tu cuenta",
+        "responsiblePoint2": "Mantener la seguridad de la cuenta",
+        "responsiblePoint3": "Actualizar tu información cuando sea necesario",
+        "responsiblePoint4": "Cumplir con las pautas de la comunidad",
+        "restrictions": "❌ Restricciones de la Cuenta:",
+        "restrictionPoint1": "Una cuenta por persona",
+        "restrictionPoint2": "No compartir cuentas con otros",
+        "restrictionPoint3": "No hacerse pasar por otros usuarios",
+        "restrictionPoint4": "No crear cuentas para evadir prohibiciones"
+      }
+    },
+    "acceptableUse": {
+      "title": "4. Política de Uso Aceptable",
+      "encouraged": {
+        "title": "✅ Actividades Fomentadas",
+        "point1": "Compartir reglas de juegos y estrategias útiles",
+        "point2": "Crear publicaciones y reseñas informativas",
+        "point3": "Subir imágenes de calidad de juegos y configuraciones",
+        "point4": "Participar en discusiones respetuosas",
+        "point5": "Ayudar a nuevos miembros de la comunidad",
+        "point6": "Reportar contenido inapropiado",
+        "point7": "Proporcionar retroalimentación constructiva",
+        "point8": "Celebrar el hobby de los juegos de mesa"
+      },
+      "prohibited": {
+        "title": "❌ Actividades Prohibidas",
+        "point1": "Acoso, intimidación o discurso de odio",
+        "point2": "Spam, estafas o contenido fraudulento",
+        "point3": "Contenido para adultos o material inapropiado",
+        "point4": "Infracción de derechos de autor",
+        "point5": "Doxxing o compartir información privada",
+        "point6": "Suplantación de identidad o identidad falsa",
+        "point7": "Malware, virus o código malicioso",
+        "point8": "Raspado automatizado o minería de datos",
+        "point9": "Eludir medidas de seguridad",
+        "point10": "Publicidad comercial sin permiso"
+      }
+    },
+    "content": {
+      "title": "5. Contenido y Propiedad Intelectual",
+      "yourContent": {
+        "title": "Tu Contenido",
+        "description": "Conservas la propiedad del contenido que creas en King Dice (publicaciones, comentarios, imágenes, reseñas). Sin embargo, al publicar contenido, nos otorgas ciertos derechos:",
+        "licenseTitle": "Licencia para Usar Tu Contenido",
+        "licenseDescription": "Otorgas a King Dice una licencia mundial y libre de regalías para usar, mostrar, reproducir y distribuir tu contenido en nuestra plataforma. Esta licencia termina cuando eliminas tu contenido o cuenta."
+      },
+      "kingDiceContent": {
+        "title": "Contenido de King Dice",
+        "point1": "Nuestra plataforma, diseño y funciones están protegidos por leyes de propiedad intelectual",
+        "point2": "Las reglas de juegos se compilan de fuentes públicas y materiales de editores",
+        "point3": "No puedes copiar, modificar o redistribuir nuestra plataforma o contenido",
+        "point4": "Las marcas comerciales y logotipos pertenecen a sus respectivos propietarios"
+      },
+      "copyright": {
+        "title": "Cumplimiento de Derechos de Autor",
+        "description": "Respetamos los derechos de propiedad intelectual. Si crees que tu trabajo con derechos de autor ha sido infringido, contáctanos con un aviso DMCA detallado a support@kingdice.gg."
+      }
+    },
+    "privacy": {
+      "title": "6. Privacidad y Protección de Datos",
+      "description": "Tu privacidad es importante para nosotros. Nuestra recopilación y uso de tu información personal se rige por nuestra",
+      "privacyPolicyLink": "Política de Privacidad",
+      "incorporated": "que se incorpora a estos Términos por referencia.",
+      "dataCollection": {
+        "title": "Recopilación de Datos",
+        "description": "Recopilamos solo la información necesaria para proporcionar nuestros servicios y mejorar tu experiencia."
+      },
+      "dataSecurity": {
+        "title": "Seguridad de Datos",
+        "description": "Implementamos medidas de seguridad de nivel industrial para proteger tu información personal."
+      }
+    },
+    "communityGuidelines": {
+      "title": "7. Pautas de la Comunidad y Moderación",
+      "description": "King Dice es una plataforma impulsada por la comunidad. Mantenemos",
+      "communityRulesLink": "Reglas de la Comunidad",
+      "mustFollow": "detalladas que todos los usuarios deben seguir.",
+      "moderation": {
+        "title": "Política de Moderación",
+        "contentReview": {
+          "title": "Revisión de Contenido",
+          "point1": "Los sistemas automatizados examinan el contenido",
+          "point2": "Los moderadores humanos revisan el contenido reportado",
+          "point3": "Los miembros de la comunidad pueden reportar violaciones",
+          "point4": "Proceso de apelación disponible para todas las acciones"
+        },
+        "enforcement": {
+          "title": "Acciones de Cumplimiento",
+          "point1": "Eliminación o edición de contenido",
+          "point2": "Suspensión temporal o permanente de la cuenta",
+          "point3": "Restricciones de funciones (publicación, mensajería)",
+          "point4": "Ajustes de reputación de la comunidad"
+        }
+      }
+    },
+    "disclaimers": {
+      "title": "8. Descargos de Responsabilidad y Limitaciones",
+      "serviceAsIs": {
+        "title": "Servicio \"Tal Como Está\"",
+        "description": "King Dice se proporciona \"tal como está\" sin garantías de ningún tipo. No garantizamos que el servicio esté libre de errores, sea seguro o esté siempre disponible."
+      },
+      "limitation": {
+        "title": "Limitación de Responsabilidad",
+        "point1": "No somos responsables de daños indirectos, incidentales o consecuentes",
+        "point2": "Nuestra responsabilidad total está limitada a la cantidad que nos has pagado (si la hay)",
+        "point3": "No somos responsables del contenido generado por usuarios o acciones de terceros",
+        "point4": "Algunas jurisdicciones no permiten limitaciones de responsabilidad, por lo que estas pueden no aplicarse a ti"
+      },
+      "thirdParty": {
+        "title": "Contenido de Terceros",
+        "description": "King Dice puede contener enlaces a sitios web de terceros o referencias a juegos y materiales de terceros. No somos responsables del contenido, precisión o prácticas de estos terceros."
+      }
+    },
+    "termination": {
+      "title": "9. Terminación de Cuenta",
+      "yourRight": {
+        "title": "Tu Derecho a Terminar",
+        "description": "Puedes eliminar tu cuenta en cualquier momento a través de la configuración de tu cuenta. Al eliminar:",
+        "point1": "Tu perfil e información personal serán eliminados",
+        "point2": "Tus publicaciones y comentarios pueden permanecer pero serán anonimizados",
+        "point3": "Perderás el acceso a todas las funciones de King Dice",
+        "point4": "Algunos datos pueden conservarse por razones legales o de seguridad"
+      },
+      "ourRight": {
+        "title": "Nuestro Derecho a Terminar",
+        "description": "Podemos suspender o terminar tu cuenta si violas estos Términos, participas en comportamientos dañinos o por otras razones legítimas. Proporcionaremos aviso cuando sea posible, pero podemos actuar inmediatamente por violaciones graves."
+      }
+    },
+    "changes": {
+      "title": "10. Cambios a Estos Términos",
+      "description": "Podemos actualizar estos Términos periódicamente para reflejar cambios en nuestro servicio, requisitos legales o prácticas comerciales.",
+      "howWeNotify": {
+        "title": "Cómo Te Notificamos",
+        "point1": "Notificación por correo electrónico a usuarios registrados",
+        "point2": "Anuncios y banners de la plataforma",
+        "point3": "Fecha de \"Última Modificación\" actualizada",
+        "point4": "Resumen de cambios significativos"
+      },
+      "yourOptions": {
+        "title": "Tus Opciones",
+        "point1": "Revisar cambios antes de que entren en vigor",
+        "point2": "Contactarnos con preguntas o inquietudes",
+        "point3": "Eliminar tu cuenta si no estás de acuerdo",
+        "point4": "El uso continuado significa aceptación"
+      }
+    },
+    "legal": {
+      "title": "11. Legal y Ley Aplicable",
+      "disputeResolution": {
+        "title": "Resolución de Disputas",
+        "description": "Fomentamos resolver disputas mediante comunicación directa. Si eso no es posible:",
+        "point1": "Contacta a nuestro equipo de soporte para mediación",
+        "point2": "Considera arbitraje para una resolución más rápida",
+        "point3": "La acción legal debe ser el último recurso",
+        "point4": "El tribunal de pequeñas reclamaciones puede ser apropiado para disputas menores"
+      },
+      "severability": {
+        "title": "Divisibilidad",
+        "description": "Si se encuentra que alguna parte de estos Términos no es aplicable, las disposiciones restantes continuarán en pleno vigor y efecto."
+      }
+    },
+    "contact": {
+      "title": "12. Información de Contacto",
+      "description": "Si tienes preguntas sobre estos Términos de Servicio, contáctanos:",
+      "contactUs": "Contáctanos",
+      "email": "support@kingdice.gg",
+      "forGeneral": "Para soporte general, preguntas legales, reportes de abuso o cualquier otra consulta.",
+      "thankYou": "¡Gracias por ser parte de la comunidad de King Dice!",
+      "thankYouDescription": "Estos términos nos ayudan a mantener un ambiente seguro, divertido y respetuoso para todos los entusiastas de los juegos de mesa."
+    }
+  },
+  "communityRules": {
+    "title": "Reglas de la Comunidad",
+    "subtitle": "Pautas para crear una comunidad de juegos de mesa acogedora, respetuosa y divertida para todos.",
+    "welcome": {
+      "title": "¡Bienvenido a la Comunidad de King Dice!",
+      "description": "Nuestra comunidad está dedicada a compartir la pasión por los juegos de mesa. Estamos aquí para ayudarnos mutuamente a descubrir nuevos juegos, aprender reglas, compartir estrategias y celebrar juntos este increíble hobby. ¡Ayúdanos a mantener un ambiente respetuoso y acogedor para todos!"
+    },
+    "values": {
+      "title": "Nuestros Valores Comunitarios",
+      "respect": {
+        "title": "Respeto y Amabilidad",
+        "description": "Trata a cada miembro de la comunidad con respeto, independientemente de su nivel de experiencia o preferencias de juegos."
+      },
+      "helpful": {
+        "title": "Útil y Constructivo",
+        "description": "Comparte conocimientos, ayuda a los recién llegados y proporciona retroalimentación constructiva para construir una comunidad solidaria."
+      },
+      "quality": {
+        "title": "Calidad y Relevancia",
+        "description": "Comparte contenido de alta calidad que sea relevante para los juegos de mesa y agregue valor a las discusiones."
+      },
+      "safe": {
+        "title": "Seguro e Inclusivo",
+        "description": "Crea un espacio seguro donde todos se sientan bienvenidos, independientemente de su origen, identidad o experiencia en juegos."
+      }
+    },
+    "encouraged": {
+      "title": "Lo que se Fomenta",
+      "discussion": {
+        "title": "Discusión y Aprendizaje",
+        "point1": "Discusiones y consejos sobre estrategias de juegos",
+        "point2": "Preguntas y aclaraciones sobre reglas",
+        "point3": "Reseñas de juegos y opiniones honestas",
+        "point4": "Recomendaciones y sugerencias de juegos",
+        "point5": "Contenido educativo y tutoriales"
+      },
+      "visual": {
+        "title": "Contenido Visual",
+        "point1": "Fotos de colecciones de juegos y muestras",
+        "point2": "Configuraciones de tableros y fotos de juegos en progreso",
+        "point3": "Modificaciones personalizadas de juegos y accesorios",
+        "point4": "Soluciones de almacenamiento y organización de juegos",
+        "point5": "Fotos de eventos y documentación de reuniones"
+      },
+      "activities": {
+        "title": "Actividades Comunitarias",
+        "point1": "Organización de noches de juegos",
+        "point2": "Anuncios de reuniones locales",
+        "point3": "Compartir torneos y eventos",
+        "point4": "Desafíos colaborativos de juegos",
+        "point5": "Ayudar a los recién llegados a aprender",
+        "point6": "Retroalimentación e ideas de la comunidad"
+      }
+    },
+    "prohibited": {
+      "title": "Lo que No Está Permitido",
+      "harmful": {
+        "title": "Contenido Dañino",
+        "point1": "Discurso de odio, discriminación o acoso",
+        "point2": "Contenido sexual, violento o inapropiado",
+        "point3": "Ataques personales o intimidación",
+        "point4": "Doxxing o compartir información privada",
+        "point5": "Contenido que promueva actividades ilegales"
+      },
+      "spam": {
+        "title": "Spam y Baja Calidad",
+        "point1": "Publicaciones de spam, repetitivas o de bajo esfuerzo",
+        "point2": "Publicidad no autorizada o autopromoción",
+        "point3": "Contenido fuera de tema no relacionado con juegos de mesa",
+        "point4": "Títulos sensacionalistas o contenido engañoso",
+        "point5": "Manipulación de votos o participación falsa"
+      },
+      "account": {
+        "title": "Violaciones de Cuenta",
+        "point1": "Múltiples cuentas por persona",
+        "point2": "Hacerse pasar por otros usuarios",
+        "point3": "Compartir cuentas con otros",
+        "point4": "Evadir prohibiciones o suspensiones",
+        "point5": "Reportes falsos o abuso",
+        "point6": "Eludir funciones de la plataforma"
+      }
+    },
+    "reputation": {
+      "title": "Sistema de Reputación",
+      "howItWorks": {
+        "title": "Cómo Funciona la Reputación",
+        "description": "King Dice usa un sistema de reputación para reconocer a los miembros valiosos de la comunidad y mantener la calidad. Tu puntuación de reputación refleja tus contribuciones positivas a la comunidad."
+      },
+      "earning": {
+        "title": "Ganar Puntos de Reputación",
+        "creatingPosts": "Crear publicaciones útiles",
+        "creatingPostsXP": "+5 XP",
+        "uploadingImages": "Subir imágenes de calidad",
+        "uploadingImagesXP": "+3 XP",
+        "writingComments": "Escribir comentarios reflexivos",
+        "writingCommentsXP": "+2 XP",
+        "receivingLikes": "Recibir me gusta en el contenido",
+        "receivingLikesXP": "+1 XP",
+        "dailyLogin": "Racha de inicio de sesión diario",
+        "dailyLoginXP": "+1 XP",
+        "ratingGames": "Calificar juegos",
+        "ratingGamesXP": "+1 XP"
+      },
+      "benefits": {
+        "title": "Beneficios de la Reputación",
+        "higherVisibility": {
+          "title": "Mayor Visibilidad",
+          "description": "Tus publicaciones y comentarios obtienen mejor visibilidad en los feeds y resultados de búsqueda."
+        },
+        "specialBadges": {
+          "title": "Insignias Especiales",
+          "description": "Gana insignias de reconocimiento que se muestran en tu perfil y publicaciones."
+        },
+        "communityTrust": {
+          "title": "Confianza de la Comunidad",
+          "description": "Construye confianza dentro de la comunidad como un miembro confiable y útil."
+        }
+      }
+    },
+    "moderation": {
+      "title": "Moderación y Cumplimiento",
+      "howWeKeepSafe": {
+        "title": "Cómo Mantenemos Segura la Comunidad",
+        "automatic": {
+          "title": "Moderación Automática",
+          "description": "Todo el contenido se revisa automáticamente antes de su publicación usando IA para detectar contenido inapropiado, spam y violaciones de políticas."
+        },
+        "communityReports": {
+          "title": "Reportes de la Comunidad",
+          "description": "Los usuarios pueden reportar contenido que viola las reglas de la comunidad. Nuestro equipo de moderación revisa cada reporte dentro de 24 horas."
+        }
+      },
+      "enforcement": {
+        "title": "Acciones de Cumplimiento",
+        "firstWarning": {
+          "label": "1ra Advertencia",
+          "title": "Eliminación de Contenido y Advertencia",
+          "description": "El contenido que viola las reglas se elimina y el usuario recibe una advertencia educativa sobre las reglas de la comunidad."
+        },
+        "secondWarning": {
+          "label": "2da Advertencia",
+          "title": "Suspensión de 24 Horas",
+          "description": "Suspensión temporal de publicar, comentar e interacciones comunitarias por 24 horas."
+        },
+        "thirdWarning": {
+          "label": "3ra Advertencia",
+          "title": "Suspensión de 7 Días",
+          "description": "Suspensión extendida de todas las funciones comunitarias por una semana, con revisión de cuenta."
+        },
+        "permanentBan": {
+          "title": "Prohibición Permanente",
+          "description": "Por violaciones graves o ofensas repetidas, las cuentas pueden ser prohibidas permanentemente de King Dice."
+        }
+      },
+      "appeals": {
+        "title": "Proceso de Apelaciones",
+        "description": "Si crees que se tomó una acción de moderación por error, puedes apelar contactando a nuestro equipo de soporte. Todas las apelaciones son revisadas por moderadores senior dentro de 48 horas."
+      }
+    },
+    "reporting": {
+      "title": "Cómo Reportar Violaciones",
+      "whenToReport": {
+        "title": "Cuándo Reportar",
+        "point1": "Contenido que viola las reglas de la comunidad",
+        "point2": "Acoso o comportamiento inapropiado",
+        "point3": "Spam o publicidad no autorizada",
+        "point4": "Infracción de derechos de autor",
+        "point5": "Suplantación de identidad o cuentas falsas",
+        "point6": "Contenido para adultos o violento",
+        "point7": "Compartir información personal",
+        "point8": "Abuso técnico o intentos de piratería"
+      },
+      "howToReport": {
+        "title": "Cómo Reportar",
+        "step1": {
+          "title": "Encuentra el Botón de Reportar",
+          "description": "Haz clic en el botón de reportar en cualquier publicación, comentario o perfil de usuario."
+        },
+        "step2": {
+          "title": "Selecciona el Tipo de Violación",
+          "description": "Elige la violación específica de reglas de las opciones proporcionadas."
+        },
+        "step3": {
+          "title": "Proporciona Detalles",
+          "description": "Agrega cualquier contexto adicional que ayude a nuestro equipo de moderación a entender el problema."
+        }
+      }
+    },
+    "contact": {
+      "title": "¿Necesitas Ayuda o Tienes Preguntas?",
+      "communitySupport": {
+        "title": "Soporte de la Comunidad",
+        "description": "Para preguntas sobre reglas de la comunidad, decisiones de moderación o soporte general.",
+        "email": "support@kingdice.gg"
+      },
+      "reportSerious": {
+        "title": "Reportar Problemas Graves",
+        "description": "Para preocupaciones urgentes de seguridad, acoso o violaciones graves de reglas.",
+        "email": "support@kingdice.gg"
+      },
+      "responseTimes": {
+        "title": "Tiempos de Respuesta",
+        "contentReports": "Reportes de Contenido:",
+        "contentReportsTime": "Dentro de 24 horas",
+        "supportRequests": "Solicitudes de Soporte:",
+        "supportRequestsTime": "1-2 días hábiles",
+        "appeals": "Apelaciones:",
+        "appealsTime": "Dentro de 48 horas"
+      },
+      "thankYou": {
+        "title": "¡Gracias por Ser Parte de Nuestra Comunidad!",
+        "description": "Tu participación y adherencia a estas reglas ayudan a hacer de King Dice un lugar acogedor para los entusiastas de los juegos de mesa de todo el mundo."
+      }
+    }
+  },
+  "credits": {
+    "title": "Créditos",
+    "subtitle": "Reconociendo a las personas, herramientas y recursos que hacen posible King Dice.",
+    "team": {
+      "title": "Equipo de Desarrollo",
+      "description": "King Dice está construido con pasión por un equipo dedicado de entusiastas de juegos de mesa y desarrolladores."
+    },
+    "technologies": {
+      "title": "Tecnologías y Herramientas",
+      "description": "King Dice está impulsado por tecnologías web modernas y herramientas de código abierto:",
+      "nextjs": "Next.js - Framework de React",
+      "react": "React - Biblioteca de UI",
+      "typescript": "TypeScript - JavaScript con tipos",
+      "tailwind": "Tailwind CSS - CSS con utilidades",
+      "supabase": "Supabase - Backend como Servicio",
+      "vercel": "Vercel - Alojamiento y despliegue"
+    },
+    "resources": {
+      "title": "Recursos y Datos",
+      "description": "La información y reglas de juegos se compilan de varias fuentes:",
+      "boardgamegeek": "BoardGameGeek - Base de datos y comunidad de juegos",
+      "publishers": "Editores de juegos y libros de reglas oficiales",
+      "community": "Contribuciones de la comunidad y envíos de usuarios"
+    },
+    "specialThanks": {
+      "title": "Agradecimientos Especiales",
+      "description": "Nos gustaría agradecer a:",
+      "community": "Nuestra increíble comunidad de entusiastas de juegos de mesa",
+      "contributors": "Todos los contribuidores que ayudan a mejorar King Dice",
+      "testers": "Probadores beta y primeros usuarios",
+      "feedback": "Todos los que proporcionan retroalimentación y sugerencias"
+    },
+    "contact": {
+      "title": "¿Quieres Contribuir?",
+      "description": "¡King Dice siempre está buscando contribuidores! Ya seas desarrollador, diseñador o experto en juegos de mesa, nos encantaría tenerte.",
+      "email": "Contáctanos en",
+      "orVisit": "o visita nuestro",
+      "github": "repositorio de GitHub"
+    }
   }
 }

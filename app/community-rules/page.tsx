@@ -4,8 +4,11 @@ import React from 'react';
 import { Shield, Users, Heart, AlertTriangle, CheckCircle, Award, MessageSquare, Camera, Star, Ban } from 'lucide-react';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 import Footer from '@/components/Footer';
+import { useTranslations, useLocale } from 'next-intl';
 
 export default function CommunityRulesPage() {
+  const t = useTranslations('communityRules');
+  const locale = useLocale();
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Hero Section */}
@@ -13,9 +16,9 @@ export default function CommunityRulesPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-green-200" />
-            <h1 className="text-4xl font-bold mb-4">Community Rules</h1>
+            <h1 className="text-4xl font-bold mb-4">{t('title')}</h1>
             <p className="text-xl text-green-100 max-w-2xl mx-auto">
-              Guidelines for creating a welcoming, respectful, and fun board gaming community for everyone.
+              {t('subtitle')}
             </p>
           </div>
         </div>
@@ -29,11 +32,9 @@ export default function CommunityRulesPage() {
           <div className="flex items-start">
             <Heart className="w-6 h-6 text-blue-600 mr-3 mt-1" />
             <div>
-              <h2 className="text-xl font-semibold text-blue-900 mb-3">Welcome to King Dice Community!</h2>
+              <h2 className="text-xl font-semibold text-blue-900 mb-3">{t('welcome.title')}</h2>
               <p className="text-blue-800">
-                Our community is dedicated to sharing the passion for board games. We're here to help each other 
-                discover new games, learn rules, share strategies, and celebrate this amazing hobby together. 
-                Help us maintain a respectful and welcoming environment for everyone!
+                {t('welcome.description')}
               </p>
             </div>
           </div>
@@ -43,7 +44,7 @@ export default function CommunityRulesPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <Users className="w-6 h-6 text-gray-600 mr-3" />
-            Our Community Values
+            {t('values.title')}
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
@@ -51,20 +52,20 @@ export default function CommunityRulesPage() {
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <h3 className="font-semibold text-green-900 mb-2 flex items-center">
                   <Heart className="w-4 h-4 mr-2" />
-                  Respect & Kindness
+                  {t('values.respect.title')}
                 </h3>
                 <p className="text-green-700 text-sm">
-                  Treat every community member with respect, regardless of their experience level or game preferences.
+                  {t('values.respect.description')}
                 </p>
               </div>
               
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  Helpful & Constructive
+                  {t('values.helpful.title')}
                 </h3>
                 <p className="text-blue-700 text-sm">
-                  Share knowledge, help newcomers, and provide constructive feedback to build a supportive community.
+                  {t('values.helpful.description')}
                 </p>
               </div>
             </div>
@@ -73,20 +74,20 @@ export default function CommunityRulesPage() {
               <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
                 <h3 className="font-semibold text-purple-900 mb-2 flex items-center">
                   <Star className="w-4 h-4 mr-2" />
-                  Quality & Relevance
+                  {t('values.quality.title')}
                 </h3>
                 <p className="text-purple-700 text-sm">
-                  Share high-quality content that's relevant to board gaming and adds value to discussions.
+                  {t('values.quality.description')}
                 </p>
               </div>
               
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <h3 className="font-semibold text-orange-900 mb-2 flex items-center">
                   <Shield className="w-4 h-4 mr-2" />
-                  Safe & Inclusive
+                  {t('values.safe.title')}
                 </h3>
                 <p className="text-orange-700 text-sm">
-                  Create a safe space where everyone feels welcome, regardless of background, identity, or gaming experience.
+                  {t('values.safe.description')}
                 </p>
               </div>
             </div>
@@ -97,35 +98,35 @@ export default function CommunityRulesPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
-            What's Encouraged
+            {t('encouraged.title')}
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                 <MessageSquare className="w-5 h-5 text-blue-600 mr-2" />
-                Discussion & Learning
+                {t('encouraged.discussion.title')}
               </h3>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Game strategy discussions and tips</span>
+                  <span>{t('encouraged.discussion.point1')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Rules questions and clarifications</span>
+                  <span>{t('encouraged.discussion.point2')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Game reviews and honest opinions</span>
+                  <span>{t('encouraged.discussion.point3')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Recommendations and game suggestions</span>
+                  <span>{t('encouraged.discussion.point4')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Educational content and tutorials</span>
+                  <span>{t('encouraged.discussion.point5')}</span>
                 </li>
               </ul>
             </div>
@@ -133,28 +134,28 @@ export default function CommunityRulesPage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                 <Camera className="w-5 h-5 text-purple-600 mr-2" />
-                Visual Content
+                {t('encouraged.visual.title')}
               </h3>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Game collection photos and showcases</span>
+                  <span>{t('encouraged.visual.point1')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Board setups and game in progress shots</span>
+                  <span>{t('encouraged.visual.point2')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Custom game modifications and accessories</span>
+                  <span>{t('encouraged.visual.point3')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Game storage and organization solutions</span>
+                  <span>{t('encouraged.visual.point4')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Event photos and meetup documentation</span>
+                  <span>{t('encouraged.visual.point5')}</span>
                 </li>
               </ul>
             </div>
@@ -163,37 +164,37 @@ export default function CommunityRulesPage() {
           <div className="mt-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Users className="w-5 h-5 text-green-600 mr-2" />
-              Community Activities
+              {t('encouraged.activities.title')}
             </h3>
             <div className="grid md:grid-cols-3 gap-4">
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Game night organization</span>
+                  <span>{t('encouraged.activities.point1')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Local meetup announcements</span>
-                </li>
-              </ul>
-              <ul className="space-y-2 text-gray-600">
-                <li className="flex items-start">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Tournament and event sharing</span>
-                </li>
-                <li className="flex items-start">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Collaborative game challenges</span>
+                  <span>{t('encouraged.activities.point2')}</span>
                 </li>
               </ul>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Helping newcomers learn</span>
+                  <span>{t('encouraged.activities.point3')}</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Community feedback and ideas</span>
+                  <span>{t('encouraged.activities.point4')}</span>
+                </li>
+              </ul>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start">
+                  <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{t('encouraged.activities.point5')}</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{t('encouraged.activities.point6')}</span>
                 </li>
               </ul>
             </div>
@@ -204,94 +205,94 @@ export default function CommunityRulesPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <AlertTriangle className="w-6 h-6 text-red-600 mr-3" />
-            What's Not Allowed
+            {t('prohibited.title')}
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Harmful Content</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('prohibited.harmful.title')}</h3>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Hate speech, discrimination, or harassment</span>
+                  <span>{t('prohibited.harmful.point1')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Sexual, violent, or inappropriate content</span>
+                  <span>{t('prohibited.harmful.point2')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Personal attacks or bullying</span>
+                  <span>{t('prohibited.harmful.point3')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Doxxing or sharing private information</span>
+                  <span>{t('prohibited.harmful.point4')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Content promoting illegal activities</span>
+                  <span>{t('prohibited.harmful.point5')}</span>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Spam & Low-Quality</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('prohibited.spam.title')}</h3>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Spam, repetitive, or low-effort posts</span>
+                  <span>{t('prohibited.spam.point1')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Unauthorized advertising or self-promotion</span>
+                  <span>{t('prohibited.spam.point2')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Off-topic content unrelated to board games</span>
+                  <span>{t('prohibited.spam.point3')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Clickbait titles or misleading content</span>
+                  <span>{t('prohibited.spam.point4')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Vote manipulation or fake engagement</span>
+                  <span>{t('prohibited.spam.point5')}</span>
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="mt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Violations</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('prohibited.account.title')}</h3>
             <div className="grid md:grid-cols-3 gap-4">
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Multiple accounts per person</span>
+                  <span>{t('prohibited.account.point1')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Impersonating other users</span>
-                </li>
-              </ul>
-              <ul className="space-y-2 text-gray-600">
-                <li className="flex items-start">
-                  <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Sharing accounts with others</span>
-                </li>
-                <li className="flex items-start">
-                  <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Evading bans or suspensions</span>
+                  <span>{t('prohibited.account.point2')}</span>
                 </li>
               </ul>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>False reporting or abuse</span>
+                  <span>{t('prohibited.account.point3')}</span>
                 </li>
                 <li className="flex items-start">
                   <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span>Circumventing platform features</span>
+                  <span>{t('prohibited.account.point4')}</span>
+                </li>
+              </ul>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start">
+                  <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{t('prohibited.account.point5')}</span>
+                </li>
+                <li className="flex items-start">
+                  <AlertTriangle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{t('prohibited.account.point6')}</span>
                 </li>
               </ul>
             </div>
@@ -302,71 +303,70 @@ export default function CommunityRulesPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <Award className="w-6 h-6 text-yellow-600 mr-3" />
-            Reputation System
+            {t('reputation.title')}
           </h2>
           
           <div className="space-y-6">
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="font-semibold text-yellow-900 mb-2">How Reputation Works</h3>
+              <h3 className="font-semibold text-yellow-900 mb-2">{t('reputation.howItWorks.title')}</h3>
               <p className="text-yellow-800">
-                King Dice uses a reputation system to recognize valuable community members and maintain quality. 
-                Your reputation score reflects your positive contributions to the community.
+                {t('reputation.howItWorks.description')}
               </p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Earning Reputation Points</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('reputation.earning.title')}</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <span className="text-green-800">Creating helpful posts</span>
-                    <span className="text-green-600 font-semibold">+5 XP</span>
+                    <span className="text-green-800">{t('reputation.earning.creatingPosts')}</span>
+                    <span className="text-green-600 font-semibold">{t('reputation.earning.creatingPostsXP')}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <span className="text-green-800">Uploading quality images</span>
-                    <span className="text-green-600 font-semibold">+3 XP</span>
+                    <span className="text-green-800">{t('reputation.earning.uploadingImages')}</span>
+                    <span className="text-green-600 font-semibold">{t('reputation.earning.uploadingImagesXP')}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <span className="text-green-800">Writing thoughtful comments</span>
-                    <span className="text-green-600 font-semibold">+2 XP</span>
+                    <span className="text-green-800">{t('reputation.earning.writingComments')}</span>
+                    <span className="text-green-600 font-semibold">{t('reputation.earning.writingCommentsXP')}</span>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <span className="text-blue-800">Receiving likes on content</span>
-                    <span className="text-blue-600 font-semibold">+1 XP</span>
+                    <span className="text-blue-800">{t('reputation.earning.receivingLikes')}</span>
+                    <span className="text-blue-600 font-semibold">{t('reputation.earning.receivingLikesXP')}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <span className="text-blue-800">Daily login streak</span>
-                    <span className="text-blue-600 font-semibold">+1 XP</span>
+                    <span className="text-blue-800">{t('reputation.earning.dailyLogin')}</span>
+                    <span className="text-blue-600 font-semibold">{t('reputation.earning.dailyLoginXP')}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <span className="text-blue-800">Rating games</span>
-                    <span className="text-blue-600 font-semibold">+1 XP</span>
+                    <span className="text-blue-800">{t('reputation.earning.ratingGames')}</span>
+                    <span className="text-blue-600 font-semibold">{t('reputation.earning.ratingGamesXP')}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Reputation Benefits</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('reputation.benefits.title')}</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="p-4 border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-800 mb-2">Higher Visibility</h4>
+                  <h4 className="font-medium text-gray-800 mb-2">{t('reputation.benefits.higherVisibility.title')}</h4>
                   <p className="text-sm text-gray-600">
-                    Your posts and comments get better visibility in feeds and search results.
+                    {t('reputation.benefits.higherVisibility.description')}
                   </p>
                 </div>
                 <div className="p-4 border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-800 mb-2">Special Badges</h4>
+                  <h4 className="font-medium text-gray-800 mb-2">{t('reputation.benefits.specialBadges.title')}</h4>
                   <p className="text-sm text-gray-600">
-                    Earn recognition badges that display on your profile and posts.
+                    {t('reputation.benefits.specialBadges.description')}
                   </p>
                 </div>
                 <div className="p-4 border border-gray-200 rounded-lg">
-                  <h4 className="font-medium text-gray-800 mb-2">Community Trust</h4>
+                  <h4 className="font-medium text-gray-800 mb-2">{t('reputation.benefits.communityTrust.title')}</h4>
                   <p className="text-sm text-gray-600">
-                    Build trust within the community as a reliable and helpful member.
+                    {t('reputation.benefits.communityTrust.description')}
                   </p>
                 </div>
               </div>
@@ -378,66 +378,64 @@ export default function CommunityRulesPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <Shield className="w-6 h-6 text-gray-600 mr-3" />
-            Moderation & Enforcement
+            {t('moderation.title')}
           </h2>
           
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">How We Keep the Community Safe</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('moderation.howWeKeepSafe.title')}</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-semibold text-blue-900 mb-2">Automatic Moderation</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('moderation.howWeKeepSafe.automatic.title')}</h4>
                   <p className="text-blue-700 text-sm">
-                    All content is automatically reviewed before publication using AI to detect 
-                    inappropriate content, spam, and policy violations.
+                    {t('moderation.howWeKeepSafe.automatic.description')}
                   </p>
                 </div>
                 
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-semibold text-green-900 mb-2">Community Reports</h4>
+                  <h4 className="font-semibold text-green-900 mb-2">{t('moderation.howWeKeepSafe.communityReports.title')}</h4>
                   <p className="text-green-700 text-sm">
-                    Users can report content that violates community rules. Our moderation team 
-                    reviews every report within 24 hours.
+                    {t('moderation.howWeKeepSafe.communityReports.description')}
                   </p>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Enforcement Actions</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('moderation.enforcement.title')}</h3>
               <div className="space-y-4">
                 <div className="flex items-start p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium mr-4 mt-1">
-                    1st Warning
+                    {t('moderation.enforcement.firstWarning.label')}
                   </span>
                   <div>
-                    <h4 className="font-medium text-yellow-900">Content Removal & Warning</h4>
+                    <h4 className="font-medium text-yellow-900">{t('moderation.enforcement.firstWarning.title')}</h4>
                     <p className="text-yellow-700 text-sm">
-                      Violating content is removed and user receives an educational warning about community rules.
+                      {t('moderation.enforcement.firstWarning.description')}
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-start p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium mr-4 mt-1">
-                    2nd Warning
+                    {t('moderation.enforcement.secondWarning.label')}
                   </span>
                   <div>
-                    <h4 className="font-medium text-orange-900">24-Hour Suspension</h4>
+                    <h4 className="font-medium text-orange-900">{t('moderation.enforcement.secondWarning.title')}</h4>
                     <p className="text-orange-700 text-sm">
-                      Temporary suspension from posting, commenting, and community interactions for 24 hours.
+                      {t('moderation.enforcement.secondWarning.description')}
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-start p-4 bg-red-50 border border-red-200 rounded-lg">
                   <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium mr-4 mt-1">
-                    3rd Warning
+                    {t('moderation.enforcement.thirdWarning.label')}
                   </span>
                   <div>
-                    <h4 className="font-medium text-red-900">7-Day Suspension</h4>
+                    <h4 className="font-medium text-red-900">{t('moderation.enforcement.thirdWarning.title')}</h4>
                     <p className="text-red-700 text-sm">
-                      Extended suspension from all community features for one week, with account review.
+                      {t('moderation.enforcement.thirdWarning.description')}
                     </p>
                   </div>
                 </div>
@@ -445,9 +443,9 @@ export default function CommunityRulesPage() {
                 <div className="flex items-start p-4 bg-gray-900 text-white border border-gray-700 rounded-lg">
                   <Ban className="w-5 h-5 mr-4 mt-1 text-red-400" />
                   <div>
-                    <h4 className="font-medium">Permanent Ban</h4>
+                    <h4 className="font-medium">{t('moderation.enforcement.permanentBan.title')}</h4>
                     <p className="text-gray-300 text-sm">
-                      For serious violations or repeated offenses, accounts may be permanently banned from King Dice.
+                      {t('moderation.enforcement.permanentBan.description')}
                     </p>
                   </div>
                 </div>
@@ -455,10 +453,9 @@ export default function CommunityRulesPage() {
             </div>
 
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-blue-900 mb-2">Appeals Process</h3>
+              <h3 className="font-semibold text-blue-900 mb-2">{t('moderation.appeals.title')}</h3>
               <p className="text-blue-700 text-sm">
-                If you believe a moderation action was taken in error, you can appeal by contacting our support team. 
-                All appeals are reviewed by senior moderators within 48 hours.
+                {t('moderation.appeals.description')}
               </p>
             </div>
           </div>
@@ -466,37 +463,37 @@ export default function CommunityRulesPage() {
 
         {/* Reporting System */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">How to Report Violations</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('reporting.title')}</h2>
           
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">When to Report</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('reporting.whenToReport.title')}</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <ul className="space-y-2 text-gray-600">
-                  <li>• Content that violates community rules</li>
-                  <li>• Harassment or inappropriate behavior</li>
-                  <li>• Spam or unauthorized advertising</li>
-                  <li>• Copyright infringement</li>
+                  <li>• {t('reporting.whenToReport.point1')}</li>
+                  <li>• {t('reporting.whenToReport.point2')}</li>
+                  <li>• {t('reporting.whenToReport.point3')}</li>
+                  <li>• {t('reporting.whenToReport.point4')}</li>
                 </ul>
                 <ul className="space-y-2 text-gray-600">
-                  <li>• Impersonation or fake accounts</li>
-                  <li>• Adult or violent content</li>
-                  <li>• Personal information sharing</li>
-                  <li>• Technical abuse or hacking attempts</li>
+                  <li>• {t('reporting.whenToReport.point5')}</li>
+                  <li>• {t('reporting.whenToReport.point6')}</li>
+                  <li>• {t('reporting.whenToReport.point7')}</li>
+                  <li>• {t('reporting.whenToReport.point8')}</li>
                 </ul>
               </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">How to Report</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('reporting.howToReport.title')}</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="p-4 border border-gray-200 rounded-lg text-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <span className="text-blue-600 font-bold">1</span>
                   </div>
-                  <h4 className="font-medium text-gray-800 mb-2">Find the Report Button</h4>
+                  <h4 className="font-medium text-gray-800 mb-2">{t('reporting.howToReport.step1.title')}</h4>
                   <p className="text-sm text-gray-600">
-                    Click the report button on any post, comment, or user profile.
+                    {t('reporting.howToReport.step1.description')}
                   </p>
                 </div>
                 
@@ -504,9 +501,9 @@ export default function CommunityRulesPage() {
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <span className="text-green-600 font-bold">2</span>
                   </div>
-                  <h4 className="font-medium text-gray-800 mb-2">Select Violation Type</h4>
+                  <h4 className="font-medium text-gray-800 mb-2">{t('reporting.howToReport.step2.title')}</h4>
                   <p className="text-sm text-gray-600">
-                    Choose the specific rule violation from the provided options.
+                    {t('reporting.howToReport.step2.description')}
                   </p>
                 </div>
                 
@@ -514,9 +511,9 @@ export default function CommunityRulesPage() {
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <span className="text-purple-600 font-bold">3</span>
                   </div>
-                  <h4 className="font-medium text-gray-800 mb-2">Provide Details</h4>
+                  <h4 className="font-medium text-gray-800 mb-2">{t('reporting.howToReport.step3.title')}</h4>
                   <p className="text-sm text-gray-600">
-                    Add any additional context that helps our moderation team understand the issue.
+                    {t('reporting.howToReport.step3.description')}
                   </p>
                 </div>
               </div>
@@ -526,55 +523,54 @@ export default function CommunityRulesPage() {
 
         {/* Contact and Support */}
         <section className="bg-white rounded-lg border border-gray-200 p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Need Help or Have Questions?</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('contact.title')}</h2>
           
           <div className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h3 className="font-semibold text-green-900 mb-2">Community Support</h3>
+                <h3 className="font-semibold text-green-900 mb-2">{t('contact.communitySupport.title')}</h3>
                 <p className="text-green-700 text-sm mb-3">
-                  For questions about community rules, moderation decisions, or general support.
+                  {t('contact.communitySupport.description')}
                 </p>
                 <p className="text-green-600 font-medium">
-                  <a href="mailto:support@kingdice.gg" className="hover:underline">support@kingdice.gg</a>
+                  <a href="mailto:support@kingdice.gg" className="hover:underline">{t('contact.communitySupport.email')}</a>
                 </p>
               </div>
               
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h3 className="font-semibold text-red-900 mb-2">Report Serious Issues</h3>
+                <h3 className="font-semibold text-red-900 mb-2">{t('contact.reportSerious.title')}</h3>
                 <p className="text-red-700 text-sm mb-3">
-                  For urgent safety concerns, harassment, or serious rule violations.
+                  {t('contact.reportSerious.description')}
                 </p>
                 <p className="text-red-600 font-medium">
-                  <a href="mailto:support@kingdice.gg" className="hover:underline">support@kingdice.gg</a>
+                  <a href="mailto:support@kingdice.gg" className="hover:underline">{t('contact.reportSerious.email')}</a>
                 </p>
               </div>
             </div>
 
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold text-blue-900 mb-2">Response Times</h3>
+              <h3 className="font-semibold text-blue-900 mb-2">{t('contact.responseTimes.title')}</h3>
               <div className="grid md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <span className="font-medium text-blue-800">Content Reports:</span>
-                  <p className="text-blue-700">Within 24 hours</p>
+                  <span className="font-medium text-blue-800">{t('contact.responseTimes.contentReports')}</span>
+                  <p className="text-blue-700">{t('contact.responseTimes.contentReportsTime')}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-blue-800">Support Requests:</span>
-                  <p className="text-blue-700">1-2 business days</p>
+                  <span className="font-medium text-blue-800">{t('contact.responseTimes.supportRequests')}</span>
+                  <p className="text-blue-700">{t('contact.responseTimes.supportRequestsTime')}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-blue-800">Appeals:</span>
-                  <p className="text-blue-700">Within 48 hours</p>
+                  <span className="font-medium text-blue-800">{t('contact.responseTimes.appeals')}</span>
+                  <p className="text-blue-700">{t('contact.responseTimes.appealsTime')}</p>
                 </div>
               </div>
             </div>
 
             <div className="text-center p-6 bg-gradient-to-r from-green-50 to-blue-50 border border-gray-200 rounded-lg">
               <Heart className="w-8 h-8 text-green-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-900 mb-2">Thank You for Being Part of Our Community!</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('contact.thankYou.title')}</h3>
               <p className="text-gray-700">
-                Your participation and adherence to these rules help make King Dice a welcoming place 
-                for board game enthusiasts around the world.
+                {t('contact.thankYou.description')}
               </p>
             </div>
           </div>

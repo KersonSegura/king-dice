@@ -4,8 +4,11 @@ import React from 'react';
 import { Shield, Eye, Cookie, Download, Mail, AlertCircle } from 'lucide-react';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 import Footer from '@/components/Footer';
+import { useTranslations, useLocale } from 'next-intl';
 
 export default function PrivacyPolicyPage() {
+  const t = useTranslations('privacyPolicy');
+  const locale = useLocale();
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Hero Section */}
@@ -13,9 +16,9 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Shield className="w-16 h-16 mx-auto mb-4 text-blue-200" />
-            <h1 className="text-4xl font-bold mb-4">Privacy Policy</h1>
+            <h1 className="text-4xl font-bold mb-4">{t('title')}</h1>
             <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              Your privacy is important to us. Learn how we collect, use, and protect your data on King Dice.
+              {t('subtitle')}
             </p>
           </div>
         </div>
@@ -29,13 +32,13 @@ export default function PrivacyPolicyPage() {
           <div className="flex items-start">
             <Eye className="w-6 h-6 text-blue-600 mr-3 mt-1" />
             <div>
-              <h2 className="text-xl font-semibold text-blue-900 mb-3">Privacy at a Glance</h2>
+              <h2 className="text-xl font-semibold text-blue-900 mb-3">{t('overview.title')}</h2>
               <ul className="text-blue-800 space-y-2">
-                <li>• We collect minimal data necessary to provide our board game services</li>
-                <li>• Your personal information is never sold to third parties</li>
-                <li>• You have full control over your data and can delete your account anytime</li>
-                <li>• We use cookies to improve your experience and remember your preferences</li>
-                <li>• All data is stored securely and protected with industry-standard encryption</li>
+                <li>• {t('overview.point1')}</li>
+                <li>• {t('overview.point2')}</li>
+                <li>• {t('overview.point3')}</li>
+                <li>• {t('overview.point4')}</li>
+                <li>• {t('overview.point5')}</li>
               </ul>
             </div>
           </div>
@@ -45,40 +48,40 @@ export default function PrivacyPolicyPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <Download className="w-6 h-6 text-gray-600 mr-3" />
-            Information We Collect
+            {t('informationWeCollect.title')}
           </h2>
           
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Account Information</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('informationWeCollect.accountInfo.title')}</h3>
               <ul className="text-gray-600 space-y-2 ml-4">
-                <li>• Username and email address (required for account creation)</li>
-                <li>• Profile information you choose to share (bio, favorite games, avatar)</li>
-                <li>• Game collection photos and favorite cards (if uploaded)</li>
-                <li>• Privacy settings and profile customization preferences</li>
-                <li>• OAuth provider information (if you sign in with Google or Facebook): email, name, and profile picture</li>
+                <li>• {t('informationWeCollect.accountInfo.point1')}</li>
+                <li>• {t('informationWeCollect.accountInfo.point2')}</li>
+                <li>• {t('informationWeCollect.accountInfo.point3')}</li>
+                <li>• {t('informationWeCollect.accountInfo.point4')}</li>
+                <li>• {t('informationWeCollect.accountInfo.point5')}</li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Community Activity</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('informationWeCollect.communityActivity.title')}</h3>
               <ul className="text-gray-600 space-y-2 ml-4">
-                <li>• Posts, comments, and forum discussions you create</li>
-                <li>• Images uploaded to the community gallery</li>
-                <li>• Game ratings and reviews you submit</li>
-                <li>• Votes and interactions with other users' content</li>
-                <li>• Chat messages and direct communications</li>
+                <li>• {t('informationWeCollect.communityActivity.point1')}</li>
+                <li>• {t('informationWeCollect.communityActivity.point2')}</li>
+                <li>• {t('informationWeCollect.communityActivity.point3')}</li>
+                <li>• {t('informationWeCollect.communityActivity.point4')}</li>
+                <li>• {t('informationWeCollect.communityActivity.point5')}</li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Usage Data</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('informationWeCollect.usageData.title')}</h3>
               <ul className="text-gray-600 space-y-2 ml-4">
-                <li>• Pages visited and features used on King Dice</li>
-                <li>• Search queries for games and rules</li>
-                <li>• Device information (browser type, operating system)</li>
-                <li>• IP address and general location (for security purposes)</li>
-                <li>• Login times and session duration</li>
+                <li>• {t('informationWeCollect.usageData.point1')}</li>
+                <li>• {t('informationWeCollect.usageData.point2')}</li>
+                <li>• {t('informationWeCollect.usageData.point3')}</li>
+                <li>• {t('informationWeCollect.usageData.point4')}</li>
+                <li>• {t('informationWeCollect.usageData.point5')}</li>
               </ul>
             </div>
           </div>
@@ -86,49 +89,49 @@ export default function PrivacyPolicyPage() {
 
         {/* How We Use Your Information */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">How We Use Your Information</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('howWeUse.title')}</h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h3 className="font-semibold text-green-900 mb-2">Service Provision</h3>
+                <h3 className="font-semibold text-green-900 mb-2">{t('howWeUse.serviceProvision.title')}</h3>
                 <ul className="text-sm text-green-700 space-y-1">
-                  <li>• Maintain your user account and profile</li>
-                  <li>• Provide access to game rules and databases</li>
-                  <li>• Enable community features and interactions</li>
-                  <li>• Process your uploads and content submissions</li>
+                  <li>• {t('howWeUse.serviceProvision.point1')}</li>
+                  <li>• {t('howWeUse.serviceProvision.point2')}</li>
+                  <li>• {t('howWeUse.serviceProvision.point3')}</li>
+                  <li>• {t('howWeUse.serviceProvision.point4')}</li>
                 </ul>
               </div>
               
               <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                <h3 className="font-semibold text-purple-900 mb-2">Communication</h3>
+                <h3 className="font-semibold text-purple-900 mb-2">{t('howWeUse.communication.title')}</h3>
                 <ul className="text-sm text-purple-700 space-y-1">
-                  <li>• Send important account notifications</li>
-                  <li>• Respond to your support requests</li>
-                  <li>• Share platform updates and new features</li>
-                  <li>• Moderate community content and interactions</li>
+                  <li>• {t('howWeUse.communication.point1')}</li>
+                  <li>• {t('howWeUse.communication.point2')}</li>
+                  <li>• {t('howWeUse.communication.point3')}</li>
+                  <li>• {t('howWeUse.communication.point4')}</li>
                 </ul>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">Platform Improvement</h3>
+                <h3 className="font-semibold text-blue-900 mb-2">{t('howWeUse.platformImprovement.title')}</h3>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Analyze usage patterns to improve features</li>
-                  <li>• Personalize your King Dice experience</li>
-                  <li>• Develop new tools and game resources</li>
-                  <li>• Optimize platform performance and reliability</li>
+                  <li>• {t('howWeUse.platformImprovement.point1')}</li>
+                  <li>• {t('howWeUse.platformImprovement.point2')}</li>
+                  <li>• {t('howWeUse.platformImprovement.point3')}</li>
+                  <li>• {t('howWeUse.platformImprovement.point4')}</li>
                 </ul>
               </div>
 
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <h3 className="font-semibold text-orange-900 mb-2">Security & Safety</h3>
+                <h3 className="font-semibold text-orange-900 mb-2">{t('howWeUse.securitySafety.title')}</h3>
                 <ul className="text-sm text-orange-700 space-y-1">
-                  <li>• Protect against fraud and abuse</li>
-                  <li>• Enforce community guidelines and terms</li>
-                  <li>• Investigate violations and disputes</li>
-                  <li>• Maintain platform security and integrity</li>
+                  <li>• {t('howWeUse.securitySafety.point1')}</li>
+                  <li>• {t('howWeUse.securitySafety.point2')}</li>
+                  <li>• {t('howWeUse.securitySafety.point3')}</li>
+                  <li>• {t('howWeUse.securitySafety.point4')}</li>
                 </ul>
               </div>
             </div>
@@ -139,33 +142,33 @@ export default function PrivacyPolicyPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <Cookie className="w-6 h-6 text-gray-600 mr-3" />
-            Cookies and Tracking
+            {t('cookies.title')}
           </h2>
           
           <div className="space-y-4">
             <p className="text-gray-600">
-              King Dice uses cookies and similar technologies to enhance your browsing experience and provide personalized features.
+              {t('cookies.description')}
             </p>
             
             <div className="grid md:grid-cols-3 gap-4">
               <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Essential Cookies</h3>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('cookies.essential.title')}</h3>
                 <p className="text-sm text-gray-600">
-                  Required for basic site functionality, user authentication, and security features.
+                  {t('cookies.essential.description')}
                 </p>
               </div>
               
               <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Preference Cookies</h3>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('cookies.preference.title')}</h3>
                 <p className="text-sm text-gray-600">
-                  Remember your settings, theme preferences, and customization choices.
+                  {t('cookies.preference.description')}
                 </p>
               </div>
               
               <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Analytics Cookies</h3>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('cookies.analytics.title')}</h3>
                 <p className="text-sm text-gray-600">
-                  Help us understand how you use King Dice to improve our platform and features.
+                  {t('cookies.analytics.description')}
                 </p>
               </div>
             </div>
@@ -174,39 +177,36 @@ export default function PrivacyPolicyPage() {
 
         {/* OAuth Providers */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">OAuth Authentication (Google & Facebook)</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('oauth.title')}</h2>
           
           <div className="space-y-4">
             <p className="text-gray-600">
-              King Dice offers the option to sign in using your Google or Facebook account for convenience. 
-              When you choose this option:
+              {t('oauth.description')}
             </p>
             
             <div className="grid md:grid-cols-2 gap-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">What We Receive</h3>
+                <h3 className="font-semibold text-blue-900 mb-2">{t('oauth.whatWeReceive.title')}</h3>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Your email address</li>
-                  <li>• Your name (from your OAuth provider)</li>
-                  <li>• Your profile picture (optional)</li>
+                  <li>• {t('oauth.whatWeReceive.point1')}</li>
+                  <li>• {t('oauth.whatWeReceive.point2')}</li>
+                  <li>• {t('oauth.whatWeReceive.point3')}</li>
                 </ul>
               </div>
               
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h3 className="font-semibold text-green-900 mb-2">What We Don't Access</h3>
+                <h3 className="font-semibold text-green-900 mb-2">{t('oauth.whatWeDontAccess.title')}</h3>
                 <ul className="text-sm text-green-700 space-y-1">
-                  <li>• Your OAuth provider password</li>
-                  <li>• Your contacts or friends list</li>
-                  <li>• Any other data from your OAuth account</li>
+                  <li>• {t('oauth.whatWeDontAccess.point1')}</li>
+                  <li>• {t('oauth.whatWeDontAccess.point2')}</li>
+                  <li>• {t('oauth.whatWeDontAccess.point3')}</li>
                 </ul>
               </div>
             </div>
             
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-yellow-800 text-sm">
-                <strong>Important:</strong> Your OAuth provider (Google or Facebook) may collect information 
-                about your use of King Dice according to their own privacy policies. We recommend reviewing 
-                their privacy policies to understand how they handle your data.
+                <strong>{locale === 'es' ? 'Importante:' : 'Important:'}</strong> {t('oauth.important')}
               </p>
             </div>
           </div>
@@ -214,29 +214,29 @@ export default function PrivacyPolicyPage() {
 
         {/* Data Sharing */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Data Sharing and Third Parties</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('dataSharing.title')}</h2>
           
           <div className="space-y-4">
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-start">
                 <AlertCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-red-900 mb-2">We Never Sell Your Data</h3>
+                  <h3 className="font-semibold text-red-900 mb-2">{t('dataSharing.neverSell.title')}</h3>
                   <p className="text-red-700">
-                    King Dice does not sell, rent, or trade your personal information to third parties for marketing purposes.
+                    {t('dataSharing.neverSell.description')}
                   </p>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Limited Sharing Scenarios</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('dataSharing.limitedSharing.title')}</h3>
               <ul className="text-gray-600 space-y-2 ml-4">
-                <li>• <strong>Service Providers:</strong> Trusted partners who help operate King Dice (hosting, email delivery, analytics)</li>
-                <li>• <strong>OAuth Providers:</strong> When you sign in with Google or Facebook, we share authentication requests with these providers (as required for OAuth functionality)</li>
-                <li>• <strong>Legal Requirements:</strong> When required by law, court order, or to protect rights and safety</li>
-                <li>• <strong>Business Transfers:</strong> In the unlikely event of a merger or acquisition, with user notification</li>
-                <li>• <strong>Public Content:</strong> Information you choose to make public (posts, comments, gallery images)</li>
+                <li>• <strong>{locale === 'es' ? 'Proveedores de Servicios:' : 'Service Providers:'}</strong> {t('dataSharing.limitedSharing.point1')}</li>
+                <li>• <strong>{locale === 'es' ? 'Proveedores OAuth:' : 'OAuth Providers:'}</strong> {t('dataSharing.limitedSharing.point2')}</li>
+                <li>• <strong>{locale === 'es' ? 'Requisitos Legales:' : 'Legal Requirements:'}</strong> {t('dataSharing.limitedSharing.point3')}</li>
+                <li>• <strong>{locale === 'es' ? 'Transferencias Comerciales:' : 'Business Transfers:'}</strong> {t('dataSharing.limitedSharing.point4')}</li>
+                <li>• <strong>{locale === 'es' ? 'Contenido Público:' : 'Public Content:'}</strong> {t('dataSharing.limitedSharing.point5')}</li>
               </ul>
             </div>
           </div>
@@ -244,67 +244,67 @@ export default function PrivacyPolicyPage() {
 
         {/* Your Rights */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Privacy Rights</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('yourRights.title')}</h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Data Control</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('yourRights.dataControl.title')}</h3>
               <ul className="text-gray-600 space-y-3">
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Access:</strong> Request a copy of your personal data
+                    <strong>{locale === 'es' ? 'Acceso:' : 'Access:'}</strong> {t('yourRights.dataControl.access').replace('Access: ', '')}
                   </div>
                 </li>
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Correction:</strong> Update incorrect or incomplete information
+                    <strong>{locale === 'es' ? 'Corrección:' : 'Correction:'}</strong> {t('yourRights.dataControl.correction').replace('Correction: ', '')}
                   </div>
                 </li>
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Deletion:</strong> Delete your account and associated data. 
+                    <strong>{locale === 'es' ? 'Eliminación:' : 'Deletion:'}</strong> {t('yourRights.dataControl.deletion').replace('Deletion: ', '')}
                     <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline ml-1">
-                      Learn how to delete your account
+                      {t('yourRights.dataControl.learnHow')}
                     </a>
                   </div>
                 </li>
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Portability:</strong> Export your data in a readable format
+                    <strong>{locale === 'es' ? 'Portabilidad:' : 'Portability:'}</strong> {t('yourRights.dataControl.portability').replace('Portability: ', '')}
                   </div>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Privacy Controls</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('yourRights.privacyControls.title')}</h3>
               <ul className="text-gray-600 space-y-3">
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Profile Privacy:</strong> Control who can see your profile and activity
+                    <strong>{locale === 'es' ? 'Privacidad del Perfil:' : 'Profile Privacy:'}</strong> {t('yourRights.privacyControls.profilePrivacy').replace('Profile Privacy: ', '')}
                   </div>
                 </li>
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Communication:</strong> Opt out of non-essential emails
+                    <strong>{locale === 'es' ? 'Comunicación:' : 'Communication:'}</strong> {t('yourRights.privacyControls.communication').replace('Communication: ', '')}
                   </div>
                 </li>
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Content Visibility:</strong> Manage who can see your posts and images
+                    <strong>{locale === 'es' ? 'Visibilidad del Contenido:' : 'Content Visibility:'}</strong> {t('yourRights.privacyControls.contentVisibility').replace('Content Visibility: ', '')}
                   </div>
                 </li>
                 <li className="flex items-start">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
                   <div>
-                    <strong>Data Processing:</strong> Object to certain uses of your information
+                    <strong>{locale === 'es' ? 'Procesamiento de Datos:' : 'Data Processing:'}</strong> {t('yourRights.privacyControls.dataProcessing').replace('Data Processing: ', '')}
                   </div>
                 </li>
               </ul>
@@ -314,25 +314,25 @@ export default function PrivacyPolicyPage() {
 
         {/* Data Security */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Data Security</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('dataSecurity.title')}</h2>
           
           <div className="space-y-4">
             <p className="text-gray-600">
-              We implement comprehensive security measures to protect your personal information:
+              {t('dataSecurity.description')}
             </p>
             
             <div className="grid md:grid-cols-2 gap-6">
               <ul className="text-gray-600 space-y-2">
-                <li>• Encryption of data in transit and at rest</li>
-                <li>• Regular security audits and vulnerability assessments</li>
-                <li>• Secure authentication and session management</li>
-                <li>• Limited access to personal data by authorized personnel only</li>
+                <li>• {t('dataSecurity.point1')}</li>
+                <li>• {t('dataSecurity.point2')}</li>
+                <li>• {t('dataSecurity.point3')}</li>
+                <li>• {t('dataSecurity.point4')}</li>
               </ul>
               <ul className="text-gray-600 space-y-2">
-                <li>• Regular backups and disaster recovery procedures</li>
-                <li>• Monitoring for suspicious activity and unauthorized access</li>
-                <li>• Compliance with industry-standard security frameworks</li>
-                <li>• Incident response procedures for potential data breaches</li>
+                <li>• {t('dataSecurity.point5')}</li>
+                <li>• {t('dataSecurity.point6')}</li>
+                <li>• {t('dataSecurity.point7')}</li>
+                <li>• {t('dataSecurity.point8')}</li>
               </ul>
             </div>
           </div>
@@ -340,25 +340,25 @@ export default function PrivacyPolicyPage() {
 
         {/* International Users */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">International Users</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('internationalUsers.title')}</h2>
           
           <div className="space-y-4">
             <p className="text-gray-600">
-              King Dice welcomes users from around the world. We comply with applicable privacy laws including:
+              {t('internationalUsers.description')}
             </p>
             
             <div className="grid md:grid-cols-2 gap-6">
               <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">GDPR (European Union)</h3>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('internationalUsers.gdpr.title')}</h3>
                 <p className="text-sm text-gray-600">
-                  Enhanced rights for EU residents including consent management, data portability, and the right to be forgotten.
+                  {t('internationalUsers.gdpr.description')}
                 </p>
               </div>
               
               <div className="p-4 border border-gray-200 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">CCPA (California)</h3>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('internationalUsers.ccpa.title')}</h3>
                 <p className="text-sm text-gray-600">
-                  Additional privacy rights for California residents including disclosure of data collection and deletion rights.
+                  {t('internationalUsers.ccpa.description')}
                 </p>
               </div>
             </div>
@@ -367,12 +367,11 @@ export default function PrivacyPolicyPage() {
 
         {/* Children's Privacy */}
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Children's Privacy</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('childrensPrivacy.title')}</h2>
           
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-gray-700">
-              King Dice is designed for users aged 13 and older. We do not knowingly collect personal information from children under 13. 
-              If you believe a child under 13 has provided personal information to us, please contact us immediately so we can remove it.
+              {t('childrensPrivacy.description')}
             </p>
           </div>
         </section>
@@ -381,17 +380,17 @@ export default function PrivacyPolicyPage() {
         <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <Mail className="w-6 h-6 text-gray-600 mr-3" />
-            Contact Us About Privacy
+            {t('contact.title')}
           </h2>
           
           <div className="space-y-4">
             <p className="text-gray-600">
-              If you have questions about this Privacy Policy or want to exercise your privacy rights, please contact us:
+              {t('contact.description')}
             </p>
             
             <div className="grid md:grid-cols-2 gap-6">
               <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Email</h3>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('contact.email')}</h3>
                 <p className="text-gray-600">
                   <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
                     support@kingdice.gg
@@ -400,16 +399,16 @@ export default function PrivacyPolicyPage() {
               </div>
               
               <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-2">Response Time</h3>
-                <p className="text-gray-600">We respond to privacy requests within 30 days</p>
+                <h3 className="font-semibold text-gray-800 mb-2">{t('contact.responseTime')}</h3>
+                <p className="text-gray-600">{t('contact.responseTimeValue')}</p>
               </div>
             </div>
             
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-blue-800">
-                <strong>Account Deletion:</strong> To request deletion of your account and data, 
-                please visit our <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline font-semibold">Data Deletion page</a> 
-                {' '}or email us at <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">support@kingdice.gg</a>.
+                <strong>{locale === 'es' ? 'Eliminación de Cuenta:' : 'Account Deletion:'}</strong> {t('contact.accountDeletion')}{' '}
+                <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline font-semibold">{t('contact.dataDeletionPage')}</a>{' '}
+                {t('contact.orEmail')} <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">support@kingdice.gg</a>.
               </p>
             </div>
           </div>
@@ -417,23 +416,22 @@ export default function PrivacyPolicyPage() {
 
         {/* Policy Updates */}
         <section className="bg-white rounded-lg border border-gray-200 p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Policy Updates</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('policyUpdates.title')}</h2>
           
           <div className="space-y-4">
             <p className="text-gray-600">
-              We may update this Privacy Policy periodically to reflect changes in our practices or applicable laws. 
-              When we make significant changes, we will:
+              {t('policyUpdates.description')}
             </p>
             
             <ul className="text-gray-600 space-y-2 ml-4">
-              <li>• Notify users via email and platform announcements</li>
-              <li>• Update the "Last Updated" date at the top of this policy</li>
-              <li>• Provide a summary of key changes</li>
-              <li>• Give users time to review changes before they take effect</li>
+              <li>• {t('policyUpdates.point1')}</li>
+              <li>• {t('policyUpdates.point2')}</li>
+              <li>• {t('policyUpdates.point3')}</li>
+              <li>• {t('policyUpdates.point4')}</li>
             </ul>
             
             <p className="text-gray-600">
-              Your continued use of King Dice after policy updates constitutes acceptance of the revised terms.
+              {t('policyUpdates.continuedUse')}
             </p>
           </div>
         </section>
