@@ -73,6 +73,13 @@ export default function PostDetailPage() {
   
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
   
+  // Swipe from left to go back gesture state
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [startTime, setStartTime] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+  
   const {
     showMentionDropdown,
     mentionQuery,
@@ -594,6 +601,72 @@ export default function PostDetailPage() {
     }
   };
 
+  // Touch handlers for swipe from left to go back (mobile only)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Only work on mobile (screen width < 640px)
+    if (typeof window !== 'undefined' && window.innerWidth >= 640) {
+      return;
+    }
+    
+    // Only allow dragging from the left edge (first 20px)
+    const touchX = e.touches[0].clientX;
+    
+    // Check if touch started near the left edge
+    if (touchX <= 20) {
+      // Don't allow dragging if starting from interactive elements
+      const target = e.target as HTMLElement;
+      const isInteractive = target.closest('button') || 
+                           target.closest('a') ||
+                           target.closest('textarea') ||
+                           target.closest('input') ||
+                           target.closest('select') ||
+                           target.closest('.comments-section');
+      
+      if (!isInteractive) {
+        setIsDragging(true);
+        setStartX(touchX);
+        setStartTime(Date.now());
+        setDragX(0);
+      }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const currentX = e.touches[0].clientX;
+    const deltaX = currentX - startX;
+    
+    // Only allow dragging to the right (positive deltaX)
+    if (deltaX > 0) {
+      setDragX(deltaX);
+      // Prevent scrolling while dragging
+      e.preventDefault();
+    } else {
+      // If dragging left, reset
+      setDragX(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    const threshold = 150; // Minimum drag distance to navigate back
+    const dragDuration = Date.now() - startTime;
+    const velocity = dragX / Math.max(dragDuration, 1); // pixels per ms
+    
+    // Navigate back if dragged enough or if velocity is high (swipe gesture)
+    if (dragX > threshold || (dragX > 50 && velocity > 0.5)) {
+      router.back();
+    } else {
+      // Animate back to original position
+      setIsDragging(false);
+      setDragX(0);
+      setStartX(0);
+      setStartTime(0);
+    }
+  };
+
   const formatCommentTimestamp = (dateString: string) => {
     const d = new Date(dateString);
     const now = new Date();
@@ -658,7 +731,18 @@ export default function PostDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="flex-1 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full overflow-x-hidden">
+      <div 
+        ref={contentRef}
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full overflow-x-hidden sm:transform-none"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: isDragging ? `translateX(${dragX}px)` : 'translateX(0)',
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+          opacity: isDragging ? Math.max(0.7, 1 - dragX / 600) : 1,
+        }}
+      >
         {/* Back button */}
         <div className="mb-6">
           <Link 
@@ -907,6 +991,7 @@ export default function PostDetailPage() {
             </div>
 
             {/* Comments section */}
+            <div className="comments-section">
             <div className="bg-white rounded-none shadow-sm border border-gray-200 p-4 sm:p-6 -mx-4 sm:mx-0">
               {/* Add comment */}
               <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
