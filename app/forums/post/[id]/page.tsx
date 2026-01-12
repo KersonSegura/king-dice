@@ -1349,6 +1349,7 @@ export default function PostDetailPage() {
           </div>
         </div>
       </div>
+      </div>
       <Footer />
 
       {/* Moderation Alert */}
