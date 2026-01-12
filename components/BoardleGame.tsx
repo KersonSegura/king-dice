@@ -1934,125 +1934,167 @@ export function BoardleGame({}: BoardleGameProps) {
     return (
       <div className="space-y-2 flex flex-col items-center">
         {/* Show completed guesses */}
-        {gameMode === 'title' && guesses && guesses.map((guess, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
-            <div className="flex gap-0.5 sm:gap-1 justify-center">
-              {Array.from({ length: maxLength }).map((_, j) => {
-                const targetChar = targetGameData.name[j];
-                const guessChar = guess[j] || '';
-                
-                if (targetChar === ' ') {
-                  return <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
-                } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
-                  return (
-                    <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
-                      {targetChar}
-                    </div>
-                  );
-                } else {
-                  const isCorrect = guessChar === targetChar;
-                  const isPresent = targetGameData.name.toUpperCase().includes(guessChar);
-                  const finalBgColor = isCorrect ? 'bg-green-500' : isPresent ? 'bg-yellow-500' : 'bg-gray-200';
-                  const finalTextColor = isCorrect ? 'text-white' : isPresent ? 'text-white' : 'text-gray-700';
-                  const tileKey = getTileKey(index, j);
-                  const isFlipped = isTileFlipped(tileKey);
+        {gameMode === 'title' && guesses && guesses.map((guess, index) => {
+          const lineBreakPositions = getLineBreakPositions();
+          return (
+            <div key={index} className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
+              <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
+                {Array.from({ length: maxLength }).map((_, j) => {
+                  const targetChar = targetGameData.name[j];
+                  const guessChar = guess[j] || '';
+                  const shouldBreakLine = lineBreakPositions.includes(j);
                   
-                  return (
-                    <div 
-                      key={j} 
-                      className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
-                        isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
-                      }`}
-                    >
-                      {guessChar}
-                    </div>
-                  );
-                }
-              })}
+                  if (targetChar === ' ') {
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />
+                      </React.Fragment>
+                    );
+                  } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
+                          {targetChar}
+                        </div>
+                      </React.Fragment>
+                    );
+                  } else {
+                    const isCorrect = guessChar === targetChar;
+                    const isPresent = targetGameData.name.toUpperCase().includes(guessChar);
+                    const finalBgColor = isCorrect ? 'bg-green-500' : isPresent ? 'bg-yellow-500' : 'bg-gray-200';
+                    const finalTextColor = isCorrect ? 'text-white' : isPresent ? 'text-white' : 'text-gray-700';
+                    const tileKey = getTileKey(index, j);
+                    const isFlipped = isTileFlipped(tileKey);
+                    
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div 
+                          className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
+                            isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
+                          }`}
+                        >
+                          {guessChar}
+                        </div>
+                      </React.Fragment>
+                    );
+                  }
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
-        {gameMode === 'image' && imageGuesses && imageGuesses.map((guess, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
-            <div className="flex gap-0.5 sm:gap-1 justify-center">
-              {Array.from({ length: maxLength }).map((_, j) => {
-                const targetChar = targetGameData.name[j];
-                const guessChar = guess[j] || '';
-                
-                if (targetChar === ' ') {
-                  return <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
-                } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
-                  return (
-                    <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
-                      {targetChar}
-                    </div>
-                  );
-                } else {
-                  const isCorrect = guessChar === targetChar;
-                  const isPresent = targetGameData.name.toUpperCase().includes(guessChar);
-                  const finalBgColor = isCorrect ? 'bg-green-500' : isPresent ? 'bg-yellow-500' : 'bg-gray-200';
-                  const finalTextColor = isCorrect ? 'text-white' : isPresent ? 'text-white' : 'text-gray-700';
-                  const tileKey = getTileKey(index, j);
-                  const isFlipped = isTileFlipped(tileKey);
+        {gameMode === 'image' && imageGuesses && imageGuesses.map((guess, index) => {
+          const lineBreakPositions = getLineBreakPositions();
+          return (
+            <div key={index} className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
+              <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
+                {Array.from({ length: maxLength }).map((_, j) => {
+                  const targetChar = targetGameData.name[j];
+                  const guessChar = guess[j] || '';
+                  const shouldBreakLine = lineBreakPositions.includes(j);
                   
-                  return (
-                    <div 
-                      key={j} 
-                      className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
-                        isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
-                      }`}
-                    >
-                      {guessChar}
-                    </div>
-                  );
-                }
-              })}
+                  if (targetChar === ' ') {
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />
+                      </React.Fragment>
+                    );
+                  } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
+                          {targetChar}
+                        </div>
+                      </React.Fragment>
+                    );
+                  } else {
+                    const isCorrect = guessChar === targetChar;
+                    const isPresent = targetGameData.name.toUpperCase().includes(guessChar);
+                    const finalBgColor = isCorrect ? 'bg-green-500' : isPresent ? 'bg-yellow-500' : 'bg-gray-200';
+                    const finalTextColor = isCorrect ? 'text-white' : isPresent ? 'text-white' : 'text-gray-700';
+                    const tileKey = getTileKey(index, j);
+                    const isFlipped = isTileFlipped(tileKey);
+                    
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div 
+                          className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
+                            isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
+                          }`}
+                        >
+                          {guessChar}
+                        </div>
+                      </React.Fragment>
+                    );
+                  }
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
-        {gameMode === 'card' && cardGuesses && cardGuesses.map((guess, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
-            <div className="flex gap-0.5 sm:gap-1 justify-center">
-              {Array.from({ length: maxLength }).map((_, j) => {
-                const targetChar = targetGameData.name[j];
-                const guessChar = guess[j] || '';
-                
-                if (targetChar === ' ') {
-                  return <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />;
-                } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
-                  return (
-                    <div key={j} className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
-                      {targetChar}
-                    </div>
-                  );
-                } else {
-                  const isCorrect = guessChar === targetChar;
-                  const isPresent = targetGameData.name.toUpperCase().includes(guessChar);
-                  const finalBgColor = isCorrect ? 'bg-green-500' : isPresent ? 'bg-yellow-500' : 'bg-gray-200';
-                  const finalTextColor = isCorrect ? 'text-white' : isPresent ? 'text-white' : 'text-gray-700';
-                  const tileKey = getTileKey(index, j);
-                  const isFlipped = isTileFlipped(tileKey);
+        {gameMode === 'card' && cardGuesses && cardGuesses.map((guess, index) => {
+          const lineBreakPositions = getLineBreakPositions();
+          return (
+            <div key={index} className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-500 w-6 text-right">{index + 1}</span>
+              <div className="flex gap-0.5 sm:gap-1 justify-center flex-wrap">
+                {Array.from({ length: maxLength }).map((_, j) => {
+                  const targetChar = targetGameData.name[j];
+                  const guessChar = guess[j] || '';
+                  const shouldBreakLine = lineBreakPositions.includes(j);
                   
-                  return (
-                    <div 
-                      key={j} 
-                      className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
-                        isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
-                      }`}
-                    >
-                      {guessChar}
-                    </div>
-                  );
-                }
-              })}
+                  if (targetChar === ' ') {
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 border-2 border-gray-400 rounded" />
+                      </React.Fragment>
+                    );
+                  } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
+                          {targetChar}
+                        </div>
+                      </React.Fragment>
+                    );
+                  } else {
+                    const isCorrect = guessChar === targetChar;
+                    const isPresent = targetGameData.name.toUpperCase().includes(guessChar);
+                    const finalBgColor = isCorrect ? 'bg-green-500' : isPresent ? 'bg-yellow-500' : 'bg-gray-200';
+                    const finalTextColor = isCorrect ? 'text-white' : isPresent ? 'text-white' : 'text-gray-700';
+                    const tileKey = getTileKey(index, j);
+                    const isFlipped = isTileFlipped(tileKey);
+                    
+                    return (
+                      <React.Fragment key={j}>
+                        {shouldBreakLine && <div className="basis-full w-full h-0" />}
+                        <div 
+                          className={`w-6 h-6 sm:w-8 sm:h-8 border-2 border-transparent rounded flex items-center justify-center text-xs sm:text-sm font-bold ${
+                            isFlipped ? `${finalBgColor} ${finalTextColor} tile-flip` : `${finalBgColor} ${finalTextColor}`
+                          }`}
+                        >
+                          {guessChar}
+                        </div>
+                      </React.Fragment>
+                    );
+                  }
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
                  {/* Show current input row - only if game is not over */}
          {currentRow < 6 && !gameOver && (
@@ -2074,7 +2116,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 } else if (['-', ':', '&', "'", '.', '!', '?', ','].includes(targetChar)) {
                   return (
                     <React.Fragment key={index}>
-                      {shouldBreakLine && <div className="w-full" />}
+                      {shouldBreakLine && <div className="basis-full w-full h-0" />}
                       <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-200 text-blue-800 border-2 border-blue-400 rounded flex items-center justify-center text-xs sm:text-sm font-bold">
                       {targetChar}
                     </div>
@@ -2083,7 +2125,7 @@ export function BoardleGame({}: BoardleGameProps) {
                 } else {
             return (
                     <React.Fragment key={index}>
-                      {shouldBreakLine && <div className="w-full" />}
+                      {shouldBreakLine && <div className="basis-full w-full h-0" />}
               <input
                 id={`letter-input-${index}`}
                 type="text"
