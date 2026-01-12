@@ -2623,16 +2623,16 @@ export function BoardleGame({}: BoardleGameProps) {
                        <div className="flex flex-col items-center justify-center gap-2 px-4">
                          <div className="flex items-center gap-2 flex-wrap justify-center text-center">
                            <img src="/PartyIcon.svg" alt="Party" className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0" />
-                           <span className="break-words">Congratulations, you found {targetGameData?.name}!</span>
+                           <span className="break-words">{tBoardle('congratulationsFound', { name: targetGameData?.name })}</span>
                          </div>
-                         <p className="text-xs sm:text-sm text-green-600">Come back tomorrow for a new challenge!</p>
+                         <p className="text-xs sm:text-sm text-green-600">{tBoardle('comeBackTomorrow')}</p>
                        </div>
                      </div>
                    ) : (
                      <div className="text-red-600 font-bold text-lg sm:text-xl mb-2">
                        <div className="flex flex-col items-center justify-center gap-2 px-4">
-                         <div className="break-words">Game Over! The answer was {targetGameData?.name}</div>
-                         <p className="text-xs sm:text-sm text-red-600">Come back tomorrow to try again!</p>
+                         <div className="break-words">{tBoardle('gameOver', { name: targetGameData?.name })}</div>
+                         <p className="text-xs sm:text-sm text-red-600">{tBoardle('comeBackTomorrowTryAgain')}</p>
                        </div>
                      </div>
                    )}
