@@ -2925,48 +2925,58 @@ export function BoardleGame({}: BoardleGameProps) {
 
       {/* Rules Modal */}
       {showRules && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md mx-4">
-            <h3 className="text-xl font-bold mb-4">{tBoardle('howToPlayBoardle')}</h3>
-            <div className="space-y-3 text-sm">
-                                                           <p><strong>{tBoardle('titleModeLabel')}</strong></p>
-              <p>• {tBoardle('titleModeRule1')}</p>
-              <p>• {tBoardle('titleModeRule2')}</p>
-              <p>• {tBoardle('titleModeRule3')}</p>
-              <p>• {tBoardle('titleModeRule4')}</p>
-               <p>• {tBoardle('titleModeRule5')}</p>
-              
-              <p><strong>{tBoardle('imageModeLabel')}</strong></p>
-              <p>• {tBoardle('imageModeRule1')}</p>
-              <p>• {tBoardle('imageModeRule2')}</p>
-                              <p>• {tBoardle('imageModeRule3')}</p>
-              
-              <p><strong>{tBoardle('cardModeLabel')}</strong></p>
-              <p>• {tBoardle('cardModeRule1')}</p>
-              <p>• {tBoardle('cardModeRule2')}</p>
-              <p>• {tBoardle('cardModeRule3')}</p>
-              
-              <p><strong>{tBoardle('letterColors')}</strong></p>
-              <div className="flex gap-2 items-center">
-                <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center text-white text-xs">A</div>
-                <span>{tBoardle('letterCorrectPosition')}</span>
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center text-white text-xs">A</div>
-                <span>{tBoardle('letterWrongPosition')}</span>
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="w-6 h-6 bg-gray-400 rounded flex items-center justify-center text-white text-xs">A</div>
-                <span>{tBoardle('letterNotInName')}</span>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4"
+          onClick={() => setShowRules(false)}
+        >
+          <div 
+            className="bg-white rounded-lg max-w-md w-full max-h-[calc(100vh-2rem)] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 overflow-y-auto flex-1">
+              <h3 className="text-xl font-bold mb-4">{tBoardle('howToPlayBoardle')}</h3>
+              <div className="space-y-3 text-sm">
+                <p><strong>{tBoardle('titleModeLabel')}</strong></p>
+                <p>• {tBoardle('titleModeRule1')}</p>
+                <p>• {tBoardle('titleModeRule2')}</p>
+                <p>• {tBoardle('titleModeRule3')}</p>
+                <p>• {tBoardle('titleModeRule4')}</p>
+                <p>• {tBoardle('titleModeRule5')}</p>
+                
+                <p><strong>{tBoardle('imageModeLabel')}</strong></p>
+                <p>• {tBoardle('imageModeRule1')}</p>
+                <p>• {tBoardle('imageModeRule2')}</p>
+                <p>• {tBoardle('imageModeRule3')}</p>
+                
+                <p><strong>{tBoardle('cardModeLabel')}</strong></p>
+                <p>• {tBoardle('cardModeRule1')}</p>
+                <p>• {tBoardle('cardModeRule2')}</p>
+                <p>• {tBoardle('cardModeRule3')}</p>
+                
+                <p><strong>{tBoardle('letterColors')}</strong></p>
+                <div className="flex gap-2 items-center">
+                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center text-white text-xs">A</div>
+                  <span>{tBoardle('letterCorrectPosition')}</span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center text-white text-xs">A</div>
+                  <span>{tBoardle('letterWrongPosition')}</span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <div className="w-6 h-6 bg-gray-400 rounded flex items-center justify-center text-white text-xs">A</div>
+                  <span>{tBoardle('letterNotInName')}</span>
+                </div>
               </div>
             </div>
-            <button
-              onClick={() => setShowRules(false)}
-              className="mt-4 w-full px-4 py-2 text-white rounded hover:opacity-90"
-              style={{ backgroundColor: '#4B86FE' }}
-            >
-              {tBoardle('gotIt')}
-            </button>
+            <div className="p-6 pt-0 border-t border-gray-200 flex-shrink-0">
+              <button
+                onClick={() => setShowRules(false)}
+                className="w-full px-4 py-2 text-white rounded hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#4B86FE' }}
+              >
+                {tBoardle('gotIt')}
+              </button>
+            </div>
           </div>
         </div>
       )}
