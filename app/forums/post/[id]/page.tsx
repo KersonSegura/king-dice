@@ -1366,7 +1366,7 @@ export default function PostDetailPage() {
           showDetails={true}
         />
       )}
-      {showReport && reportingContent && (
+      {(showReport && reportingContent) ? (
         <ReportContent
           contentType={reportingContent.type === 'post' ? 'forum_post' : 'comment'}
           contentId={reportingContent.id}
@@ -1380,7 +1380,7 @@ export default function PostDetailPage() {
             setReportingContent(null);
           }}
         />
-      )}
+      ) : null}
       <ConfirmationDialog
         isOpen={showDeletePostConfirm}
         onClose={() => setShowDeletePostConfirm(false)}
