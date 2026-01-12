@@ -1053,7 +1053,7 @@ export default function PostDetailPage() {
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                           />
                         </div>
-                        {mentionResults.length > 0 ? (
+                        {mentionResults.length > 0 && (
                           <div className="py-1 overflow-y-auto flex-1 min-h-0 pb-1">
                             {mentionResults.map((game, index) => (
                               <button
@@ -1074,11 +1074,13 @@ export default function PostDetailPage() {
                               </button>
                             ))}
                           </div>
-                        ) : mentionQuery.length > 0 ? (
+                        )}
+                        {mentionResults.length === 0 && mentionQuery.length > 0 && (
                           <div className="px-3 py-4 text-sm text-gray-500 text-center">
                             {tChat('noGamesFound')}
                           </div>
-                        ) : (
+                        )}
+                        {mentionResults.length === 0 && mentionQuery.length === 0 && (
                           <div className="px-3 py-4 text-sm text-gray-500 text-center">
                             {tChat('typeToSearchGames')}
                           </div>
