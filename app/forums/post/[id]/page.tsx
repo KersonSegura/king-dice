@@ -1351,8 +1351,6 @@ export default function PostDetailPage() {
       </div>
       </div>
       <Footer />
-
-      {/* Moderation Alert */}
       {moderationAlert && (
         <ModerationAlert
           result={moderationAlert.result}
@@ -1361,8 +1359,6 @@ export default function PostDetailPage() {
           showDetails={true}
         />
       )}
-
-      {/* Report Modal */}
       {showReport && reportingContent && (
         <ReportContent
           contentType={reportingContent.type === 'post' ? 'forum_post' : 'comment'}
@@ -1378,8 +1374,6 @@ export default function PostDetailPage() {
           }}
         />
       )}
-
-      {/* Delete Post Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={showDeletePostConfirm}
         onClose={() => setShowDeletePostConfirm(false)}
@@ -1390,8 +1384,6 @@ export default function PostDetailPage() {
         cancelText={tCommon('cancel')}
         type="danger"
       />
-
-      {/* Delete Comment Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={showDeleteCommentConfirm}
         onClose={() => {
