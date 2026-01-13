@@ -1330,7 +1330,7 @@ export default function CollectionPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 sm:pb-16">
         {/* Page title (moved from header) */}
         <div className="mb-6">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight text-center">
