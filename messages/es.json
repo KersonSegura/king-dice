@@ -1952,9 +1952,7 @@
     "contact": {
       "title": "¿Quieres Contribuir?",
       "description": "¡King Dice siempre está buscando contribuidores! Ya seas desarrollador, diseñador o experto en juegos de mesa, nos encantaría tenerte.",
-      "email": "Contáctanos en",
-      "orVisit": "o visita nuestro",
-      "github": "repositorio de GitHub"
+      "email": "Contáctanos en"
     }
   }
 }

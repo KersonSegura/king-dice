@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Heart, Code, Database, Users, Mail, Github } from 'lucide-react';
+import { Heart, Users, Mail } from 'lucide-react';
 import Footer from '@/components/Footer';
 import { useTranslations } from 'next-intl';
 
@@ -35,59 +35,6 @@ export default function CreditsPage() {
           <p className="text-gray-600">
             {t('team.description')}
           </p>
-        </section>
-
-        {/* Technologies */}
-        <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Code className="w-6 h-6 text-gray-600 mr-3" />
-            {t('technologies.title')}
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {t('technologies.description')}
-          </p>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('technologies.nextjs')}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('technologies.react')}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('technologies.typescript')}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('technologies.tailwind')}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('technologies.supabase')}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('technologies.vercel')}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Resources */}
-        <section className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <Database className="w-6 h-6 text-gray-600 mr-3" />
-            {t('resources.title')}
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {t('resources.description')}
-          </p>
-          <div className="space-y-3">
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('resources.boardgamegeek')}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('resources.publishers')}</p>
-            </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <p className="text-gray-700">• {t('resources.community')}</p>
-            </div>
-          </div>
         </section>
 
         {/* Special Thanks */}
@@ -126,11 +73,7 @@ export default function CreditsPage() {
           </p>
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-blue-800">
-              {t('contact.email')} <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline font-semibold">support@kingdice.gg</a>{' '}
-              {t('contact.orVisit')} <a href="https://github.com/KersonSegura/king-dice" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-1 inline-flex">
-                <Github className="w-4 h-4" />
-                {t('contact.github')}
-              </a>
+              {t('contact.email')} <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline font-semibold">support@kingdice.gg</a>
             </p>
           </div>
         </section>

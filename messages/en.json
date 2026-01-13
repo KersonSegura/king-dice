@@ -1932,9 +1932,7 @@
     "contact": {
       "title": "Want to Contribute?",
       "description": "King Dice is always looking for contributors! Whether you're a developer, designer, or board game expert, we'd love to have you.",
-      "email": "Contact us at",
-      "orVisit": "or visit our",
-      "github": "GitHub repository"
+      "email": "Contact us at"
     }
   }
 }
