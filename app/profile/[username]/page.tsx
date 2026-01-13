@@ -263,6 +263,7 @@ export default function UserProfilePage() {
   const [isEditingCollection, setIsEditingCollection] = useState(false);
   const [showColorCustomizer, setShowColorCustomizer] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPhotoSelectionModal, setShowPhotoSelectionModal] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<'favorite-card' | 'collection-photo'>('favorite-card');
   const [pendingRemoveFeatured, setPendingRemoveFeatured] = useState<null | 'favorite-card' | 'collection-photo'>(null);
   const [profileColors, setProfileColors] = useState({
