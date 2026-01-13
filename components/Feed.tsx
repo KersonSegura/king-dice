@@ -125,6 +125,15 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
       refetchFeedFirstPage();
     };
     window.addEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
+    const onGalleryDelete = (e: any) => {
+      // On image delete, remove from feed and refetch
+      const { imageId } = e.detail || {};
+      if (imageId) {
+        setFeedItems(prev => prev.filter(item => !(item.type === 'gallery' && item.id === imageId)));
+        refetchFeedFirstPage();
+      }
+    };
+    window.addEventListener('kd-gallery-image-deleted', onGalleryDelete as any);
     const onCommentsUpdate = (e: any) => {
       const { imageId, comments } = e.detail || {};
       if (!imageId) return;
@@ -135,6 +144,7 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
     window.addEventListener('kd-gallery-comments-updated', onCommentsUpdate as any);
     return () => {
       window.removeEventListener('kd-gallery-image-updated', onGalleryUpdate as any);
+      window.removeEventListener('kd-gallery-image-deleted', onGalleryDelete as any);
       window.removeEventListener('kd-gallery-comments-updated', onCommentsUpdate as any);
     };
   }, [refetchFeedFirstPage]);

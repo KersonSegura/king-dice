@@ -14,12 +14,14 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import SplitText from '@/components/SplitText';
 import { fetchJsonWithRetry } from '@/utils/fetchWithRetry';
 import { useLocale, useTranslations } from 'next-intl';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import LoginModal from '@/components/LoginModal';
 import { useLoginModal } from '@/hooks/useLoginModal';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 
 const BOARDLE_ASSET_BASE =
   'https://yoedvavdopxhehpxsvlt.supabase.co/storage/v1/object/public/boardle-images/boardle-images';
@@ -127,6 +129,7 @@ export default function HomePage() {
   const isSpanish = locale === 'es';
   const { isChatOpen, selectedChat } = useChatState();
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const [showLoginModal, setShowLoginModal] = useLoginModal();
 
@@ -198,6 +201,10 @@ export default function HomePage() {
   // Modal state
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<GalleryImage | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
+  
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   
   // ImageModal state and handlers
   const [imageComments, setImageComments] = useState<any[]>([]);
@@ -522,6 +529,58 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error('Error liking image:', error);
+    }
+  };
+
+  const handleDeleteImage = () => {
+    if (!isAuthenticated || !user || !selectedGalleryImage) {
+      return;
+    }
+    setImageToDelete(selectedGalleryImage.id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!isAuthenticated || !user || !imageToDelete) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/gallery/${imageToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          authorId: user.id
+        })
+      });
+
+      if (response.ok) {
+        // Remove the image from gallery images
+        setGalleryImages(prevImages => prevImages.filter(image => image.id !== imageToDelete));
+        
+        // Close the image modal if the deleted image is currently selected
+        if (selectedGalleryImage && selectedGalleryImage.id === imageToDelete) {
+          closeImageModal();
+        }
+        
+        // Notify Feed component to refetch
+        try { 
+          window.dispatchEvent(new CustomEvent('kd-gallery-image-deleted', { detail: { imageId: imageToDelete } })); 
+        } catch {}
+        
+        showToast('Image deleted successfully', 'success');
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to delete image', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      showToast('Error deleting image. Please try again.', 'error');
+    } finally {
+      setShowDeleteConfirm(false);
+      setImageToDelete(null);
     }
   };
 
@@ -1864,7 +1923,7 @@ export default function HomePage() {
           category={selectedGalleryImage.category}
           isFeatured={false}
           onLike={() => handleLike(selectedGalleryImage.id)}
-          onDelete={() => {}}
+          onDelete={handleDeleteImage}
           onReport={() => {}}
           onEditDescription={() => {}}
           isLiked={selectedGalleryImage.userVote === 'up'}
@@ -1888,6 +1947,21 @@ export default function HomePage() {
           onNavigate={handleNavigate}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setImageToDelete(null);
+        }}
+        onConfirm={confirmDeleteImage}
+        title="Delete Image"
+        message="Are you sure you want to delete this image? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
 
       {/* Login Modal (opened by home CTA) */}
       <LoginModal isOpen={showLoginModal} onClose={closeLoginModal} />
