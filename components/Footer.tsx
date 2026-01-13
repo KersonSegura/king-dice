@@ -218,26 +218,7 @@ export default function Footer() {
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pb-6">
           <div className="flex flex-col space-y-4">
-            {/* Desktop: Copyright and Made with love on same line */}
-            <div className="md:flex md:items-center md:justify-between">
-              <p className="text-gray-400 text-sm">
-                © {currentYear} King Dice. {t('allRightsReserved')}
-              </p>
-              <div className="mt-4 md:mt-0">
-                <p className="text-gray-400 text-sm flex items-center">
-                  {t('madeWithLove', { heart: '❤️' }).split('❤️').map((part, i, arr) => 
-                    i < arr.length - 1 ? (
-                      <React.Fragment key={i}>
-                        {part}
-                        <Heart className="w-4 h-4 mx-1 text-red-500" />
-                      </React.Fragment>
-                    ) : part
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Desktop: Policy links on separate line */}
+            {/* Desktop: Policy links on first line */}
             {locale === 'es' ? (
               <>
                 {/* Mobile: first line 2 cols, second line left/right */}
@@ -295,6 +276,25 @@ export default function Footer() {
                 </Link>
               </div>
             )}
+
+            {/* Desktop: Copyright and Made with love on second line */}
+            <div className="md:flex md:items-center md:justify-between">
+              <p className="text-gray-400 text-sm">
+                © {currentYear} King Dice. {t('allRightsReserved')}
+              </p>
+              <div className="mt-4 md:mt-0">
+                <p className="text-gray-400 text-sm flex items-center">
+                  {t('madeWithLove', { heart: '❤️' }).split('❤️').map((part, i, arr) => 
+                    i < arr.length - 1 ? (
+                      <React.Fragment key={i}>
+                        {part}
+                        <Heart className="w-4 h-4 mx-1 text-red-500" />
+                      </React.Fragment>
+                    ) : part
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
