@@ -707,7 +707,10 @@ function ForumsPageContent() {
                         <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>{formatDate(post.createdAt)}</span>
                       </div>
-                      
+                    </div>
+                    
+                    {/* Action buttons - Delete and Report */}
+                    <div className="flex items-center space-x-2">
                       {/* Delete button - only show to post author */}
                       {isAuthenticated && user && post.author.id === user.id && (
                         <ModernTooltip content={t('delete') + ' ' + t('post')} position="top">
@@ -719,23 +722,23 @@ function ForumsPageContent() {
                           </button>
                         </ModernTooltip>
                       )}
+                      
+                      {/* Report button */}
+                      <ModernTooltip content={!isAuthenticated ? tCommon('pleaseSignIn') + ' to ' + t('report').toLowerCase() : t('report') + ' ' + t('post')} position="top">
+                        <button
+                          onClick={() => {
+                            if (isAuthenticated) {
+                              handleReport(post);
+                            } else {
+                              setShowLoginModal(true);
+                            }
+                          }}
+                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
+                        </button>
+                      </ModernTooltip>
                     </div>
-                    
-                    {/* Report button - far right */}
-                    <ModernTooltip content={!isAuthenticated ? tCommon('pleaseSignIn') + ' to ' + t('report').toLowerCase() : t('report') + ' ' + t('post')} position="top">
-                      <button
-                        onClick={() => {
-                          if (isAuthenticated) {
-                            handleReport(post);
-                          } else {
-                            setShowLoginModal(true);
-                          }
-                        }}
-                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </button>
-                    </ModernTooltip>
                   </div>
                 </div>
               </div>
