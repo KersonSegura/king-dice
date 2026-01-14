@@ -385,10 +385,7 @@ export default function PixelCanvas({
 
   // Place a pixel
   const placePixel = async (x: number, y: number) => {
-    console.log('[PIXEL CANVAS] placePixel called:', { x, y, isAuthenticated, hasUser: !!user, isPlacing });
-    
     if (!isAuthenticated || !user || isPlacing) {
-      console.log('[PIXEL CANVAS] placePixel blocked:', { isAuthenticated, hasUser: !!user, isPlacing });
       return;
     }
 
@@ -453,8 +450,6 @@ export default function PixelCanvas({
         username: user.username
       };
       
-      console.log('[PIXEL CANVAS] Sending pixel placement request:', payload);
-      
       const response = await fetch('/api/pixel-canvas/place', {
         method: 'POST',
         headers: {
@@ -463,9 +458,7 @@ export default function PixelCanvas({
         body: JSON.stringify(payload),
       });
 
-      console.log('[PIXEL CANVAS] API response status:', response.status);
       const data = await response.json();
-      console.log('[PIXEL CANVAS] API response data:', data);
 
       if (data.success) {
         // No cooldown - reset countdown timer immediately
@@ -484,7 +477,6 @@ export default function PixelCanvas({
         }
       }
     } catch (error) {
-      console.error('[PIXEL CANVAS] Error placing pixel:', error);
       showToast(tPixel('failedToPlacePixel'), 'error');
       // Revert optimistic update on error
       fetchCanvasData();
@@ -495,8 +487,6 @@ export default function PixelCanvas({
 
   // Handle pixel click
   const handlePixelClick = (x: number, y: number) => {
-    console.log('[PIXEL CANVAS] handlePixelClick called:', { x, y, isAuthenticated, hasUser: !!user, countdownTimer });
-    
     if (!isAuthenticated || !user) {
       showToast(tPixel('pleaseSignInToPlacePixels'), 'error');
       return;
@@ -507,7 +497,6 @@ export default function PixelCanvas({
       return;
     }
 
-    console.log('[PIXEL CANVAS] Calling placePixel with:', { x, y, color: selectedColor, userId: user.id });
     placePixel(x, y);
   };
 
@@ -987,20 +976,8 @@ export default function PixelCanvas({
           const x = Math.floor(touchX * scaleX / pixelSize);
           const y = Math.floor(touchY * scaleY / pixelSize);
           
-          console.log('[PIXEL CANVAS] Touch tap detected:', { 
-            touchX, touchY,
-            canvasRect: { width: canvasRect.width, height: canvasRect.height },
-            canvasInternal: { width: canvas.width, height: canvas.height },
-            scaleX, scaleY,
-            x, y,
-            pixelSize
-          });
-          
           if (x >= 0 && x < canvasData.width && y >= 0 && y < canvasData.height) {
-            console.log('[PIXEL CANVAS] Calling handlePixelClick from touch with:', { x, y });
             handlePixelClick(x, y);
-          } else {
-            console.log('[PIXEL CANVAS] Touch coordinates out of bounds:', { x, y, width: canvasData.width, height: canvasData.height });
           }
         }
       }
@@ -1045,20 +1022,8 @@ export default function PixelCanvas({
       const x = Math.floor(mouseX * scaleX / pixelSize);
       const y = Math.floor(mouseY * scaleY / pixelSize);
       
-      console.log('[PIXEL CANVAS] Click detected:', { 
-        mouseX, mouseY,
-        canvasRect: { width: canvasRect.width, height: canvasRect.height },
-        canvasInternal: { width: canvas.width, height: canvas.height },
-        scaleX, scaleY,
-        x, y,
-        pixelSize
-      });
-      
       if (x >= 0 && x < canvasData.width && y >= 0 && y < canvasData.height) {
-        console.log('[PIXEL CANVAS] Calling handlePixelClick with:', { x, y });
         handlePixelClick(x, y);
-      } else {
-        console.log('[PIXEL CANVAS] Coordinates out of bounds:', { x, y, width: canvasData.width, height: canvasData.height });
       }
     }
     setIsDragging(false);
