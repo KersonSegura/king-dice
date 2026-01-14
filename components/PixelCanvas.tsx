@@ -109,17 +109,62 @@ export default function PixelCanvas({
   const colorInputRef = useRef<HTMLInputElement>(null);
   const dropperInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch canvas data
+  // Fetch canvas data (preserves optimistic updates)
   const fetchCanvasData = useCallback(async () => {
     try {
       const response = await fetch('/api/pixel-canvas');
       if (response.ok) {
         const data = await response.json();
-        setCanvasData(data.canvas);
+        // Merge with existing canvas data to preserve optimistic updates
+        setCanvasData(prev => {
+          if (!prev) return data.canvas;
+          
+          // Create a copy of the server grid
+          const mergedGrid = data.canvas.grid.map((row: string[]) => [...row]);
+          
+          // Preserve recently placed pixels from optimistic updates
+          // This prevents pixels from being erased during auto-refresh
+          prev.pixels.forEach(optimisticPixel => {
+            const pixelKey = `${optimisticPixel.x},${optimisticPixel.y}`;
+            if (recentlyPlacedPixelsRef.current.has(pixelKey)) {
+              // Keep the optimistic pixel color
+              if (optimisticPixel.y >= 0 && optimisticPixel.y < mergedGrid.length &&
+                  optimisticPixel.x >= 0 && optimisticPixel.x < mergedGrid[0]?.length) {
+                mergedGrid[optimisticPixel.y][optimisticPixel.x] = optimisticPixel.color;
+              }
+            }
+          });
+          
+          // Merge pixels array, prioritizing optimistic updates
+          const mergedPixels = [...data.canvas.pixels];
+          prev.pixels.forEach(optimisticPixel => {
+            const pixelKey = `${optimisticPixel.x},${optimisticPixel.y}`;
+            if (recentlyPlacedPixelsRef.current.has(pixelKey)) {
+              const existingIndex = mergedPixels.findIndex(
+                p => p.x === optimisticPixel.x && p.y === optimisticPixel.y
+              );
+              if (existingIndex !== -1) {
+                // Replace with optimistic version
+                mergedPixels[existingIndex] = optimisticPixel;
+              } else {
+                // Add optimistic pixel if not in server data yet
+                mergedPixels.push(optimisticPixel);
+              }
+            }
+          });
+          
+          return {
+            ...data.canvas,
+            grid: mergedGrid,
+            pixels: mergedPixels,
+            totalPixels: mergedPixels.length,
+            uniqueUsers: new Set(mergedPixels.map(p => p.userId)).size
+          };
+        });
         setStats(data.stats);
       }
     } catch (error) {
-      console.error('Error fetching canvas data:', error);
+      // Silent error handling
     } finally {
       setIsLoading(false);
     }

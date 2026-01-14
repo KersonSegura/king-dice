@@ -10,6 +10,10 @@ const nextConfig = {
     // TODO: Fix TypeScript errors after deployment
     ignoreBuildErrors: true,
   },
+  // Suppress preload warnings for resources that may not be used immediately
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   images: {
     remotePatterns: [
       {
