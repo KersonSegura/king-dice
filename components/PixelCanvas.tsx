@@ -63,6 +63,7 @@ export default function PixelCanvas({
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
   const [countdownTimer, setCountdownTimer] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const recentlyPlacedPixelsRef = useRef<Set<string>>(new Set());
   const baseZoom = 1.5; // This is our "normal" size (0% zoom)
   
   // Initialize zoom level based on device type
@@ -244,6 +245,19 @@ export default function PixelCanvas({
             (payload) => {
               if (!active) return;
               
+              // Create a unique key for this pixel position
+              const pixelKey = `${payload.new.x},${payload.new.y}`;
+              
+              // Skip real-time update if we just placed this pixel ourselves (optimistic update already handled it)
+              // This prevents the blinking/flashing effect
+              if (recentlyPlacedPixelsRef.current.has(pixelKey)) {
+                // Remove from set after a short delay to allow future updates
+                setTimeout(() => {
+                  recentlyPlacedPixelsRef.current.delete(pixelKey);
+                }, 1000);
+                return;
+              }
+              
               // Update canvas data with the new pixel
               const newPixel = {
                 x: payload.new.x,
@@ -380,6 +394,56 @@ export default function PixelCanvas({
 
     setIsPlacing(true);
 
+    // Optimistically update the canvas immediately (before API call)
+    setCanvasData(prev => {
+      if (!prev) return prev;
+      
+      const newPixel = {
+        x,
+        y,
+        color: selectedColor,
+        userId: user.id,
+        username: user.username,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Check if pixel already exists at this position (update)
+      const existingIndex = prev.pixels.findIndex(p => p.x === x && p.y === y);
+      let updatedPixels;
+      
+      if (existingIndex !== -1) {
+        // Update existing pixel
+        updatedPixels = [...prev.pixels];
+        updatedPixels[existingIndex] = newPixel;
+      } else {
+        // Add new pixel
+        updatedPixels = [...prev.pixels, newPixel];
+      }
+      
+      // Update grid immediately
+      const newGrid = prev.grid.map(row => [...row]);
+      if (y >= 0 && y < newGrid.length && x >= 0 && x < newGrid[0].length) {
+        newGrid[y][x] = selectedColor;
+      }
+      
+      // Mark this pixel as recently placed to prevent real-time subscription from causing blinking
+      const pixelKey = `${x},${y}`;
+      recentlyPlacedPixelsRef.current.add(pixelKey);
+      
+      // Remove from set after a delay to allow future real-time updates
+      setTimeout(() => {
+        recentlyPlacedPixelsRef.current.delete(pixelKey);
+      }, 2000);
+      
+      return {
+        ...prev,
+        pixels: updatedPixels,
+        grid: newGrid,
+        totalPixels: updatedPixels.length,
+        uniqueUsers: new Set(updatedPixels.map(p => p.userId)).size
+      };
+    });
+
     try {
       const payload = {
         x,
@@ -407,12 +471,15 @@ export default function PixelCanvas({
         showToast(data.message, 'success', 3000);
         // No cooldown - reset countdown timer immediately
         setCountdownTimer(null);
-        // Fetch canvas data in background (don't block)
-        fetchCanvasData();
-        // Check cooldown in background (should return no cooldown)
+        // Don't fetch canvas data - real-time subscription will handle updates
+        // This prevents the blinking/flashing effect
+        // checkCooldown in background (should return no cooldown)
         checkCooldown();
       } else {
+        // Revert optimistic update on error
         showToast(data.message, 'error');
+        // Re-fetch to get correct state
+        fetchCanvasData();
         if (data.cooldownRemaining) {
           setCooldownRemaining(data.cooldownRemaining);
         }
@@ -420,6 +487,8 @@ export default function PixelCanvas({
     } catch (error) {
       console.error('[PIXEL CANVAS] Error placing pixel:', error);
       showToast(tPixel('failedToPlacePixel'), 'error');
+      // Revert optimistic update on error
+      fetchCanvasData();
     } finally {
       setIsPlacing(false);
     }
