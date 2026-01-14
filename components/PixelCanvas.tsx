@@ -276,7 +276,70 @@ export default function PixelCanvas({
         const supabaseClient = await getSupabaseBrowserClient();
         if (!active) return;
         
-        // Subscribe to pixel placement changes
+        // Subscribe to pixel placement changes (both INSERT and UPDATE)
+        // This ensures all users see pixel updates in real-time
+        const handlePixelUpdate = (payload: any) => {
+          if (!active) return;
+          
+          // Create a unique key for this pixel position
+          const pixelKey = `${payload.new.x},${payload.new.y}`;
+          
+          // Skip real-time update if we just placed this pixel ourselves (optimistic update already handled it)
+          // This prevents the blinking/flashing effect and discoloration
+          if (recentlyPlacedPixelsRef.current.has(pixelKey)) {
+            return;
+          }
+          
+          // Update canvas data with the new pixel
+          const newPixel = {
+            x: payload.new.x,
+            y: payload.new.y,
+            color: payload.new.color,
+            userId: payload.new.user_id,
+            username: payload.new.username,
+            timestamp: payload.new.placed_at || payload.new.updated_at || payload.new.created_at
+          };
+          
+          // Update canvas data immediately for all users
+          setCanvasData(prev => {
+            if (!prev) return prev;
+            
+            // Check if pixel already exists at this position (update)
+            const existingIndex = prev.pixels.findIndex(p => p.x === newPixel.x && p.y === newPixel.y);
+            const isNewPixel = existingIndex === -1;
+            let updatedPixels;
+            
+            if (existingIndex !== -1) {
+              // Update existing pixel
+              updatedPixels = [...prev.pixels];
+              updatedPixels[existingIndex] = newPixel;
+            } else {
+              // Add new pixel
+              updatedPixels = [...prev.pixels, newPixel];
+            }
+            
+            // Update grid immediately
+            const newGrid = prev.grid.map(row => [...row]);
+            if (newPixel.y >= 0 && newPixel.y < newGrid.length && newPixel.x >= 0 && newPixel.x < newGrid[0].length) {
+              newGrid[newPixel.y][newPixel.x] = newPixel.color;
+            }
+            
+            // Update stats based on whether it's a new pixel
+            setStats(prevStats => ({
+              ...prevStats,
+              totalPixels: isNewPixel ? (prevStats?.totalPixels || 0) + 1 : (prevStats?.totalPixels || 0)
+            }));
+            
+            return {
+              ...prev,
+              pixels: updatedPixels,
+              grid: newGrid,
+              totalPixels: updatedPixels.length,
+              uniqueUsers: new Set(updatedPixels.map(p => p.userId)).size
+            };
+          });
+        };
+        
         pixelChannel = supabaseClient
           .channel('pixel-placements-realtime')
           .on(
@@ -287,71 +350,27 @@ export default function PixelCanvas({
               table: 'pixel_placements',
               filter: 'canvas_id=eq.main-canvas'
             },
-            (payload) => {
-              if (!active) return;
-              
-              // Create a unique key for this pixel position
-              const pixelKey = `${payload.new.x},${payload.new.y}`;
-              
-              // Skip real-time update if we just placed this pixel ourselves (optimistic update already handled it)
-              // This prevents the blinking/flashing effect and discoloration
-              if (recentlyPlacedPixelsRef.current.has(pixelKey)) {
-                return;
-              }
-              
-              // Update canvas data with the new pixel
-              const newPixel = {
-                x: payload.new.x,
-                y: payload.new.y,
-                color: payload.new.color,
-                userId: payload.new.user_id,
-                username: payload.new.username,
-                timestamp: payload.new.placed_at || payload.new.created_at
-              };
-              
-              // Update canvas data immediately
-              setCanvasData(prev => {
-                if (!prev) return prev;
-                
-                // Check if pixel already exists at this position (update)
-                const existingIndex = prev.pixels.findIndex(p => p.x === newPixel.x && p.y === newPixel.y);
-                const isNewPixel = existingIndex === -1;
-                let updatedPixels;
-                
-                if (existingIndex !== -1) {
-                  // Update existing pixel
-                  updatedPixels = [...prev.pixels];
-                  updatedPixels[existingIndex] = newPixel;
-                } else {
-                  // Add new pixel
-                  updatedPixels = [...prev.pixels, newPixel];
-                }
-                
-                // Update grid
-                const newGrid = prev.grid.map(row => [...row]);
-                if (newPixel.y >= 0 && newPixel.y < newGrid.length && newPixel.x >= 0 && newPixel.x < newGrid[0].length) {
-                  newGrid[newPixel.y][newPixel.x] = newPixel.color;
-                }
-                
-                // Update stats based on whether it's a new pixel
-                setStats(prevStats => ({
-                  ...prevStats,
-                  totalPixels: isNewPixel ? (prevStats?.totalPixels || 0) + 1 : (prevStats?.totalPixels || 0)
-                }));
-                
-                return {
-                  ...prev,
-                  pixels: updatedPixels,
-                  grid: newGrid,
-                  totalPixels: updatedPixels.length,
-                  uniqueUsers: new Set(updatedPixels.map(p => p.userId)).size
-                };
-              });
-            }
+            handlePixelUpdate
           )
-          .subscribe();
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'pixel_placements',
+              filter: 'canvas_id=eq.main-canvas'
+            },
+            handlePixelUpdate
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              // Real-time subscription is active - all users will see updates
+            } else if (status === 'CHANNEL_ERROR') {
+              // Connection error - will retry on next mount
+            }
+          });
       } catch (err) {
-        // Silent error handling
+        // Silent error handling - subscription will retry on next mount
       }
     })();
     
