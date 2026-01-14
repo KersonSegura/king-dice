@@ -468,7 +468,6 @@ export default function PixelCanvas({
       console.log('[PIXEL CANVAS] API response data:', data);
 
       if (data.success) {
-        showToast(data.message, 'success', 3000);
         // No cooldown - reset countdown timer immediately
         setCountdownTimer(null);
         // Don't fetch canvas data - real-time subscription will handle updates
