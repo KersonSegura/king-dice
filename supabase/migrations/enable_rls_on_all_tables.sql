@@ -40,6 +40,10 @@ ALTER TABLE public.comment_likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pixel_canvas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pixel_placements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pixel_cooldowns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.game_shop_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.post_poll_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hot_game_list ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.most_played_game_list ENABLE ROW LEVEL SECURITY;
 
 -- Create basic policies for read access (public data)
 -- These allow anyone to read public data, but only authenticated users can modify
@@ -169,6 +173,21 @@ CREATE POLICY "Users can manage their own 2FA codes" ON public.two_factor_codes 
 -- Reports (authenticated users can create, admins can view)
 CREATE POLICY "Authenticated users can create reports" ON public.reports FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 -- Note: Reports viewing should be restricted to admins only - you may want to add admin check
+
+-- Game shop items (public read, authenticated write)
+CREATE POLICY "Game shop items are viewable by everyone" ON public.game_shop_items FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create shop items" ON public.game_shop_items FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can update shop items" ON public.game_shop_items FOR UPDATE WITH CHECK (auth.role() = 'authenticated');
+
+-- Post poll votes (public read, authenticated write)
+CREATE POLICY "Post poll votes are viewable by everyone" ON public.post_poll_votes FOR SELECT USING (true);
+CREATE POLICY "Users can manage their own poll votes" ON public.post_poll_votes FOR ALL USING (auth.uid()::text = user_id);
+
+-- Hot game list (public read, system write)
+CREATE POLICY "Hot game list is viewable by everyone" ON public.hot_game_list FOR SELECT USING (true);
+
+-- Most played game list (public read, system write)
+CREATE POLICY "Most played game list is viewable by everyone" ON public.most_played_game_list FOR SELECT USING (true);
 
 -- Verify RLS is enabled
 DO $$

@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if user can place a pixel - 10 seconds cooldown
+    // Check if user can place a pixel - 0 seconds cooldown (no cooldown)
     const cooldownStatus = await getUserCooldownStatus(userId);
     console.log('[PIXEL CANVAS API] Cooldown status:', cooldownStatus);
     if (!cooldownStatus.canPlace) {

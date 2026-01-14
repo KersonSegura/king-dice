@@ -269,9 +269,9 @@ export async function placePixel(
     }
     color = normalizedColor;
     
-    // Check cooldown - 10 seconds
+    // Check cooldown - 0 seconds (no cooldown)
     const userCooldown = cooldowns.find(c => c.userId === userId);
-    const cooldownSeconds = 10; // 10 seconds cooldown
+    const cooldownSeconds = 0; // 0 seconds cooldown (disabled)
     
     if (userCooldown) {
       const lastPixelTime = new Date(userCooldown.lastPixelTime);
@@ -349,12 +349,12 @@ export async function placePixel(
       uniqueUsers
     });
     
-    // Update user cooldown - 10 seconds (ignore errors if table doesn't exist)
+    // Update user cooldown - 0 seconds (ignore errors if table doesn't exist)
     try {
       await saveCooldown({
         userId,
         lastPixelTime: now,
-        cooldownMinutes: 0.167 // 10 seconds = ~0.167 minutes
+        cooldownMinutes: 0 // 0 seconds = 0 minutes (no cooldown)
       });
     } catch (cooldownError: any) {
       // Silently ignore if table doesn't exist - cooldown isn't critical
@@ -396,7 +396,7 @@ export async function getUserCooldownStatus(userId: string): Promise<{ canPlace:
     const now = new Date();
     const timeDiff = now.getTime() - lastPixelTime.getTime();
     const secondsPassed = timeDiff / 1000;
-    const cooldownSeconds = 10;
+    const cooldownSeconds = 0; // 0 seconds cooldown (disabled)
     
     if (secondsPassed >= cooldownSeconds) {
       return { canPlace: true };
