@@ -331,10 +331,11 @@ export default function PixelCanvas({
         setCooldownRemaining(data.remainingMinutes);
         setCooldownSeconds(data.cooldownSeconds);
         
-        // Start countdown timer if there's a cooldown
+        // Start countdown timer if there's a cooldown (only if > 0)
         if (data.cooldownSeconds && data.cooldownSeconds > 0) {
           setCountdownTimer(data.cooldownSeconds);
         } else {
+          // No cooldown - clear the timer
           setCountdownTimer(null);
         }
       }
@@ -404,11 +405,12 @@ export default function PixelCanvas({
 
       if (data.success) {
         showToast(data.message, 'success', 3000);
-        await fetchCanvasData();
-        // Start 10-second countdown immediately
-        setCountdownTimer(10);
-        // Also check server-side cooldown to ensure sync
-        await checkCooldown();
+        // No cooldown - reset countdown timer immediately
+        setCountdownTimer(null);
+        // Fetch canvas data in background (don't block)
+        fetchCanvasData();
+        // Check cooldown in background (should return no cooldown)
+        checkCooldown();
       } else {
         showToast(data.message, 'error');
         if (data.cooldownRemaining) {
@@ -432,7 +434,7 @@ export default function PixelCanvas({
       return;
     }
 
-    if (countdownTimer) {
+    if (countdownTimer && countdownTimer > 0) {
       showToast(`Please wait ${countdownTimer} more second(s)`, 'error');
       return;
     }
