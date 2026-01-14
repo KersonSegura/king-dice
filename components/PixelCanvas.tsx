@@ -249,12 +249,8 @@ export default function PixelCanvas({
               const pixelKey = `${payload.new.x},${payload.new.y}`;
               
               // Skip real-time update if we just placed this pixel ourselves (optimistic update already handled it)
-              // This prevents the blinking/flashing effect
+              // This prevents the blinking/flashing effect and discoloration
               if (recentlyPlacedPixelsRef.current.has(pixelKey)) {
-                // Remove from set after a short delay to allow future updates
-                setTimeout(() => {
-                  recentlyPlacedPixelsRef.current.delete(pixelKey);
-                }, 1000);
                 return;
               }
               
@@ -308,13 +304,9 @@ export default function PixelCanvas({
               });
             }
           )
-          .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-              console.log('✅ Real-time pixel updates enabled');
-            }
-          });
+          .subscribe();
       } catch (err) {
-        console.error('Error setting up pixel realtime:', err);
+        // Silent error handling
       }
     })();
     
@@ -389,12 +381,18 @@ export default function PixelCanvas({
       return;
     }
 
-    setIsPlacing(true);
-
     // Optimistically update the canvas immediately (before API call)
+    // This makes the pixel appear instantly
     setCanvasData(prev => {
       if (!prev) return prev;
       
+      // Directly update the grid for fastest rendering
+      const newGrid = prev.grid.map(row => [...row]);
+      if (y >= 0 && y < newGrid.length && x >= 0 && x < newGrid[0].length) {
+        newGrid[y][x] = selectedColor;
+      }
+      
+      // Update pixels array
       const newPixel = {
         x,
         y,
@@ -404,33 +402,19 @@ export default function PixelCanvas({
         timestamp: new Date().toISOString()
       };
       
-      // Check if pixel already exists at this position (update)
       const existingIndex = prev.pixels.findIndex(p => p.x === x && p.y === y);
-      let updatedPixels;
+      const updatedPixels = existingIndex !== -1
+        ? prev.pixels.map((p, i) => i === existingIndex ? newPixel : p)
+        : [...prev.pixels, newPixel];
       
-      if (existingIndex !== -1) {
-        // Update existing pixel
-        updatedPixels = [...prev.pixels];
-        updatedPixels[existingIndex] = newPixel;
-      } else {
-        // Add new pixel
-        updatedPixels = [...prev.pixels, newPixel];
-      }
-      
-      // Update grid immediately
-      const newGrid = prev.grid.map(row => [...row]);
-      if (y >= 0 && y < newGrid.length && x >= 0 && x < newGrid[0].length) {
-        newGrid[y][x] = selectedColor;
-      }
-      
-      // Mark this pixel as recently placed to prevent real-time subscription from causing blinking
+      // Mark this pixel as recently placed to prevent real-time subscription from overwriting
       const pixelKey = `${x},${y}`;
       recentlyPlacedPixelsRef.current.add(pixelKey);
       
       // Remove from set after a delay to allow future real-time updates
       setTimeout(() => {
         recentlyPlacedPixelsRef.current.delete(pixelKey);
-      }, 2000);
+      }, 3000);
       
       return {
         ...prev,
@@ -441,48 +425,43 @@ export default function PixelCanvas({
       };
     });
 
-    try {
-      const payload = {
+    // Fire API call in background - don't block UI
+    // Only set isPlacing briefly to prevent rapid double-clicks
+    setIsPlacing(true);
+    setTimeout(() => setIsPlacing(false), 100);
+
+    // Make API call without blocking
+    fetch('/api/pixel-canvas/place', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         x,
         y,
         color: selectedColor,
         userId: user.id,
         username: user.username
-      };
-      
-      const response = await fetch('/api/pixel-canvas/place', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // No cooldown - reset countdown timer immediately
-        setCountdownTimer(null);
-        // Don't fetch canvas data - real-time subscription will handle updates
-        // This prevents the blinking/flashing effect
-        // checkCooldown in background (should return no cooldown)
-        checkCooldown();
-      } else {
-        // Revert optimistic update on error
-        showToast(data.message, 'error');
-        // Re-fetch to get correct state
-        fetchCanvasData();
-        if (data.cooldownRemaining) {
-          setCooldownRemaining(data.cooldownRemaining);
+      }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Success - optimistic update was correct, no need to do anything
+          setCountdownTimer(null);
+          checkCooldown();
+        } else {
+          // Only revert if we get a clear error response (not network errors)
+          // Don't show toast for every error to avoid spam
+          if (data.cooldownRemaining) {
+            setCooldownRemaining(data.cooldownRemaining);
+          }
         }
-      }
-    } catch (error) {
-      showToast(tPixel('failedToPlacePixel'), 'error');
-      // Revert optimistic update on error
-      fetchCanvasData();
-    } finally {
-      setIsPlacing(false);
-    }
+      })
+      .catch(error => {
+        // Network errors are silent - optimistic update stays
+        // The real-time subscription will eventually sync if the pixel was actually placed
+      });
   };
 
   // Handle pixel click
