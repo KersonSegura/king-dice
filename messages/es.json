@@ -332,6 +332,56 @@
     "selectLanguage": "Seleccionar Idioma",
     "languageChanged": "Idioma cambiado exitosamente"
   },
+  "dataDeletion": {
+    "title": "Instrucciones para Eliminación de Datos",
+    "subtitle": "Aprende cómo solicitar la eliminación de tu cuenta y datos personales de King Dice.",
+    "right": {
+      "title": "Tu Derecho a la Eliminación de Datos",
+      "description": "Bajo las regulaciones de protección de datos, tienes derecho a solicitar la eliminación de tus datos personales. Nos comprometemos a atender estas solicitudes de manera oportuna."
+    },
+    "how": {
+      "title": "Cómo Solicitar la Eliminación de la Cuenta",
+      "step1": "Inicia sesión en tu cuenta de King Dice",
+      "step2": "Ve a Configuración (haz clic en tu foto de perfil → Configuración)",
+      "step3": "Desplázate hasta la sección \"Cuenta\"",
+      "step4": "Haz clic en el botón \"Eliminar Cuenta\"",
+      "step5": "Confirma la eliminación ingresando tu contraseña",
+      "step6": "Tu cuenta y datos se eliminarán permanentemente dentro de 30 días"
+    },
+    "emailAlt": {
+      "title": "Alternativa: Solicitud por Correo",
+      "description": "Si no puedes acceder a tu cuenta, puedes solicitar la eliminación por correo electrónico.",
+      "sendTo": "Envía un correo a:",
+      "include": "Incluye la siguiente información en tu correo:",
+      "item1": "Tu nombre de usuario o correo asociado a la cuenta",
+      "item2": "Asunto: \"Solicitud de Eliminación de Cuenta\"",
+      "item3": "Confirmación de que deseas eliminar permanentemente tu cuenta"
+    },
+    "whatDeleted": {
+      "title": "Qué Datos Serán Eliminados",
+      "description": "Cuando solicitas la eliminación de la cuenta, los siguientes datos se eliminarán permanentemente:",
+      "item1": "Tu cuenta de usuario e información de perfil",
+      "item2": "Todas tus publicaciones, comentarios y contribuciones en foros",
+      "item3": "Imágenes y subidas de la galería",
+      "item4": "Colección de juegos y favoritos",
+      "item5": "Mensajes y comunicaciones privadas",
+      "item6": "Datos de XP y nivel",
+      "item7": "Preferencias y configuraciones personales",
+      "note": "Nota: Algunos datos pueden conservarse por razones legales o de seguridad (por ejemplo, registros de transacciones) según lo requiera la ley. Estos datos se anonimizarán y no podrán vincularse a tu cuenta."
+    },
+    "processing": {
+      "title": "Tiempo de Procesamiento",
+      "description": "Las solicitudes de eliminación de cuenta normalmente se procesan dentro de",
+      "time": "30 días"
+    },
+    "questions": {
+      "title": "¿Preguntas o Inquietudes?",
+      "description": "Si tienes preguntas sobre la eliminación de datos o necesitas ayuda con tu solicitud, contáctanos:",
+      "emailTitle": "Correo",
+      "responseTitle": "Tiempo de Respuesta",
+      "responseValue": "Nuestro objetivo es responder a todas las consultas dentro de 48 horas."
+    }
+  },
   "footer": {
     "loveKingDice": "¿Amas King Dice?",
     "supportMission": "Apoya nuestra misión de construir la comunidad definitiva de juegos de mesa",

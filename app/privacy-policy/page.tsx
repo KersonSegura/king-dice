@@ -407,7 +407,9 @@ export default function PrivacyPolicyPage() {
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-blue-800">
                 <strong>{locale === 'es' ? 'Eliminación de Cuenta:' : 'Account Deletion:'}</strong> {t('contact.accountDeletion')}{' '}
-                <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline font-semibold">{t('contact.dataDeletionPage')}</a>{' '}
+                <a href="/data-deletion" className="text-blue-600 hover:text-blue-800 underline font-semibold">
+                  {t('contact.dataDeletionPage')}
+                </a>{' '}
                 {t('contact.orEmail')} <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">support@kingdice.gg</a>.
               </p>
             </div>

@@ -2,9 +2,12 @@
 
 import React from 'react';
 import { Trash2, Mail, Shield, AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Footer from '@/components/Footer';
 
 export default function DataDeletionPage() {
+  const t = useTranslations('dataDeletion');
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Hero Section */}
@@ -12,151 +15,144 @@ export default function DataDeletionPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Trash2 className="w-16 h-16 mx-auto mb-4 text-red-200" />
-            <h1 className="text-4xl font-bold mb-4">Data Deletion Instructions</h1>
-            <p className="text-xl text-red-100 max-w-2xl mx-auto">
-              Learn how to request deletion of your account and personal data from King Dice.
-            </p>
+            <h1 className="text-4xl font-bold mb-4">{t('title')}</h1>
+            <p className="text-xl text-red-100 max-w-2xl mx-auto">{t('subtitle')}</p>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Right to Deletion */}
         <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
           <div className="flex items-start space-x-4 mb-6">
             <Shield className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Right to Data Deletion</h2>
-              <p className="text-gray-600">
-                Under data protection regulations, you have the right to request deletion of your personal data. 
-                We are committed to honoring these requests in a timely manner.
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('right.title')}</h2>
+              <p className="text-gray-600">{t('right.description')}</p>
             </div>
           </div>
+        </div>
 
-          <div className="space-y-6">
-            {/* How to Request Deletion */}
-            <section>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <Mail className="w-5 h-5 mr-2 text-blue-600" />
-                How to Request Account Deletion
-              </h3>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <ol className="list-decimal list-inside space-y-3 text-gray-700">
-                  <li>
-                    <strong>Log in to your account</strong> on King Dice
-                  </li>
-                  <li>
-                    <strong>Go to Settings</strong> (click on your profile picture → Settings)
-                  </li>
-                  <li>
-                    <strong>Scroll to the "Account" section</strong>
-                  </li>
-                  <li>
-                    <strong>Click "Delete Account"</strong> button
-                  </li>
-                  <li>
-                    <strong>Confirm the deletion</strong> by entering your password
-                  </li>
-                  <li>
-                    <strong>Your account and data will be permanently deleted</strong> within 30 days
-                  </li>
-                </ol>
+        {/* Steps */}
+        <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('how.title')}</h2>
+          <ol className="space-y-4 text-gray-700">
+            <li className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold mr-4 flex-shrink-0">
+                1
               </div>
-            </section>
+              <span>{t('how.step1')}</span>
+            </li>
+            <li className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold mr-4 flex-shrink-0">
+                2
+              </div>
+              <span>{t('how.step2')}</span>
+            </li>
+            <li className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold mr-4 flex-shrink-0">
+                3
+              </div>
+              <span>{t('how.step3')}</span>
+            </li>
+            <li className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold mr-4 flex-shrink-0">
+                4
+              </div>
+              <span>{t('how.step4')}</span>
+            </li>
+            <li className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold mr-4 flex-shrink-0">
+                5
+              </div>
+              <span>{t('how.step5')}</span>
+            </li>
+            <li className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold mr-4 flex-shrink-0">
+                6
+              </div>
+              <span>{t('how.step6')}</span>
+            </li>
+          </ol>
+        </div>
 
-            {/* Alternative Method */}
-            <section>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2 text-orange-600" />
-                Alternative: Email Request
-              </h3>
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
-                <p className="text-gray-700 mb-3">
-                  If you cannot access your account, you can request deletion by email:
-                </p>
-                <div className="bg-white rounded p-4 border border-orange-300">
-                  <p className="font-semibold text-gray-800 mb-2">Send an email to:</p>
-                  <a 
-                    href="mailto:support@kingdice.gg" 
-                    className="text-blue-600 hover:text-blue-800 underline text-lg"
-                  >
-                    support@kingdice.gg
-                  </a>
-                  <p className="text-sm text-gray-600 mt-3">
-                    Include the following information in your email:
-                  </p>
-                  <ul className="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
-                    <li>Your username or email address associated with the account</li>
-                    <li>Subject line: "Account Deletion Request"</li>
-                    <li>Confirmation that you want to permanently delete your account</li>
-                  </ul>
-                </div>
-              </div>
-            </section>
+        {/* Email alternative */}
+        <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('emailAlt.title')}</h2>
+          <p className="text-gray-600 mb-4">{t('emailAlt.description')}</p>
 
-            {/* What Gets Deleted */}
-            <section>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">What Data Will Be Deleted</h3>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                <p className="text-gray-700 mb-4">
-                  When you request account deletion, the following data will be permanently removed:
-                </p>
-                <ul className="list-disc list-inside space-y-2 text-gray-700">
-                  <li>Your user account and profile information</li>
-                  <li>All posts, comments, and forum contributions</li>
-                  <li>Gallery images and uploads</li>
-                  <li>Game collection and favorites</li>
-                  <li>Messages and private communications</li>
-                  <li>XP, level, and reputation data</li>
-                  <li>All personal preferences and settings</li>
-                </ul>
-                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Note:</strong> Some data may be retained for legal or security purposes 
-                    (e.g., transaction records) as required by law. This data will be anonymized 
-                    and cannot be linked back to your account.
-                  </p>
-                </div>
-              </div>
-            </section>
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center mb-2">
+              <Mail className="w-5 h-5 text-gray-600 mr-2" />
+              <span className="font-semibold text-gray-900">{t('emailAlt.sendTo')}</span>
+            </div>
+            <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
+              support@kingdice.gg
+            </a>
+            <div className="mt-4">
+              <p className="font-semibold text-gray-900 mb-2">{t('emailAlt.include')}</p>
+              <ul className="text-gray-700 space-y-1 ml-4">
+                <li>• {t('emailAlt.item1')}</li>
+                <li>• {t('emailAlt.item2')}</li>
+                <li>• {t('emailAlt.item3')}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
 
-            {/* Processing Time */}
-            <section>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Processing Time</h3>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <p className="text-gray-700">
-                  Account deletion requests are typically processed within <strong>30 days</strong> of receipt. 
-                  You will receive a confirmation email once your account has been permanently deleted.
-                </p>
-              </div>
-            </section>
+        {/* What will be deleted */}
+        <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('whatDeleted.title')}</h2>
+          <p className="text-gray-600 mb-4">{t('whatDeleted.description')}</p>
+          <ul className="text-gray-700 space-y-2 ml-4">
+            <li>• {t('whatDeleted.item1')}</li>
+            <li>• {t('whatDeleted.item2')}</li>
+            <li>• {t('whatDeleted.item3')}</li>
+            <li>• {t('whatDeleted.item4')}</li>
+            <li>• {t('whatDeleted.item5')}</li>
+            <li>• {t('whatDeleted.item6')}</li>
+            <li>• {t('whatDeleted.item7')}</li>
+          </ul>
 
-            {/* Contact Information */}
-            <section>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Questions or Concerns?</h3>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <p className="text-gray-700 mb-3">
-                  If you have any questions about data deletion or need assistance with your request, 
-                  please contact us:
-                </p>
-                <div className="space-y-2 text-gray-700">
-                  <p>
-                    <strong>Email:</strong>{' '}
-                    <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
-                      support@kingdice.gg
-                    </a>
-                  </p>
-                  <p>
-                    <strong>Response Time:</strong> We aim to respond to all inquiries within 48 hours.
-                  </p>
-                </div>
-              </div>
-            </section>
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
+              <p className="text-yellow-800 text-sm">{t('whatDeleted.note')}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Processing time */}
+        <div className="bg-white rounded-lg border border-gray-200 p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('processing.title')}</h2>
+          <p className="text-gray-700">
+            {t('processing.description')}{' '}
+            <strong>{t('processing.time')}</strong>.
+          </p>
+        </div>
+
+        {/* Questions */}
+        <div className="bg-white rounded-lg border border-gray-200 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('questions.title')}</h2>
+          <p className="text-gray-600 mb-4">{t('questions.description')}</p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-2">{t('questions.emailTitle')}</h3>
+              <a href="mailto:support@kingdice.gg" className="text-blue-600 hover:text-blue-800 underline">
+                support@kingdice.gg
+              </a>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-2">{t('questions.responseTitle')}</h3>
+              <p className="text-gray-700">{t('questions.responseValue')}</p>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Footer */}
       <Footer />
     </div>
   );

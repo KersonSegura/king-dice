@@ -332,6 +332,56 @@
     "selectLanguage": "Select Language",
     "languageChanged": "Language changed successfully"
   },
+  "dataDeletion": {
+    "title": "Data Deletion Instructions",
+    "subtitle": "Learn how to request deletion of your account and personal data from King Dice.",
+    "right": {
+      "title": "Your Right to Data Deletion",
+      "description": "Under data protection regulations, you have the right to request deletion of your personal data. We are committed to honoring these requests in a timely manner."
+    },
+    "how": {
+      "title": "How to Request Account Deletion",
+      "step1": "Log in to your account on King Dice",
+      "step2": "Go to Settings (click on your profile picture → Settings)",
+      "step3": "Scroll to the \"Account\" section",
+      "step4": "Click \"Delete Account\" button",
+      "step5": "Confirm the deletion by entering your password",
+      "step6": "Your account and data will be permanently deleted within 30 days"
+    },
+    "emailAlt": {
+      "title": "Alternative: Email Request",
+      "description": "If you cannot access your account, you can request deletion by email.",
+      "sendTo": "Send an email to:",
+      "include": "Include the following information in your email:",
+      "item1": "Your username or email address associated with the account",
+      "item2": "Subject line: \"Account Deletion Request\"",
+      "item3": "Confirmation that you want to permanently delete your account"
+    },
+    "whatDeleted": {
+      "title": "What Data Will Be Deleted",
+      "description": "When you request account deletion, the following data will be permanently removed:",
+      "item1": "Your user account and profile information",
+      "item2": "All posts, comments, and forum contributions",
+      "item3": "Gallery images and uploads",
+      "item4": "Game collection and favorites",
+      "item5": "Messages and private communications",
+      "item6": "XP and level data",
+      "item7": "Personal preferences and settings",
+      "note": "Note: Some data may be retained for legal or security purposes (e.g., transaction records) as required by law. This data will be anonymized and cannot be linked back to your account."
+    },
+    "processing": {
+      "title": "Processing Time",
+      "description": "Account deletion requests are typically processed within",
+      "time": "30 days"
+    },
+    "questions": {
+      "title": "Questions or Concerns?",
+      "description": "If you have any questions about data deletion or need assistance with your request, please contact us:",
+      "emailTitle": "Email",
+      "responseTitle": "Response Time",
+      "responseValue": "We aim to respond to all inquiries within 48 hours."
+    }
+  },
   "footer": {
     "loveKingDice": "Love King Dice?",
     "supportMission": "Support our mission to build the ultimate board game community",

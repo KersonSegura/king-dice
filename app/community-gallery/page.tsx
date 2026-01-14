@@ -166,7 +166,7 @@ function CommunityGalleryPageContent() {
       if (mobile) {
         // Mobile defaults to "feed" when coming from desktop modes
         if (current === 'grid' || current === 'list') {
-          setViewMode('feed');
+        setViewMode('feed');
         }
         return;
       }
@@ -1534,7 +1534,7 @@ function CommunityGalleryPageContent() {
                                   }
                                 }}
                                 className={`flex items-center space-x-1 px-3 py-2 rounded-full bg-white bg-opacity-80 transition-colors ${
-                                  image.userVote === 'up'
+                                  image.userVote === 'up' 
                                     ? 'text-red-500'
                                     : 'text-gray-500 hover:bg-gray-100'
                                 }`}

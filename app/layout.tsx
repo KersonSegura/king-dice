@@ -97,21 +97,21 @@ export default async function RootLayout({
       <body className={`${inter.className}`} suppressHydrationWarning={true}>
         <Providers locale={locale} messages={messages}>
           <ErrorBoundary>
-            <LevelUpProvider>
-              <AuthProvider>
-                <SocketProvider>
-                  <ChatStateProvider>
-                    <ToastProvider>
-                      <Header />
-                      {children}
-                      <FloatingChat />
-                      <BackToTopButton />
-                      <ToastContainer />
-                    </ToastProvider>
-                  </ChatStateProvider>
-                </SocketProvider>
-              </AuthProvider>
-            </LevelUpProvider>
+          <LevelUpProvider>
+            <AuthProvider>
+              <SocketProvider>
+                <ChatStateProvider>
+                  <ToastProvider>
+                    <Header />
+                    {children}
+                    <FloatingChat />
+                    <BackToTopButton />
+                    <ToastContainer />
+                  </ToastProvider>
+                </ChatStateProvider>
+              </SocketProvider>
+            </AuthProvider>
+          </LevelUpProvider>
           </ErrorBoundary>
         </Providers>
       </body>
