@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const shareId = searchParams.get('shareId');
+    const username = searchParams.get('username');
 
     if (shareId) {
       // Fetch shared tracker by share_id (public access)
@@ -47,6 +48,46 @@ export async function GET(request: NextRequest) {
       }
 
       return NextResponse.json({ tracker: data });
+    }
+
+    if (username) {
+      // Fetch tracker by username (public access for viewing)
+      const { data: userData, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+      if (userError || !userData) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        );
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('game_night_trackers')
+        .select('*')
+        .eq('user_id', userData.id)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('Error fetching tracker by username:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch tracker' },
+          { status: 500 }
+        );
+      }
+
+      if (!data || data.length === 0) {
+        return NextResponse.json(
+          { error: 'Tracker not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({ tracker: data[0] });
     }
 
     // Fetch user's trackers (requires authentication)
