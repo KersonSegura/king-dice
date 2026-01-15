@@ -629,38 +629,38 @@ export default function UserTrackerPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header with back button */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-4">
           <Link 
             href="/"
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
             {t('backToHome')}
           </Link>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1">
         {/* Header */}
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center justify-center mb-4 sm:mb-8 px-2">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center justify-center gap-2 sm:gap-3">
               <img
                 src="/GameNightTrackerIconYellow.svg"
                 alt="Game Night Tracker Icon"
-                className="w-9 h-9 flex-none"
+                className="w-6 h-6 sm:w-9 sm:h-9 flex-none"
               />
               <span>{tTracker('title')}</span>
             </h1>
-            <p className="text-lg text-gray-600">{tTracker('subtitle')}</p>
+            <p className="text-sm sm:text-lg text-gray-600">{tTracker('subtitle')}</p>
           </div>
         </div>
 
         {/* Players Table Container */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
           {/* Tracker Name at Top */}
-          <div className="mb-6 pb-4 border-b border-gray-200">
+          <div className="mb-3 sm:mb-6 pb-2 sm:pb-4 border-b border-gray-200 px-1 sm:px-0">
             {isOwnTracker && isEditingTrackerName ? (
               <div className="flex items-center space-x-2">
                 <input
@@ -673,19 +673,19 @@ export default function UserTrackerPage() {
                       setIsEditingTrackerName(false);
                     }
                   }}
-                  className="flex-1 text-2xl font-bold text-gray-900 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                  className="flex-1 text-lg sm:text-2xl font-bold text-gray-900 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
                   autoFocus
                 />
                 <button
                   onClick={() => setIsEditingTrackerName(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <Check className="w-5 h-5" />
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#fbae17] to-[#e0990f] bg-clip-text text-transparent">
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
                   {trackerName}
                 </h2>
                 {isOwnTracker && (
@@ -694,61 +694,61 @@ export default function UserTrackerPage() {
                     className="text-gray-500 hover:text-gray-700 transition-colors"
                     title={tTracker('editTrackerName')}
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                 )}
               </div>
             )}
             {username && (
-              <p className="text-sm text-gray-500 mt-1">{tTracker('byUser', { username: `@${username}` })}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">{tTracker('byUser', { username: `@${username}` })}</p>
             )}
           </div>
 
           {/* Players Header with Edit, Add Player, Duplicate, and Save */}
           {isOwnTracker && (
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>
-              <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0">
+              <h3 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('players')}</h3>
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                 {isEditMode && (
                   <>
                     <button
                       onClick={addPlayer}
-                      className="flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
                     >
-                      <Plus className="w-4 h-4" />
-                      <span>{tTracker('addPlayer')}</span>
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">{tTracker('addPlayer')}</span>
                     </button>
                     <button
                       onClick={duplicateTab}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
                       title={tTracker('duplicateSheet')}
                     >
-                      <CopyIcon className="w-4 h-4" />
-                      <span>{tTracker('duplicateSheet')}</span>
+                      <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">{tTracker('duplicateSheet')}</span>
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm"
                 >
-                  <Edit className="w-4 h-4" />
-                  <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
+                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
                 </button>
                 <button
                   onClick={saveTracker}
                   disabled={isSaving}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
+                  <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{isSaving ? tTracker('saving') : tTracker('save')}</span>
                 </button>
               </div>
             </div>
           )}
           {!isOwnTracker && (
-            <div className="mb-4">
-              <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>
+            <div className="mb-3 sm:mb-4 px-1 sm:px-0">
+              <h3 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('players')}</h3>
             </div>
           )}
 
@@ -1024,9 +1024,9 @@ export default function UserTrackerPage() {
 
         {/* Victory Chart */}
         {playersWithVictories.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">{tTracker('victoryChart')}</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 px-1 sm:px-0">
+              <h2 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('victoryChart')}</h2>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setGraphView('pie')}
