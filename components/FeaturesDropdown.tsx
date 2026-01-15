@@ -56,6 +56,13 @@ export default function FeaturesDropdown() {
       hoverColor: '#e0990f'
     }] : []),
     {
+      name: t('gameNightTracker'),
+      href: '/game-night-tracker',
+      icon: '/GameNightTrackerIconWhite.svg',
+      color: '#fbae17',
+      hoverColor: '#e0990f'
+    },
+    {
       name: t('catanMaps'),
       href: '/catan-map-generator',
       icon: '/CatanIcon.svg',
@@ -87,13 +94,6 @@ export default function FeaturesDropdown() {
       name: t('digitalCorner'),
       href: '/digital-corner',
       icon: '/PCIcon.svg',
-      color: '#fbae17',
-      hoverColor: '#e0990f'
-    },
-    {
-      name: t('gameNightTracker'),
-      href: '/game-night-tracker',
-      icon: '/GameNightTrackerIconWhite.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
     }
