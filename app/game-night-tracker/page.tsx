@@ -793,19 +793,21 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
       </div>
 
       {/* Delete Tab Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showDeleteTabConfirm}
-        onClose={() => {
-          setShowDeleteTabConfirm(false);
-          setTabToDelete(null);
-        }}
-        onConfirm={confirmDeleteTab}
-        title={tTracker('deleteTab')}
-        message={tTracker('confirmDeleteTab')}
-        confirmText={tTracker('delete')}
-        cancelText={tTracker('cancel')}
-        type="danger"
-      />
+      {typeof showDeleteTabConfirm !== 'undefined' && (
+        <ConfirmationDialog
+          isOpen={showDeleteTabConfirm}
+          onClose={() => {
+            setShowDeleteTabConfirm(false);
+            setTabToDelete(null);
+          }}
+          onConfirm={confirmDeleteTab}
+          title={tTracker('deleteTab')}
+          message={tTracker('confirmDeleteTab')}
+          confirmText={tTracker('delete')}
+          cancelText={tTracker('cancel')}
+          type="danger"
+        />
+      )}
     </div>
   );
 }
