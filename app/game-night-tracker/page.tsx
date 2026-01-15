@@ -463,6 +463,19 @@ export default function GameNightTrackerPage() {
     setActiveTabId(newTabId);
     showToast(tTracker('tabDuplicated'), 'success');
   };
+  
+  // Handle drag end for tabs
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setGameTabs((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   const saveTracker = async () => {
     if (!isAuthenticated) {
