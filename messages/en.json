@@ -1344,7 +1344,8 @@
     "wins": "wins",
     "pie": "Pie",
     "bar": "Bar",
-    "byUser": "by {username}"
+    "byUser": "by {username}",
+    "selectPlayerColor": "Select Player Color"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",

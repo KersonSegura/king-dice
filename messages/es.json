@@ -1364,7 +1364,8 @@
     "wins": "victorias",
     "pie": "Circular",
     "bar": "Barras",
-    "byUser": "por {username}"
+    "byUser": "por {username}",
+    "selectPlayerColor": "Seleccionar Color del Jugador"
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

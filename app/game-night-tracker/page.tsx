@@ -1130,36 +1130,69 @@ export default function GameNightTrackerPage() {
           }}
         >
           <div 
-            className="bg-white rounded-lg p-6 max-w-md w-full mx-4" 
+            className="bg-white rounded-lg p-6 max-w-sm w-full mx-4" 
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Select Color</h3>
-            <div className="grid grid-cols-5 gap-3 mb-4">
-              {PLAYER_COLORS.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => {
-                    if (playerForColorChange !== null) {
-                      updatePlayer(playerForColorChange, 'color', color);
-                      setShowColorPicker(false);
-                      setPlayerForColorChange(null);
+            <h3 className="text-lg font-bold text-gray-900 mb-4">{tTracker('selectPlayerColor')}</h3>
+            <div className="flex flex-col items-center space-y-4 mb-4">
+              <input
+                type="color"
+                value={activeTab?.players[playerForColorChange]?.color || PLAYER_COLORS[playerForColorChange % PLAYER_COLORS.length] || '#000000'}
+                onChange={(e) => {
+                  if (playerForColorChange !== null) {
+                    updatePlayer(playerForColorChange, 'color', e.target.value);
+                  }
+                }}
+                className="w-32 h-32 cursor-pointer border-2 border-gray-300 rounded-lg"
+                style={{ 
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  appearance: 'none',
+                  backgroundColor: 'transparent',
+                  border: '2px solid #d1d5db',
+                  borderRadius: '0.5rem'
+                }}
+              />
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {tTracker('selectPlayerColor')}
+                </label>
+                <input
+                  type="text"
+                  value={activeTab?.players[playerForColorChange]?.color || PLAYER_COLORS[playerForColorChange % PLAYER_COLORS.length] || '#000000'}
+                  onChange={(e) => {
+                    if (playerForColorChange !== null && /^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                      updatePlayer(playerForColorChange, 'color', e.target.value);
                     }
                   }}
-                  className="w-12 h-12 rounded-full border-2 border-gray-300 hover:scale-110 transition-transform"
-                  style={{ backgroundColor: color }}
-                  title={color}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fbae17] text-gray-900"
+                  placeholder="#000000"
+                  pattern="^#[0-9A-F]{6}$"
                 />
-              ))}
+              </div>
             </div>
-            <button
-              onClick={() => {
-                setShowColorPicker(false);
-                setPlayerForColorChange(null);
-              }}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowColorPicker(false);
+                  setPlayerForColorChange(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                {tTracker('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowColorPicker(false);
+                  setPlayerForColorChange(null);
+                }}
+                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+              >
+                {tTracker('save')}
+              </button>
+            </div>
           </div>
         </div>
       )}
