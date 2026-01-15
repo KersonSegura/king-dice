@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Check, Edit2, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Check, Edit2, X, Edit, Copy as CopyIcon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Footer from '@/components/Footer';
@@ -54,6 +54,7 @@ export default function GameNightTrackerPage() {
   const [shareUrl, setShareUrl] = useState('');
   const [shareCopied, setShareCopied] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Get current active tab's players
   const activeTab = gameTabs.find(tab => tab.id === activeTabId);
@@ -252,6 +253,21 @@ export default function GameNightTrackerPage() {
     }
   };
 
+  const duplicateTab = () => {
+    if (!activeTab) return;
+    
+    const newTabId = `tab-${Date.now()}`;
+    const duplicatedTab: GameTab = {
+      id: newTabId,
+      name: `${activeTab.name} (Copy)`,
+      players: activeTab.players.map(player => ({ ...player })),
+    };
+    
+    setGameTabs([...gameTabs, duplicatedTab]);
+    setActiveTabId(newTabId);
+    showToast(tTracker('tabDuplicated'), 'success');
+  };
+
   const saveTracker = async () => {
     if (!isAuthenticated) {
       setShowLoginModal(true);
@@ -394,16 +410,35 @@ export default function GameNightTrackerPage() {
             )}
           </div>
 
-          {/* Players Header with Add Player and Save */}
+          {/* Players Header with Edit, Add Player, Duplicate, and Save */}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>
             <div className="flex items-center space-x-2">
+              {isEditMode && (
+                <>
+                  <button
+                    onClick={addPlayer}
+                    className="flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{tTracker('addPlayer')}</span>
+                  </button>
+                  <button
+                    onClick={duplicateTab}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    title={tTracker('duplicateSheet')}
+                  >
+                    <CopyIcon className="w-4 h-4" />
+                    <span>{tTracker('duplicateSheet')}</span>
+                  </button>
+                </>
+              )}
               <button
-                onClick={addPlayer}
-                className="flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
-                <span>{tTracker('addPlayer')}</span>
+                <Edit className="w-4 h-4" />
+                <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
               </button>
               <button
                 onClick={saveTracker}
@@ -455,40 +490,56 @@ export default function GameNightTrackerPage() {
                   players.map((player, index) => (
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="text"
-                          value={player.name}
-                          onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                          placeholder={tTracker('playerNamePlaceholder')}
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={player.name}
+                            onChange={(e) => updatePlayer(index, 'name', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                            placeholder={tTracker('playerNamePlaceholder')}
+                          />
+                        ) : (
+                          <span className="text-gray-900 font-medium">{player.name || tTracker('unnamedPlayer')}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="number"
-                          min="0"
-                          value={player.victories}
-                          onChange={(e) => updatePlayer(index, 'victories', parseInt(e.target.value) || 0)}
-                          className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="number"
+                            min="0"
+                            value={player.victories}
+                            onChange={(e) => updatePlayer(index, 'victories', parseInt(e.target.value) || 0)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                          />
+                        ) : (
+                          <span className="text-gray-900">{player.victories}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="number"
-                          min="0"
-                          value={player.gameNights}
-                          onChange={(e) => updatePlayer(index, 'gameNights', parseInt(e.target.value) || 0)}
-                          className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="number"
+                            min="0"
+                            value={player.gameNights}
+                            onChange={(e) => updatePlayer(index, 'gameNights', parseInt(e.target.value) || 0)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                          />
+                        ) : (
+                          <span className="text-gray-900">{player.gameNights}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="number"
-                          min="0"
-                          value={player.gamesPlayed}
-                          onChange={(e) => updatePlayer(index, 'gamesPlayed', parseInt(e.target.value) || 0)}
-                          className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="number"
+                            min="0"
+                            value={player.gamesPlayed}
+                            onChange={(e) => updatePlayer(index, 'gamesPlayed', parseInt(e.target.value) || 0)}
+                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                          />
+                        ) : (
+                          <span className="text-gray-900">{player.gamesPlayed}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                         {player.winRate.toFixed(2)}
@@ -497,13 +548,15 @@ export default function GameNightTrackerPage() {
                         {player.winRatePercentage.toFixed(1)}%
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <button
-                          onClick={() => removePlayer(index)}
-                          className="text-red-600 hover:text-red-800"
-                          title={tTracker('removePlayer')}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {isEditMode && (
+                          <button
+                            onClick={() => removePlayer(index)}
+                            className="text-red-600 hover:text-red-800"
+                            title={tTracker('removePlayer')}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -540,7 +593,7 @@ export default function GameNightTrackerPage() {
                           }
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-24 px-1 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                        className="w-24 px-1 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] text-gray-900 bg-white"
                         autoFocus
                       />
                       <button

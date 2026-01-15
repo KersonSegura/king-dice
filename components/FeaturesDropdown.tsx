@@ -135,11 +135,9 @@ export default function FeaturesDropdown() {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = feature.color}
               >
                 {feature.icon ? (
-                  <Image
+                  <img
                     src={feature.icon}
                     alt={feature.name}
-                    width={24}
-                    height={24}
                     className="w-6 h-6"
                   />
                 ) : (

@@ -1331,7 +1331,12 @@
     "deleteTab": "Delete tab",
     "addTab": "Add Tab",
     "cannotDeleteLastTab": "Cannot delete the last tab",
-    "shareTitle": "Share with your friends"
+    "shareTitle": "Share with your friends",
+    "edit": "Edit",
+    "exitEdit": "Exit Edit",
+    "duplicateSheet": "Duplicate Sheet",
+    "tabDuplicated": "Sheet duplicated successfully!",
+    "unnamedPlayer": "Unnamed Player"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",
