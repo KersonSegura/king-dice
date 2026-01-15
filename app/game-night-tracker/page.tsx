@@ -762,10 +762,10 @@ export default function GameNightTrackerPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th 
-                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                     onClick={() => handleSort('name')}
                   >
-                    <div className="flex items-center justify-center space-x-1">
+                    <div className="flex items-center space-x-1">
                       <span>{tTracker('playerName')}</span>
                       {sortColumn === 'name' && (
                         <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
@@ -852,8 +852,8 @@ export default function GameNightTrackerPage() {
                           isTopWinner ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''
                         }`}
                       >
-                        <td className="px-4 py-3 whitespace-nowrap text-center">
-                          <div className="flex items-center justify-center space-x-2">
+                        <td className="px-4 py-3 whitespace-nowrap text-left">
+                          <div className="flex items-center space-x-2">
                             {/* Color circle */}
                             <button
                               onClick={() => {
@@ -1114,6 +1114,50 @@ export default function GameNightTrackerPage() {
         cancelText={tTracker('cancel')}
         type="danger"
       />
+
+      {/* Color Picker Modal */}
+      {showColorPicker && playerForColorChange !== null && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" 
+          onClick={() => {
+            setShowColorPicker(false);
+            setPlayerForColorChange(null);
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Select Color</h3>
+            <div className="grid grid-cols-5 gap-3 mb-4">
+              {PLAYER_COLORS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => {
+                    if (playerForColorChange !== null) {
+                      updatePlayer(playerForColorChange, 'color', color);
+                      setShowColorPicker(false);
+                      setPlayerForColorChange(null);
+                    }
+                  }}
+                  className="w-12 h-12 rounded-full border-2 border-gray-300 hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setShowColorPicker(false);
+                setPlayerForColorChange(null);
+              }}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

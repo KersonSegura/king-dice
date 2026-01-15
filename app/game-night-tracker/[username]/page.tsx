@@ -743,10 +743,10 @@ export default function UserTrackerPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th 
-                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                     onClick={() => handleSort('name')}
                   >
-                    <div className="flex items-center justify-center space-x-1">
+                    <div className="flex items-center space-x-1">
                       <span>{tTracker('playerName')}</span>
                       {sortColumn === 'name' && (
                         <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
@@ -833,11 +833,13 @@ export default function UserTrackerPage() {
                           isTopWinner ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''
                         }`}
                       >
-                        <td className="px-4 py-3 whitespace-nowrap text-center">
-                          <div className="flex items-center justify-center space-x-2">
+                        <td className="px-4 py-3 whitespace-nowrap text-left">
+                          <div className="flex items-center space-x-2">
                             {/* Color circle */}
                             <button
-                              onClick={() => {
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 if (isEditMode && isOwnTracker && originalIndex !== -1) {
                                   setPlayerForColorChange(originalIndex);
                                   setShowColorPicker(true);
