@@ -1340,7 +1340,7 @@
     "removePlayer": "Eliminar Jugador",
     "noPlayers": "Aún no hay jugadores añadidos. Haz clic en 'Añadir Jugador' para comenzar.",
     "victoryChart": "Gráfico de Victorias",
-    "save": "Guardar Marcador",
+    "save": "Guardar",
     "saving": "Guardando...",
     "saved": "¡Marcador guardado exitosamente!",
     "saveError": "Error al guardar el marcador",

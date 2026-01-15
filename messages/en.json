@@ -1320,7 +1320,7 @@
     "removePlayer": "Remove Player",
     "noPlayers": "No players added yet. Click 'Add Player' to get started.",
     "victoryChart": "Victory Chart",
-    "save": "Save Tracker",
+    "save": "Save",
     "saving": "Saving...",
     "saved": "Tracker saved successfully!",
     "saveError": "Failed to save tracker",
