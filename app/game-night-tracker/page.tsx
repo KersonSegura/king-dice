@@ -234,6 +234,9 @@ export default function GameNightTrackerPage() {
   // Sorting state
   const [sortColumn, setSortColumn] = useState<keyof Player | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  // Color picker state
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [playerForColorChange, setPlayerForColorChange] = useState<number | null>(null);
   
   // Drag and drop sensors
   const sensors = useSensors(
