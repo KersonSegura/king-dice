@@ -56,6 +56,7 @@ export default function GameNightTrackerPage() {
   const [shareCopied, setShareCopied] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  // Delete tab confirmation dialog state
   const [showDeleteTabConfirm, setShowDeleteTabConfirm] = useState(false);
   const [tabToDelete, setTabToDelete] = useState<string | null>(null);
 
