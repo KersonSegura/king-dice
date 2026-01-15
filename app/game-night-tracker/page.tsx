@@ -132,8 +132,8 @@ function SortableTab({
               onClick={onTabClick}
               className={`group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 cursor-pointer transition-colors ${
                 isActive
-                  ? 'bg-[#fbae17] text-white rounded-b-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
+                  ? 'bg-[#fbae17] text-white rounded-none sm:rounded-b-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-none sm:rounded-b-lg'
               } ${isDragging ? 'z-50' : ''}`}
             >
       {isEditing ? (
@@ -732,14 +732,14 @@ export default function GameNightTrackerPage() {
                   <>
                     <button
                       onClick={addPlayer}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
                     >
                       <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{tTracker('addPlayer')}</span>
                     </button>
                     <button
                       onClick={duplicateTab}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
                       title={tTracker('duplicateSheet')}
                     >
                       <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -749,7 +749,7 @@ export default function GameNightTrackerPage() {
                 )}
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-none sm:rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm"
                 >
                   <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
@@ -757,7 +757,7 @@ export default function GameNightTrackerPage() {
                 <button
                   onClick={saveTracker}
                   disabled={isSaving}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-none sm:rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                 >
                   <Save className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{isSaving ? tTracker('saving') : tTracker('save')}</span>
@@ -1030,8 +1030,8 @@ export default function GameNightTrackerPage() {
                     onClick={() => switchTab(tab.id)}
                     className={`px-2 sm:px-4 py-1.5 sm:py-2 cursor-pointer transition-colors ${
                       activeTabId === tab.id
-                        ? 'bg-[#fbae17] text-white rounded-b-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
+                        ? 'bg-[#fbae17] text-white rounded-none sm:rounded-b-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-none sm:rounded-b-lg'
                     }`}
                   >
                     <span className="text-xs sm:text-sm font-medium">{tab.name}</span>
@@ -1044,7 +1044,7 @@ export default function GameNightTrackerPage() {
 
         {/* Victory Chart */}
         {playersWithVictories.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
+          <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4 px-1 sm:px-0">
               <h2 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('victoryChart')}</h2>
               <div className="flex items-center space-x-2">
@@ -1060,7 +1060,7 @@ export default function GameNightTrackerPage() {
                 </button>
                 <button
                   onClick={() => setGraphView('bar')}
-                  className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                  className={`px-3 py-1 rounded-none sm:rounded-md text-xs sm:text-sm transition-colors ${
                     graphView === 'bar'
                       ? 'bg-[#fbae17] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
