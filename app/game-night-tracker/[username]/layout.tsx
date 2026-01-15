@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
-export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
-  const username = params?.username as string;
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
+  const { username } = await params;
   
   // Try to fetch tracker data for metadata
   let trackerName = 'Game Night Tracker';
