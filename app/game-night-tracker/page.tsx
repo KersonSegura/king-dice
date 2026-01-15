@@ -9,6 +9,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import LoginModal from '@/components/LoginModal';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 
 interface Player {
   name: string;
@@ -55,6 +56,8 @@ export default function GameNightTrackerPage() {
   const [shareCopied, setShareCopied] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showDeleteTabConfirm, setShowDeleteTabConfirm] = useState(false);
+  const [tabToDelete, setTabToDelete] = useState<string | null>(null);
 
   // Get current active tab's players
   const activeTab = gameTabs.find(tab => tab.id === activeTabId);
@@ -246,11 +249,25 @@ export default function GameNightTrackerPage() {
       showToast(tTracker('cannotDeleteLastTab'), 'error');
       return;
     }
-    const updatedTabs = gameTabs.filter(tab => tab.id !== tabId);
+    setTabToDelete(tabId);
+    setShowDeleteTabConfirm(true);
+  };
+
+  const confirmDeleteTab = () => {
+    if (!tabToDelete) return;
+    if (gameTabs.length === 1) {
+      showToast(tTracker('cannotDeleteLastTab'), 'error');
+      setShowDeleteTabConfirm(false);
+      setTabToDelete(null);
+      return;
+    }
+    const updatedTabs = gameTabs.filter(tab => tab.id !== tabToDelete);
     setGameTabs(updatedTabs);
-    if (activeTabId === tabId) {
+    if (activeTabId === tabToDelete) {
       setActiveTabId(updatedTabs[0].id);
     }
+    setShowDeleteTabConfirm(false);
+    setTabToDelete(null);
   };
 
   const duplicateTab = () => {
@@ -305,6 +322,7 @@ export default function GameNightTrackerPage() {
         setCurrentTracker(data.tracker);
         setShareUrl(`${window.location.origin}/game-night-tracker?share=${data.tracker.share_id}`);
         showToast(tTracker('saved'), 'success');
+        setIsEditMode(false); // Exit edit mode after saving
       } else {
         showToast(tTracker('saveError'), 'error');
       }
@@ -474,9 +492,11 @@ export default function GameNightTrackerPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {tTracker('winRatePercentage')}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tTracker('actions')}
-                  </th>
+                  {isEditMode && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {tTracker('actions')}
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -547,8 +567,8 @@ export default function GameNightTrackerPage() {
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
                         {player.winRatePercentage.toFixed(1)}%
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {isEditMode && (
+                      {isEditMode && (
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <button
                             onClick={() => removePlayer(index)}
                             className="text-red-600 hover:text-red-800"
@@ -556,8 +576,8 @@ export default function GameNightTrackerPage() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                      </td>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -770,6 +790,21 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
           </div>
         ))}
       </div>
+
+      {/* Delete Tab Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteTabConfirm}
+        onClose={() => {
+          setShowDeleteTabConfirm(false);
+          setTabToDelete(null);
+        }}
+        onConfirm={confirmDeleteTab}
+        title={tTracker('deleteTab')}
+        message={tTracker('confirmDeleteTab')}
+        confirmText={tTracker('delete')}
+        cancelText={tTracker('cancel')}
+        type="danger"
+      />
     </div>
   );
 }

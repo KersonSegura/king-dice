@@ -1356,7 +1356,10 @@
     "exitEdit": "Salir de Edición",
     "duplicateSheet": "Duplicar Hoja",
     "tabDuplicated": "¡Hoja duplicada exitosamente!",
-    "unnamedPlayer": "Jugador Sin Nombre"
+    "unnamedPlayer": "Jugador Sin Nombre",
+    "confirmDeleteTab": "¿Estás seguro de que quieres eliminar esta pestaña? Esta acción no se puede deshacer.",
+    "delete": "Eliminar",
+    "cancel": "Cancelar"
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

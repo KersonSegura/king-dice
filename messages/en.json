@@ -1336,7 +1336,10 @@
     "exitEdit": "Exit Edit",
     "duplicateSheet": "Duplicate Sheet",
     "tabDuplicated": "Sheet duplicated successfully!",
-    "unnamedPlayer": "Unnamed Player"
+    "unnamedPlayer": "Unnamed Player",
+    "confirmDeleteTab": "Are you sure you want to delete this tab? This action cannot be undone.",
+    "delete": "Delete",
+    "cancel": "Cancel"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",
