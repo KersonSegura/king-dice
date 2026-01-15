@@ -240,20 +240,21 @@ export default function GameNightTrackerPage() {
   // Find max victories for highlighting
   const maxVictories = players.length > 0 ? Math.max(...players.map(p => p.victories)) : 0;
 
-  // Load tracker from URL if share_id or username is present
+  // Load tracker from URL if share_id is present
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const shareId = urlParams.get('share');
     const pathname = window.location.pathname;
     
-    // Check if we're on a username route like /game-night-tracker/username
+    // If we're on a username route, redirect to that route
     const usernameMatch = pathname.match(/^\/game-night-tracker\/([^\/]+)$/);
-    const username = usernameMatch ? usernameMatch[1] : null;
+    if (usernameMatch && usernameMatch[1]) {
+      // Already on username route, let that page handle it
+      return;
+    }
     
     if (shareId) {
       loadSharedTracker(shareId);
-    } else if (username) {
-      loadTrackerByUsername(username);
     } else if (isAuthenticated && !authLoading) {
       loadUserTrackers();
     }
