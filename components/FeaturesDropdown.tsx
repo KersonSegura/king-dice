@@ -89,6 +89,13 @@ export default function FeaturesDropdown() {
       icon: '/PCIcon.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
+    },
+    {
+      name: t('gameNightTracker'),
+      href: '/game-night-tracker',
+      icon: '/GameNightTrackerIcon.svg',
+      color: '#fbae17',
+      hoverColor: '#e0990f'
     }
   ];
 
