@@ -93,7 +93,7 @@ export default function FeaturesDropdown() {
     {
       name: t('gameNightTracker'),
       href: '/game-night-tracker',
-      icon: '/GameNightTrackerIcon.svg',
+      icon: '/GameNightTrackerIconWhite.svg',
       color: '#fbae17',
       hoverColor: '#e0990f'
     }

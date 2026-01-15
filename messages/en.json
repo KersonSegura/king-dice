@@ -1330,7 +1330,8 @@
     "renameTab": "Rename tab",
     "deleteTab": "Delete tab",
     "addTab": "Add Tab",
-    "cannotDeleteLastTab": "Cannot delete the last tab"
+    "cannotDeleteLastTab": "Cannot delete the last tab",
+    "shareTitle": "Share with your friends"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",

@@ -1350,7 +1350,8 @@
     "renameTab": "Renombrar pestaña",
     "deleteTab": "Eliminar pestaña",
     "addTab": "Añadir Pestaña",
-    "cannotDeleteLastTab": "No se puede eliminar la última pestaña"
+    "cannotDeleteLastTab": "No se puede eliminar la última pestaña",
+    "shareTitle": "Comparte con tus amigos"
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

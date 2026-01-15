@@ -343,12 +343,10 @@ export default function GameNightTrackerPage() {
         <div className="flex items-center justify-center mb-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
-              <Image
-                src="/GameNightTrackerIcon.svg"
+              <img
+                src="/GameNightTrackerIconYellow.svg"
                 alt="Game Night Tracker Icon"
-                width={36}
-                height={36}
-                className="flex-none"
+                className="w-9 h-9 flex-none"
               />
               <span>{tTracker('title')}</span>
             </h1>
@@ -521,10 +519,10 @@ export default function GameNightTrackerPage() {
                 <div
                   key={tab.id}
                   onClick={() => switchTab(tab.id)}
-                  className={`group flex items-center space-x-2 px-4 py-2 rounded-t-lg cursor-pointer transition-colors ${
+                  className={`group flex items-center space-x-2 px-4 py-2 cursor-pointer transition-colors ${
                     activeTabId === tab.id
-                      ? 'bg-[#fbae17] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-[#fbae17] text-white rounded-b-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
                   }`}
                 >
                   {editingTabId === tab.id ? (
@@ -589,7 +587,7 @@ export default function GameNightTrackerPage() {
               ))}
               <button
                 onClick={addTab}
-                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-t-lg hover:bg-gray-200 transition-colors"
+                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-b-lg hover:bg-gray-200 transition-colors"
                 title={tTracker('addTab')}
               >
                 <Plus className="w-4 h-4" />
@@ -610,6 +608,7 @@ export default function GameNightTrackerPage() {
         {/* Share Section */}
         {shareUrl && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{tTracker('shareTitle')}</h3>
             <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
               <Share2 className="w-4 h-4 text-gray-500" />
               <input
@@ -713,7 +712,7 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
               style={{ backgroundColor: slice.color }}
             />
             <span className="text-sm text-gray-700">
-              <strong>{slice.player.name}</strong>: {slice.player.victories} wins • {slice.percentage.toFixed(1)}%
+              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.player.victories === 1 ? 'win' : 'wins'} • {slice.percentage.toFixed(1)}%
             </span>
           </div>
         ))}
