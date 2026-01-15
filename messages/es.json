@@ -1345,7 +1345,12 @@
     "saved": "¡Rastreador guardado exitosamente!",
     "saveError": "Error al guardar el rastreador",
     "copyLink": "Copiar enlace de compartir",
-    "linkCopied": "¡Enlace copiado al portapapeles!"
+    "linkCopied": "¡Enlace copiado al portapapeles!",
+    "editTrackerName": "Editar nombre del rastreador",
+    "renameTab": "Renombrar pestaña",
+    "deleteTab": "Eliminar pestaña",
+    "addTab": "Añadir Pestaña",
+    "cannotDeleteLastTab": "No se puede eliminar la última pestaña"
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

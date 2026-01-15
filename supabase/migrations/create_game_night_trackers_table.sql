@@ -4,8 +4,9 @@ CREATE TABLE IF NOT EXISTS public.game_night_trackers (
   user_id TEXT NOT NULL,
   tracker_name TEXT NOT NULL DEFAULT 'My Game Night Tracker',
   share_id TEXT UNIQUE, -- For shareable URLs
-  game_filter TEXT, -- NULL = all games, or specific game name
-  players JSONB NOT NULL DEFAULT '[]'::jsonb, -- Array of player objects
+  game_filter TEXT, -- NULL = all games, or specific game name (legacy)
+  players JSONB NOT NULL DEFAULT '[]'::jsonb, -- Array of player objects (legacy)
+  game_tabs JSONB, -- Array of game tabs with players (new structure)
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   

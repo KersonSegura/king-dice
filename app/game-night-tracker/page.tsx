@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Check, Edit2, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Footer from '@/components/Footer';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +17,12 @@ interface Player {
   gamesPlayed: number;
   winRate: number;
   winRatePercentage: number;
+}
+
+interface GameTab {
+  id: string;
+  name: string;
+  players: Player[];
 }
 
 interface Tracker {
@@ -36,14 +43,21 @@ export default function GameNightTrackerPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
   
-  const [players, setPlayers] = useState<Player[]>([]);
   const [trackerName, setTrackerName] = useState('My Game Night Tracker');
-  const [gameFilter, setGameFilter] = useState<string>('');
+  const [isEditingTrackerName, setIsEditingTrackerName] = useState(false);
+  const [gameTabs, setGameTabs] = useState<GameTab[]>([{ id: 'tab-1', name: 'All Games', players: [] }]);
+  const [activeTabId, setActiveTabId] = useState('tab-1');
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editingTabName, setEditingTabName] = useState('');
   const [currentTracker, setCurrentTracker] = useState<Tracker | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [shareCopied, setShareCopied] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Get current active tab's players
+  const activeTab = gameTabs.find(tab => tab.id === activeTabId);
+  const players = activeTab?.players || [];
 
   // Load tracker from URL if share_id is present
   useEffect(() => {
@@ -64,9 +78,17 @@ export default function GameNightTrackerPage() {
         const data = await response.json();
         if (data.tracker) {
           setCurrentTracker(data.tracker);
-          setPlayers(data.tracker.players || []);
           setTrackerName(data.tracker.tracker_name);
-          setGameFilter(data.tracker.game_filter || '');
+          // Load tabs from stored data or create default
+          if (data.tracker.game_tabs && Array.isArray(data.tracker.game_tabs)) {
+            setGameTabs(data.tracker.game_tabs);
+            if (data.tracker.game_tabs.length > 0) {
+              setActiveTabId(data.tracker.game_tabs[0].id);
+            }
+          } else {
+            // Legacy: convert old format to tabs
+            setGameTabs([{ id: 'tab-1', name: data.tracker.game_filter || 'All Games', players: data.tracker.players || [] }]);
+          }
           setShareUrl(`${window.location.origin}/game-night-tracker?share=${shareId}`);
         }
       }
@@ -83,9 +105,17 @@ export default function GameNightTrackerPage() {
         if (data.trackers && data.trackers.length > 0) {
           const tracker = data.trackers[0];
           setCurrentTracker(tracker);
-          setPlayers(tracker.players || []);
           setTrackerName(tracker.tracker_name);
-          setGameFilter(tracker.game_filter || '');
+          // Load tabs from stored data or create default
+          if (tracker.game_tabs && Array.isArray(tracker.game_tabs)) {
+            setGameTabs(tracker.game_tabs);
+            if (tracker.game_tabs.length > 0) {
+              setActiveTabId(tracker.game_tabs[0].id);
+            }
+          } else {
+            // Legacy: convert old format to tabs
+            setGameTabs([{ id: 'tab-1', name: tracker.game_filter || 'All Games', players: tracker.players || [] }]);
+          }
           setShareUrl(`${window.location.origin}/game-night-tracker?share=${tracker.share_id}`);
         }
       }
@@ -104,41 +134,122 @@ export default function GameNightTrackerPage() {
   }, []);
 
   const updatePlayer = (index: number, field: keyof Player, value: number | string) => {
-    const updatedPlayers = [...players];
-    updatedPlayers[index] = {
-      ...updatedPlayers[index],
-      [field]: value,
-    };
+    const updatedTabs = gameTabs.map(tab => {
+      if (tab.id === activeTabId) {
+        const updatedPlayers = [...tab.players];
+        updatedPlayers[index] = {
+          ...updatedPlayers[index],
+          [field]: value,
+        };
 
-    // Recalculate win rate if victories or gamesPlayed changed
-    if (field === 'victories' || field === 'gamesPlayed') {
-      const { winRate, winRatePercentage } = calculateWinRate(
-        updatedPlayers[index].victories,
-        updatedPlayers[index].gamesPlayed
-      );
-      updatedPlayers[index].winRate = winRate;
-      updatedPlayers[index].winRatePercentage = winRatePercentage;
-    }
+        // Recalculate win rate if victories or gamesPlayed changed
+        if (field === 'victories' || field === 'gamesPlayed') {
+          const { winRate, winRatePercentage } = calculateWinRate(
+            updatedPlayers[index].victories,
+            updatedPlayers[index].gamesPlayed
+          );
+          updatedPlayers[index].winRate = winRate;
+          updatedPlayers[index].winRatePercentage = winRatePercentage;
+        }
 
-    setPlayers(updatedPlayers);
+        return { ...tab, players: updatedPlayers };
+      }
+      return tab;
+    });
+    setGameTabs(updatedTabs);
   };
 
   const addPlayer = () => {
-    setPlayers([
-      ...players,
-      {
-        name: '',
-        victories: 0,
-        gameNights: 0,
-        gamesPlayed: 0,
-        winRate: 0,
-        winRatePercentage: 0,
-      },
-    ]);
+    const updatedTabs = gameTabs.map(tab => {
+      if (tab.id === activeTabId) {
+        return {
+          ...tab,
+          players: [
+            ...tab.players,
+            {
+              name: '',
+              victories: 0,
+              gameNights: 0,
+              gamesPlayed: 0,
+              winRate: 0,
+              winRatePercentage: 0,
+            },
+          ],
+        };
+      }
+      return tab;
+    });
+    setGameTabs(updatedTabs);
   };
 
   const removePlayer = (index: number) => {
-    setPlayers(players.filter((_, i) => i !== index));
+    const updatedTabs = gameTabs.map(tab => {
+      if (tab.id === activeTabId) {
+        return {
+          ...tab,
+          players: tab.players.filter((_, i) => i !== index),
+        };
+      }
+      return tab;
+    });
+    setGameTabs(updatedTabs);
+  };
+
+  const addTab = () => {
+    const newTabId = `tab-${Date.now()}`;
+    const newTab: GameTab = {
+      id: newTabId,
+      name: `Game ${gameTabs.length + 1}`,
+      players: [],
+    };
+    setGameTabs([...gameTabs, newTab]);
+    setActiveTabId(newTabId);
+    setEditingTabId(newTabId);
+    setEditingTabName(newTab.name);
+  };
+
+  const switchTab = (tabId: string) => {
+    setActiveTabId(tabId);
+    setEditingTabId(null);
+  };
+
+  const startEditingTab = (tabId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const tab = gameTabs.find(t => t.id === tabId);
+    if (tab) {
+      setEditingTabId(tabId);
+      setEditingTabName(tab.name);
+    }
+  };
+
+  const saveTabName = (tabId: string) => {
+    const updatedTabs = gameTabs.map(tab => {
+      if (tab.id === tabId) {
+        return { ...tab, name: editingTabName.trim() || tab.name };
+      }
+      return tab;
+    });
+    setGameTabs(updatedTabs);
+    setEditingTabId(null);
+    setEditingTabName('');
+  };
+
+  const cancelEditingTab = () => {
+    setEditingTabId(null);
+    setEditingTabName('');
+  };
+
+  const deleteTab = (tabId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (gameTabs.length === 1) {
+      showToast(tTracker('cannotDeleteLastTab'), 'error');
+      return;
+    }
+    const updatedTabs = gameTabs.filter(tab => tab.id !== tabId);
+    setGameTabs(updatedTabs);
+    if (activeTabId === tabId) {
+      setActiveTabId(updatedTabs[0].id);
+    }
   };
 
   const saveTracker = async () => {
@@ -151,8 +262,9 @@ export default function GameNightTrackerPage() {
     try {
       const trackerData = {
         trackerName,
-        gameFilter: gameFilter || null,
-        players,
+        gameTabs, // Save all tabs
+        players: activeTab?.players || [], // Legacy support
+        gameFilter: activeTab?.name || null, // Legacy support
       };
 
       let response;
@@ -231,10 +343,12 @@ export default function GameNightTrackerPage() {
         <div className="flex items-center justify-center mb-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
-              <img
+              <Image
                 src="/GameNightTrackerIcon.svg"
                 alt="Game Night Tracker Icon"
-                className="w-9 h-9 flex-none"
+                width={36}
+                height={36}
+                className="flex-none"
               />
               <span>{tTracker('title')}</span>
             </h1>
@@ -242,50 +356,70 @@ export default function GameNightTrackerPage() {
           </div>
         </div>
 
-        {/* Tracker Name and Game Filter */}
+        {/* Players Table Container */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tTracker('trackerName')}
-              </label>
-              <input
-                type="text"
-                value={trackerName}
-                onChange={(e) => setTrackerName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                placeholder={tTracker('trackerNamePlaceholder')}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tTracker('gameFilter')} ({tTracker('optional')})
-              </label>
-              <input
-                type="text"
-                value={gameFilter}
-                onChange={(e) => setGameFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                placeholder={tTracker('gameFilterPlaceholder')}
-              />
-            </div>
+          {/* Tracker Name at Top */}
+          <div className="mb-6 pb-4 border-b border-gray-200">
+            {isEditingTrackerName ? (
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={trackerName}
+                  onChange={(e) => setTrackerName(e.target.value)}
+                  onBlur={() => setIsEditingTrackerName(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setIsEditingTrackerName(false);
+                    }
+                  }}
+                  className="flex-1 text-2xl font-bold text-gray-900 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                  autoFocus
+                />
+                <button
+                  onClick={() => setIsEditingTrackerName(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <Check className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <h2 className="text-2xl font-bold text-gray-900">{trackerName}</h2>
+                <button
+                  onClick={() => setIsEditingTrackerName(true)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  title={tTracker('editTrackerName')}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Players Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          {/* Players Header with Add Player and Save */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">{tTracker('players')}</h2>
-            <button
-              onClick={addPlayer}
-              className="flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{tTracker('addPlayer')}</span>
-            </button>
+            <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={addPlayer}
+                className="flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{tTracker('addPlayer')}</span>
+              </button>
+              <button
+                onClick={saveTracker}
+                disabled={isSaving}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
+              </button>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Players Table */}
+          <div className="overflow-x-auto mb-4">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -379,6 +513,90 @@ export default function GameNightTrackerPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Game Tabs (like Excel sheets) */}
+          <div className="border-t border-gray-200 pt-4 mt-4">
+            <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+              {gameTabs.map((tab) => (
+                <div
+                  key={tab.id}
+                  onClick={() => switchTab(tab.id)}
+                  className={`group flex items-center space-x-2 px-4 py-2 rounded-t-lg cursor-pointer transition-colors ${
+                    activeTabId === tab.id
+                      ? 'bg-[#fbae17] text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {editingTabId === tab.id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editingTabName}
+                        onChange={(e) => setEditingTabName(e.target.value)}
+                        onBlur={() => saveTabName(tab.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            saveTabName(tab.id);
+                          } else if (e.key === 'Escape') {
+                            cancelEditingTab();
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-24 px-1 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                        autoFocus
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          saveTabName(tab.id);
+                        }}
+                        className="text-current hover:opacity-80"
+                      >
+                        <Check className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelEditingTab();
+                        }}
+                        className="text-current hover:opacity-80"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm font-medium">{tab.name}</span>
+                      <button
+                        onClick={(e) => startEditingTab(tab.id, e)}
+                        className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={tTracker('renameTab')}
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      {gameTabs.length > 1 && (
+                        <button
+                          onClick={(e) => deleteTab(tab.id, e)}
+                          className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title={tTracker('deleteTab')}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+              <button
+                onClick={addTab}
+                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-t-lg hover:bg-gray-200 transition-colors"
+                title={tTracker('addTab')}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-sm">{tTracker('addTab')}</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Victory Chart */}
@@ -389,42 +607,31 @@ export default function GameNightTrackerPage() {
           </div>
         )}
 
-        {/* Save and Share */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={saveTracker}
-              disabled={isSaving}
-              className="flex items-center justify-center space-x-2 px-6 py-3 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
-            </button>
-            
-            {shareUrl && (
-              <div className="flex-1 flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
-                <Share2 className="w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  value={shareUrl}
-                  readOnly
-                  className="flex-1 bg-transparent text-sm text-gray-700 focus:outline-none"
-                />
-                <button
-                  onClick={copyShareUrl}
-                  className="text-[#fbae17] hover:text-[#e0990f] transition-colors"
-                  title={tTracker('copyLink')}
-                >
-                  {shareCopied ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            )}
+        {/* Share Section */}
+        {shareUrl && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+              <Share2 className="w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                value={shareUrl}
+                readOnly
+                className="flex-1 bg-transparent text-sm text-gray-700 focus:outline-none"
+              />
+              <button
+                onClick={copyShareUrl}
+                className="text-[#fbae17] hover:text-[#e0990f] transition-colors"
+                title={tTracker('copyLink')}
+              >
+                {shareCopied ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -506,7 +713,7 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
               style={{ backgroundColor: slice.color }}
             />
             <span className="text-sm text-gray-700">
-              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.percentage.toFixed(1)}%
+              <strong>{slice.player.name}</strong>: {slice.player.victories} wins • {slice.percentage.toFixed(1)}%
             </span>
           </div>
         ))}

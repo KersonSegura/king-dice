@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { trackerName, gameFilter, players } = body;
+    const { trackerName, gameFilter, players, gameTabs } = body;
 
     // Generate share_id
     const shareId = `gnt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
         share_id: shareId,
         game_filter: gameFilter || null,
         players: players || [],
+        game_tabs: gameTabs || null, // Store tabs as JSONB
       })
       .select()
       .single();
@@ -144,7 +145,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, trackerName, gameFilter, players } = body;
+    const { id, trackerName, gameFilter, players, gameTabs } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -174,6 +175,7 @@ export async function PUT(request: NextRequest) {
     if (trackerName !== undefined) updateData.tracker_name = trackerName;
     if (gameFilter !== undefined) updateData.game_filter = gameFilter;
     if (players !== undefined) updateData.players = players;
+    if (gameTabs !== undefined) updateData.game_tabs = gameTabs;
 
     const { data, error } = await supabaseAdmin
       .from('game_night_trackers')

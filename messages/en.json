@@ -1325,7 +1325,12 @@
     "saved": "Tracker saved successfully!",
     "saveError": "Failed to save tracker",
     "copyLink": "Copy share link",
-    "linkCopied": "Link copied to clipboard!"
+    "linkCopied": "Link copied to clipboard!",
+    "editTrackerName": "Edit tracker name",
+    "renameTab": "Rename tab",
+    "deleteTab": "Delete tab",
+    "addTab": "Add Tab",
+    "cannotDeleteLastTab": "Cannot delete the last tab"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",
