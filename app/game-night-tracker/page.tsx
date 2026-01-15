@@ -57,7 +57,7 @@ export default function GameNightTrackerPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   // Delete tab confirmation dialog state
-  const [showDeleteTabConfirm, setShowDeleteTabConfirm] = useState(false);
+  const [showDeleteTabConfirm, setShowDeleteTabConfirm] = useState<boolean>(false);
   const [tabToDelete, setTabToDelete] = useState<string | null>(null);
 
   // Get current active tab's players
@@ -794,10 +794,14 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
 
       {/* Delete Tab Confirmation Dialog */}
       <ConfirmationDialog
-        isOpen={showDeleteTabConfirm}
+        isOpen={showDeleteTabConfirm || false}
         onClose={() => {
-          setShowDeleteTabConfirm(false);
-          setTabToDelete(null);
+          if (setShowDeleteTabConfirm) {
+            setShowDeleteTabConfirm(false);
+          }
+          if (setTabToDelete) {
+            setTabToDelete(null);
+          }
         }}
         onConfirm={confirmDeleteTab}
         title={tTracker('deleteTab')}
