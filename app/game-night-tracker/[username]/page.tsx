@@ -1049,6 +1049,75 @@ export default function UserTrackerPage() {
 
       {/* Footer */}
       <Footer locale={locale} />
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+        />
+      )}
+
+      {/* Delete Tab Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteTabConfirm}
+        onClose={() => {
+          setShowDeleteTabConfirm(false);
+          setTabToDelete(null);
+        }}
+        onConfirm={confirmDeleteTab}
+        title={tTracker('deleteTab')}
+        message={tTracker('confirmDeleteTab')}
+        confirmText={tTracker('delete')}
+        cancelText={tTracker('cancel')}
+        type="danger"
+      />
+
+      {/* Color Picker Modal */}
+      {showColorPicker && playerForColorChange !== null && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" 
+          onClick={() => {
+            setShowColorPicker(false);
+            setPlayerForColorChange(null);
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-4">{tTracker('selectPlayerColor')}</h3>
+            <div className="grid grid-cols-5 gap-3 mb-4">
+              {PLAYER_COLORS.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => {
+                    if (playerForColorChange !== null) {
+                      updatePlayer(playerForColorChange, 'color', color);
+                      setShowColorPicker(false);
+                      setPlayerForColorChange(null);
+                    }
+                  }}
+                  className="w-12 h-12 rounded-full border-2 border-gray-300 hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowColorPicker(false);
+                setPlayerForColorChange(null);
+              }}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              {tTracker('cancel')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
