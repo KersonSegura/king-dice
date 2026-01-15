@@ -650,10 +650,10 @@ export default function GameNightTrackerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col w-full max-w-full overflow-x-hidden">
       {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-4">
+      <div className="bg-white shadow-sm border-b w-full max-w-full">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-4 w-full max-w-full">
           <Link 
             href="/"
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
@@ -665,19 +665,19 @@ export default function GameNightTrackerPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1">
+      <div className="w-full max-w-full mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1 overflow-x-hidden">
         {/* Header */}
         <div className="flex items-center justify-center mb-3 sm:mb-8 px-2">
-          <div className="text-center">
-            <h1 className="text-xl sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center justify-center gap-1.5 sm:gap-3">
+          <div className="text-center w-full max-w-full">
+            <h1 className="text-lg sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center justify-center gap-1 sm:gap-3 flex-wrap">
               <img
                 src="/GameNightTrackerIconYellow.svg"
                 alt="Game Night Tracker Icon"
-                className="w-5 h-5 sm:w-9 sm:h-9 flex-none"
+                className="w-4 h-4 sm:w-9 sm:h-9 flex-none"
               />
-              <span className="text-lg sm:text-4xl">{tTracker('title')}</span>
+              <span className="text-base sm:text-4xl break-words">{tTracker('title')}</span>
             </h1>
-            <p className="text-xs sm:text-lg text-gray-600 px-1">{tTracker('subtitle')}</p>
+            <p className="text-[10px] sm:text-lg text-gray-600 px-1 break-words">{tTracker('subtitle')}</p>
           </div>
         </div>
 
@@ -725,41 +725,41 @@ export default function GameNightTrackerPage() {
 
           {/* Players Header with Edit, Add Player, Duplicate, and Save */}
           {!isSharedView && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0">
-              <h3 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('players')}</h3>
-              <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0 w-full max-w-full overflow-hidden">
+              <h3 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2 w-full sm:w-auto">
                 {isEditMode && (
                   <>
                     <button
                       onClick={addPlayer}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
+                      className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors text-[10px] sm:text-sm flex-shrink-0"
                     >
-                      <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <Plus className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{tTracker('addPlayer')}</span>
                     </button>
                     <button
                       onClick={duplicateTab}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                      className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-[10px] sm:text-sm flex-shrink-0"
                       title={tTracker('duplicateSheet')}
                     >
-                      <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <CopyIcon className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{tTracker('duplicateSheet')}</span>
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-none sm:rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm"
+                  className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-gray-600 text-white rounded-none sm:rounded-md hover:bg-gray-700 transition-colors text-[10px] sm:text-sm flex-shrink-0"
                 >
-                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Edit className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
                 </button>
                 <button
                   onClick={saveTracker}
                   disabled={isSaving}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-none sm:rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
+                  className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-green-600 text-white rounded-none sm:rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-sm flex-shrink-0"
                 >
-                  <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Save className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{isSaving ? tTracker('saving') : tTracker('save')}</span>
                 </button>
               </div>
@@ -1229,8 +1229,8 @@ export default function GameNightTrackerPage() {
 
 // Simple SVG Pie Chart Component
 function VictoryPieChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
-  const size = 300;
-  const radius = 120;
+  const size = typeof window !== 'undefined' && window.innerWidth < 640 ? Math.min(250, window.innerWidth - 40) : 300;
+  const radius = size * 0.4;
   const center = size / 2;
 
   let currentAngle = -90; // Start from top
@@ -1270,9 +1270,9 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
     };
   });
 
-  return (
-    <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-      <svg width={size} height={size} className="flex-shrink-0">
+          return (
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-8 w-full max-w-full overflow-hidden">
+              <svg width={size} height={size} className="flex-shrink-0 max-w-full" viewBox={`0 0 ${size} ${size}`}>
         {slices.map((slice, index) => (
           <path
             key={index}
