@@ -1105,21 +1105,35 @@ function VictoryBarChart({ players, totalVictories }: { players: Player[]; total
   const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const maxVictories = Math.max(...players.map(p => p.victories), 1);
   const barHeight = 40;
-  const chartWidth = 600;
+  const nameWidth = 120;
+  const textPadding = 20;
+  const maxBarWidth = 500;
   const chartHeight = players.length * (barHeight + 10);
   
+  // Calculate the maximum text width needed
+  const maxTextLength = Math.max(
+    ...players.map(p => {
+      const text = `${p.victories} ${p.victories === 1 ? 'win' : 'wins'} • ${((p.victories / totalVictories) * 100).toFixed(1)}%`;
+      return text.length;
+    })
+  );
+  
+  // Calculate total chart width with enough space for text
+  const chartWidth = nameWidth + maxBarWidth + (maxTextLength * 8) + textPadding;
+  
   return (
-    <div className="flex flex-col md:flex-row items-start justify-center gap-8">
-      <svg width={chartWidth} height={chartHeight} className="flex-shrink-0">
+    <div className="flex flex-col md:flex-row items-start justify-center gap-8 overflow-x-auto w-full">
+      <svg width={chartWidth} height={chartHeight} className="flex-shrink-0" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
         {players.map((player, index) => {
-          const barWidth = (player.victories / maxVictories) * (chartWidth - 150);
+          const barWidth = (player.victories / maxVictories) * maxBarWidth;
           const y = index * (barHeight + 10);
           const percentage = (player.victories / totalVictories) * 100;
+          const textX = nameWidth + barWidth + textPadding;
           
           return (
             <g key={index}>
               <rect
-                x={120}
+                x={nameWidth}
                 y={y}
                 width={barWidth}
                 height={barHeight}
@@ -1135,7 +1149,7 @@ function VictoryBarChart({ players, totalVictories }: { players: Player[]; total
                 {player.name}
               </text>
               <text
-                x={130 + barWidth}
+                x={textX}
                 y={y + barHeight / 2}
                 dominantBaseline="middle"
                 className="text-sm font-semibold fill-gray-900"
