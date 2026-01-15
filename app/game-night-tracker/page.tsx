@@ -59,10 +59,35 @@ export default function GameNightTrackerPage() {
   // Delete tab confirmation dialog state
   const [showDeleteTabConfirm, setShowDeleteTabConfirm] = useState(false);
   const [tabToDelete, setTabToDelete] = useState<string | null>(null);
+  // Graph view type (pie, bar)
+  const [graphView, setGraphView] = useState<'pie' | 'bar'>('pie');
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<keyof Player | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Get current active tab's players
   const activeTab = gameTabs.find(tab => tab.id === activeTabId);
-  const players = activeTab?.players || [];
+  const rawPlayers = activeTab?.players || [];
+  
+  // Check if viewing shared tracker (not owner)
+  const isSharedView = currentTracker && (!isAuthenticated || currentTracker.user_id !== user?.id);
+  
+  // Sort players
+  const players = [...rawPlayers].sort((a, b) => {
+    if (!sortColumn) return 0;
+    const aVal = a[sortColumn];
+    const bVal = b[sortColumn];
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    }
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    return 0;
+  });
+  
+  // Find max victories for highlighting
+  const maxVictories = players.length > 0 ? Math.max(...players.map(p => p.victories)) : 0;
 
   // Load tracker from URL if share_id is present
   useEffect(() => {
@@ -142,19 +167,21 @@ export default function GameNightTrackerPage() {
     const updatedTabs = gameTabs.map(tab => {
       if (tab.id === activeTabId) {
         const updatedPlayers = [...tab.players];
-        updatedPlayers[index] = {
-          ...updatedPlayers[index],
-          [field]: value,
-        };
+        if (index >= 0 && index < updatedPlayers.length) {
+          updatedPlayers[index] = {
+            ...updatedPlayers[index],
+            [field]: value,
+          };
 
-        // Recalculate win rate if victories or gamesPlayed changed
-        if (field === 'victories' || field === 'gamesPlayed') {
-          const { winRate, winRatePercentage } = calculateWinRate(
-            updatedPlayers[index].victories,
-            updatedPlayers[index].gamesPlayed
-          );
-          updatedPlayers[index].winRate = winRate;
-          updatedPlayers[index].winRatePercentage = winRatePercentage;
+          // Recalculate win rate if victories or gamesPlayed changed
+          if (field === 'victories' || field === 'gamesPlayed') {
+            const { winRate, winRatePercentage } = calculateWinRate(
+              updatedPlayers[index].victories,
+              updatedPlayers[index].gamesPlayed
+            );
+            updatedPlayers[index].winRate = winRate;
+            updatedPlayers[index].winRatePercentage = winRatePercentage;
+          }
         }
 
         return { ...tab, players: updatedPlayers };
@@ -342,6 +369,16 @@ export default function GameNightTrackerPage() {
     setTimeout(() => setShareCopied(false), 2000);
   };
 
+  // Handle column sorting
+  const handleSort = (column: keyof Player) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+  
   // Filter players with victories for chart
   const playersWithVictories = players.filter(p => p.victories > 0);
   const totalVictories = playersWithVictories.reduce((sum, p) => sum + p.victories, 0);
@@ -430,71 +467,126 @@ export default function GameNightTrackerPage() {
           </div>
 
           {/* Players Header with Edit, Add Player, Duplicate, and Save */}
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>
-            <div className="flex items-center space-x-2">
-              {isEditMode && (
-                <>
-                  <button
-                    onClick={addPlayer}
-                    className="flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{tTracker('addPlayer')}</span>
-                  </button>
-                  <button
-                    onClick={duplicateTab}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    title={tTracker('duplicateSheet')}
-                  >
-                    <CopyIcon className="w-4 h-4" />
-                    <span>{tTracker('duplicateSheet')}</span>
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setIsEditMode(!isEditMode)}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
-              </button>
-              <button
-                onClick={saveTracker}
-                disabled={isSaving}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
-              </button>
+          {!isSharedView && (
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>
+              <div className="flex items-center space-x-2">
+                {isEditMode && (
+                  <>
+                    <button
+                      onClick={addPlayer}
+                      className="flex items-center space-x-2 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>{tTracker('addPlayer')}</span>
+                    </button>
+                    <button
+                      onClick={duplicateTab}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      title={tTracker('duplicateSheet')}
+                    >
+                      <CopyIcon className="w-4 h-4" />
+                      <span>{tTracker('duplicateSheet')}</span>
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
+                </button>
+                <button
+                  onClick={saveTracker}
+                  disabled={isSaving}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+          {isSharedView && (
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>
+            </div>
+          )}
 
           {/* Players Table */}
           <div className="overflow-x-auto mb-4">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tTracker('playerName')}
+                  <th 
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>{tTracker('playerName')}</span>
+                      {sortColumn === 'name' && (
+                        <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tTracker('victories')}
+                  <th 
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('victories')}
+                  >
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>{tTracker('victories')}</span>
+                      {sortColumn === 'victories' && (
+                        <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tTracker('gameNights')}
+                  <th 
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('gameNights')}
+                  >
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>{tTracker('gameNights')}</span>
+                      {sortColumn === 'gameNights' && (
+                        <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tTracker('gamesPlayed')}
+                  <th 
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('gamesPlayed')}
+                  >
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>{tTracker('gamesPlayed')}</span>
+                      {sortColumn === 'gamesPlayed' && (
+                        <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tTracker('winRate')}
+                  <th 
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('winRate')}
+                  >
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>{tTracker('winRate')}</span>
+                      {sortColumn === 'winRate' && (
+                        <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tTracker('winRatePercentage')}
+                  <th 
+                    className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('winRatePercentage')}
+                  >
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>{tTracker('winRatePercentage')}</span>
+                      {sortColumn === 'winRatePercentage' && (
+                        <span className="text-[#fbae17]">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </div>
                   </th>
-                  {isEditMode && (
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {isEditMode && !isSharedView && (
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {tTracker('actions')}
                     </th>
                   )}
@@ -503,184 +595,256 @@ export default function GameNightTrackerPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {players.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={isEditMode && !isSharedView ? 7 : 6} className="px-4 py-8 text-center text-gray-500">
                       {tTracker('noPlayers')}
                     </td>
                   </tr>
                 ) : (
-                  players.map((player, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={player.name}
-                            onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                            placeholder={tTracker('playerNamePlaceholder')}
-                          />
-                        ) : (
-                          <span className="text-gray-900 font-medium">{player.name || tTracker('unnamedPlayer')}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {isEditMode ? (
-                          <input
-                            type="number"
-                            min="0"
-                            value={player.victories}
-                            onChange={(e) => updatePlayer(index, 'victories', parseInt(e.target.value) || 0)}
-                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                          />
-                        ) : (
-                          <span className="text-gray-900">{player.victories}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {isEditMode ? (
-                          <input
-                            type="number"
-                            min="0"
-                            value={player.gameNights}
-                            onChange={(e) => updatePlayer(index, 'gameNights', parseInt(e.target.value) || 0)}
-                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                          />
-                        ) : (
-                          <span className="text-gray-900">{player.gameNights}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {isEditMode ? (
-                          <input
-                            type="number"
-                            min="0"
-                            value={player.gamesPlayed}
-                            onChange={(e) => updatePlayer(index, 'gamesPlayed', parseInt(e.target.value) || 0)}
-                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                          />
-                        ) : (
-                          <span className="text-gray-900">{player.gamesPlayed}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                        {player.winRate.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                        {player.winRatePercentage.toFixed(1)}%
-                      </td>
-                      {isEditMode && (
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <button
-                            onClick={() => removePlayer(index)}
-                            className="text-red-600 hover:text-red-800"
-                            title={tTracker('removePlayer')}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                  players.map((player, index) => {
+                    const isTopWinner = player.victories === maxVictories && maxVictories > 0;
+                    const originalIndex = rawPlayers.findIndex(p => p === player);
+                    return (
+                      <tr 
+                        key={index} 
+                        className={`hover:bg-gray-50 transition-colors ${
+                          isTopWinner ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''
+                        }`}
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {isEditMode && !isSharedView ? (
+                            <input
+                              type="text"
+                              value={player.name}
+                              onChange={(e) => {
+                                if (originalIndex !== -1) updatePlayer(originalIndex, 'name', e.target.value);
+                              }}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                              placeholder={tTracker('playerNamePlaceholder')}
+                            />
+                          ) : (
+                            <span className={`font-medium ${isTopWinner ? 'text-yellow-700 font-bold' : 'text-gray-900'}`}>
+                              {player.name || tTracker('unnamedPlayer')}
+                            </span>
+                          )}
                         </td>
-                      )}
-                    </tr>
-                  ))
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {isEditMode && !isSharedView ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={player.victories}
+                              onChange={(e) => {
+                                if (originalIndex !== -1) updatePlayer(originalIndex, 'victories', parseInt(e.target.value) || 0);
+                              }}
+                              className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] mx-auto"
+                            />
+                          ) : (
+                            <span className={`${isTopWinner ? 'text-yellow-700 font-bold' : 'text-gray-900'}`}>
+                              {player.victories}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {isEditMode && !isSharedView ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={player.gameNights}
+                              onChange={(e) => {
+                                if (originalIndex !== -1) updatePlayer(originalIndex, 'gameNights', parseInt(e.target.value) || 0);
+                              }}
+                              className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] mx-auto"
+                            />
+                          ) : (
+                            <span className="text-gray-900">{player.gameNights}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {isEditMode && !isSharedView ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={player.gamesPlayed}
+                              onChange={(e) => {
+                                if (originalIndex !== -1) updatePlayer(originalIndex, 'gamesPlayed', parseInt(e.target.value) || 0);
+                              }}
+                              className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] mx-auto"
+                            />
+                          ) : (
+                            <span className="text-gray-900">{player.gamesPlayed}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                          {player.winRate.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 font-semibold">
+                          {player.winRatePercentage.toFixed(1)}%
+                        </td>
+                        {isEditMode && !isSharedView && (
+                          <td className="px-4 py-3 whitespace-nowrap text-center">
+                            <button
+                              onClick={() => {
+                                if (originalIndex !== -1) removePlayer(originalIndex);
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                              title={tTracker('removePlayer')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Game Tabs (like Excel sheets) */}
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-              {gameTabs.map((tab) => (
-                <div
-                  key={tab.id}
-                  onClick={() => switchTab(tab.id)}
-                  className={`group flex items-center space-x-2 px-4 py-2 cursor-pointer transition-colors ${
-                    activeTabId === tab.id
-                      ? 'bg-[#fbae17] text-white rounded-b-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
-                  }`}
-                >
-                  {editingTabId === tab.id ? (
-                    <>
-                      <input
-                        type="text"
-                        value={editingTabName}
-                        onChange={(e) => setEditingTabName(e.target.value)}
-                        onBlur={() => saveTabName(tab.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            saveTabName(tab.id);
-                          } else if (e.key === 'Escape') {
-                            cancelEditingTab();
-                          }
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-24 px-1 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] text-gray-900 bg-white"
-                        autoFocus
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          saveTabName(tab.id);
-                        }}
-                        className="text-current hover:opacity-80"
-                      >
-                        <Check className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          cancelEditingTab();
-                        }}
-                        className="text-current hover:opacity-80"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-sm font-medium">{tab.name}</span>
-                      <button
-                        onClick={(e) => startEditingTab(tab.id, e)}
-                        className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title={tTracker('renameTab')}
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                      {gameTabs.length > 1 && (
+          {!isSharedView && (
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+                {gameTabs.map((tab) => (
+                  <div
+                    key={tab.id}
+                    onClick={() => switchTab(tab.id)}
+                    className={`group flex items-center space-x-2 px-4 py-2 cursor-pointer transition-colors ${
+                      activeTabId === tab.id
+                        ? 'bg-[#fbae17] text-white rounded-b-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
+                    }`}
+                  >
+                    {editingTabId === tab.id ? (
+                      <>
+                        <input
+                          type="text"
+                          value={editingTabName}
+                          onChange={(e) => setEditingTabName(e.target.value)}
+                          onBlur={() => saveTabName(tab.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              saveTabName(tab.id);
+                            } else if (e.key === 'Escape') {
+                              cancelEditingTab();
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-24 px-1 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] text-gray-900 bg-white"
+                          autoFocus
+                        />
                         <button
-                          onClick={(e) => deleteTab(tab.id, e)}
-                          className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
-                          title={tTracker('deleteTab')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveTabName(tab.id);
+                          }}
+                          className="text-current hover:opacity-80"
+                        >
+                          <Check className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelEditingTab();
+                          }}
+                          className="text-current hover:opacity-80"
                         >
                           <X className="w-3 h-3" />
                         </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-              <button
-                onClick={addTab}
-                className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-b-lg hover:bg-gray-200 transition-colors"
-                title={tTracker('addTab')}
-              >
-                <Plus className="w-4 h-4" />
-                <span className="text-sm">{tTracker('addTab')}</span>
-              </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm font-medium">{tab.name}</span>
+                        <button
+                          onClick={(e) => startEditingTab(tab.id, e)}
+                          className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title={tTracker('renameTab')}
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                        {gameTabs.length > 1 && (
+                          <button
+                            onClick={(e) => deleteTab(tab.id, e)}
+                            className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title={tTracker('deleteTab')}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={addTab}
+                  className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-b-lg hover:bg-gray-200 transition-colors"
+                  title={tTracker('addTab')}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="text-sm">{tTracker('addTab')}</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+          {isSharedView && (
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+                {gameTabs.map((tab) => (
+                  <div
+                    key={tab.id}
+                    onClick={() => switchTab(tab.id)}
+                    className={`px-4 py-2 cursor-pointer transition-colors ${
+                      activeTabId === tab.id
+                        ? 'bg-[#fbae17] text-white rounded-b-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{tab.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Victory Chart */}
         {playersWithVictories.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">{tTracker('victoryChart')}</h2>
-            <VictoryPieChart players={playersWithVictories} totalVictories={totalVictories} />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">{tTracker('victoryChart')}</h2>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setGraphView('pie')}
+                  className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                    graphView === 'pie'
+                      ? 'bg-[#fbae17] text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Pie
+                </button>
+                <button
+                  onClick={() => setGraphView('bar')}
+                  className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                    graphView === 'bar'
+                      ? 'bg-[#fbae17] text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Bar
+                </button>
+              </div>
+            </div>
+            {graphView === 'pie' ? (
+              <VictoryPieChart players={playersWithVictories} totalVictories={totalVictories} />
+            ) : (
+              <VictoryBarChart players={playersWithVictories} totalVictories={totalVictories} />
+            )}
           </div>
         )}
 
         {/* Share Section */}
-        {shareUrl && (
+        {shareUrl && !isSharedView && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{tTracker('shareTitle')}</h3>
             <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
@@ -808,6 +972,56 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
           type="danger"
         />
       )}
+    </div>
+  );
+}
+
+// Simple SVG Bar Chart Component
+function VictoryBarChart({ players, totalVictories }: { players: Player[]; totalVictories: number }) {
+  const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+  const maxVictories = Math.max(...players.map(p => p.victories), 1);
+  const barHeight = 40;
+  const chartWidth = 600;
+  const chartHeight = players.length * (barHeight + 10);
+  
+  return (
+    <div className="flex flex-col md:flex-row items-start justify-center gap-8">
+      <svg width={chartWidth} height={chartHeight} className="flex-shrink-0">
+        {players.map((player, index) => {
+          const barWidth = (player.victories / maxVictories) * (chartWidth - 150);
+          const y = index * (barHeight + 10);
+          const percentage = (player.victories / totalVictories) * 100;
+          
+          return (
+            <g key={index}>
+              <rect
+                x={120}
+                y={y}
+                width={barWidth}
+                height={barHeight}
+                fill={colors[index % colors.length]}
+                rx={4}
+              />
+              <text
+                x={10}
+                y={y + barHeight / 2}
+                dominantBaseline="middle"
+                className="text-sm font-medium fill-gray-700"
+              >
+                {player.name}
+              </text>
+              <text
+                x={130 + barWidth}
+                y={y + barHeight / 2}
+                dominantBaseline="middle"
+                className="text-sm font-semibold fill-gray-900"
+              >
+                {player.victories} {player.victories === 1 ? 'win' : 'wins'} • {percentage.toFixed(1)}%
+              </text>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
