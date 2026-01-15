@@ -239,6 +239,18 @@ export default function UserTrackerPage() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [playerForColorChange, setPlayerForColorChange] = useState<number | null>(null);
   
+  // Lock body scroll when color picker is open
+  useEffect(() => {
+    if (showColorPicker) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showColorPicker]);
+  
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
