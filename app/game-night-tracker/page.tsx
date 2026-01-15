@@ -1119,7 +1119,7 @@ function VictoryBarChart({ players, totalVictories }: { players: Player[]; total
   // Calculate the maximum text width needed
   const maxTextLength = Math.max(
     ...players.map(p => {
-      const text = `${p.victories} ${p.victories === 1 ? 'win' : 'wins'} • ${((p.victories / totalVictories) * 100).toFixed(1)}%`;
+      const text = `${p.victories} ${p.victories === 1 ? 'win' : 'wins'} • ${p.winRatePercentage.toFixed(1)}%`;
       return text.length;
     })
   );
@@ -1133,7 +1133,6 @@ function VictoryBarChart({ players, totalVictories }: { players: Player[]; total
         {players.map((player, index) => {
           const barWidth = (player.victories / maxVictories) * maxBarWidth;
           const y = index * (barHeight + 10);
-          const percentage = (player.victories / totalVictories) * 100;
           const textX = nameWidth + barWidth + textPadding;
           
           return (
