@@ -187,6 +187,7 @@ export default function GameNightTrackerPage() {
   const locale = useLocale();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
+  const router = useRouter();
   
   const [trackerName, setTrackerName] = useState('My Game Night Tracker');
   const [isEditingTrackerName, setIsEditingTrackerName] = useState(false);
