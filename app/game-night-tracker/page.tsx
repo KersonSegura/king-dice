@@ -794,14 +794,10 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
 
       {/* Delete Tab Confirmation Dialog */}
       <ConfirmationDialog
-        isOpen={showDeleteTabConfirm || false}
+        isOpen={showDeleteTabConfirm}
         onClose={() => {
-          if (setShowDeleteTabConfirm) {
-            setShowDeleteTabConfirm(false);
-          }
-          if (setTabToDelete) {
-            setTabToDelete(null);
-          }
+          setShowDeleteTabConfirm(false);
+          setTabToDelete(null);
         }}
         onConfirm={confirmDeleteTab}
         title={tTracker('deleteTab')}
