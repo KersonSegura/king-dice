@@ -708,16 +708,14 @@ export default function GameNightTrackerPage() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#fbae17] to-[#e0990f] bg-clip-text text-transparent">
-                  {trackerName}
-                </h2>
+              <div className="flex items-center space-x-1 sm:space-x-2 w-full max-w-full min-w-0">
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate min-w-0 flex-1">{trackerName}</h2>
                 <button
                   onClick={() => setIsEditingTrackerName(true)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
                   title={tTracker('editTrackerName')}
                 >
-                  <Edit2 className="w-4 h-4" />
+                  <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
               </div>
             )}
