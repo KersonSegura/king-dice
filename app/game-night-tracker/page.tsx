@@ -667,17 +667,17 @@ export default function GameNightTrackerPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1">
         {/* Header */}
-        <div className="flex items-center justify-center mb-4 sm:mb-8 px-2">
+        <div className="flex items-center justify-center mb-3 sm:mb-8 px-2">
           <div className="text-center">
-            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center justify-center gap-2 sm:gap-3">
+            <h1 className="text-xl sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center justify-center gap-1.5 sm:gap-3">
               <img
                 src="/GameNightTrackerIconYellow.svg"
                 alt="Game Night Tracker Icon"
-                className="w-6 h-6 sm:w-9 sm:h-9 flex-none"
+                className="w-5 h-5 sm:w-9 sm:h-9 flex-none"
               />
-              <span>{tTracker('title')}</span>
+              <span className="text-lg sm:text-4xl">{tTracker('title')}</span>
             </h1>
-            <p className="text-sm sm:text-lg text-gray-600">{tTracker('subtitle')}</p>
+            <p className="text-xs sm:text-lg text-gray-600 px-1">{tTracker('subtitle')}</p>
           </div>
         </div>
 
