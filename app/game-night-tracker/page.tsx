@@ -1157,24 +1157,29 @@ export default function GameNightTrackerPage() {
             </button>
             <h3 className="text-lg font-bold text-gray-900 mb-4 pr-8">{tTracker('selectPlayerColor')}</h3>
             <div className="flex flex-col items-center space-y-4 mb-4">
-              <input
-                type="color"
-                value={activeTab?.players[playerForColorChange]?.color || PLAYER_COLORS[playerForColorChange % PLAYER_COLORS.length] || '#000000'}
-                onChange={(e) => {
-                  if (playerForColorChange !== null) {
-                    updatePlayer(playerForColorChange, 'color', e.target.value);
-                  }
-                }}
-                className="w-32 h-32 cursor-pointer border-2 border-gray-300 rounded-full"
-                style={{ 
-                  WebkitAppearance: 'none',
-                  MozAppearance: 'none',
-                  appearance: 'none',
-                  backgroundColor: 'transparent',
-                  border: '2px solid #d1d5db',
-                  borderRadius: '50%'
-                }}
-              />
+              <div className="relative w-24 h-24">
+                <input
+                  type="color"
+                  value={activeTab?.players[playerForColorChange]?.color || PLAYER_COLORS[playerForColorChange % PLAYER_COLORS.length] || '#000000'}
+                  onChange={(e) => {
+                    if (playerForColorChange !== null) {
+                      updatePlayer(playerForColorChange, 'color', e.target.value);
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full cursor-pointer rounded-full border-2 border-gray-300 opacity-0 z-10"
+                  style={{ 
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none',
+                    appearance: 'none',
+                  }}
+                />
+                <div
+                  className="absolute inset-0 w-full h-full rounded-full border-2 border-gray-300 pointer-events-none"
+                  style={{
+                    backgroundColor: activeTab?.players[playerForColorChange]?.color || PLAYER_COLORS[playerForColorChange % PLAYER_COLORS.length] || '#000000'
+                  }}
+                />
+              </div>
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {tTracker('colorHexCode')}
