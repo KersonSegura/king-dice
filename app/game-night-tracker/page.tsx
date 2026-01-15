@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Check, Edit2, X, Edit, Copy as CopyIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Check, Edit2, X, Edit, Copy as CopyIcon, GripVertical } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Footer from '@/components/Footer';
@@ -10,6 +10,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import LoginModal from '@/components/LoginModal';
 import ConfirmationDialog from '@/components/ConfirmationDialog';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Player {
   name: string;
@@ -35,6 +52,132 @@ interface Tracker {
   players: Player[];
   created_at: string;
   updated_at: string;
+}
+
+// Sortable Tab Component
+interface SortableTabProps {
+  tab: GameTab;
+  isActive: boolean;
+  isEditing: boolean;
+  editingTabName: string;
+  onTabClick: () => void;
+  onStartEdit: (e: React.MouseEvent) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onEditNameChange: (value: string) => void;
+  onDelete: (e: React.MouseEvent) => void;
+  canDelete: boolean;
+  tTracker: any;
+}
+
+function SortableTab({
+  tab,
+  isActive,
+  isEditing,
+  editingTabName,
+  onTabClick,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onEditNameChange,
+  onDelete,
+  canDelete,
+  tTracker,
+}: SortableTabProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tab.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || undefined,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onTabClick}
+      className={`group flex items-center space-x-2 px-4 py-2 cursor-pointer transition-colors ${
+        isActive
+          ? 'bg-[#fbae17] text-white rounded-b-lg'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
+      } ${isDragging ? 'z-50' : ''}`}
+    >
+      {isEditing ? (
+        <>
+          <input
+            type="text"
+            value={editingTabName}
+            onChange={(e) => onEditNameChange(e.target.value)}
+            onBlur={onSaveEdit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onSaveEdit();
+              } else if (e.key === 'Escape') {
+                onCancelEdit();
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-24 px-1 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] text-gray-900 bg-white"
+            autoFocus
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSaveEdit();
+            }}
+            className="text-current hover:opacity-80"
+          >
+            <Check className="w-3 h-3" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancelEdit();
+            }}
+            className="text-current hover:opacity-80"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </>
+      ) : (
+        <>
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="w-3 h-3" />
+          </div>
+          <span className="text-sm font-medium">{tab.name}</span>
+          <button
+            onClick={(e) => onStartEdit(e)}
+            className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+            title={tTracker('renameTab')}
+          >
+            <Edit2 className="w-3 h-3" />
+          </button>
+          {canDelete && (
+            <button
+              onClick={(e) => onDelete(e)}
+              className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+              title={tTracker('deleteTab')}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function GameNightTrackerPage() {
@@ -64,6 +207,14 @@ export default function GameNightTrackerPage() {
   // Sorting state
   const [sortColumn, setSortColumn] = useState<keyof Player | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Get current active tab's players
   const activeTab = gameTabs.find(tab => tab.id === activeTabId);
@@ -385,7 +536,7 @@ export default function GameNightTrackerPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center fixed inset-0 z-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fbae17] mx-auto mb-4"></div>
           <p className="text-gray-600">{t('loading')}</p>
@@ -414,13 +565,15 @@ export default function GameNightTrackerPage() {
         {/* Header */}
         <div className="flex items-center justify-center mb-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
+            <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
               <img
                 src="/GameNightTrackerIconYellow.svg"
                 alt="Game Night Tracker Icon"
                 className="w-9 h-9 flex-none"
               />
-              <span>{tTracker('title')}</span>
+              <span className="bg-gradient-to-r from-[#fbae17] to-[#e0990f] bg-clip-text text-transparent">
+                {tTracker('title')}
+              </span>
             </h1>
             <p className="text-lg text-gray-600">{tTracker('subtitle')}</p>
           </div>
@@ -704,86 +857,44 @@ export default function GameNightTrackerPage() {
           {/* Game Tabs (like Excel sheets) */}
           {!isSharedView && (
             <div className="border-t border-gray-200 pt-4 mt-4">
-              <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-                {gameTabs.map((tab) => (
-                  <div
-                    key={tab.id}
-                    onClick={() => switchTab(tab.id)}
-                    className={`group flex items-center space-x-2 px-4 py-2 cursor-pointer transition-colors ${
-                      activeTabId === tab.id
-                        ? 'bg-[#fbae17] text-white rounded-b-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
-                    }`}
-                  >
-                    {editingTabId === tab.id ? (
-                      <>
-                        <input
-                          type="text"
-                          value={editingTabName}
-                          onChange={(e) => setEditingTabName(e.target.value)}
-                          onBlur={() => saveTabName(tab.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              saveTabName(tab.id);
-                            } else if (e.key === 'Escape') {
-                              cancelEditingTab();
-                            }
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-24 px-1 py-0.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] text-gray-900 bg-white"
-                          autoFocus
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            saveTabName(tab.id);
-                          }}
-                          className="text-current hover:opacity-80"
-                        >
-                          <Check className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            cancelEditingTab();
-                          }}
-                          className="text-current hover:opacity-80"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm font-medium">{tab.name}</span>
-                        <button
-                          onClick={(e) => startEditingTab(tab.id, e)}
-                          className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
-                          title={tTracker('renameTab')}
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                        {gameTabs.length > 1 && (
-                          <button
-                            onClick={(e) => deleteTab(tab.id, e)}
-                            className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title={tTracker('deleteTab')}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
-                <button
-                  onClick={addTab}
-                  className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-b-lg hover:bg-gray-200 transition-colors"
-                  title={tTracker('addTab')}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={gameTabs.map(tab => tab.id)}
+                  strategy={horizontalListSortingStrategy}
                 >
-                  <Plus className="w-4 h-4" />
-                  <span className="text-sm">{tTracker('addTab')}</span>
-                </button>
-              </div>
+                  <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+                    {gameTabs.map((tab) => (
+                      <SortableTab
+                        key={tab.id}
+                        tab={tab}
+                        isActive={activeTabId === tab.id}
+                        isEditing={editingTabId === tab.id}
+                        editingTabName={editingTabName}
+                        onTabClick={() => switchTab(tab.id)}
+                        onStartEdit={(e) => startEditingTab(tab.id, e)}
+                        onSaveEdit={() => saveTabName(tab.id)}
+                        onCancelEdit={cancelEditingTab}
+                        onEditNameChange={setEditingTabName}
+                        onDelete={(e) => deleteTab(tab.id, e)}
+                        canDelete={gameTabs.length > 1}
+                        tTracker={tTracker}
+                      />
+                    ))}
+                    <button
+                      onClick={addTab}
+                      className="flex items-center space-x-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-b-lg hover:bg-gray-200 transition-colors"
+                      title={tTracker('addTab')}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="text-sm">{tTracker('addTab')}</span>
+                    </button>
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
           )}
           {isSharedView && (
