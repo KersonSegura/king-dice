@@ -57,7 +57,7 @@ export default function GameNightTrackerPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   // Delete tab confirmation dialog state
-  const [showDeleteTabConfirm, setShowDeleteTabConfirm] = useState<boolean>(false);
+  const [showDeleteTabConfirm, setShowDeleteTabConfirm] = useState(false);
   const [tabToDelete, setTabToDelete] = useState<string | null>(null);
 
   // Get current active tab's players
