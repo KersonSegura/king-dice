@@ -859,19 +859,21 @@ export default function GameNightTrackerPage() {
                           <div className="flex items-center space-x-2">
                             {/* Color circle */}
                             <button
-                              onClick={() => {
-                                if (isEditMode && !isSharedView && originalIndex !== -1) {
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isSharedView && originalIndex !== -1) {
                                   setPlayerForColorChange(originalIndex);
                                   setShowColorPicker(true);
                                 }
                               }}
                               className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                                isEditMode && !isSharedView ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
+                                !isSharedView ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
                               }`}
                               style={{ 
                                 backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length]
                               }}
-                              title={isEditMode && !isSharedView ? 'Change color' : undefined}
+                              title={!isSharedView ? 'Change color' : undefined}
                             />
                             {isEditMode && !isSharedView ? (
                               <input
