@@ -682,7 +682,7 @@ export default function GameNightTrackerPage() {
         </div>
 
         {/* Players Table Container */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
           {/* Tracker Name at Top */}
           <div className="mb-6 pb-4 border-b border-gray-200">
             {isEditingTrackerName ? (
@@ -1205,7 +1205,7 @@ export default function GameNightTrackerPage() {
                   setShowColorPicker(false);
                   setPlayerForColorChange(null);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-none sm:rounded-md hover:bg-gray-300 transition-colors"
               >
                 {tTracker('cancel')}
               </button>
@@ -1215,7 +1215,7 @@ export default function GameNightTrackerPage() {
                   setShowColorPicker(false);
                   setPlayerForColorChange(null);
                 }}
-                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors"
               >
                 {tTracker('saveColor')}
               </button>

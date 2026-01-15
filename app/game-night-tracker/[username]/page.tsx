@@ -1008,10 +1008,10 @@ export default function UserTrackerPage() {
                   <div
                     key={tab.id}
                     onClick={() => setActiveTabId(tab.id)}
-                    className={`px-4 py-2 cursor-pointer transition-colors ${
+                    className={`px-2 sm:px-4 py-1.5 sm:py-2 cursor-pointer transition-colors ${
                       activeTabId === tab.id
-                        ? 'bg-[#fbae17] text-white rounded-b-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
+                        ? 'bg-[#fbae17] text-white rounded-none sm:rounded-b-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-none sm:rounded-b-lg'
                     }`}
                   >
                     <span className="text-sm font-medium">{tab.name}</span>
@@ -1060,7 +1060,7 @@ export default function UserTrackerPage() {
 
         {/* Share Section */}
         {shareUrl && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{tTracker('shareTitle')}</h3>
             <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
               <Share2 className="w-4 h-4 text-gray-500" />
@@ -1185,7 +1185,7 @@ export default function UserTrackerPage() {
                   setShowColorPicker(false);
                   setPlayerForColorChange(null);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-none sm:rounded-md hover:bg-gray-300 transition-colors"
               >
                 {tTracker('cancel')}
               </button>
@@ -1195,7 +1195,7 @@ export default function UserTrackerPage() {
                   setShowColorPicker(false);
                   setPlayerForColorChange(null);
                 }}
-                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors"
               >
                 {tTracker('saveColor')}
               </button>
