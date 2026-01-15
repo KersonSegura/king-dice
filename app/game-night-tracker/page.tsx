@@ -729,15 +729,15 @@ export default function GameNightTrackerPage() {
                 <div className="flex items-center gap-1.5 sm:hidden">
                   <button
                     onClick={() => setIsEditMode(!isEditMode)}
-                    className="flex items-center px-2 py-1.5 bg-gray-600 text-white rounded-none hover:bg-gray-700 transition-colors text-xs flex-shrink-0"
+                    className="flex items-center space-x-1 px-2 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs flex-shrink-0"
                   >
                     <Edit className="w-3 h-3" />
-                    <span className="hidden">{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
+                    <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
                   </button>
                   <button
                     onClick={saveTracker}
                     disabled={isSaving}
-                    className="px-2 py-1.5 bg-green-600 text-white rounded-none hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs flex-shrink-0"
+                    className="px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs flex-shrink-0"
                   >
                     {isSaving ? tTracker('saving') : tTracker('save')}
                   </button>
@@ -748,32 +748,31 @@ export default function GameNightTrackerPage() {
                   <>
                     <button
                       onClick={addPlayer}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm flex-shrink-0"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm flex-shrink-0"
                     >
                       <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">{tTracker('addPlayer')}</span>
+                      <span>{tTracker('addPlayer')}</span>
                     </button>
                     <button
                       onClick={duplicateTab}
-                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm flex-shrink-0"
-                      title={tTracker('duplicateSheet')}
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm flex-shrink-0"
                     >
                       <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">{tTracker('duplicateSheet')}</span>
+                      <span>{tTracker('duplicateSheet')}</span>
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-none sm:rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
                 >
                   <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
+                  <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
                 </button>
                 <button
                   onClick={saveTracker}
                   disabled={isSaving}
-                  className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-none sm:rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
+                  className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
                 >
                   {isSaving ? tTracker('saving') : tTracker('save')}
                 </button>
@@ -782,18 +781,17 @@ export default function GameNightTrackerPage() {
                 <div className="flex flex-wrap items-center gap-1.5 w-full sm:hidden mt-2">
                   <button
                     onClick={addPlayer}
-                    className="flex items-center space-x-1 px-2 py-1.5 bg-[#fbae17] text-white rounded-none hover:bg-[#e0990f] transition-colors text-xs flex-shrink-0"
+                    className="flex items-center space-x-1 px-2 py-1.5 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs flex-shrink-0"
                   >
                     <Plus className="w-3 h-3" />
-                    <span className="hidden">{tTracker('addPlayer')}</span>
+                    <span>{tTracker('addPlayer')}</span>
                   </button>
                   <button
                     onClick={duplicateTab}
-                    className="flex items-center space-x-1 px-2 py-1.5 bg-blue-600 text-white rounded-none hover:bg-blue-700 transition-colors text-xs flex-shrink-0"
-                    title={tTracker('duplicateSheet')}
+                    className="flex items-center space-x-1 px-2 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs flex-shrink-0"
                   >
                     <CopyIcon className="w-3 h-3" />
-                    <span className="hidden">{tTracker('duplicateSheet')}</span>
+                    <span>{tTracker('duplicateSheet')}</span>
                   </button>
                 </div>
               )}
