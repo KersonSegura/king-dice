@@ -724,8 +724,26 @@ export default function GameNightTrackerPage() {
           {/* Players Header with Edit, Add Player, Duplicate, and Save */}
           {!isSharedView && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0 w-full max-w-full overflow-hidden">
-              <h3 className="text-base sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-2 sm:gap-0 w-full sm:w-auto">
+                <h3 className="text-base sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
+                <div className="flex items-center gap-1.5 sm:hidden">
+                  <button
+                    onClick={() => setIsEditMode(!isEditMode)}
+                    className="flex items-center px-2 py-1.5 bg-gray-600 text-white rounded-none hover:bg-gray-700 transition-colors text-xs flex-shrink-0"
+                  >
+                    <Edit className="w-3 h-3" />
+                    <span className="hidden">{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
+                  </button>
+                  <button
+                    onClick={saveTracker}
+                    disabled={isSaving}
+                    className="px-2 py-1.5 bg-green-600 text-white rounded-none hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs flex-shrink-0"
+                  >
+                    {isSaving ? tTracker('saving') : tTracker('save')}
+                  </button>
+                </div>
+              </div>
+              <div className="hidden sm:flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
                 {isEditMode && (
                   <>
                     <button
@@ -760,6 +778,25 @@ export default function GameNightTrackerPage() {
                   {isSaving ? tTracker('saving') : tTracker('save')}
                 </button>
               </div>
+              {isEditMode && (
+                <div className="flex flex-wrap items-center gap-1.5 w-full sm:hidden mt-2">
+                  <button
+                    onClick={addPlayer}
+                    className="flex items-center space-x-1 px-2 py-1.5 bg-[#fbae17] text-white rounded-none hover:bg-[#e0990f] transition-colors text-xs flex-shrink-0"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span className="hidden">{tTracker('addPlayer')}</span>
+                  </button>
+                  <button
+                    onClick={duplicateTab}
+                    className="flex items-center space-x-1 px-2 py-1.5 bg-blue-600 text-white rounded-none hover:bg-blue-700 transition-colors text-xs flex-shrink-0"
+                    title={tTracker('duplicateSheet')}
+                  >
+                    <CopyIcon className="w-3 h-3" />
+                    <span className="hidden">{tTracker('duplicateSheet')}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
           {isSharedView && (

@@ -892,6 +892,23 @@ export default function Header() {
                 )}
                 
                 <Link
+                  href="/game-night-tracker"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
+                  onClick={handleMobileNavigation}
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
+                    <Image
+                      src="/GameNightTrackerIconWhite.svg"
+                      alt="Game Night Tracker"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                  </div>
+                  <span className="font-medium">{t('gameNightTracker')}</span>
+                </Link>
+                
+                <Link
                   href="/catan-map-generator"
                   className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
