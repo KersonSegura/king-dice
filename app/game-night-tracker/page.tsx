@@ -1159,7 +1159,7 @@ function VictoryBarChart({ players, totalVictories }: { players: Player[]; total
                 dominantBaseline="middle"
                 className="text-sm font-semibold fill-gray-900"
               >
-                {player.victories} {player.victories === 1 ? 'win' : 'wins'} • {percentage.toFixed(1)}%
+                {player.victories} {player.victories === 1 ? 'win' : 'wins'} • {player.winRatePercentage.toFixed(1)}%
               </text>
             </g>
           );
