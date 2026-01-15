@@ -881,6 +881,21 @@ export default function GameNightTrackerPage() {
           onClose={() => setShowLoginModal(false)}
         />
       )}
+
+      {/* Delete Tab Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteTabConfirm}
+        onClose={() => {
+          setShowDeleteTabConfirm(false);
+          setTabToDelete(null);
+        }}
+        onConfirm={confirmDeleteTab}
+        title={tTracker('deleteTab')}
+        message={tTracker('confirmDeleteTab')}
+        confirmText={tTracker('delete')}
+        cancelText={tTracker('cancel')}
+        type="danger"
+      />
     </div>
   );
 }
@@ -955,21 +970,6 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
           </div>
         ))}
       </div>
-
-      {/* Delete Tab Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showDeleteTabConfirm}
-        onClose={() => {
-          setShowDeleteTabConfirm(false);
-          setTabToDelete(null);
-        }}
-        onConfirm={confirmDeleteTab}
-        title={tTracker('deleteTab')}
-        message={tTracker('confirmDeleteTab')}
-        confirmText={tTracker('delete')}
-        cancelText={tTracker('cancel')}
-        type="danger"
-      />
     </div>
   );
 }
