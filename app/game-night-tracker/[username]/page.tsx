@@ -36,6 +36,7 @@ interface Player {
   gamesPlayed: number;
   winRate: number;
   winRatePercentage: number;
+  color?: string; // Player's color for charts
 }
 
 interface GameTab {
@@ -358,6 +359,7 @@ export default function UserTrackerPage() {
               gamesPlayed: 0,
               winRate: 0,
               winRatePercentage: 0,
+              color: PLAYER_COLORS[tab.players.length % PLAYER_COLORS.length],
             },
           ],
         };
@@ -1040,7 +1042,7 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
 
     return {
       pathData,
-      color: colors[index % colors.length],
+      color: player.color || PLAYER_COLORS[index % PLAYER_COLORS.length],
       player,
       percentage,
       startAngle,
@@ -1080,7 +1082,6 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
 
 // Simple SVG Bar Chart Component
 function VictoryBarChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
-  const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const maxVictories = Math.max(...players.map(p => p.victories), 1);
   const barHeight = 40;
   const nameWidth = 120;
@@ -1114,7 +1115,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
                 y={y}
                 width={barWidth}
                 height={barHeight}
-                fill={colors[index % colors.length]}
+                fill={player.color || PLAYER_COLORS[index % PLAYER_COLORS.length]}
                 rx={4}
               />
               <text

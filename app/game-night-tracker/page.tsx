@@ -36,6 +36,7 @@ interface Player {
   gamesPlayed: number;
   winRate: number;
   winRatePercentage: number;
+  color?: string; // Player's color for charts
 }
 
 interface GameTab {
@@ -393,6 +394,7 @@ export default function GameNightTrackerPage() {
               gamesPlayed: 0,
               winRate: 0,
               winRatePercentage: 0,
+              color: PLAYER_COLORS[tab.players.length % PLAYER_COLORS.length],
             },
           ],
         };
@@ -827,21 +829,40 @@ export default function GameNightTrackerPage() {
                         }`}
                       >
                         <td className="px-4 py-3 whitespace-nowrap text-center">
-                          {isEditMode && !isSharedView ? (
-                            <input
-                              type="text"
-                              value={player.name}
-                              onChange={(e) => {
-                                if (originalIndex !== -1) updatePlayer(originalIndex, 'name', e.target.value);
+                          <div className="flex items-center justify-center space-x-2">
+                            {/* Color circle */}
+                            <button
+                              onClick={() => {
+                                if (isEditMode && !isSharedView && originalIndex !== -1) {
+                                  setPlayerForColorChange(originalIndex);
+                                  setShowColorPicker(true);
+                                }
                               }}
-                              className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                              placeholder={tTracker('playerNamePlaceholder')}
+                              className={`w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0 ${
+                                isEditMode && !isSharedView ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'
+                              }`}
+                              style={{ 
+                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length],
+                                borderColor: isEditMode && !isSharedView ? '#d1d5db' : 'transparent'
+                              }}
+                              title={isEditMode && !isSharedView ? 'Change color' : undefined}
                             />
-                          ) : (
-                            <span className={`font-medium ${isTopWinner ? 'text-yellow-700 font-bold' : 'text-gray-900'}`}>
-                              {player.name || tTracker('unnamedPlayer')}
-                            </span>
-                          )}
+                            {isEditMode && !isSharedView ? (
+                              <input
+                                type="text"
+                                value={player.name}
+                                onChange={(e) => {
+                                  if (originalIndex !== -1) updatePlayer(originalIndex, 'name', e.target.value);
+                                }}
+                                className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                                placeholder={tTracker('playerNamePlaceholder')}
+                              />
+                            ) : (
+                              <span className={`font-medium ${isTopWinner ? 'text-yellow-700 font-bold' : 'text-gray-900'}`}>
+                                {player.name || tTracker('unnamedPlayer')}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-center">
                           {isEditMode && !isSharedView ? (
@@ -1110,7 +1131,7 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
 
     return {
       pathData,
-      color: colors[index % colors.length],
+      color: player.color || PLAYER_COLORS[index % PLAYER_COLORS.length],
       player,
       percentage,
       startAngle,
@@ -1150,7 +1171,6 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
 
 // Simple SVG Bar Chart Component
 function VictoryBarChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
-  const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const maxVictories = Math.max(...players.map(p => p.victories), 1);
   const barHeight = 40;
   const nameWidth = 120;
@@ -1184,7 +1204,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
                 y={y}
                 width={barWidth}
                 height={barHeight}
-                fill={colors[index % colors.length]}
+                fill={player.color || PLAYER_COLORS[index % PLAYER_COLORS.length]}
                 rx={4}
               />
               <text
