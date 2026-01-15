@@ -1363,7 +1363,8 @@
     "win": "victoria",
     "wins": "victorias",
     "pie": "Circular",
-    "bar": "Barras"
+    "bar": "Barras",
+    "byUser": "por {username}"
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

@@ -1343,7 +1343,8 @@
     "win": "win",
     "wins": "wins",
     "pie": "Pie",
-    "bar": "Bar"
+    "bar": "Bar",
+    "byUser": "by {username}"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",

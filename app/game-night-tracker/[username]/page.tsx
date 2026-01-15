@@ -235,6 +235,9 @@ export default function UserTrackerPage() {
   const [sortColumn, setSortColumn] = useState<keyof Player | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [graphView, setGraphView] = useState<'pie' | 'bar'>('pie');
+  // Color picker state
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [playerForColorChange, setPlayerForColorChange] = useState<number | null>(null);
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -685,7 +688,7 @@ export default function UserTrackerPage() {
               </div>
             )}
             {username && (
-              <p className="text-sm text-gray-500 mt-1">by @{username}</p>
+              <p className="text-sm text-gray-500 mt-1">{tTracker('byUser', { username: `@${username}` })}</p>
             )}
           </div>
 
