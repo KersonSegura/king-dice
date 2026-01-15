@@ -1057,6 +1057,33 @@ export default function UserTrackerPage() {
             )}
           </div>
         )}
+
+        {/* Share Section */}
+        {shareUrl && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{tTracker('shareTitle')}</h3>
+            <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+              <Share2 className="w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                value={shareUrl}
+                readOnly
+                className="flex-1 bg-transparent text-sm text-gray-700 focus:outline-none"
+              />
+              <button
+                onClick={copyShareUrl}
+                className="text-[#fbae17] hover:text-[#e0990f] transition-colors"
+                title={tTracker('copyLink')}
+              >
+                {shareCopied ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}

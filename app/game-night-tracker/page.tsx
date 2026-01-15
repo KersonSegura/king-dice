@@ -1079,7 +1079,7 @@ export default function GameNightTrackerPage() {
         )}
 
         {/* Share Section */}
-        {shareUrl && !isSharedView && (
+        {shareUrl && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{tTracker('shareTitle')}</h3>
             <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
