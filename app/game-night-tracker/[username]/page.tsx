@@ -57,6 +57,30 @@ interface Tracker {
   updated_at: string;
 }
 
+// Available colors for players (20 colors, no white)
+const PLAYER_COLORS = [
+  '#ef4444', // red
+  '#10b981', // green
+  '#f59e0b', // amber
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#84cc16', // lime
+  '#f97316', // orange
+  '#14b8a6', // teal
+  '#6366f1', // indigo
+  '#a855f7', // purple
+  '#e11d48', // rose
+  '#22c55e', // emerald
+  '#fbbf24', // yellow
+  '#0ea5e9', // sky
+  '#64748b', // slate
+  '#dc2626', // red-600
+  '#059669', // green-600
+  '#d97706', // amber-600
+];
+
 // Sortable Tab Component
 interface SortableTabProps {
   tab: GameTab;

@@ -56,6 +56,30 @@ interface Tracker {
   updated_at: string;
 }
 
+// Available colors for players (20 colors, no white)
+const PLAYER_COLORS = [
+  '#ef4444', // red
+  '#10b981', // green
+  '#f59e0b', // amber
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#84cc16', // lime
+  '#f97316', // orange
+  '#14b8a6', // teal
+  '#6366f1', // indigo
+  '#a855f7', // purple
+  '#e11d48', // rose
+  '#22c55e', // emerald
+  '#fbbf24', // yellow
+  '#0ea5e9', // sky
+  '#64748b', // slate
+  '#dc2626', // red-600
+  '#059669', // green-600
+  '#d97706', // amber-600
+];
+
 // Sortable Tab Component
 interface SortableTabProps {
   tab: GameTab;
@@ -838,12 +862,11 @@ export default function GameNightTrackerPage() {
                                   setShowColorPicker(true);
                                 }
                               }}
-                              className={`w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0 ${
-                                isEditMode && !isSharedView ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'
+                              className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                                isEditMode && !isSharedView ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
                               }`}
                               style={{ 
-                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length],
-                                borderColor: isEditMode && !isSharedView ? '#d1d5db' : 'transparent'
+                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length]
                               }}
                               title={isEditMode && !isSharedView ? 'Change color' : undefined}
                             />
@@ -1097,7 +1120,6 @@ export default function GameNightTrackerPage() {
 
 // Simple SVG Pie Chart Component
 function VictoryPieChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
-  const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const size = 300;
   const radius = 120;
   const center = size / 2;
