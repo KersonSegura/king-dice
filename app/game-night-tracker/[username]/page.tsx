@@ -753,8 +753,8 @@ export default function UserTrackerPage() {
           )}
 
           {/* Players Table */}
-          <div className="overflow-x-auto mb-4">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto mb-2 sm:mb-4 -mx-2 sm:mx-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '600px' }}>
               <thead className="bg-gray-50">
                 <tr>
                   <th 
