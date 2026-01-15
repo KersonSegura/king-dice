@@ -669,15 +669,15 @@ export default function GameNightTrackerPage() {
         {/* Header */}
         <div className="flex items-center justify-center mb-3 sm:mb-8 px-2">
           <div className="text-center w-full max-w-full">
-            <h1 className="text-lg sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center justify-center gap-1 sm:gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 flex items-center justify-center gap-1.5 sm:gap-3 flex-wrap">
               <img
                 src="/GameNightTrackerIconYellow.svg"
                 alt="Game Night Tracker Icon"
-                className="w-4 h-4 sm:w-9 sm:h-9 flex-none"
+                className="w-6 h-6 sm:w-9 sm:h-9 flex-none"
               />
-              <span className="text-base sm:text-4xl break-words">{tTracker('title')}</span>
+              <span className="text-2xl sm:text-4xl break-words">{tTracker('title')}</span>
             </h1>
-            <p className="text-[10px] sm:text-lg text-gray-600 px-1 break-words">{tTracker('subtitle')}</p>
+            <p className="text-sm sm:text-lg text-gray-600 px-1 break-words">{tTracker('subtitle')}</p>
           </div>
         </div>
 
@@ -726,41 +726,40 @@ export default function GameNightTrackerPage() {
           {/* Players Header with Edit, Add Player, Duplicate, and Save */}
           {!isSharedView && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0 w-full max-w-full overflow-hidden">
-              <h3 className="text-sm sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
-              <div className="flex flex-wrap items-center gap-1 sm:gap-2 w-full sm:w-auto">
+              <h3 className="text-base sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
                 {isEditMode && (
                   <>
                     <button
                       onClick={addPlayer}
-                      className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors text-[10px] sm:text-sm flex-shrink-0"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm flex-shrink-0"
                     >
-                      <Plus className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{tTracker('addPlayer')}</span>
                     </button>
                     <button
                       onClick={duplicateTab}
-                      className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-[10px] sm:text-sm flex-shrink-0"
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm flex-shrink-0"
                       title={tTracker('duplicateSheet')}
                     >
-                      <CopyIcon className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
+                      <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{tTracker('duplicateSheet')}</span>
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-gray-600 text-white rounded-none sm:rounded-md hover:bg-gray-700 transition-colors text-[10px] sm:text-sm flex-shrink-0"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-none sm:rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
                 >
-                  <Edit className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
+                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
                 </button>
                 <button
                   onClick={saveTracker}
                   disabled={isSaving}
-                  className="flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-4 py-1 sm:py-2 bg-green-600 text-white rounded-none sm:rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-sm flex-shrink-0"
+                  className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-none sm:rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
                 >
-                  <Save className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{isSaving ? tTracker('saving') : tTracker('save')}</span>
+                  {isSaving ? tTracker('saving') : tTracker('save')}
                 </button>
               </div>
             </div>
