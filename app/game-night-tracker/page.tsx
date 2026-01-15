@@ -549,10 +549,18 @@ export default function GameNightTrackerPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center fixed inset-0 z-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fbae17] mx-auto mb-4"></div>
-          <p className="text-gray-600">{t('loading')}</p>
+      <div className="fixed inset-0 bg-gray-50 z-50">
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="text-center">
+            <Image 
+              src="/DiceLogo.svg" 
+              alt="Loading..." 
+              width={64} 
+              height={64} 
+              className="opacity-60 mx-auto mb-4 animate-pulse"
+            />
+            <p className="text-gray-600">{t('loading')}</p>
+          </div>
         </div>
       </div>
     );
@@ -578,15 +586,13 @@ export default function GameNightTrackerPage() {
         {/* Header */}
         <div className="flex items-center justify-center mb-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
               <img
                 src="/GameNightTrackerIconYellow.svg"
                 alt="Game Night Tracker Icon"
                 className="w-9 h-9 flex-none"
               />
-              <span className="bg-gradient-to-r from-[#fbae17] to-[#e0990f] bg-clip-text text-transparent">
-                {tTracker('title')}
-              </span>
+              <span>{tTracker('title')}</span>
             </h1>
             <p className="text-lg text-gray-600">{tTracker('subtitle')}</p>
           </div>
@@ -1091,7 +1097,7 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
               style={{ backgroundColor: slice.color }}
             />
             <span className="text-sm text-gray-700">
-              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.player.victories === 1 ? 'win' : 'wins'} • {slice.percentage.toFixed(1)}%
+              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.player.victories === 1 ? 'win' : 'wins'} • {slice.player.winRatePercentage.toFixed(1)}%
             </span>
           </div>
         ))}
