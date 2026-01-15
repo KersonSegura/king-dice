@@ -840,18 +840,18 @@ export default function UserTrackerPage() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (isEditMode && isOwnTracker && originalIndex !== -1) {
+                                if (isOwnTracker && originalIndex !== -1) {
                                   setPlayerForColorChange(originalIndex);
                                   setShowColorPicker(true);
                                 }
                               }}
                               className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                                isEditMode && isOwnTracker ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
+                                isOwnTracker ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
                               }`}
                               style={{ 
                                 backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length]
                               }}
-                              title={isEditMode && isOwnTracker ? 'Change color' : undefined}
+                              title={isOwnTracker ? 'Change color' : undefined}
                             />
                             {isEditMode && isOwnTracker ? (
                               <input
