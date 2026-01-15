@@ -620,7 +620,9 @@ export default function GameNightTrackerPage() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <h2 className="text-2xl font-bold text-gray-900">{trackerName}</h2>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#fbae17] to-[#e0990f] bg-clip-text text-transparent">
+                  {trackerName}
+                </h2>
                 <button
                   onClick={() => setIsEditingTrackerName(true)}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
