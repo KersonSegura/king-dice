@@ -240,13 +240,20 @@ export default function GameNightTrackerPage() {
   // Find max victories for highlighting
   const maxVictories = players.length > 0 ? Math.max(...players.map(p => p.victories)) : 0;
 
-  // Load tracker from URL if share_id is present
+  // Load tracker from URL if share_id or username is present
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const shareId = urlParams.get('share');
+    const pathname = window.location.pathname;
+    
+    // Check if we're on a username route like /game-night-tracker/username
+    const usernameMatch = pathname.match(/^\/game-night-tracker\/([^\/]+)$/);
+    const username = usernameMatch ? usernameMatch[1] : null;
     
     if (shareId) {
       loadSharedTracker(shareId);
+    } else if (username) {
+      loadTrackerByUsername(username);
     } else if (isAuthenticated && !authLoading) {
       loadUserTrackers();
     }
@@ -275,6 +282,31 @@ export default function GameNightTrackerPage() {
       }
     } catch (error) {
       console.error('Error loading shared tracker:', error);
+    }
+  };
+
+  const loadTrackerByUsername = async (username: string) => {
+    try {
+      const response = await fetch(`/api/game-night-tracker?username=${username}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.tracker) {
+          setCurrentTracker(data.tracker);
+          setTrackerName(data.tracker.tracker_name);
+          // Load tabs from stored data or create default
+          if (data.tracker.game_tabs && Array.isArray(data.tracker.game_tabs)) {
+            setGameTabs(data.tracker.game_tabs);
+            if (data.tracker.game_tabs.length > 0) {
+              setActiveTabId(data.tracker.game_tabs[0].id);
+            }
+          } else {
+            // Legacy: convert old format to tabs
+            setGameTabs([{ id: 'tab-1', name: data.tracker.game_filter || 'All Games', players: data.tracker.players || [] }]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading tracker by username:', error);
     }
   };
 
@@ -953,7 +985,7 @@ export default function GameNightTrackerPage() {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Pie
+                  {tTracker('pie')}
                 </button>
                 <button
                   onClick={() => setGraphView('bar')}
@@ -963,14 +995,14 @@ export default function GameNightTrackerPage() {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Bar
+                  {tTracker('bar')}
                 </button>
               </div>
             </div>
             {graphView === 'pie' ? (
-              <VictoryPieChart players={playersWithVictories} totalVictories={totalVictories} />
+              <VictoryPieChart players={playersWithVictories} totalVictories={totalVictories} tTracker={tTracker} />
             ) : (
-              <VictoryBarChart players={playersWithVictories} totalVictories={totalVictories} />
+              <VictoryBarChart players={playersWithVictories} totalVictories={totalVictories} tTracker={tTracker} />
             )}
           </div>
         )}
@@ -1033,7 +1065,7 @@ export default function GameNightTrackerPage() {
 }
 
 // Simple SVG Pie Chart Component
-function VictoryPieChart({ players, totalVictories }: { players: Player[]; totalVictories: number }) {
+function VictoryPieChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
   const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const size = 300;
   const radius = 120;
@@ -1097,7 +1129,7 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
               style={{ backgroundColor: slice.color }}
             />
             <span className="text-sm text-gray-700">
-              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.player.victories === 1 ? 'win' : 'wins'} • {slice.player.winRatePercentage.toFixed(1)}%
+              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.player.victories === 1 ? tTracker('win') : tTracker('wins')} • {slice.player.winRatePercentage.toFixed(1)}%
             </span>
           </div>
         ))}
@@ -1107,7 +1139,7 @@ function VictoryPieChart({ players, totalVictories }: { players: Player[]; total
 }
 
 // Simple SVG Bar Chart Component
-function VictoryBarChart({ players, totalVictories }: { players: Player[]; totalVictories: number }) {
+function VictoryBarChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
   const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const maxVictories = Math.max(...players.map(p => p.victories), 1);
   const barHeight = 40;
@@ -1119,7 +1151,7 @@ function VictoryBarChart({ players, totalVictories }: { players: Player[]; total
   // Calculate the maximum text width needed
   const maxTextLength = Math.max(
     ...players.map(p => {
-      const text = `${p.victories} ${p.victories === 1 ? 'win' : 'wins'} • ${p.winRatePercentage.toFixed(1)}%`;
+      const text = `${p.victories} ${p.victories === 1 ? tTracker('win') : tTracker('wins')} • ${p.winRatePercentage.toFixed(1)}%`;
       return text.length;
     })
   );
@@ -1159,7 +1191,7 @@ function VictoryBarChart({ players, totalVictories }: { players: Player[]; total
                 dominantBaseline="middle"
                 className="text-sm font-semibold fill-gray-900"
               >
-                {player.victories} {player.victories === 1 ? 'win' : 'wins'} • {player.winRatePercentage.toFixed(1)}%
+                {player.victories} {player.victories === 1 ? tTracker('win') : tTracker('wins')} • {player.winRatePercentage.toFixed(1)}%
               </text>
             </g>
           );

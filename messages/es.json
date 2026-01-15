@@ -1359,7 +1359,11 @@
     "unnamedPlayer": "Jugador Sin Nombre",
     "confirmDeleteTab": "¿Estás seguro de que quieres eliminar esta pestaña? Esta acción no se puede deshacer.",
     "delete": "Eliminar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "win": "victoria",
+    "wins": "victorias",
+    "pie": "Circular",
+    "bar": "Barras"
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

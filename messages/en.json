@@ -1339,7 +1339,11 @@
     "unnamedPlayer": "Unnamed Player",
     "confirmDeleteTab": "Are you sure you want to delete this tab? This action cannot be undone.",
     "delete": "Delete",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "win": "win",
+    "wins": "wins",
+    "pie": "Pie",
+    "bar": "Bar"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",
