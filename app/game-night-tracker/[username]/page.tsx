@@ -834,21 +834,39 @@ export default function UserTrackerPage() {
                         }`}
                       >
                         <td className="px-4 py-3 whitespace-nowrap text-center">
-                          {isEditMode && isOwnTracker ? (
-                            <input
-                              type="text"
-                              value={player.name}
-                              onChange={(e) => {
-                                if (originalIndex !== -1) updatePlayer(originalIndex, 'name', e.target.value);
+                          <div className="flex items-center justify-center space-x-2">
+                            {/* Color circle */}
+                            <button
+                              onClick={() => {
+                                if (isEditMode && isOwnTracker && originalIndex !== -1) {
+                                  setPlayerForColorChange(originalIndex);
+                                  setShowColorPicker(true);
+                                }
                               }}
-                              className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
-                              placeholder={tTracker('playerNamePlaceholder')}
+                              className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                                isEditMode && isOwnTracker ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
+                              }`}
+                              style={{ 
+                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length]
+                              }}
+                              title={isEditMode && isOwnTracker ? 'Change color' : undefined}
                             />
-                          ) : (
-                            <span className={`font-medium ${isTopWinner ? 'text-yellow-700 font-bold' : 'text-gray-900'}`}>
-                              {player.name || tTracker('unnamedPlayer')}
-                            </span>
-                          )}
+                            {isEditMode && isOwnTracker ? (
+                              <input
+                                type="text"
+                                value={player.name}
+                                onChange={(e) => {
+                                  if (originalIndex !== -1) updatePlayer(originalIndex, 'name', e.target.value);
+                                }}
+                                className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17]"
+                                placeholder={tTracker('playerNamePlaceholder')}
+                              />
+                            ) : (
+                              <span className={`font-medium ${isTopWinner ? 'text-yellow-700 font-bold' : 'text-gray-900'}`}>
+                                {player.name || tTracker('unnamedPlayer')}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-center">
                           {isEditMode && isOwnTracker ? (
@@ -1032,7 +1050,6 @@ export default function UserTrackerPage() {
 
 // Simple SVG Pie Chart Component
 function VictoryPieChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
-  const colors = ['#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
   const size = 300;
   const radius = 120;
   const center = size / 2;
