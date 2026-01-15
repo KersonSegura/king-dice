@@ -1345,7 +1345,9 @@
     "pie": "Pie",
     "bar": "Bar",
     "byUser": "by {username}",
-    "selectPlayerColor": "Select Player Color"
+    "selectPlayerColor": "Select Player Color",
+    "saveColor": "Save Color",
+    "colorHexCode": "Color Hex Code"
   },
   "digitalCorner": {
     "backToHome": "Back to Home",

@@ -1365,7 +1365,9 @@
     "pie": "Circular",
     "bar": "Barras",
     "byUser": "por {username}",
-    "selectPlayerColor": "Seleccionar Color del Jugador"
+    "selectPlayerColor": "Seleccionar Color del Jugador",
+    "saveColor": "Guardar Color",
+    "colorHexCode": "Código Hex del Color"
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

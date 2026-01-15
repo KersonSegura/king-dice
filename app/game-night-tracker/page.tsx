@@ -238,6 +238,18 @@ export default function GameNightTrackerPage() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [playerForColorChange, setPlayerForColorChange] = useState<number | null>(null);
   
+  // Lock body scroll when color picker is open
+  useEffect(() => {
+    if (showColorPicker) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showColorPicker]);
+  
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -1130,10 +1142,20 @@ export default function GameNightTrackerPage() {
           }}
         >
           <div 
-            className="bg-white rounded-lg p-6 max-w-sm w-full mx-4" 
+            className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 relative" 
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold text-gray-900 mb-4">{tTracker('selectPlayerColor')}</h3>
+            <button
+              type="button"
+              onClick={() => {
+                setShowColorPicker(false);
+                setPlayerForColorChange(null);
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 pr-8">{tTracker('selectPlayerColor')}</h3>
             <div className="flex flex-col items-center space-y-4 mb-4">
               <input
                 type="color"
@@ -1143,19 +1165,19 @@ export default function GameNightTrackerPage() {
                     updatePlayer(playerForColorChange, 'color', e.target.value);
                   }
                 }}
-                className="w-32 h-32 cursor-pointer border-2 border-gray-300 rounded-lg"
+                className="w-32 h-32 cursor-pointer border-2 border-gray-300 rounded-full"
                 style={{ 
                   WebkitAppearance: 'none',
                   MozAppearance: 'none',
                   appearance: 'none',
                   backgroundColor: 'transparent',
                   border: '2px solid #d1d5db',
-                  borderRadius: '0.5rem'
+                  borderRadius: '50%'
                 }}
               />
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {tTracker('selectPlayerColor')}
+                  {tTracker('colorHexCode')}
                 </label>
                 <input
                   type="text"
@@ -1190,7 +1212,7 @@ export default function GameNightTrackerPage() {
                 }}
                 className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
               >
-                {tTracker('save')}
+                {tTracker('saveColor')}
               </button>
             </div>
           </div>
