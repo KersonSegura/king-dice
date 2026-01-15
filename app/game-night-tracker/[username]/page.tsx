@@ -109,7 +109,12 @@ export default function UserTrackerPage() {
         }
       } else {
         showToast('Tracker not found', 'error');
-        router.push('/game-night-tracker');
+        // Redirect to home or profile if tracker not found
+        if (isOwnTracker && user?.username) {
+          router.push(`/game-night-tracker/${user.username}`);
+        } else {
+          router.push('/');
+        }
       }
     } catch (error) {
       console.error('Error loading tracker by username:', error);

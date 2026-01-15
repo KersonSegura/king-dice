@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, Trash2, Save, Share2, Copy, Check, Edit2, X, Edit, Copy as CopyIcon, GripVertical } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -240,7 +241,7 @@ export default function GameNightTrackerPage() {
   // Find max victories for highlighting
   const maxVictories = players.length > 0 ? Math.max(...players.map(p => p.victories)) : 0;
 
-  // Load tracker from URL if share_id is present
+  // Redirect to username route or load shared tracker
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const shareId = urlParams.get('share');
@@ -254,11 +255,13 @@ export default function GameNightTrackerPage() {
     }
     
     if (shareId) {
+      // Load shared tracker via share link
       loadSharedTracker(shareId);
-    } else if (isAuthenticated && !authLoading) {
-      loadUserTrackers();
+    } else if (isAuthenticated && !authLoading && user?.username) {
+      // Redirect to username-based route
+      router.push(`/game-night-tracker/${user.username}`);
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, user?.username, router]);
 
   const loadSharedTracker = async (shareId: string) => {
     try {
@@ -545,7 +548,12 @@ export default function GameNightTrackerPage() {
       if (response.ok) {
         const data = await response.json();
         setCurrentTracker(data.tracker);
-        setShareUrl(`${window.location.origin}/game-night-tracker?share=${data.tracker.share_id}`);
+        // Use username-based URL if available, otherwise use share link
+        if (data.tracker.user_id && user?.id === data.tracker.user_id && user?.username) {
+          setShareUrl(`${window.location.origin}/game-night-tracker/${user.username}`);
+        } else {
+          setShareUrl(`${window.location.origin}/game-night-tracker?share=${data.tracker.share_id}`);
+        }
         showToast(tTracker('saved'), 'success');
         setIsEditMode(false); // Exit edit mode after saving
       } else {
