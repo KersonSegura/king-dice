@@ -1008,7 +1008,46 @@ export default function GameNightTrackerPage() {
                   ) : null}
                 </DragOverlay>
               </DndContext>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <div className="flex items-center justify-end gap-2 mt-2 flex-wrap">
+                {isEditMode && (
+                  <button
+                    onClick={duplicateTab}
+                    className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                  >
+                    <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
+                  </button>
+                )}
+                {/* Active tab rename and delete buttons */}
+                {!isSharedView && activeTabId && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const activeTab = gameTabs.find(tab => tab.id === activeTabId);
+                        if (activeTab) {
+                          startEditingTab(activeTabId, e);
+                        }
+                      }}
+                      className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                      title={tTracker('renameTab')}
+                    >
+                      <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </button>
+                    {gameTabs.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTab(activeTabId, e);
+                        }}
+                        className="p-1.5 sm:p-2 bg-gray-100 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                        title={tTracker('deleteTab')}
+                      >
+                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                    )}
+                  </>
+                )}
                 {/* Mobile-only Edit and Save buttons */}
                 <div className="flex items-center gap-1.5 sm:hidden">
                   <button
@@ -1027,15 +1066,6 @@ export default function GameNightTrackerPage() {
                     <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
                   </button>
                 </div>
-                {isEditMode && (
-                  <button
-                    onClick={duplicateTab}
-                    className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
-                  >
-                    <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
-                  </button>
-                )}
               </div>
             </div>
           )}
