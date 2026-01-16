@@ -131,10 +131,10 @@ function SortableTab({
               ref={setNodeRef}
               style={style}
               onClick={onTabClick}
-              className={`group flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-3 py-1 sm:py-1.5 cursor-pointer transition-colors ${
+              className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0.5 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm ${
                 isActive
-                  ? 'bg-[#fbae17] text-white rounded-none sm:rounded-b-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-none sm:rounded-b-lg'
+                  ? 'bg-[#fbae17] text-white rounded-b-md sm:rounded-b-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-md sm:rounded-b-lg'
               } ${isDragging ? 'z-50' : ''}`}
             >
       {isEditing ? (
@@ -963,7 +963,7 @@ export default function GameNightTrackerPage() {
                         <div className="w-4 h-4 flex-shrink-0"></div>
                         <button
                           onClick={addPlayer}
-                          className="flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
+                          className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
                         >
                           <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>{tTracker('addPlayer')}</span>
@@ -1323,7 +1323,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const barHeight = 40;
   const nameWidth = 120;
   const textPadding = 20;
-  const maxBarWidth = 150;
+  const maxBarWidth = 100;
   const chartHeight = players.length * (barHeight + 10);
   
   // Calculate the maximum text width needed
