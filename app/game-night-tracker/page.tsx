@@ -202,13 +202,14 @@ function SortableTab({
           >
             <Edit2 className="w-3 h-3" />
           </button>
-          {canDelete && (
+          {isEditMode && canDelete && (
             <button
               onClick={(e) => onDelete(e)}
-              className="hidden sm:inline-flex text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ml-1 flex-shrink-0"
+              style={{ minWidth: '1rem', minHeight: '1rem', aspectRatio: '1 / 1' }}
               title={tTracker('deleteTab')}
             >
-              <X className="w-3 h-3" />
+              <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </button>
           )}
         </>
