@@ -969,6 +969,7 @@ export default function UserTrackerPage() {
                         onEditNameChange={setEditingTabName}
                         onDelete={(e) => deleteTab(tab.id, e)}
                         canDelete={gameTabs.length > 1}
+                        isEditMode={isEditMode}
                         tTracker={tTracker}
                       />
                     ))}
