@@ -701,7 +701,7 @@ export default function UserTrackerPage() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
+                <h2 className="text-lg sm:text-2xl font-bold text-[#fbae17]">
                   {trackerName}
                 </h2>
                 {isOwnTracker && (
