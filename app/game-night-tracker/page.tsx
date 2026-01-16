@@ -1010,6 +1010,15 @@ export default function GameNightTrackerPage() {
                         tTracker={tTracker}
                       />
                     ))}
+                    {/* Add Tab button styled like a tab with dotted border */}
+                    <button
+                      onClick={addTab}
+                      className="flex items-center space-x-1 px-1 sm:px-3 py-0.5 sm:py-1.5 bg-gray-100 text-gray-700 rounded-b-lg hover:bg-gray-200 transition-colors text-xs sm:text-sm border-2 border-dashed border-gray-400"
+                      title={tTracker('addTab')}
+                    >
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{tTracker('addTab')}</span>
+                    </button>
                   </div>
                 </SortableContext>
                 <DragOverlay>
@@ -1022,42 +1031,23 @@ export default function GameNightTrackerPage() {
                 </DragOverlay>
               </DndContext>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <button
-                  onClick={addTab}
-                  className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-700 rounded-md sm:rounded-b-lg hover:bg-gray-200 transition-colors text-xs sm:text-sm"
-                  title={tTracker('addTab')}
-                >
-                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm">{tTracker('addTab')}</span>
-                </button>
-                {/* Mobile-only tab edit/delete buttons */}
-                <div className="flex items-center gap-1 sm:hidden">
-                  {gameTabs.map((tab) => (
-                    <div key={tab.id} className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditingTab(tab.id, e);
-                        }}
-                        className="p-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                        title={tTracker('renameTab')}
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                      {gameTabs.length > 1 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteTab(tab.id, e);
-                          }}
-                          className="p-1.5 bg-gray-100 text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                          title={tTracker('deleteTab')}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                {/* Mobile-only Edit and Save buttons */}
+                <div className="flex items-center gap-1.5 sm:hidden">
+                  <button
+                    onClick={() => setIsEditMode(!isEditMode)}
+                    className="flex items-center space-x-1 px-2 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs flex-shrink-0"
+                  >
+                    <Edit className="w-3 h-3" />
+                    <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
+                  </button>
+                  <button
+                    onClick={saveTracker}
+                    disabled={isSaving}
+                    className="flex items-center space-x-1 px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs flex-shrink-0"
+                  >
+                    <Save className="w-3 h-3" />
+                    <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
+                  </button>
                 </div>
                 {isEditMode && (
                   <button
