@@ -48,15 +48,25 @@ Before recording, ensure your OAuth consent screen is properly configured:
 4. **CRITICAL**: Record the entire OAuth consent screen that appears, showing:
    - ✅ Your app name at the top (e.g., "King Dice wants to access your Google Account")
    - ✅ The Google account email being used
-   - ✅ The permission scopes requested:
-     - "See your primary Google Account email address"
-     - "See your personal info, including any personal info you've made publicly available"
+   - ✅ **SLOWLY SCROLL DOWN** to show all content
+   - ✅ **Click "See details" if available** to expand and show all scopes
+   - ✅ The permission scopes requested (make sure ALL are visible):
+     - "See your primary Google Account email address" (email scope)
+     - "See your personal info, including any personal info you've made publicly available" (profile scope)
+     - "Associate you with your personal info on Google" (openid scope)
    - ✅ The "Allow" and "Cancel" buttons
    - ✅ The privacy policy link (if configured)
+   - ✅ Any other information shown on the consent screen
 
 5. **Click "Allow"** and show the redirect back to your app
 
 6. **Show successful sign-in** - User should be logged in after OAuth flow completes
+
+### IMPORTANT for Google Verification:
+- **Scroll slowly** through the entire consent screen
+- **Click "See details"** if that button/link appears - this expands to show all scopes
+- **Show every scope** that's being requested
+- Make sure the video clearly shows what permissions your app is requesting
 
 ### Tips for Recording:
 

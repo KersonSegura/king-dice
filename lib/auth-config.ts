@@ -26,10 +26,12 @@ export const authOptions: NextAuthOptions = {
       clientSecret: googleClientSecret || '',
       authorization: {
         params: {
-          prompt: 'consent',
+          prompt: 'select_account consent', // Force account selection AND consent screen
           access_type: 'offline',
           response_type: 'code',
           scope: 'openid email profile',
+          // Ensure consent screen shows all scopes explicitly
+          include_granted_scopes: 'true',
         },
       },
     }),
