@@ -19,6 +19,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
