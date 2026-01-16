@@ -1004,19 +1004,48 @@ export default function UserTrackerPage() {
                   ) : null}
                 </DragOverlay>
               </DndContext>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <button
                   onClick={addTab}
-                  className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-700 rounded-none sm:rounded-b-lg hover:bg-gray-200 transition-colors text-xs sm:text-sm"
+                  className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-700 rounded-md sm:rounded-b-lg hover:bg-gray-200 transition-colors text-xs sm:text-sm"
                   title={tTracker('addTab')}
                 >
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="text-xs sm:text-sm">{tTracker('addTab')}</span>
                 </button>
+                {/* Mobile-only tab edit/delete buttons */}
+                <div className="flex items-center gap-1 sm:hidden">
+                  {gameTabs.map((tab) => (
+                    <div key={tab.id} className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditingTab(tab.id, e);
+                        }}
+                        className="p-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                        title={tTracker('renameTab')}
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      {gameTabs.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTab(tab.id, e);
+                          }}
+                          className="p-1.5 bg-gray-100 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                          title={tTracker('deleteTab')}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
                 {isEditMode && (
                   <button
                     onClick={duplicateTab}
-                    className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                    className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
                   >
                     <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
