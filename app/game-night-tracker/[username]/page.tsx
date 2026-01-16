@@ -701,7 +701,7 @@ export default function UserTrackerPage() {
               </div>
             )}
             {username && (
-              <p className="text-xs sm:text-sm text-gray-500 mt-1">{tTracker('byUser', { username: `@${username}` })}</p>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{tTracker('byUser', { username: `@${username}` })}</p>
             )}
           </div>
 
@@ -1040,7 +1040,7 @@ export default function UserTrackerPage() {
 
         {/* Victory Chart */}
         {playersWithVictories.length > 0 && (
-          <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
+          <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 pb-4 sm:pb-8 mb-4 sm:mb-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4 px-1 sm:px-0">
               <h2 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('victoryChart')}</h2>
               <div className="flex items-center space-x-2">

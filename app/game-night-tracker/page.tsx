@@ -1058,7 +1058,7 @@ export default function GameNightTrackerPage() {
 
         {/* Victory Chart */}
         {playersWithVictories.length > 0 && (
-          <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
+          <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 pb-4 sm:pb-8 mb-4 sm:mb-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4 px-1 sm:px-0">
               <h2 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('victoryChart')}</h2>
               <div className="flex items-center space-x-2">
@@ -1320,7 +1320,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const barHeight = 40;
   const nameWidth = 120;
   const textPadding = 20;
-  const maxBarWidth = 500;
+  const maxBarWidth = 300;
   const chartHeight = players.length * (barHeight + 10);
   
   // Calculate the maximum text width needed
