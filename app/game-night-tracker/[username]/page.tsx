@@ -720,7 +720,7 @@ export default function UserTrackerPage() {
               </div>
             )}
             {username && (
-              <p className="text-xs sm:text-sm text-gray-500 -mt-0.5">{tTracker('byUser', { username: `@${username}` })}</p>
+              <p className="text-xs sm:text-sm text-gray-500 -mt-1 sm:-mt-0.5">{tTracker('byUser', { username: `@${username}` })}</p>
             )}
           </div>
 
