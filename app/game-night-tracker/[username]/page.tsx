@@ -942,13 +942,16 @@ export default function UserTrackerPage() {
                 {isEditMode && isOwnTracker && (
                   <tr className="bg-gray-50">
                     <td className="px-1.5 sm:px-4 py-1.5 sm:py-3 whitespace-nowrap text-left" colSpan={7}>
-                      <button
-                        onClick={addPlayer}
-                        className="flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm w-full justify-center"
-                      >
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>{tTracker('addPlayer')}</span>
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 flex-shrink-0"></div>
+                        <button
+                          onClick={addPlayer}
+                          className="flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
+                        >
+                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span>{tTracker('addPlayer')}</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -1078,7 +1081,7 @@ export default function UserTrackerPage() {
         {shareUrl && (
           <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{tTracker('shareTitle')}</h3>
-            <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+            <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200 mb-4">
               <Share2 className="w-4 h-4 text-gray-500" />
               <input
                 type="text"
@@ -1302,7 +1305,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const barHeight = 40;
   const nameWidth = 120;
   const textPadding = 20;
-  const maxBarWidth = 200;
+  const maxBarWidth = 150;
   const chartHeight = players.length * (barHeight + 10);
   
   // Calculate the maximum text width needed

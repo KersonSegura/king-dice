@@ -131,7 +131,7 @@ function SortableTab({
               ref={setNodeRef}
               style={style}
               onClick={onTabClick}
-              className={`group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 cursor-pointer transition-colors ${
+              className={`group flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-3 py-1 sm:py-1.5 cursor-pointer transition-colors ${
                 isActive
                   ? 'bg-[#fbae17] text-white rounded-none sm:rounded-b-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-none sm:rounded-b-lg'
@@ -1096,7 +1096,7 @@ export default function GameNightTrackerPage() {
         {shareUrl && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">{tTracker('shareTitle')}</h3>
-            <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+            <div className="flex items-center space-x-2 px-4 py-3 bg-gray-50 rounded-md border border-gray-200 mb-4">
               <Share2 className="w-4 h-4 text-gray-500" />
               <input
                 type="text"
@@ -1320,7 +1320,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const barHeight = 40;
   const nameWidth = 120;
   const textPadding = 20;
-  const maxBarWidth = 200;
+  const maxBarWidth = 150;
   const chartHeight = players.length * (barHeight + 10);
   
   // Calculate the maximum text width needed
