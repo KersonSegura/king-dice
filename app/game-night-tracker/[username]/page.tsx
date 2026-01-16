@@ -185,7 +185,7 @@ function SortableTab({
           >
             <GripVertical className="w-3 h-3" />
           </div>
-          <span className="text-sm font-medium">{tab.name}</span>
+          <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{tab.name}</span>
           <button
             onClick={(e) => onStartEdit(e)}
             className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
