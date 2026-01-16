@@ -206,7 +206,8 @@ function SortableTab({
           {isEditMode && canDelete && (
             <button
               onClick={(e) => onDelete(e)}
-              className="flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ml-1"
+              className="flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ml-1 flex-shrink-0"
+              style={{ minWidth: '1rem', minHeight: '1rem', aspectRatio: '1 / 1' }}
               title={tTracker('deleteTab')}
             >
               <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
