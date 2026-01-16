@@ -188,7 +188,7 @@ function SortableTab({
           <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{tab.name}</span>
           <button
             onClick={(e) => onStartEdit(e)}
-            className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="hidden sm:inline-flex text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
             title={tTracker('renameTab')}
           >
             <Edit2 className="w-3 h-3" />
@@ -196,7 +196,7 @@ function SortableTab({
           {canDelete && (
             <button
               onClick={(e) => onDelete(e)}
-              className="text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="hidden sm:inline-flex text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
               title={tTracker('deleteTab')}
             >
               <X className="w-3 h-3" />
