@@ -1267,7 +1267,7 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
   });
 
           return (
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-8 w-full max-w-full overflow-hidden pb-2 sm:pb-4">
               <svg width={size} height={size} className="flex-shrink-0 max-w-full" viewBox={`0 0 ${size} ${size}`}>
         {slices.map((slice, index) => (
           <path
