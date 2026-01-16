@@ -141,7 +141,9 @@ function SortableTab({
               style={style}
               onClick={onTabClick}
               onDoubleClick={handleDoubleClick}
-              className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm h-[30px] sm:h-auto ${
+              {...attributes}
+              {...listeners}
+              className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-grab active:cursor-grabbing transition-colors text-xs sm:text-sm h-[30px] sm:h-auto touch-none ${
                 isActive
                   ? 'bg-[#fbae17] text-white rounded-b-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
@@ -266,7 +268,7 @@ export default function GameNightTrackerPage() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -980,7 +982,7 @@ export default function GameNightTrackerPage() {
                   items={gameTabs.map(tab => tab.id)}
                   strategy={horizontalListSortingStrategy}
                 >
-                  <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-2">
+                  <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto sm:overflow-x-visible pb-2" style={{ touchAction: 'pan-y' }}>
                     {gameTabs.map((tab) => (
                       <SortableTab
                         key={tab.id}
