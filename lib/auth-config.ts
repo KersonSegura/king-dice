@@ -47,12 +47,17 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       try {
         console.log('🔄 SignIn callback - User:', user.email, 'Provider:', account?.provider);
+        console.log('🔄 SignIn callback - Full user object:', JSON.stringify(user, null, 2));
+        console.log('🔄 SignIn callback - Account:', JSON.stringify(account, null, 2));
         
         if (!user.email) {
           console.error('❌ OAuth sign-in failed: No email provided');
+          console.error('❌ User object:', user);
           return false;
         }
 
+        console.log('🔍 Checking if user exists in database for email:', user.email);
+        
         // Check if user already exists - only check by email for OAuth
         // Email is the unique identifier for OAuth accounts
         const { data: existingUser, error: findError } = await supabaseAdmin
@@ -64,8 +69,14 @@ export const authOptions: NextAuthOptions = {
 
         if (findError) {
           console.error('❌ Error finding user:', findError);
+          console.error('❌ Error code:', findError.code);
+          console.error('❌ Error message:', findError.message);
+          console.error('❌ Error details:', findError.details);
+          console.error('❌ Error hint:', findError.hint);
           return false;
         }
+        
+        console.log('🔍 User lookup result:', existingUser ? 'User found' : 'User not found');
 
         const userExists = !!existingUser;
         const dbUser = existingUser;
@@ -138,33 +149,55 @@ export const authOptions: NextAuthOptions = {
           const provider = account?.provider || 'google';
           const providerId = account?.providerAccountId || user.id || '';
           
+          console.log('📝 Creating new user with data:', {
+            id: userId,
+            username,
+            email: user.email,
+            provider,
+            providerId,
+          });
+          
+          const userData = {
+            id: userId,
+            username,
+            email: user.email,
+            avatar: user.image || defaultAvatar,
+            passwordHash: null, // OAuth users don't have passwords
+            level: 1,
+            xp: 0,
+            isAdmin: false,
+            isVerified: true, // OAuth emails are pre-verified
+            createdAt: now,
+            updatedAt: now,
+            joinDate: now,
+            provider: provider,
+            provider_id: providerId,
+          };
+          
+          console.log('📝 Inserting user data:', JSON.stringify(userData, null, 2));
+          
           const { data: newUser, error: createError } = await supabaseAdmin
             .from('users')
-            .insert({
-              id: userId,
-              username,
-              email: user.email,
-              avatar: user.image || defaultAvatar,
-              passwordHash: null, // OAuth users don't have passwords
-              level: 1,
-              xp: 0,
-              isAdmin: false,
-              isVerified: true, // OAuth emails are pre-verified
-              createdAt: now,
-              updatedAt: now,
-              joinDate: now,
-              provider: provider,
-              provider_id: providerId,
-            })
+            .insert(userData)
             .select('id, username, email, avatar, isAdmin, level, xp, isVerified, provider, provider_id')
             .single();
 
-          if (createError || !newUser) {
+          if (createError) {
             console.error('❌ Error creating OAuth user:', createError);
+            console.error('❌ Error code:', createError.code);
+            console.error('❌ Error message:', createError.message);
+            console.error('❌ Error details:', createError.details);
+            console.error('❌ Error hint:', createError.hint);
+            return false;
+          }
+          
+          if (!newUser) {
+            console.error('❌ User creation returned null/undefined');
             return false;
           }
 
-          console.log('✅ OAuth user created:', newUser.username);
+          console.log('✅ OAuth user created successfully:', newUser.username);
+          console.log('✅ Created user ID:', newUser.id);
           return true;
         }
       } catch (error) {
