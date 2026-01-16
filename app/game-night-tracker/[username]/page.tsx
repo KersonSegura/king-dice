@@ -923,17 +923,14 @@ export default function UserTrackerPage() {
                 {/* Add Player Row - shown only in edit mode */}
                 {isEditMode && isOwnTracker && (
                   <tr className="bg-gray-50">
-                    <td className="px-1.5 sm:px-4 py-1.5 sm:py-3 whitespace-nowrap text-left" colSpan={7}>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 flex-shrink-0"></div>
-                        <button
-                          onClick={addPlayer}
-                          className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm"
-                        >
-                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span>{tTracker('addPlayer')}</span>
-                        </button>
-                      </div>
+                    <td className="px-1.5 sm:px-4 py-1.5 sm:py-3 whitespace-nowrap text-left border-2 border-dashed border-gray-400" colSpan={7}>
+                      <button
+                        onClick={addPlayer}
+                        className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-xs sm:text-sm"
+                      >
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>+ {tTracker('addPlayer')}</span>
+                      </button>
                     </td>
                   </tr>
                 )}
