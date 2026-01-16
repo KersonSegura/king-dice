@@ -988,7 +988,7 @@ export default function GameNightTrackerPage() {
                     {/* Add Tab button styled like a tab with dotted border */}
                     <button
                       onClick={addTab}
-                      className="group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0.5 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg border border-dashed border-gray-400"
+                      className="group flex items-center justify-center px-1 sm:px-3 py-[3px] sm:py-[1px] cursor-pointer transition-colors text-xs sm:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg border border-dashed border-gray-400 h-5"
                       title={tTracker('addTab')}
                     >
                       <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
