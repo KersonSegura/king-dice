@@ -324,6 +324,15 @@ export default function GameNightTrackerPage() {
     }
   }, [isAuthenticated, authLoading, user?.username, router]);
 
+  // Show login modal if not authenticated (similar to Pixel Canvas)
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      setShowLoginModal(true);
+    } else if (authLoading) {
+      setShowLoginModal(false); // Hide modal while loading
+    }
+  }, [isAuthenticated, authLoading]);
+
   const loadSharedTracker = async (shareId: string) => {
     try {
       const response = await fetch(`/api/game-night-tracker?shareId=${shareId}`);
@@ -701,6 +710,33 @@ export default function GameNightTrackerPage() {
           </div>
         </div>
 
+        {/* Show message if not authenticated */}
+        {!isAuthenticated && !authLoading ? (
+          <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-8 sm:p-12 mb-4 sm:mb-6">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="mb-6">
+                <img
+                  src="/GameNightTrackerIconYellow.svg"
+                  alt="Game Night Tracker Icon"
+                  className="w-16 h-16 sm:w-20 sm:h-20 mx-auto opacity-60"
+                />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
+                {tTracker('createAccountRequired')}
+              </h2>
+              <p className="text-gray-600 mb-6 max-w-md">
+                {tTracker('createAccountMessage')}
+              </p>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="bg-[#fbae17] hover:bg-[#e0990f] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+              >
+                {t('signIn')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Players Table Container */}
         <div className="bg-white rounded-none sm:rounded-lg shadow-sm border border-gray-200 p-2 sm:p-6 mb-4 sm:mb-6">
           {/* Tracker Name at Top */}
@@ -1135,6 +1171,8 @@ export default function GameNightTrackerPage() {
               </button>
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
 

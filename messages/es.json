@@ -1368,7 +1368,9 @@
     "totalMatchesPlayed": "Total de Partidas",
     "selectPlayerColor": "Seleccionar Color del Jugador",
     "saveColor": "Guardar Color",
-    "colorHexCode": "Código Hex del Color"
+    "colorHexCode": "Código Hex del Color",
+    "createAccountRequired": "Se Requiere Crear una Cuenta",
+    "createAccountMessage": "Por favor crea una cuenta o inicia sesión para usar el Rastreador de Noches de Juegos. Esto te permite guardar tus estadísticas de juegos y rastrear victorias en múltiples noches de juegos."
   },
   "digitalCorner": {
     "backToHome": "Volver al Inicio",

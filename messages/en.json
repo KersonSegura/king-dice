@@ -1348,7 +1348,9 @@
     "totalMatchesPlayed": "Total Matches Played",
     "selectPlayerColor": "Select Player Color",
     "saveColor": "Save Color",
-    "colorHexCode": "Color Hex Code"
+    "colorHexCode": "Color Hex Code",
+    "createAccountRequired": "Create an Account Required",
+    "createAccountMessage": "Please create an account or sign in to use the Game Night Tracker. This allows you to save your game statistics and track victories across multiple game nights."
   },
   "digitalCorner": {
     "backToHome": "Back to Home",
