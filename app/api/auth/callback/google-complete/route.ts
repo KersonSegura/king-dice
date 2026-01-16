@@ -9,10 +9,23 @@ import { authOptions } from '@/lib/auth-config';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get the return URL from query params
-    const returnUrl = request.nextUrl.searchParams.get('return') || '/';
+    // Get the return URL from query params, clean it up to prevent loops
+    let returnUrl = request.nextUrl.searchParams.get('return') || '/';
+    
+    // Clean up return URL to prevent redirect loops
+    try {
+      const returnUrlObj = new URL(returnUrl, request.url);
+      returnUrlObj.searchParams.delete('error');
+      returnUrlObj.searchParams.delete('callbackUrl');
+      returnUrl = returnUrlObj.toString();
+    } catch {
+      // If URL parsing fails, use base path
+      const basePath = new URL(returnUrl, request.url);
+      returnUrl = basePath.pathname;
+    }
     
     console.log('🔄 OAuth callback completion - Getting session...');
+    console.log('📋 Return URL:', returnUrl);
     
     // Get NextAuth session (should be established by now)
     const session = await getServerSession(authOptions);
@@ -26,16 +39,21 @@ export async function GET(request: NextRequest) {
     
     if (!session || !session.accessToken) {
       console.error('❌ No session or access token found');
-      // Redirect to home with error message
-      const errorUrl = new URL(returnUrl, request.url);
-      errorUrl.searchParams.set('error', 'oauth_no_session');
-      return NextResponse.redirect(errorUrl);
+      // Redirect to home without error parameter to prevent loops
+      const cleanUrl = new URL(returnUrl, request.url);
+      cleanUrl.searchParams.delete('error');
+      cleanUrl.searchParams.delete('callbackUrl');
+      return NextResponse.redirect(cleanUrl);
     }
 
     console.log('✅ Session found, setting auth_token cookie...');
 
-    // Create response with user data
-    const response = NextResponse.redirect(new URL(returnUrl, request.url));
+    // Create clean redirect URL
+    const redirectUrl = new URL(returnUrl, request.url);
+    redirectUrl.searchParams.delete('error');
+    redirectUrl.searchParams.delete('callbackUrl');
+    
+    const response = NextResponse.redirect(redirectUrl);
 
     // Set the auth_token cookie that the existing system expects
     const cookieOptions = {
@@ -48,15 +66,13 @@ export async function GET(request: NextRequest) {
 
     response.cookies.set('auth_token', session.accessToken, cookieOptions);
     
-    console.log('✅ Auth token cookie set, redirecting to:', returnUrl);
+    console.log('✅ Auth token cookie set, redirecting to:', redirectUrl.toString());
 
     return response;
   } catch (error) {
     console.error('❌ OAuth callback completion error:', error);
-    // On error, redirect with error parameter
-    const returnUrl = request.nextUrl.searchParams.get('return') || '/';
-    const errorUrl = new URL(returnUrl, request.url);
-    errorUrl.searchParams.set('error', 'oauth_callback_error');
-    return NextResponse.redirect(errorUrl);
+    // On error, redirect to home without error parameters
+    const cleanUrl = new URL('/', request.url);
+    return NextResponse.redirect(cleanUrl);
   }
 }

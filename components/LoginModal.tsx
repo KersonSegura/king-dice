@@ -521,14 +521,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   setError('');
                   try {
                     // OAuth requires a redirect to Google's consent screen
+                    // Get clean return URL without error parameters
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.delete('error');
+                    currentUrl.searchParams.delete('callbackUrl');
+                    const cleanReturnUrl = currentUrl.toString();
+                    
                     // Store callback info in sessionStorage to sync after redirect
                     sessionStorage.setItem('oauth_provider', 'google');
-                    sessionStorage.setItem('oauth_callback', window.location.href);
+                    sessionStorage.setItem('oauth_callback', cleanReturnUrl);
                     
                     // Redirect to Google OAuth consent screen
                     // NextAuth will handle the callback and redirect back
                     await signIn('google', {
-                      callbackUrl: `${window.location.origin}/api/auth/callback/google-complete?return=${encodeURIComponent(window.location.href)}`,
+                      callbackUrl: `${window.location.origin}/api/auth/callback/google-complete?return=${encodeURIComponent(cleanReturnUrl)}`,
                     });
                   } catch (error) {
                     console.error('Google sign-in error:', error);

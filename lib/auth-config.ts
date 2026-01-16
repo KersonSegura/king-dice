@@ -53,33 +53,48 @@ export const authOptions: NextAuthOptions = {
           return false;
         }
 
-        // Check if user already exists
+        // Check if user already exists - only check by email for OAuth
+        // Email is the unique identifier for OAuth accounts
         const { data: existingUser, error: findError } = await supabaseAdmin
           .from('users')
-          .select('id, username, email, passwordHash, isVerified')
-          .or(`email.eq.${user.email},username.eq.${user.name || user.email?.split('@')[0]}`)
-          .limit(1);
+          .select('id, username, email, passwordHash, isVerified, provider, provider_id')
+          .eq('email', user.email)
+          .limit(1)
+          .maybeSingle();
 
-        if (findError && findError.code !== 'PGRST116') {
+        if (findError) {
           console.error('❌ Error finding user:', findError);
           return false;
         }
 
-        const userExists = existingUser && existingUser.length > 0;
-        const dbUser = userExists ? existingUser[0] : null;
+        const userExists = !!existingUser;
+        const dbUser = existingUser;
 
         if (userExists && dbUser) {
-          // User exists - check if they have a password (regular account) or OAuth account
-          if (dbUser.passwordHash) {
-            // User has a password account - link OAuth to existing account
-            console.log('✅ Linking OAuth account to existing user:', dbUser.username);
-            // For now, we'll allow sign-in but could add account linking logic here
-            return true;
-          } else {
-            // OAuth-only account, allow sign-in
-            console.log('✅ OAuth user found:', dbUser.username);
-            return true;
+          // User exists - update provider info if needed and allow sign-in
+          const provider = account?.provider || 'google';
+          const providerId = account?.providerAccountId || user.id || '';
+          
+          // Update provider info if not set or different
+          if (!dbUser.provider || !dbUser.provider_id) {
+            console.log('📝 Updating provider info for existing user:', dbUser.username);
+            await supabaseAdmin
+              .from('users')
+              .update({
+                provider: provider,
+                provider_id: providerId,
+              })
+              .eq('id', dbUser.id);
           }
+          
+          if (dbUser.passwordHash) {
+            // User has a password account - OAuth can also sign in
+            console.log('✅ Signing in existing user with password account:', dbUser.username);
+          } else {
+            // OAuth-only account
+            console.log('✅ Signing in OAuth user:', dbUser.username);
+          }
+          return true;
         } else {
           // New user - create account
           console.log('📝 Creating new OAuth user:', user.email);
@@ -167,53 +182,36 @@ export const authOptions: NextAuthOptions = {
         console.log('🔄 JWT callback - Initial sign in for:', user.email);
         
         try {
-          // Get user from database
-          const { data: dbUser, error } = await supabaseAdmin
-            .from('users')
-            .select('id, username, email, avatar, isAdmin, level, xp')
-            .eq('email', user.email)
-            .single();
-
-          if (error) {
-            console.error('❌ Error fetching OAuth user from database:', error);
-            // Try to find by username as fallback
-            const username = user.name?.toLowerCase().replace(/\s+/g, '_').substring(0, 20) || user.email?.split('@')[0];
-            const { data: dbUserByUsername, error: usernameError } = await supabaseAdmin
+          // Get user from database - retry up to 3 times with delay
+          // This handles the case where user was just created in signIn callback
+          let dbUser = null;
+          let error = null;
+          
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            const { data, error: fetchError } = await supabaseAdmin
               .from('users')
               .select('id, username, email, avatar, isAdmin, level, xp')
-              .ilike('username', username || '')
-              .limit(1)
-              .single();
+              .eq('email', user.email)
+              .maybeSingle();
 
-            if (usernameError || !dbUserByUsername) {
-              console.error('❌ Error fetching OAuth user by username:', usernameError);
-              return token;
+            if (!fetchError && data) {
+              dbUser = data;
+              error = null;
+              break;
             }
-
-            // Use the user found by username
-            const jwtToken = generateToken({
-              userId: dbUserByUsername.id,
-              username: dbUserByUsername.username,
-              email: dbUserByUsername.email,
-              isAdmin: dbUserByUsername.isAdmin || false,
-            });
-
-            console.log('✅ JWT token generated for user:', dbUserByUsername.username);
-            return {
-              ...token,
-              accessToken: jwtToken,
-              userId: dbUserByUsername.id,
-              username: dbUserByUsername.username,
-              email: dbUserByUsername.email,
-              avatar: dbUserByUsername.avatar,
-              isAdmin: dbUserByUsername.isAdmin || false,
-              level: dbUserByUsername.level || 1,
-              xp: dbUserByUsername.xp || 0,
-            };
+            
+            if (attempt < 3) {
+              // Wait a bit before retrying (user might have just been created)
+              await new Promise(resolve => setTimeout(resolve, 200 * attempt));
+              console.log(`⏳ Retrying user fetch (attempt ${attempt + 1}/3)...`);
+            } else {
+              error = fetchError;
+            }
           }
 
-          if (!dbUser) {
-            console.error('❌ User not found in database');
+          if (error || !dbUser) {
+            console.error('❌ Error fetching OAuth user from database after retries:', error);
+            // Return token without accessToken - this will cause sign-in to fail gracefully
             return token;
           }
 
@@ -239,6 +237,9 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error('❌ Exception in JWT callback:', error);
+          if (error instanceof Error) {
+            console.error('❌ Exception details:', error.message, error.stack);
+          }
           return token;
         }
       }
