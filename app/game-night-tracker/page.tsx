@@ -131,7 +131,7 @@ function SortableTab({
               ref={setNodeRef}
               style={style}
               onClick={onTabClick}
-              className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0.5 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm ${
+              className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm h-[30px] sm:h-auto ${
                 isActive
                   ? 'bg-[#fbae17] text-white rounded-b-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
@@ -940,14 +940,16 @@ export default function GameNightTrackerPage() {
                 {/* Add Player Row - shown only in edit mode */}
                 {isEditMode && !isSharedView && (
                   <tr className="bg-gray-50">
-                    <td className="px-4 sm:px-6 py-1.5 sm:py-3 pb-3 sm:pb-3 pl-6 sm:pl-6 pr-4 sm:pr-6 whitespace-nowrap text-left border-2 border-dashed border-gray-400" colSpan={7}>
-                      <button
-                        onClick={addPlayer}
-                        className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-sm sm:text-base"
-                      >
-                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span>{tTracker('addPlayer')}</span>
-                      </button>
+                    <td className="px-4 sm:px-6 py-1.5 sm:py-3 whitespace-nowrap text-left border-2 border-dashed border-gray-400" colSpan={7}>
+                      <div className="px-3 pb-3 sm:px-0 sm:pb-0">
+                        <button
+                          onClick={addPlayer}
+                          className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-sm sm:text-base"
+                        >
+                          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span>{tTracker('addPlayer')}</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -988,7 +990,7 @@ export default function GameNightTrackerPage() {
                     {/* Add Tab button styled like a tab with dotted border */}
                     <button
                       onClick={addTab}
-                      className="group flex items-center justify-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg border border-dashed border-gray-400 h-5 sm:h-auto"
+                      className="group flex items-center justify-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg border border-dashed border-gray-400 h-[30px] w-[35px] sm:h-auto sm:w-auto"
                       title={tTracker('addTab')}
                     >
                       <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
