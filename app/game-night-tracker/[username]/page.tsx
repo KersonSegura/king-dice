@@ -1015,22 +1015,23 @@ export default function UserTrackerPage() {
                 {/* Edit and Save buttons */}
                 {isOwnTracker && (
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                  <button
-                    onClick={() => setIsEditMode(!isEditMode)}
-                    className="flex items-center space-x-1 px-2 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs flex-shrink-0"
-                  >
-                    <Edit className="w-3 h-3" />
-                    <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
-                  </button>
-                  <button
-                    onClick={saveTracker}
-                    disabled={isSaving}
-                    className="flex items-center space-x-1 px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs flex-shrink-0"
-                  >
-                    <Save className="w-3 h-3" />
-                    <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
-                  </button>
-                </div>
+                    <button
+                      onClick={() => setIsEditMode(!isEditMode)}
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
+                    >
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
+                    </button>
+                    <button
+                      onClick={saveTracker}
+                      disabled={isSaving}
+                      className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
+                    >
+                      <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
