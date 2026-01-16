@@ -935,13 +935,27 @@ export default function UserTrackerPage() {
                     );
                   })
                 )}
+                {/* Add Player Row - shown only in edit mode */}
+                {isEditMode && isOwnTracker && (
+                  <tr className="bg-gray-50">
+                    <td className="px-1.5 sm:px-4 py-1.5 sm:py-3 whitespace-nowrap text-left" colSpan={7}>
+                      <button
+                        onClick={addPlayer}
+                        className="flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors text-xs sm:text-sm w-full justify-center"
+                      >
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>{tTracker('addPlayer')}</span>
+                      </button>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
           {/* Game Tabs */}
           {isOwnTracker ? (
-            <div className="border-t border-gray-200 pt-4 mt-4">
+            <div className="border-t border-gray-200 pt-3 sm:pt-4 mt-3 sm:mt-4 px-1 sm:px-0">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -951,7 +965,7 @@ export default function UserTrackerPage() {
                   items={gameTabs.map(tab => tab.id)}
                   strategy={horizontalListSortingStrategy}
                 >
-                  <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+                  <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-2">
                     {gameTabs.map((tab) => (
                       <SortableTab
                         key={tab.id}
@@ -969,17 +983,36 @@ export default function UserTrackerPage() {
                         tTracker={tTracker}
                       />
                     ))}
-                    {isEditMode && (
-                      <button
-                        onClick={addTab}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-b-lg hover:bg-gray-300 transition-colors text-sm font-medium"
-                      >
-                        + {tTracker('addTab')}
-                      </button>
-                    )}
                   </div>
                 </SortableContext>
+                <DragOverlay>
+                  {editingTabId ? (
+                    <div className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-300 text-gray-700 rounded-none sm:rounded-b-lg opacity-80">
+                      <GripVertical className="w-3 h-3" />
+                      <span className="text-xs sm:text-sm font-medium">{editingTabName}</span>
+                    </div>
+                  ) : null}
+                </DragOverlay>
               </DndContext>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={addTab}
+                  className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-700 rounded-none sm:rounded-b-lg hover:bg-gray-200 transition-colors text-xs sm:text-sm"
+                  title={tTracker('addTab')}
+                >
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm">{tTracker('addTab')}</span>
+                </button>
+                {isEditMode && (
+                  <button
+                    onClick={duplicateTab}
+                    className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-none sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                  >
+                    <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="border-t border-gray-200 pt-4 mt-4">
