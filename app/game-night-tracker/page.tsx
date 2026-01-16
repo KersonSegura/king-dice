@@ -1323,7 +1323,7 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
               style={{ backgroundColor: slice.color }}
             />
             <span className="text-sm text-gray-700">
-              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.player.victories === 1 ? tTracker('win') : tTracker('wins')} • {slice.player.winRatePercentage.toFixed(1)}%
+              <strong>{slice.player.name}</strong>: {slice.player.victories} {slice.player.victories === 1 ? tTracker('win') : tTracker('wins')} • {slice.percentage.toFixed(1)}%
             </span>
           </div>
         ))}
@@ -1344,7 +1344,8 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   // Calculate the maximum text width needed
   const maxTextLength = Math.max(
     ...players.map(p => {
-      const text = `${p.victories} ${p.victories === 1 ? tTracker('win') : tTracker('wins')} • ${p.winRatePercentage.toFixed(1)}%`;
+      const victoryPercentage = totalVictories > 0 ? (p.victories / totalVictories) * 100 : 0;
+      const text = `${p.victories} ${p.victories === 1 ? tTracker('win') : tTracker('wins')} • ${victoryPercentage.toFixed(1)}%`;
       return text.length;
     })
   );
@@ -1359,6 +1360,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
           const barWidth = (player.victories / maxVictories) * maxBarWidth;
           const y = index * (barHeight + 10);
           const textX = nameWidth + barWidth + textPadding;
+          const victoryPercentage = totalVictories > 0 ? (player.victories / totalVictories) * 100 : 0;
           
           return (
             <g key={index}>
@@ -1384,7 +1386,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
                 dominantBaseline="middle"
                 className="text-sm font-semibold fill-gray-900"
               >
-                {player.victories} {player.victories === 1 ? tTracker('win') : tTracker('wins')} • {player.winRatePercentage.toFixed(1)}%
+                {player.victories} {player.victories === 1 ? tTracker('win') : tTracker('wins')} • {victoryPercentage.toFixed(1)}%
               </text>
             </g>
           );
