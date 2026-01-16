@@ -612,7 +612,6 @@ export default function UserTrackerPage() {
   // Filter players with victories for chart
   const playersWithVictories = players.filter(p => p.victories > 0);
   const totalVictories = playersWithVictories.reduce((sum, p) => sum + p.victories, 0);
-  const totalGamesPlayed = players.reduce((sum, p) => sum + p.gamesPlayed, 0);
 
   if (authLoading || loading) {
     return (
@@ -1089,9 +1088,9 @@ export default function UserTrackerPage() {
               </div>
             </div>
             {graphView === 'pie' ? (
-              <VictoryPieChart players={playersWithVictories} totalVictories={totalVictories} totalGamesPlayed={totalGamesPlayed} tTracker={tTracker} />
+              <VictoryPieChart players={playersWithVictories} totalVictories={totalVictories} tTracker={tTracker} />
             ) : (
-              <VictoryBarChart players={playersWithVictories} totalVictories={totalVictories} totalGamesPlayed={totalGamesPlayed} tTracker={tTracker} />
+              <VictoryBarChart players={playersWithVictories} totalVictories={totalVictories} tTracker={tTracker} />
             )}
           </div>
         )}
@@ -1246,7 +1245,7 @@ export default function UserTrackerPage() {
 }
 
 // Simple SVG Pie Chart Component
-function VictoryPieChart({ players, totalVictories, totalGamesPlayed, tTracker }: { players: Player[]; totalVictories: number; totalGamesPlayed: number; tTracker: any }) {
+function VictoryPieChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
   const size = typeof window !== 'undefined' && window.innerWidth < 640 ? Math.min(250, window.innerWidth - 40) : 300;
   const radius = size * 0.4;
   const center = size / 2;
@@ -1316,7 +1315,7 @@ function VictoryPieChart({ players, totalVictories, totalGamesPlayed, tTracker }
       </div>
       <div className="text-center mt-4">
         <p className="text-sm font-semibold text-gray-700">
-          {tTracker('totalMatchesPlayed')}: {totalGamesPlayed}
+          {tTracker('totalMatchesPlayed')}: {totalVictories}
         </p>
       </div>
     </div>
@@ -1324,7 +1323,7 @@ function VictoryPieChart({ players, totalVictories, totalGamesPlayed, tTracker }
 }
 
 // Simple SVG Bar Chart Component
-function VictoryBarChart({ players, totalVictories, totalGamesPlayed, tTracker }: { players: Player[]; totalVictories: number; totalGamesPlayed: number; tTracker: any }) {
+function VictoryBarChart({ players, totalVictories, tTracker }: { players: Player[]; totalVictories: number; tTracker: any }) {
   const maxVictories = Math.max(...players.map(p => p.victories), 1);
   const barHeight = 40;
   const nameWidth = 120;
@@ -1387,7 +1386,7 @@ function VictoryBarChart({ players, totalVictories, totalGamesPlayed, tTracker }
       </div>
       <div className="text-center">
         <p className="text-sm font-semibold text-gray-700">
-          {tTracker('totalMatchesPlayed')}: {totalGamesPlayed}
+          {tTracker('totalMatchesPlayed')}: {totalVictories}
         </p>
       </div>
     </div>
