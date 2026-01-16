@@ -128,11 +128,19 @@ function SortableTab({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isEditing) {
+      onStartEdit(e);
+    }
+  };
+
   return (
             <div
               ref={setNodeRef}
               style={style}
               onClick={onTabClick}
+              onDoubleClick={handleDoubleClick}
               className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm h-[30px] sm:h-auto ${
                 isActive
                   ? 'bg-[#fbae17] text-white rounded-b-lg'
@@ -1019,37 +1027,21 @@ export default function GameNightTrackerPage() {
                     <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
                   </button>
                 )}
-                {/* Active tab rename button */}
-                {!isSharedView && activeTabId && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const activeTab = gameTabs.find(tab => tab.id === activeTabId);
-                      if (activeTab) {
-                        startEditingTab(activeTabId, e);
-                      }
-                    }}
-                    className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                    title={tTracker('renameTab')}
-                  >
-                    <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </button>
-                )}
-                {/* Mobile-only Edit and Save buttons */}
-                <div className="flex items-center gap-1.5 sm:hidden">
+                {/* Edit and Save buttons */}
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => setIsEditMode(!isEditMode)}
-                    className="flex items-center space-x-1 px-2 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs flex-shrink-0"
+                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
                   >
-                    <Edit className="w-3 h-3" />
+                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
                   </button>
                   <button
                     onClick={saveTracker}
                     disabled={isSaving}
-                    className="flex items-center space-x-1 px-2 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs flex-shrink-0"
+                    className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
                   >
-                    <Save className="w-3 h-3" />
+                    <Save className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
                   </button>
                 </div>

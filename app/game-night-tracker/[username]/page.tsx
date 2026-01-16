@@ -129,11 +129,19 @@ function SortableTab({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isEditing) {
+      onStartEdit(e);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       onClick={onTabClick}
+      onDoubleClick={handleDoubleClick}
       className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm h-[30px] sm:h-auto ${
         isActive
           ? 'bg-[#fbae17] text-white rounded-b-lg'
