@@ -724,9 +724,9 @@ export default function GameNightTrackerPage() {
 
           {/* Players Header with Edit and Save */}
           {!isSharedView && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0 w-full max-w-full overflow-hidden">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0 w-full max-w-full overflow-hidden">
               <h3 className="text-base sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
-              <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+              <div className="flex items-center gap-1.5 sm:gap-2 ml-auto flex-shrink-0">
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
                   className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
@@ -737,9 +737,10 @@ export default function GameNightTrackerPage() {
                 <button
                   onClick={saveTracker}
                   disabled={isSaving}
-                  className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
                 >
-                  {isSaving ? tTracker('saving') : tTracker('save')}
+                  <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
                 </button>
               </div>
             </div>
@@ -858,11 +859,12 @@ export default function GameNightTrackerPage() {
                                   setShowColorPicker(true);
                                 }
                               }}
-                              className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                              className={`w-4 h-4 min-w-[1rem] min-h-[1rem] rounded-full border-2 flex-shrink-0 ${
                                 !isSharedView ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
                               }`}
                               style={{ 
-                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length]
+                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length],
+                                aspectRatio: '1 / 1'
                               }}
                               title={!isSharedView ? 'Change color' : undefined}
                             />
