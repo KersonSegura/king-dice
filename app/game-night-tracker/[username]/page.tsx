@@ -95,6 +95,7 @@ interface SortableTabProps {
   onEditNameChange: (value: string) => void;
   onDelete: (e: React.MouseEvent) => void;
   canDelete: boolean;
+  isEditMode: boolean;
   tTracker: any;
 }
 
@@ -110,6 +111,7 @@ function SortableTab({
   onEditNameChange,
   onDelete,
   canDelete,
+  isEditMode,
   tTracker,
 }: SortableTabProps) {
   const {
@@ -193,13 +195,13 @@ function SortableTab({
           >
             <Edit2 className="w-3 h-3" />
           </button>
-          {canDelete && (
+          {isEditMode && canDelete && (
             <button
               onClick={(e) => onDelete(e)}
-              className="hidden sm:inline-flex text-current hover:opacity-80 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors ml-1"
               title={tTracker('deleteTab')}
             >
-              <X className="w-3 h-3" />
+              <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </button>
           )}
         </>
@@ -1000,35 +1002,21 @@ export default function UserTrackerPage() {
                     <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
                   </button>
                 )}
-                {/* Active tab rename and delete buttons */}
+                {/* Active tab rename button */}
                 {isOwnTracker && activeTabId && (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const activeTab = gameTabs.find(tab => tab.id === activeTabId);
-                        if (activeTab) {
-                          startEditingTab(activeTabId, e);
-                        }
-                      }}
-                      className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                      title={tTracker('renameTab')}
-                    >
-                      <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </button>
-                    {gameTabs.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteTab(activeTabId, e);
-                        }}
-                        className="p-1.5 sm:p-2 bg-gray-100 text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                        title={tTracker('deleteTab')}
-                      >
-                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </button>
-                    )}
-                  </>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const activeTab = gameTabs.find(tab => tab.id === activeTabId);
+                      if (activeTab) {
+                        startEditingTab(activeTabId, e);
+                      }
+                    }}
+                    className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                    title={tTracker('renameTab')}
+                  >
+                    <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </button>
                 )}
                 {/* Mobile-only Edit and Save buttons */}
                 <div className="flex items-center gap-1.5 sm:hidden">

@@ -94,6 +94,7 @@ interface SortableTabProps {
   onEditNameChange: (value: string) => void;
   onDelete: (e: React.MouseEvent) => void;
   canDelete: boolean;
+  isEditMode: boolean;
   tTracker: any;
 }
 
@@ -109,6 +110,7 @@ function SortableTab({
   onEditNameChange,
   onDelete,
   canDelete,
+  isEditMode,
   tTracker,
 }: SortableTabProps) {
   const {
@@ -939,9 +941,9 @@ export default function GameNightTrackerPage() {
                 )}
                 {/* Add Player Row - shown only in edit mode */}
                 {isEditMode && !isSharedView && (
-                  <tr className="bg-gray-50">
+                  <tr className="bg-white">
                     <td className="px-7 sm:px-6 py-1.5 sm:py-3 pb-4 sm:pb-3 whitespace-nowrap text-left" colSpan={7}>
-                      <div className="border-2 border-dashed border-gray-400 rounded">
+                      <div className="border-2 border-dashed border-gray-400 rounded bg-gray-50">
                         <button
                           onClick={addPlayer}
                           className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-sm sm:text-base px-4 sm:px-6 py-1.5 sm:py-3"
@@ -1017,35 +1019,21 @@ export default function GameNightTrackerPage() {
                     <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
                   </button>
                 )}
-                {/* Active tab rename and delete buttons */}
+                {/* Active tab rename button */}
                 {!isSharedView && activeTabId && (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const activeTab = gameTabs.find(tab => tab.id === activeTabId);
-                        if (activeTab) {
-                          startEditingTab(activeTabId, e);
-                        }
-                      }}
-                      className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                      title={tTracker('renameTab')}
-                    >
-                      <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </button>
-                    {gameTabs.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteTab(activeTabId, e);
-                        }}
-                        className="p-1.5 sm:p-2 bg-gray-100 text-red-600 rounded-md hover:bg-red-50 transition-colors"
-                        title={tTracker('deleteTab')}
-                      >
-                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </button>
-                    )}
-                  </>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const activeTab = gameTabs.find(tab => tab.id === activeTabId);
+                      if (activeTab) {
+                        startEditingTab(activeTabId, e);
+                      }
+                    }}
+                    className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                    title={tTracker('renameTab')}
+                  >
+                    <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </button>
                 )}
                 {/* Mobile-only Edit and Save buttons */}
                 <div className="flex items-center gap-1.5 sm:hidden">
