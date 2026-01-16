@@ -1302,7 +1302,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const barHeight = 40;
   const nameWidth = 120;
   const textPadding = 20;
-  const maxBarWidth = 500;
+  const maxBarWidth = 300;
   const chartHeight = players.length * (barHeight + 10);
   
   // Calculate the maximum text width needed
