@@ -728,7 +728,7 @@ export default function UserTrackerPage() {
           )}
 
           {/* Players Table */}
-          <div className="overflow-x-auto mb-2 sm:mb-4 -mx-2 sm:mx-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="overflow-x-auto mb-2 sm:mb-4 -mx-2 sm:mx-0 pb-4 sm:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
             <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '600px' }}>
               <thead className="bg-gray-50">
                 <tr>
@@ -820,7 +820,7 @@ export default function UserTrackerPage() {
                       <tr 
                         key={index} 
                         className={`hover:bg-gray-50 transition-colors ${
-                          isTopWinner ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''
+                          isTopWinner ? 'bg-yellow-50' : ''
                         }`}
                       >
                         <td className="px-4 py-3 whitespace-nowrap text-left">

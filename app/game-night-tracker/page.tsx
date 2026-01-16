@@ -725,7 +725,7 @@ export default function GameNightTrackerPage() {
               </div>
             ) : (
               <div className="flex items-center space-x-1 sm:space-x-2 w-full max-w-full min-w-0">
-                <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate min-w-0 flex-1">{trackerName}</h2>
+                <h2 className="text-lg sm:text-2xl font-bold text-[#fbae17] truncate min-w-0 flex-1">{trackerName}</h2>
                 <button
                   onClick={() => setIsEditingTrackerName(true)}
                   className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
@@ -745,7 +745,7 @@ export default function GameNightTrackerPage() {
           )}
 
           {/* Players Table */}
-          <div className="overflow-x-auto mb-2 sm:mb-4 -mx-2 sm:mx-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="overflow-x-auto mb-2 sm:mb-4 -mx-2 sm:mx-0 pb-4 sm:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
             <table className="min-w-full divide-y divide-gray-200" style={{ minWidth: '600px' }}>
               <thead className="bg-gray-50">
                 <tr>
@@ -837,7 +837,7 @@ export default function GameNightTrackerPage() {
                       <tr 
                         key={index} 
                         className={`hover:bg-gray-50 transition-colors ${
-                          isTopWinner ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''
+                          isTopWinner ? 'bg-yellow-50' : ''
                         }`}
                       >
                         <td className="px-4 py-3 whitespace-nowrap text-left">
