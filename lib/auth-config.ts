@@ -46,6 +46,8 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
+        console.log('🔄 SignIn callback - User:', user.email, 'Provider:', account?.provider);
+        
         if (!user.email) {
           console.error('❌ OAuth sign-in failed: No email provided');
           return false;
@@ -152,43 +154,93 @@ export const authOptions: NextAuthOptions = {
         }
       } catch (error) {
         console.error('❌ OAuth sign-in error:', error);
+        // Log the full error for debugging
+        if (error instanceof Error) {
+          console.error('❌ Error details:', error.message, error.stack);
+        }
         return false;
       }
     },
     async jwt({ token, user, account }) {
       // Initial sign in
       if (account && user) {
-        // Get user from database
-        const { data: dbUser, error } = await supabaseAdmin
-          .from('users')
-          .select('id, username, email, avatar, isAdmin, level, xp')
-          .eq('email', user.email)
-          .single();
+        console.log('🔄 JWT callback - Initial sign in for:', user.email);
+        
+        try {
+          // Get user from database
+          const { data: dbUser, error } = await supabaseAdmin
+            .from('users')
+            .select('id, username, email, avatar, isAdmin, level, xp')
+            .eq('email', user.email)
+            .single();
 
-        if (error || !dbUser) {
-          console.error('❌ Error fetching OAuth user:', error);
+          if (error) {
+            console.error('❌ Error fetching OAuth user from database:', error);
+            // Try to find by username as fallback
+            const username = user.name?.toLowerCase().replace(/\s+/g, '_').substring(0, 20) || user.email?.split('@')[0];
+            const { data: dbUserByUsername, error: usernameError } = await supabaseAdmin
+              .from('users')
+              .select('id, username, email, avatar, isAdmin, level, xp')
+              .ilike('username', username || '')
+              .limit(1)
+              .single();
+
+            if (usernameError || !dbUserByUsername) {
+              console.error('❌ Error fetching OAuth user by username:', usernameError);
+              return token;
+            }
+
+            // Use the user found by username
+            const jwtToken = generateToken({
+              userId: dbUserByUsername.id,
+              username: dbUserByUsername.username,
+              email: dbUserByUsername.email,
+              isAdmin: dbUserByUsername.isAdmin || false,
+            });
+
+            console.log('✅ JWT token generated for user:', dbUserByUsername.username);
+            return {
+              ...token,
+              accessToken: jwtToken,
+              userId: dbUserByUsername.id,
+              username: dbUserByUsername.username,
+              email: dbUserByUsername.email,
+              avatar: dbUserByUsername.avatar,
+              isAdmin: dbUserByUsername.isAdmin || false,
+              level: dbUserByUsername.level || 1,
+              xp: dbUserByUsername.xp || 0,
+            };
+          }
+
+          if (!dbUser) {
+            console.error('❌ User not found in database');
+            return token;
+          }
+
+          // Generate JWT token compatible with existing system
+          const jwtToken = generateToken({
+            userId: dbUser.id,
+            username: dbUser.username,
+            email: dbUser.email,
+            isAdmin: dbUser.isAdmin || false,
+          });
+
+          console.log('✅ JWT token generated for user:', dbUser.username);
+          return {
+            ...token,
+            accessToken: jwtToken,
+            userId: dbUser.id,
+            username: dbUser.username,
+            email: dbUser.email,
+            avatar: dbUser.avatar,
+            isAdmin: dbUser.isAdmin || false,
+            level: dbUser.level || 1,
+            xp: dbUser.xp || 0,
+          };
+        } catch (error) {
+          console.error('❌ Exception in JWT callback:', error);
           return token;
         }
-
-        // Generate JWT token compatible with existing system
-        const jwtToken = generateToken({
-          userId: dbUser.id,
-          username: dbUser.username,
-          email: dbUser.email,
-          isAdmin: dbUser.isAdmin || false,
-        });
-
-        return {
-          ...token,
-          accessToken: jwtToken,
-          userId: dbUser.id,
-          username: dbUser.username,
-          email: dbUser.email,
-          avatar: dbUser.avatar,
-          isAdmin: dbUser.isAdmin || false,
-          level: dbUser.level || 1,
-          xp: dbUser.xp || 0,
-        };
       }
 
       // Return previous token if the access token has not expired yet
@@ -214,7 +266,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/',
-    error: '/',
+    error: '/?error=oauth_error', // Redirect to home with error parameter
   },
   session: {
     strategy: 'jwt',

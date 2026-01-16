@@ -12,13 +12,27 @@ export async function GET(request: NextRequest) {
     // Get the return URL from query params
     const returnUrl = request.nextUrl.searchParams.get('return') || '/';
     
+    console.log('🔄 OAuth callback completion - Getting session...');
+    
     // Get NextAuth session (should be established by now)
     const session = await getServerSession(authOptions);
     
+    console.log('📋 Session data:', session ? {
+      hasAccessToken: !!session.accessToken,
+      userId: session.userId,
+      username: session.username,
+      email: session.user?.email
+    } : 'No session');
+    
     if (!session || !session.accessToken) {
-      // No session yet, redirect to return URL (will show as logged out)
-      return NextResponse.redirect(new URL(returnUrl, request.url));
+      console.error('❌ No session or access token found');
+      // Redirect to home with error message
+      const errorUrl = new URL(returnUrl, request.url);
+      errorUrl.searchParams.set('error', 'oauth_no_session');
+      return NextResponse.redirect(errorUrl);
     }
+
+    console.log('✅ Session found, setting auth_token cookie...');
 
     // Create response with user data
     const response = NextResponse.redirect(new URL(returnUrl, request.url));
@@ -33,12 +47,16 @@ export async function GET(request: NextRequest) {
     };
 
     response.cookies.set('auth_token', session.accessToken, cookieOptions);
+    
+    console.log('✅ Auth token cookie set, redirecting to:', returnUrl);
 
     return response;
   } catch (error) {
-    console.error('OAuth callback error:', error);
-    // On error, still redirect but without auth cookie
+    console.error('❌ OAuth callback completion error:', error);
+    // On error, redirect with error parameter
     const returnUrl = request.nextUrl.searchParams.get('return') || '/';
-    return NextResponse.redirect(new URL(returnUrl, request.url));
+    const errorUrl = new URL(returnUrl, request.url);
+    errorUrl.searchParams.set('error', 'oauth_callback_error');
+    return NextResponse.redirect(errorUrl);
   }
 }
