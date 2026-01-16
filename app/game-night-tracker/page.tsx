@@ -179,7 +179,7 @@ function SortableTab({
           <div
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+            className="hidden sm:block cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
             <GripVertical className="w-3 h-3" />
