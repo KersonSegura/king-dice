@@ -134,8 +134,8 @@ function SortableTab({
       onClick={onTabClick}
       className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0.5 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm ${
         isActive
-          ? 'bg-[#fbae17] text-white rounded-b-md sm:rounded-b-lg'
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-md sm:rounded-b-lg'
+          ? 'bg-[#fbae17] text-white rounded-b-lg'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
       } ${isDragging ? 'z-50' : ''}`}
     >
       {isEditing ? (
