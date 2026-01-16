@@ -726,29 +726,7 @@ export default function GameNightTrackerPage() {
             )}
           </div>
 
-          {/* Players Header with Edit and Save */}
-          {!isSharedView && (
-            <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0 w-full max-w-full overflow-hidden">
-              <h3 className="text-base sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
-              <div className="flex items-center gap-1.5 sm:gap-2 ml-auto flex-shrink-0">
-                <button
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
-                >
-                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
-                </button>
-                <button
-                  onClick={saveTracker}
-                  disabled={isSaving}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
-                >
-                  <Save className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Players Header - only for shared view */}
           {isSharedView && (
             <div className="mb-4">
               <h3 className="text-xl font-bold text-gray-900">{tTracker('players')}</h3>

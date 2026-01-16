@@ -709,29 +709,7 @@ export default function UserTrackerPage() {
             )}
           </div>
 
-          {/* Players Header with Edit and Save */}
-          {isOwnTracker && (
-            <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2 sm:gap-0 px-1 sm:px-0 w-full max-w-full overflow-hidden">
-              <h3 className="text-base sm:text-xl font-bold text-gray-900 truncate">{tTracker('players')}</h3>
-              <div className="flex items-center gap-1.5 sm:gap-2 ml-auto flex-shrink-0">
-                <button
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm flex-shrink-0"
-                >
-                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{isEditMode ? tTracker('exitEdit') : tTracker('edit')}</span>
-                </button>
-                <button
-                  onClick={saveTracker}
-                  disabled={isSaving}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm flex-shrink-0"
-                >
-                  <Save className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Players Header - only for non-owner view */}
           {!isOwnTracker && (
             <div className="mb-3 sm:mb-4 px-1 sm:px-0">
               <h3 className="text-base sm:text-xl font-bold text-gray-900">{tTracker('players')}</h3>
@@ -1013,7 +991,46 @@ export default function UserTrackerPage() {
                   ) : null}
                 </DragOverlay>
               </DndContext>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <div className="flex items-center justify-end gap-2 mt-2 flex-wrap">
+                {isEditMode && (
+                  <button
+                    onClick={duplicateTab}
+                    className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                  >
+                    <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
+                  </button>
+                )}
+                {/* Active tab rename and delete buttons */}
+                {isOwnTracker && activeTabId && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const activeTab = gameTabs.find(tab => tab.id === activeTabId);
+                        if (activeTab) {
+                          startEditingTab(activeTabId, e);
+                        }
+                      }}
+                      className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                      title={tTracker('renameTab')}
+                    >
+                      <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </button>
+                    {gameTabs.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTab(activeTabId, e);
+                        }}
+                        className="p-1.5 sm:p-2 bg-gray-100 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                        title={tTracker('deleteTab')}
+                      >
+                        <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </button>
+                    )}
+                  </>
+                )}
                 {/* Mobile-only Edit and Save buttons */}
                 <div className="flex items-center gap-1.5 sm:hidden">
                   <button
@@ -1032,15 +1049,6 @@ export default function UserTrackerPage() {
                     <span>{isSaving ? tTracker('saving') : tTracker('save')}</span>
                   </button>
                 </div>
-                {isEditMode && (
-                  <button
-                    onClick={duplicateTab}
-                    className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm"
-                  >
-                    <CopyIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
-                  </button>
-                )}
               </div>
             </div>
           ) : (
