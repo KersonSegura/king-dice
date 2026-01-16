@@ -842,11 +842,12 @@ export default function UserTrackerPage() {
                                   setShowColorPicker(true);
                                 }
                               }}
-                              className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                              className={`w-4 h-4 min-w-[1rem] min-h-[1rem] rounded-full border-2 flex-shrink-0 ${
                                 isOwnTracker ? 'cursor-pointer hover:scale-110 transition-transform border-gray-300' : 'cursor-default border-transparent'
                               }`}
                               style={{ 
-                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length]
+                                backgroundColor: player.color || PLAYER_COLORS[originalIndex % PLAYER_COLORS.length],
+                                aspectRatio: '1 / 1'
                               }}
                               title={isOwnTracker ? 'Change color' : undefined}
                             />
