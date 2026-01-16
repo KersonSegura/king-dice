@@ -127,6 +127,8 @@ function SortableTab({
     transform: CSS.Transform.toString(transform),
     transition: transition || undefined,
     opacity: isDragging ? 0.5 : 1,
+    minHeight: '30px',
+    maxHeight: '30px',
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
@@ -144,7 +146,7 @@ function SortableTab({
               onDoubleClick={handleDoubleClick}
               {...attributes}
               {...listeners}
-              className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-grab active:cursor-grabbing transition-colors text-xs sm:text-sm h-[30px] sm:h-auto touch-none ${
+              className={`group flex items-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-grab active:cursor-grabbing transition-colors text-xs sm:text-sm h-[30px] sm:h-auto touch-none box-border ${
                 isActive
                   ? 'bg-[#fbae17] text-white rounded-b-lg'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
