@@ -940,10 +940,10 @@ export default function GameNightTrackerPage() {
                 {/* Add Player Row - shown only in edit mode */}
                 {isEditMode && !isSharedView && (
                   <tr className="bg-gray-50">
-                    <td className="px-4 sm:px-6 py-1.5 sm:py-3 whitespace-nowrap text-left border-2 border-dashed border-gray-400" colSpan={7}>
+                    <td className="px-4 sm:px-6 py-1.5 sm:py-3 pb-2 sm:pb-4 whitespace-nowrap text-left border-2 border-dashed border-gray-400" colSpan={7}>
                       <button
                         onClick={addPlayer}
-                        className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-sm sm:text-base"
+                        className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-sm sm:text-base pl-1 sm:pl-2 pr-1 sm:pr-2"
                       >
                         <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span>{tTracker('addPlayer')}</span>
