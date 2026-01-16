@@ -1285,7 +1285,7 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
   });
 
           return (
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-8 w-full max-w-full overflow-hidden pb-2 sm:pb-4">
               <svg width={size} height={size} className="flex-shrink-0 max-w-full" viewBox={`0 0 ${size} ${size}`}>
         {slices.map((slice, index) => (
           <path
@@ -1320,7 +1320,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const barHeight = 40;
   const nameWidth = 120;
   const textPadding = 20;
-  const maxBarWidth = 300;
+  const maxBarWidth = 200;
   const chartHeight = players.length * (barHeight + 10);
   
   // Calculate the maximum text width needed

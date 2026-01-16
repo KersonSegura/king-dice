@@ -701,7 +701,7 @@ export default function UserTrackerPage() {
               </div>
             )}
             {username && (
-              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{tTracker('byUser', { username: `@${username}` })}</p>
+              <p className="text-xs sm:text-sm text-gray-500 -mt-0.5">{tTracker('byUser', { username: `@${username}` })}</p>
             )}
           </div>
 
@@ -1302,7 +1302,7 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const barHeight = 40;
   const nameWidth = 120;
   const textPadding = 20;
-  const maxBarWidth = 300;
+  const maxBarWidth = 200;
   const chartHeight = players.length * (barHeight + 10);
   
   // Calculate the maximum text width needed
