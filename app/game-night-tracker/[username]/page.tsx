@@ -659,7 +659,7 @@ export default function UserTrackerPage() {
       </div>
 
       {/* Main Content */}
-      <div className="w-full max-w-full mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1 overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1 overflow-x-hidden">
         {/* Header */}
         <div className="flex items-center justify-center mb-3 sm:mb-8 px-2">
           <div className="text-center w-full max-w-full">
