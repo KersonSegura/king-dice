@@ -136,12 +136,10 @@ export const authOptions: NextAuthOptions = {
               createdAt: now,
               updatedAt: now,
               joinDate: now,
-              // Store OAuth provider info (if columns exist)
-              // Note: Add these columns to your database if they don't exist:
-              // provider: provider,
-              // providerId: providerId,
+              provider: provider,
+              provider_id: providerId,
             })
-            .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
+            .select('id, username, email, avatar, isAdmin, level, xp, isVerified, provider, provider_id')
             .single();
 
           if (createError || !newUser) {
