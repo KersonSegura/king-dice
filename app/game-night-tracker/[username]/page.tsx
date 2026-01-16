@@ -132,10 +132,10 @@ function SortableTab({
       ref={setNodeRef}
       style={style}
       onClick={onTabClick}
-      className={`group flex items-center space-x-2 px-4 py-2 cursor-pointer transition-colors ${
+      className={`group flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-3 py-1 sm:py-1.5 cursor-pointer transition-colors ${
         isActive
-          ? 'bg-[#fbae17] text-white rounded-b-lg'
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg'
+          ? 'bg-[#fbae17] text-white rounded-none sm:rounded-b-lg'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-none sm:rounded-b-lg'
       } ${isDragging ? 'z-50' : ''}`}
     >
       {isEditing ? (
