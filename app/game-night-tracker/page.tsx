@@ -940,10 +940,10 @@ export default function GameNightTrackerPage() {
                 {/* Add Player Row - shown only in edit mode */}
                 {isEditMode && !isSharedView && (
                   <tr className="bg-gray-50">
-                    <td className="px-4 sm:px-6 py-1.5 sm:py-3 pb-2 sm:pb-4 whitespace-nowrap text-left border-2 border-dashed border-gray-400" colSpan={7}>
+                    <td className="px-4 sm:px-6 py-1.5 sm:py-3 pb-3 sm:pb-3 pl-6 sm:pl-6 pr-4 sm:pr-6 whitespace-nowrap text-left border-2 border-dashed border-gray-400" colSpan={7}>
                       <button
                         onClick={addPlayer}
-                        className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-sm sm:text-base pl-1 sm:pl-2 pr-1 sm:pr-2"
+                        className="flex items-center space-x-1.5 sm:space-x-2 text-left w-full text-gray-700 hover:text-gray-900 transition-colors text-sm sm:text-base"
                       >
                         <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span>{tTracker('addPlayer')}</span>
@@ -988,7 +988,7 @@ export default function GameNightTrackerPage() {
                     {/* Add Tab button styled like a tab with dotted border */}
                     <button
                       onClick={addTab}
-                      className="group flex items-center justify-center px-1 sm:px-3 py-[3px] sm:py-[1px] cursor-pointer transition-colors text-xs sm:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg border border-dashed border-gray-400 h-5"
+                      className="group flex items-center justify-center space-x-1 sm:space-x-2 px-1 sm:px-3 py-0 sm:py-1.5 cursor-pointer transition-colors text-xs sm:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-b-lg border border-dashed border-gray-400 h-5 sm:h-auto"
                       title={tTracker('addTab')}
                     >
                       <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
