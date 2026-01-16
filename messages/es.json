@@ -1365,7 +1365,7 @@
     "pie": "Circular",
     "bar": "Barras",
     "byUser": "por {username}",
-    "totalVictories": "Total de Victorias",
+    "totalMatchesPlayed": "Total de Partidas",
     "selectPlayerColor": "Seleccionar Color del Jugador",
     "saveColor": "Guardar Color",
     "colorHexCode": "Código Hex del Color"

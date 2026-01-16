@@ -1345,7 +1345,7 @@
     "pie": "Pie",
     "bar": "Bar",
     "byUser": "by {username}",
-    "totalVictories": "Total Victories",
+    "totalMatchesPlayed": "Total Matches Played",
     "selectPlayerColor": "Select Player Color",
     "saveColor": "Save Color",
     "colorHexCode": "Color Hex Code"
