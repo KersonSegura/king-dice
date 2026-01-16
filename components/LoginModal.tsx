@@ -520,45 +520,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   setIsLoading(true);
                   setError('');
                   try {
-                    const result = await signIn('google', {
+                    // OAuth requires a redirect to Google's consent screen
+                    // NextAuth will handle the callback and redirect back
+                    await signIn('google', {
                       callbackUrl: window.location.href,
-                      redirect: false,
                     });
-                    
-                    if (result?.error) {
-                      setError('Failed to sign in with Google. Please try again.');
-                      setIsLoading(false);
-                    } else if (result?.ok) {
-                      // Success - NextAuth will handle the session
-                      // Wait a bit for NextAuth to process the callback
-                      await new Promise(resolve => setTimeout(resolve, 500));
-                      
-                      // Sync NextAuth session with auth_token cookie
-                      const callbackResponse = await fetch('/api/auth/oauth-callback');
-                      if (callbackResponse.ok) {
-                        const data = await callbackResponse.json();
-                        if (data?.user && data?.token) {
-                          login({
-                            id: data.user.id,
-                            username: data.user.username,
-                            email: data.user.email,
-                            avatar: data.user.avatar,
-                            isAdmin: data.user.isAdmin || false,
-                            isVerified: true,
-                            level: data.user.level || 1,
-                            xp: data.user.xp || 0,
-                          }, data.token);
-                          onClose();
-                          // Reload to ensure all components pick up the new auth state
-                          window.location.reload();
-                        } else {
-                          setError('Failed to complete sign-in. Please try again.');
-                        }
-                      } else {
-                        setError('Failed to sync session. Please try again.');
-                      }
-                      setIsLoading(false);
-                    }
+                    // Note: User will be redirected to Google, then back to the app
+                    // The session will be established automatically by NextAuth
                   } catch (error) {
                     console.error('Google sign-in error:', error);
                     setError('Failed to sign in with Google. Please try again.');
