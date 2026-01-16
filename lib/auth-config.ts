@@ -26,12 +26,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: googleClientSecret || '',
       authorization: {
         params: {
-          prompt: 'select_account consent', // Force account selection AND consent screen
-          access_type: 'offline',
-          response_type: 'code',
-          scope: 'openid email profile',
-          // Ensure consent screen shows all scopes explicitly
-          include_granted_scopes: 'true',
+          scope: 'openid email profile', // Basic scopes only - no verification needed
         },
       },
     }),
@@ -122,6 +117,10 @@ export const authOptions: NextAuthOptions = {
           const userId = generateCuid();
           const now = new Date().toISOString();
           
+          // Store provider information
+          const provider = account?.provider || 'google';
+          const providerId = account?.providerAccountId || user.id || '';
+          
           const { data: newUser, error: createError } = await supabaseAdmin
             .from('users')
             .insert({
@@ -136,7 +135,11 @@ export const authOptions: NextAuthOptions = {
               isVerified: true, // OAuth emails are pre-verified
               createdAt: now,
               updatedAt: now,
-              joinDate: now
+              joinDate: now,
+              // Store OAuth provider info (if columns exist)
+              // Note: Add these columns to your database if they don't exist:
+              // provider: provider,
+              // providerId: providerId,
             })
             .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
             .single();
