@@ -1328,6 +1328,11 @@ function VictoryPieChart({ players, totalVictories, tTracker }: { players: Playe
           </div>
         ))}
       </div>
+      <div className="text-center mt-4">
+        <p className="text-sm font-semibold text-gray-700">
+          {tTracker('totalVictories')}: {totalVictories} {totalVictories === 1 ? tTracker('win') : tTracker('wins')}
+        </p>
+      </div>
     </div>
   );
 }
@@ -1354,44 +1359,51 @@ function VictoryBarChart({ players, totalVictories, tTracker }: { players: Playe
   const chartWidth = nameWidth + maxBarWidth + (maxTextLength * 8) + textPadding;
   
   return (
-    <div className="flex flex-col md:flex-row items-start justify-center gap-8 overflow-x-auto w-full">
-      <svg width={chartWidth} height={chartHeight} className="flex-shrink-0" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
-        {players.map((player, index) => {
-          const barWidth = (player.victories / maxVictories) * maxBarWidth;
-          const y = index * (barHeight + 10);
-          const textX = nameWidth + barWidth + textPadding;
-          const victoryPercentage = totalVictories > 0 ? (player.victories / totalVictories) * 100 : 0;
-          
-          return (
-            <g key={index}>
-              <rect
-                x={nameWidth}
-                y={y}
-                width={barWidth}
-                height={barHeight}
-                fill={player.color || PLAYER_COLORS[index % PLAYER_COLORS.length]}
-                rx={4}
-              />
-              <text
-                x={10}
-                y={y + barHeight / 2}
-                dominantBaseline="middle"
-                className="text-sm font-medium fill-gray-700"
-              >
-                {player.name}
-              </text>
-              <text
-                x={textX}
-                y={y + barHeight / 2}
-                dominantBaseline="middle"
-                className="text-sm font-semibold fill-gray-900"
-              >
-                {player.victories} {player.victories === 1 ? tTracker('win') : tTracker('wins')} • {victoryPercentage.toFixed(1)}%
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col md:flex-row items-start justify-center gap-8 overflow-x-auto w-full">
+        <svg width={chartWidth} height={chartHeight} className="flex-shrink-0" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+          {players.map((player, index) => {
+            const barWidth = (player.victories / maxVictories) * maxBarWidth;
+            const y = index * (barHeight + 10);
+            const textX = nameWidth + barWidth + textPadding;
+            const victoryPercentage = totalVictories > 0 ? (player.victories / totalVictories) * 100 : 0;
+            
+            return (
+              <g key={index}>
+                <rect
+                  x={nameWidth}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  fill={player.color || PLAYER_COLORS[index % PLAYER_COLORS.length]}
+                  rx={4}
+                />
+                <text
+                  x={10}
+                  y={y + barHeight / 2}
+                  dominantBaseline="middle"
+                  className="text-sm font-medium fill-gray-700"
+                >
+                  {player.name}
+                </text>
+                <text
+                  x={textX}
+                  y={y + barHeight / 2}
+                  dominantBaseline="middle"
+                  className="text-sm font-semibold fill-gray-900"
+                >
+                  {player.victories} {player.victories === 1 ? tTracker('win') : tTracker('wins')} • {victoryPercentage.toFixed(1)}%
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-semibold text-gray-700">
+          {tTracker('totalVictories')}: {totalVictories} {totalVictories === 1 ? tTracker('win') : tTracker('wins')}
+        </p>
+      </div>
     </div>
   );
 }
