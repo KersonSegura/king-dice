@@ -1011,24 +1011,9 @@ export default function UserTrackerPage() {
                     <span className="text-xs sm:text-sm">{tTracker('duplicateSheet')}</span>
                   </button>
                 )}
-                {/* Active tab rename button */}
-                {isOwnTracker && activeTabId && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const activeTab = gameTabs.find(tab => tab.id === activeTabId);
-                      if (activeTab) {
-                        startEditingTab(activeTabId, e);
-                      }
-                    }}
-                    className="p-1.5 sm:p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                    title={tTracker('renameTab')}
-                  >
-                    <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </button>
-                )}
-                {/* Mobile-only Edit and Save buttons */}
-                <div className="flex items-center gap-1.5 sm:hidden">
+                {/* Edit and Save buttons */}
+                {isOwnTracker && (
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => setIsEditMode(!isEditMode)}
                     className="flex items-center space-x-1 px-2 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-xs flex-shrink-0"
