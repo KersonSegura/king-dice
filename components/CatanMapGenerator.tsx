@@ -627,11 +627,51 @@ export function makeValidExpansionBoard(customRules: any): Board {
   
   // Step 5: Final validation and output
   
-  // Validate but always return a board (even if it has violations)
-  if (!noHotAdjacencyExpansion(numbers, customRules)) {
-    console.warn('⚠️ Final expansion board has some adjacency violations, but returning map anyway');
+  // Validate number distribution first
+  if (!validateNumberDistribution(numbers)) {
+    console.error('❌ Expansion board has invalid number distribution - regenerating...');
+    // Regenerate if distribution is wrong
+    numbers = placeNumberTokens(desertPositions, customRules);
   }
   
+  // Validate adjacency rules - retry if invalid (but with limit to avoid infinite loops)
+  const MAX_VALIDATION_RETRIES = 20;
+  let validationAttempts = 0;
+  
+  while (!noHotAdjacencyExpansion(numbers, customRules) && validationAttempts < MAX_VALIDATION_RETRIES) {
+    console.warn(`⚠️ Expansion board has adjacency violations (attempt ${validationAttempts + 1}/${MAX_VALIDATION_RETRIES}), trying to repair...`);
+    // Try to repair the board
+    const repaired = repairExpansionAdjacency(numbers, customRules);
+    
+    // Validate distribution after repair
+    if (!validateNumberDistribution(repaired)) {
+      console.error('❌ Repair invalidated number distribution - regenerating...');
+      numbers = placeNumberTokens(desertPositions, customRules);
+      validationAttempts++;
+      continue;
+    }
+    
+    if (noHotAdjacencyExpansion(repaired, customRules)) {
+      numbers.splice(0, numbers.length, ...repaired);
+      break;
+    }
+    // If repair didn't work, regenerate the numbers
+    numbers = placeNumberTokens(desertPositions, customRules);
+    validationAttempts++;
+  }
+  
+  // Final validation checks
+  const hasValidDistribution = validateNumberDistribution(numbers);
+  const hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
+  
+  if (!hasValidDistribution) {
+    console.error('❌ Expansion board has invalid number distribution after all retries');
+  }
+  if (!hasValidAdjacency) {
+    console.error('❌ Expansion board has adjacency violations after all retries');
+  }
+  
+  // Still return the board even if invalid (to avoid crashes), but log errors
   return { terrains: terrains as Terrain[], numbers: numbers };
 }
 
@@ -1629,16 +1669,17 @@ export const EXPANSION_NEIGHBORS: number[][] = [
   /* 24 */ [20, 21, 23, 25, 28, 29],   // Tile 25: adjacent to 20, 21, 24, 26, 28, 29
   /* 25 */ [21, 22, 24, 26, 29, 30],   // Tile 26: adjacent to 21, 22, 25, 27, 29, 30
   /* 26 */ [22, 23, 25, 27, 30],        // Tile 27: adjacent to 22, 23, 26, 30
-  /* 27 */ [23, 24, 25, 28, 29],        // Tile 28: adjacent to 24, 25, 29
-  /* 28 */ [25, 26, 27, 29, 30],        // Tile 29: adjacent to 25, 26, 28, 30
-  /* 29 */ [26, 27, 28, 29]             // Tile 30: adjacent to 26, 27, 29
+  /* 27 */ [23, 24, 25, 28],            // Tile 28: adjacent to 24, 25, 29 (1-indexed: tiles 25, 26, 29)
+  /* 28 */ [25, 26, 27],                // Tile 29: adjacent to 25, 26, 28, 30 (1-indexed: tiles 26, 27, 29, 31) - fixed: removed invalid indices
+  /* 29 */ [26, 27, 28]                 // Tile 30: adjacent to 26, 27, 29 (1-indexed: tiles 27, 28, 30) - fixed: correct neighbors
 ];
 
 // Expansion-specific adjacency validation
 export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any): boolean {
   const validationId = Math.random().toString(36).substr(2, 9);
   
-  for (let i = 0; i < 29; i++) { // Only check tiles 1-29 (tile 30 has no neighbors)
+  // Check ALL 30 tiles (indices 0-29) - tile 30 (index 29) DOES have neighbors according to EXPANSION_NEIGHBORS
+  for (let i = 0; i < 30; i++) {
     const a = nums[i];
     if (!HOT.has(a as number)) continue;
     
@@ -1667,7 +1708,7 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
   
   // Rule 4: Other same numbers cannot be adjacent (unless custom rule allows)
   if (!customRules.sameNumbersCanTouch) {
-    for (let i = 0; i < 29; i++) {
+    for (let i = 0; i < 30; i++) {
       const a = nums[i];
       if (a === null || HOT.has(a)) continue; // Skip 2, 6, 8, 12 (already handled above)
       
@@ -1683,7 +1724,7 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
   
   // Additional rule: 2 and 12 cannot be adjacent (unless custom rule allows)
   if (!customRules.twoTwelveCanTouch) {
-    for (let i = 0; i < 29; i++) {
+    for (let i = 0; i < 30; i++) {
       const a = nums[i];
       if (a === 2 || a === 12) {
         for (let jIdx = 0; jIdx < EXPANSION_NEIGHBORS[i].length; jIdx++) {
@@ -1694,6 +1735,52 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
           }
         }
       }
+    }
+  }
+  
+  return true;
+}
+
+// Validate that number distribution matches official Catan expansion rules
+function validateNumberDistribution(numbers: (number | null)[]): boolean {
+  // Official 5-6 player expansion distribution (28 numbers total)
+  const expectedDistribution: Record<number, number> = {
+    2: 2,   // 2 appears twice
+    3: 3,   // 3 appears three times
+    4: 3,   // 4 appears three times
+    5: 3,   // 5 appears three times
+    6: 3,   // 6 appears three times
+    8: 3,   // 8 appears three times
+    9: 3,   // 9 appears three times
+    10: 3,  // 10 appears three times
+    11: 3,  // 11 appears three times
+    12: 2,  // 12 appears twice
+  };
+  
+  // Count actual distribution (excluding nulls/deserts)
+  const actualDistribution: Record<number, number> = {};
+  let nonNullCount = 0;
+  
+  for (const num of numbers) {
+    if (num !== null) {
+      nonNullCount++;
+      actualDistribution[num] = (actualDistribution[num] || 0) + 1;
+    }
+  }
+  
+  // Check total count (should be 28)
+  if (nonNullCount !== 28) {
+    console.error(`❌ Invalid number count: expected 28, got ${nonNullCount}`);
+    return false;
+  }
+  
+  // Check each number's count
+  for (const [num, expectedCount] of Object.entries(expectedDistribution)) {
+    const numValue = parseInt(num);
+    const actualCount = actualDistribution[numValue] || 0;
+    if (actualCount !== expectedCount) {
+      console.error(`❌ Invalid distribution for number ${num}: expected ${expectedCount}, got ${actualCount}`);
+      return false;
     }
   }
   
