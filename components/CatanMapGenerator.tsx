@@ -1008,15 +1008,28 @@ function placeResourcesAggressively(desertPositions: number[], resourcePool: Ter
       }
     }
     
-    // Check if this placement has any clustering issues
+    // STRICT: Check if this placement has any clustering issues
     if (!placementFailed && !hasAnyClustering(terrains)) {
-      return terrains;
+      // Double-check with comprehensive validation
+      const visited = new Array(30).fill(false);
+      let hasViolation = false;
+      for (let i = 0; i < 30; i++) {
+        if (visited[i] || terrains[i] === 'desert') continue;
+        const clusterSize = getClusterSize(terrains, i, terrains[i], visited);
+        if (clusterSize > 2) {
+          hasViolation = true;
+          break;
+        }
+      }
+      if (!hasViolation) {
+        return terrains; // Valid board!
+      }
     }
   }
   
-  // If aggressive placement also fails, create a minimal valid board
-  console.warn('⚠️ All placement strategies failed, creating minimal valid board...');
-  return createMinimalValidBoard(desertPositions, resourcePool);
+  // If aggressive placement also fails, return null to force retry
+  // NEVER return invalid boards - the calling function will retry with new deserts
+  return null;
 }
 
 // Create a minimal valid board when all else fails
