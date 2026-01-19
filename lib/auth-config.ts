@@ -85,6 +85,13 @@ export const authOptions: NextAuthOptions = {
         if (userExists && dbUser) {
           // User exists - allow sign-in
           // Note: We don't update provider info here since columns may not exist
+          console.log('✅ User exists in database:', {
+            id: dbUser.id,
+            username: dbUser.username,
+            email: dbUser.email,
+            hasPassword: !!dbUser.passwordHash,
+          });
+          
           if (dbUser.passwordHash) {
             // User has a password account - OAuth can also sign in
             console.log('✅ Signing in existing user with password account:', dbUser.username);
@@ -92,6 +99,8 @@ export const authOptions: NextAuthOptions = {
             // OAuth-only account or no password
             console.log('✅ Signing in OAuth user:', dbUser.username);
           }
+          
+          console.log('✅ Returning true from signIn callback');
           return true;
         } else {
           // New user - create account
