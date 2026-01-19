@@ -5,14 +5,26 @@ import { supabaseAdmin } from './supabase';
 import { generateToken } from './auth';
 import { generateDefaultAvatar } from './auth';
 
-// Validate OAuth credentials
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-const facebookClientId = process.env.FACEBOOK_CLIENT_ID;
-const facebookClientSecret = process.env.FACEBOOK_CLIENT_SECRET;
+// Validate OAuth credentials - trim whitespace to prevent issues
+const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+const facebookClientId = process.env.FACEBOOK_CLIENT_ID?.trim();
+const facebookClientSecret = process.env.FACEBOOK_CLIENT_SECRET?.trim();
+
+// Log credential status (without exposing secrets)
+if (process.env.NODE_ENV === 'production') {
+  console.log('🔐 OAuth Credentials Check:', {
+    googleClientId: googleClientId ? `${googleClientId.substring(0, 20)}...${googleClientId.substring(googleClientId.length - 10)}` : 'NOT SET',
+    googleClientSecret: googleClientSecret ? `SET (length: ${googleClientSecret.length}, ends with: ${googleClientSecret.substring(googleClientSecret.length - 4)})` : 'NOT SET',
+    googleClientIdLength: googleClientId?.length || 0,
+    googleClientSecretLength: googleClientSecret?.length || 0,
+  });
+}
 
 if (!googleClientId || !googleClientSecret) {
-  console.warn('⚠️ Google OAuth credentials not configured. Google sign-in will not work.');
+  console.error('❌ Google OAuth credentials not configured. Google sign-in will not work.');
+  console.error('❌ GOOGLE_CLIENT_ID:', googleClientId ? 'SET' : 'MISSING');
+  console.error('❌ GOOGLE_CLIENT_SECRET:', googleClientSecret ? 'SET' : 'MISSING');
 }
 
 if (!facebookClientId || !facebookClientSecret) {
@@ -24,8 +36,12 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: googleClientId || '',
       clientSecret: googleClientSecret || '',
-      // Remove custom authorization params - let NextAuth handle defaults
-      // The prompt parameter might be causing issues
+      // Explicitly set scopes to ensure we only request basic info
+      authorization: {
+        params: {
+          scope: 'openid email profile',
+        },
+      },
     }),
     FacebookProvider({
       clientId: facebookClientId || '',
