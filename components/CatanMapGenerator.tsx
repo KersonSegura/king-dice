@@ -811,11 +811,11 @@ function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[],
   const shuffledResources = shuffleInPlace([...resourcePool]);
   let resourceIndex = 0;
   
-  // Place resources one by one with immediate validation
+  // Place resources one by one with STRICT validation at each step
   for (const pos of emptyPositions) {
-    // Get all resources that don't create immediate clustering
+    // Get all resources that don't create ANY clustering violation
     const validResources = shuffledResources.filter(resource => 
-      !wouldCreateTripleCluster(terrains, pos, resource)
+      !wouldCreateClusterViolation(terrains, pos, resource)
     );
     
     if (validResources.length === 0) {
@@ -828,9 +828,19 @@ function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[],
     // Place the resource
     terrains[pos] = chosenResource;
     
-    // IMMEDIATELY check if this creates any clustering issues
+    // STRICT: Immediately validate after placement - check for ANY cluster > 2
     if (hasAnyClustering(terrains)) {
       return null; // This placement created clustering, fail and retry
+    }
+    
+    // Additional validation: ensure no cluster > 2 exists
+    const visited = new Array(30).fill(false);
+    for (let i = 0; i < 30; i++) {
+      if (visited[i] || terrains[i] === 'desert') continue;
+      const clusterSize = getClusterSize(terrains, i, terrains[i], visited);
+      if (clusterSize > 2) {
+        return null; // Found cluster > 2, fail immediately
+      }
     }
     
     // Remove the chosen resource from the pool
@@ -838,7 +848,6 @@ function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[],
     if (resourceIndexToRemove !== -1) {
       shuffledResources.splice(resourceIndexToRemove, 1);
     }
-    
   }
   
   return terrains;
@@ -846,7 +855,7 @@ function placeResourcesSimple(resourcePool: Terrain[], emptyPositions: number[],
 
 
 
-// Check if placing a resource would create a triple cluster
+// Check if placing a resource would create a cluster of 3+ (STRICT VALIDATION)
 function wouldCreateTripleCluster(terrains: Terrain[], pos: number, resource: Terrain): boolean {
   const neighbors = EXPANSION_NEIGHBORS[pos];
   if (!neighbors) return false;
@@ -855,7 +864,51 @@ function wouldCreateTripleCluster(terrains: Terrain[], pos: number, resource: Te
   const sameTypeNeighbors = neighbors.filter(n => terrains[n] === resource);
   
   // If 2+ neighbors of same type already exist, placing this will make 3+
-  return sameTypeNeighbors.length >= 2;
+  if (sameTypeNeighbors.length >= 2) {
+    return true;
+  }
+  
+  // Additional check: If there's 1 neighbor of same type, check if that neighbor
+  // is part of a chain that would become 3+ when we place this tile
+  if (sameTypeNeighbors.length === 1) {
+    const neighborPos = sameTypeNeighbors[0];
+    const neighborNeighbors = EXPANSION_NEIGHBORS[neighborPos] || [];
+    // Check if that neighbor has another neighbor (besides us) of the same type
+    const otherSameTypeNeighbors = neighborNeighbors.filter(n => 
+      n !== pos && terrains[n] === resource
+    );
+    // If the neighbor already has another neighbor of the same type, placing here makes 3+
+    if (otherSameTypeNeighbors.length > 0) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Check if placing a resource at a position would create any cluster > 2 (COMPREHENSIVE)
+function wouldCreateClusterViolation(terrains: Terrain[], pos: number, resource: Terrain): boolean {
+  // First check immediate triple cluster
+  if (wouldCreateTripleCluster(terrains, pos, resource)) {
+    return true;
+  }
+  
+  // Simulate placing the resource
+  const testTerrains = [...terrains];
+  testTerrains[pos] = resource;
+  
+  // Check if this placement creates any cluster of 3+
+  const visited = new Array(30).fill(false);
+  for (let i = 0; i < 30; i++) {
+    if (visited[i] || testTerrains[i] !== resource) continue;
+    
+    const clusterSize = getClusterSize(testTerrains, i, resource, visited);
+    if (clusterSize > 2) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 // Check if the entire board has any clustering issues
