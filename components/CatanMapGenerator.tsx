@@ -706,8 +706,8 @@ export function makeValidExpansionBoard(customRules: any): Board {
     
     // Final STRICT validation checks - ALL must pass
     const hasValidDistribution = validateNumberDistribution(numbers);
-    const hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
-    const hasValidTerrains = terrainsPassClusterRule(terrains, customRules) && !hasAnyClustering(terrains);
+    let hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
+    let hasValidTerrains = terrainsPassClusterRule(terrains, customRules) && !hasAnyClustering(terrains);
     
     // CRITICAL: Log validation results ALWAYS
     console.log(`🔍 EXPANSION BOARD VALIDATION (Attempt ${boardAttempt + 1}):`, {
