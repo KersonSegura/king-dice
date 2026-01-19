@@ -27,7 +27,22 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         params: {
           scope: 'openid email profile', // Basic scopes only - no verification needed
+          prompt: 'select_account consent', // Force account selection and consent
         },
+      },
+      // Add profile callback to ensure we get email
+      profile(profile) {
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('🔄 Google Provider Profile Callback');
+        console.log('🔄 Profile data:', JSON.stringify(profile, null, 2));
+        console.log('═══════════════════════════════════════════════════════');
+        
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        };
       },
     }),
     FacebookProvider({
