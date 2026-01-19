@@ -1930,30 +1930,34 @@ export const EXPANSION_NEIGHBORS: number[][] = [
 export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any): boolean {
   const validationId = Math.random().toString(36).substr(2, 9);
   
-  // Check ALL 30 tiles (indices 0-29) - tile 30 (index 29) DOES have neighbors according to EXPANSION_NEIGHBORS
+  // CRITICAL FIX: Check ALL 30 tiles and ALL adjacencies, not just HOT-to-HOT
+  // We must check every position that has a number, checking all its neighbors
   for (let i = 0; i < 30; i++) {
     const a = nums[i];
-    if (!HOT.has(a as number)) continue;
+    if (a === null) continue; // Skip null positions, but check ALL numbers (not just HOT)
     
-    for (let jIdx = 0; jIdx < EXPANSION_NEIGHBORS[i].length; jIdx++) {
-      const j = EXPANSION_NEIGHBORS[i][jIdx];
+    const neighbors = EXPANSION_NEIGHBORS[i] || [];
+    for (let jIdx = 0; jIdx < neighbors.length; jIdx++) {
+      const j = neighbors[jIdx];
       const b = nums[j];
-      if (HOT.has(b as number)) {
-        // Rule 1: 6 cannot be adjacent to 8 and vice versa (unless custom rule allows)
-        if ((a === 6 && b === 8) || (a === 8 && b === 6)) {
-          if (!customRules.sixEightCanTouch) {
-            return false;
-          } else {
-          }
-        }
-        // Rule 2: Two 6s can NEVER be adjacent to each other (ALWAYS enforced)
-        if (a === 6 && b === 6) {
+      if (b === null) continue; // Skip null neighbors
+      
+      // Rule 1: 6 cannot be adjacent to 8 and vice versa (unless custom rule allows)
+      // CRITICAL: Check this for ANY position with 6 or 8, not just when both are in HOT
+      if ((a === 6 && b === 8) || (a === 8 && b === 6)) {
+        if (!customRules.sixEightCanTouch) {
           return false;
         }
-        // Rule 3: Two 8s can NEVER be adjacent to each other (ALWAYS enforced)
-        if (a === 8 && b === 8) {
-          return false;
-        }
+      }
+      
+      // Rule 2: Two 6s can NEVER be adjacent to each other (ALWAYS enforced)
+      if (a === 6 && b === 6) {
+        return false;
+      }
+      
+      // Rule 3: Two 8s can NEVER be adjacent to each other (ALWAYS enforced)
+      if (a === 8 && b === 8) {
+        return false;
       }
     }
   }
