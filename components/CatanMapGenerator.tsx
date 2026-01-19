@@ -793,9 +793,10 @@ function placeResourceTiles(desertPositions: number[]): Terrain[] {
     return minimalResult;
   }
   
-  // Last resort: return even with clustering (should be very rare)
-  console.error('❌ Could not create board without clustering - returning best attempt');
-  return minimalResult;
+  // Last resort: If even minimal board has clustering, return null to force retry
+  // NEVER return invalid boards - the calling function will retry with new deserts
+  console.error('❌ Could not create board without clustering after all strategies');
+  return null; // Force retry with new board
 }
 
 // Simple, reliable resource placement with immediate validation
@@ -989,7 +990,7 @@ function placeResourcesAggressively(desertPositions: number[], resourcePool: Ter
         const resourceToPlace = shuffledResources[resourceIndex];
         
         // Try to find a better position for this resource if it would create clustering
-        if (wouldCreateTripleCluster(terrains, i, resourceToPlace)) {
+        if (wouldCreateClusterViolation(terrains, i, resourceToPlace)) {
           // Look for a better position
           let betterPosition = findBetterPosition(terrains, resourceToPlace, desertPositions);
           if (betterPosition !== -1) {
