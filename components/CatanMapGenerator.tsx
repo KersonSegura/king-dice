@@ -2441,7 +2441,55 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         }
         
 
-        // Final validation (different for classic vs expansion)
+        // CRITICAL: Final validation with detailed error reporting (different for classic vs expansion)
+        if (currentMapType === 'expansion') {
+          // For expansion, do comprehensive validation and log any violations
+          const numbersArray = newHexagons.map(h => h.number);
+          const terrainsArray = newHexagons.map(h => h.type);
+          
+          // Validate numbers
+          if (!noHotAdjacencyExpansion(numbersArray, customRules)) {
+            console.error('❌ EXPANSION BOARD VALIDATION FAILED: Number adjacency violations detected!');
+            // Find and log specific violations
+            for (let i = 0; i < 30; i++) {
+              const a = numbersArray[i];
+              if (a === null) continue;
+              const neighbors = EXPANSION_NEIGHBORS[i] || [];
+              for (const j of neighbors) {
+                const b = numbersArray[j];
+                if (b === null) continue;
+                
+                // Check 6-8 adjacency
+                if (!customRules.sixEightCanTouch) {
+                  if ((a === 6 && b === 8) || (a === 8 && b === 6)) {
+                    console.error(`❌ VIOLATION FOUND: 6-8 adjacency at positions ${i} (${a}) and ${j} (${b})`);
+                  }
+                }
+                
+                // Check same number adjacency
+                if (!customRules.sameNumbersCanTouch && a === b) {
+                  console.error(`❌ VIOLATION FOUND: Same number ${a} adjacent at positions ${i} and ${j}`);
+                }
+              }
+            }
+            // Still continue but log the error
+          }
+          
+          // Validate terrains
+          if (hasAnyClustering(terrainsArray)) {
+            console.error('❌ EXPANSION BOARD VALIDATION FAILED: Terrain clustering violations detected!');
+            // Find and log specific clusters
+            const visited = new Array(30).fill(false);
+            for (let i = 0; i < 30; i++) {
+              if (visited[i] || terrainsArray[i] === 'desert') continue;
+              const clusterSize = getClusterSize(terrainsArray, i, terrainsArray[i], visited);
+              if (clusterSize > 2) {
+                console.error(`❌ VIOLATION FOUND: Cluster of ${clusterSize} ${terrainsArray[i]} tiles starting at position ${i}`);
+              }
+            }
+          }
+        }
+        
         if (currentMapType === 'classic') {
           if (!noHotAdjacency(board.numbers, customRules)) {
             console.warn('⚠️ Classic board has some adjacency violations - displaying anyway');
