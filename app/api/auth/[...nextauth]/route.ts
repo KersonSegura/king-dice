@@ -15,6 +15,14 @@ export async function GET(request: NextRequest, context: any) {
   console.log('🔄 Pathname:', pathname);
   console.log('🔄 Full URL:', url);
   console.log('🔄 Search params:', searchParams);
+  
+  // Special logging for callback
+  if (pathname.includes('/callback/')) {
+    console.log('🔄 THIS IS AN OAUTH CALLBACK REQUEST');
+    console.log('🔄 Callback provider:', pathname.split('/callback/')[1]);
+    console.log('🔄 All query params:', Object.fromEntries(request.nextUrl.searchParams.entries()));
+  }
+  
   console.log('═══════════════════════════════════════════════════════');
   
   try {
@@ -25,6 +33,12 @@ export async function GET(request: NextRequest, context: any) {
     if (response?.status === 302 || response?.status === 307) {
       const location = response.headers.get('location');
       console.log('🔄 NextAuth redirecting to:', location);
+      
+      // If redirecting to error, log it
+      if (location?.includes('/error') || location?.includes('error=')) {
+        console.error('❌ NextAuth is redirecting to error page');
+        console.error('❌ Error redirect URL:', location);
+      }
     }
     
     return response;
