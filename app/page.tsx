@@ -176,6 +176,28 @@ export default function HomePage() {
       router.push(`/collection/${user.username}`);
     }
   }, [isAuthenticated, isAuthLoading, router, setShowLoginModal, user?.username]);
+
+  // Close login modal automatically after successful OAuth sign-in
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // If user is authenticated and modal is open, close it (OAuth success)
+    if (!isAuthLoading && isAuthenticated && showLoginModal) {
+      // Check if this is after an OAuth callback (no error in URL)
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasError = urlParams.has('error');
+      
+      // If no error and user is authenticated, close the modal
+      if (!hasError) {
+        setShowLoginModal(false);
+        // Clean up OAuth-related sessionStorage
+        sessionStorage.removeItem('oauth_provider');
+        sessionStorage.removeItem('oauth_callback');
+        sessionStorage.removeItem('loginModalOpen');
+      }
+    }
+  }, [isAuthenticated, isAuthLoading, showLoginModal, setShowLoginModal]);
+
   const [hotGames, setHotGames] = useState<Game[]>([]);
   const [topRankedGames, setTopRankedGames] = useState<Game[]>([]);
   // Vote data is now loaded on-demand when users interact with star buttons
