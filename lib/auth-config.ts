@@ -45,16 +45,25 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Log immediately to ensure we see this in logs
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔄 SIGNIN CALLBACK CALLED');
+      console.log('🔄 User email:', user?.email);
+      console.log('🔄 Provider:', account?.provider);
+      console.log('🔄 User object keys:', Object.keys(user || {}));
+      console.log('🔄 Account object keys:', Object.keys(account || {}));
+      console.log('🔄 User email exists:', !!user?.email);
+      console.log('═══════════════════════════════════════════════════════');
+      
+      // Early return check - log if email is missing
+      if (!user?.email) {
+        console.error('❌ NO EMAIL IN USER OBJECT');
+        console.error('❌ Full user object:', JSON.stringify(user, null, 2));
+        console.error('❌ Full account object:', JSON.stringify(account, null, 2));
+        return false;
+      }
+      
       try {
-        console.log('🔄 SignIn callback - User:', user.email, 'Provider:', account?.provider);
-        console.log('🔄 SignIn callback - Full user object:', JSON.stringify(user, null, 2));
-        console.log('🔄 SignIn callback - Account:', JSON.stringify(account, null, 2));
-        
-        if (!user.email) {
-          console.error('❌ OAuth sign-in failed: No email provided');
-          console.error('❌ User object:', user);
-          return false;
-        }
 
         console.log('🔍 Checking if user exists in database for email:', user.email);
         
