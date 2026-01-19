@@ -612,9 +612,9 @@ export function makeValidBoard(customRules: any): Board {
 // Expansion board generation (5-6 players) - Improved step-by-step logic
 export function makeValidExpansionBoard(customRules: any): Board {
   
-  const MAX_BOARD_GENERATION_ATTEMPTS = 50; // Increased attempts for strict rule enforcement
+  const MAX_BOARD_GENERATION_ATTEMPTS = 200; // Significantly increased attempts for strict rule enforcement
   
-  // Try multiple times to generate a valid board
+  // Try multiple times to generate a valid board - NEVER return invalid board
   for (let boardAttempt = 0; boardAttempt < MAX_BOARD_GENERATION_ATTEMPTS; boardAttempt++) {
     
     // Step 1: Place Deserts First
@@ -623,87 +623,115 @@ export function makeValidExpansionBoard(customRules: any): Board {
     // Step 2: Place Resource Tiles with strict validation
     let terrains = placeResourceTiles(desertPositions);
     
-    // Validate terrain clustering - MUST pass or retry entire board
+    // STRICT: Validate terrain clustering - MUST pass or retry entire board
     if (!terrainsPassClusterRule(terrains, customRules)) {
-      console.warn(`⚠️ Terrain clustering violation detected (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS}), regenerating board...`);
-      continue; // Retry from beginning
+      continue; // Retry from beginning - NO logging to avoid spam
     }
     
-    // Additional check: ensure no 3+ tiles in a line
+    // STRICT: Additional check: ensure no 3+ tiles in a line - MUST pass
     if (hasAnyClustering(terrains)) {
-      console.warn(`⚠️ Resource clustering detected (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS}), regenerating board...`);
-      continue; // Retry from beginning
+      continue; // Retry from beginning - NO logging to avoid spam
     }
     
-    // Step 3: Place Number Tokens Using Smart Placement Strategy
-    // This will automatically use smart placement if 6-8 cannot touch,
-    // or fall back to the original chit ring method if they can touch
-    let numbers = placeNumberTokens(desertPositions, customRules);
+    // Step 3: Place Number Tokens - ALWAYS use smart placement if 6-8 cannot touch
+    // This ensures 6 & 8 are NEVER adjacent when the rule is enforced
+    let numbers: (number | null)[] | null = null;
     
-    // Validate number distribution first
-    if (!validateNumberDistribution(numbers)) {
-      console.warn(`⚠️ Invalid number distribution (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS}), regenerating...`);
-      // Regenerate numbers for this board
-      numbers = placeNumberTokens(desertPositions, customRules);
-      if (!validateNumberDistribution(numbers)) {
-        continue; // If still invalid, retry entire board
-      }
-    }
-    
-    // Validate adjacency rules - retry if invalid (but with limit to avoid infinite loops)
-    const MAX_NUMBER_RETRIES = 20;
-    let numberRetryAttempts = 0;
-    
-    while (!noHotAdjacencyExpansion(numbers, customRules) && numberRetryAttempts < MAX_NUMBER_RETRIES) {
-      console.warn(`⚠️ Number adjacency violations (attempt ${numberRetryAttempts + 1}/${MAX_NUMBER_RETRIES}), trying to repair...`);
-      // Try to repair the board
-      const repaired = repairExpansionAdjacency(numbers, customRules);
+    // Try multiple times to place numbers correctly
+    const MAX_NUMBER_PLACEMENT_ATTEMPTS = 100;
+    for (let numAttempt = 0; numAttempt < MAX_NUMBER_PLACEMENT_ATTEMPTS; numAttempt++) {
+      const candidateNumbers = placeNumberTokens(desertPositions, customRules);
       
-      // Validate distribution after repair
-      if (!validateNumberDistribution(repaired)) {
-        console.error('❌ Repair invalidated number distribution - regenerating numbers...');
-        numbers = placeNumberTokens(desertPositions, customRules);
-        numberRetryAttempts++;
-        continue;
+      // STRICT: Validate number distribution - MUST match exactly
+      if (!candidateNumbers || !validateNumberDistribution(candidateNumbers)) {
+        continue; // Try again
       }
       
-      if (noHotAdjacencyExpansion(repaired, customRules)) {
-        numbers.splice(0, numbers.length, ...repaired);
-        break;
+      // STRICT: Validate adjacency rules - MUST pass or retry
+      if (!noHotAdjacencyExpansion(candidateNumbers, customRules)) {
+        continue; // Try again
       }
-      // If repair didn't work, regenerate the numbers
-      numbers = placeNumberTokens(desertPositions, customRules);
-      numberRetryAttempts++;
+      
+      // STRICT: Additional check for 6-8 adjacency if rule is enforced
+      if (!customRules.sixEightCanTouch) {
+        let has6_8Adjacency = false;
+        for (let i = 0; i < 30; i++) {
+          if (candidateNumbers[i] === 6 || candidateNumbers[i] === 8) {
+            const neighbors = EXPANSION_NEIGHBORS[i] || [];
+            for (const neighbor of neighbors) {
+              if ((candidateNumbers[i] === 6 && candidateNumbers[neighbor] === 8) || 
+                  (candidateNumbers[i] === 8 && candidateNumbers[neighbor] === 6)) {
+                has6_8Adjacency = true;
+                break;
+              }
+            }
+            if (has6_8Adjacency) break;
+          }
+        }
+        if (has6_8Adjacency) {
+          continue; // Found 6-8 adjacency, retry
+        }
+      }
+      
+      // If we get here, numbers are valid!
+      numbers = candidateNumbers;
+      break;
     }
     
-    // Final validation checks - if ALL pass, return the board
+    // If numbers are still invalid after all attempts, retry entire board
+    if (!numbers || !validateNumberDistribution(numbers) || !noHotAdjacencyExpansion(numbers, customRules)) {
+      continue; // Retry entire board
+    }
+    
+    // Final strict check for 6-8 adjacency
+    if (!customRules.sixEightCanTouch) {
+      let has6_8Adjacency = false;
+      for (let i = 0; i < 30; i++) {
+        if (numbers[i] === 6 || numbers[i] === 8) {
+          const neighbors = EXPANSION_NEIGHBORS[i] || [];
+          for (const neighbor of neighbors) {
+            if ((numbers[i] === 6 && numbers[neighbor] === 8) || 
+                (numbers[i] === 8 && numbers[neighbor] === 6)) {
+              has6_8Adjacency = true;
+              break;
+            }
+          }
+          if (has6_8Adjacency) break;
+        }
+      }
+      if (has6_8Adjacency) {
+        continue; // Found 6-8 adjacency, retry entire board
+      }
+    }
+    
+    // Final STRICT validation checks - ALL must pass
     const hasValidDistribution = validateNumberDistribution(numbers);
     const hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
     const hasValidTerrains = terrainsPassClusterRule(terrains, customRules) && !hasAnyClustering(terrains);
     
     if (hasValidDistribution && hasValidAdjacency && hasValidTerrains) {
-      // Perfect board found!
+      // Perfect valid board found! Return it.
       return { terrains: terrains as Terrain[], numbers: numbers };
-    } else {
-      // Log what failed and retry
-      if (!hasValidDistribution) {
-        console.warn(`⚠️ Invalid number distribution after retries (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
-      }
-      if (!hasValidAdjacency) {
-        console.warn(`⚠️ Number adjacency violations after retries (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
-      }
-      if (!hasValidTerrains) {
-        console.warn(`⚠️ Terrain clustering violations after retries (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
-      }
-      continue; // Retry entire board
     }
+    
+    // If any validation fails, retry entire board (continue loop)
   }
   
-  // If we've exhausted all attempts, try one more time and return the best we can get
-  console.error('❌ Could not generate valid expansion board after all attempts - returning best attempt');
+  // If we've exhausted ALL attempts, throw an error instead of returning invalid board
+  console.error('❌ CRITICAL: Could not generate valid expansion board after ' + MAX_BOARD_GENERATION_ATTEMPTS + ' attempts');
+  console.error('❌ This should not happen - there may be a logic error in the placement algorithms');
+  
+  // Last resort: Generate one more board and validate it one more time
+  // If still invalid, we have a serious problem
   const desertPositions = placeDesertsRandomly();
   const terrains = placeResourceTiles(desertPositions);
   const numbers = placeNumberTokens(desertPositions, customRules);
+  
+  // Final check - if still invalid, we need to fix the algorithms
+  if (!terrainsPassClusterRule(terrains, customRules) || hasAnyClustering(terrains) || 
+      !validateNumberDistribution(numbers) || !noHotAdjacencyExpansion(numbers, customRules)) {
+    throw new Error('CRITICAL: Expansion board generator cannot create valid boards. Algorithms need fixing.');
+  }
   
   return { terrains: terrains as Terrain[], numbers: numbers };
 }
@@ -1025,10 +1053,12 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
     return placeNumbersSmartly(desertPositions, customRules);
   }
   
-  // Otherwise, use the original chit ring method
+  // Otherwise, use the original chit ring method (only if 6-8 can touch)
+  // NOTE: If 6-8 cannot touch, we should have used smart placement above
+  // This fallback should rarely be used
   
   // Try multiple times to get a valid placement
-  for (let attempt = 0; attempt < 200; attempt++) {
+  for (let attempt = 0; attempt < 500; attempt++) {
     // Randomize the starting point and rotation for variety
     const shuffledNumbers = shuffleInPlace([...expansionNumbers]);
     const numbers: (number | null)[] = new Array(30).fill(null);
@@ -1105,12 +1135,19 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
       return secondRepair;
     }
     
-    // If still not perfect, return the best we have (better than crashing)
-    console.warn("⚠️ Could not achieve perfect adjacency after multiple attempts, returning best attempt");
-    return secondRepair;
+    // STRICT: Do NOT return invalid boards - return null instead
+    // The calling function will retry with a new board
+    console.warn("⚠️ Could not achieve perfect adjacency after multiple attempts");
+    return null; // Return null to signal failure, forcing retry
   }
   
-  return repaired;
+  // Validate repaired board before returning
+  if (noHotAdjacencyExpansion(repaired, customRules)) {
+    return repaired;
+  }
+  
+  // If repair didn't work, return null to force retry
+  return null;
 }
 
 // Smart placement function that prevents 6-8 adjacency by placing them first
@@ -1252,10 +1289,25 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         numbers[position] = number;
       }
       
-      // Final validation to ensure no adjacency violations
+      // STRICT Final validation to ensure no adjacency violations
       if (!noHotAdjacencyExpansion(numbers, customRules)) {
         // If validation fails, restart the attempt
         throw new Error('RETRY_PLACEMENT');
+      }
+      
+      // STRICT: Double-check 6-8 adjacency if rule is enforced
+      if (!customRules.sixEightCanTouch) {
+        // Verify no 6 is adjacent to any 8
+        for (let i = 0; i < 30; i++) {
+          if (numbers[i] === 6) {
+            const neighbors = EXPANSION_NEIGHBORS[i] || [];
+            for (const neighbor of neighbors) {
+              if (numbers[neighbor] === 8) {
+                throw new Error('RETRY_PLACEMENT'); // Found 6-8 adjacency, retry
+              }
+            }
+          }
+        }
       }
       
       // Success! Return the valid placement
