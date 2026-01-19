@@ -152,19 +152,22 @@ export async function DELETE(request: NextRequest) {
 
     console.log(`✅ Successfully deleted account for user: ${userId}`);
 
-    // Clear the authentication cookie
+    // Clear the authentication cookies (both auth_token and token for compatibility)
     const response = NextResponse.json({
       success: true,
       message: 'Account deleted successfully'
     });
 
-    response.cookies.set('token', '', {
+    const clearCookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       maxAge: 0,
       path: '/'
-    });
+    };
+
+    response.cookies.set('auth_token', '', clearCookieOptions);
+    response.cookies.set('token', '', clearCookieOptions);
 
     return response;
 
