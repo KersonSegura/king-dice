@@ -709,9 +709,60 @@ export function makeValidExpansionBoard(customRules: any): Board {
     const hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
     const hasValidTerrains = terrainsPassClusterRule(terrains, customRules) && !hasAnyClustering(terrains);
     
+    // CRITICAL: Log validation results ALWAYS
+    console.log(`🔍 EXPANSION BOARD VALIDATION (Attempt ${boardAttempt + 1}):`, {
+      hasValidDistribution,
+      hasValidAdjacency,
+      hasValidTerrains,
+      sixEightCanTouch: customRules.sixEightCanTouch
+    });
+    
+    // Manual check for 6-8 adjacency violations (ALWAYS run this check)
+    if (!customRules.sixEightCanTouch) {
+      let found6_8Violation = false;
+      for (let i = 0; i < 30; i++) {
+        if (numbers[i] === 6 || numbers[i] === 8) {
+          const neighbors = EXPANSION_NEIGHBORS[i] || [];
+          for (const neighbor of neighbors) {
+            const neighborNum = numbers[neighbor];
+            if (neighborNum === null) continue;
+            if ((numbers[i] === 6 && neighborNum === 8) || (numbers[i] === 8 && neighborNum === 6)) {
+              console.error(`❌❌❌ CRITICAL: Found 6-8 adjacency at positions ${i} (${numbers[i]}) and ${neighbor} (${neighborNum})`);
+              found6_8Violation = true;
+              hasValidAdjacency = false; // Force invalid
+            }
+          }
+        }
+      }
+      if (found6_8Violation) {
+        console.error('❌❌❌ Board has 6-8 adjacency violation - will retry');
+        continue; // Retry
+      }
+    }
+    
+    // Manual check for cluster violations (ALWAYS run this check)
+    const visited = new Array(30).fill(false);
+    let foundClusterViolation = false;
+    for (let i = 0; i < 30; i++) {
+      if (visited[i] || terrains[i] === 'desert') continue;
+      const clusterSize = getClusterSize(terrains, i, terrains[i], visited);
+      if (clusterSize > 2) {
+        console.error(`❌❌❌ CRITICAL: Found cluster of ${clusterSize} ${terrains[i]} tiles starting at position ${i}`);
+        foundClusterViolation = true;
+        hasValidTerrains = false; // Force invalid
+      }
+    }
+    if (foundClusterViolation) {
+      console.error('❌❌❌ Board has cluster violation - will retry');
+      continue; // Retry
+    }
+    
     if (hasValidDistribution && hasValidAdjacency && hasValidTerrains) {
       // Perfect valid board found! Return it.
+      console.log('✅✅✅ VALID EXPANSION BOARD FOUND!');
       return { terrains: terrains as Terrain[], numbers: numbers };
+    } else {
+      console.warn(`⚠️ Validation failed - retrying (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
     }
     
     // If any validation fails, retry entire board (continue loop)
