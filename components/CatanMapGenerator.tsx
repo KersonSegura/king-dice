@@ -1332,14 +1332,50 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         }
       }
   
-      // Step 3: Place all remaining numbers randomly in remaining positions
+      // Step 3: Place all remaining numbers with STRICT validation at each step
       const remainingNumbers = expansionNumbers.filter(n => n !== 6 && n !== 8);
       const shuffledRemaining = shuffleInPlace([...remainingNumbers]);
       
       for (let i = 0; i < shuffledRemaining.length && i < availablePositions.length; i++) {
         const number = shuffledRemaining[i];
         const position = availablePositions[i];
+        
+        // STRICT: Validate BEFORE placing - check if this placement would create violations
+        const neighbors = EXPANSION_NEIGHBORS[position] || [];
+        for (const neighbor of neighbors) {
+          const neighborNum = numbers[neighbor];
+          if (neighborNum === null) continue;
+          
+          // Check 6-8 adjacency
+          if (!customRules.sixEightCanTouch) {
+            if ((number === 6 && neighborNum === 8) || (number === 8 && neighborNum === 6)) {
+              throw new Error('RETRY_PLACEMENT'); // Would create 6-8 adjacency
+            }
+          }
+          
+          // Check same number adjacency (if rule enforced)
+          if (!customRules.sameNumbersCanTouch) {
+            if (number === neighborNum && number !== 6 && number !== 8) {
+              // 6-6 and 8-8 are already handled, this is for other numbers
+              throw new Error('RETRY_PLACEMENT'); // Would create same number adjacency
+            }
+          }
+          
+          // Check 2-12 adjacency (if rule enforced)
+          if (!customRules.twoTwelveCanTouch) {
+            if ((number === 2 && neighborNum === 12) || (number === 12 && neighborNum === 2)) {
+              throw new Error('RETRY_PLACEMENT'); // Would create 2-12 adjacency
+            }
+          }
+        }
+        
+        // Place the number
         numbers[position] = number;
+        
+        // STRICT: Validate AFTER placement - check entire board
+        if (!noHotAdjacencyExpansion(numbers, customRules)) {
+          throw new Error('RETRY_PLACEMENT'); // Violation detected after placement
+        }
       }
       
       // STRICT Final validation to ensure no adjacency violations
