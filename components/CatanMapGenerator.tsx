@@ -1323,39 +1323,9 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
     }
   }
   
-  // If we exhausted all attempts, fall back to a more permissive placement
-  console.warn('⚠️ Could not find valid placement after ' + maxAttempts + ' attempts, using fallback...');
-  
-  // Initialize board with nulls
-  const numbers: (number | null)[] = new Array(30).fill(null);
-  
-  // Place deserts first (no numbers)
-  desertPositions.forEach(pos => {
-    numbers[pos] = null;
-  });
-  
-  // Get all available positions (non-desert)
-  const availablePositions = Array.from({ length: 30 }, (_, i) => i)
-    .filter(i => !desertPositions.includes(i));
-  
-  // Shuffle all numbers and place them in available positions
-  const shuffledNumbers = shuffleInPlace([...expansionNumbers]);
-  let numIndex = 0;
-  
-  for (let i = 0; i < availablePositions.length && numIndex < shuffledNumbers.length; i++) {
-    numbers[availablePositions[i]] = shuffledNumbers[numIndex];
-    numIndex++;
-  }
-  
-  // Try to repair any violations
-  const repaired = repairExpansionAdjacency(numbers, customRules);
-  
-  // If repair failed, at least return something rather than crashing
-  if (!noHotAdjacencyExpansion(repaired, customRules)) {
-    console.warn('⚠️ Fallback placement has some violations - returning map anyway');
-  }
-  
-  return repaired;
+  // If we exhausted all attempts, return null to force retry
+  // NEVER return invalid boards - the calling function will retry with a new board
+  return null;
 }
 
 // Generate spiral order for expansion board (similar to classic but for 30 tiles)
@@ -1815,6 +1785,7 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
   }
   
   // Rule 4: Other same numbers cannot be adjacent (unless custom rule allows)
+  // This includes checking for same numbers that are NOT in HOT set
   if (!customRules.sameNumbersCanTouch) {
     for (let i = 0; i < 30; i++) {
       const a = nums[i];
@@ -1824,13 +1795,14 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
         const j = EXPANSION_NEIGHBORS[i][jIdx];
         const b = nums[j];
         if (a === b) {
-          return false;
+          return false; // Same numbers adjacent (e.g., two 3s, two 4s, etc.)
         }
       }
     }
   }
   
   // Additional rule: 2 and 12 cannot be adjacent (unless custom rule allows)
+  // Also check for same 12s adjacent (12-12)
   if (!customRules.twoTwelveCanTouch) {
     for (let i = 0; i < 30; i++) {
       const a = nums[i];
@@ -1839,7 +1811,31 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
           const j = EXPANSION_NEIGHBORS[i][jIdx];
           const b = nums[j];
           if ((a === 2 && b === 12) || (a === 12 && b === 2)) {
-            return false;
+            return false; // 2 and 12 adjacent
+          }
+          // Check for two 12s adjacent
+          if (a === 12 && b === 12) {
+            return false; // Two 12s adjacent
+          }
+          // Check for two 2s adjacent
+          if (a === 2 && b === 2) {
+            return false; // Two 2s adjacent
+          }
+        }
+      }
+    }
+  }
+  
+  // Also check for same 2s or 12s if sameNumbersCanTouch is false
+  if (!customRules.sameNumbersCanTouch) {
+    for (let i = 0; i < 30; i++) {
+      const a = nums[i];
+      if (a === 2 || a === 12) {
+        for (let jIdx = 0; jIdx < EXPANSION_NEIGHBORS[i].length; jIdx++) {
+          const j = EXPANSION_NEIGHBORS[i][jIdx];
+          const b = nums[j];
+          if (a === b) {
+            return false; // Same numbers adjacent (2-2 or 12-12)
           }
         }
       }
@@ -2882,9 +2878,13 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   type="checkbox" 
                   className="mr-2" 
                   checked={customRules.sameResourceCanTouch}
+                  disabled={mapType === 'expansion'}
                   onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
                 />
-                <span className="text-base text-dark-700">{tCatan('sameResourceCanTouch')}</span>
+                <span className={`text-base ${mapType === 'expansion' ? 'text-gray-500' : 'text-dark-700'}`}>
+                  {tCatan('sameResourceCanTouch')}
+                  {mapType === 'expansion' && <span className="ml-1 text-xs">(Required: Max 2 in line)</span>}
+                </span>
               </label>
               )}
             </div>
@@ -3492,9 +3492,13 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                     type="checkbox" 
                     className="mr-2" 
                     checked={customRules.sameResourceCanTouch}
+                    disabled={mapType === 'expansion'}
                     onChange={(e) => handleCustomRuleChange('sameResourceCanTouch', e.target.checked)}
                   />
-                  <span className="text-base text-dark-700">Same Resource Can Touch</span>
+                  <span className={`text-base ${mapType === 'expansion' ? 'text-gray-500' : 'text-dark-700'}`}>
+                    Same Resource Can Touch
+                    {mapType === 'expansion' && <span className="ml-1 text-xs">(Required: Max 2 in line)</span>}
+                  </span>
                 </label>
                 )}
               </div>
