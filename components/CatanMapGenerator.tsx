@@ -1425,34 +1425,66 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       }
       
       // STRICT: Final comprehensive check - validate EVERYTHING before returning
-      // Double-check 6-8 adjacency if rule is enforced (check ALL 6s and 8s)
+      // CRITICAL: Double-check 6-8 adjacency if rule is enforced (check ALL 6s and 8s)
+      // This MUST catch any violations before returning
+      if (!customRules.sixEightCanTouch) {
+        // Check every position that has a 6 or 8
+        for (let i = 0; i < 30; i++) {
+          const num = numbers[i];
+          if (num !== 6 && num !== 8) continue; // Skip positions without 6 or 8
+          
+          const neighbors = EXPANSION_NEIGHBORS[i] || [];
+          for (const neighbor of neighbors) {
+            const neighborNum = numbers[neighbor];
+            if (neighborNum === null) continue; // Skip null neighbors
+            
+            // CRITICAL: Check for 6-8 adjacency in BOTH directions
+            if ((num === 6 && neighborNum === 8) || (num === 8 && neighborNum === 6)) {
+              console.error(`❌ EXPANSION BOARD ERROR: Found 6-8 adjacency at positions ${i} (${num}) and ${neighbor} (${neighborNum})`);
+              throw new Error('RETRY_PLACEMENT'); // Found 6-8 adjacency violation - MUST RETRY
+            }
+          }
+        }
+      }
+      
+      // CRITICAL: Final validation using the comprehensive function
+      // This is the ultimate check - if this passes, the board should be valid
+      if (!noHotAdjacencyExpansion(numbers, customRules)) {
+        console.error('❌ EXPANSION BOARD ERROR: noHotAdjacencyExpansion validation failed');
+        throw new Error('RETRY_PLACEMENT'); // Final validation failed - MUST RETRY
+      }
+      
+      // Additional check: verify distribution is correct
+      if (!validateNumberDistribution(numbers)) {
+        console.error('❌ EXPANSION BOARD ERROR: Number distribution is invalid');
+        throw new Error('RETRY_PLACEMENT'); // Distribution is wrong - MUST RETRY
+      }
+      
+      // CRITICAL: One final manual check for 6-8 adjacency (belt and suspenders)
       if (!customRules.sixEightCanTouch) {
         for (let i = 0; i < 30; i++) {
-          if (numbers[i] === 6 || numbers[i] === 8) {
+          if (numbers[i] === 6) {
             const neighbors = EXPANSION_NEIGHBORS[i] || [];
             for (const neighbor of neighbors) {
-              const neighborNum = numbers[neighbor];
-              if (neighborNum === null) continue;
-              // Check 6-8 adjacency (both directions)
-              if ((numbers[i] === 6 && neighborNum === 8) || (numbers[i] === 8 && neighborNum === 6)) {
-                throw new Error('RETRY_PLACEMENT'); // Found 6-8 adjacency violation
+              if (numbers[neighbor] === 8) {
+                console.error(`❌ EXPANSION BOARD CRITICAL ERROR: Manual check found 6-8 adjacency at ${i} and ${neighbor}`);
+                throw new Error('RETRY_PLACEMENT');
+              }
+            }
+          }
+          if (numbers[i] === 8) {
+            const neighbors = EXPANSION_NEIGHBORS[i] || [];
+            for (const neighbor of neighbors) {
+              if (numbers[neighbor] === 6) {
+                console.error(`❌ EXPANSION BOARD CRITICAL ERROR: Manual check found 8-6 adjacency at ${i} and ${neighbor}`);
+                throw new Error('RETRY_PLACEMENT');
               }
             }
           }
         }
       }
       
-      // Final validation using the comprehensive function
-      if (!noHotAdjacencyExpansion(numbers, customRules)) {
-        throw new Error('RETRY_PLACEMENT'); // Final validation failed
-      }
-      
-      // Additional check: verify distribution is correct
-      if (!validateNumberDistribution(numbers)) {
-        throw new Error('RETRY_PLACEMENT'); // Distribution is wrong
-      }
-      
-      // Success! Return the valid placement
+      // Success! All validations passed - return the valid placement
       return numbers;
       
     } catch (error) {
