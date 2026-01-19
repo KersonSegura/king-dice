@@ -612,66 +612,99 @@ export function makeValidBoard(customRules: any): Board {
 // Expansion board generation (5-6 players) - Improved step-by-step logic
 export function makeValidExpansionBoard(customRules: any): Board {
   
-  // Step 1: Place Deserts First
-  const desertPositions = placeDesertsRandomly();
+  const MAX_BOARD_GENERATION_ATTEMPTS = 50; // Increased attempts for strict rule enforcement
   
-  // Step 2: Place Resource Tiles
-  const terrains = placeResourceTiles(desertPositions);
-  
-  // Step 3: Place Number Tokens Using Smart Placement Strategy
-  // This will automatically use smart placement if 6-8 cannot touch,
-  // or fall back to the original chit ring method if they can touch
-  let numbers = placeNumberTokens(desertPositions, customRules);
-  
-  // Step 4: Randomization for Variety (already implemented in the functions above)
-  
-  // Step 5: Final validation and output
-  
-  // Validate number distribution first
-  if (!validateNumberDistribution(numbers)) {
-    console.error('❌ Expansion board has invalid number distribution - regenerating...');
-    // Regenerate if distribution is wrong
-    numbers = placeNumberTokens(desertPositions, customRules);
-  }
-  
-  // Validate adjacency rules - retry if invalid (but with limit to avoid infinite loops)
-  const MAX_VALIDATION_RETRIES = 20;
-  let validationAttempts = 0;
-  
-  while (!noHotAdjacencyExpansion(numbers, customRules) && validationAttempts < MAX_VALIDATION_RETRIES) {
-    console.warn(`⚠️ Expansion board has adjacency violations (attempt ${validationAttempts + 1}/${MAX_VALIDATION_RETRIES}), trying to repair...`);
-    // Try to repair the board
-    const repaired = repairExpansionAdjacency(numbers, customRules);
+  // Try multiple times to generate a valid board
+  for (let boardAttempt = 0; boardAttempt < MAX_BOARD_GENERATION_ATTEMPTS; boardAttempt++) {
     
-    // Validate distribution after repair
-    if (!validateNumberDistribution(repaired)) {
-      console.error('❌ Repair invalidated number distribution - regenerating...');
+    // Step 1: Place Deserts First
+    const desertPositions = placeDesertsRandomly();
+    
+    // Step 2: Place Resource Tiles with strict validation
+    let terrains = placeResourceTiles(desertPositions);
+    
+    // Validate terrain clustering - MUST pass or retry entire board
+    if (!terrainsPassClusterRule(terrains, customRules)) {
+      console.warn(`⚠️ Terrain clustering violation detected (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS}), regenerating board...`);
+      continue; // Retry from beginning
+    }
+    
+    // Additional check: ensure no 3+ tiles in a line
+    if (hasAnyClustering(terrains)) {
+      console.warn(`⚠️ Resource clustering detected (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS}), regenerating board...`);
+      continue; // Retry from beginning
+    }
+    
+    // Step 3: Place Number Tokens Using Smart Placement Strategy
+    // This will automatically use smart placement if 6-8 cannot touch,
+    // or fall back to the original chit ring method if they can touch
+    let numbers = placeNumberTokens(desertPositions, customRules);
+    
+    // Validate number distribution first
+    if (!validateNumberDistribution(numbers)) {
+      console.warn(`⚠️ Invalid number distribution (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS}), regenerating...`);
+      // Regenerate numbers for this board
       numbers = placeNumberTokens(desertPositions, customRules);
-      validationAttempts++;
-      continue;
+      if (!validateNumberDistribution(numbers)) {
+        continue; // If still invalid, retry entire board
+      }
     }
     
-    if (noHotAdjacencyExpansion(repaired, customRules)) {
-      numbers.splice(0, numbers.length, ...repaired);
-      break;
+    // Validate adjacency rules - retry if invalid (but with limit to avoid infinite loops)
+    const MAX_NUMBER_RETRIES = 20;
+    let numberRetryAttempts = 0;
+    
+    while (!noHotAdjacencyExpansion(numbers, customRules) && numberRetryAttempts < MAX_NUMBER_RETRIES) {
+      console.warn(`⚠️ Number adjacency violations (attempt ${numberRetryAttempts + 1}/${MAX_NUMBER_RETRIES}), trying to repair...`);
+      // Try to repair the board
+      const repaired = repairExpansionAdjacency(numbers, customRules);
+      
+      // Validate distribution after repair
+      if (!validateNumberDistribution(repaired)) {
+        console.error('❌ Repair invalidated number distribution - regenerating numbers...');
+        numbers = placeNumberTokens(desertPositions, customRules);
+        numberRetryAttempts++;
+        continue;
+      }
+      
+      if (noHotAdjacencyExpansion(repaired, customRules)) {
+        numbers.splice(0, numbers.length, ...repaired);
+        break;
+      }
+      // If repair didn't work, regenerate the numbers
+      numbers = placeNumberTokens(desertPositions, customRules);
+      numberRetryAttempts++;
     }
-    // If repair didn't work, regenerate the numbers
-    numbers = placeNumberTokens(desertPositions, customRules);
-    validationAttempts++;
+    
+    // Final validation checks - if ALL pass, return the board
+    const hasValidDistribution = validateNumberDistribution(numbers);
+    const hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
+    const hasValidTerrains = terrainsPassClusterRule(terrains, customRules) && !hasAnyClustering(terrains);
+    
+    if (hasValidDistribution && hasValidAdjacency && hasValidTerrains) {
+      // Perfect board found!
+      return { terrains: terrains as Terrain[], numbers: numbers };
+    } else {
+      // Log what failed and retry
+      if (!hasValidDistribution) {
+        console.warn(`⚠️ Invalid number distribution after retries (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
+      }
+      if (!hasValidAdjacency) {
+        console.warn(`⚠️ Number adjacency violations after retries (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
+      }
+      if (!hasValidTerrains) {
+        console.warn(`⚠️ Terrain clustering violations after retries (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
+      }
+      continue; // Retry entire board
+    }
   }
   
-  // Final validation checks
-  const hasValidDistribution = validateNumberDistribution(numbers);
-  const hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
+  // If we've exhausted all attempts, try one more time and return the best we can get
+  console.error('❌ Could not generate valid expansion board after all attempts - returning best attempt');
+  const desertPositions = placeDesertsRandomly();
+  const terrains = placeResourceTiles(desertPositions);
+  const numbers = placeNumberTokens(desertPositions, customRules);
   
-  if (!hasValidDistribution) {
-    console.error('❌ Expansion board has invalid number distribution after all retries');
-  }
-  if (!hasValidAdjacency) {
-    console.error('❌ Expansion board has adjacency violations after all retries');
-  }
-  
-  // Still return the board even if invalid (to avoid crashes), but log errors
   return { terrains: terrains as Terrain[], numbers: numbers };
 }
 
@@ -703,7 +736,12 @@ function placeResourceTiles(desertPositions: number[]): Terrain[] {
   for (let attempt = 0; attempt < 2000; attempt++) {
     const result = placeResourcesSimple(resourcePool, emptyPositions, desertPositions);
     if (result) {
-      return result;
+      // Strict validation: check for any clustering (3+ tiles in a line)
+      // For expansion maps, maximum 2 tiles of same resource can touch
+      if (!hasAnyClustering(result)) {
+        return result;
+      }
+      // If clustering detected, continue trying
     }
     
     if (attempt % 200 === 0) {
@@ -711,7 +749,25 @@ function placeResourceTiles(desertPositions: number[]): Terrain[] {
   }
   
   console.warn('⚠️ Simple placement failed after 2000 attempts, falling back to aggressive placement...');
-  return placeResourcesAggressively(desertPositions, resourcePool);
+  const aggressiveResult = placeResourcesAggressively(desertPositions, resourcePool);
+  
+  // Final validation check for aggressive placement too
+  if (!hasAnyClustering(aggressiveResult)) {
+    return aggressiveResult;
+  }
+  
+  // If aggressive placement also has clustering, try one more time with minimal valid board
+  console.warn('⚠️ Aggressive placement still has clustering, creating minimal valid board...');
+  const minimalResult = createMinimalValidBoard(desertPositions, resourcePool);
+  
+  // Even minimal board should pass clustering check, but verify
+  if (!hasAnyClustering(minimalResult)) {
+    return minimalResult;
+  }
+  
+  // Last resort: return even with clustering (should be very rare)
+  console.error('❌ Could not create board without clustering - returning best attempt');
+  return minimalResult;
 }
 
 // Simple, reliable resource placement with immediate validation
