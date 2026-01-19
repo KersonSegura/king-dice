@@ -214,11 +214,18 @@ export const authOptions: NextAuthOptions = {
           return true;
         }
       } catch (error) {
-        console.error('❌ OAuth sign-in error:', error);
-        // Log the full error for debugging
+        console.error('═══════════════════════════════════════════════════════');
+        console.error('❌ EXCEPTION IN SIGNIN CALLBACK');
+        console.error('❌ Error type:', typeof error);
+        console.error('❌ Error:', error);
         if (error instanceof Error) {
-          console.error('❌ Error details:', error.message, error.stack);
+          console.error('❌ Error name:', error.name);
+          console.error('❌ Error message:', error.message);
+          console.error('❌ Error stack:', error.stack);
+        } else {
+          console.error('❌ Error (stringified):', JSON.stringify(error, null, 2));
         }
+        console.error('═══════════════════════════════════════════════════════');
         return false;
       }
     },
@@ -313,7 +320,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/',
-    error: '/?error=oauth_error', // Redirect to home with error parameter
+    error: '/auth/error', // Custom error page to see what went wrong
   },
   session: {
     strategy: 'jwt',
