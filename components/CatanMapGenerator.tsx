@@ -1930,6 +1930,14 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
     sameResourceCanTouch: true,
     imageStyle: 'king-dice' // Add image style state
   });
+  
+  // Ensure sameResourceCanTouch is always true for expansion maps (required: max 2 in line)
+  useEffect(() => {
+    if (mapType === 'expansion' && !customRules.sameResourceCanTouch) {
+      setCustomRules(prev => ({ ...prev, sameResourceCanTouch: true }));
+    }
+  }, [mapType, customRules.sameResourceCanTouch]);
+  
   const [isMobile, setIsMobile] = useState(false);
   const userId = useUserId();
   const { user } = useAuth();
