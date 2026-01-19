@@ -1667,9 +1667,9 @@ export const EXPANSION_NEIGHBORS: number[][] = [
   /* 22 */ [17, 18, 21, 23, 27],        // Tile 23: adjacent to 17, 18, 22, 27
   /* 23 */ [18, 19, 20, 25, 28],        // Tile 24: adjacent to 19, 20, 25, 28
   /* 24 */ [20, 21, 23, 25, 28, 29],   // Tile 25: adjacent to 20, 21, 24, 26, 28, 29
-  /* 25 */ [21, 22, 24, 26, 29, 30],   // Tile 26: adjacent to 21, 22, 25, 27, 29, 30
-  /* 26 */ [22, 23, 25, 27, 30],        // Tile 27: adjacent to 22, 23, 26, 30
-  /* 27 */ [23, 24, 25, 28],            // Tile 28: adjacent to 24, 25, 29 (1-indexed: tiles 25, 26, 29)
+  /* 25 */ [21, 22, 24, 26, 28],       // Tile 26: adjacent to 21, 22, 25, 27, 29 (fixed: removed self-ref 25, invalid 30)
+  /* 26 */ [22, 23, 25, 27, 28],        // Tile 27: adjacent to 22, 23, 26, 28 (fixed: removed self-ref 26, invalid 30)
+  /* 27 */ [23, 24, 25, 28],            // Tile 28: adjacent to 24, 25, 29
   /* 28 */ [25, 26, 27],                // Tile 29: adjacent to 25, 26, 28, 30 (1-indexed: tiles 26, 27, 29, 31) - fixed: removed invalid indices
   /* 29 */ [26, 27, 28]                 // Tile 30: adjacent to 26, 27, 29 (1-indexed: tiles 27, 28, 30) - fixed: correct neighbors
 ];
