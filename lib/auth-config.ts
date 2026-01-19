@@ -327,18 +327,26 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET,
-  debug: process.env.NODE_ENV === 'development', // Enable debug logging in development
+  debug: true, // Enable debug logging always for now
   logger: {
     error(code, metadata) {
-      console.error('❌ NextAuth error:', code, metadata);
+      console.error('═══════════════════════════════════════════════════════');
+      console.error('❌ NextAuth ERROR:', code);
+      console.error('❌ NextAuth ERROR metadata:', JSON.stringify(metadata, null, 2));
+      console.error('═══════════════════════════════════════════════════════');
     },
     warn(code) {
-      console.warn('⚠️ NextAuth warning:', code);
+      console.warn('═══════════════════════════════════════════════════════');
+      console.warn('⚠️ NextAuth WARNING:', code);
+      console.warn('═══════════════════════════════════════════════════════');
     },
     debug(code, metadata) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 NextAuth debug:', code, metadata);
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔍 NextAuth DEBUG:', code);
+      if (metadata) {
+        console.log('🔍 NextAuth DEBUG metadata:', JSON.stringify(metadata, null, 2));
       }
+      console.log('═══════════════════════════════════════════════════════');
     },
   },
 };
