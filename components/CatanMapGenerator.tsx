@@ -621,7 +621,7 @@ export function makeValidExpansionBoard(customRules: any): Board {
   // Step 3: Place Number Tokens Using Smart Placement Strategy
   // This will automatically use smart placement if 6-8 cannot touch,
   // or fall back to the original chit ring method if they can touch
-  const numbers = placeNumberTokens(desertPositions, customRules);
+  let numbers = placeNumberTokens(desertPositions, customRules);
   
   // Step 4: Randomization for Variety (already implemented in the functions above)
   
