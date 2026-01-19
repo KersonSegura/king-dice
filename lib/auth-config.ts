@@ -60,9 +60,10 @@ export const authOptions: NextAuthOptions = {
         
         // Check if user already exists - only check by email for OAuth
         // Email is the unique identifier for OAuth accounts
+        // Note: provider and provider_id columns may not exist yet, so we select them conditionally
         const { data: existingUser, error: findError } = await supabaseAdmin
           .from('users')
-          .select('id, username, email, passwordHash, isVerified, provider, provider_id')
+          .select('id, username, email, passwordHash, isVerified')
           .eq('email', user.email)
           .limit(1)
           .maybeSingle();
@@ -82,27 +83,13 @@ export const authOptions: NextAuthOptions = {
         const dbUser = existingUser;
 
         if (userExists && dbUser) {
-          // User exists - update provider info if needed and allow sign-in
-          const provider = account?.provider || 'google';
-          const providerId = account?.providerAccountId || user.id || '';
-          
-          // Update provider info if not set or different
-          if (!dbUser.provider || !dbUser.provider_id) {
-            console.log('📝 Updating provider info for existing user:', dbUser.username);
-            await supabaseAdmin
-              .from('users')
-              .update({
-                provider: provider,
-                provider_id: providerId,
-              })
-              .eq('id', dbUser.id);
-          }
-          
+          // User exists - allow sign-in
+          // Note: We don't update provider info here since columns may not exist
           if (dbUser.passwordHash) {
             // User has a password account - OAuth can also sign in
             console.log('✅ Signing in existing user with password account:', dbUser.username);
           } else {
-            // OAuth-only account
+            // OAuth-only account or no password
             console.log('✅ Signing in OAuth user:', dbUser.username);
           }
           return true;
@@ -157,7 +144,8 @@ export const authOptions: NextAuthOptions = {
             providerId,
           });
           
-          const userData = {
+          // Build user data - only include provider columns if they exist
+          const userData: any = {
             id: userId,
             username,
             email: user.email,
@@ -170,17 +158,33 @@ export const authOptions: NextAuthOptions = {
             createdAt: now,
             updatedAt: now,
             joinDate: now,
-            provider: provider,
-            provider_id: providerId,
           };
+          
+          // Try to add provider columns if they exist (will be ignored if columns don't exist)
+          // We'll handle this gracefully by trying to insert with provider, and if it fails, retry without
           
           console.log('📝 Inserting user data:', JSON.stringify(userData, null, 2));
           
-          const { data: newUser, error: createError } = await supabaseAdmin
+          // Try to insert with provider info first
+          let insertData = { ...userData, provider: provider, provider_id: providerId };
+          let { data: newUser, error: createError } = await supabaseAdmin
             .from('users')
-            .insert(userData)
-            .select('id, username, email, avatar, isAdmin, level, xp, isVerified, provider, provider_id')
+            .insert(insertData)
+            .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
             .single();
+          
+          // If insert failed due to missing provider columns, retry without them
+          if (createError && (createError.code === '42703' || createError.message?.includes('provider'))) {
+            console.log('⚠️ Provider columns don\'t exist, retrying without them...');
+            insertData = userData; // Remove provider columns
+            const retryResult = await supabaseAdmin
+              .from('users')
+              .insert(insertData)
+              .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
+              .single();
+            newUser = retryResult.data;
+            createError = retryResult.error;
+          }
 
           if (createError) {
             console.error('❌ Error creating OAuth user:', createError);

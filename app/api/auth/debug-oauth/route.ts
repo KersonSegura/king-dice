@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
     
     console.log('🔍 Debug OAuth - Testing with email:', testEmail);
     
-    // Test 1: Check if user exists
+    // Test 1: Check if user exists (without provider columns since they may not exist)
     const { data: existingUser, error: findError } = await supabaseAdmin
       .from('users')
-      .select('id, username, email, passwordHash, isVerified, provider, provider_id')
+      .select('id, username, email, passwordHash, isVerified')
       .eq('email', testEmail)
       .maybeSingle();
     
@@ -29,25 +29,39 @@ export async function GET(request: NextRequest) {
       const testUserId = `test_${Date.now()}`;
       const now = new Date().toISOString();
       
-      const { data: newUser, error: createError } = await supabaseAdmin
+      // Try inserting without provider columns first (they may not exist)
+      let insertData: any = {
+        id: testUserId,
+        username: testUsername,
+        email: testEmail,
+        passwordHash: null,
+        level: 1,
+        xp: 0,
+        isAdmin: false,
+        isVerified: true,
+        createdAt: now,
+        updatedAt: now,
+        joinDate: now,
+      };
+      
+      let { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
-        .insert({
-          id: testUserId,
-          username: testUsername,
-          email: testEmail,
-          passwordHash: null,
-          level: 1,
-          xp: 0,
-          isAdmin: false,
-          isVerified: true,
-          createdAt: now,
-          updatedAt: now,
-          joinDate: now,
-          provider: 'google',
-          provider_id: 'test_provider_id',
-        })
+        .insert(insertData)
         .select('id, username, email')
         .single();
+      
+      // If that worked, try with provider columns (they may exist)
+      if (!createError && newUser) {
+        const { error: updateError } = await supabaseAdmin
+          .from('users')
+          .update({ provider: 'google', provider_id: 'test_provider_id' })
+          .eq('id', testUserId);
+        
+        if (updateError && updateError.code !== '42703') {
+          // Only log if it's not a "column doesn't exist" error
+          console.log('⚠️ Could not update provider columns (they may not exist):', updateError);
+        }
+      }
       
       insertResult = newUser;
       insertError = createError;
