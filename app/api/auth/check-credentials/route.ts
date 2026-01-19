@@ -15,7 +15,9 @@ export async function GET() {
   return NextResponse.json({
     google: {
       clientId: googleClientId ? `${googleClientId.substring(0, 10)}...` : 'NOT SET',
-      clientSecret: googleClientSecret ? 'SET' : 'NOT SET',
+      clientSecret: googleClientSecret ? `${googleClientSecret.substring(0, 6)}...${googleClientSecret.substring(googleClientSecret.length - 4)}` : 'NOT SET',
+      clientSecretLength: googleClientSecret ? googleClientSecret.length : 0,
+      clientSecretStartsWith: googleClientSecret ? googleClientSecret.substring(0, 6) : 'N/A',
       configured: !!(googleClientId && googleClientSecret),
     },
     facebook: {
