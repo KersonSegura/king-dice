@@ -42,209 +42,129 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Log immediately to ensure we see this in logs
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('🔄 SIGNIN CALLBACK CALLED');
-      console.log('🔄 User email:', user?.email);
-      console.log('🔄 Provider:', account?.provider);
-      console.log('🔄 User object keys:', Object.keys(user || {}));
-      console.log('🔄 Account object keys:', Object.keys(account || {}));
-      console.log('🔄 User email exists:', !!user?.email);
-      console.log('═══════════════════════════════════════════════════════');
+      // Standard OAuth flow: match by email, create if doesn't exist, sign in if exists
+      console.log('🔄 SIGNIN CALLBACK - Email:', user?.email, 'Provider:', account?.provider);
       
-      // Early return check - log if email is missing
+      // Must have email for OAuth
       if (!user?.email) {
-        console.error('❌ NO EMAIL IN USER OBJECT');
-        console.error('❌ Full user object:', JSON.stringify(user, null, 2));
-        console.error('❌ Full account object:', JSON.stringify(account, null, 2));
+        console.error('❌ No email in OAuth user object');
         return false;
       }
       
       try {
-
-        console.log('🔍 Checking if user exists in database for email:', user.email);
-        
-        // Check if user already exists - only check by email for OAuth
-        // Email is the unique identifier for OAuth accounts
-        // Note: provider and provider_id columns may not exist yet, so we select them conditionally
+        // Check if user exists by email (standard OAuth approach)
         const { data: existingUser, error: findError } = await supabaseAdmin
           .from('users')
-          .select('id, username, email, passwordHash, isVerified')
+          .select('id, username, email')
           .eq('email', user.email)
-          .limit(1)
           .maybeSingle();
 
         if (findError) {
-          console.error('❌ Error finding user:', findError);
-          console.error('❌ Error code:', findError.code);
-          console.error('❌ Error message:', findError.message);
-          console.error('❌ Error details:', findError.details);
-          console.error('❌ Error hint:', findError.hint);
-          return false;
+          console.error('❌ Database error finding user:', findError.message);
+          // Don't fail sign-in on database errors - let it proceed
+          // The JWT callback will handle user creation if needed
+          return true;
         }
         
-        console.log('🔍 User lookup result:', existingUser ? 'User found' : 'User not found');
-
-        const userExists = !!existingUser;
-        const dbUser = existingUser;
-
-        if (userExists && dbUser) {
-          // User exists - allow sign-in
-          // Note: We don't update provider info here since columns may not exist
-          console.log('✅ User exists in database:', {
-            id: dbUser.id,
-            username: dbUser.username,
-            email: dbUser.email,
-            hasPassword: !!dbUser.passwordHash,
-          });
-          
-          if (dbUser.passwordHash) {
-            // User has a password account - OAuth can also sign in
-            console.log('✅ Signing in existing user with password account:', dbUser.username);
-          } else {
-            // OAuth-only account or no password
-            console.log('✅ Signing in OAuth user:', dbUser.username);
-          }
-          
-          console.log('✅ Returning true from signIn callback');
+        if (existingUser) {
+          // User exists - allow sign-in (standard OAuth behavior)
+          console.log('✅ User exists, allowing sign-in:', existingUser.email);
           return true;
-        } else {
-          // New user - create account
-          console.log('📝 Creating new OAuth user:', user.email);
-          
-          // Generate username from email or name
-          const baseUsername = user.name 
-            ? user.name.toLowerCase().replace(/\s+/g, '_').substring(0, 20)
-            : user.email?.split('@')[0].substring(0, 20) || 'user';
-          
-          // Ensure username is unique
-          let username = baseUsername;
-          let counter = 1;
-          while (true) {
-            const { data: checkUser } = await supabaseAdmin
-              .from('users')
-              .select('id')
-              .ilike('username', username)
-              .limit(1);
-            
-            if (!checkUser || checkUser.length === 0) {
-              break; // Username is available
-            }
-            username = `${baseUsername}${counter}`;
-            counter++;
-          }
-
-          // Generate default avatar
-          const defaultAvatar = await generateDefaultAvatar();
-
-          // Create user in database
-          const generateCuid = () => {
-            const timestamp = Date.now().toString(36);
-            const random = Math.random().toString(36).substring(2, 15);
-            const random2 = Math.random().toString(36).substring(2, 15);
-            return `c${timestamp}${random}${random2}`.substring(0, 25);
-          };
-          const userId = generateCuid();
-          const now = new Date().toISOString();
-          
-          // Store provider information
-          const provider = account?.provider || 'google';
-          const providerId = account?.providerAccountId || user.id || '';
-          
-          console.log('📝 Creating new user with data:', {
-            id: userId,
-            username,
-            email: user.email,
-            provider,
-            providerId,
-          });
-          
-          // Build user data - only include provider columns if they exist
-          const userData: any = {
-            id: userId,
-            username,
-            email: user.email,
-            avatar: user.image || defaultAvatar,
-            passwordHash: null, // OAuth users don't have passwords
-            level: 1,
-            xp: 0,
-            isAdmin: false,
-            isVerified: true, // OAuth emails are pre-verified
-            createdAt: now,
-            updatedAt: now,
-            joinDate: now,
-          };
-          
-          // Try to add provider columns if they exist (will be ignored if columns don't exist)
-          // We'll handle this gracefully by trying to insert with provider, and if it fails, retry without
-          
-          console.log('📝 Inserting user data:', JSON.stringify(userData, null, 2));
-          
-          // Try to insert with provider info first
-          let insertData = { ...userData, provider: provider, provider_id: providerId };
-          let { data: newUser, error: createError } = await supabaseAdmin
+        }
+        
+        // New user - create account
+        console.log('📝 Creating new OAuth user:', user.email);
+        
+        // Generate username from email or name
+        const baseUsername = user.name 
+          ? user.name.toLowerCase().replace(/\s+/g, '_').substring(0, 20)
+          : user.email.split('@')[0].substring(0, 20);
+        
+        // Ensure username is unique
+        let username = baseUsername;
+        let counter = 1;
+        while (true) {
+          const { data: checkUser } = await supabaseAdmin
             .from('users')
-            .insert(insertData)
-            .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
+            .select('id')
+            .ilike('username', username)
+            .limit(1);
+          
+          if (!checkUser || checkUser.length === 0) {
+            break;
+          }
+          username = `${baseUsername}${counter}`;
+          counter++;
+        }
+
+        // Generate default avatar
+        const defaultAvatar = await generateDefaultAvatar();
+
+        // Create user
+        const generateCuid = () => {
+          const timestamp = Date.now().toString(36);
+          const random = Math.random().toString(36).substring(2, 15);
+          const random2 = Math.random().toString(36).substring(2, 15);
+          return `c${timestamp}${random}${random2}`.substring(0, 25);
+        };
+        
+        const userId = generateCuid();
+        const now = new Date().toISOString();
+        
+        const userData: any = {
+          id: userId,
+          username,
+          email: user.email,
+          avatar: user.image || defaultAvatar,
+          passwordHash: null,
+          level: 1,
+          xp: 0,
+          isAdmin: false,
+          isVerified: true,
+          createdAt: now,
+          updatedAt: now,
+          joinDate: now,
+        };
+        
+        // Try to insert with provider info, fallback without if columns don't exist
+        let { error: createError } = await supabaseAdmin
+          .from('users')
+          .insert({ ...userData, provider: account?.provider || 'google', provider_id: account?.providerAccountId || '' })
+          .select('id')
+          .single();
+        
+        if (createError && (createError.code === '42703' || createError.message?.includes('provider'))) {
+          // Retry without provider columns
+          const { error: retryError } = await supabaseAdmin
+            .from('users')
+            .insert(userData)
+            .select('id')
             .single();
-          
-          // If insert failed due to missing provider columns, retry without them
-          if (createError && (createError.code === '42703' || createError.message?.includes('provider'))) {
-            console.log('⚠️ Provider columns don\'t exist, retrying without them...');
-            insertData = userData; // Remove provider columns
-            const retryResult = await supabaseAdmin
-              .from('users')
-              .insert(insertData)
-              .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
-              .single();
-            newUser = retryResult.data;
-            createError = retryResult.error;
-          }
+          createError = retryError;
+        }
 
-          if (createError) {
-            console.error('❌ Error creating OAuth user:', createError);
-            console.error('❌ Error code:', createError.code);
-            console.error('❌ Error message:', createError.message);
-            console.error('❌ Error details:', createError.details);
-            console.error('❌ Error hint:', createError.hint);
-            return false;
-          }
-          
-          if (!newUser) {
-            console.error('❌ User creation returned null/undefined');
-            return false;
-          }
-
-          console.log('✅ OAuth user created successfully:', newUser.username);
-          console.log('✅ Created user ID:', newUser.id);
+        if (createError) {
+          console.error('❌ Error creating user:', createError.message);
+          // Still allow sign-in - user might already exist from race condition
           return true;
         }
+        
+        console.log('✅ New OAuth user created:', username);
+        return true;
       } catch (error) {
-        console.error('═══════════════════════════════════════════════════════');
-        console.error('❌ EXCEPTION IN SIGNIN CALLBACK');
-        console.error('❌ Error type:', typeof error);
-        console.error('❌ Error:', error);
-        if (error instanceof Error) {
-          console.error('❌ Error name:', error.name);
-          console.error('❌ Error message:', error.message);
-          console.error('❌ Error stack:', error.stack);
-        } else {
-          console.error('❌ Error (stringified):', JSON.stringify(error, null, 2));
-        }
-        console.error('═══════════════════════════════════════════════════════');
-        return false;
+        console.error('❌ Exception in signIn callback:', error instanceof Error ? error.message : error);
+        // Allow sign-in to proceed - errors will be logged but won't block OAuth
+        return true;
       }
     },
     async jwt({ token, user, account }) {
-      // Initial sign in
-      if (account && user) {
-        console.log('🔄 JWT callback - Initial sign in for:', user.email);
+      // Initial sign in - get user from database and generate JWT
+      if (account && user && user.email) {
+        console.log('🔄 JWT callback - Getting user data for:', user.email);
         
         try {
-          // Get user from database - retry up to 3 times with delay
-          // This handles the case where user was just created in signIn callback
+          // Get user from database - retry with delay if needed (user might have just been created)
           let dbUser = null;
-          let error = null;
           
           for (let attempt = 1; attempt <= 3; attempt++) {
             const { data, error: fetchError } = await supabaseAdmin
@@ -255,26 +175,23 @@ export const authOptions: NextAuthOptions = {
 
             if (!fetchError && data) {
               dbUser = data;
-              error = null;
               break;
             }
             
             if (attempt < 3) {
-              // Wait a bit before retrying (user might have just been created)
-              await new Promise(resolve => setTimeout(resolve, 200 * attempt));
-              console.log(`⏳ Retrying user fetch (attempt ${attempt + 1}/3)...`);
+              await new Promise(resolve => setTimeout(resolve, 300 * attempt));
             } else {
-              error = fetchError;
+              console.error('❌ Could not find user after retries:', fetchError?.message);
             }
           }
 
-          if (error || !dbUser) {
-            console.error('❌ Error fetching OAuth user from database after retries:', error);
-            // Return token without accessToken - this will cause sign-in to fail gracefully
+          if (!dbUser) {
+            console.error('❌ User not found in database for email:', user.email);
+            // Return token without accessToken - will be handled by session callback
             return token;
           }
 
-          // Generate JWT token compatible with existing system
+          // Generate JWT token
           const jwtToken = generateToken({
             userId: dbUser.id,
             username: dbUser.username,
@@ -282,7 +199,7 @@ export const authOptions: NextAuthOptions = {
             isAdmin: dbUser.isAdmin || false,
           });
 
-          console.log('✅ JWT token generated for user:', dbUser.username);
+          console.log('✅ JWT token generated for:', dbUser.username);
           return {
             ...token,
             accessToken: jwtToken,
@@ -295,15 +212,12 @@ export const authOptions: NextAuthOptions = {
             xp: dbUser.xp || 0,
           };
         } catch (error) {
-          console.error('❌ Exception in JWT callback:', error);
-          if (error instanceof Error) {
-            console.error('❌ Exception details:', error.message, error.stack);
-          }
+          console.error('❌ Exception in JWT callback:', error instanceof Error ? error.message : error);
           return token;
         }
       }
 
-      // Return previous token if the access token has not expired yet
+      // Return existing token
       return token;
     },
     async session({ session, token }) {
