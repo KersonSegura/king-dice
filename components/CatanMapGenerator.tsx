@@ -1398,19 +1398,32 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         throw new Error('RETRY_PLACEMENT');
       }
       
-      // STRICT: Double-check 6-8 adjacency if rule is enforced
+      // STRICT: Final comprehensive check - validate EVERYTHING before returning
+      // Double-check 6-8 adjacency if rule is enforced (check ALL 6s and 8s)
       if (!customRules.sixEightCanTouch) {
-        // Verify no 6 is adjacent to any 8
         for (let i = 0; i < 30; i++) {
-          if (numbers[i] === 6) {
+          if (numbers[i] === 6 || numbers[i] === 8) {
             const neighbors = EXPANSION_NEIGHBORS[i] || [];
             for (const neighbor of neighbors) {
-              if (numbers[neighbor] === 8) {
-                throw new Error('RETRY_PLACEMENT'); // Found 6-8 adjacency, retry
+              const neighborNum = numbers[neighbor];
+              if (neighborNum === null) continue;
+              // Check 6-8 adjacency (both directions)
+              if ((numbers[i] === 6 && neighborNum === 8) || (numbers[i] === 8 && neighborNum === 6)) {
+                throw new Error('RETRY_PLACEMENT'); // Found 6-8 adjacency violation
               }
             }
           }
         }
+      }
+      
+      // Final validation using the comprehensive function
+      if (!noHotAdjacencyExpansion(numbers, customRules)) {
+        throw new Error('RETRY_PLACEMENT'); // Final validation failed
+      }
+      
+      // Additional check: verify distribution is correct
+      if (!validateNumberDistribution(numbers)) {
+        throw new Error('RETRY_PLACEMENT'); // Distribution is wrong
       }
       
       // Success! Return the valid placement
