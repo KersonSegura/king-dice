@@ -1383,12 +1383,38 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
           }
         }
         
+        // STRICT: Final check BEFORE placing - make absolutely sure it's safe
+        // Re-check all neighbors one more time
+        for (const neighbor of neighbors) {
+          const neighborNum = numbers[neighbor];
+          if (neighborNum === null) continue;
+          
+          // Re-check 6-8 adjacency
+          if (!customRules.sixEightCanTouch) {
+            if ((number === 6 && neighborNum === 8) || (number === 8 && neighborNum === 6)) {
+              throw new Error('RETRY_PLACEMENT'); // Would create 6-8 adjacency
+            }
+          }
+        }
+        
         // Place the number
         numbers[position] = number;
         
-        // STRICT: Validate AFTER placement - check entire board
+        // STRICT: Validate AFTER placement - check entire board immediately
         if (!noHotAdjacencyExpansion(numbers, customRules)) {
           throw new Error('RETRY_PLACEMENT'); // Violation detected after placement
+        }
+        
+        // Additional immediate check: verify 6-8 adjacency was not created
+        if (!customRules.sixEightCanTouch) {
+          const positionNeighbors = EXPANSION_NEIGHBORS[position] || [];
+          for (const neighbor of positionNeighbors) {
+            const neighborNum = numbers[neighbor];
+            if (neighborNum === null) continue;
+            if ((number === 6 && neighborNum === 8) || (number === 8 && neighborNum === 6)) {
+              throw new Error('RETRY_PLACEMENT'); // Just created 6-8 adjacency!
+            }
+          }
         }
       }
       
