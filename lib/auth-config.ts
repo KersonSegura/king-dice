@@ -131,7 +131,7 @@ export const authOptions: NextAuthOptions = {
           id: userId,
           username,
           email: user.email,
-          avatar: user.image || defaultAvatar,
+          avatar: defaultAvatar, // Always use default dice avatar for new OAuth users
           passwordHash: null,
           level: 1,
           xp: 0,
