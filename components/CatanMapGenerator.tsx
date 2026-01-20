@@ -1185,6 +1185,65 @@ function hasResourceClustering(terrains: Terrain[], resourceType: Terrain): bool
     }
   }
   
+  // CRITICAL: Also check for linear chains of 3+ tiles (e.g., tiles 9, 14, 20 in a line)
+  return hasLinearChain(terrains, resourceType);
+}
+
+// Check for linear chains of 3+ tiles of the same resource
+// A linear chain is when tiles form a line: A-B-C where all have the same resource
+// Example: tiles 9, 14, 20 (positions 8, 13, 19) form a chain: 9->14->20
+function hasLinearChain(terrains: Terrain[], resourceType: Terrain): boolean {
+  const neighbors = EXPANSION_NEIGHBORS;
+  const visited = new Array(30).fill(false);
+  
+  // Check every tile of this resource type
+  for (let i = 0; i < 30; i++) {
+    if (visited[i] || terrains[i] !== resourceType) continue;
+    
+    // Use BFS to find the longest chain starting from this tile
+    const queue: Array<{pos: number, path: number[]}> = [{pos: i, path: [i]}];
+    const localVisited = new Array(30).fill(false);
+    localVisited[i] = true;
+    
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const currentPos = current.pos;
+      const currentPath = current.path;
+      
+      // If we've found a chain of 3+ tiles, that's a violation
+      if (currentPath.length >= 3) {
+        const tileNumbers = currentPath.map(p => p + 1).join(', '); // Convert to 1-indexed for display
+        console.error(`❌❌❌ LINEAR CHAIN VIOLATION: Found chain of ${currentPath.length} ${resourceType} tiles at positions ${tileNumbers} (tiles ${currentPath.map(p => p + 1).join(', ')})`);
+        return true;
+      }
+      
+      // Check all neighbors of the same type
+      const tileNeighbors = neighbors[currentPos] || [];
+      for (const neighbor of tileNeighbors) {
+        if (localVisited[neighbor] || terrains[neighbor] !== resourceType) continue;
+        
+        // Check if this neighbor extends the chain (not forming a triangle)
+        // A triangle would be if the neighbor is already in the path (except the immediate previous tile)
+        const isTriangle = currentPath.length >= 2 && neighbors[neighbor].some(n => 
+          currentPath.includes(n) && n !== currentPos
+        );
+        
+        if (!isTriangle) {
+          // This extends the chain linearly
+          localVisited[neighbor] = true;
+          queue.push({pos: neighbor, path: [...currentPath, neighbor]});
+        }
+      }
+    }
+    
+    // Mark all tiles in this cluster as visited
+    for (let j = 0; j < 30; j++) {
+      if (localVisited[j]) {
+        visited[j] = true;
+      }
+    }
+  }
+  
   return false;
 }
 
