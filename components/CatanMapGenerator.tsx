@@ -1586,135 +1586,153 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       const availablePositions = Array.from({ length: 30 }, (_, i) => i)
         .filter(i => !desertPositions.includes(i));
       
-      // Step 1: Place the 6s first in random non-adjacent positions
+      // INTERLEAVED PLACEMENT: Place 6s and 8s together to prevent dead-end situations
+      // Instead of placing all 6s first, then all 8s, we interleave them so we can
+      // detect early if we're running out of valid positions
       const sixes = expansionNumbers.filter(n => n === 6);
-      const sixPositions: number[] = [];
-      const eightPositions: number[] = []; // Track 8s - declared here to use when placing 6s
+      const eights = expansionNumbers.filter(n => n === 8);
+      const hotNumbers: Array<{value: number, type: 'six' | 'eight'}> = [];
       
-      for (const six of sixes) {
-        // Find all positions that are not adjacent to any existing 6 or 8
-        const validPositions = availablePositions.filter(pos => {
-          // CRITICAL: Check problematic pairs first - if this position is part of a problematic pair
-          // and the other position already has an 8, this position CANNOT have a 6
-          for (const [p1, p2] of PROBLEMATIC_PAIRS) {
-            if (pos === p1 && numbers[p2] === 8) {
-              console.warn(`🚫 Blocking 6 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p2} (tile ${p2 + 1}) which has 8`);
-              return false;
-            }
-            if (pos === p2 && numbers[p1] === 8) {
-              console.warn(`🚫 Blocking 6 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p1} (tile ${p1 + 1}) which has 8`);
+      // Create interleaved list: [6, 8, 6, 8, 6, 8] or shuffled
+      sixes.forEach(() => hotNumbers.push({value: 6, type: 'six'}));
+      eights.forEach(() => hotNumbers.push({value: 8, type: 'eight'}));
+      shuffleInPlace(hotNumbers); // Shuffle for randomness
+      
+      const sixPositions: number[] = [];
+      const eightPositions: number[] = [];
+      
+      // Helper function to check if a position is valid for a hot number
+      const isValidHotPosition = (pos: number, isSix: boolean, isEight: boolean): boolean => {
+        // Check problematic pairs
+        for (const [p1, p2] of PROBLEMATIC_PAIRS) {
+          if (pos === p1) {
+            const otherValue = numbers[p2];
+            if ((isSix && otherValue === 8) || (isEight && otherValue === 6)) {
               return false;
             }
           }
-          
-          // CRITICAL: Check if this position is adjacent to any existing 6 (6s cannot be adjacent to each other)
-          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-          const isAdjacentToSix = neighbors.some(neighbor => sixPositions.includes(neighbor));
-          
-          // Also check if any existing 6s are adjacent to this position
-          const isAdjacentToExistingSixes = sixPositions.some(sixPos => {
-            const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
-            return sixNeighbors.includes(pos);
-          });
-          
-          // CRITICAL: Check if this position is adjacent to any existing 8 (6s cannot be adjacent to 8s)
-          const isAdjacentToEight = neighbors.some(neighbor => eightPositions.includes(neighbor));
-          
-          // Also check if any existing 8s are adjacent to this position
-          const isAdjacentToExistingEights = eightPositions.some(eightPos => {
-            const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
-            return eightNeighbors.includes(pos);
-          });
-          
-          // CRITICAL: Check if placing a 6 here would make any existing 6s adjacent to each other
-          const wouldCreateAdjacentSixes = sixPositions.some(existingSixPos => {
-            const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
-            return existingSixNeighbors.includes(pos);
-          });
-          
-          const isValid = !isAdjacentToSix && !isAdjacentToExistingSixes && !isAdjacentToEight && !isAdjacentToExistingEights && !wouldCreateAdjacentSixes;
-          
-          return isValid;
+          if (pos === p2) {
+            const otherValue = numbers[p1];
+            if ((isSix && otherValue === 8) || (isEight && otherValue === 6)) {
+              return false;
+            }
+          }
+        }
+        
+        // Check adjacency to existing hot numbers
+        const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+        
+        // Check if adjacent to any 6
+        const isAdjacentToSix = neighbors.some(neighbor => 
+          sixPositions.includes(neighbor) || numbers[neighbor] === 6
+        ) || sixPositions.some(sixPos => {
+          const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
+          return sixNeighbors.includes(pos);
         });
         
-        if (validPositions.length === 0) {
-          // If we can't place a 6, restart the attempt
-          throw new Error('RETRY_PLACEMENT');
+        // Check if adjacent to any 8
+        const isAdjacentToEight = neighbors.some(neighbor => 
+          eightPositions.includes(neighbor) || numbers[neighbor] === 8
+        ) || eightPositions.some(eightPos => {
+          const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
+          return eightNeighbors.includes(pos);
+        });
+        
+        // Cannot place 6 if adjacent to 6 or 8
+        if (isSix && (isAdjacentToSix || isAdjacentToEight)) {
+          return false;
         }
         
-        // Choose a random valid position
-        const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-        numbers[chosenPos] = six;
-        sixPositions.push(chosenPos);
-        
-        // Remove this position from available positions
-        const index = availablePositions.indexOf(chosenPos);
-        if (index !== -1) {
-          availablePositions.splice(index, 1);
+        // Cannot place 8 if adjacent to 6 or 8
+        if (isEight && (isAdjacentToSix || isAdjacentToEight)) {
+          return false;
         }
-      }
+        
+        return true;
+      };
       
-      // Step 2: Place the 8s in random non-adjacent positions (also not adjacent to 6s)
-      const eights = expansionNumbers.filter(n => n === 8);
-      // eightPositions already declared above
-      
-      for (const eight of eights) {
-        // Find all positions that are not adjacent to any existing 6 or 8
-        const validPositions = availablePositions.filter(pos => {
-          // CRITICAL: Check problematic pairs first - if this position is part of a problematic pair
-          // and the other position already has a 6, this position CANNOT have an 8
-          for (const [p1, p2] of PROBLEMATIC_PAIRS) {
-            if (pos === p1 && numbers[p2] === 6) {
-              console.warn(`🚫 Blocking 8 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p2} (tile ${p2 + 1}) which has 6`);
-              return false;
-            }
-            if (pos === p2 && numbers[p1] === 6) {
-              console.warn(`🚫 Blocking 8 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p1} (tile ${p1 + 1}) which has 6`);
-              return false;
-            }
-          }
-          
-          // Check if this position is adjacent to any existing 6 or 8
-          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-          const isAdjacentToSixOrEight = neighbors.some(neighbor => 
-            sixPositions.includes(neighbor) || eightPositions.includes(neighbor)
+      // Helper to check if remaining hot numbers can still be placed
+      const canPlaceRemainingHotNumbers = (remainingHotNumbers: Array<{value: number, type: 'six' | 'eight'}>, remainingPositions: number[]): boolean => {
+        // Create a test array to simulate remaining placements
+        const testNumbers = [...numbers];
+        const testSixPositions = [...sixPositions];
+        const testEightPositions = [...eightPositions];
+        const testAvailablePositions = [...remainingPositions];
+        
+        // Try to find valid positions for each remaining hot number
+        for (const hotNum of remainingHotNumbers) {
+          const validPositions = testAvailablePositions.filter(pos => 
+            isValidHotPosition(pos, hotNum.type === 'six', hotNum.type === 'eight')
           );
           
-          // Also check if any existing 6s or 8s are adjacent to this position
-          const isAdjacentToExistingHotNumbers = sixPositions.some(sixPos => {
-            const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
-            return sixNeighbors.includes(pos);
-          }) || eightPositions.some(eightPos => {
-            const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
-            return eightNeighbors.includes(pos);
-          });
+          if (validPositions.length === 0) {
+            return false; // Can't place this hot number
+          }
           
-          // CRITICAL: Check if placing an 8 here would make any existing 8s adjacent to each other
-          const wouldCreateAdjacentEights = eightPositions.some(existingEightPos => {
-            const existingEightNeighbors = EXPANSION_NEIGHBORS[existingEightPos] || [];
-            return existingEightNeighbors.includes(pos);
-          });
+          // Simulate placing it at the first valid position
+          const chosenPos = validPositions[0];
+          testNumbers[chosenPos] = hotNum.value;
+          if (hotNum.type === 'six') {
+            testSixPositions.push(chosenPos);
+          } else {
+            testEightPositions.push(chosenPos);
+          }
           
-          // CRITICAL: Check if placing an 8 here would make any existing 6s adjacent to each other
-          const wouldCreateAdjacentSixes = sixPositions.some(existingSixPos => {
-            const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
-            return existingSixNeighbors.includes(pos);
-          });
-          
-          const isValid = !isAdjacentToSixOrEight && !isAdjacentToExistingHotNumbers && !wouldCreateAdjacentEights && !wouldCreateAdjacentSixes;
-          
-          return isValid;
-        });
+          // Remove chosen position and its neighbors from available positions
+          // (simplified: just remove the chosen position)
+          const index = testAvailablePositions.indexOf(chosenPos);
+          if (index !== -1) {
+            testAvailablePositions.splice(index, 1);
+          }
+        }
+        
+        return true; // All remaining hot numbers can be placed
+      };
+      
+      // Place hot numbers one by one with validation
+      for (let i = 0; i < hotNumbers.length; i++) {
+        const hotNum = hotNumbers[i];
+        const remainingHotNumbers = hotNumbers.slice(i + 1);
+        
+        // Find all valid positions for this hot number
+        const validPositions = availablePositions.filter(pos => 
+          isValidHotPosition(pos, hotNum.type === 'six', hotNum.type === 'eight')
+        );
         
         if (validPositions.length === 0) {
-          // If we can't place an 8, restart the attempt
+          // Cannot place this hot number - retry entire placement
           throw new Error('RETRY_PLACEMENT');
+        }
+        
+        // After finding valid positions, check if remaining hot numbers can still be placed
+        // This prevents us from getting into dead-end situations
+        const remainingPositionsAfterPlacement = availablePositions.filter(pos => !validPositions.includes(pos));
+        if (!canPlaceRemainingHotNumbers(remainingHotNumbers, remainingPositionsAfterPlacement)) {
+          // If we can't place remaining hot numbers, try a different position for this one
+          // If no position works, retry
+          const alternativePositions = validPositions.filter(pos => {
+            const testRemainingPositions = availablePositions.filter(p => p !== pos);
+            return canPlaceRemainingHotNumbers(remainingHotNumbers, testRemainingPositions);
+          });
+          
+          if (alternativePositions.length === 0) {
+            throw new Error('RETRY_PLACEMENT');
+          }
+          
+          // Use alternative positions that allow remaining placements
+          validPositions.length = 0;
+          validPositions.push(...alternativePositions);
         }
         
         // Choose a random valid position
         const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-        numbers[chosenPos] = eight;
-        eightPositions.push(chosenPos);
+        numbers[chosenPos] = hotNum.value;
+        
+        if (hotNum.type === 'six') {
+          sixPositions.push(chosenPos);
+        } else {
+          eightPositions.push(chosenPos);
+        }
         
         // Remove this position from available positions
         const index = availablePositions.indexOf(chosenPos);
