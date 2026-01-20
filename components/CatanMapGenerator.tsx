@@ -717,43 +717,114 @@ export function makeValidExpansionBoard(customRules: any): Board {
       sixEightCanTouch: customRules.sixEightCanTouch
     });
     
-    // Manual check for 6-8 adjacency violations (ALWAYS run this check)
-    if (!customRules.sixEightCanTouch) {
-      let found6_8Violation = false;
-      for (let i = 0; i < 30; i++) {
-        if (numbers[i] === 6 || numbers[i] === 8) {
-          const neighbors = EXPANSION_NEIGHBORS[i] || [];
-          for (const neighbor of neighbors) {
-            const neighborNum = numbers[neighbor];
-            if (neighborNum === null) continue;
-            if ((numbers[i] === 6 && neighborNum === 8) || (numbers[i] === 8 && neighborNum === 6)) {
-              console.error(`❌❌❌ CRITICAL: Found 6-8 adjacency at positions ${i} (${numbers[i]}) and ${neighbor} (${neighborNum})`);
-              found6_8Violation = true;
-              hasValidAdjacency = false; // Force invalid
-            }
+    // BRUTE FORCE: Manual check for ALL adjacency violations - check EVERY position and EVERY neighbor
+    let foundAdjacencyViolation = false;
+    console.log('🔍 BRUTE FORCE CHECK: Checking ALL adjacencies...');
+    for (let i = 0; i < 30; i++) {
+      const numA = numbers[i];
+      if (numA === null) continue;
+      
+      const neighbors = EXPANSION_NEIGHBORS[i] || [];
+      for (const neighbor of neighbors) {
+        const numB = numbers[neighbor];
+        if (numB === null) continue;
+        
+        // Check 6-6 adjacency (ALWAYS forbidden)
+        if (numA === 6 && numB === 6) {
+          console.error(`❌❌❌ VIOLATION: Two 6s adjacent at positions ${i} and ${neighbor}`);
+          foundAdjacencyViolation = true;
+        }
+        
+        // Check 8-8 adjacency (ALWAYS forbidden)
+        if (numA === 8 && numB === 8) {
+          console.error(`❌❌❌ VIOLATION: Two 8s adjacent at positions ${i} and ${neighbor}`);
+          foundAdjacencyViolation = true;
+        }
+        
+        // Check 6-8 adjacency (if rule enforced)
+        if (!customRules.sixEightCanTouch) {
+          if ((numA === 6 && numB === 8) || (numA === 8 && numB === 6)) {
+            console.error(`❌❌❌ VIOLATION: 6-8 adjacency at positions ${i} (${numA}) and ${neighbor} (${numB})`);
+            foundAdjacencyViolation = true;
+          }
+        }
+        
+        // Check same number adjacency (if rule enforced)
+        if (!customRules.sameNumbersCanTouch && numA === numB && numA !== 6 && numA !== 8) {
+          console.error(`❌❌❌ VIOLATION: Same number ${numA} adjacent at positions ${i} and ${neighbor}`);
+          foundAdjacencyViolation = true;
+        }
+        
+        // Check 2-12 adjacency (if rule enforced)
+        if (!customRules.twoTwelveCanTouch) {
+          if ((numA === 2 && numB === 12) || (numA === 12 && numB === 2)) {
+            console.error(`❌❌❌ VIOLATION: 2-12 adjacency at positions ${i} (${numA}) and ${neighbor} (${numB})`);
+            foundAdjacencyViolation = true;
           }
         }
       }
-      if (found6_8Violation) {
-        console.error('❌❌❌ Board has 6-8 adjacency violation - will retry');
-        continue; // Retry
+    }
+    
+    if (foundAdjacencyViolation) {
+      console.error('❌❌❌ Board has adjacency violations - will retry');
+      hasValidAdjacency = false;
+      continue; // Retry
+    }
+    
+    // BRUTE FORCE: Manual check for cluster violations - check EVERY tile and its neighbors
+    console.log('🔍 BRUTE FORCE CHECK: Checking ALL terrain clusters...');
+    let foundClusterViolation = false;
+    const visited = new Array(30).fill(false);
+    
+    for (let i = 0; i < 30; i++) {
+      if (visited[i] || terrains[i] === 'desert') continue;
+      
+      // Use a fresh visited array for this check to get accurate cluster size
+      const checkVisited = new Array(30).fill(false);
+      const clusterSize = getClusterSize(terrains, i, terrains[i], checkVisited);
+      
+      if (clusterSize > 2) {
+        console.error(`❌❌❌ VIOLATION: Found cluster of ${clusterSize} ${terrains[i]} tiles starting at position ${i}`);
+        
+        // Log all positions in this cluster for debugging
+        const clusterPositions: number[] = [];
+        const clusterVisited = new Array(30).fill(false);
+        const queue = [i];
+        while (queue.length > 0) {
+          const pos = queue.shift()!;
+          if (clusterVisited[pos] || terrains[pos] !== terrains[i]) continue;
+          clusterVisited[pos] = true;
+          clusterPositions.push(pos);
+          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+          for (const neighbor of neighbors) {
+            if (!clusterVisited[neighbor] && terrains[neighbor] === terrains[i]) {
+              queue.push(neighbor);
+            }
+          }
+        }
+        console.error(`   Cluster positions: [${clusterPositions.join(', ')}]`);
+        foundClusterViolation = true;
+      }
+      
+      // Mark all positions in this cluster as visited
+      const markVisited = new Array(30).fill(false);
+      const markQueue = [i];
+      while (markQueue.length > 0) {
+        const pos = markQueue.shift()!;
+        if (visited[pos] || terrains[pos] !== terrains[i]) continue;
+        visited[pos] = true;
+        const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+        for (const neighbor of neighbors) {
+          if (!visited[neighbor] && terrains[neighbor] === terrains[i]) {
+            markQueue.push(neighbor);
+          }
+        }
       }
     }
     
-    // Manual check for cluster violations (ALWAYS run this check)
-    const visited = new Array(30).fill(false);
-    let foundClusterViolation = false;
-    for (let i = 0; i < 30; i++) {
-      if (visited[i] || terrains[i] === 'desert') continue;
-      const clusterSize = getClusterSize(terrains, i, terrains[i], visited);
-      if (clusterSize > 2) {
-        console.error(`❌❌❌ CRITICAL: Found cluster of ${clusterSize} ${terrains[i]} tiles starting at position ${i}`);
-        foundClusterViolation = true;
-        hasValidTerrains = false; // Force invalid
-      }
-    }
     if (foundClusterViolation) {
-      console.error('❌❌❌ Board has cluster violation - will retry');
+      console.error('❌❌❌ Board has cluster violations - will retry');
+      hasValidTerrains = false;
       continue; // Retry
     }
     
