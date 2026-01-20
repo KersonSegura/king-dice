@@ -1589,7 +1589,7 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       // Step 1: Place the 6s first in random non-adjacent positions
       const sixes = expansionNumbers.filter(n => n === 6);
       const sixPositions: number[] = [];
-      const eightPositions: number[] = []; // Track 8s even though we place them later
+      const eightPositions: number[] = []; // Track 8s - declared here to use when placing 6s
       
       for (const six of sixes) {
         // Find all positions that are not adjacent to any existing 6 or 8
@@ -1656,7 +1656,7 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       
       // Step 2: Place the 8s in random non-adjacent positions (also not adjacent to 6s)
       const eights = expansionNumbers.filter(n => n === 8);
-      const eightPositions: number[] = [];
+      // eightPositions already declared above
       
       for (const eight of eights) {
         // Find all positions that are not adjacent to any existing 6 or 8
