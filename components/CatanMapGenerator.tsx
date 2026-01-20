@@ -869,7 +869,8 @@ export function makeValidExpansionBoard(customRules: any): Board {
           if ((numA === 6 && numB === 8) || (numA === 8 && numB === 6)) {
             // Check if this is one of the known problematic pairs
             const isProblematicPair = (i === 3 && neighbor === 8) || (i === 8 && neighbor === 3) || // Tiles 4-9
-                                     (i === 7 && neighbor === 13) || (i === 13 && neighbor === 7); // Tiles 8-14
+                                     (i === 7 && neighbor === 13) || (i === 13 && neighbor === 7) || // Tiles 8-14
+                                     (i === 26 && neighbor === 29) || (i === 29 && neighbor === 26); // Tiles 27-30
             
             if (isProblematicPair) {
               console.error(`❌❌❌ CRITICAL VIOLATION: 6-8 adjacency at PROBLEMATIC PAIR positions ${i} (tile ${i + 1}, ${numA}) and ${neighbor} (tile ${neighbor + 1}, ${numB})`);
