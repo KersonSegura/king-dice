@@ -1542,6 +1542,20 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
     2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12
   ];
   
+  // CRITICAL: Problematic adjacency pairs that frequently cause 6-8 violations
+  // These pairs are adjacent and must NEVER have 6 and 8 together
+  const PROBLEMATIC_PAIRS: Array<[number, number]> = [
+    [3, 8],  // Tile 4 (pos 3) and Tile 9 (pos 8) - frequently problematic
+    [7, 13], // Tile 8 (pos 7) and Tile 14 (pos 13) - frequently problematic
+  ];
+  
+  // Helper to check if a position pair is problematic
+  const isProblematicPair = (pos1: number, pos2: number): boolean => {
+    return PROBLEMATIC_PAIRS.some(([p1, p2]) => 
+      (pos1 === p1 && pos2 === p2) || (pos1 === p2 && pos2 === p1)
+    );
+  };
+  
   // Try multiple times to find a valid placement
   const maxAttempts = 500;
   
@@ -1566,6 +1580,19 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       for (const six of sixes) {
         // Find all positions that are not adjacent to any existing 6
         const validPositions = availablePositions.filter(pos => {
+          // CRITICAL: Check problematic pairs first - if this position is part of a problematic pair
+          // and the other position already has an 8, this position CANNOT have a 6
+          for (const [p1, p2] of PROBLEMATIC_PAIRS) {
+            if (pos === p1 && numbers[p2] === 8) {
+              console.warn(`🚫 Blocking 6 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p2} (tile ${p2 + 1}) which has 8`);
+              return false;
+            }
+            if (pos === p2 && numbers[p1] === 8) {
+              console.warn(`🚫 Blocking 6 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p1} (tile ${p1 + 1}) which has 8`);
+              return false;
+            }
+          }
+          
           // Check if this position is adjacent to any existing 6
           const neighbors = EXPANSION_NEIGHBORS[pos] || [];
           const isAdjacentToSix = neighbors.some(neighbor => sixPositions.includes(neighbor));
@@ -1611,33 +1638,46 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       for (const eight of eights) {
         // Find all positions that are not adjacent to any existing 6 or 8
         const validPositions = availablePositions.filter(pos => {
-      // Check if this position is adjacent to any existing 6 or 8
-      const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-      const isAdjacentToSixOrEight = neighbors.some(neighbor => 
-        sixPositions.includes(neighbor) || eightPositions.includes(neighbor)
-      );
-      
-      // Also check if any existing 6s or 8s are adjacent to this position
-      const isAdjacentToExistingHotNumbers = sixPositions.some(sixPos => {
-        const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
-        return sixNeighbors.includes(pos);
-      }) || eightPositions.some(eightPos => {
-        const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
-        return eightNeighbors.includes(pos);
-      });
-      
-      // CRITICAL: Check if placing an 8 here would make any existing 8s adjacent to each other
-      const wouldCreateAdjacentEights = eightPositions.some(existingEightPos => {
-        const existingEightNeighbors = EXPANSION_NEIGHBORS[existingEightPos] || [];
-        return existingEightNeighbors.includes(pos);
-      });
-      
-      // CRITICAL: Check if placing an 8 here would make any existing 6s adjacent to each other
-      const wouldCreateAdjacentSixes = sixPositions.some(existingSixPos => {
-        const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
-        return existingSixNeighbors.includes(pos);
-      });
-      
+          // CRITICAL: Check problematic pairs first - if this position is part of a problematic pair
+          // and the other position already has a 6, this position CANNOT have an 8
+          for (const [p1, p2] of PROBLEMATIC_PAIRS) {
+            if (pos === p1 && numbers[p2] === 6) {
+              console.warn(`🚫 Blocking 8 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p2} (tile ${p2 + 1}) which has 6`);
+              return false;
+            }
+            if (pos === p2 && numbers[p1] === 6) {
+              console.warn(`🚫 Blocking 8 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p1} (tile ${p1 + 1}) which has 6`);
+              return false;
+            }
+          }
+          
+          // Check if this position is adjacent to any existing 6 or 8
+          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+          const isAdjacentToSixOrEight = neighbors.some(neighbor => 
+            sixPositions.includes(neighbor) || eightPositions.includes(neighbor)
+          );
+          
+          // Also check if any existing 6s or 8s are adjacent to this position
+          const isAdjacentToExistingHotNumbers = sixPositions.some(sixPos => {
+            const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
+            return sixNeighbors.includes(pos);
+          }) || eightPositions.some(eightPos => {
+            const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
+            return eightNeighbors.includes(pos);
+          });
+          
+          // CRITICAL: Check if placing an 8 here would make any existing 8s adjacent to each other
+          const wouldCreateAdjacentEights = eightPositions.some(existingEightPos => {
+            const existingEightNeighbors = EXPANSION_NEIGHBORS[existingEightPos] || [];
+            return existingEightNeighbors.includes(pos);
+          });
+          
+          // CRITICAL: Check if placing an 8 here would make any existing 6s adjacent to each other
+          const wouldCreateAdjacentSixes = sixPositions.some(existingSixPos => {
+            const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
+            return existingSixNeighbors.includes(pos);
+          });
+          
           const isValid = !isAdjacentToSixOrEight && !isAdjacentToExistingHotNumbers && !wouldCreateAdjacentEights && !wouldCreateAdjacentSixes;
           
           return isValid;
