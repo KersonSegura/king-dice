@@ -1552,9 +1552,13 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
   
   // CRITICAL: Problematic adjacency pairs that frequently cause 6-8 violations
   // These pairs are adjacent and must NEVER have 6 and 8 together
+  // Position 3 = Tile 4, Position 8 = Tile 9
+  // Position 7 = Tile 8, Position 13 = Tile 14
+  // Position 26 = Tile 27, Position 29 = Tile 30
   const PROBLEMATIC_PAIRS: Array<[number, number]> = [
-    [3, 8],  // Tile 4 (pos 3) and Tile 9 (pos 8) - frequently problematic
-    [7, 13], // Tile 8 (pos 7) and Tile 14 (pos 13) - frequently problematic
+    [3, 8],   // Tile 4 (pos 3) and Tile 9 (pos 8) - frequently problematic
+    [7, 13],  // Tile 8 (pos 7) and Tile 14 (pos 13) - frequently problematic
+    [26, 29], // Tile 27 (pos 26) and Tile 30 (pos 29) - frequently problematic
   ];
   
   // Helper to check if a position pair is problematic
