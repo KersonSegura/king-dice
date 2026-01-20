@@ -1106,6 +1106,16 @@ function wouldCreateTripleCluster(terrains: Terrain[], pos: number, resource: Te
   const neighbors = EXPANSION_NEIGHBORS[pos];
   if (!neighbors) return false;
   
+  // Simulate placing the resource to check for linear chains
+  const testTerrains = [...terrains];
+  testTerrains[pos] = resource;
+  
+  // CRITICAL: Check if this would create a linear chain of 3+ tiles
+  // This catches cases like: tile 9 -> tile 14 -> tile 20 all having the same resource
+  if (hasLinearChain(testTerrains, resource)) {
+    return true;
+  }
+  
   // Count how many neighbors already have the same resource
   const sameTypeNeighbors = neighbors.filter(n => terrains[n] === resource);
   
