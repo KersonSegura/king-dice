@@ -587,26 +587,149 @@ export function generateValidTerrains(customRules: any): Terrain[] {
 
 // ---------- MAIN: build board without rendering invalid states ----------
 export function makeValidBoard(customRules: any): Board {
+  const MAX_ATTEMPTS = 100;
   
-  const terrains = generateValidTerrains(customRules);
-  
-  // CRITICAL: Validate terrains before proceeding
-  if (!terrainsPassClusterRule(terrains, customRules)) {
-    console.error('🚫 CRITICAL: Terrain validation failed in makeValidBoard!');
-    throw new Error('Terrain cluster rule failed - retrying board generation');
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    let terrains = generateValidTerrains(customRules);
+    
+    // BRUTE FORCE: Check for cluster violations and try to repair
+    console.log(`🔍 CLASSIC BOARD VALIDATION (Attempt ${attempt + 1}): Checking terrain clusters...`);
+    let foundClusterViolation = false;
+    
+    // Check each tile for cluster violations
+    for (let i = 0; i < 19; i++) {
+      if (terrains[i] === 'desert') continue;
+      
+      const neighbors = NEIGHBORS[i] || [];
+      let sameTypeCount = 0;
+      for (const neighbor of neighbors) {
+        if (terrains[neighbor] === terrains[i]) {
+          sameTypeCount++;
+        }
+      }
+      
+      // If this tile has 2+ neighbors of same type, check if they form a chain
+      if (sameTypeCount >= 2) {
+        // Check if neighbors are also connected (forming a chain of 3+)
+        for (let j = 0; j < neighbors.length; j++) {
+          for (let k = j + 1; k < neighbors.length; k++) {
+            const neighbor1 = neighbors[j];
+            const neighbor2 = neighbors[k];
+            if (terrains[neighbor1] === terrains[i] && terrains[neighbor2] === terrains[i]) {
+              // Check if neighbor1 and neighbor2 are adjacent
+              if (NEIGHBORS[neighbor1]?.includes(neighbor2)) {
+                // Found a chain of 3+ - try to repair
+                console.error(`❌❌❌ VIOLATION: Found cluster of ${terrains[i]} tiles at positions ${i}, ${neighbor1}, ${neighbor2}`);
+                foundClusterViolation = true;
+                
+                // Try to repair by swapping one tile
+                const repaired = repairClassicClustering(terrains, i, customRules);
+                if (repaired) {
+                  terrains = repaired;
+                  console.log('✅ Repaired cluster violation by swapping tiles');
+                  foundClusterViolation = false; // Retry validation with repaired board
+                  break;
+                } else {
+                  // Repair failed, retry entire board
+                  console.error('❌ Could not repair cluster - retrying entire board');
+                  break;
+                }
+              }
+            }
+          }
+          if (foundClusterViolation) break;
+        }
+        if (foundClusterViolation && !repairClassicClustering(terrains, i, customRules)) break;
+      }
+    }
+    
+    // Final validation using the cluster rule function
+    if (!terrainsPassClusterRule(terrains, customRules) || foundClusterViolation) {
+      console.warn(`⚠️ Classic board has cluster violations - retrying (attempt ${attempt + 1}/${MAX_ATTEMPTS})`);
+      continue; // Retry
+    }
+    
+    const desertIdx = terrains.indexOf("desert");
+    const numbers = generateValidNumbers(desertIdx, customRules);
+    
+    // BRUTE FORCE: Check number adjacencies
+    console.log('🔍 CLASSIC BOARD VALIDATION: Checking number adjacencies...');
+    let foundAdjacencyViolation = false;
+    for (let i = 0; i < 19; i++) {
+      const numA = numbers[i];
+      if (numA === null) continue;
+      
+      const neighbors = NEIGHBORS[i] || [];
+      for (const neighbor of neighbors) {
+        const numB = numbers[neighbor];
+        if (numB === null) continue;
+        
+        // Check 6-6 adjacency (ALWAYS forbidden)
+        if (numA === 6 && numB === 6) {
+          console.error(`❌❌❌ VIOLATION: Two 6s adjacent at positions ${i} and ${neighbor}`);
+          foundAdjacencyViolation = true;
+        }
+        
+        // Check 8-8 adjacency (ALWAYS forbidden)
+        if (numA === 8 && numB === 8) {
+          console.error(`❌❌❌ VIOLATION: Two 8s adjacent at positions ${i} and ${neighbor}`);
+          foundAdjacencyViolation = true;
+        }
+        
+        // Check 6-8 adjacency (if rule enforced)
+        if (!customRules.sixEightCanTouch) {
+          if ((numA === 6 && numB === 8) || (numA === 8 && numB === 6)) {
+            console.error(`❌❌❌ VIOLATION: 6-8 adjacency at positions ${i} (${numA}) and ${neighbor} (${numB})`);
+            foundAdjacencyViolation = true;
+          }
+        }
+      }
+    }
+    
+    // CRITICAL: Final validation before returning
+    if (!noHotAdjacency(numbers, customRules) || foundAdjacencyViolation) {
+      console.warn(`⚠️ Classic board has adjacency violations - retrying (attempt ${attempt + 1}/${MAX_ATTEMPTS})`);
+      continue; // Retry
+    }
+    
+    console.log('✅✅✅ VALID CLASSIC BOARD FOUND!');
+    return { terrains, numbers };
   }
   
-  const desertIdx = terrains.indexOf("desert");
-  const numbers = generateValidNumbers(desertIdx, customRules);
+  // If all attempts failed, throw error
+  console.error('❌❌❌ CRITICAL: Could not generate valid classic board after ' + MAX_ATTEMPTS + ' attempts');
+  throw new Error('Failed to generate valid classic board - too many violations');
+}
+
+// Repair classic map clustering by swapping tiles
+function repairClassicClustering(terrains: Terrain[], violationPos: number, customRules: any): Terrain[] | null {
+  const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
+  const currentResource = terrains[violationPos];
+  if (currentResource === 'desert') return null;
   
-  // CRITICAL: Final validation before returning
-  if (!noHotAdjacency(numbers, customRules)) {
-    console.error('🚫 CRITICAL: Final classic board validation failed!');
-    console.error('🚫 This should NEVER happen - throwing error to prevent invalid map display');
-    throw new Error('Classic board failed final validation - 6-8 adjacency rules violated');
+  // Try swapping with each other resource type
+  for (const swapResource of resourceTypes) {
+    if (swapResource === currentResource) continue;
+    
+    // Find positions with the swap resource
+    for (let swapPos = 0; swapPos < 19; swapPos++) {
+      if (terrains[swapPos] !== swapResource) continue;
+      if (swapPos === violationPos) continue;
+      
+      // Try the swap
+      const testTerrains = [...terrains];
+      testTerrains[violationPos] = swapResource;
+      testTerrains[swapPos] = currentResource;
+      
+      // Check if this fixes the violation
+      if (terrainsPassClusterRule(testTerrains, customRules)) {
+        console.log(`✅ Repair successful: Swapped position ${violationPos} (${currentResource}) with position ${swapPos} (${swapResource})`);
+        return testTerrains;
+      }
+    }
   }
   
-  return { terrains, numbers };
+  return null; // Could not repair
 }
 
 // Expansion board generation (5-6 players) - Improved step-by-step logic
