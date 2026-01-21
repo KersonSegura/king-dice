@@ -1816,22 +1816,18 @@ export default function ProfilePage() {
                   <p className="leading-relaxed text-gray-700">
                     {formData.bio || "No bio written yet. Click 'Edit Profile' to add your bio and favorite game categories!"}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                     {formData.favoriteGames.length > 0 ? (
                       formData.favoriteGames.map((category, index) => (
                         <span 
                           key={index} 
-                          className="px-3 py-1 rounded-full text-sm font-medium"
-                          style={{ 
-                            backgroundColor: `${profileColors.cover}1A`, // 10% opacity
-                            color: isLightCover() ? darkenColor(profileColors.cover, 0.5) : profileColors.cover
-                          }}
+                          className="px-4 py-1.5 rounded-full text-sm font-medium bg-[#fbae17] text-white"
                         >
                           {getCategoryLabel(category)}
                         </span>
                       ))
                     ) : (
-                      <p className="text-sm italic text-gray-500">No favorite categories selected yet</p>
+                      <p className="text-sm italic text-gray-400 text-center md:text-left">No favorite categories selected yet</p>
                     )}
                   </div>
                </div>
@@ -1849,38 +1845,42 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700">Favorite Game Categories</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
-                      {getAllCategoriesForEditing().map((category) => {
-                        const categoryValue = typeof category === 'string' ? category : category.value;
-                        const isSelected = formData.favoriteGames.includes(categoryValue);
-                        const isDisabled = !isSelected && formData.favoriteGames.length >= 3;
-                        
-                        return (
-                          <label 
-                            key={categoryValue} 
-                            className={`flex items-center space-x-2 p-2 rounded transition-colors ${
-                              isDisabled 
-                                ? 'cursor-not-allowed opacity-50' 
-                                : 'cursor-pointer hover:bg-gray-50'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleCategory(categoryValue)}
-                              disabled={isDisabled}
-                              className="w-4 h-4 text-[#fbae17] border-gray-300 rounded focus:ring-[#fbae17] disabled:cursor-not-allowed"
-                            />
-                            <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-                              {getCategoryLabel(categoryValue)}
-                            </span>
-                          </label>
-                        );
-                      })}
-                  </div>
-                    <p className="text-xs mt-1 text-gray-500">
-                      Select your favorite game categories ({formData.favoriteGames.length}/3 selected)
-                    </p>
+                    <div className="space-y-3">
+                      <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
+                        <div className="grid grid-cols-2 gap-2">
+                          {getAllCategoriesForEditing().map((category) => {
+                            const categoryValue = typeof category === 'string' ? category : category.value;
+                            const isSelected = formData.favoriteGames.includes(categoryValue);
+                            const isDisabled = !isSelected && formData.favoriteGames.length >= 3;
+                            
+                            return (
+                              <button
+                                key={categoryValue}
+                                onClick={() => toggleCategory(categoryValue)}
+                                disabled={isDisabled}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  isSelected
+                                    ? 'text-white bg-[#fbae17]'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                } ${
+                                  isDisabled
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : 'cursor-pointer'
+                                }`}
+                              >
+                                {getCategoryLabel(categoryValue)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs text-gray-400 md:whitespace-nowrap">
+                          <span className="block md:inline">Select your favorite game categories</span>{' '}
+                          <span className="block md:inline">({formData.favoriteGames.length}/3 selected)</span>
+                        </p>
+                      </div>
+                    </div>
                  </div>
                  <div className="flex space-x-3 pt-4">
                     <button
