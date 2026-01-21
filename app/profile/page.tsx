@@ -1830,6 +1830,7 @@ export default function ProfilePage() {
                </div>
               ) : (
                <div className="space-y-4">
+                  {/* ONLY Bio field - NO categories in About section edit mode */}
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700">Bio</label>
                     <textarea
