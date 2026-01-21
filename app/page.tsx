@@ -818,7 +818,7 @@ export default function HomePage() {
         </div>
         
         {/* Infinite Carousels - Full Width */}
-        <div className="space-y-1 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 overflow-x-hidden">
+        <div className="space-y-1 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
           {/* Hot Games Row - Left to Right */}
           {hotGames.length > 0 && (
             <div className="relative overflow-hidden w-full">
@@ -828,10 +828,10 @@ export default function HomePage() {
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
-                  overflowX: 'auto',
+                  overflowX: 'visible',
                   willChange: 'transform',
-                  display: 'flex',
-                  width: '100%'
+                  display: 'inline-flex',
+                  width: 'auto'
                 }}
               >
                     {/* Duplicate the games array twice for seamless loop */}
@@ -869,11 +869,11 @@ export default function HomePage() {
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
-                      overflowX: 'auto',
+                      overflowX: 'visible',
                       WebkitOverflowScrolling: 'touch',
                       willChange: 'transform',
-                      display: 'flex',
-                      width: '100%'
+                      display: 'inline-flex',
+                      width: 'auto'
                     }}
                   >
                     {/* Duplicate the games array twice for seamless loop */}
