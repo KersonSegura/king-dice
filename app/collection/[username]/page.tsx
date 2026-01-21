@@ -2016,8 +2016,16 @@ export default function CollectionPage() {
 
       {/* Add Game Modal */}
       {showAddGameModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[200] p-4" onClick={() => setShowAddGameModal(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[200] p-4" 
+          onMouseDown={(e) => {
+            // Only close if the mousedown happens directly on the backdrop (not on a child)
+            if (e.target === e.currentTarget) {
+              setShowAddGameModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100dvh-2rem)] sm:max-h-[80vh] overflow-hidden flex flex-col" onMouseDown={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900">{safeT('addGamesToCollection')}</h2>
               <button
