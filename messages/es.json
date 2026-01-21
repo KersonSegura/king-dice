@@ -206,7 +206,8 @@
       "adventure": "Aventura",
       "diceGames": "Juegos de dados",
       "auctionGames": "Juegos de subasta",
-      "tilePlacement": "Colocación de fichas"
+      "tilePlacement": "Colocación de fichas",
+      "remove": "Remover"
     },
     "noBioWrittenYet": "Aún no se ha escrito una biografía.",
     "noFavoriteCategoriesSelected": "Aún no se han seleccionado categorías favoritas",

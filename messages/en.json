@@ -206,7 +206,8 @@
       "adventure": "Adventure",
       "diceGames": "Dice Games",
       "auctionGames": "Auction Games",
-      "tilePlacement": "Tile Placement"
+      "tilePlacement": "Tile Placement",
+      "remove": "Remove"
     },
     "noBioWrittenYet": "No bio written yet.",
     "noFavoriteCategoriesSelected": "No favorite categories selected yet",

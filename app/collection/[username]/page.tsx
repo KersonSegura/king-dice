@@ -1122,7 +1122,6 @@ export default function CollectionPage() {
         setUserProfile(prev => prev ? { ...prev, gamesList: tempGamesList } : null);
         showToast('Games order updated!', 'success');
         setShowGamesListModal(false);
-        setIsEditingCollection(false);
         await loadUserProfile();
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -1487,7 +1486,7 @@ export default function CollectionPage() {
       {/* Header */}
       <div className="bg-gray-900 shadow-sm border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between flex-nowrap">
+          <div className="flex items-center justify-between flex-nowrap">
             <Link 
               href={`/profile/${username}`}
               className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors whitespace-nowrap flex-shrink-0"
@@ -1496,7 +1495,33 @@ export default function CollectionPage() {
               <span className="font-medium text-sm sm:text-base">{safeT('backToProfile')}</span>
             </Link>
             <div className="flex-1" />
-              {!isOwnProfile && <div className="w-16 sm:w-20 flex-shrink-0"></div>}
+            {isOwnProfile ? (
+              <button
+                onClick={() => {
+                  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+                  if (navigator.share) {
+                    navigator.share({
+                      title: `${userProfile.username}'s collection`,
+                      url: shareUrl
+                    }).catch(() => {});
+                  } else if (navigator.clipboard && shareUrl) {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                      showToast('Link copied to clipboard', 'success');
+                    }).catch(() => {
+                      showToast('Could not copy link', 'error');
+                    });
+                  }
+                }}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap bg-[#fbae17] hover:bg-[#fbae17]/90 text-white"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 12v.01M12 4v.01M20 12v.01M12 20v.01M7 12a5 5 0 0010 0 5 5 0 00-10 0z" />
+                </svg>
+                <span>{tCommon('share') || 'Share'}</span>
+              </button>
+            ) : (
+              <div className="w-16 sm:w-20 flex-shrink-0"></div>
+            )}
           </div>
         </div>
       </div>
@@ -2012,7 +2037,7 @@ export default function CollectionPage() {
                                     : 'bg-gray-300 hover:bg-gray-400 text-gray-800'
                                 }`}
                               >
-                                {isPending ? 'Working...' : 'Remove'}
+                                {isPending ? 'Working...' : tCommon('remove') || 'Remove'}
                               </button>
                             );
                           }
