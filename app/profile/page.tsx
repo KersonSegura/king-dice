@@ -790,16 +790,18 @@ export default function ProfilePage() {
 
   // Translate category name
   const getCategoryLabel = (categoryValue: string): string => {
-    const match = gameCategories.find(c => c.value === categoryValue);
+    // First normalize the category value to ensure consistency
+    const normalizedValue = normalizeFavoriteCategory(categoryValue);
+    const match = gameCategories.find(c => c.value === normalizedValue);
     if (!match) {
-      // If no match found, return the value as-is (fallback)
-      return categoryValue;
+      // If no match found, return the normalized value (fallback)
+      return normalizedValue;
     }
     // Try to get translation
     const translated = t(`gameCategories.${match.key}`);
-    // If translation returns the key itself (meaning translation not found), return the original value
+    // If translation returns the key itself (meaning translation not found), return the normalized value
     if (translated === `gameCategories.${match.key}` || translated.startsWith('profile.gameCategories.')) {
-      return categoryValue;
+      return normalizedValue;
     }
     return translated;
   };
@@ -979,10 +981,15 @@ export default function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         if (data.profile) {
+          // Normalize favorite games categories to ensure consistency
+          const normalizedFavoriteGames = (data.profile.favoriteGames || []).map((cat: string) => normalizeFavoriteCategory(cat));
+          // Remove duplicates after normalization
+          const uniqueFavoriteGames = Array.from(new Set(normalizedFavoriteGames));
+          
           setFormData(prev => ({
             ...prev,
             bio: data.profile.bio || '',
-            favoriteGames: data.profile.favoriteGames || []
+            favoriteGames: uniqueFavoriteGames
           }));
           
           // Set admin status
@@ -1439,7 +1446,7 @@ export default function ProfilePage() {
           username: formData.username,
           email: formData.email,
           bio: formData.bio,
-          favoriteGames: formData.favoriteGames
+          favoriteGames: formData.favoriteGames.map(cat => normalizeFavoriteCategory(cat))
         }),
       });
 

@@ -323,9 +323,15 @@ export default function CollectionPage() {
       });
       if (response.ok) {
         const data = await response.json();
+        // Normalize favorite games categories to ensure consistency
+        const normalizedFavoriteGames = (data.user.favoriteGames || []).map((cat: string) => normalizeFavoriteCategory(cat));
+        // Remove duplicates after normalization
+        const uniqueFavoriteGames = Array.from(new Set(normalizedFavoriteGames));
+        
         setUserProfile({
           ...data.user,
-          email: data.user.email || user?.email || ''
+          email: data.user.email || user?.email || '',
+          favoriteGames: uniqueFavoriteGames
         });
 
         // Load user's gallery images so collection photo / favorite card are linked to their posts
@@ -1070,16 +1076,18 @@ export default function CollectionPage() {
   };
 
   const getGameCategoryLabel = (categoryValue: string) => {
-    const match = gameCategories.find(c => c.value === categoryValue);
+    // First normalize the category value to ensure consistency
+    const normalizedValue = normalizeFavoriteCategory(categoryValue);
+    const match = gameCategories.find(c => c.value === normalizedValue);
     if (!match) {
-      // If no match found, return the value as-is (fallback)
-      return categoryValue;
+      // If no match found, return the normalized value (fallback)
+      return normalizedValue;
     }
     // Try to get translation
     const translated = safeT(`gameCategories.${match.key}`);
-    // If translation returns the key itself (meaning translation not found), return the original value
+    // If translation returns the key itself (meaning translation not found), return the normalized value
     if (translated === `gameCategories.${match.key}` || translated.startsWith('profile.gameCategories.')) {
-      return categoryValue;
+      return normalizedValue;
     }
     return translated;
   };
@@ -1140,7 +1148,7 @@ export default function CollectionPage() {
           userId: userProfile.id,
           username: userProfile.username,
           email: email || user?.email || '',
-          favoriteGames: editingFavoriteGames
+          favoriteGames: editingFavoriteGames.map(cat => normalizeFavoriteCategory(cat))
         })
       });
 
