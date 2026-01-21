@@ -215,7 +215,12 @@ export default function CollectionPage() {
   const tCommon: (key: string, params?: any) => string = typeof tCommonRaw === 'function' 
     ? ((key: string, params?: any) => {
         try {
-          return tCommonRaw(key, params) || key;
+          const result = tCommonRaw(key, params);
+          // If translation returns the namespaced key (e.g., 'common.remove'), return just the key or a fallback
+          if (result && result.startsWith('common.')) {
+            return key;
+          }
+          return result || key;
         } catch (error) {
           console.error('[CollectionPage] Error calling tCommon:', error, 'key:', key);
           return key;
@@ -2073,7 +2078,7 @@ export default function CollectionPage() {
                                     : 'bg-gray-300 hover:bg-gray-400 text-gray-800'
                                 }`}
                               >
-                                {isPending ? 'Working...' : tCommon('remove') || 'Remove'}
+                                {isPending ? tCommon('loading') || 'Working...' : tCommon('remove')}
                               </button>
                             );
                           }
