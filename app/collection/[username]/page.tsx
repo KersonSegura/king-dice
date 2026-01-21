@@ -277,6 +277,7 @@ export default function CollectionPage() {
     category?: string;
     likeCount?: number;
     imageId?: string;
+    imageType?: 'collectionPhoto' | 'favoriteCard' | 'gallery';
   } | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [userImages, setUserImages] = useState<GalleryImage[]>([]);
@@ -550,7 +551,7 @@ export default function CollectionPage() {
     }
   };
 
-  const openImageModal = async (galleryImage: GalleryImage) => {
+  const openImageModal = async (galleryImage: GalleryImage & { imageType?: 'collectionPhoto' | 'favoriteCard' | 'gallery' }) => {
     if (!galleryImage) return;
 
     setSelectedImage({
@@ -564,7 +565,8 @@ export default function CollectionPage() {
       createdAt: galleryImage.createdAt,
       category: galleryImage.category,
       likeCount: galleryImage.votes?.upvotes || 0,
-      imageId: galleryImage.id
+      imageId: galleryImage.id,
+      imageType: galleryImage.imageType || 'gallery'
     });
 
     // Load comments + initialize like state
@@ -737,11 +739,13 @@ export default function CollectionPage() {
     if (userProfile?.collectionPhoto) {
       const galleryImage = userImages.find(img => img.imageUrl === userProfile.collectionPhoto);
       if (galleryImage) {
-        void openImageModal(galleryImage);
+        const imageWithType = { ...galleryImage, imageType: 'collectionPhoto' as const };
+        void openImageModal(imageWithType);
       } else {
         setSelectedImage({
           url: userProfile.collectionPhoto,
-          title: tRef.current?.('collectionPhoto') || 'Collection Photo'
+          title: tRef.current?.('collectionPhoto') || 'Collection Photo',
+          imageType: 'collectionPhoto'
         });
         setImageComments([]);
         setShowImageModal(true);
@@ -753,15 +757,81 @@ export default function CollectionPage() {
     if (userProfile?.favoriteCard) {
       const galleryImage = userImages.find(img => img.imageUrl === userProfile.favoriteCard);
       if (galleryImage) {
-        void openImageModal(galleryImage);
+        const imageWithType = { ...galleryImage, imageType: 'favoriteCard' as const };
+        void openImageModal(imageWithType);
       } else {
         setSelectedImage({
           url: userProfile.favoriteCard,
-          title: tRef.current?.('favoriteCard') || 'Favorite Card'
+          title: tRef.current?.('favoriteCard') || 'Favorite Card',
+          imageType: 'favoriteCard'
         });
         setImageComments([]);
         setShowImageModal(true);
       }
+    }
+  };
+
+  // Handle delete image (for collection photo or favorite card)
+  const handleDeleteImage = async () => {
+    if (!selectedImage || !isOwnProfile) return;
+    if (!user?.id || !userProfile?.id) return;
+
+    const imageType = selectedImage.imageType;
+    if (imageType !== 'collectionPhoto' && imageType !== 'favoriteCard') return;
+
+    try {
+      const fieldToUpdate = imageType === 'collectionPhoto' ? 'collectionPhoto' : 'favoriteCard';
+      const response = await fetch('/api/users/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userProfile.id,
+          [fieldToUpdate]: null
+        })
+      });
+
+      if (response.ok) {
+        setUserProfile(prev => prev ? { ...prev, [fieldToUpdate]: null } : null);
+        showToast(imageType === 'collectionPhoto' ? 'Collection photo removed' : 'Favorite card removed', 'success');
+        setShowImageModal(false);
+        setSelectedImage(null);
+        await loadUserProfile();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || 'Failed to remove image', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      showToast('Failed to remove image', 'error');
+    }
+  };
+
+  // Handle edit description (for collection photo or favorite card)
+  const handleEditImageDescription = async (newDescription: string) => {
+    if (!selectedImage || !isOwnProfile) return;
+    if (!selectedImage.imageId) return;
+
+    try {
+      const response = await fetch(`/api/gallery/${selectedImage.imageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: newDescription
+        })
+      });
+
+      if (response.ok) {
+        setSelectedImage(prev => prev ? { ...prev, description: newDescription } : null);
+        showToast('Description updated', 'success');
+        // Reload user images to reflect the change
+        await loadUserImages();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(errorData.error || 'Failed to update description', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating description:', error);
+      showToast('Failed to update description', 'error');
     }
   };
 
@@ -1858,6 +1928,10 @@ export default function CollectionPage() {
           onLikeComment={handleLikeGalleryComment}
           onReplyToComment={handleReplyToGalleryComment}
           onReportComment={handleReportGalleryComment}
+          canEdit={isOwnProfile && (selectedImage.imageType === 'collectionPhoto' || selectedImage.imageType === 'favoriteCard' || !!selectedImage.imageId)}
+          canDelete={isOwnProfile && (selectedImage.imageType === 'collectionPhoto' || selectedImage.imageType === 'favoriteCard')}
+          onDelete={selectedImage.imageType === 'collectionPhoto' || selectedImage.imageType === 'favoriteCard' ? handleDeleteImage : undefined}
+          onEditDescription={selectedImage.imageId ? handleEditImageDescription : undefined}
         />
       )}
 

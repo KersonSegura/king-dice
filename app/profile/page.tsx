@@ -725,29 +725,49 @@ export default function ProfilePage() {
     }
   };
 
-  // Predefined game categories
+  // Game categories list (same as collection page)
   const gameCategories = [
-    'Strategy Games',
-    'Euro Games',
-    'Cooperative Games',
-    'Card Games',
-    'Party Games',
-    'Family Games',
-    'Abstract Games',
-    'Dice Games',
-    'Miniature Games',
-    'Role-Playing Games',
-    'Legacy Games',
-    'Deck Building',
-    'Worker Placement',
-    'Area Control',
-    'Engine Building',
-    'Social Deduction',
-    'Trading Games',
-    'Auction Games',
-    'Tile Placement',
-    'Drafting Games'
-  ];
+    // Canonical categories (deduped). We normalize old saved values (e.g. "Strategy")
+    // into these canonical names (e.g. "Strategy Games") so users don't see duplicates.
+    { value: 'Strategy Games', key: 'strategyGames' },
+    { value: 'Family Games', key: 'familyGames' },
+    { value: 'Party Games', key: 'partyGames' },
+    { value: 'Cooperative Games', key: 'cooperativeGames' },
+    { value: 'Card Games', key: 'cardGames' },
+    { value: 'Competitive', key: 'competitive' },
+    { value: 'Euro Games', key: 'euroGames' },
+    { value: 'Abstract Games', key: 'abstractGames' },
+    { value: 'Dice Games', key: 'diceGames' },
+    { value: 'Miniature Games', key: 'miniatureGames' },
+    { value: 'Role-Playing Games', key: 'rolePlayingGames' },
+    { value: 'Legacy Games', key: 'legacyGames' },
+    { value: 'Deck Building', key: 'deckBuilding' },
+    { value: 'Worker Placement', key: 'workerPlacement' },
+    { value: 'Area Control', key: 'areaControl' },
+    { value: 'Tile Placement', key: 'tilePlacement' },
+    { value: 'Drafting Games', key: 'draftingGames' },
+    { value: 'Engine Building', key: 'engineBuilding' },
+    { value: 'Trading Games', key: 'tradingGames' },
+    { value: 'Auction Games', key: 'auctionGames' },
+    { value: 'Social Deduction', key: 'socialDeduction' },
+    { value: 'Negotiation', key: 'negotiation' },
+    { value: 'Deduction', key: 'deduction' },
+    { value: 'Memory', key: 'memory' },
+    { value: 'Pattern Recognition', key: 'patternRecognition' },
+    { value: 'Thematic', key: 'thematic' },
+    { value: 'Historical', key: 'historical' },
+    { value: 'Fantasy', key: 'fantasy' },
+    { value: 'Sci-Fi', key: 'sciFi' },
+    { value: 'Horror', key: 'horror' },
+    { value: 'Adventure', key: 'adventure' },
+    { value: 'Campaign', key: 'campaign' },
+    { value: 'Solo', key: 'solo' },
+    { value: 'Two Player', key: 'twoPlayer' },
+    { value: 'Quick Play', key: 'quickPlay' },
+    { value: 'Heavy Strategy', key: 'heavyStrategy' },
+    { value: 'Light Strategy', key: 'lightStrategy' },
+    { value: 'Ameritrash', key: 'ameritrash' }
+  ] as const;
 
   const normalizeFavoriteCategory = (category: string): string => {
     const c = (category || '').trim();
@@ -768,77 +788,20 @@ export default function ProfilePage() {
     return map[c] || c;
   };
 
-  // Map category names to translation keys
-  const getCategoryTranslationKey = (category: string): string => {
-    const categoryMap: Record<string, string> = {
-      'Strategy Games': 'strategyGames',
-      'Euro Games': 'euroGames',
-      'Cooperative Games': 'cooperativeGames',
-      'Card Games': 'cardGames',
-      'Party Games': 'partyGames',
-      'Family Games': 'familyGames',
-      'Abstract Games': 'abstractGames',
-      'Dice Games': 'diceGames',
-      'Miniature Games': 'miniatureGames',
-      'Role-Playing Games': 'rolePlayingGames',
-      'Legacy Games': 'legacyGames',
-      'Deck Building': 'deckBuilding',
-      'Worker Placement': 'workerPlacement',
-      'Area Control': 'areaControl',
-      'Engine Building': 'engineBuilding',
-      'Social Deduction': 'socialDeduction',
-      'Trading Games': 'tradingGames',
-      'Auction Games': 'auctionGames',
-      'Tile Placement': 'tilePlacement',
-      'Drafting Games': 'draftingGames',
-      // Also handle singular forms
-      'Strategy': 'strategy',
-      'Family': 'family',
-      'Party': 'party',
-      'Cooperative': 'cooperative',
-      'Competitive': 'competitive',
-      'Drafting': 'drafting',
-      'Trading': 'trading',
-      'Negotiation': 'negotiation',
-      'Deduction': 'deduction',
-      'Memory': 'memory',
-      'Pattern Recognition': 'patternRecognition',
-      'Social Deduction': 'socialDeduction',
-      'Role Playing': 'rolePlaying',
-      'Miniatures': 'miniatures',
-      'Legacy': 'legacy',
-      'Campaign': 'campaign',
-      'Solo': 'solo',
-      'Two Player': 'twoPlayer',
-      'Quick Play': 'quickPlay',
-      'Heavy Strategy': 'heavyStrategy',
-      'Light Strategy': 'lightStrategy',
-      'Euro Game': 'euroGame',
-      'Ameritrash': 'ameritrash',
-      'Abstract': 'abstract',
-      'Thematic': 'thematic',
-      'Historical': 'historical',
-      'Fantasy': 'fantasy',
-      'Sci-Fi': 'sciFi',
-      'Horror': 'horror',
-      'Adventure': 'adventure'
-    };
-    return categoryMap[category] || category.toLowerCase().replace(/\s+/g, '');
-  };
-
   // Translate category name
-  const getCategoryLabel = (category: string): string => {
-    const key = getCategoryTranslationKey(category);
-    try {
-      const translated = t(`gameCategories.${key}`);
-      // If translation returns the key itself, return original category
-      if (translated === `gameCategories.${key}` || translated.startsWith('profile.gameCategories.')) {
-        return category;
-      }
-      return translated;
-    } catch {
-      return category;
+  const getCategoryLabel = (categoryValue: string): string => {
+    const match = gameCategories.find(c => c.value === categoryValue);
+    if (!match) {
+      // If no match found, return the value as-is (fallback)
+      return categoryValue;
     }
+    // Try to get translation
+    const translated = t(`gameCategories.${match.key}`);
+    // If translation returns the key itself (meaning translation not found), return the original value
+    if (translated === `gameCategories.${match.key}` || translated.startsWith('profile.gameCategories.')) {
+      return categoryValue;
+    }
+    return translated;
   };
 
   // Create a complete list that includes both standard categories and any selected categories
@@ -849,7 +812,8 @@ export default function ProfilePage() {
     
     // Add any selected categories that aren't in the standard list
     const missingCategories = selectedCategories
-      .filter(selected => !standardCategories.includes(selected));
+      .filter(selected => !standardCategories.some(cat => cat.value === selected))
+      .map(value => ({ value, key: value.toLowerCase().replace(/\s+/g, '') }));
     
     return [...standardCategories, ...missingCategories];
   };
@@ -1884,12 +1848,13 @@ export default function ProfilePage() {
                     <label className="block text-sm font-medium mb-2 text-gray-700">Favorite Game Categories</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
                       {getAllCategoriesForEditing().map((category) => {
-                        const isSelected = formData.favoriteGames.includes(category);
+                        const categoryValue = typeof category === 'string' ? category : category.value;
+                        const isSelected = formData.favoriteGames.includes(categoryValue);
                         const isDisabled = !isSelected && formData.favoriteGames.length >= 3;
                         
                         return (
                           <label 
-                            key={category} 
+                            key={categoryValue} 
                             className={`flex items-center space-x-2 p-2 rounded transition-colors ${
                               isDisabled 
                                 ? 'cursor-not-allowed opacity-50' 
@@ -1899,12 +1864,12 @@ export default function ProfilePage() {
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => toggleCategory(category)}
+                              onChange={() => toggleCategory(categoryValue)}
                               disabled={isDisabled}
                               className="w-4 h-4 text-[#fbae17] border-gray-300 rounded focus:ring-[#fbae17] disabled:cursor-not-allowed"
                             />
                             <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-                              {getCategoryLabel(category)}
+                              {getCategoryLabel(categoryValue)}
                             </span>
                           </label>
                         );
