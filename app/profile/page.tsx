@@ -766,7 +766,14 @@ export default function ProfilePage() {
 
   // Return the exact same list as collection page - just the standard 38 categories
   const getAllCategoriesForEditing = () => {
-    return [...gameCategories];
+    // Ensure we're using the shared constant from @/constants/gameCategories
+    // This should always return the canonical list of 38 categories
+    const categories = [...gameCategories];
+    // Debug: Verify we have the correct number of categories
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log('[ProfilePage] getAllCategoriesForEditing returning', categories.length, 'categories from shared constant');
+    }
+    return categories;
   };
 
   useEffect(() => {
