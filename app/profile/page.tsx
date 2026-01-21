@@ -1373,7 +1373,7 @@ export default function ProfilePage() {
 
       // Call API to update user profile
       const response = await fetch('/api/users/update-profile', {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1392,21 +1392,31 @@ export default function ProfilePage() {
         const updatedUser = await response.json();
         console.log('Save successful:', updatedUser);
         setIsEditing(false);
+        // Reload user data to reflect changes
+        if (user) {
+          // Update auth context with new username
+          window.location.reload(); // Simple reload to ensure all data is refreshed
+        }
         showToast('Profile updated successfully! ✨', 'success');
       } else {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { message: 'Failed to update profile' };
+        }
         console.error('Save failed:', errorData);
         console.error('Response status:', response.status);
-        console.error('Response headers:', response.headers);
         setErrors({
-          username: errorData.message?.includes('username') ? errorData.message : undefined,
-          email: errorData.message?.includes('email') ? errorData.message : undefined
+          username: errorData.message?.includes('username') || errorData.message?.includes('Username') ? errorData.message : undefined,
+          email: errorData.message?.includes('email') || errorData.message?.includes('Email') ? errorData.message : undefined
         });
-        showToast(`Failed to update profile: ${errorData.message}`, 'error');
+        showToast(`Failed to update profile: ${errorData.message || 'Unknown error'}`, 'error');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      showToast('Failed to update profile. Please try again.', 'error');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showToast(`Failed to update profile: ${errorMessage}`, 'error');
     }
   };
 

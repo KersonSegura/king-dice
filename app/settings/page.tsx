@@ -34,6 +34,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
   const [showDeleteConfirm1, setShowDeleteConfirm1] = useState(false);
   const [showDeleteConfirm2, setShowDeleteConfirm2] = useState(false);
 
@@ -73,8 +74,9 @@ export default function SettingsPage() {
     }
   };
 
-  const showNotificationToast = (message: string) => {
+  const showNotificationToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setNotificationMessage(message);
+    setNotificationType(type);
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 5000);
   };
@@ -96,7 +98,7 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const response = await fetch('/api/users/update-profile', {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -109,7 +111,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setIsEditing(false);
-        showNotificationToast(tSettings('profileUpdated'));
+        showNotificationToast(tSettings('profileUpdated'), 'success');
         // Send notification
         await fetch('/api/notifications', {
           method: 'POST',
@@ -122,12 +124,18 @@ export default function SettingsPage() {
           })
         });
       } else {
-        const errorData = await response.json();
-        showNotificationToast(errorData.message || tSettings('failedToUpdateProfile'));
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { message: tSettings('failedToUpdateProfile') };
+        }
+        showNotificationToast(errorData.message || tSettings('failedToUpdateProfile'), 'error');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      showNotificationToast(tSettings('failedToUpdateProfile'));
+      const errorMessage = error instanceof Error ? error.message : tSettings('failedToUpdateProfile');
+      showNotificationToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -155,10 +163,10 @@ export default function SettingsPage() {
           settings: { notifications: newNotifications }
         })
       });
-      showNotificationToast(tSettings('notificationSettingsUpdated'));
+      showNotificationToast(tSettings('notificationSettingsUpdated'), 'success');
     } catch (error) {
       console.error('Error updating notification settings:', error);
-      showNotificationToast(tSettings('failedToUpdateNotificationSettings'));
+      showNotificationToast(tSettings('failedToUpdateNotificationSettings'), 'error');
     }
   };
 
@@ -176,10 +184,10 @@ export default function SettingsPage() {
           settings: { titleGenderPreference: preference }
         })
       });
-      showNotificationToast(tSettings('titleGenderPreferenceUpdated'));
+      showNotificationToast(tSettings('titleGenderPreferenceUpdated'), 'success');
     } catch (error) {
       console.error('Error updating title gender preference:', error);
-      showNotificationToast(tSettings('failedToUpdateTitleGenderPreference'));
+      showNotificationToast(tSettings('failedToUpdateTitleGenderPreference'), 'error');
       // Revert on error
       setTitleGenderPreference(previous);
     }
@@ -205,15 +213,16 @@ export default function SettingsPage() {
         showNotificationToast(
           newTwoFactorEnabled 
             ? tSettings('twoFactorEnabled')
-            : tSettings('twoFactorDisabled')
+            : tSettings('twoFactorDisabled'),
+          'success'
         );
       } else {
         const errorData = await response.json();
-        showNotificationToast(errorData.error || tSettings('failedToUpdateSecuritySettings'));
+        showNotificationToast(errorData.error || tSettings('failedToUpdateSecuritySettings'), 'error');
       }
     } catch (error) {
       console.error('Error updating 2FA settings:', error);
-      showNotificationToast(tSettings('failedToUpdateSecuritySettings'));
+      showNotificationToast(tSettings('failedToUpdateSecuritySettings'), 'error');
     }
   };
 
@@ -246,7 +255,7 @@ export default function SettingsPage() {
         throw new Error(data.error || 'Failed to delete account');
       }
 
-      showNotificationToast(tSettings('accountDeleted'));
+      showNotificationToast(tSettings('accountDeleted'), 'success');
       
       // Logout and clear local storage, then redirect to home
       setTimeout(() => {
@@ -258,7 +267,7 @@ export default function SettingsPage() {
       }, 1500);
     } catch (error: any) {
       console.error('Error deleting account:', error);
-      showNotificationToast(error.message || tSettings('failedToDeleteAccount'));
+      showNotificationToast(error.message || tSettings('failedToDeleteAccount'), 'error');
     } finally {
       setLoading(false);
     }
@@ -574,8 +583,18 @@ export default function SettingsPage() {
 
       {/* Notification Toast */}
       {showNotification && (
-        <div className="fixed bottom-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
-          <CheckCircle className="w-5 h-5" />
+        <div className={`fixed bottom-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 ${
+          notificationType === 'error' 
+            ? 'bg-red-500 text-white' 
+            : notificationType === 'info'
+            ? 'bg-blue-500 text-white'
+            : 'bg-green-500 text-white'
+        }`}>
+          {notificationType === 'error' ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <CheckCircle className="w-5 h-5" />
+          )}
           <span>{notificationMessage}</span>
           <button
             onClick={() => setShowNotification(false)}
