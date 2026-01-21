@@ -486,29 +486,9 @@ export default function CollectionPage() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, searchGames]);
 
-  // Refresh data when page comes into focus - EXACT pattern from working version
-  useEffect(() => {
-    if (!username) return;
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadUserProfile();
-      }
-    };
-
-    const handleFocus = () => {
-      loadUserProfile();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username]);
+  // Note: Removed auto-refresh on focus/visibility change as it was causing
+  // annoying page refreshes when switching browser tabs. Data is loaded
+  // on initial mount and when username changes.
 
   // Handle URL image/photo parameter (direct links to featured posts)
   useEffect(() => {
