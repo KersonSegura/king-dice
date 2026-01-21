@@ -126,8 +126,11 @@ export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { showToast, ToastContainer } = useToast();
+  const t = useTranslations('profile');
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingCategories, setIsEditingCategories] = useState(false);
+  const [editingFavoriteGames, setEditingFavoriteGames] = useState<string[]>([]);
   const [editedUser, setEditedUser] = useState(user);
   const [formData, setFormData] = useState({
     username: user?.username || '',
@@ -884,6 +887,20 @@ export default function ProfilePage() {
     };
   }, [user?.id]);
 
+  // Initialize editing favorite games when categories editing starts - EXACT COPY from collection page
+  useEffect(() => {
+    if (isEditingCategories && formData.favoriteGames) {
+      const normalized = (formData.favoriteGames || [])
+        .map(normalizeFavoriteCategory)
+        .filter(Boolean);
+
+      // Ensure uniqueness after normalization (prevents duplicates like "Strategy" + "Strategy Games")
+      setEditingFavoriteGames(Array.from(new Set(normalized)));
+    } else if (!isEditingCategories) {
+      setEditingFavoriteGames([]);
+    }
+  }, [isEditingCategories, formData.favoriteGames]);
+
   useEffect(() => {
     if (user) {
       loadUserData();
@@ -1462,31 +1479,54 @@ export default function ProfilePage() {
   };
 
   // EXACT COPY from collection page's handleToggleFavoriteGame
-  const toggleCategory = (category: string) => {
+  const handleToggleFavoriteGame = (category: string) => {
     const normalizedCategory = normalizeFavoriteCategory(category);
-    setFormData(prev => {
+    setEditingFavoriteGames(prev => {
       // Remove either exact or normalized (covers old saved values)
-      if (prev.favoriteGames.includes(category)) {
-        return {
-          ...prev,
-          favoriteGames: prev.favoriteGames.filter(c => c !== category)
-        };
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
       }
-      if (prev.favoriteGames.includes(normalizedCategory)) {
-        return {
-          ...prev,
-          favoriteGames: prev.favoriteGames.filter(c => c !== normalizedCategory)
-        };
+      if (prev.includes(normalizedCategory)) {
+        return prev.filter(c => c !== normalizedCategory);
       }
-      if (prev.favoriteGames.length < 3) {
-        return {
-          ...prev,
-          favoriteGames: [...prev.favoriteGames, normalizedCategory]
-        };
+      if (prev.length < 3) {
+        return [...prev, normalizedCategory];
       }
       showToast('You can only select up to 3 favorite game categories!', 'error');
       return prev;
     });
+  };
+
+  // EXACT COPY from collection page's handleSaveFavoriteGames
+  const handleSaveFavoriteGames = async () => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch('/api/users/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          username: formData.username,
+          email: formData.email || user.email || '',
+          bio: formData.bio,
+          favoriteGames: editingFavoriteGames.map(cat => normalizeFavoriteCategory(cat))
+        })
+      });
+
+      if (response.ok) {
+        setFormData(prev => ({ ...prev, favoriteGames: editingFavoriteGames }));
+        showToast('Favorite categories updated!', 'success');
+        setIsEditingCategories(false);
+        await loadUserData();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(`Failed to update categories: ${errorData.error || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error updating favorite games:', error);
+      showToast('Failed to update favorite categories', 'error');
+    }
   };
 
   const handleColorSave = async (colors: typeof profileColors) => {
@@ -1785,22 +1825,8 @@ export default function ProfilePage() {
               {!isEditing ? (
                 <div className="space-y-4">
                   <p className="leading-relaxed text-gray-700">
-                    {formData.bio || "No bio written yet. Click 'Edit Profile' to add your bio and favorite game categories!"}
+                    {formData.bio || "No bio written yet. Click 'Edit Profile' to add your bio!"}
                   </p>
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    {formData.favoriteGames.length > 0 ? (
-                      formData.favoriteGames.map((category, index) => (
-                        <span 
-                          key={index} 
-                          className="px-4 py-1.5 rounded-full text-sm font-medium bg-[#fbae17] text-white"
-                        >
-                          {getCategoryLabel(category)}
-                        </span>
-                      ))
-                    ) : (
-                      <p className="text-sm italic text-gray-400 text-center md:text-left">No favorite categories selected yet</p>
-                    )}
-                  </div>
                </div>
               ) : (
                <div className="space-y-4">
@@ -1814,47 +1840,6 @@ export default function ProfilePage() {
                       placeholder="Tell us about yourself and your board game interests..."
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700">Favorite Game Categories</label>
-                    <div className="space-y-3">
-                      <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
-                        <div className="grid grid-cols-2 gap-2">
-                          {getAllCategoriesForEditing().map((category) => {
-                            const categoryValue = typeof category === 'string' ? category : category.value;
-                            const normalizedCategoryValue = normalizeFavoriteCategory(categoryValue);
-                            const normalizedFavoriteGames = (formData.favoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
-                            const isSelected = normalizedFavoriteGames.includes(normalizedCategoryValue);
-                            const isDisabled = !isSelected && normalizedFavoriteGames.length >= 3;
-                            
-                            return (
-                              <button
-                                key={categoryValue}
-                                onClick={() => toggleCategory(categoryValue)}
-                                disabled={isDisabled}
-                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                  isSelected
-                                    ? 'text-white bg-[#fbae17]'
-                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                } ${
-                                  isDisabled
-                                    ? 'opacity-50 cursor-not-allowed'
-                                    : 'cursor-pointer'
-                                }`}
-                              >
-                                {getCategoryLabel(categoryValue)}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs text-gray-400 md:whitespace-nowrap">
-                          <span className="block md:inline">Select your favorite game categories</span>{' '}
-                          <span className="block md:inline">({formData.favoriteGames.length}/3 selected)</span>
-                        </p>
-                      </div>
-                    </div>
-                 </div>
                  <div className="flex space-x-3 pt-4">
                     <button
                       onClick={handleSave}
@@ -1873,6 +1858,82 @@ export default function ProfilePage() {
                 </div>
               )}
              </div>
+
+            {/* Favorite Game Categories Section - EXACT COPY from collection page */}
+            <div className="mb-8 space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-[#fbae17]">Favorite Game Categories</h3>
+                <button
+                  onClick={() => setIsEditingCategories(!isEditingCategories)}
+                  className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1 text-[#fbae17]"
+                >
+                  <span>{isEditingCategories ? 'Cancel' : 'Edit'}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </button>
+              </div>
+              {isEditingCategories ? (
+                <div className="space-y-3">
+                  <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
+                    <div className="grid grid-cols-2 gap-2">
+                      {getAllCategoriesForEditing().map((category) => {
+                        const normalizedCategoryValue = normalizeFavoriteCategory(category.value);
+                        const normalizedEditingGames = (editingFavoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
+                        const isSelected = normalizedEditingGames.includes(normalizedCategoryValue);
+                        const isDisabled = !isSelected && normalizedEditingGames.length >= 3;
+                        
+                        return (
+                          <button
+                            key={category.value}
+                            onClick={() => handleToggleFavoriteGame(category.value)}
+                            disabled={isDisabled}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              isSelected
+                                ? 'text-white bg-[#fbae17]'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            } ${
+                              isDisabled
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'cursor-pointer'
+                            }`}
+                          >
+                            {getCategoryLabel(category.value)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-gray-400 md:whitespace-nowrap">
+                      <span className="block md:inline">Select your favorite game categories</span>{' '}
+                      <span className="block md:inline">({editingFavoriteGames.length}/3 selected)</span>
+                    </p>
+                    <button
+                      onClick={handleSaveFavoriteGames}
+                      className="px-4 py-2 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-lg text-sm font-medium transition-colors flex-shrink-0"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                  {formData.favoriteGames && formData.favoriteGames.length > 0 ? (
+                    formData.favoriteGames.map((category, index) => (
+                      <span 
+                        key={index} 
+                        className="px-4 py-1.5 rounded-full text-sm font-medium bg-[#fbae17] text-white"
+                      >
+                        {getCategoryLabel(category)}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-sm italic text-gray-400 text-center md:text-left">No favorite categories selected yet</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Collection Summary Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
