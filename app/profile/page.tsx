@@ -749,6 +749,25 @@ export default function ProfilePage() {
     'Drafting Games'
   ];
 
+  const normalizeFavoriteCategory = (category: string): string => {
+    const c = (category || '').trim();
+    const map: Record<string, string> = {
+      // Old singular values -> canonical list above
+      'Strategy': 'Strategy Games',
+      'Euro Game': 'Euro Games',
+      'Cooperative': 'Cooperative Games',
+      'Party': 'Party Games',
+      'Family': 'Family Games',
+      'Abstract': 'Abstract Games',
+      'Miniatures': 'Miniature Games',
+      'Role Playing': 'Role-Playing Games',
+      'Legacy': 'Legacy Games',
+      'Drafting': 'Drafting Games',
+      'Trading': 'Trading Games'
+    };
+    return map[c] || c;
+  };
+
   // Map category names to translation keys
   const getCategoryTranslationKey = (category: string): string => {
     const categoryMap: Record<string, string> = {
@@ -1507,13 +1526,14 @@ export default function ProfilePage() {
 
   const toggleCategory = (category: string) => {
     setFormData(prev => {
-      const isSelected = prev.favoriteGames.includes(category);
+      const normalizedCategory = normalizeFavoriteCategory(category);
+      const isSelected = prev.favoriteGames.includes(normalizedCategory) || prev.favoriteGames.includes(category);
       
       if (isSelected) {
         // Remove category if already selected
         return {
           ...prev,
-          favoriteGames: prev.favoriteGames.filter(cat => cat !== category)
+          favoriteGames: prev.favoriteGames.filter(cat => cat !== category && cat !== normalizedCategory)
         };
       } else {
         // Add category if not already selected
@@ -1525,7 +1545,7 @@ export default function ProfilePage() {
         
         return {
           ...prev,
-          favoriteGames: [...prev.favoriteGames, category]
+          favoriteGames: [...prev.favoriteGames, normalizedCategory]
         };
       }
     });

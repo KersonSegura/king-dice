@@ -409,7 +409,44 @@ export default function CollectionPage() {
   // Initialize editing favorite games when editing starts
   useEffect(() => {
     if (isEditingCollection && userProfile?.favoriteGames) {
-      setEditingFavoriteGames([...userProfile.favoriteGames]);
+      const normalizeFavoriteCategory = (category: string): string => {
+        const c = (category || '').trim();
+        const map: Record<string, string> = {
+          // Singular -> canonical "Games" versions
+          'Strategy': 'Strategy Games',
+          'Family': 'Family Games',
+          'Party': 'Party Games',
+          'Cooperative': 'Cooperative Games',
+          'Drafting': 'Drafting Games',
+          'Trading': 'Trading Games',
+          'Legacy': 'Legacy Games',
+          'Miniatures': 'Miniature Games',
+          'Role Playing': 'Role-Playing Games',
+          'Euro Game': 'Euro Games',
+          'Abstract': 'Abstract Games',
+          // Canonical versions (pass-through)
+          'Strategy Games': 'Strategy Games',
+          'Family Games': 'Family Games',
+          'Party Games': 'Party Games',
+          'Cooperative Games': 'Cooperative Games',
+          'Drafting Games': 'Drafting Games',
+          'Trading Games': 'Trading Games',
+          'Legacy Games': 'Legacy Games',
+          'Miniature Games': 'Miniature Games',
+          'Role-Playing Games': 'Role-Playing Games',
+          'Euro Games': 'Euro Games',
+          'Abstract Games': 'Abstract Games'
+        };
+
+        return map[c] || c;
+      };
+
+      const normalized = userProfile.favoriteGames
+        .map(normalizeFavoriteCategory)
+        .filter(Boolean);
+
+      // Ensure uniqueness after normalization (prevents duplicates like "Strategy" + "Strategy Games")
+      setEditingFavoriteGames(Array.from(new Set(normalized)));
     } else if (!isEditingCollection) {
       setEditingFavoriteGames([]);
     }
@@ -862,56 +899,79 @@ export default function CollectionPage() {
 
   // Game categories list (same as profile page)
   const gameCategories = [
-    { value: 'Strategy', key: 'strategy' },
+    // Canonical categories (deduped). We normalize old saved values (e.g. "Strategy")
+    // into these canonical names (e.g. "Strategy Games") so users don't see duplicates.
     { value: 'Strategy Games', key: 'strategyGames' },
-    { value: 'Family', key: 'family' },
     { value: 'Family Games', key: 'familyGames' },
-    { value: 'Party', key: 'party' },
     { value: 'Party Games', key: 'partyGames' },
-    { value: 'Cooperative', key: 'cooperative' },
     { value: 'Cooperative Games', key: 'cooperativeGames' },
     { value: 'Card Games', key: 'cardGames' },
     { value: 'Competitive', key: 'competitive' },
+    { value: 'Euro Games', key: 'euroGames' },
+    { value: 'Abstract Games', key: 'abstractGames' },
+    { value: 'Dice Games', key: 'diceGames' },
+    { value: 'Miniature Games', key: 'miniatureGames' },
+    { value: 'Role-Playing Games', key: 'rolePlayingGames' },
+    { value: 'Legacy Games', key: 'legacyGames' },
     { value: 'Deck Building', key: 'deckBuilding' },
     { value: 'Worker Placement', key: 'workerPlacement' },
     { value: 'Area Control', key: 'areaControl' },
-    { value: 'Drafting', key: 'drafting' },
+    { value: 'Tile Placement', key: 'tilePlacement' },
     { value: 'Drafting Games', key: 'draftingGames' },
     { value: 'Engine Building', key: 'engineBuilding' },
-    { value: 'Trading', key: 'trading' },
     { value: 'Trading Games', key: 'tradingGames' },
+    { value: 'Auction Games', key: 'auctionGames' },
+    { value: 'Social Deduction', key: 'socialDeduction' },
     { value: 'Negotiation', key: 'negotiation' },
     { value: 'Deduction', key: 'deduction' },
     { value: 'Memory', key: 'memory' },
     { value: 'Pattern Recognition', key: 'patternRecognition' },
-    { value: 'Social Deduction', key: 'socialDeduction' },
-    { value: 'Role Playing', key: 'rolePlaying' },
-    { value: 'Role-Playing Games', key: 'rolePlayingGames' },
-    { value: 'Miniatures', key: 'miniatures' },
-    { value: 'Miniature Games', key: 'miniatureGames' },
-    { value: 'Legacy', key: 'legacy' },
-    { value: 'Legacy Games', key: 'legacyGames' },
-    { value: 'Campaign', key: 'campaign' },
-    { value: 'Solo', key: 'solo' },
-    { value: 'Two Player', key: 'twoPlayer' },
-    { value: 'Quick Play', key: 'quickPlay' },
-    { value: 'Heavy Strategy', key: 'heavyStrategy' },
-    { value: 'Light Strategy', key: 'lightStrategy' },
-    { value: 'Euro Game', key: 'euroGame' },
-    { value: 'Euro Games', key: 'euroGames' },
-    { value: 'Ameritrash', key: 'ameritrash' },
-    { value: 'Abstract', key: 'abstract' },
-    { value: 'Abstract Games', key: 'abstractGames' },
     { value: 'Thematic', key: 'thematic' },
     { value: 'Historical', key: 'historical' },
     { value: 'Fantasy', key: 'fantasy' },
     { value: 'Sci-Fi', key: 'sciFi' },
     { value: 'Horror', key: 'horror' },
     { value: 'Adventure', key: 'adventure' },
-    { value: 'Dice Games', key: 'diceGames' },
-    { value: 'Auction Games', key: 'auctionGames' },
-    { value: 'Tile Placement', key: 'tilePlacement' }
+    { value: 'Campaign', key: 'campaign' },
+    { value: 'Solo', key: 'solo' },
+    { value: 'Two Player', key: 'twoPlayer' },
+    { value: 'Quick Play', key: 'quickPlay' },
+    { value: 'Heavy Strategy', key: 'heavyStrategy' },
+    { value: 'Light Strategy', key: 'lightStrategy' },
+    { value: 'Ameritrash', key: 'ameritrash' }
   ] as const;
+
+  const normalizeFavoriteCategory = (category: string): string => {
+    const c = (category || '').trim();
+    const map: Record<string, string> = {
+      // Singular -> canonical "Games" versions
+      'Strategy': 'Strategy Games',
+      'Family': 'Family Games',
+      'Party': 'Party Games',
+      'Cooperative': 'Cooperative Games',
+      'Drafting': 'Drafting Games',
+      'Trading': 'Trading Games',
+      'Legacy': 'Legacy Games',
+      'Miniatures': 'Miniature Games',
+      'Role Playing': 'Role-Playing Games',
+      'Euro Game': 'Euro Games',
+      'Abstract': 'Abstract Games',
+      // Canonical versions (pass-through)
+      'Strategy Games': 'Strategy Games',
+      'Family Games': 'Family Games',
+      'Party Games': 'Party Games',
+      'Cooperative Games': 'Cooperative Games',
+      'Drafting Games': 'Drafting Games',
+      'Trading Games': 'Trading Games',
+      'Legacy Games': 'Legacy Games',
+      'Miniature Games': 'Miniature Games',
+      'Role-Playing Games': 'Role-Playing Games',
+      'Euro Games': 'Euro Games',
+      'Abstract Games': 'Abstract Games'
+    };
+
+    return map[c] || c;
+  };
 
   const getGameCategoryLabel = (categoryValue: string) => {
     const match = gameCategories.find(c => c.value === categoryValue);
@@ -943,15 +1003,20 @@ export default function CollectionPage() {
   };
 
   const handleToggleFavoriteGame = (category: string) => {
+    const normalizedCategory = normalizeFavoriteCategory(category);
     setEditingFavoriteGames(prev => {
+      // Remove either exact or normalized (covers old saved values)
       if (prev.includes(category)) {
         return prev.filter(c => c !== category);
-      } else if (prev.length < 3) {
-        return [...prev, category];
-      } else {
-        showToast('You can only select up to 3 favorite game categories!', 'error');
-        return prev;
       }
+      if (prev.includes(normalizedCategory)) {
+        return prev.filter(c => c !== normalizedCategory);
+      }
+      if (prev.length < 3) {
+        return [...prev, normalizedCategory];
+      }
+      showToast('You can only select up to 3 favorite game categories!', 'error');
+      return prev;
     });
   };
 
