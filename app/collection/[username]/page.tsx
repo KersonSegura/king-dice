@@ -284,7 +284,7 @@ export default function CollectionPage() {
   const [imageLikes, setImageLikes] = useState<Record<string, boolean>>({});
   const [loadingComments, setLoadingComments] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
-  const [isEditingCollection, setIsEditingCollection] = useState(false);
+  const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [showGamesListModal, setShowGamesListModal] = useState(false);
   const [showAddGameModal, setShowAddGameModal] = useState(false);
   const [tempGamesList, setTempGamesList] = useState<any[]>([]);
@@ -379,9 +379,9 @@ export default function CollectionPage() {
     }
   }, [showGamesListModal, userProfile?.gamesList]);
 
-  // Initialize editing favorite games when editing starts
+  // Initialize editing favorite games when categories editing starts
   useEffect(() => {
-    if (isEditingCollection && userProfile?.favoriteGames) {
+    if (isEditingCategories && userProfile?.favoriteGames) {
       const normalizeFavoriteCategory = (category: string): string => {
         const c = (category || '').trim();
         const map: Record<string, string> = {
@@ -420,10 +420,10 @@ export default function CollectionPage() {
 
       // Ensure uniqueness after normalization (prevents duplicates like "Strategy" + "Strategy Games")
       setEditingFavoriteGames(Array.from(new Set(normalized)));
-    } else if (!isEditingCollection) {
+    } else if (!isEditingCategories) {
       setEditingFavoriteGames([]);
     }
-  }, [isEditingCollection, userProfile?.favoriteGames]);
+  }, [isEditingCategories, userProfile?.favoriteGames]);
 
   // Debounced search - useCallback to prevent recreation
   const searchGames = useCallback(async (query: string) => {
@@ -1487,7 +1487,7 @@ export default function CollectionPage() {
       {/* Header */}
       <div className="bg-gray-900 shadow-sm border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between flex-nowrap">
+            <div className="flex items-center justify-between flex-nowrap">
             <Link 
               href={`/profile/${username}`}
               className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors whitespace-nowrap flex-shrink-0"
@@ -1496,16 +1496,7 @@ export default function CollectionPage() {
               <span className="font-medium text-sm sm:text-base">{safeT('backToProfile')}</span>
             </Link>
             <div className="flex-1" />
-            {isOwnProfile && (
-              <button
-                onClick={() => setIsEditingCollection(!isEditingCollection)}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap bg-[#fbae17] hover:bg-[#fbae17]/90 text-white"
-              >
-                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{isEditingCollection ? tCommon('cancel') : tCommon('edit')}</span>
-              </button>
-            )}
-            {!isOwnProfile && <div className="w-16 sm:w-20 flex-shrink-0"></div>}
+              {!isOwnProfile && <div className="w-16 sm:w-20 flex-shrink-0"></div>}
           </div>
         </div>
       </div>
@@ -1543,7 +1534,7 @@ export default function CollectionPage() {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-300"></div>
-              {isEditingCollection && (
+              {isOwnProfile && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1624,7 +1615,7 @@ export default function CollectionPage() {
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-300"></div>
-                {isEditingCollection && (
+                {isOwnProfile && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1657,8 +1648,21 @@ export default function CollectionPage() {
         {/* Favorite Categories Section */}
         {(isOwnProfile || hasFavoriteCategories) && (
         <div className="mb-8 space-y-2">
-          <h3 className="text-lg font-semibold text-[#fbae17]">{safeT('favoriteGameCategories')}</h3>
-          {isEditingCollection && isOwnProfile ? (
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-[#fbae17]">{safeT('favoriteGameCategories')}</h3>
+            {isOwnProfile && (
+              <button
+                onClick={() => setIsEditingCategories(!isEditingCategories)}
+                className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1 text-[#fbae17]"
+              >
+                <span>{isEditingCategories ? tCommon('cancel') : tCommon('edit')}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+              </button>
+            )}
+          </div>
+          {isEditingCategories && isOwnProfile ? (
             <div className="space-y-3">
               <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
                 <div className="grid grid-cols-2 gap-2">
@@ -1721,7 +1725,7 @@ export default function CollectionPage() {
             <h2 className="text-2xl font-semibold text-white">
               {safeT('allGames')} ({userProfile.gamesList?.length || 0})
             </h2>
-            {isEditingCollection && (
+            {isOwnProfile && (
               <button
                 onClick={() => setShowGamesListModal(true)}
                 className="text-sm hover:text-[#fbae17]/80 font-medium flex items-center space-x-1 text-[#fbae17]"
