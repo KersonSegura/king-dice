@@ -16,6 +16,7 @@ import PhotoSelectionModal from '@/components/PhotoSelectionModal';
 import LoadingScreen from '@/components/LoadingScreen';
 import { getTranslatedTitle } from '@/lib/title-translations';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
+import { gameCategories } from '@/constants/gameCategories';
 import {
   DndContext,
   closestCenter,
@@ -915,17 +916,34 @@ export default function UserProfilePage() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
+  // Initialize editing favorite games when editing starts
+  useEffect(() => {
+    if (isEditing && userProfile?.favoriteGames) {
+      const normalized = (userProfile.favoriteGames || [])
+        .map(normalizeFavoriteCategory)
+        .filter(Boolean);
+
+      // Ensure uniqueness after normalization (prevents duplicates like "Strategy" + "Strategy Games")
+      setEditingFavoriteGames(Array.from(new Set(normalized)));
+    } else if (!isEditing) {
+      setEditingFavoriteGames([]);
+    }
+  }, [isEditing, userProfile?.favoriteGames]);
+
   // Edit profile functions
   const handleEditProfile = () => {
     setIsEditing(true);
     setEditingBio(userProfile?.bio || '');
-    setEditingFavoriteGames(userProfile?.favoriteGames || []);
+    // editingFavoriteGames will be set by the useEffect above
   };
 
   const handleSaveProfile = async () => {
     if (!userProfile?.id) return;
 
     try {
+      // Normalize categories before saving
+      const normalizedFavoriteGames = editingFavoriteGames.map(cat => normalizeFavoriteCategory(cat));
+      
       const response = await fetch('/api/users/update-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -934,7 +952,7 @@ export default function UserProfilePage() {
           username: userProfile.username,
           email: userProfile.email,
           bio: editingBio,
-          favoriteGames: editingFavoriteGames
+          favoriteGames: normalizedFavoriteGames
         })
       });
 
@@ -942,7 +960,7 @@ export default function UserProfilePage() {
         setUserProfile(prev => prev ? {
           ...prev,
           bio: editingBio,
-          favoriteGames: editingFavoriteGames
+          favoriteGames: normalizedFavoriteGames
         } : null);
         setIsEditing(false);
         showToast(t('profileUpdatedSuccessfully'), 'success');
@@ -961,59 +979,77 @@ export default function UserProfilePage() {
     setEditingFavoriteGames(userProfile?.favoriteGames || []);
   };
 
+  // Normalize favorite category to canonical form (same as collection page)
+  const normalizeFavoriteCategory = (category: string): string => {
+    const c = (category || '').trim();
+    const map: Record<string, string> = {
+      // Singular -> canonical "Games" versions
+      'Strategy': 'Strategy Games',
+      'Family': 'Family Games',
+      'Party': 'Party Games',
+      'Cooperative': 'Cooperative Games',
+      'Drafting': 'Drafting Games',
+      'Trading': 'Trading Games',
+      'Legacy': 'Legacy Games',
+      'Miniatures': 'Miniature Games',
+      'Role Playing': 'Role-Playing Games',
+      'Euro Game': 'Euro Games',
+      'Abstract': 'Abstract Games',
+      // Canonical versions (pass-through)
+      'Strategy Games': 'Strategy Games',
+      'Family Games': 'Family Games',
+      'Party Games': 'Party Games',
+      'Cooperative Games': 'Cooperative Games',
+      'Drafting Games': 'Drafting Games',
+      'Trading Games': 'Trading Games',
+      'Legacy Games': 'Legacy Games',
+      'Miniature Games': 'Miniature Games',
+      'Role-Playing Games': 'Role-Playing Games',
+      'Euro Games': 'Euro Games',
+      'Abstract Games': 'Abstract Games'
+    };
+
+    return map[c] || c;
+  };
+
+  // Return the exact same list as collection page - just the standard 38 categories
+  const getAllCategoriesForEditing = () => {
+    return [...gameCategories];
+  };
+
   const handleToggleFavoriteGame = (category: string) => {
+    const normalizedCategory = normalizeFavoriteCategory(category);
     setEditingFavoriteGames(prev => {
+      // Remove either exact or normalized (covers old saved values)
       if (prev.includes(category)) {
         return prev.filter(c => c !== category);
-      } else if (prev.length < 3) {
-        return [...prev, category];
       }
+      if (prev.includes(normalizedCategory)) {
+        return prev.filter(c => c !== normalizedCategory);
+      }
+      if (prev.length < 3) {
+        return [...prev, normalizedCategory];
+      }
+      showToast('You can only select up to 3 favorite game categories!', 'error');
       return prev;
     });
   };
 
-  // Game categories list
-  // Keep `value` in English for storage/backwards compatibility, but display translated labels via `key`.
-  const gameCategories = [
-    { value: 'Strategy', key: 'strategy' },
-    { value: 'Family', key: 'family' },
-    { value: 'Party', key: 'party' },
-    { value: 'Cooperative', key: 'cooperative' },
-    { value: 'Competitive', key: 'competitive' },
-    { value: 'Deck Building', key: 'deckBuilding' },
-    { value: 'Worker Placement', key: 'workerPlacement' },
-    { value: 'Area Control', key: 'areaControl' },
-    { value: 'Drafting', key: 'drafting' },
-    { value: 'Engine Building', key: 'engineBuilding' },
-    { value: 'Trading', key: 'trading' },
-    { value: 'Negotiation', key: 'negotiation' },
-    { value: 'Deduction', key: 'deduction' },
-    { value: 'Memory', key: 'memory' },
-    { value: 'Pattern Recognition', key: 'patternRecognition' },
-    { value: 'Social Deduction', key: 'socialDeduction' },
-    { value: 'Role Playing', key: 'rolePlaying' },
-    { value: 'Miniatures', key: 'miniatures' },
-    { value: 'Legacy', key: 'legacy' },
-    { value: 'Campaign', key: 'campaign' },
-    { value: 'Solo', key: 'solo' },
-    { value: 'Two Player', key: 'twoPlayer' },
-    { value: 'Quick Play', key: 'quickPlay' },
-    { value: 'Heavy Strategy', key: 'heavyStrategy' },
-    { value: 'Light Strategy', key: 'lightStrategy' },
-    { value: 'Euro Game', key: 'euroGame' },
-    { value: 'Ameritrash', key: 'ameritrash' },
-    { value: 'Abstract', key: 'abstract' },
-    { value: 'Thematic', key: 'thematic' },
-    { value: 'Historical', key: 'historical' },
-    { value: 'Fantasy', key: 'fantasy' },
-    { value: 'Sci-Fi', key: 'sciFi' },
-    { value: 'Horror', key: 'horror' },
-    { value: 'Adventure', key: 'adventure' }
-  ] as const;
-
   const getGameCategoryLabel = (categoryValue: string) => {
-    const match = gameCategories.find(c => c.value === categoryValue);
-    return match ? t(`gameCategories.${match.key}`) : categoryValue;
+    // First normalize the category value to ensure consistency
+    const normalizedValue = normalizeFavoriteCategory(categoryValue);
+    const match = gameCategories.find(c => c.value === normalizedValue);
+    if (!match) {
+      // If no match found, return the normalized value (fallback)
+      return normalizedValue;
+    }
+    // Try to get translation
+    const translated = t(`gameCategories.${match.key}`);
+    // If translation returns the key itself (meaning translation not found), return the normalized value
+    if (translated === `gameCategories.${match.key}` || translated.startsWith('profile.gameCategories.')) {
+      return normalizedValue;
+    }
+    return translated;
   };
 
   // Open upload modal for collection photo
@@ -1827,7 +1863,6 @@ export default function UserProfilePage() {
               
               {isEditing ? (
                 <div className="space-y-6">
-                  {/* ONLY Bio field - NO categories in About section edit mode */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('bio')}</label>
                     <textarea
@@ -1837,6 +1872,48 @@ export default function UserProfilePage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-transparent resize-none"
                       rows={4}
                     />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('favoriteGameCategories')}
+                    </label>
+                    <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
+                      <div className="grid grid-cols-2 gap-2">
+                        {getAllCategoriesForEditing().map((category) => {
+                          const normalizedCategoryValue = normalizeFavoriteCategory(category.value);
+                          const normalizedEditingGames = (editingFavoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
+                          const isSelected = normalizedEditingGames.includes(normalizedCategoryValue);
+                          const isDisabled = !isSelected && normalizedEditingGames.length >= 3;
+                          
+                          return (
+                            <button
+                              key={category.value}
+                              onClick={() => handleToggleFavoriteGame(category.value)}
+                              disabled={isDisabled}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                isSelected
+                                  ? 'text-white'
+                                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                              } ${
+                                isDisabled
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : 'cursor-pointer'
+                              }`}
+                              style={{
+                                backgroundColor: isSelected ? profileColors.cover : undefined,
+                                borderColor: isSelected ? profileColors.cover : undefined
+                              }}
+                            >
+                              {getGameCategoryLabel(category.value)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <p className="text-xs mt-1 text-gray-500">
+                      {t('selectFavoriteCategories')} ({editingFavoriteGames.length}/3 {t('selected')})
+                    </p>
                   </div>
                   
                   <div className="flex justify-end space-x-3">
