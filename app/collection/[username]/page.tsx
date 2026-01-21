@@ -1054,9 +1054,9 @@ export default function CollectionPage() {
   // This ensures users can always deselect categories they previously selected
   const getAllCategoriesForEditing = () => {
     const standardCategories = [...gameCategories];
-    const selectedCategories = editingFavoriteGames || [];
+    const selectedCategories = (editingFavoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
     
-    // Add any selected categories that aren't in the standard list
+    // Add any selected categories that aren't in the standard list (after normalization)
     const missingCategories = selectedCategories
       .filter(selected => !standardCategories.some(cat => cat.value === selected))
       .map(selected => ({ value: selected, key: selected.toLowerCase().replace(/\s+/g, '') }));
@@ -1725,24 +1725,31 @@ export default function CollectionPage() {
             <div className="space-y-3">
               <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
                 <div className="grid grid-cols-2 gap-2">
-                  {getAllCategoriesForEditing().map((category) => (
-                    <button
-                      key={category.value}
-                      onClick={() => handleToggleFavoriteGame(category.value)}
-                      disabled={!editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        editingFavoriteGames.includes(category.value)
-                          ? 'text-white bg-[#fbae17]'
-                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      } ${
-                        !editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'cursor-pointer'
-                      }`}
-                    >
-                      {getGameCategoryLabel(category.value)}
-                    </button>
-                  ))}
+                  {getAllCategoriesForEditing().map((category) => {
+                    const normalizedCategoryValue = normalizeFavoriteCategory(category.value);
+                    const normalizedEditingGames = (editingFavoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
+                    const isSelected = normalizedEditingGames.includes(normalizedCategoryValue);
+                    const isDisabled = !isSelected && normalizedEditingGames.length >= 3;
+                    
+                    return (
+                      <button
+                        key={category.value}
+                        onClick={() => handleToggleFavoriteGame(category.value)}
+                        disabled={isDisabled}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          isSelected
+                            ? 'text-white bg-[#fbae17]'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        } ${
+                          isDisabled
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'cursor-pointer'
+                        }`}
+                      >
+                        {getGameCategoryLabel(category.value)}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2">

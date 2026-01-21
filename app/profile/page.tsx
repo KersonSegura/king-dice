@@ -768,9 +768,9 @@ export default function ProfilePage() {
   // This ensures users can always deselect categories they previously selected
   const getAllCategoriesForEditing = () => {
     const standardCategories = [...gameCategories];
-    const selectedCategories = formData.favoriteGames || [];
+    const selectedCategories = (formData.favoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
     
-    // Add any selected categories that aren't in the standard list
+    // Add any selected categories that aren't in the standard list (after normalization)
     const missingCategories = selectedCategories
       .filter(selected => !standardCategories.some(cat => cat.value === selected))
       .map(value => ({ value, key: value.toLowerCase().replace(/\s+/g, '') }));
@@ -1815,8 +1815,10 @@ export default function ProfilePage() {
                         <div className="grid grid-cols-2 gap-2">
                           {getAllCategoriesForEditing().map((category) => {
                             const categoryValue = typeof category === 'string' ? category : category.value;
-                            const isSelected = formData.favoriteGames.includes(categoryValue);
-                            const isDisabled = !isSelected && formData.favoriteGames.length >= 3;
+                            const normalizedCategoryValue = normalizeFavoriteCategory(categoryValue);
+                            const normalizedFavoriteGames = (formData.favoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
+                            const isSelected = normalizedFavoriteGames.includes(normalizedCategoryValue);
+                            const isDisabled = !isSelected && normalizedFavoriteGames.length >= 3;
                             
                             return (
                               <button
