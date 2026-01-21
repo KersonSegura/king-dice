@@ -784,7 +784,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col overflow-x-hidden">
       {/* Hero Section */}
       <section className="bg-gray-900 pb-12 pt-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -818,7 +818,7 @@ export default function HomePage() {
         </div>
         
         {/* Infinite Carousels - Full Width */}
-        <div className="space-y-1 mb-8 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="space-y-1 mb-8 -mx-4 sm:-mx-6 lg:-mx-8 overflow-x-hidden">
           {/* Hot Games Row - Left to Right */}
           {hotGames.length > 0 && (
             <div className="relative overflow-hidden w-full">
@@ -828,10 +828,10 @@ export default function HomePage() {
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
-                  overflowX: 'visible',
+                  overflowX: 'auto',
                   willChange: 'transform',
-                  display: 'inline-flex',
-                  width: 'auto'
+                  display: 'flex',
+                  width: '100%'
                 }}
               >
                     {/* Duplicate the games array twice for seamless loop */}
@@ -869,11 +869,11 @@ export default function HomePage() {
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
-                      overflowX: 'visible',
+                      overflowX: 'auto',
                       WebkitOverflowScrolling: 'touch',
                       willChange: 'transform',
-                      display: 'inline-flex',
-                      width: 'auto'
+                      display: 'flex',
+                      width: '100%'
                     }}
                   >
                     {/* Duplicate the games array twice for seamless loop */}
