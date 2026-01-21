@@ -193,25 +193,11 @@ export default function CollectionPage() {
   const tRaw = useTranslations('profile');
   const tCommonRaw = useTranslations('common');
   
-  // DEBUG: Log translation initialization
-  if (typeof window !== 'undefined') {
-    console.log('[CollectionPage] Translation initialization:', {
-      tRawType: typeof tRaw,
-      tRawIsFunction: typeof tRaw === 'function',
-      tCommonRawType: typeof tCommonRaw,
-      tCommonRawIsFunction: typeof tCommonRaw === 'function',
-      stack: new Error().stack
-    });
-  }
-  
   // Ensure t is always a function to prevent undefined errors
   const t: (key: string, params?: any) => string = typeof tRaw === 'function' 
     ? ((key: string, params?: any) => {
         try {
           const result = tRaw(key, params);
-          if (typeof window !== 'undefined' && (result === undefined || result === null)) {
-            console.warn('[CollectionPage] Translation returned undefined/null for key:', key, 'params:', params);
-          }
           return result || key;
         } catch (error) {
           console.error('[CollectionPage] Error calling translation function:', error, 'key:', key);
@@ -236,26 +222,11 @@ export default function CollectionPage() {
       })
     : ((key: string) => key);
   
-  // DEBUG: Verify t is defined
-  if (typeof window !== 'undefined') {
-    console.log('[CollectionPage] After initialization:', {
-      tType: typeof t,
-      tIsFunction: typeof t === 'function',
-      tCommonType: typeof tCommon,
-      tCommonIsFunction: typeof tCommon === 'function'
-    });
-  }
-  
   // Store t in ref to ensure it's always accessible in callbacks
   const tRef = useRef(t);
   const isClosingModal = useRef(false);
   useEffect(() => {
     tRef.current = t;
-    // Also store on window for debugging (remove in production if needed)
-    if (typeof window !== 'undefined') {
-      (window as any).__collectionPageT = t;
-      console.log('[CollectionPage] Updated tRef.current, t type:', typeof t);
-    }
   }, [t]);
   
   // Create a safe wrapper for t that logs errors
@@ -854,8 +825,7 @@ export default function CollectionPage() {
         } : null);
         
         showToast('Game added to collection!', 'success');
-        // Keep the Add Game modal open so users can add multiple games quickly
-        await loadUserProfile();
+        // Keep the Add Game modal open; no full refresh to avoid interrupting flow
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         showToast(`Failed to add game: ${errorData.error || 'Unknown error'}`, 'error');
@@ -918,7 +888,6 @@ export default function CollectionPage() {
       if (response.ok) {
         setUserProfile(prev => prev ? { ...prev, gamesList: updatedGamesList } : null);
         showToast('Game removed from collection', 'success');
-        await loadUserProfile();
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         showToast(`Failed to remove game: ${errorData.error || 'Unknown error'}`, 'error');
