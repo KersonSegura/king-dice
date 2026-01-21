@@ -1827,6 +1827,7 @@ export default function UserProfilePage() {
               
               {isEditing ? (
                 <div className="space-y-6">
+                  {/* ONLY Bio field - NO categories in About section edit mode */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('bio')}</label>
                     <textarea
@@ -1836,38 +1837,6 @@ export default function UserProfilePage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#fbae17] focus:border-transparent resize-none"
                       rows={4}
                     />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('favoriteGameCategories')}
-                    </label>
-                    <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
-                      <div className="grid grid-cols-2 gap-2">
-                        {gameCategories.map((category) => (
-                          <button
-                            key={category.value}
-                            onClick={() => handleToggleFavoriteGame(category.value)}
-                            disabled={!editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              editingFavoriteGames.includes(category.value)
-                                ? 'text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
-                            } ${
-                              !editingFavoriteGames.includes(category.value) && editingFavoriteGames.length >= 3
-                                ? 'opacity-50 cursor-not-allowed'
-                                : 'cursor-pointer'
-                            }`}
-                            style={{
-                              backgroundColor: editingFavoriteGames.includes(category.value) ? profileColors.cover : undefined,
-                              borderColor: editingFavoriteGames.includes(category.value) ? profileColors.cover : undefined
-                            }}
-                          >
-                            {t(`gameCategories.${category.key}`)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                   
                   <div className="flex justify-end space-x-3">
