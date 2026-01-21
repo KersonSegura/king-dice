@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
 import ExpandableText from './ExpandableText';
 import ReportContent from './ReportContent';
 import { useLocale, useTranslations } from 'next-intl';
+import { renderFormattedText } from '@/utils/formatText';
 
 interface Comment {
   id: string;
@@ -692,8 +693,8 @@ export default function ImageModal({
                     </div>
                   ) : (
                     <div className="relative">
-                      <p className="text-gray-700 text-sm whitespace-pre-wrap pr-8">
-                        {description}
+                      <p className="text-gray-700 text-sm pr-8">
+                        {renderFormattedText(description || '')}
                       </p>
                       {canEdit && onEditDescription && (
                         <button
@@ -790,7 +791,7 @@ export default function ImageModal({
                             </div>
                             <span className="text-gray-500 text-xs whitespace-nowrap">{formatRelativeTime(comment.createdAt)}</span>
                           </div>
-                          <p className="text-gray-700 text-xs">{comment.content}</p>
+                          <p className="text-gray-700 text-xs">{renderFormattedText(comment.content)}</p>
 
                           {/* Comment actions (mobile) */}
                           <div className="mt-2 flex items-center justify-between">
@@ -1068,8 +1069,8 @@ export default function ImageModal({
                   ) : (
                     <div className="relative">
                       <div className="text-gray-700 max-h-32 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar]:bg-gray-200 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full pr-8">
-                        <p className="whitespace-pre-wrap">
-                          {description}
+                        <p>
+                          {renderFormattedText(description || '')}
                         </p>
                       </div>
                       {canEdit && onEditDescription && (
@@ -1210,7 +1211,7 @@ export default function ImageModal({
                           </div>
                           <span className="text-gray-500 text-xs whitespace-nowrap">{formatRelativeTime(comment.createdAt)}</span>
                         </div>
-                            <p className="text-gray-700 text-sm pr-8">{comment.content}</p>
+                            <p className="text-gray-700 text-sm pr-8">{renderFormattedText(comment.content)}</p>
                             
                             {/* Action buttons at bottom */}
                             <div className="flex items-center justify-between mt-2">
