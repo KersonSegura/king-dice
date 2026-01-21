@@ -1794,13 +1794,13 @@ export default function CollectionPage() {
                 </Link>
               ))}
 
-              {/* Add tile (editing only): opens Edit List modal */}
-              {isEditingCollection && isOwnProfile && (
+              {/* Add tile (owner only): always visible so owners can add games quickly */}
+              {isOwnProfile && (
                 <button
                   type="button"
-                  onClick={() => setShowGamesListModal(true)}
+                  onClick={() => setShowAddGameModal(true)}
                   className="group"
-                  aria-label={safeT('editList')}
+                  aria-label={safeT('addGamesToCollection')}
                 >
                   <div className="relative aspect-square rounded-lg overflow-hidden flex items-center justify-center border-2 border-dashed border-gray-600 bg-gray-800/40 hover:border-[#fbae17] hover:bg-[#fbae17]/10 transition-colors">
                     <svg className="w-8 h-8 text-gray-300 group-hover:text-[#fbae17] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
