@@ -1147,7 +1147,7 @@ export default function CollectionPage() {
       if (response.ok) {
         setUserProfile(prev => prev ? { ...prev, favoriteGames: editingFavoriteGames } : null);
         showToast('Favorite categories updated!', 'success');
-        setIsEditingCollection(false);
+        setIsEditingCategories(false);
         await loadUserProfile();
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));

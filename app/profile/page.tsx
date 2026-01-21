@@ -1449,10 +1449,13 @@ export default function ProfilePage() {
         const updatedUser = await response.json();
         console.log('Save successful:', updatedUser);
         setIsEditing(false);
-        // Reload user data to reflect changes
+        // Reload user data to reflect changes (including favoriteGames)
         if (user) {
-          // Update auth context with new username
-          window.location.reload(); // Simple reload to ensure all data is refreshed
+          await loadUserData(); // Reload profile data including favoriteGames
+          // Update auth context with new username if it changed
+          if (updatedUser.username && updatedUser.username !== user.username) {
+            window.location.reload(); // Full reload if username changed
+          }
         }
         showToast('Profile updated successfully! ✨', 'success');
       } else {
