@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Camera, Edit, X, GripVertical } from 'lucide-react';
+import { ArrowLeft, Camera, Edit, X, GripVertical, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import ImageModal from '@/components/ImageModal';
@@ -1514,9 +1514,7 @@ export default function CollectionPage() {
                 }}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium whitespace-nowrap bg-[#fbae17] hover:bg-[#fbae17]/90 text-white"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 12v.01M12 4v.01M20 12v.01M12 20v.01M7 12a5 5 0 0010 0 5 5 0 00-10 0z" />
-                </svg>
+                <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{tCommon('share') || 'Share'}</span>
               </button>
             ) : (
