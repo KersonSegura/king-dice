@@ -1050,18 +1050,9 @@ export default function CollectionPage() {
     return translated;
   };
 
-  // Create a complete list that includes both standard categories and any selected categories
-  // This ensures users can always deselect categories they previously selected
+  // Return the exact same list as profile page - just the standard 38 categories
   const getAllCategoriesForEditing = () => {
-    const standardCategories = [...gameCategories];
-    const selectedCategories = (editingFavoriteGames || []).map(cat => normalizeFavoriteCategory(cat));
-    
-    // Add any selected categories that aren't in the standard list (after normalization)
-    const missingCategories = selectedCategories
-      .filter(selected => !standardCategories.some(cat => cat.value === selected))
-      .map(selected => ({ value: selected, key: selected.toLowerCase().replace(/\s+/g, '') }));
-    
-    return [...standardCategories, ...missingCategories];
+    return [...gameCategories];
   };
 
   const handleToggleFavoriteGame = (category: string) => {
