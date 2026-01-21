@@ -11,6 +11,7 @@ import ImageModal from '@/components/ImageModal';
 import ProfileUploadModal from '@/components/ProfileUploadModal';
 import PhotoSelectionModal from '@/components/PhotoSelectionModal';
 import { useTranslations } from 'next-intl';
+import { gameCategories } from '@/constants/gameCategories';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import {
   DndContext,
@@ -999,49 +1000,6 @@ export default function CollectionPage() {
     showToast('Game removed from collection', 'success', 1500);
   };
 
-  // Game categories list (same as profile page)
-  const gameCategories = [
-    // Canonical categories (deduped). We normalize old saved values (e.g. "Strategy")
-    // into these canonical names (e.g. "Strategy Games") so users don't see duplicates.
-    { value: 'Strategy Games', key: 'strategyGames' },
-    { value: 'Family Games', key: 'familyGames' },
-    { value: 'Party Games', key: 'partyGames' },
-    { value: 'Cooperative Games', key: 'cooperativeGames' },
-    { value: 'Card Games', key: 'cardGames' },
-    { value: 'Competitive', key: 'competitive' },
-    { value: 'Euro Games', key: 'euroGames' },
-    { value: 'Abstract Games', key: 'abstractGames' },
-    { value: 'Dice Games', key: 'diceGames' },
-    { value: 'Miniature Games', key: 'miniatureGames' },
-    { value: 'Role-Playing Games', key: 'rolePlayingGames' },
-    { value: 'Legacy Games', key: 'legacyGames' },
-    { value: 'Deck Building', key: 'deckBuilding' },
-    { value: 'Worker Placement', key: 'workerPlacement' },
-    { value: 'Area Control', key: 'areaControl' },
-    { value: 'Tile Placement', key: 'tilePlacement' },
-    { value: 'Drafting Games', key: 'draftingGames' },
-    { value: 'Engine Building', key: 'engineBuilding' },
-    { value: 'Trading Games', key: 'tradingGames' },
-    { value: 'Auction Games', key: 'auctionGames' },
-    { value: 'Social Deduction', key: 'socialDeduction' },
-    { value: 'Negotiation', key: 'negotiation' },
-    { value: 'Deduction', key: 'deduction' },
-    { value: 'Memory', key: 'memory' },
-    { value: 'Pattern Recognition', key: 'patternRecognition' },
-    { value: 'Thematic', key: 'thematic' },
-    { value: 'Historical', key: 'historical' },
-    { value: 'Fantasy', key: 'fantasy' },
-    { value: 'Sci-Fi', key: 'sciFi' },
-    { value: 'Horror', key: 'horror' },
-    { value: 'Adventure', key: 'adventure' },
-    { value: 'Campaign', key: 'campaign' },
-    { value: 'Solo', key: 'solo' },
-    { value: 'Two Player', key: 'twoPlayer' },
-    { value: 'Quick Play', key: 'quickPlay' },
-    { value: 'Heavy Strategy', key: 'heavyStrategy' },
-    { value: 'Light Strategy', key: 'lightStrategy' },
-    { value: 'Ameritrash', key: 'ameritrash' }
-  ] as const;
 
   const normalizeFavoriteCategory = (category: string): string => {
     const c = (category || '').trim();
