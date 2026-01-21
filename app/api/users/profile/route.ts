@@ -36,10 +36,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Find user in database by username or userId
-    const { data: users, error: findError } = await supabaseAdmin
+    // Use case-insensitive matching for username to handle URL variations (Kerson vs kerson)
+    let query = supabaseAdmin
       .from('users')
-      .select('*')
-      .or(username ? `username.eq.${username}` : `id.eq.${userId}`)
+      .select('*');
+    
+    if (username) {
+      // Use ilike for case-insensitive exact match
+      query = query.ilike('username', username);
+    } else if (userId) {
+      query = query.eq('id', userId);
+    }
+    
+    const { data: users, error: findError } = await query
       .limit(1)
       .single();
 
