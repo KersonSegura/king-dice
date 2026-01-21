@@ -320,6 +320,7 @@ export default function CollectionPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSuggestingGame, setIsSuggestingGame] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<'collection-photo' | 'favorite-card'>('collection-photo');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPhotoSelectionModal, setShowPhotoSelectionModal] = useState(false);
@@ -1086,6 +1087,46 @@ export default function CollectionPage() {
     } catch (error) {
       console.error('Error updating games order:', error);
       showToast('Failed to update games order', 'error');
+    }
+  };
+
+  const handleSuggestGame = async () => {
+    const gameName = (searchQuery || '').trim();
+    if (!gameName) return;
+
+    if (!user?.id || !user?.username) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    setIsSuggestingGame(true);
+    try {
+      const response = await fetch('/api/suggest-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameName,
+          suggestedBy: user.username,
+          userId: user.id,
+          additionalInfo: 'Suggested from Collection -> Add Game modal'
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        showToast(data?.error || data?.message || 'Failed to send suggestion. Please try again later.', 'error');
+        return;
+      }
+
+      showToast("Thanks! We'll review it and add it soon after reviewing it.", 'success');
+      // Clear search to avoid repeated submissions
+      setSearchQuery('');
+      setSearchResults([]);
+    } catch (e) {
+      console.error('Error suggesting game:', e);
+      showToast('Failed to send suggestion. Please try again later.', 'error');
+    } finally {
+      setIsSuggestingGame(false);
     }
   };
 
@@ -1918,6 +1959,21 @@ export default function CollectionPage() {
                 ) : searchQuery ? (
                   <div className="text-center py-8 text-gray-500">
                     <p>No games found for "{searchQuery}"</p>
+                    <button
+                      type="button"
+                      onClick={handleSuggestGame}
+                      disabled={isSuggestingGame || !searchQuery.trim()}
+                      className={`mt-4 inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isSuggestingGame
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          : 'bg-[#fbae17] hover:bg-[#fbae17]/90 text-white'
+                      }`}
+                    >
+                      {isSuggestingGame ? 'Sending suggestion...' : 'Suggest this game'}
+                    </button>
+                    <p className="mt-2 text-xs text-gray-400">
+                      We’ll review it and add it to the kingdom soon.
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
