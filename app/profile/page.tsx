@@ -730,23 +730,36 @@ export default function ProfilePage() {
   const normalizeFavoriteCategory = (category: string): string => {
     const c = (category || '').trim();
     const map: Record<string, string> = {
-      // Old singular values -> canonical list above
+      // Singular -> canonical "Games" versions
       'Strategy': 'Strategy Games',
-      'Euro Game': 'Euro Games',
-      'Cooperative': 'Cooperative Games',
-      'Party': 'Party Games',
       'Family': 'Family Games',
-      'Abstract': 'Abstract Games',
+      'Party': 'Party Games',
+      'Cooperative': 'Cooperative Games',
+      'Drafting': 'Drafting Games',
+      'Trading': 'Trading Games',
+      'Legacy': 'Legacy Games',
       'Miniatures': 'Miniature Games',
       'Role Playing': 'Role-Playing Games',
-      'Legacy': 'Legacy Games',
-      'Drafting': 'Drafting Games',
-      'Trading': 'Trading Games'
+      'Euro Game': 'Euro Games',
+      'Abstract': 'Abstract Games',
+      // Canonical versions (pass-through)
+      'Strategy Games': 'Strategy Games',
+      'Family Games': 'Family Games',
+      'Party Games': 'Party Games',
+      'Cooperative Games': 'Cooperative Games',
+      'Drafting Games': 'Drafting Games',
+      'Trading Games': 'Trading Games',
+      'Legacy Games': 'Legacy Games',
+      'Miniature Games': 'Miniature Games',
+      'Role-Playing Games': 'Role-Playing Games',
+      'Euro Games': 'Euro Games',
+      'Abstract Games': 'Abstract Games'
     };
+
     return map[c] || c;
   };
 
-  // Translate category name
+  // Translate category name - EXACT COPY from collection page
   const getCategoryLabel = (categoryValue: string): string => {
     // First normalize the category value to ensure consistency
     const normalizedValue = normalizeFavoriteCategory(categoryValue);
@@ -765,15 +778,9 @@ export default function ProfilePage() {
   };
 
   // Return the exact same list as collection page - just the standard 38 categories
+  // EXACT COPY from collection page
   const getAllCategoriesForEditing = () => {
-    // Ensure we're using the shared constant from @/constants/gameCategories
-    // This should always return the canonical list of 38 categories
-    const categories = [...gameCategories];
-    // Debug: Verify we have the correct number of categories
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      console.log('[ProfilePage] getAllCategoriesForEditing returning', categories.length, 'categories from shared constant');
-    }
-    return categories;
+    return [...gameCategories];
   };
 
   useEffect(() => {
@@ -1454,30 +1461,31 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+  // EXACT COPY from collection page's handleToggleFavoriteGame
   const toggleCategory = (category: string) => {
+    const normalizedCategory = normalizeFavoriteCategory(category);
     setFormData(prev => {
-      const normalizedCategory = normalizeFavoriteCategory(category);
-      const isSelected = prev.favoriteGames.includes(normalizedCategory) || prev.favoriteGames.includes(category);
-      
-      if (isSelected) {
-        // Remove category if already selected
+      // Remove either exact or normalized (covers old saved values)
+      if (prev.favoriteGames.includes(category)) {
         return {
           ...prev,
-          favoriteGames: prev.favoriteGames.filter(cat => cat !== category && cat !== normalizedCategory)
+          favoriteGames: prev.favoriteGames.filter(c => c !== category)
         };
-      } else {
-        // Add category if not already selected
-        if (prev.favoriteGames.length >= 3) {
-          // Show popup if trying to select more than 3
-          showToast('You can only select up to 3 favorite game categories!', 'error');
-          return prev; // Don't update the state
-        }
-        
+      }
+      if (prev.favoriteGames.includes(normalizedCategory)) {
+        return {
+          ...prev,
+          favoriteGames: prev.favoriteGames.filter(c => c !== normalizedCategory)
+        };
+      }
+      if (prev.favoriteGames.length < 3) {
         return {
           ...prev,
           favoriteGames: [...prev.favoriteGames, normalizedCategory]
         };
       }
+      showToast('You can only select up to 3 favorite game categories!', 'error');
+      return prev;
     });
   };
 
