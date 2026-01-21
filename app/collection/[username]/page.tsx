@@ -321,6 +321,7 @@ export default function CollectionPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isSuggestingGame, setIsSuggestingGame] = useState(false);
+  const [pendingGameIds, setPendingGameIds] = useState<Set<number>>(new Set());
   const [uploadCategory, setUploadCategory] = useState<'collection-photo' | 'favorite-card'>('collection-photo');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPhotoSelectionModal, setShowPhotoSelectionModal] = useState(false);
@@ -796,6 +797,8 @@ export default function CollectionPage() {
   // Add game to collection
   const addGameToCollection = async (game: any) => {
     if (!userProfile?.id) return;
+    const gameId = Number(game?.id);
+    if (!Number.isFinite(gameId)) return;
 
     try {
       const currentGamesList = userProfile.gamesList || [];
@@ -804,6 +807,12 @@ export default function CollectionPage() {
         showToast('Game already in collection', 'info');
         return;
       }
+
+      setPendingGameIds(prev => {
+        const next = new Set(prev);
+        next.add(gameId);
+        return next;
+      });
 
       const newGame = {
         id: game.id,
@@ -845,9 +854,7 @@ export default function CollectionPage() {
         } : null);
         
         showToast('Game added to collection!', 'success');
-        setShowAddGameModal(false);
-        setSearchQuery('');
-        setSearchResults([]);
+        // Keep the Add Game modal open so users can add multiple games quickly
         await loadUserProfile();
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -856,6 +863,75 @@ export default function CollectionPage() {
     } catch (error) {
       console.error('Error adding game:', error);
       showToast('Failed to add game', 'error');
+    } finally {
+      setPendingGameIds(prev => {
+        const next = new Set(prev);
+        next.delete(gameId);
+        return next;
+      });
+    }
+  };
+
+  const removeGameFromCollection = async (game: any) => {
+    if (!userProfile?.id) return;
+    const gameId = Number(game?.id);
+    if (!Number.isFinite(gameId)) return;
+
+    try {
+      const currentGamesList = userProfile.gamesList || [];
+      if (!currentGamesList.some(g => g.id === gameId)) {
+        return;
+      }
+
+      setPendingGameIds(prev => {
+        const next = new Set(prev);
+        next.add(gameId);
+        return next;
+      });
+
+      const updatedGamesList = currentGamesList.filter(g => g.id !== gameId);
+
+      let email = userProfile.email;
+      if (!email && userProfile.id) {
+        try {
+          const profileResponse = await fetch(`/api/users/profile?username=${userProfile.username}`);
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            email = profileData.user?.email || '';
+          }
+        } catch (e) {
+          console.error('Error fetching email:', e);
+        }
+      }
+
+      const response = await fetch('/api/users/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userProfile.id,
+          username: userProfile.username,
+          email: email || user?.email || '',
+          gamesList: updatedGamesList
+        })
+      });
+
+      if (response.ok) {
+        setUserProfile(prev => prev ? { ...prev, gamesList: updatedGamesList } : null);
+        showToast('Game removed from collection', 'success');
+        await loadUserProfile();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        showToast(`Failed to remove game: ${errorData.error || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error removing game:', error);
+      showToast('Failed to remove game', 'error');
+    } finally {
+      setPendingGameIds(prev => {
+        const next = new Set(prev);
+        next.delete(gameId);
+        return next;
+      });
     }
   };
 
@@ -1947,12 +2023,41 @@ export default function CollectionPage() {
                             {game.yearRelease || safeT('unknownYear')}
                           </p>
                         </div>
-                        <button
-                          onClick={() => addGameToCollection(game)}
-                          className="ml-4 px-4 py-2 bg-[#fbae17] hover:bg-[#fbae17]/90 text-white rounded-lg font-medium transition-colors"
-                        >
-                          {safeT('add')}
-                        </button>
+                        {(() => {
+                          const gameId = Number(game.id);
+                          const isPending = Number.isFinite(gameId) && pendingGameIds.has(gameId);
+                          const isInCollection = !!userProfile?.gamesList?.some(g => g.id === gameId);
+
+                          if (isInCollection) {
+                            return (
+                              <button
+                                onClick={() => removeGameFromCollection(game)}
+                                disabled={isPending}
+                                className={`ml-4 px-4 py-2 rounded-lg font-medium transition-colors ${
+                                  isPending
+                                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                    : 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                                }`}
+                              >
+                                {isPending ? 'Working...' : 'Remove'}
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <button
+                              onClick={() => addGameToCollection(game)}
+                              disabled={isPending}
+                              className={`ml-4 px-4 py-2 rounded-lg font-medium transition-colors ${
+                                isPending
+                                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                  : 'bg-[#fbae17] hover:bg-[#fbae17]/90 text-white'
+                              }`}
+                            >
+                              {isPending ? 'Adding...' : safeT('add')}
+                            </button>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
