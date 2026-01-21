@@ -15,6 +15,7 @@ import FriendsFollowersSection from '@/components/FriendsFollowersSection';
 import { isUserAdmin } from '@/lib/admin-utils';
 import TagSelector from '@/components/TagSelector';
 import GameSearchModal from '@/components/GameSearchModal';
+import { useTranslations } from 'next-intl';
 import {
   DndContext,
   closestCenter,
@@ -747,6 +748,79 @@ export default function ProfilePage() {
     'Tile Placement',
     'Drafting Games'
   ];
+
+  // Map category names to translation keys
+  const getCategoryTranslationKey = (category: string): string => {
+    const categoryMap: Record<string, string> = {
+      'Strategy Games': 'strategyGames',
+      'Euro Games': 'euroGames',
+      'Cooperative Games': 'cooperativeGames',
+      'Card Games': 'cardGames',
+      'Party Games': 'partyGames',
+      'Family Games': 'familyGames',
+      'Abstract Games': 'abstractGames',
+      'Dice Games': 'diceGames',
+      'Miniature Games': 'miniatureGames',
+      'Role-Playing Games': 'rolePlayingGames',
+      'Legacy Games': 'legacyGames',
+      'Deck Building': 'deckBuilding',
+      'Worker Placement': 'workerPlacement',
+      'Area Control': 'areaControl',
+      'Engine Building': 'engineBuilding',
+      'Social Deduction': 'socialDeduction',
+      'Trading Games': 'tradingGames',
+      'Auction Games': 'auctionGames',
+      'Tile Placement': 'tilePlacement',
+      'Drafting Games': 'draftingGames',
+      // Also handle singular forms
+      'Strategy': 'strategy',
+      'Family': 'family',
+      'Party': 'party',
+      'Cooperative': 'cooperative',
+      'Competitive': 'competitive',
+      'Drafting': 'drafting',
+      'Trading': 'trading',
+      'Negotiation': 'negotiation',
+      'Deduction': 'deduction',
+      'Memory': 'memory',
+      'Pattern Recognition': 'patternRecognition',
+      'Social Deduction': 'socialDeduction',
+      'Role Playing': 'rolePlaying',
+      'Miniatures': 'miniatures',
+      'Legacy': 'legacy',
+      'Campaign': 'campaign',
+      'Solo': 'solo',
+      'Two Player': 'twoPlayer',
+      'Quick Play': 'quickPlay',
+      'Heavy Strategy': 'heavyStrategy',
+      'Light Strategy': 'lightStrategy',
+      'Euro Game': 'euroGame',
+      'Ameritrash': 'ameritrash',
+      'Abstract': 'abstract',
+      'Thematic': 'thematic',
+      'Historical': 'historical',
+      'Fantasy': 'fantasy',
+      'Sci-Fi': 'sciFi',
+      'Horror': 'horror',
+      'Adventure': 'adventure'
+    };
+    return categoryMap[category] || category.toLowerCase().replace(/\s+/g, '');
+  };
+
+  // Translate category name
+  const getCategoryLabel = (category: string): string => {
+    const key = getCategoryTranslationKey(category);
+    try {
+      const translated = t(`gameCategories.${key}`);
+      // If translation returns the key itself, return original category
+      if (translated === `gameCategories.${key}` || translated.startsWith('profile.gameCategories.')) {
+        return category;
+      }
+      return translated;
+    } catch {
+      return category;
+    }
+  };
 
   // Create a complete list that includes both standard categories and any selected categories
   // This ensures users can always deselect categories they previously selected
@@ -1766,7 +1840,7 @@ export default function ProfilePage() {
                             color: isLightCover() ? darkenColor(profileColors.cover, 0.5) : profileColors.cover
                           }}
                         >
-                          {category}
+                          {getCategoryLabel(category)}
                         </span>
                       ))
                     ) : (
@@ -1810,7 +1884,7 @@ export default function ProfilePage() {
                               className="w-4 h-4 text-[#fbae17] border-gray-300 rounded focus:ring-[#fbae17] disabled:cursor-not-allowed"
                             />
                             <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
-                              {category}
+                              {getCategoryLabel(category)}
                             </span>
                           </label>
                         );

@@ -915,7 +915,17 @@ export default function CollectionPage() {
 
   const getGameCategoryLabel = (categoryValue: string) => {
     const match = gameCategories.find(c => c.value === categoryValue);
-    return match ? safeT(`gameCategories.${match.key}`) : categoryValue;
+    if (!match) {
+      // If no match found, return the value as-is (fallback)
+      return categoryValue;
+    }
+    // Try to get translation
+    const translated = safeT(`gameCategories.${match.key}`);
+    // If translation returns the key itself (meaning translation not found), return the original value
+    if (translated === `gameCategories.${match.key}` || translated.startsWith('profile.gameCategories.')) {
+      return categoryValue;
+    }
+    return translated;
   };
 
   // Create a complete list that includes both standard categories and any selected categories
