@@ -748,6 +748,19 @@ export default function ProfilePage() {
     'Drafting Games'
   ];
 
+  // Create a complete list that includes both standard categories and any selected categories
+  // This ensures users can always deselect categories they previously selected
+  const getAllCategoriesForEditing = () => {
+    const standardCategories = [...gameCategories];
+    const selectedCategories = formData.favoriteGames || [];
+    
+    // Add any selected categories that aren't in the standard list
+    const missingCategories = selectedCategories
+      .filter(selected => !standardCategories.includes(selected));
+    
+    return [...standardCategories, ...missingCategories];
+  };
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/');
@@ -1766,7 +1779,7 @@ export default function ProfilePage() {
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700">Favorite Game Categories</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
-                      {gameCategories.map((category) => {
+                      {getAllCategoriesForEditing().map((category) => {
                         const isSelected = formData.favoriteGames.includes(category);
                         const isDisabled = !isSelected && formData.favoriteGames.length >= 3;
                         

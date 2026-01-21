@@ -863,24 +863,34 @@ export default function CollectionPage() {
   // Game categories list (same as profile page)
   const gameCategories = [
     { value: 'Strategy', key: 'strategy' },
+    { value: 'Strategy Games', key: 'strategyGames' },
     { value: 'Family', key: 'family' },
+    { value: 'Family Games', key: 'familyGames' },
     { value: 'Party', key: 'party' },
+    { value: 'Party Games', key: 'partyGames' },
     { value: 'Cooperative', key: 'cooperative' },
+    { value: 'Cooperative Games', key: 'cooperativeGames' },
+    { value: 'Card Games', key: 'cardGames' },
     { value: 'Competitive', key: 'competitive' },
     { value: 'Deck Building', key: 'deckBuilding' },
     { value: 'Worker Placement', key: 'workerPlacement' },
     { value: 'Area Control', key: 'areaControl' },
     { value: 'Drafting', key: 'drafting' },
+    { value: 'Drafting Games', key: 'draftingGames' },
     { value: 'Engine Building', key: 'engineBuilding' },
     { value: 'Trading', key: 'trading' },
+    { value: 'Trading Games', key: 'tradingGames' },
     { value: 'Negotiation', key: 'negotiation' },
     { value: 'Deduction', key: 'deduction' },
     { value: 'Memory', key: 'memory' },
     { value: 'Pattern Recognition', key: 'patternRecognition' },
     { value: 'Social Deduction', key: 'socialDeduction' },
     { value: 'Role Playing', key: 'rolePlaying' },
+    { value: 'Role-Playing Games', key: 'rolePlayingGames' },
     { value: 'Miniatures', key: 'miniatures' },
+    { value: 'Miniature Games', key: 'miniatureGames' },
     { value: 'Legacy', key: 'legacy' },
+    { value: 'Legacy Games', key: 'legacyGames' },
     { value: 'Campaign', key: 'campaign' },
     { value: 'Solo', key: 'solo' },
     { value: 'Two Player', key: 'twoPlayer' },
@@ -888,19 +898,38 @@ export default function CollectionPage() {
     { value: 'Heavy Strategy', key: 'heavyStrategy' },
     { value: 'Light Strategy', key: 'lightStrategy' },
     { value: 'Euro Game', key: 'euroGame' },
+    { value: 'Euro Games', key: 'euroGames' },
     { value: 'Ameritrash', key: 'ameritrash' },
     { value: 'Abstract', key: 'abstract' },
+    { value: 'Abstract Games', key: 'abstractGames' },
     { value: 'Thematic', key: 'thematic' },
     { value: 'Historical', key: 'historical' },
     { value: 'Fantasy', key: 'fantasy' },
     { value: 'Sci-Fi', key: 'sciFi' },
     { value: 'Horror', key: 'horror' },
-    { value: 'Adventure', key: 'adventure' }
+    { value: 'Adventure', key: 'adventure' },
+    { value: 'Dice Games', key: 'diceGames' },
+    { value: 'Auction Games', key: 'auctionGames' },
+    { value: 'Tile Placement', key: 'tilePlacement' }
   ] as const;
 
   const getGameCategoryLabel = (categoryValue: string) => {
     const match = gameCategories.find(c => c.value === categoryValue);
     return match ? safeT(`gameCategories.${match.key}`) : categoryValue;
+  };
+
+  // Create a complete list that includes both standard categories and any selected categories
+  // This ensures users can always deselect categories they previously selected
+  const getAllCategoriesForEditing = () => {
+    const standardCategories = [...gameCategories];
+    const selectedCategories = editingFavoriteGames || [];
+    
+    // Add any selected categories that aren't in the standard list
+    const missingCategories = selectedCategories
+      .filter(selected => !standardCategories.some(cat => cat.value === selected))
+      .map(selected => ({ value: selected, key: selected.toLowerCase().replace(/\s+/g, '') }));
+    
+    return [...standardCategories, ...missingCategories];
   };
 
   const handleToggleFavoriteGame = (category: string) => {
@@ -1252,6 +1281,16 @@ export default function CollectionPage() {
     ? userProfile.gamesList[0] 
     : null;
 
+  // Check if sections have content (for visitor view)
+  const hasCollectionPhoto = !!userProfile?.collectionPhoto;
+  const hasFavoriteCard = !!userProfile?.favoriteCard;
+  const hasFavoriteGame = !!favoriteGame;
+  const hasFavoriteCategories = !!(userProfile?.favoriteGames && userProfile.favoriteGames.length > 0);
+  const hasGamesList = !!(userProfile?.gamesList && userProfile.gamesList.length > 0);
+  
+  // Check if visitor has any content
+  const hasAnyContent = hasCollectionPhoto || hasFavoriteCard || hasFavoriteGame || hasFavoriteCategories || hasGamesList;
+
   if (loading) {
     return (
       <div 
@@ -1338,7 +1377,19 @@ export default function CollectionPage() {
           </h1>
         </div>
 
+        {/* Show empty message for visitors with no content */}
+        {!isOwnProfile && !hasAnyContent && (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <p className="text-white text-lg md:text-xl mb-2">
+                {userProfile.username} has not shared their collection with the kingdom yet
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Collection Photo */}
+        {(isOwnProfile || hasCollectionPhoto) && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-[#fbae17] mb-2">{safeT('collectionPhoto')}</h2>
           {userProfile.collectionPhoto ? (
@@ -1374,13 +1425,16 @@ export default function CollectionPage() {
             >
               <Camera className="w-12 h-12 mb-2" />
               <span className="text-sm font-medium">{isOwnProfile ? (uploadingCollectionPhoto ? 'Uploading...' : 'Add Collection Photo') : safeT('noCollectionPhoto')}</span>
-            </button>
+              </button>
           )}
         </div>
+        )}
 
         {/* Favorite Card and Favorite Game Image Row */}
+        {(isOwnProfile || hasFavoriteGame || hasFavoriteCard) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Favorite Game Image (Left) */}
+          {(isOwnProfile || hasFavoriteGame) && (
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-[#fbae17]">{safeT('favoriteGame')}</h2>
             {favoriteGame ? (
@@ -1412,8 +1466,10 @@ export default function CollectionPage() {
               </div>
             )}
           </div>
+          )}
 
           {/* Favorite Card (Right) */}
+          {(isOwnProfile || hasFavoriteCard) && (
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-[#fbae17]">{safeT('favoriteCard')}</h2>
             {userProfile.favoriteCard ? (
@@ -1453,16 +1509,19 @@ export default function CollectionPage() {
               </button>
             )}
           </div>
+          )}
         </div>
+        )}
 
         {/* Favorite Categories Section */}
+        {(isOwnProfile || hasFavoriteCategories) && (
         <div className="mb-8 space-y-2">
           <h3 className="text-lg font-semibold text-[#fbae17]">{safeT('favoriteGameCategories')}</h3>
           {isEditingCollection && isOwnProfile ? (
             <div className="space-y-3">
               <div className="max-h-48 overflow-y-auto border border-gray-700 rounded-lg p-3 bg-gray-800">
                 <div className="grid grid-cols-2 gap-2">
-                  {gameCategories.map((category) => (
+                  {getAllCategoriesForEditing().map((category) => (
                     <button
                       key={category.value}
                       onClick={() => handleToggleFavoriteGame(category.value)}
@@ -1512,8 +1571,10 @@ export default function CollectionPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* All Games Grid */}
+        {(isOwnProfile || hasGamesList) && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold text-white">
@@ -1586,6 +1647,7 @@ export default function CollectionPage() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Image Modal */}
