@@ -1822,7 +1822,6 @@ export default function ProfilePage() {
             {/* Bio Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
               <h2 className="text-xl font-semibold mb-4 text-gray-900">About</h2>
-              {/* Favorite Game Categories have been moved to a separate section below */}
               {!isEditing ? (
                 <div className="space-y-4">
                   <p className="leading-relaxed text-gray-700">
