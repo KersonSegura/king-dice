@@ -21,12 +21,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user
-    const { data: users, error: findError } = await supabaseAdmin
+    // Find user (case-insensitive for username/email)
+    // Try username first (case-insensitive)
+    let query = supabaseAdmin
       .from('users')
-      .select('id, username, email, password_hash')
-      .or(`username.eq.${username},email.eq.${username}`)
+      .select('id, username, email, password_hash');
+    
+    const { data: usernameUsers, error: usernameError } = await query
+      .ilike('username', username)
       .limit(1);
+    
+    let users, findError;
+    if (!usernameError && usernameUsers && usernameUsers.length > 0) {
+      users = usernameUsers;
+      findError = null;
+    } else {
+      // If not found by username, try email (case-insensitive)
+      const { data: emailUsers, error: emailError } = await supabaseAdmin
+        .from('users')
+        .select('id, username, email, password_hash')
+        .ilike('email', username)
+        .limit(1);
+      users = emailUsers;
+      findError = emailError;
+    }
 
     if (findError || !users || users.length === 0) {
       return NextResponse.json(

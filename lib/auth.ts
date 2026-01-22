@@ -90,13 +90,15 @@ export async function authenticateUser(identifier: string, password: string): Pr
     console.log('🔐 authenticateUser: Starting authentication for:', identifier);
     console.log('🔐 Checking Supabase connection...');
     
-    // Find user by username or email with retry logic
+    // Find user by username or email with retry logic (case-insensitive)
     console.log('🔍 Searching for user:', identifier);
-    const { data: users, error } = await executeSupabaseQuery(
+    // Use case-insensitive matching for both username and email
+    // Try username first (case-insensitive)
+    const usernameResult = await executeSupabaseQuery(
       () => supabaseAdmin
         .from('users')
         .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled, isVerified')
-        .or(`username.eq.${identifier},email.eq.${identifier}`)
+        .ilike('username', identifier)
         .limit(1),
       {
         maxRetries: 2,
@@ -104,6 +106,29 @@ export async function authenticateUser(identifier: string, password: string): Pr
         timeout: 15000
       }
     );
+    
+    let users, error;
+    // If found by username, use that result
+    if (!usernameResult.error && usernameResult.data && usernameResult.data.length > 0) {
+      users = usernameResult.data;
+      error = null;
+    } else {
+      // If not found by username, try email (case-insensitive)
+      const emailResult = await executeSupabaseQuery(
+        () => supabaseAdmin
+          .from('users')
+          .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled, isVerified')
+          .ilike('email', identifier)
+          .limit(1),
+        {
+          maxRetries: 2,
+          baseDelay: 400,
+          timeout: 15000
+        }
+      );
+      users = emailResult.data;
+      error = emailResult.error;
+    }
 
     if (error) {
       console.error('❌ Supabase query error:', error);
