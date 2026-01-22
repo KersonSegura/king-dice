@@ -1339,7 +1339,7 @@ export default function CollectionPage() {
               body: JSON.stringify({
                 imageUrl: url,
                 category,
-                description: description || (isCollectionPhoto ? 'Collection photo' : 'Favorite card'),
+                description: description || '',
                 authorId: userProfile.id
               })
             });
