@@ -798,6 +798,8 @@ export default function CollectionPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: userProfile.id,
+          username: userProfile.username,
+          email: userProfile.email || user?.email || '',
           [fieldToUpdate]: null
         })
       });
