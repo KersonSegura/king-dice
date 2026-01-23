@@ -2730,7 +2730,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
     twoTwelveCanTouch: true,
     sameNumbersCanTouch: true,
     sameResourceCanTouch: true,
-    imageStyle: 'king-dice' // Add image style state
+    imageStyle: 'classic' // Default to classic image style
   });
   
   // Ensure sameResourceCanTouch is always true for expansion maps (required: max 2 in line)
