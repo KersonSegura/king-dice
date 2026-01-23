@@ -900,7 +900,8 @@ export function makeValidExpansionBoard(customRules: any): Board {
     if (foundAdjacencyViolation) {
       console.error('❌❌❌ Board has adjacency violations - will retry');
       hasValidAdjacency = false;
-      continue; // Retry
+      // CRITICAL: Don't continue here - we need to check terrain clusters too, then retry
+      // But we've already marked it as invalid, so it will fail the final check
     }
     
     // BRUTE FORCE: Manual check for cluster violations - check EVERY tile and its neighbors
@@ -960,12 +961,30 @@ export function makeValidExpansionBoard(customRules: any): Board {
       continue; // Retry
     }
     
-    if (hasValidDistribution && hasValidAdjacency && hasValidTerrains) {
+    // CRITICAL: Only return if ALL validations pass - brute force check must also pass
+    // The brute force check is the ultimate authority - if it finds violations, the board is invalid
+    if (foundAdjacencyViolation) {
+      console.error('❌❌❌ Board has adjacency violations detected in brute force check - will retry');
+      hasValidAdjacency = false;
+    }
+    
+    if (foundClusterViolation) {
+      console.error('❌❌❌ Board has cluster violations detected in brute force check - will retry');
+      hasValidTerrains = false;
+    }
+    
+    if (hasValidDistribution && hasValidAdjacency && hasValidTerrains && !foundAdjacencyViolation && !foundClusterViolation) {
       // Perfect valid board found! Return it.
       console.log('✅✅✅ VALID EXPANSION BOARD FOUND!');
       return { terrains: terrains as Terrain[], numbers: numbers };
     } else {
       console.warn(`⚠️ Validation failed - retrying (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
+      if (foundAdjacencyViolation) {
+        console.error('❌❌❌ REASON: Adjacency violations detected in brute force check');
+      }
+      if (foundClusterViolation) {
+        console.error('❌❌❌ REASON: Cluster violations detected in brute force check');
+      }
     }
     
     // If any validation fails, retry entire board (continue loop)
