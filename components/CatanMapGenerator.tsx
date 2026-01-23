@@ -2379,40 +2379,62 @@ function completeReshuffle(numbers: (number | null)[]): (number | null)[] {
 
 
 // Expansion map adjacency based on CatanExpansionAdjacencyMap-01.png
-// Columns: [1..3], [4..7], [8..12], [13..18], [19..23], [24..27], [28..30]
-// Uses the published expansion adjacency layout to avoid invalid resource chains and number adjacencies.
-export const EXPANSION_NEIGHBORS: number[][] = [
-  /* 0  */ [4, 5, 1],                    // Tile 1: 2, 5, 6
-  /* 1  */ [5, 6, 2, 0],                 // Tile 2: 1, 3, 6, 7
-  /* 2  */ [6, 1],                       // Tile 3: 2, 7
-  /* 3  */ [8, 9, 4, 0],                 // Tile 4: 1, 5, 9, 10
-  /* 4  */ [9, 10, 5, 0, 1, 3],          // Tile 5: 1, 2, 4, 6, 10, 11
-  /* 5  */ [10, 11, 6, 1, 2, 4],         // Tile 6: 2, 3, 5, 7, 11, 12
-  /* 6  */ [11, 2, 5],                   // Tile 7: 3, 6, 12
-  /* 7  */ [13, 14, 8, 3],               // Tile 8: 4, 9, 14, 15
-  /* 8  */ [14, 15, 9, 3, 4, 7],         // Tile 9: 4, 5, 8, 10, 15, 16
-  /* 9  */ [15, 16, 10, 4, 5, 8],        // Tile 10: 5, 6, 9, 11, 16, 17
-  /* 10 */ [16, 17, 11, 5, 6, 9],        // Tile 11: 6, 7, 10, 12, 17, 18
-  /* 11 */ [17, 6, 10],                  // Tile 12: 7, 11, 18
-  /* 12 */ [18, 13, 7],                  // Tile 13: 8, 14, 19
-  /* 13 */ [18, 19, 14, 7, 8, 12],       // Tile 14: 8, 9, 13, 15, 19, 20
-  /* 14 */ [19, 20, 15, 8, 9, 13],       // Tile 15: 9, 10, 14, 16, 20, 21
-  /* 15 */ [20, 21, 16, 9, 10, 14],      // Tile 16: 10, 11, 15, 17, 21, 22
-  /* 16 */ [21, 22, 17, 10, 11, 15],     // Tile 17: 11, 12, 16, 18, 22, 23
-  /* 17 */ [22, 11, 16],                 // Tile 18: 12, 17, 23
-  /* 18 */ [23, 19, 13, 14],             // Tile 19: 14, 15, 20, 24
-  /* 19 */ [23, 24, 20, 14, 15, 18],     // Tile 20: 15, 16, 19, 21, 24, 25
-  /* 20 */ [24, 25, 21, 15, 16, 19],     // Tile 21: 16, 17, 20, 22, 25, 26
-  /* 21 */ [25, 26, 22, 16, 17, 20],     // Tile 22: 17, 18, 21, 23, 26, 27
-  /* 22 */ [26, 17, 21],                 // Tile 23: 18, 22, 27
-  /* 23 */ [27, 24, 19, 20],             // Tile 24: 20, 21, 25, 28
-  /* 24 */ [27, 28, 25, 20, 21, 23],     // Tile 25: 21, 22, 24, 26, 28, 29
-  /* 25 */ [28, 29, 26, 21, 22, 24],     // Tile 26: 22, 23, 25, 27, 29, 30
-  /* 26 */ [29, 22, 25],                 // Tile 27: 23, 26, 30
-  /* 27 */ [28, 24, 25],                 // Tile 28: 25, 26, 29
-  /* 28 */ [29, 25, 26, 27],             // Tile 29: 26, 27, 28, 30
-  /* 29 */ [26, 28]                      // Tile 30: 27, 29
-];
+// Column layout (top -> bottom):
+// [1,2,3], [4,5,6,7], [8,9,10,11,12], [13,14,15,16,17,18],
+// [19,20,21,22,23], [24,25,26,27], [28,29,30]
+export const EXPANSION_NEIGHBORS: number[][] = buildExpansionNeighbors();
+
+function buildExpansionNeighbors(): number[][] {
+  const columns: Array<{ startRow: number; tiles: number[] }> = [
+    { startRow: 3, tiles: [0, 1, 2] },
+    { startRow: 2, tiles: [3, 4, 5, 6] },
+    { startRow: 1, tiles: [7, 8, 9, 10, 11] },
+    { startRow: 0, tiles: [12, 13, 14, 15, 16, 17] },
+    { startRow: 1, tiles: [18, 19, 20, 21, 22] },
+    { startRow: 2, tiles: [23, 24, 25, 26] },
+    { startRow: 3, tiles: [27, 28, 29] }
+  ];
+
+  const axialByIndex = new Map<number, { q: number; r: number }>();
+  const indexByAxial = new Map<string, number>();
+
+  for (let q = 0; q < columns.length; q++) {
+    const { startRow, tiles } = columns[q];
+    for (let i = 0; i < tiles.length; i++) {
+      const rOffset = startRow + i;
+      const rAxial = rOffset - Math.floor(q / 2);
+      const index = tiles[i];
+      axialByIndex.set(index, { q, r: rAxial });
+      indexByAxial.set(`${q},${rAxial}`, index);
+    }
+  }
+
+  const directions = [
+    { dq: 1, dr: 0 },
+    { dq: 1, dr: -1 },
+    { dq: 0, dr: -1 },
+    { dq: -1, dr: 0 },
+    { dq: -1, dr: 1 },
+    { dq: 0, dr: 1 }
+  ];
+
+  const neighbors: number[][] = new Array(30).fill(null).map(() => []);
+  for (let i = 0; i < 30; i++) {
+    const axial = axialByIndex.get(i);
+    if (!axial) continue;
+    for (const dir of directions) {
+      const q = axial.q + dir.dq;
+      const r = axial.r + dir.dr;
+      const key = `${q},${r}`;
+      const neighborIndex = indexByAxial.get(key);
+      if (neighborIndex !== undefined) {
+        neighbors[i].push(neighborIndex);
+      }
+    }
+  }
+
+  return neighbors;
+}
 
 // Expansion-specific adjacency validation
 export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any): boolean {
