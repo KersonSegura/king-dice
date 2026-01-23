@@ -779,10 +779,7 @@ function generateExpansionTerrainsRandom(desertPositions: number[]): Terrain[] |
   for (const resource of shuffledResources) {
     const validPositions = shuffledPositions.filter(pos => {
       if (terrains[pos] !== null) return false;
-      terrains[pos] = resource;
-      const clusterSize = getConnectedResourceSize(terrains, pos, resource);
-      terrains[pos] = null;
-      return clusterSize <= 2;
+      return canPlaceResource(terrains, pos, resource);
     });
 
     if (validPositions.length === 0) {
@@ -795,7 +792,11 @@ function generateExpansionTerrainsRandom(desertPositions: number[]): Terrain[] |
 
   const finalTerrains = terrains as Terrain[];
   if (!passesResourceRules(finalTerrains)) {
-    return null;
+    const repaired = repairExpansionResourceChains(finalTerrains);
+    if (!repaired) {
+      return null;
+    }
+    return repaired;
   }
 
   return finalTerrains;
@@ -861,6 +862,14 @@ function isResourcePlacementValid(terrains: (Terrain | null)[], pos: number, res
   const isValid = !wouldCreateResourceChain(terrains, pos, resource);
   terrains[pos] = null;
   return isValid;
+}
+
+function canPlaceResource(terrains: (Terrain | null)[], pos: number, resource: Terrain): boolean {
+  terrains[pos] = resource;
+  const clusterSize = getConnectedResourceSize(terrains, pos, resource);
+  const chainViolation = wouldCreateResourceChain(terrains, pos, resource);
+  terrains[pos] = null;
+  return clusterSize <= 2 && !chainViolation;
 }
 
 function wouldCreateResourceChain(
@@ -978,7 +987,96 @@ function passesResourceRules(terrains: Terrain[]): boolean {
     }
   }
 
+  // Strict: no connected cluster of 3+ tiles of the same resource
+  const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
+  for (const resourceType of resourceTypes) {
+    const visited = new Array(30).fill(false);
+    for (let i = 0; i < 30; i++) {
+      if (visited[i] || terrains[i] !== resourceType) continue;
+      const clusterSize = getClusterSize(terrains, i, resourceType, visited);
+      if (clusterSize > 2) {
+        return false;
+      }
+    }
+  }
+
   return true;
+}
+
+function repairExpansionResourceChains(terrains: Terrain[]): Terrain[] | null {
+  const maxSwaps = 500;
+  const positions = Array.from({ length: 30 }, (_, i) => i)
+    .filter(i => terrains[i] !== 'desert');
+
+  for (let attempt = 0; attempt < maxSwaps; attempt++) {
+    const violatingPositions = findResourceChainPositions(terrains);
+    if (violatingPositions.length === 0) {
+      return terrains;
+    }
+
+    const swapFrom = violatingPositions[Math.floor(Math.random() * violatingPositions.length)];
+    const swapCandidates = shuffleInPlace(
+      positions.filter(pos => pos !== swapFrom && terrains[pos] !== terrains[swapFrom])
+    );
+
+    for (const swapTo of swapCandidates) {
+      const test = [...terrains];
+      const temp = test[swapFrom];
+      test[swapFrom] = test[swapTo];
+      test[swapTo] = temp;
+
+      if (passesResourceRules(test)) {
+        return test;
+      }
+    }
+  }
+
+  return null;
+}
+
+function findResourceChainPositions(terrains: Terrain[]): number[] {
+  const violating: number[] = [];
+  const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
+
+  for (const resourceType of resourceTypes) {
+    const visited = new Array(30).fill(false);
+    for (let i = 0; i < 30; i++) {
+      if (visited[i] || terrains[i] !== resourceType) continue;
+      const clusterPositions = collectClusterPositions(terrains, i, resourceType, visited);
+      if (clusterPositions.length > 2) {
+        violating.push(...clusterPositions);
+      }
+    }
+  }
+
+  return Array.from(new Set(violating));
+}
+
+function collectClusterPositions(
+  terrains: Terrain[],
+  startPos: number,
+  resource: Terrain,
+  visited: boolean[]
+): number[] {
+  const queue = [startPos];
+  const cluster: number[] = [];
+
+  while (queue.length > 0) {
+    const pos = queue.shift()!;
+    if (visited[pos]) continue;
+    if (terrains[pos] !== resource) continue;
+    visited[pos] = true;
+    cluster.push(pos);
+
+    const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+    for (const neighbor of neighbors) {
+      if (!visited[neighbor] && terrains[neighbor] === resource) {
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return cluster;
 }
 
 function validateExpansionNumberAdjacency(numbers: (number | null)[], customRules: any): boolean {
