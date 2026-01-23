@@ -720,23 +720,15 @@ function repairClassicClustering(terrains: Terrain[], violationPos: number, cust
   return null; // Could not repair
 }
 
-// Expansion board generation (5-6 players) - STRICT BACKTRACKING REWRITE
+// Expansion board generation (5-6 players) - RANDOM TWO-PHASE BUILD
 export function makeValidExpansionBoard(customRules: any): Board {
-  const MAX_ATTEMPTS = 200;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+  const MAX_TERRAIN_ATTEMPTS = 2000;
+  const MAX_NUMBER_ATTEMPTS = 3000;
+
+  for (let attempt = 0; attempt < MAX_TERRAIN_ATTEMPTS; attempt++) {
     const desertPositions = placeDesertsRandomly();
-    const terrains = generateExpansionTerrainsStrict(desertPositions);
+    const terrains = generateExpansionTerrainsRandom(desertPositions);
     if (!terrains) {
-      continue;
-    }
-
-    const numbers = generateExpansionNumbersStrict(desertPositions, customRules);
-    if (!numbers) {
-      continue;
-    }
-
-    // Final sanity checks
-    if (!validateNumberDistribution(numbers) || !noHotAdjacencyExpansion(numbers, customRules)) {
       continue;
     }
 
@@ -744,175 +736,76 @@ export function makeValidExpansionBoard(customRules: any): Board {
       continue;
     }
 
-    console.log('✅✅✅ VALID EXPANSION BOARD FOUND!');
-    return { terrains, numbers };
+    for (let numAttempt = 0; numAttempt < MAX_NUMBER_ATTEMPTS; numAttempt++) {
+      const numbers = generateExpansionNumbersRandom(desertPositions);
+      if (!numbers) {
+        continue;
+      }
+
+      if (!validateNumberDistribution(numbers)) {
+        continue;
+      }
+
+      if (!validateExpansionNumberAdjacency(numbers, customRules)) {
+        continue;
+      }
+
+      console.log('✅✅✅ VALID EXPANSION BOARD FOUND!');
+      return { terrains, numbers };
+    }
   }
 
-  throw new Error('CRITICAL: Could not generate valid expansion board after ' + MAX_ATTEMPTS + ' attempts');
+  throw new Error('CRITICAL: Could not generate valid expansion board with random two-phase build');
 }
 
-function generateExpansionTerrainsStrict(desertPositions: number[]): Terrain[] | null {
+function generateExpansionTerrainsRandom(desertPositions: number[]): Terrain[] | null {
   const terrains = new Array(30).fill(null) as (Terrain | null)[];
   desertPositions.forEach(pos => terrains[pos] = 'desert');
 
+  const resourcePool: Terrain[] = [
+    'grain', 'grain', 'grain', 'grain', 'grain', 'grain',
+    'wood', 'wood', 'wood', 'wood', 'wood', 'wood',
+    'sheep', 'sheep', 'sheep', 'sheep', 'sheep', 'sheep',
+    'brick', 'brick', 'brick', 'brick', 'brick',
+    'ore', 'ore', 'ore', 'ore', 'ore'
+  ];
+
   const positions = Array.from({ length: 30 }, (_, i) => i)
     .filter(i => !desertPositions.includes(i));
 
-  const remaining: Record<Terrain, number> = {
-    grain: 6,
-    wood: 6,
-    sheep: 6,
-    brick: 5,
-    ore: 5,
-    desert: 0
-  };
+  const shuffledPositions = shuffleInPlace([...positions]);
+  const shuffledResources = shuffleInPlace([...resourcePool]);
 
-  let steps = 0;
-  const MAX_STEPS = 30000;
+  for (let i = 0; i < shuffledPositions.length; i++) {
+    terrains[shuffledPositions[i]] = shuffledResources[i];
+  }
 
-  const getAllowedResources = (pos: number): Terrain[] => {
-    const candidates = (Object.keys(remaining) as Terrain[])
-      .filter(t => t !== 'desert' && remaining[t] > 0);
-    const allowed: Terrain[] = [];
-
-    for (const resource of candidates) {
-      if (isResourcePlacementValid(terrains, pos, resource)) {
-        allowed.push(resource);
-      }
-    }
-
-    return allowed;
-  };
-
-  const pickMostConstrainedPosition = (): { pos: number; allowed: Terrain[] } | null => {
-    let bestPos = -1;
-    let bestAllowed: Terrain[] = [];
-    let bestCount = Number.POSITIVE_INFINITY;
-
-    for (const pos of positions) {
-      const allowed = getAllowedResources(pos);
-      if (allowed.length === 0) {
-        return null;
-      }
-      if (allowed.length < bestCount) {
-        bestCount = allowed.length;
-        bestPos = pos;
-        bestAllowed = allowed;
-      }
-    }
-
-    return { pos: bestPos, allowed: bestAllowed };
-  };
-
-  const placeNext = (): boolean => {
-    if (steps++ > MAX_STEPS) return false;
-    if (positions.length === 0) return true;
-
-    const selection = pickMostConstrainedPosition();
-    if (!selection) return false;
-
-    const { pos, allowed } = selection;
-    positions.splice(positions.indexOf(pos), 1);
-
-    const candidates = shuffleInPlace([...allowed]);
-    for (const resource of candidates) {
-      terrains[pos] = resource;
-      remaining[resource] -= 1;
-
-      if (placeNext()) {
-        return true;
-      }
-
-      remaining[resource] += 1;
-      terrains[pos] = null;
-    }
-
-    positions.push(pos);
-    return false;
-  };
-
-  if (!placeNext()) {
+  const finalTerrains = terrains as Terrain[];
+  if (!passesResourceRules(finalTerrains)) {
     return null;
   }
 
-  return terrains as Terrain[];
+  return finalTerrains;
 }
 
-function generateExpansionNumbersStrict(desertPositions: number[], customRules: any): (number | null)[] | null {
+function generateExpansionNumbersRandom(desertPositions: number[]): (number | null)[] | null {
   const numbers = new Array(30).fill(null) as (number | null)[];
   desertPositions.forEach(pos => numbers[pos] = null);
+
+  const numberPool = [
+    2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
+    6, 6, 6, 8, 8, 8,
+    9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12
+  ];
 
   const positions = Array.from({ length: 30 }, (_, i) => i)
     .filter(i => !desertPositions.includes(i));
 
-  const remaining: Record<number, number> = {
-    2: 2, 3: 3, 4: 3, 5: 3, 6: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 2
-  };
+  const shuffledPositions = shuffleInPlace([...positions]);
+  const shuffledNumbers = shuffleInPlace([...numberPool]);
 
-  let steps = 0;
-  const MAX_STEPS = 40000;
-
-  const getAllowedNumbers = (pos: number): number[] => {
-    const allowed: number[] = [];
-    for (const key of Object.keys(remaining)) {
-      const num = Number(key);
-      if (remaining[num] === 0) continue;
-      if (isNumberPlacementValid(numbers, pos, num, customRules)) {
-        allowed.push(num);
-      }
-    }
-    return allowed;
-  };
-
-  const pickMostConstrainedPosition = (): { pos: number; allowed: number[] } | null => {
-    let bestPos = -1;
-    let bestAllowed: number[] = [];
-    let bestCount = Number.POSITIVE_INFINITY;
-
-    for (const pos of positions) {
-      const allowed = getAllowedNumbers(pos);
-      if (allowed.length === 0) {
-        return null;
-      }
-      if (allowed.length < bestCount) {
-        bestCount = allowed.length;
-        bestPos = pos;
-        bestAllowed = allowed;
-      }
-    }
-
-    return { pos: bestPos, allowed: bestAllowed };
-  };
-
-  const placeNext = (): boolean => {
-    if (steps++ > MAX_STEPS) return false;
-    if (positions.length === 0) return true;
-
-    const selection = pickMostConstrainedPosition();
-    if (!selection) return false;
-
-    const { pos, allowed } = selection;
-    positions.splice(positions.indexOf(pos), 1);
-
-    const candidates = shuffleInPlace([...allowed]);
-    for (const num of candidates) {
-      numbers[pos] = num;
-      remaining[num] -= 1;
-
-      if (placeNext()) {
-        return true;
-      }
-
-      remaining[num] += 1;
-      numbers[pos] = null;
-    }
-
-    positions.push(pos);
-    return false;
-  };
-
-  if (!placeNext()) {
-    return null;
+  for (let i = 0; i < shuffledPositions.length; i++) {
+    numbers[shuffledPositions[i]] = shuffledNumbers[i];
   }
 
   return numbers;
@@ -1017,6 +910,44 @@ function passesResourceRules(terrains: Terrain[]): boolean {
       const clusterSize = getClusterSize(terrains, i, resourceType, visited);
       if (clusterSize > 2) {
         return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function validateExpansionNumberAdjacency(numbers: (number | null)[], customRules: any): boolean {
+  for (let i = 0; i < 30; i++) {
+    const numA = numbers[i];
+    if (numA === null) continue;
+
+    const neighbors = EXPANSION_NEIGHBORS[i] || [];
+    for (const neighbor of neighbors) {
+      const numB = numbers[neighbor];
+      if (numB === null) continue;
+
+      // 6-6 and 8-8 are ALWAYS forbidden
+      if (numA === 6 && numB === 6) return false;
+      if (numA === 8 && numB === 8) return false;
+
+      // 6-8 adjacency depends on checkbox
+      if (!customRules.sixEightCanTouch) {
+        if ((numA === 6 && numB === 8) || (numA === 8 && numB === 6)) {
+          return false;
+        }
+      }
+
+      // Same numbers adjacency depends on checkbox (excluding 6/8)
+      if (!customRules.sameNumbersCanTouch && numA === numB && numA !== 6 && numA !== 8) {
+        return false;
+      }
+
+      // 2-12 adjacency depends on checkbox
+      if (!customRules.twoTwelveCanTouch) {
+        if ((numA === 2 && numB === 12) || (numA === 12 && numB === 2)) {
+          return false;
+        }
       }
     }
   }
