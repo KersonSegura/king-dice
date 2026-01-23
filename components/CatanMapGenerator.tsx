@@ -1724,58 +1724,61 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       }
   
       // Step 3: Place all remaining numbers with STRICT validation at each step
+      // CRITICAL FIX: For each number, find ALL valid positions, not just use sequential positions
       const remainingNumbers = expansionNumbers.filter(n => n !== 6 && n !== 8);
       const shuffledRemaining = shuffleInPlace([...remainingNumbers]);
       
-      for (let i = 0; i < shuffledRemaining.length && i < availablePositions.length; i++) {
-        const number = shuffledRemaining[i];
-        const position = availablePositions[i];
+      for (const number of shuffledRemaining) {
+        // Find ALL valid positions for this number
+        const validPositions = availablePositions.filter(position => {
+          // Check all neighbors to ensure this placement is valid
+          const neighbors = EXPANSION_NEIGHBORS[position] || [];
+          
+          for (const neighbor of neighbors) {
+            const neighborNum = numbers[neighbor];
+            if (neighborNum === null) continue;
+            
+            // CRITICAL: Check 6-8 adjacency (6s and 8s are already placed, check if this number would be adjacent to them)
+            if (!customRules.sixEightCanTouch) {
+              if ((number === 6 && neighborNum === 8) || (number === 8 && neighborNum === 6)) {
+                return false; // Would create 6-8 adjacency
+              }
+            }
+            
+            // Check same number adjacency (if rule enforced)
+            if (!customRules.sameNumbersCanTouch) {
+              if (number === neighborNum && number !== 6 && number !== 8) {
+                return false; // Would create same number adjacency
+              }
+            }
+            
+            // Check 2-12 adjacency (if rule enforced)
+            if (!customRules.twoTwelveCanTouch) {
+              if ((number === 2 && neighborNum === 12) || (number === 12 && neighborNum === 2)) {
+                return false; // Would create 2-12 adjacency
+              }
+            }
+          }
+          
+          return true; // Position is valid
+        });
         
-        // STRICT: Validate BEFORE placing - check if this placement would create violations
-        const neighbors = EXPANSION_NEIGHBORS[position] || [];
-        for (const neighbor of neighbors) {
-          const neighborNum = numbers[neighbor];
-          if (neighborNum === null) continue;
-          
-          // Check 6-8 adjacency
-          if (!customRules.sixEightCanTouch) {
-            if ((number === 6 && neighborNum === 8) || (number === 8 && neighborNum === 6)) {
-              throw new Error('RETRY_PLACEMENT'); // Would create 6-8 adjacency
-            }
-          }
-          
-          // Check same number adjacency (if rule enforced)
-          if (!customRules.sameNumbersCanTouch) {
-            if (number === neighborNum && number !== 6 && number !== 8) {
-              // 6-6 and 8-8 are already handled, this is for other numbers
-              throw new Error('RETRY_PLACEMENT'); // Would create same number adjacency
-            }
-          }
-          
-          // Check 2-12 adjacency (if rule enforced)
-          if (!customRules.twoTwelveCanTouch) {
-            if ((number === 2 && neighborNum === 12) || (number === 12 && neighborNum === 2)) {
-              throw new Error('RETRY_PLACEMENT'); // Would create 2-12 adjacency
-            }
-          }
+        if (validPositions.length === 0) {
+          // No valid position for this number - must retry entire placement
+          throw new Error('RETRY_PLACEMENT');
         }
         
-        // STRICT: Final check BEFORE placing - make absolutely sure it's safe
-        // Re-check all neighbors one more time
-        for (const neighbor of neighbors) {
-          const neighborNum = numbers[neighbor];
-          if (neighborNum === null) continue;
-          
-          // Re-check 6-8 adjacency
-          if (!customRules.sixEightCanTouch) {
-            if ((number === 6 && neighborNum === 8) || (number === 8 && neighborNum === 6)) {
-              throw new Error('RETRY_PLACEMENT'); // Would create 6-8 adjacency
-            }
-          }
-        }
+        // Choose a random valid position
+        const chosenPosition = validPositions[Math.floor(Math.random() * validPositions.length)];
         
         // Place the number
-        numbers[position] = number;
+        numbers[chosenPosition] = number;
+        
+        // Remove this position from available positions
+        const index = availablePositions.indexOf(chosenPosition);
+        if (index !== -1) {
+          availablePositions.splice(index, 1);
+        }
         
         // STRICT: Validate AFTER placement - check entire board immediately
         if (!noHotAdjacencyExpansion(numbers, customRules)) {
@@ -1784,7 +1787,7 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         
         // Additional immediate check: verify 6-8 adjacency was not created
         if (!customRules.sixEightCanTouch) {
-          const positionNeighbors = EXPANSION_NEIGHBORS[position] || [];
+          const positionNeighbors = EXPANSION_NEIGHBORS[chosenPosition] || [];
           for (const neighbor of positionNeighbors) {
             const neighborNum = numbers[neighbor];
             if (neighborNum === null) continue;
