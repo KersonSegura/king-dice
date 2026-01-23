@@ -737,7 +737,7 @@ export function makeValidExpansionBoard(customRules: any): Board {
     }
 
     for (let numAttempt = 0; numAttempt < MAX_NUMBER_ATTEMPTS; numAttempt++) {
-      const numbers = generateExpansionNumbersRandom(desertPositions);
+      const numbers = generateExpansionNumbersRandom(desertPositions, customRules);
       if (!numbers) {
         continue;
       }
@@ -776,8 +776,21 @@ function generateExpansionTerrainsRandom(desertPositions: number[]): Terrain[] |
   const shuffledPositions = shuffleInPlace([...positions]);
   const shuffledResources = shuffleInPlace([...resourcePool]);
 
-  for (let i = 0; i < shuffledPositions.length; i++) {
-    terrains[shuffledPositions[i]] = shuffledResources[i];
+  for (const resource of shuffledResources) {
+    const validPositions = shuffledPositions.filter(pos => {
+      if (terrains[pos] !== null) return false;
+      terrains[pos] = resource;
+      const clusterSize = getConnectedResourceSize(terrains, pos, resource);
+      terrains[pos] = null;
+      return clusterSize <= 2;
+    });
+
+    if (validPositions.length === 0) {
+      return null;
+    }
+
+    const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+    terrains[chosenPos] = resource;
   }
 
   const finalTerrains = terrains as Terrain[];
@@ -788,7 +801,10 @@ function generateExpansionTerrainsRandom(desertPositions: number[]): Terrain[] |
   return finalTerrains;
 }
 
-function generateExpansionNumbersRandom(desertPositions: number[]): (number | null)[] | null {
+function generateExpansionNumbersRandom(
+  desertPositions: number[],
+  customRules: any
+): (number | null)[] | null {
   const numbers = new Array(30).fill(null) as (number | null)[];
   desertPositions.forEach(pos => numbers[pos] = null);
 
@@ -804,8 +820,18 @@ function generateExpansionNumbersRandom(desertPositions: number[]): (number | nu
   const shuffledPositions = shuffleInPlace([...positions]);
   const shuffledNumbers = shuffleInPlace([...numberPool]);
 
-  for (let i = 0; i < shuffledPositions.length; i++) {
-    numbers[shuffledPositions[i]] = shuffledNumbers[i];
+  for (const numberToPlace of shuffledNumbers) {
+    const validPositions = shuffledPositions.filter(pos => {
+      if (numbers[pos] !== null) return false;
+      return isNumberPlacementValid(numbers, pos, numberToPlace, customRules);
+    });
+
+    if (validPositions.length === 0) {
+      return null;
+    }
+
+    const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+    numbers[chosenPos] = numberToPlace;
   }
 
   return numbers;
