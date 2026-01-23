@@ -2401,11 +2401,10 @@ function buildExpansionNeighbors(): number[][] {
   for (let q = 0; q < columns.length; q++) {
     const { startRow, tiles } = columns[q];
     for (let i = 0; i < tiles.length; i++) {
-      const rOffset = startRow + i;
-      const rAxial = rOffset - Math.floor(q / 2);
+      const r = startRow + i;
       const index = tiles[i];
-      axialByIndex.set(index, { q, r: rAxial });
-      indexByAxial.set(`${q},${rAxial}`, index);
+      axialByIndex.set(index, { q, r });
+      indexByAxial.set(`${q},${r}`, index);
     }
   }
 
