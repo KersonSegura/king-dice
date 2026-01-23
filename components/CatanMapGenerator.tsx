@@ -3924,7 +3924,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                     }}
                   />
           {hexagons.map((hexagon, i) => {
-                    const currentTilePositions = expansionTilePositions;
+                    const currentTilePositions = EXPANSION_TILE_POSITIONS;
             const pos = currentTilePositions[i];
             let tileWidth, tileHeight;
               if (customRules.imageStyle === 'classic') {
@@ -4165,7 +4165,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
                   }}
                 />
                 {hexagons.map((hexagon, i) => {
-                  const currentTilePositions = expansionTilePositions;
+                  const currentTilePositions = EXPANSION_TILE_POSITIONS;
                   const pos = currentTilePositions[i];
                   let tileWidth, tileHeight;
                   if (customRules.imageStyle === 'classic') {
