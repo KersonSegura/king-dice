@@ -1038,16 +1038,8 @@ function placeResourceTiles(desertPositions: number[]): Terrain[] {
     return aggressiveResult;
   }
   
-  // If aggressive placement also has clustering, try one more time with minimal valid board
-  console.warn('⚠️ Aggressive placement still has clustering, creating minimal valid board...');
-  const minimalResult = createMinimalValidBoard(desertPositions, resourcePool);
-  
-  // Even minimal board should pass clustering check, but verify
-  if (!hasAnyClustering(minimalResult)) {
-    return minimalResult;
-  }
-  
-  // Last resort: If even minimal board has clustering, return null to force retry
+  // If aggressive placement also has clustering, DON'T use minimal board - it will have violations
+  // Instead, return null to force retry with new desert positions
   // NEVER return invalid boards - the calling function will retry with new deserts
   console.error('❌ Could not create board without clustering after all strategies');
   return null; // Force retry with new board
@@ -1162,6 +1154,12 @@ function wouldCreateClusterViolation(terrains: Terrain[], pos: number, resource:
   const testTerrains = [...terrains];
   testTerrains[pos] = resource;
   
+  // CRITICAL: Check for linear chains BEFORE checking cluster size
+  // This catches chains like A-B-C where placing at C creates a 3-tile chain
+  if (hasLinearChain(testTerrains, resource)) {
+    return true; // Would create a linear chain
+  }
+  
   // Check if this placement creates any cluster of 3+
   const visited = new Array(30).fill(false);
   for (let i = 0; i < 30; i++) {
@@ -1191,6 +1189,11 @@ function hasAnyClustering(terrains: Terrain[]): boolean {
 
 // Check for clustering issues with a specific resource type
 function hasResourceClustering(terrains: Terrain[], resourceType: Terrain): boolean {
+  // CRITICAL: Check for linear chains FIRST - this is the most common violation
+  if (hasLinearChain(terrains, resourceType)) {
+    return true;
+  }
+  
   const visited = new Array(30).fill(false);
   
   for (let i = 0; i < 30; i++) {
@@ -1204,8 +1207,7 @@ function hasResourceClustering(terrains: Terrain[], resourceType: Terrain): bool
     }
   }
   
-  // CRITICAL: Also check for linear chains of 3+ tiles (e.g., tiles 9, 14, 20 in a line)
-  return hasLinearChain(terrains, resourceType);
+  return false;
 }
 
 // Check for linear chains of 3+ tiles of the same resource
@@ -1683,6 +1685,9 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
           // All checks passed
           return true;
         });
+        
+        // CRITICAL: Shuffle valid positions to ensure truly random placement
+        const shuffledValidPositions = shuffleInPlace([...validPositions]);
         
         if (shuffledValidPositions.length === 0) {
           // If we can't place a 6, restart the attempt
