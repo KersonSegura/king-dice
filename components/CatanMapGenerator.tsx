@@ -856,12 +856,46 @@ function pickMostConstrainedPosition<T>(positions: number[], grid: (T | null)[])
 }
 
 function isResourcePlacementValid(terrains: (Terrain | null)[], pos: number, resource: Terrain): boolean {
+  // Strict: no tile may have 2+ same-resource neighbors (prevents chains and 3+ clusters)
   terrains[pos] = resource;
-  const clusterSize = getConnectedResourceSize(terrains, pos, resource);
+  const isValid = !wouldCreateResourceChain(terrains, pos, resource);
   terrains[pos] = null;
+  return isValid;
+}
 
-  // Strict: no cluster larger than 2 (prevents chains and triangles)
-  return clusterSize <= 2;
+function wouldCreateResourceChain(
+  terrains: (Terrain | null)[],
+  pos: number,
+  resource: Terrain
+): boolean {
+  const toCheck = new Set<number>([pos]);
+  const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+  for (const neighbor of neighbors) {
+    if (terrains[neighbor] === resource) {
+      toCheck.add(neighbor);
+    }
+  }
+
+  for (const tile of toCheck) {
+    const tileNeighbors = EXPANSION_NEIGHBORS[tile] || [];
+    let sameCount = 0;
+    for (const neighbor of tileNeighbors) {
+      if (neighbor === pos) {
+        if (resource === resource) {
+          sameCount += 1;
+        }
+        continue;
+      }
+      if (terrains[neighbor] === resource) {
+        sameCount += 1;
+      }
+    }
+    if (sameCount >= 2) {
+      return true; // This tile would have 2+ same-resource neighbors
+    }
+  }
+
+  return false;
 }
 
 function getConnectedResourceSize(terrains: (Terrain | null)[], startPos: number, resource: Terrain): number {
@@ -927,16 +961,20 @@ function isNumberPlacementValid(
 }
 
 function passesResourceRules(terrains: Terrain[]): boolean {
-  const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
+  // Strict: no tile may have 2+ same-resource neighbors (prevents chains and 3+ clusters)
+  for (let i = 0; i < 30; i++) {
+    const resource = terrains[i];
+    if (!resource || resource === 'desert') continue;
 
-  for (const resourceType of resourceTypes) {
-    const visited = new Array(30).fill(false);
-    for (let i = 0; i < 30; i++) {
-      if (visited[i] || terrains[i] !== resourceType) continue;
-      const clusterSize = getClusterSize(terrains, i, resourceType, visited);
-      if (clusterSize > 2) {
-        return false;
+    const neighbors = EXPANSION_NEIGHBORS[i] || [];
+    let sameCount = 0;
+    for (const neighbor of neighbors) {
+      if (terrains[neighbor] === resource) {
+        sameCount += 1;
       }
+    }
+    if (sameCount >= 2) {
+      return false;
     }
   }
 
