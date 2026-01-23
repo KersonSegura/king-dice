@@ -720,117 +720,176 @@ function repairClassicClustering(terrains: Terrain[], violationPos: number, cust
   return null; // Could not repair
 }
 
-// Expansion board generation (5-6 players) - Improved step-by-step logic
+// Expansion board generation (5-6 players) - COMPLETE REWRITE with strict rule enforcement
 export function makeValidExpansionBoard(customRules: any): Board {
+  const MAX_ATTEMPTS = 500;
   
-  const MAX_BOARD_GENERATION_ATTEMPTS = 200; // Significantly increased attempts for strict rule enforcement
-  
-  // Try multiple times to generate a valid board - NEVER return invalid board
-  for (let boardAttempt = 0; boardAttempt < MAX_BOARD_GENERATION_ATTEMPTS; boardAttempt++) {
-    
-    // Step 1: Place Deserts First
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    // Step 1: Place deserts
     const desertPositions = placeDesertsRandomly();
     
-    // Step 2: Place Resource Tiles with strict validation
-    let terrains = placeResourceTiles(desertPositions);
+    // Step 2: Place resources ONE AT A TIME with strict validation
+    const terrains = new Array(30).fill(null) as (Terrain | null)[];
+    const resourcePool: Terrain[] = [
+      'grain', 'grain', 'grain', 'grain', 'grain', 'grain',
+      'wood', 'wood', 'wood', 'wood', 'wood', 'wood',
+      'sheep', 'sheep', 'sheep', 'sheep', 'sheep', 'sheep',
+      'brick', 'brick', 'brick', 'brick', 'brick',
+      'ore', 'ore', 'ore', 'ore', 'ore'
+    ];
     
-    // STRICT: Validate terrain clustering - MUST pass or retry entire board
-    if (!terrainsPassClusterRule(terrains, customRules)) {
-      continue; // Retry from beginning - NO logging to avoid spam
-    }
+    // Mark desert positions
+    desertPositions.forEach(pos => terrains[pos] = 'desert');
     
-    // STRICT: Additional check: ensure no 3+ tiles in a line - MUST pass
-    if (hasAnyClustering(terrains)) {
-      continue; // Retry from beginning - NO logging to avoid spam
-    }
+    // Get available positions
+    const availablePositions = Array.from({ length: 30 }, (_, i) => i)
+      .filter(i => !desertPositions.includes(i));
     
-    // Step 3: Place Number Tokens - ALWAYS use smart placement if 6-8 cannot touch
-    // This ensures 6 & 8 are NEVER adjacent when the rule is enforced
-    let numbers: (number | null)[] | null = null;
+    // Shuffle resources for random placement
+    const shuffledResources = shuffleInPlace([...resourcePool]);
     
-    // Try multiple times to place numbers correctly
-    const MAX_NUMBER_PLACEMENT_ATTEMPTS = 100;
-    for (let numAttempt = 0; numAttempt < MAX_NUMBER_PLACEMENT_ATTEMPTS; numAttempt++) {
-      const candidateNumbers = placeNumberTokens(desertPositions, customRules);
+    // Place each resource one at a time, checking rules BEFORE placement
+    let resourcePlacementFailed = false;
+    for (const resource of shuffledResources) {
+      // Find all valid positions for this resource
+      const validPositions = availablePositions.filter(pos => {
+        // Check if placing this resource here would violate rules
+        const testTerrains = [...terrains];
+        testTerrains[pos] = resource;
+        
+        // Check cluster size (max 2 tiles can touch)
+        const visited = new Array(30).fill(false);
+        const clusterSize = getClusterSize(testTerrains as Terrain[], pos, resource, visited);
+        if (clusterSize > 2) {
+          return false;
+        }
+        
+        // Check for linear chains (3+ tiles in a row)
+        if (hasLinearChain(testTerrains as Terrain[], resource)) {
+          return false;
+        }
+        
+        return true;
+      });
       
-      // STRICT: Validate number distribution - MUST match exactly
-      if (!candidateNumbers || !validateNumberDistribution(candidateNumbers)) {
-        continue; // Try again
+      if (validPositions.length === 0) {
+        resourcePlacementFailed = true;
+        break;
       }
       
-      // STRICT: Validate adjacency rules - MUST pass or retry
-      if (!noHotAdjacencyExpansion(candidateNumbers, customRules)) {
-        continue; // Try again
-      }
+      // Choose random valid position
+      const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+      terrains[chosenPos] = resource;
       
-      // STRICT: Additional check for 6-8 adjacency if rule is enforced
-      if (!customRules.sixEightCanTouch) {
-        let has6_8Adjacency = false;
-        for (let i = 0; i < 30; i++) {
-          if (candidateNumbers[i] === 6 || candidateNumbers[i] === 8) {
-            const neighbors = EXPANSION_NEIGHBORS[i] || [];
-            for (const neighbor of neighbors) {
-              if ((candidateNumbers[i] === 6 && candidateNumbers[neighbor] === 8) || 
-                  (candidateNumbers[i] === 8 && candidateNumbers[neighbor] === 6)) {
-                has6_8Adjacency = true;
-                break;
-              }
+      // Remove from available positions
+      const index = availablePositions.indexOf(chosenPos);
+      if (index !== -1) {
+        availablePositions.splice(index, 1);
+      }
+    }
+    
+    if (resourcePlacementFailed) {
+      continue; // Retry with new desert positions
+    }
+    
+    // Final validation for resources
+    const finalTerrains = terrains as Terrain[];
+    if (!terrainsPassClusterRule(finalTerrains, customRules) || hasAnyClustering(finalTerrains)) {
+      continue; // Retry
+    }
+    
+    // Step 3: Place numbers ONE AT A TIME with strict validation
+    const numbers = new Array(30).fill(null) as (number | null)[];
+    const numberPool = [2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12];
+    
+    // Mark desert positions
+    desertPositions.forEach(pos => numbers[pos] = null);
+    
+    // Get available positions for numbers
+    const availableNumberPositions = Array.from({ length: 30 }, (_, i) => i)
+      .filter(i => !desertPositions.includes(i));
+    
+    // Shuffle numbers for random placement
+    const shuffledNumbers = shuffleInPlace([...numberPool]);
+    
+    // Place each number one at a time, checking rules BEFORE placement
+    let numberPlacementFailed = false;
+    for (const numberToPlace of shuffledNumbers) {
+      // Find all valid positions for this number
+      const validPositions = availableNumberPositions.filter(pos => {
+        // Check all neighbors for violations
+        const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+        
+        for (const neighbor of neighbors) {
+          const neighborNum = numbers[neighbor];
+          if (neighborNum === null) continue;
+          
+          // 6-6 adjacency: NEVER allowed
+          if (numberToPlace === 6 && neighborNum === 6) {
+            return false;
+          }
+          
+          // 8-8 adjacency: NEVER allowed
+          if (numberToPlace === 8 && neighborNum === 8) {
+            return false;
+          }
+          
+          // 6-8 adjacency: Check if rule is enforced
+          if (!customRules.sixEightCanTouch) {
+            if ((numberToPlace === 6 && neighborNum === 8) || (numberToPlace === 8 && neighborNum === 6)) {
+              return false;
             }
-            if (has6_8Adjacency) break;
+          }
+          
+          // Same number adjacency: Check if rule is enforced (excludes 6 and 8)
+          if (!customRules.sameNumbersCanTouch && numberToPlace === neighborNum && numberToPlace !== 6 && numberToPlace !== 8) {
+            return false;
+          }
+          
+          // 2-12 adjacency: Check if rule is enforced
+          if (!customRules.twoTwelveCanTouch) {
+            if ((numberToPlace === 2 && neighborNum === 12) || (numberToPlace === 12 && neighborNum === 2)) {
+              return false;
+            }
           }
         }
-        if (has6_8Adjacency) {
-          continue; // Found 6-8 adjacency, retry
-        }
+        
+        return true;
+      });
+      
+      if (validPositions.length === 0) {
+        numberPlacementFailed = true;
+        break;
       }
       
-      // If we get here, numbers are valid!
-      numbers = candidateNumbers;
-      break;
-    }
-    
-    // If numbers are still invalid after all attempts, retry entire board
-    if (!numbers || !validateNumberDistribution(numbers) || !noHotAdjacencyExpansion(numbers, customRules)) {
-      continue; // Retry entire board
-    }
-    
-    // Final strict check for 6-8 adjacency
-    if (!customRules.sixEightCanTouch) {
-      let has6_8Adjacency = false;
-      for (let i = 0; i < 30; i++) {
-        if (numbers[i] === 6 || numbers[i] === 8) {
-          const neighbors = EXPANSION_NEIGHBORS[i] || [];
-          for (const neighbor of neighbors) {
-            if ((numbers[i] === 6 && numbers[neighbor] === 8) || 
-                (numbers[i] === 8 && numbers[neighbor] === 6)) {
-              has6_8Adjacency = true;
-              break;
-            }
-          }
-          if (has6_8Adjacency) break;
-        }
+      // Choose random valid position
+      const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+      numbers[chosenPos] = numberToPlace;
+      
+      // Remove from available positions
+      const index = availableNumberPositions.indexOf(chosenPos);
+      if (index !== -1) {
+        availableNumberPositions.splice(index, 1);
       }
-      if (has6_8Adjacency) {
-        continue; // Found 6-8 adjacency, retry entire board
+      
+      // Immediate validation after placement
+      if (!noHotAdjacencyExpansion(numbers, customRules)) {
+        numberPlacementFailed = true;
+        break;
       }
     }
     
-    // Final STRICT validation checks - ALL must pass
-    const hasValidDistribution = validateNumberDistribution(numbers);
-    let hasValidAdjacency = noHotAdjacencyExpansion(numbers, customRules);
-    let hasValidTerrains = terrainsPassClusterRule(terrains, customRules) && !hasAnyClustering(terrains);
+    if (numberPlacementFailed) {
+      continue; // Retry with new board
+    }
     
-    // CRITICAL: Log validation results ALWAYS
-    console.log(`🔍 EXPANSION BOARD VALIDATION (Attempt ${boardAttempt + 1}):`, {
-      hasValidDistribution,
-      hasValidAdjacency,
-      hasValidTerrains,
-      sixEightCanTouch: customRules.sixEightCanTouch
-    });
+    // Final validation
+    if (!validateNumberDistribution(numbers) || !noHotAdjacencyExpansion(numbers, customRules)) {
+      continue; // Retry
+    }
     
-    // BRUTE FORCE: Manual check for ALL adjacency violations - check EVERY position and EVERY neighbor
-    let foundAdjacencyViolation = false;
-    console.log('🔍 BRUTE FORCE CHECK: Checking ALL adjacencies...');
+    // Final brute force check for adjacency violations
+    let hasViolation = false;
     for (let i = 0; i < 30; i++) {
       const numA = numbers[i];
       if (numA === null) continue;
@@ -840,163 +899,62 @@ export function makeValidExpansionBoard(customRules: any): Board {
         const numB = numbers[neighbor];
         if (numB === null) continue;
         
-        // Check 6-6 adjacency (ALWAYS forbidden, regardless of "Same Numbers Can Touch" checkbox)
-        // CRITICAL: 6-6 and 8-8 are NEVER allowed, even if "Same Numbers Can Touch" is checked
+        // Check 6-6
         if (numA === 6 && numB === 6) {
-          console.error(`❌❌❌ VIOLATION: Two 6s adjacent at positions ${i} and ${neighbor}`);
-          foundAdjacencyViolation = true;
+          hasViolation = true;
+          break;
         }
         
-        // Check 8-8 adjacency (ALWAYS forbidden, regardless of "Same Numbers Can Touch" checkbox)
-        // CRITICAL: 6-6 and 8-8 are NEVER allowed, even if "Same Numbers Can Touch" is checked
+        // Check 8-8
         if (numA === 8 && numB === 8) {
-          console.error(`❌❌❌ VIOLATION: Two 8s adjacent at positions ${i} and ${neighbor}`);
-          foundAdjacencyViolation = true;
+          hasViolation = true;
+          break;
         }
         
-        // Check 6-8 adjacency (uses "6 & 8 Can Touch" checkbox, NOT "Same Numbers Can Touch")
-        // CRITICAL: This uses sixEightCanTouch, not sameNumbersCanTouch
-        if (!customRules.sixEightCanTouch) {
-          if ((numA === 6 && numB === 8) || (numA === 8 && numB === 6)) {
-            // Check if this is one of the known problematic pairs
-            const isProblematicPair = (i === 3 && neighbor === 8) || (i === 8 && neighbor === 3) || // Tiles 4-9
-                                     (i === 7 && neighbor === 13) || (i === 13 && neighbor === 7) || // Tiles 8-14
-                                     (i === 26 && neighbor === 29) || (i === 29 && neighbor === 26); // Tiles 27-30
-            
-            if (isProblematicPair) {
-              console.error(`❌❌❌ CRITICAL VIOLATION: 6-8 adjacency at PROBLEMATIC PAIR positions ${i} (tile ${i + 1}, ${numA}) and ${neighbor} (tile ${neighbor + 1}, ${numB})`);
-            } else {
-              console.error(`❌❌❌ VIOLATION: 6-8 adjacency at positions ${i} (tile ${i + 1}, ${numA}) and ${neighbor} (tile ${neighbor + 1}, ${numB})`);
-            }
-            foundAdjacencyViolation = true;
-          }
-        }
-        
-        // Check same number adjacency (uses "Same Numbers Can Touch" checkbox, but excludes 6 and 8)
-        // CRITICAL: This only applies to non-6/8 numbers, and uses sameNumbersCanTouch checkbox
-        if (!customRules.sameNumbersCanTouch && numA === numB && numA !== 6 && numA !== 8) {
-          console.error(`❌❌❌ VIOLATION: Same number ${numA} adjacent at positions ${i} and ${neighbor}`);
-          foundAdjacencyViolation = true;
-        }
-        
-        // Check 2-12 adjacency (if rule enforced)
-        if (!customRules.twoTwelveCanTouch) {
-          if ((numA === 2 && numB === 12) || (numA === 12 && numB === 2)) {
-            console.error(`❌❌❌ VIOLATION: 2-12 adjacency at positions ${i} (${numA}) and ${neighbor} (${numB})`);
-            foundAdjacencyViolation = true;
-          }
+        // Check 6-8
+        if (!customRules.sixEightCanTouch && ((numA === 6 && numB === 8) || (numA === 8 && numB === 6))) {
+          hasViolation = true;
+          break;
         }
       }
+      if (hasViolation) break;
     }
     
-    if (foundAdjacencyViolation) {
-      console.error('❌❌❌ Board has adjacency violations - will retry');
-      hasValidAdjacency = false;
-      // CRITICAL: Don't continue here - we need to check terrain clusters too, then retry
-      // But we've already marked it as invalid, so it will fail the final check
+    if (hasViolation) {
+      continue; // Retry
     }
     
-    // BRUTE FORCE: Manual check for cluster violations - check EVERY tile and its neighbors
-    console.log('🔍 BRUTE FORCE CHECK: Checking ALL terrain clusters and linear chains...');
-    let foundClusterViolation = false;
-    const visited = new Array(30).fill(false);
-    
-    // Check 1: Cluster size violations (more than 2 tiles of same resource connected)
-    for (let i = 0; i < 30; i++) {
-      if (visited[i] || terrains[i] === 'desert') continue;
-      
-      // Use a fresh visited array for this check to get accurate cluster size
-      const checkVisited = new Array(30).fill(false);
-      const clusterSize = getClusterSize(terrains, i, terrains[i], checkVisited);
-      
-      if (clusterSize > 2) {
-        console.error(`❌❌❌ VIOLATION: Found cluster of ${clusterSize} ${terrains[i]} tiles starting at position ${i}`);
-        
-        // Log all positions in this cluster for debugging
-        const clusterPositions: number[] = [];
-        const clusterVisited = new Array(30).fill(false);
-        const queue = [i];
-        while (queue.length > 0) {
-          const pos = queue.shift()!;
-          if (clusterVisited[pos] || terrains[pos] !== terrains[i]) continue;
-          clusterVisited[pos] = true;
-          clusterPositions.push(pos);
-          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-          for (const neighbor of neighbors) {
-            if (!clusterVisited[neighbor] && terrains[neighbor] === terrains[i]) {
-              queue.push(neighbor);
-            }
-          }
-        }
-        console.error(`   Cluster positions: [${clusterPositions.join(', ')}]`);
-        foundClusterViolation = true;
-      }
-      
-      // Mark all positions in this cluster as visited
-      const markVisited = new Array(30).fill(false);
-      const markQueue = [i];
-      while (markQueue.length > 0) {
-        const pos = markQueue.shift()!;
-        if (visited[pos] || terrains[pos] !== terrains[i]) continue;
-        visited[pos] = true;
-        const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-        for (const neighbor of neighbors) {
-          if (!visited[neighbor] && terrains[neighbor] === terrains[i]) {
-            markQueue.push(neighbor);
-          }
-        }
-      }
-    }
-    
-    // Check 2: Linear chain violations (3+ tiles in a row) - CRITICAL: This catches "3 in a row" violations
+    // Final brute force check for resource violations
+    let hasResourceViolation = false;
     const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
     for (const resourceType of resourceTypes) {
-      if (hasLinearChain(terrains, resourceType)) {
-        console.error(`❌❌❌ LINEAR CHAIN VIOLATION: Found linear chain of 3+ ${resourceType} tiles`);
-        foundClusterViolation = true;
-        // Don't break - check all resource types to log all violations
+      if (hasLinearChain(finalTerrains, resourceType)) {
+        hasResourceViolation = true;
+        break;
       }
-    }
-    
-    if (foundClusterViolation) {
-      console.error('❌❌❌ Board has cluster/linear chain violations - will retry');
-      hasValidTerrains = false;
-      // Don't continue here - we need to check adjacency violations too, then retry at final check
-    }
-    
-    // CRITICAL: Only return if ALL validations pass - brute force check must also pass
-    // The brute force check is the ultimate authority - if it finds violations, the board is invalid
-    if (foundAdjacencyViolation) {
-      console.error('❌❌❌ Board has adjacency violations detected in brute force check - will retry');
-      hasValidAdjacency = false;
-    }
-    
-    if (foundClusterViolation) {
-      console.error('❌❌❌ Board has cluster violations detected in brute force check - will retry');
-      hasValidTerrains = false;
-    }
-    
-    if (hasValidDistribution && hasValidAdjacency && hasValidTerrains && !foundAdjacencyViolation && !foundClusterViolation) {
-      // Perfect valid board found! Return it.
-      console.log('✅✅✅ VALID EXPANSION BOARD FOUND!');
-      return { terrains: terrains as Terrain[], numbers: numbers };
-    } else {
-      console.warn(`⚠️ Validation failed - retrying (attempt ${boardAttempt + 1}/${MAX_BOARD_GENERATION_ATTEMPTS})`);
-      if (foundAdjacencyViolation) {
-        console.error('❌❌❌ REASON: Adjacency violations detected in brute force check');
+      
+      const visited = new Array(30).fill(false);
+      for (let i = 0; i < 30; i++) {
+        if (visited[i] || finalTerrains[i] !== resourceType) continue;
+        const clusterSize = getClusterSize(finalTerrains, i, resourceType, visited);
+        if (clusterSize > 2) {
+          hasResourceViolation = true;
+          break;
+        }
       }
-      if (foundClusterViolation) {
-        console.error('❌❌❌ REASON: Cluster violations detected in brute force check');
-      }
+      if (hasResourceViolation) break;
     }
     
-    // If any validation fails, retry entire board (continue loop)
+    if (hasResourceViolation) {
+      continue; // Retry
+    }
+    
+    // All validations passed!
+    console.log('✅✅✅ VALID EXPANSION BOARD FOUND!');
+    return { terrains: finalTerrains, numbers };
   }
   
-  // If we've exhausted ALL attempts, throw an error instead of returning invalid board
-  console.error('❌ CRITICAL: Could not generate valid expansion board after ' + MAX_BOARD_GENERATION_ATTEMPTS + ' attempts');
-  console.error('❌ This should not happen - there may be a logic error in the placement algorithms');
-  throw new Error('CRITICAL: Expansion board generator cannot create valid boards after ' + MAX_BOARD_GENERATION_ATTEMPTS + ' attempts. Algorithms need fixing.');
+  throw new Error('CRITICAL: Could not generate valid expansion board after ' + MAX_ATTEMPTS + ' attempts');
 }
 
 // Step 1: Randomly place 2 deserts anywhere on the map
