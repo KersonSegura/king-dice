@@ -1107,16 +1107,6 @@ function wouldCreateTripleCluster(terrains: Terrain[], pos: number, resource: Te
   const neighbors = EXPANSION_NEIGHBORS[pos];
   if (!neighbors) return false;
   
-  // Simulate placing the resource to check for linear chains
-  const testTerrains = [...terrains];
-  testTerrains[pos] = resource;
-  
-  // CRITICAL: Check if this would create a linear chain of 3+ tiles
-  // This catches cases like: tile 9 -> tile 14 -> tile 20 all having the same resource
-  if (hasLinearChain(testTerrains, resource)) {
-    return true;
-  }
-  
   // Count how many neighbors already have the same resource
   const sameTypeNeighbors = neighbors.filter(n => terrains[n] === resource);
   
@@ -1138,6 +1128,29 @@ function wouldCreateTripleCluster(terrains: Terrain[], pos: number, resource: Te
     if (otherSameTypeNeighbors.length > 0) {
       return true;
     }
+    
+    // CRITICAL: Also check if that neighbor is part of a longer chain
+    // Check all neighbors of the neighbor to see if any form a chain
+    for (const otherNeighbor of otherSameTypeNeighbors) {
+      const otherNeighborNeighbors = EXPANSION_NEIGHBORS[otherNeighbor] || [];
+      // If the other neighbor has another neighbor of the same type (besides the first neighbor), it's a chain
+      const thirdLevelNeighbors = otherNeighborNeighbors.filter(n => 
+        n !== neighborPos && n !== pos && terrains[n] === resource
+      );
+      if (thirdLevelNeighbors.length > 0) {
+        return true; // Would create a chain: pos -> neighborPos -> otherNeighbor -> thirdLevel
+      }
+    }
+  }
+  
+  // Simulate placing the resource to check for linear chains
+  const testTerrains = [...terrains];
+  testTerrains[pos] = resource;
+  
+  // CRITICAL: Check if this would create a linear chain of 3+ tiles
+  // This catches cases like: tile 9 -> tile 14 -> tile 20 all having the same resource
+  if (hasLinearChain(testTerrains, resource)) {
+    return true;
   }
   
   return false;
