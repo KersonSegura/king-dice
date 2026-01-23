@@ -1551,6 +1551,72 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
     2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12
   ];
   
+  // CRITICAL: Helper function to check if placing a number at a position would create violations
+  // This is called BEFORE placement to prevent invalid placements
+  const wouldCreateViolation = (
+    numbers: (number | null)[], 
+    position: number, 
+    numberToPlace: number,
+    sixPositions: number[],
+    eightPositions: number[]
+  ): boolean => {
+    const neighbors = EXPANSION_NEIGHBORS[position] || [];
+    
+    // Check ALL neighbors for violations
+    for (const neighbor of neighbors) {
+      const neighborNum = numbers[neighbor];
+      if (neighborNum === null) continue;
+      
+      // CRITICAL: Check for 6-6 adjacency (NEVER allowed)
+      if (numberToPlace === 6 && neighborNum === 6) {
+        return true; // Would create 6-6 adjacency
+      }
+      
+      // CRITICAL: Check for 8-8 adjacency (NEVER allowed)
+      if (numberToPlace === 8 && neighborNum === 8) {
+        return true; // Would create 8-8 adjacency
+      }
+      
+      // CRITICAL: Check for 6-8 adjacency (unless custom rule allows)
+      if (!customRules.sixEightCanTouch) {
+        if ((numberToPlace === 6 && neighborNum === 8) || (numberToPlace === 8 && neighborNum === 6)) {
+          return true; // Would create 6-8 adjacency
+        }
+      }
+    }
+    
+    // Also check if any existing 6s or 8s would become adjacent to this position
+    if (numberToPlace === 6) {
+      for (const sixPos of sixPositions) {
+        const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
+        if (sixNeighbors.includes(position)) {
+          return true; // Would create 6-6 adjacency
+        }
+      }
+    }
+    
+    if (numberToPlace === 8) {
+      for (const eightPos of eightPositions) {
+        const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
+        if (eightNeighbors.includes(position)) {
+          return true; // Would create 8-8 adjacency
+        }
+      }
+      
+      // Also check if this 8 would be adjacent to any 6s
+      if (!customRules.sixEightCanTouch) {
+        for (const sixPos of sixPositions) {
+          const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
+          if (sixNeighbors.includes(position)) {
+            return true; // Would create 6-8 adjacency
+          }
+        }
+      }
+    }
+    
+    return false; // No violations would be created
+  };
+  
   // CRITICAL: Problematic adjacency pairs that frequently cause 6-8 violations
   // These pairs are adjacent and must NEVER have 6 and 8 together
   // Position 3 = Tile 4, Position 8 = Tile 9
@@ -1594,56 +1660,24 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       for (const six of sixes) {
         // Find all positions that are not adjacent to any existing 6 or 8
         const validPositions = availablePositions.filter(pos => {
+          // CRITICAL: Use the helper function to check if placing a 6 here would create violations
+          if (wouldCreateViolation(numbers, pos, 6, sixPositions, eightPositions)) {
+            return false;
+          }
+          
           // CRITICAL: Check problematic pairs first - if this position is part of a problematic pair
           // and the other position already has an 8, this position CANNOT have a 6
           for (const [p1, p2] of PROBLEMATIC_PAIRS) {
             if (pos === p1 && numbers[p2] === 8) {
-              console.warn(`🚫 Blocking 6 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p2} (tile ${p2 + 1}) which has 8`);
               return false;
             }
             if (pos === p2 && numbers[p1] === 8) {
-              console.warn(`🚫 Blocking 6 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p1} (tile ${p1 + 1}) which has 8`);
               return false;
-            }
-          }
-          
-          // CRITICAL: Check if this position is adjacent to any existing 6 (6s cannot be adjacent to each other)
-          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-          
-          // Check all neighbors - if ANY neighbor is a 6, this position is invalid
-          for (const neighbor of neighbors) {
-            if (numbers[neighbor] === 6) {
-              return false; // Direct adjacency to existing 6
-            }
-          }
-          
-          // Also check if any existing 6s have this position as a neighbor (bidirectional check)
-          for (const sixPos of sixPositions) {
-            const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
-            if (sixNeighbors.includes(pos)) {
-              return false; // Existing 6 is adjacent to this position
-            }
-          }
-          
-          // CRITICAL: Check if this position is adjacent to any existing 8 (6s cannot be adjacent to 8s)
-          for (const neighbor of neighbors) {
-            if (numbers[neighbor] === 8) {
-              return false; // Direct adjacency to existing 8
-            }
-          }
-          
-          // Also check if any existing 8s have this position as a neighbor (bidirectional check)
-          for (const eightPos of eightPositions) {
-            const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
-            if (eightNeighbors.includes(pos)) {
-              return false; // Existing 8 is adjacent to this position
             }
           }
           
           // All checks passed
           return true;
-          
-          return isValid;
         });
         
         if (validPositions.length === 0) {
@@ -1685,48 +1719,24 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       for (const eight of eights) {
         // Find all positions that are not adjacent to any existing 6 or 8
         const validPositions = availablePositions.filter(pos => {
+          // CRITICAL: Use the helper function to check if placing an 8 here would create violations
+          if (wouldCreateViolation(numbers, pos, 8, sixPositions, eightPositions)) {
+            return false;
+          }
+          
           // CRITICAL: Check problematic pairs first - if this position is part of a problematic pair
           // and the other position already has a 6, this position CANNOT have an 8
           for (const [p1, p2] of PROBLEMATIC_PAIRS) {
             if (pos === p1 && numbers[p2] === 6) {
-              console.warn(`🚫 Blocking 8 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p2} (tile ${p2 + 1}) which has 6`);
               return false;
             }
             if (pos === p2 && numbers[p1] === 6) {
-              console.warn(`🚫 Blocking 8 at position ${pos} (tile ${pos + 1}) - problematic pair with position ${p1} (tile ${p1 + 1}) which has 6`);
               return false;
-            }
-          }
-          
-          // Check if this position is adjacent to any existing 6 or 8
-          const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-          
-          // Check all neighbors - if ANY neighbor is a 6 or 8, this position is invalid
-          for (const neighbor of neighbors) {
-            if (numbers[neighbor] === 6 || numbers[neighbor] === 8) {
-              return false; // Direct adjacency to existing 6 or 8
-            }
-          }
-          
-          // Also check if any existing 6s or 8s have this position as a neighbor (bidirectional check)
-          for (const sixPos of sixPositions) {
-            const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
-            if (sixNeighbors.includes(pos)) {
-              return false; // Existing 6 is adjacent to this position
-            }
-          }
-          
-          for (const eightPos of eightPositions) {
-            const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
-            if (eightNeighbors.includes(pos)) {
-              return false; // Existing 8 is adjacent to this position
             }
           }
           
           // All checks passed
           return true;
-          
-          return isValid;
         });
         
         if (validPositions.length === 0) {
