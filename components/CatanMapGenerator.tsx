@@ -1653,9 +1653,13 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         .filter(i => !desertPositions.includes(i));
       
       // Step 1: Place the 6s first in random non-adjacent positions
-      const sixes = expansionNumbers.filter(n => n === 6);
+      // CRITICAL: Shuffle the order to make placement truly random
+      const sixes = shuffleInPlace([...expansionNumbers.filter(n => n === 6)]);
       const sixPositions: number[] = [];
       const eightPositions: number[] = []; // Track 8s - declared here to use when placing 6s
+      
+      // CRITICAL: Also shuffle available positions to avoid patterns
+      const shuffledAvailablePositions = shuffleInPlace([...availablePositions]);
       
       for (const six of sixes) {
         // Find all positions that are not adjacent to any existing 6 or 8
@@ -1680,13 +1684,13 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
           return true;
         });
         
-        if (validPositions.length === 0) {
+        if (shuffledValidPositions.length === 0) {
           // If we can't place a 6, restart the attempt
           throw new Error('RETRY_PLACEMENT');
         }
         
-        // Choose a random valid position
-        const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+        // Choose a random valid position (already shuffled)
+        const chosenPos = shuffledValidPositions[0];
         numbers[chosenPos] = six;
         sixPositions.push(chosenPos);
         
@@ -1713,8 +1717,12 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
       }
       
       // Step 2: Place the 8s in random non-adjacent positions (also not adjacent to 6s)
-      const eights = expansionNumbers.filter(n => n === 8);
+      // CRITICAL: Shuffle the order to make placement truly random
+      const eights = shuffleInPlace([...expansionNumbers.filter(n => n === 8)]);
       // eightPositions already declared above
+      
+      // CRITICAL: Re-shuffle available positions for 8s to avoid patterns
+      const shuffledAvailableForEights = shuffleInPlace([...availablePositions]);
       
       for (const eight of eights) {
         // Find all positions that are not adjacent to any existing 6 or 8
@@ -1739,13 +1747,16 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
           return true;
         });
         
-        if (validPositions.length === 0) {
+        // CRITICAL: Shuffle valid positions to ensure truly random placement
+        const shuffledValidPositions = shuffleInPlace([...validPositions]);
+        
+        if (shuffledValidPositions.length === 0) {
           // If we can't place an 8, restart the attempt
           throw new Error('RETRY_PLACEMENT');
         }
         
-        // Choose a random valid position
-        const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+        // Choose a random valid position (already shuffled)
+        const chosenPos = shuffledValidPositions[0];
         numbers[chosenPos] = eight;
         eightPositions.push(chosenPos);
         
