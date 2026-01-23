@@ -945,8 +945,17 @@ export default function UserTrackerPage() {
                               type="number"
                               min="0"
                               value={player.victories}
+                              onFocus={(e) => e.target.select()}
                               onChange={(e) => {
-                                if (originalIndex !== -1) updatePlayer(originalIndex, 'victories', parseInt(e.target.value) || 0);
+                                if (originalIndex !== -1) {
+                                  const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                                  updatePlayer(originalIndex, 'victories', value);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                if (e.target.value === '') {
+                                  if (originalIndex !== -1) updatePlayer(originalIndex, 'victories', 0);
+                                }
                               }}
                               className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] mx-auto"
                             />
@@ -962,8 +971,17 @@ export default function UserTrackerPage() {
                               type="number"
                               min="0"
                               value={player.gameNights}
+                              onFocus={(e) => e.target.select()}
                               onChange={(e) => {
-                                if (originalIndex !== -1) updatePlayer(originalIndex, 'gameNights', parseInt(e.target.value) || 0);
+                                if (originalIndex !== -1) {
+                                  const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                                  updatePlayer(originalIndex, 'gameNights', value);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                if (e.target.value === '') {
+                                  if (originalIndex !== -1) updatePlayer(originalIndex, 'gameNights', 0);
+                                }
                               }}
                               className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] mx-auto"
                             />
@@ -977,8 +995,17 @@ export default function UserTrackerPage() {
                               type="number"
                               min="0"
                               value={player.gamesPlayed}
+                              onFocus={(e) => e.target.select()}
                               onChange={(e) => {
-                                if (originalIndex !== -1) updatePlayer(originalIndex, 'gamesPlayed', parseInt(e.target.value) || 0);
+                                if (originalIndex !== -1) {
+                                  const value = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                                  updatePlayer(originalIndex, 'gamesPlayed', value);
+                                }
+                              }}
+                              onBlur={(e) => {
+                                if (e.target.value === '') {
+                                  if (originalIndex !== -1) updatePlayer(originalIndex, 'gamesPlayed', 0);
+                                }
                               }}
                               className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#fbae17] mx-auto"
                             />
