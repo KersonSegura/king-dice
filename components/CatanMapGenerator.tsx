@@ -905,10 +905,11 @@ export function makeValidExpansionBoard(customRules: any): Board {
     }
     
     // BRUTE FORCE: Manual check for cluster violations - check EVERY tile and its neighbors
-    console.log('🔍 BRUTE FORCE CHECK: Checking ALL terrain clusters...');
+    console.log('🔍 BRUTE FORCE CHECK: Checking ALL terrain clusters and linear chains...');
     let foundClusterViolation = false;
     const visited = new Array(30).fill(false);
     
+    // Check 1: Cluster size violations (more than 2 tiles of same resource connected)
     for (let i = 0; i < 30; i++) {
       if (visited[i] || terrains[i] === 'desert') continue;
       
@@ -955,10 +956,20 @@ export function makeValidExpansionBoard(customRules: any): Board {
       }
     }
     
+    // Check 2: Linear chain violations (3+ tiles in a row) - CRITICAL: This catches "3 in a row" violations
+    const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
+    for (const resourceType of resourceTypes) {
+      if (hasLinearChain(terrains, resourceType)) {
+        console.error(`❌❌❌ LINEAR CHAIN VIOLATION: Found linear chain of 3+ ${resourceType} tiles`);
+        foundClusterViolation = true;
+        // Don't break - check all resource types to log all violations
+      }
+    }
+    
     if (foundClusterViolation) {
-      console.error('❌❌❌ Board has cluster violations - will retry');
+      console.error('❌❌❌ Board has cluster/linear chain violations - will retry');
       hasValidTerrains = false;
-      continue; // Retry
+      // Don't continue here - we need to check adjacency violations too, then retry at final check
     }
     
     // CRITICAL: Only return if ALL validations pass - brute force check must also pass
@@ -993,20 +1004,7 @@ export function makeValidExpansionBoard(customRules: any): Board {
   // If we've exhausted ALL attempts, throw an error instead of returning invalid board
   console.error('❌ CRITICAL: Could not generate valid expansion board after ' + MAX_BOARD_GENERATION_ATTEMPTS + ' attempts');
   console.error('❌ This should not happen - there may be a logic error in the placement algorithms');
-  
-  // Last resort: Generate one more board and validate it one more time
-  // If still invalid, we have a serious problem
-  const desertPositions = placeDesertsRandomly();
-  const terrains = placeResourceTiles(desertPositions);
-  const numbers = placeNumberTokens(desertPositions, customRules);
-  
-  // Final check - if still invalid, we need to fix the algorithms
-  if (!terrainsPassClusterRule(terrains, customRules) || hasAnyClustering(terrains) || 
-      !validateNumberDistribution(numbers) || !noHotAdjacencyExpansion(numbers, customRules)) {
-    throw new Error('CRITICAL: Expansion board generator cannot create valid boards. Algorithms need fixing.');
-  }
-  
-  return { terrains: terrains as Terrain[], numbers: numbers };
+  throw new Error('CRITICAL: Expansion board generator cannot create valid boards after ' + MAX_BOARD_GENERATION_ATTEMPTS + ' attempts. Algorithms need fixing.');
 }
 
 // Step 1: Randomly place 2 deserts anywhere on the map
