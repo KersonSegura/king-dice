@@ -2476,56 +2476,73 @@ function completeReshuffle(numbers: (number | null)[]): (number | null)[] {
 
 
 
-// Expansion map adjacency based on CatanExpansionAdjacencyMap-01.png
-// Column layout (top -> bottom):
-// [1,2,3], [4,5,6,7], [8,9,10,11,12], [13,14,15,16,17,18],
-// [19,20,21,22,23], [24,25,26,27], [28,29,30]
-export const EXPANSION_NEIGHBORS: number[][] = buildExpansionNeighbors();
+type ExpansionTilePosition = { x: number; y: number };
 
-function buildExpansionNeighbors(): number[][] {
-  const columns: Array<{ startRow: number; tiles: number[] }> = [
-    { startRow: 3, tiles: [0, 1, 2] },
-    { startRow: 2, tiles: [3, 4, 5, 6] },
-    { startRow: 1, tiles: [7, 8, 9, 10, 11] },
-    { startRow: 0, tiles: [12, 13, 14, 15, 16, 17] },
-    { startRow: 1, tiles: [18, 19, 20, 21, 22] },
-    { startRow: 2, tiles: [23, 24, 25, 26] },
-    { startRow: 3, tiles: [27, 28, 29] }
-  ];
+// Expansion board positions (5-6 players) - 30 tiles
+// Exact coordinates from ExpCatanMap.svg (W:1024px H:885px)
+// All tiles moved to the right for better placement (total +145px right) and up 16px
+export const EXPANSION_TILE_POSITIONS: ExpansionTilePosition[] = [
+  { x: 353.9569, y: 309.8667 },    // 1
+  { x: 353.9569, y: 426.5 },       // 2
+  { x: 353.9569, y: 543.1333 },    // 3
+  { x: 454.9643, y: 251.55 },      // 4
+  { x: 454.9643, y: 368.1833 },    // 5
+  { x: 454.9643, y: 484.8167 },    // 6
+  { x: 454.9643, y: 601.45 },      // 7
+  { x: 556.0134, y: 193.2333 },    // 8
+  { x: 556.0134, y: 309.8667 },    // 9
+  { x: 556.0134, y: 426.5 },       // 10
+  { x: 556.0134, y: 543.1333 },    // 11
+  { x: 556.0134, y: 659.7667 },    // 12
+  { x: 657.0208, y: 134.9167 },    // 13
+  { x: 657.0208, y: 251.55 },      // 14
+  { x: 657.0208, y: 368.1833 },    // 15
+  { x: 657.0208, y: 484.8167 },    // 16
+  { x: 657.0208, y: 601.4499 },    // 17
+  { x: 657.0208, y: 718.0833 },    // 18
+  { x: 758.0282, y: 193.2333 },    // 19
+  { x: 758.0282, y: 309.8667 },    // 20
+  { x: 758.0282, y: 426.5 },       // 21
+  { x: 758.0282, y: 543.1333 },    // 22
+  { x: 758.0282, y: 659.7667 },    // 23
+  { x: 859.0357, y: 251.55 },      // 24
+  { x: 859.0357, y: 368.1833 },    // 25
+  { x: 859.0357, y: 484.8167 },    // 26
+  { x: 859.0357, y: 601.45 },      // 27
+  { x: 960.0431, y: 309.8667 },    // 28
+  { x: 960.0431, y: 426.5 },       // 29
+  { x: 960.0431, y: 543.1333 }     // 30
+];
 
-  const axialByIndex = new Map<number, { q: number; r: number }>();
-  const indexByAxial = new Map<string, number>();
+// Expansion map adjacency derived from exact tile coordinates to avoid mismatch bugs.
+export const EXPANSION_NEIGHBORS: number[][] = buildExpansionNeighborsFromPositions(EXPANSION_TILE_POSITIONS);
 
-  for (let q = 0; q < columns.length; q++) {
-    const { startRow, tiles } = columns[q];
-    for (let i = 0; i < tiles.length; i++) {
-      const r = startRow + i;
-      const index = tiles[i];
-      axialByIndex.set(index, { q, r });
-      indexByAxial.set(`${q},${r}`, index);
+function buildExpansionNeighborsFromPositions(positions: ExpansionTilePosition[]): number[][] {
+  const minDistances = positions.map((pos, i) => {
+    let min = Number.POSITIVE_INFINITY;
+    for (let j = 0; j < positions.length; j++) {
+      if (i === j) continue;
+      const dx = pos.x - positions[j].x;
+      const dy = pos.y - positions[j].y;
+      const d = Math.hypot(dx, dy);
+      if (d < min) min = d;
     }
-  }
+    return min;
+  });
 
-  const directions = [
-    { dq: 1, dr: 0 },
-    { dq: 1, dr: -1 },
-    { dq: 0, dr: -1 },
-    { dq: -1, dr: 0 },
-    { dq: -1, dr: 1 },
-    { dq: 0, dr: 1 }
-  ];
+  const sorted = [...minDistances].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const threshold = median * 1.2;
 
-  const neighbors: number[][] = new Array(30).fill(null).map(() => []);
-  for (let i = 0; i < 30; i++) {
-    const axial = axialByIndex.get(i);
-    if (!axial) continue;
-    for (const dir of directions) {
-      const q = axial.q + dir.dq;
-      const r = axial.r + dir.dr;
-      const key = `${q},${r}`;
-      const neighborIndex = indexByAxial.get(key);
-      if (neighborIndex !== undefined) {
-        neighbors[i].push(neighborIndex);
+  const neighbors: number[][] = new Array(positions.length).fill(null).map(() => []);
+  for (let i = 0; i < positions.length; i++) {
+    for (let j = 0; j < positions.length; j++) {
+      if (i === j) continue;
+      const dx = positions[i].x - positions[j].x;
+      const dy = positions[i].y - positions[j].y;
+      const d = Math.hypot(dx, dy);
+      if (d <= threshold) {
+        neighbors[i].push(j);
       }
     }
   }
@@ -2923,45 +2940,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
     { x: 545.6727 * SCALE_FACTOR, y: 565.5266 * SCALE_FACTOR },   // 19
   ];
 
-  // Expansion board positions (5-6 players) - 30 tiles
-  // Exact coordinates from ExpCatanMap.svg (W:1024px H:885px)
-  // All tiles moved to the right for better placement (total +145px right) and up 16px
-  const expansionTilePositions = [
-    { x: 353.9569, y: 309.8667 },    // 1 (moved +145px right, +16px up)
-    { x: 353.9569, y: 426.5 },       // 2 (moved +145px right, +16px up)
-    { x: 353.9569, y: 543.1333 },    // 3 (moved +145px right, +16px up)
-    { x: 454.9643, y: 251.55 },      // 4 (moved +145px right, +16px up)
-    { x: 454.9643, y: 368.1833 },   // 5 (moved +145px right, +16px up)
-    { x: 454.9643, y: 484.8167 },   // 6 (moved +145px right, +16px up)
-    { x: 454.9643, y: 601.45 },     // 7 (moved +145px right, +16px up)
-    { x: 556.0134, y: 193.2333 },   // 8 (moved +145px right, +16px up)
-    { x: 556.0134, y: 309.8667 },   // 9 (moved +145px right, +16px up)
-    { x: 556.0134, y: 426.5 },      // 10 (moved +145px right, +16px up)
-    { x: 556.0134, y: 543.1333 },   // 11 (moved +145px right, +16px up)
-    { x: 556.0134, y: 659.7667 },   // 12 (moved +145px right, +16px up)
-    { x: 657.0208, y: 134.9167 },   // 13 (moved +145px right, +16px up)
-    { x: 657.0208, y: 251.55 },     // 14 (moved +145px right, +16px up)
-    { x: 657.0208, y: 368.1833 },   // 15 (moved +145px right, +16px up)
-    { x: 657.0208, y: 484.8167 },   // 16 (moved +145px right, +16px up)
-    { x: 657.0208, y: 601.4499 },   // 17 (moved +145px right, +16px up)
-    { x: 657.0208, y: 718.0833 },   // 18 (moved +145px right, +16px up)
-    { x: 758.0282, y: 193.2333 },   // 19 (moved +145px right, +16px up)
-    { x: 758.0282, y: 309.8667 },   // 20 (moved +145px right, +16px up)
-    { x: 758.0282, y: 426.5 },      // 21 (moved +145px right, +16px up)
-    { x: 758.0282, y: 543.1333 },   // 22 (moved +145px right, +16px up)
-    { x: 758.0282, y: 659.7667 },   // 23 (moved +145px right, +16px up)
-    { x: 859.0357, y: 251.55 },     // 24 (moved +145px right, +16px up)
-    { x: 859.0357, y: 368.1833 },   // 25 (moved +145px right, +16px up)
-    { x: 859.0357, y: 484.8167 },   // 26 (moved +145px right, +16px up)
-    { x: 859.0357, y: 601.45 },     // 27 (moved +145px right, +16px up)
-    { x: 960.0431, y: 309.8667 },   // 28 (moved +145px right, +16px up)
-    { x: 960.0431, y: 426.5 },      // 29 (moved +145px right, +16px up)
-    { x: 960.0431, y: 543.1333 },   // 30 (moved +145px right, +16px up)
-  ];
 
   // Get current tile positions based on map type
   const getCurrentTilePositions = () => {
-    return mapType === 'classic' ? classicTilePositions : expansionTilePositions;
+    return mapType === 'classic' ? classicTilePositions : EXPANSION_TILE_POSITIONS;
   };
 
   const generateMap = (forcedMapType?: MapType) => {
@@ -2990,7 +2972,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
         }
 
         // Convert to hexagons format
-        const currentTilePositions = currentMapType === 'classic' ? classicTilePositions : expansionTilePositions;
+        const currentTilePositions = currentMapType === 'classic' ? classicTilePositions : EXPANSION_TILE_POSITIONS;
         
         // Debug: Check if we have enough board data for all positions
         if (currentMapType === 'expansion') {
