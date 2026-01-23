@@ -767,22 +767,55 @@ function generateExpansionTerrainsStrict(desertPositions: number[]): Terrain[] |
     desert: 0
   };
 
-  const placeNext = (): boolean => {
-    if (positions.length === 0) return true;
+  let steps = 0;
+  const MAX_STEPS = 30000;
 
-    const posIndex = pickMostConstrainedPosition(positions, terrains);
-    const pos = positions[posIndex];
-    positions.splice(posIndex, 1);
-
-    const candidates = shuffleInPlace(
-      (Object.keys(remaining) as Terrain[]).filter(t => t !== 'desert' && remaining[t] > 0)
-    );
+  const getAllowedResources = (pos: number): Terrain[] => {
+    const candidates = (Object.keys(remaining) as Terrain[])
+      .filter(t => t !== 'desert' && remaining[t] > 0);
+    const allowed: Terrain[] = [];
 
     for (const resource of candidates) {
-      if (!isResourcePlacementValid(terrains, pos, resource)) {
-        continue;
+      if (isResourcePlacementValid(terrains, pos, resource)) {
+        allowed.push(resource);
       }
+    }
 
+    return allowed;
+  };
+
+  const pickMostConstrainedPosition = (): { pos: number; allowed: Terrain[] } | null => {
+    let bestPos = -1;
+    let bestAllowed: Terrain[] = [];
+    let bestCount = Number.POSITIVE_INFINITY;
+
+    for (const pos of positions) {
+      const allowed = getAllowedResources(pos);
+      if (allowed.length === 0) {
+        return null;
+      }
+      if (allowed.length < bestCount) {
+        bestCount = allowed.length;
+        bestPos = pos;
+        bestAllowed = allowed;
+      }
+    }
+
+    return { pos: bestPos, allowed: bestAllowed };
+  };
+
+  const placeNext = (): boolean => {
+    if (steps++ > MAX_STEPS) return false;
+    if (positions.length === 0) return true;
+
+    const selection = pickMostConstrainedPosition();
+    if (!selection) return false;
+
+    const { pos, allowed } = selection;
+    positions.splice(positions.indexOf(pos), 1);
+
+    const candidates = shuffleInPlace([...allowed]);
+    for (const resource of candidates) {
       terrains[pos] = resource;
       remaining[resource] -= 1;
 
@@ -794,7 +827,7 @@ function generateExpansionTerrainsStrict(desertPositions: number[]): Terrain[] |
       terrains[pos] = null;
     }
 
-    positions.splice(posIndex, 0, pos);
+    positions.push(pos);
     return false;
   };
 
@@ -816,24 +849,53 @@ function generateExpansionNumbersStrict(desertPositions: number[], customRules: 
     2: 2, 3: 3, 4: 3, 5: 3, 6: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 2
   };
 
+  let steps = 0;
+  const MAX_STEPS = 40000;
+
+  const getAllowedNumbers = (pos: number): number[] => {
+    const allowed: number[] = [];
+    for (const key of Object.keys(remaining)) {
+      const num = Number(key);
+      if (remaining[num] === 0) continue;
+      if (isNumberPlacementValid(numbers, pos, num, customRules)) {
+        allowed.push(num);
+      }
+    }
+    return allowed;
+  };
+
+  const pickMostConstrainedPosition = (): { pos: number; allowed: number[] } | null => {
+    let bestPos = -1;
+    let bestAllowed: number[] = [];
+    let bestCount = Number.POSITIVE_INFINITY;
+
+    for (const pos of positions) {
+      const allowed = getAllowedNumbers(pos);
+      if (allowed.length === 0) {
+        return null;
+      }
+      if (allowed.length < bestCount) {
+        bestCount = allowed.length;
+        bestPos = pos;
+        bestAllowed = allowed;
+      }
+    }
+
+    return { pos: bestPos, allowed: bestAllowed };
+  };
+
   const placeNext = (): boolean => {
+    if (steps++ > MAX_STEPS) return false;
     if (positions.length === 0) return true;
 
-    const posIndex = pickMostConstrainedPosition(positions, numbers);
-    const pos = positions[posIndex];
-    positions.splice(posIndex, 1);
+    const selection = pickMostConstrainedPosition();
+    if (!selection) return false;
 
-    const candidates = shuffleInPlace(
-      Object.keys(remaining)
-        .map(k => Number(k))
-        .filter(n => remaining[n] > 0)
-    );
+    const { pos, allowed } = selection;
+    positions.splice(positions.indexOf(pos), 1);
 
+    const candidates = shuffleInPlace([...allowed]);
     for (const num of candidates) {
-      if (!isNumberPlacementValid(numbers, pos, num, customRules)) {
-        continue;
-      }
-
       numbers[pos] = num;
       remaining[num] -= 1;
 
@@ -845,7 +907,7 @@ function generateExpansionNumbersStrict(desertPositions: number[], customRules: 
       numbers[pos] = null;
     }
 
-    positions.splice(posIndex, 0, pos);
+    positions.push(pos);
     return false;
   };
 
