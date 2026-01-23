@@ -283,8 +283,11 @@ export default function UserTrackerPage() {
   const activeTab = gameTabs.find(tab => tab.id === activeTabId);
   const rawPlayers = activeTab?.players || [];
   
-  // Check if viewing own tracker
-  const isOwnTracker = currentTracker && user && currentTracker.user_id === user.id;
+  // Check if viewing own tracker (check by username match or tracker ownership)
+  const isOwnTracker = user && (
+    (currentTracker && currentTracker.user_id === user.id) ||
+    (username && user.username && username.toLowerCase() === user.username.toLowerCase())
+  );
   
   // Sort players
   const players = [...rawPlayers].sort((a, b) => {
@@ -309,6 +312,39 @@ export default function UserTrackerPage() {
       loadTrackerByUsername(username);
     }
   }, [username]);
+
+  const createDefaultTracker = async () => {
+    try {
+      const response = await fetch('/api/game-night-tracker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trackerName: 'My Game Night Tracker',
+          gameTabs: [{ id: 'tab-1', name: 'All Games', players: [] }],
+          players: [],
+          gameFilter: null,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentTracker(data.tracker);
+        setTrackerName(data.tracker.tracker_name);
+        setGameTabs(data.tracker.game_tabs || [{ id: 'tab-1', name: 'All Games', players: [] }]);
+        setActiveTabId('tab-1');
+        if (user?.username) {
+          setShareUrl(`${window.location.origin}/game-night-tracker/${user.username}`);
+        }
+        return data.tracker;
+      } else {
+        console.error('Failed to create tracker');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error creating tracker:', error);
+      return null;
+    }
+  };
 
   const loadTrackerByUsername = async (usernameParam: string) => {
     setLoading(true);
@@ -335,20 +371,35 @@ export default function UserTrackerPage() {
           } else {
             setShareUrl(`${window.location.origin}/game-night-tracker/${usernameParam}`);
           }
+        } else if (data.user) {
+          // No tracker exists, but user exists
+          // If it's the authenticated user's own tracker, create one automatically
+          const isViewingOwnTracker = isAuthenticated && user && data.user.id === user.id;
+          if (isViewingOwnTracker) {
+            const newTracker = await createDefaultTracker();
+            if (!newTracker) {
+              showToast('Failed to create tracker', 'error');
+            }
+          } else {
+            // Show empty state for other users' trackers
+            setCurrentTracker(null);
+            setTrackerName('');
+            setGameTabs([{ id: 'tab-1', name: 'All Games', players: [] }]);
+            setActiveTabId('tab-1');
+          }
         }
       } else {
-        showToast('Tracker not found', 'error');
-        // Redirect to home or profile if tracker not found
-        if (isOwnTracker && user?.username) {
-          router.push(`/game-night-tracker/${user.username}`);
-        } else {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error === 'User not found') {
+          showToast('User not found', 'error');
           router.push('/');
+        } else {
+          showToast('Failed to load tracker', 'error');
         }
       }
     } catch (error) {
       console.error('Error loading tracker by username:', error);
       showToast('Failed to load tracker', 'error');
-      router.push('/game-night-tracker');
     } finally {
       setLoading(false);
     }
@@ -632,13 +683,36 @@ export default function UserTrackerPage() {
     );
   }
 
-  if (!currentTracker) {
+  // Show empty state if no tracker exists (but user exists)
+  if (!currentTracker && !loading) {
+    // If it's the user's own tracker, show a message that they can start tracking
+    if (isOwnTracker && isAuthenticated) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-4">
+            <p className="text-gray-600 mb-4">{tTracker('noTrackerYet') || 'You haven\'t created a tracker yet. Click Edit to get started!'}</p>
+            <button
+              onClick={() => {
+                // Create a default tracker and enter edit mode
+                createDefaultTracker().then(() => {
+                  setIsEditMode(true);
+                });
+              }}
+              className="px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+            >
+              {tTracker('createTracker') || 'Create Tracker'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+    // If it's someone else's tracker that doesn't exist, show empty state
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Tracker not found</p>
-          <Link href="/game-night-tracker" className="text-[#fbae17] hover:underline">
-            Go to Game Night Tracker
+          <p className="text-gray-600 mb-4">{tTracker('noTrackerForUser') || `@${username} hasn't created a tracker yet.`}</p>
+          <Link href="/" className="text-[#fbae17] hover:underline">
+            {t('backToHome')}
           </Link>
         </div>
       </div>

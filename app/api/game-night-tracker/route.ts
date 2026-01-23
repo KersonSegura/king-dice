@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
       // Fetch tracker by username (public access for viewing)
       const { data: userData, error: userError } = await supabaseAdmin
         .from('users')
-        .select('id')
-        .eq('username', username)
+        .select('id, username')
+        .ilike('username', username)
         .single();
 
       if (userError || !userData) {
@@ -80,14 +80,15 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      // Return user info even if no tracker exists (so page can create one or show empty state)
       if (!data || data.length === 0) {
-        return NextResponse.json(
-          { error: 'Tracker not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ 
+          tracker: null,
+          user: { id: userData.id, username: userData.username }
+        });
       }
 
-      return NextResponse.json({ tracker: data[0] });
+      return NextResponse.json({ tracker: data[0], user: { id: userData.id, username: userData.username } });
     }
 
     // Fetch user's trackers (requires authentication)
