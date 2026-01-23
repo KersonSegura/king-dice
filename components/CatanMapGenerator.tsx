@@ -593,7 +593,6 @@ export function makeValidBoard(customRules: any): Board {
     let terrains = generateValidTerrains(customRules);
     
     // BRUTE FORCE: Check for cluster violations and try to repair
-    console.log(`🔍 CLASSIC BOARD VALIDATION (Attempt ${attempt + 1}): Checking terrain clusters...`);
     let foundClusterViolation = false;
     
     // Check each tile for cluster violations
@@ -619,19 +618,16 @@ export function makeValidBoard(customRules: any): Board {
               // Check if neighbor1 and neighbor2 are adjacent
               if (NEIGHBORS[neighbor1]?.includes(neighbor2)) {
                 // Found a chain of 3+ - try to repair
-                console.error(`❌❌❌ VIOLATION: Found cluster of ${terrains[i]} tiles at positions ${i}, ${neighbor1}, ${neighbor2}`);
                 foundClusterViolation = true;
                 
                 // Try to repair by swapping one tile
                 const repaired = repairClassicClustering(terrains, i, customRules);
                 if (repaired) {
                   terrains = repaired;
-                  console.log('✅ Repaired cluster violation by swapping tiles');
                   foundClusterViolation = false; // Retry validation with repaired board
                   break;
                 } else {
                   // Repair failed, retry entire board
-                  console.error('❌ Could not repair cluster - retrying entire board');
                   break;
                 }
               }
@@ -645,7 +641,6 @@ export function makeValidBoard(customRules: any): Board {
     
     // Final validation using the cluster rule function
     if (!terrainsPassClusterRule(terrains, customRules) || foundClusterViolation) {
-      console.warn(`⚠️ Classic board has cluster violations - retrying (attempt ${attempt + 1}/${MAX_ATTEMPTS})`);
       continue; // Retry
     }
     
@@ -653,7 +648,6 @@ export function makeValidBoard(customRules: any): Board {
     const numbers = generateValidNumbers(desertIdx, customRules);
     
     // BRUTE FORCE: Check number adjacencies
-    console.log('🔍 CLASSIC BOARD VALIDATION: Checking number adjacencies...');
     let foundAdjacencyViolation = false;
     for (let i = 0; i < 19; i++) {
       const numA = numbers[i];
@@ -664,22 +658,19 @@ export function makeValidBoard(customRules: any): Board {
         const numB = numbers[neighbor];
         if (numB === null) continue;
         
-        // Check 6-6 adjacency (ALWAYS forbidden)
+        // Check 6-6 adjacency (ALWAYS forbidden, regardless of "Same Numbers Can Touch" checkbox)
         if (numA === 6 && numB === 6) {
-          console.error(`❌❌❌ VIOLATION: Two 6s adjacent at positions ${i} and ${neighbor}`);
           foundAdjacencyViolation = true;
         }
         
-        // Check 8-8 adjacency (ALWAYS forbidden)
+        // Check 8-8 adjacency (ALWAYS forbidden, regardless of "Same Numbers Can Touch" checkbox)
         if (numA === 8 && numB === 8) {
-          console.error(`❌❌❌ VIOLATION: Two 8s adjacent at positions ${i} and ${neighbor}`);
           foundAdjacencyViolation = true;
         }
         
-        // Check 6-8 adjacency (if rule enforced)
+        // Check 6-8 adjacency (uses "6 & 8 Can Touch" checkbox, NOT "Same Numbers Can Touch")
         if (!customRules.sixEightCanTouch) {
           if ((numA === 6 && numB === 8) || (numA === 8 && numB === 6)) {
-            console.error(`❌❌❌ VIOLATION: 6-8 adjacency at positions ${i} (${numA}) and ${neighbor} (${numB})`);
             foundAdjacencyViolation = true;
           }
         }
@@ -688,16 +679,13 @@ export function makeValidBoard(customRules: any): Board {
     
     // CRITICAL: Final validation before returning
     if (!noHotAdjacency(numbers, customRules) || foundAdjacencyViolation) {
-      console.warn(`⚠️ Classic board has adjacency violations - retrying (attempt ${attempt + 1}/${MAX_ATTEMPTS})`);
       continue; // Retry
     }
     
-    console.log('✅✅✅ VALID CLASSIC BOARD FOUND!');
     return { terrains, numbers };
   }
   
   // If all attempts failed, throw error
-  console.error('❌❌❌ CRITICAL: Could not generate valid classic board after ' + MAX_ATTEMPTS + ' attempts');
   throw new Error('Failed to generate valid classic board - too many violations');
 }
 
@@ -852,19 +840,22 @@ export function makeValidExpansionBoard(customRules: any): Board {
         const numB = numbers[neighbor];
         if (numB === null) continue;
         
-        // Check 6-6 adjacency (ALWAYS forbidden)
+        // Check 6-6 adjacency (ALWAYS forbidden, regardless of "Same Numbers Can Touch" checkbox)
+        // CRITICAL: 6-6 and 8-8 are NEVER allowed, even if "Same Numbers Can Touch" is checked
         if (numA === 6 && numB === 6) {
           console.error(`❌❌❌ VIOLATION: Two 6s adjacent at positions ${i} and ${neighbor}`);
           foundAdjacencyViolation = true;
         }
         
-        // Check 8-8 adjacency (ALWAYS forbidden)
+        // Check 8-8 adjacency (ALWAYS forbidden, regardless of "Same Numbers Can Touch" checkbox)
+        // CRITICAL: 6-6 and 8-8 are NEVER allowed, even if "Same Numbers Can Touch" is checked
         if (numA === 8 && numB === 8) {
           console.error(`❌❌❌ VIOLATION: Two 8s adjacent at positions ${i} and ${neighbor}`);
           foundAdjacencyViolation = true;
         }
         
-        // Check 6-8 adjacency (if rule enforced)
+        // Check 6-8 adjacency (uses "6 & 8 Can Touch" checkbox, NOT "Same Numbers Can Touch")
+        // CRITICAL: This uses sixEightCanTouch, not sameNumbersCanTouch
         if (!customRules.sixEightCanTouch) {
           if ((numA === 6 && numB === 8) || (numA === 8 && numB === 6)) {
             // Check if this is one of the known problematic pairs
@@ -881,7 +872,8 @@ export function makeValidExpansionBoard(customRules: any): Board {
           }
         }
         
-        // Check same number adjacency (if rule enforced)
+        // Check same number adjacency (uses "Same Numbers Can Touch" checkbox, but excludes 6 and 8)
+        // CRITICAL: This only applies to non-6/8 numbers, and uses sameNumbersCanTouch checkbox
         if (!customRules.sameNumbersCanTouch && numA === numB && numA !== 6 && numA !== 8) {
           console.error(`❌❌❌ VIOLATION: Same number ${numA} adjacent at positions ${i} and ${neighbor}`);
           foundAdjacencyViolation = true;
@@ -1251,48 +1243,56 @@ function hasLinearChain(terrains: Terrain[], resourceType: Terrain): boolean {
   for (let i = 0; i < 30; i++) {
     if (visited[i] || terrains[i] !== resourceType) continue;
     
-    // Use BFS to find the longest chain starting from this tile
-    const queue: Array<{pos: number, path: number[]}> = [{pos: i, path: [i]}];
-    const localVisited = new Array(30).fill(false);
-    localVisited[i] = true;
-    
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      const currentPos = current.pos;
-      const currentPath = current.path;
-      
+    // Use DFS to find linear chains starting from this tile
+    // A linear chain is 3+ tiles where each tile touches the next, but not all tiles touch each other
+    const findLinearChain = (startPos: number, path: number[]): boolean => {
       // If we've found a chain of 3+ tiles, that's a violation
-      if (currentPath.length >= 3) {
-        const tileNumbers = currentPath.map(p => p + 1).join(', '); // Convert to 1-indexed for display
-        console.error(`❌❌❌ LINEAR CHAIN VIOLATION: Found chain of ${currentPath.length} ${resourceType} tiles at positions ${tileNumbers} (tiles ${currentPath.map(p => p + 1).join(', ')})`);
+      if (path.length >= 3) {
+        const tileNumbers = path.map(p => p + 1).join(', '); // Convert to 1-indexed for display
+        console.error(`❌❌❌ LINEAR CHAIN VIOLATION: Found linear chain of ${path.length} ${resourceType} tiles at positions ${tileNumbers} (tiles ${path.map(p => p + 1).join(', ')})`);
         return true;
       }
       
-      // Check all neighbors of the same type
+      const currentPos = path[path.length - 1];
       const tileNeighbors = neighbors[currentPos] || [];
+      
+      // Check all neighbors of the same type
       for (const neighbor of tileNeighbors) {
-        if (localVisited[neighbor] || terrains[neighbor] !== resourceType) continue;
+        if (path.includes(neighbor) || terrains[neighbor] !== resourceType) continue;
         
-        // Check if this neighbor extends the chain (not forming a triangle)
-        // A triangle would be if the neighbor is already in the path (except the immediate previous tile)
-        const isTriangle = currentPath.length >= 2 && neighbors[neighbor].some(n => 
-          currentPath.includes(n) && n !== currentPos
-        );
+        // Check if this neighbor would create a triangle (all 3 tiles touching each other)
+        // A triangle means: the new neighbor touches BOTH the current tile AND a previous tile in the path
+        let isTriangle = false;
+        if (path.length >= 2) {
+          // Check if the neighbor is adjacent to any tile in the path (except the current one)
+          const neighborNeighbors = neighbors[neighbor] || [];
+          for (let k = 0; k < path.length - 1; k++) {
+            if (neighborNeighbors.includes(path[k])) {
+              // The neighbor touches both the current tile and a previous tile = triangle
+              isTriangle = true;
+              break;
+            }
+          }
+        }
         
+        // If it's not a triangle, it's a linear extension of the chain
         if (!isTriangle) {
-          // This extends the chain linearly
-          localVisited[neighbor] = true;
-          queue.push({pos: neighbor, path: [...currentPath, neighbor]});
+          if (findLinearChain(startPos, [...path, neighbor])) {
+            return true;
+          }
         }
       }
+      
+      return false;
+    };
+    
+    // Try to find a linear chain starting from this tile
+    if (findLinearChain(i, [i])) {
+      return true;
     }
     
-    // Mark all tiles in this cluster as visited
-    for (let j = 0; j < 30; j++) {
-      if (localVisited[j]) {
-        visited[j] = true;
-      }
-    }
+    // Mark this tile as visited (but only after we've checked all chains starting from it)
+    visited[i] = true;
   }
   
   return false;
