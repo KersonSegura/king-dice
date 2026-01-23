@@ -2340,46 +2340,40 @@ function completeReshuffle(numbers: (number | null)[]): (number | null)[] {
 
 
 
-// Expansion map adjacency system (7-column rectangular layout)
-// Based on the 7-column structure:
-// Column 1: Tiles 1, 2, 3
-// Column 2: Tiles 4, 5, 6, 7  
-// Column 3: Tiles 8, 9, 10, 11, 12
-// Column 4: Tiles 13, 14, 15, 16, 17, 18
-// Column 5: Tiles 19, 20, 21, 22, 23
-// Column 6: Tiles 24, 25, 26, 27
-// Column 7: Tiles 28, 29, 30
+// Expansion map adjacency based on CatanExpansionAdjacencyMap-01.png
+// Columns: [1..3], [4..7], [8..12], [13..18], [19..23], [24..27], [28..30]
+// Uses the published expansion adjacency layout to avoid invalid resource chains and number adjacencies.
 export const EXPANSION_NEIGHBORS: number[][] = [
-  /* 0  */ [1, 3, 4],                    // Tile 1: adjacent to 2, 4, 5
-  /* 1  */ [0, 2, 4, 5],                 // Tile 2: adjacent to 1, 3, 5, 6
-  /* 2  */ [1, 5, 6],                    // Tile 3: adjacent to 2, 6, 7
-  /* 3  */ [0, 1, 4, 7],                 // Tile 4: adjacent to 1, 5, 8, 9
-  /* 4  */ [1, 2, 3, 5, 8, 9],          // Tile 5: adjacent to 1, 2, 4, 6, 9, 10
-  /* 5  */ [2, 4, 6, 9, 10],            // Tile 6: adjacent to 2, 3, 5, 7, 10, 11
-  /* 6  */ [2, 5, 10, 11],              // Tile 7: adjacent to 3, 6, 11, 12
-  /* 7  */ [3, 4, 8, 12],               // Tile 8: adjacent to 4, 9, 13, 14
-  /* 8  */ [4, 5, 7, 9, 13, 14],        // Tile 9: adjacent to 4, 5, 8, 10, 14, 15
-  /* 9  */ [5, 6, 8, 10, 14, 15],       // Tile 10: adjacent to 5, 6, 9, 11, 15, 16
-  /* 10 */ [6, 9, 11, 15, 16],          // Tile 11: adjacent to 6, 7, 10, 12, 16, 17
-  /* 11 */ [6, 10, 16, 17],             // Tile 12: adjacent to 7, 11, 17, 18
-  /* 12 */ [7, 8, 13, 18],              // Tile 13: adjacent to 8, 14, 19
-  /* 13 */ [8, 9, 12, 14, 19, 20],      // Tile 14: adjacent to 8, 9, 13, 15, 19, 20
-  /* 14 */ [9, 10, 13, 15, 19, 20],     // Tile 15: adjacent to 9, 10, 14, 16, 20, 21
-  /* 15 */ [10, 11, 14, 16, 20, 21],   // Tile 16: adjacent to 10, 11, 15, 17, 21, 22
-  /* 16 */ [11, 15, 17, 21, 22],        // Tile 17: adjacent to 11, 12, 16, 18, 22, 23
-  /* 17 */ [12, 16, 18, 22, 23],        // Tile 18: adjacent to 12, 17, 23
-  /* 18 */ [13, 14, 20, 24],            // Tile 19: adjacent to 13, 14, 20, 24
-  /* 19 */ [14, 15, 18, 20, 24, 25],    // Tile 20: adjacent to 14, 15, 19, 21, 24, 25
-  /* 20 */ [15, 16, 19, 21, 25, 26],   // Tile 21: adjacent to 15, 16, 20, 22, 25, 26
-  /* 21 */ [16, 17, 20, 22, 26, 27],   // Tile 22: adjacent to 16, 17, 21, 23, 26, 27
-  /* 22 */ [17, 18, 21, 23, 27],        // Tile 23: adjacent to 17, 18, 22, 27
-  /* 23 */ [18, 19, 20, 25, 28],        // Tile 24: adjacent to 19, 20, 25, 28
-  /* 24 */ [20, 21, 23, 25, 28, 29],   // Tile 25: adjacent to 20, 21, 24, 26, 28, 29
-  /* 25 */ [21, 22, 24, 26, 28],       // Tile 26: adjacent to 21, 22, 25, 27, 29 (fixed: removed self-ref 25, invalid 30)
-  /* 26 */ [22, 23, 25, 27, 28],        // Tile 27: adjacent to 22, 23, 26, 28 (fixed: removed self-ref 26, invalid 30)
-  /* 27 */ [23, 24, 25, 28],            // Tile 28: adjacent to 24, 25, 29
-  /* 28 */ [25, 26, 27],                // Tile 29: adjacent to 25, 26, 28, 30 (1-indexed: tiles 26, 27, 29, 31) - fixed: removed invalid indices
-  /* 29 */ [26, 27, 28]                 // Tile 30: adjacent to 26, 27, 29 (1-indexed: tiles 27, 28, 30) - fixed: correct neighbors
+  /* 0  */ [4, 5, 1],                    // Tile 1: 2, 5, 6
+  /* 1  */ [5, 6, 2, 0],                 // Tile 2: 1, 3, 6, 7
+  /* 2  */ [6, 1],                       // Tile 3: 2, 7
+  /* 3  */ [8, 9, 4, 0],                 // Tile 4: 1, 5, 9, 10
+  /* 4  */ [9, 10, 5, 0, 1, 3],          // Tile 5: 1, 2, 4, 6, 10, 11
+  /* 5  */ [10, 11, 6, 1, 2, 4],         // Tile 6: 2, 3, 5, 7, 11, 12
+  /* 6  */ [11, 2, 5],                   // Tile 7: 3, 6, 12
+  /* 7  */ [13, 14, 8, 3],               // Tile 8: 4, 9, 14, 15
+  /* 8  */ [14, 15, 9, 3, 4, 7],         // Tile 9: 4, 5, 8, 10, 15, 16
+  /* 9  */ [15, 16, 10, 4, 5, 8],        // Tile 10: 5, 6, 9, 11, 16, 17
+  /* 10 */ [16, 17, 11, 5, 6, 9],        // Tile 11: 6, 7, 10, 12, 17, 18
+  /* 11 */ [17, 6, 10],                  // Tile 12: 7, 11, 18
+  /* 12 */ [18, 13, 7],                  // Tile 13: 8, 14, 19
+  /* 13 */ [18, 19, 14, 7, 8, 12],       // Tile 14: 8, 9, 13, 15, 19, 20
+  /* 14 */ [19, 20, 15, 8, 9, 13],       // Tile 15: 9, 10, 14, 16, 20, 21
+  /* 15 */ [20, 21, 16, 9, 10, 14],      // Tile 16: 10, 11, 15, 17, 21, 22
+  /* 16 */ [21, 22, 17, 10, 11, 15],     // Tile 17: 11, 12, 16, 18, 22, 23
+  /* 17 */ [22, 11, 16],                 // Tile 18: 12, 17, 23
+  /* 18 */ [23, 19, 13, 14],             // Tile 19: 14, 15, 20, 24
+  /* 19 */ [23, 24, 20, 14, 15, 18],     // Tile 20: 15, 16, 19, 21, 24, 25
+  /* 20 */ [24, 25, 21, 15, 16, 19],     // Tile 21: 16, 17, 20, 22, 25, 26
+  /* 21 */ [25, 26, 22, 16, 17, 20],     // Tile 22: 17, 18, 21, 23, 26, 27
+  /* 22 */ [26, 17, 21],                 // Tile 23: 18, 22, 27
+  /* 23 */ [27, 24, 19, 20],             // Tile 24: 20, 21, 25, 28
+  /* 24 */ [27, 28, 25, 20, 21, 23],     // Tile 25: 21, 22, 24, 26, 28, 29
+  /* 25 */ [28, 29, 26, 21, 22, 24],     // Tile 26: 22, 23, 25, 27, 29, 30
+  /* 26 */ [29, 22, 25],                 // Tile 27: 23, 26, 30
+  /* 27 */ [28, 24, 25],                 // Tile 28: 25, 26, 29
+  /* 28 */ [29, 25, 26, 27],             // Tile 29: 26, 27, 28, 30
+  /* 29 */ [26, 28]                      // Tile 30: 27, 29
 ];
 
 // Expansion-specific adjacency validation
