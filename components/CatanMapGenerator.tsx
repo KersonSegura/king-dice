@@ -1609,30 +1609,39 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
           
           // CRITICAL: Check if this position is adjacent to any existing 6 (6s cannot be adjacent to each other)
           const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-          const isAdjacentToSix = neighbors.some(neighbor => sixPositions.includes(neighbor));
           
-          // Also check if any existing 6s are adjacent to this position
-          const isAdjacentToExistingSixes = sixPositions.some(sixPos => {
+          // Check all neighbors - if ANY neighbor is a 6, this position is invalid
+          for (const neighbor of neighbors) {
+            if (numbers[neighbor] === 6) {
+              return false; // Direct adjacency to existing 6
+            }
+          }
+          
+          // Also check if any existing 6s have this position as a neighbor (bidirectional check)
+          for (const sixPos of sixPositions) {
             const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
-            return sixNeighbors.includes(pos);
-          });
+            if (sixNeighbors.includes(pos)) {
+              return false; // Existing 6 is adjacent to this position
+            }
+          }
           
           // CRITICAL: Check if this position is adjacent to any existing 8 (6s cannot be adjacent to 8s)
-          const isAdjacentToEight = neighbors.some(neighbor => eightPositions.includes(neighbor));
+          for (const neighbor of neighbors) {
+            if (numbers[neighbor] === 8) {
+              return false; // Direct adjacency to existing 8
+            }
+          }
           
-          // Also check if any existing 8s are adjacent to this position
-          const isAdjacentToExistingEights = eightPositions.some(eightPos => {
+          // Also check if any existing 8s have this position as a neighbor (bidirectional check)
+          for (const eightPos of eightPositions) {
             const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
-            return eightNeighbors.includes(pos);
-          });
+            if (eightNeighbors.includes(pos)) {
+              return false; // Existing 8 is adjacent to this position
+            }
+          }
           
-          // CRITICAL: Check if placing a 6 here would make any existing 6s adjacent to each other
-          const wouldCreateAdjacentSixes = sixPositions.some(existingSixPos => {
-            const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
-            return existingSixNeighbors.includes(pos);
-          });
-          
-          const isValid = !isAdjacentToSix && !isAdjacentToExistingSixes && !isAdjacentToEight && !isAdjacentToExistingEights && !wouldCreateAdjacentSixes;
+          // All checks passed
+          return true;
           
           return isValid;
         });
@@ -1646,6 +1655,21 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
         numbers[chosenPos] = six;
         sixPositions.push(chosenPos);
+        
+        // CRITICAL: Validate IMMEDIATELY after placing each 6 to catch any bugs
+        if (!noHotAdjacencyExpansion(numbers, customRules)) {
+          console.error(`❌ CRITICAL: Placed 6 at position ${chosenPos} created invalid adjacency!`);
+          throw new Error('RETRY_PLACEMENT');
+        }
+        
+        // Additional immediate check: verify no 6-6 adjacency was created
+        const neighbors = EXPANSION_NEIGHBORS[chosenPos] || [];
+        for (const neighbor of neighbors) {
+          if (numbers[neighbor] === 6) {
+            console.error(`❌ CRITICAL: 6-6 adjacency detected at positions ${chosenPos} and ${neighbor}!`);
+            throw new Error('RETRY_PLACEMENT');
+          }
+        }
         
         // Remove this position from available positions
         const index = availablePositions.indexOf(chosenPos);
@@ -1676,32 +1700,31 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
           
           // Check if this position is adjacent to any existing 6 or 8
           const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-          const isAdjacentToSixOrEight = neighbors.some(neighbor => 
-            sixPositions.includes(neighbor) || eightPositions.includes(neighbor)
-          );
           
-          // Also check if any existing 6s or 8s are adjacent to this position
-          const isAdjacentToExistingHotNumbers = sixPositions.some(sixPos => {
+          // Check all neighbors - if ANY neighbor is a 6 or 8, this position is invalid
+          for (const neighbor of neighbors) {
+            if (numbers[neighbor] === 6 || numbers[neighbor] === 8) {
+              return false; // Direct adjacency to existing 6 or 8
+            }
+          }
+          
+          // Also check if any existing 6s or 8s have this position as a neighbor (bidirectional check)
+          for (const sixPos of sixPositions) {
             const sixNeighbors = EXPANSION_NEIGHBORS[sixPos] || [];
-            return sixNeighbors.includes(pos);
-          }) || eightPositions.some(eightPos => {
+            if (sixNeighbors.includes(pos)) {
+              return false; // Existing 6 is adjacent to this position
+            }
+          }
+          
+          for (const eightPos of eightPositions) {
             const eightNeighbors = EXPANSION_NEIGHBORS[eightPos] || [];
-            return eightNeighbors.includes(pos);
-          });
+            if (eightNeighbors.includes(pos)) {
+              return false; // Existing 8 is adjacent to this position
+            }
+          }
           
-          // CRITICAL: Check if placing an 8 here would make any existing 8s adjacent to each other
-          const wouldCreateAdjacentEights = eightPositions.some(existingEightPos => {
-            const existingEightNeighbors = EXPANSION_NEIGHBORS[existingEightPos] || [];
-            return existingEightNeighbors.includes(pos);
-          });
-          
-          // CRITICAL: Check if placing an 8 here would make any existing 6s adjacent to each other
-          const wouldCreateAdjacentSixes = sixPositions.some(existingSixPos => {
-            const existingSixNeighbors = EXPANSION_NEIGHBORS[existingSixPos] || [];
-            return existingSixNeighbors.includes(pos);
-          });
-          
-          const isValid = !isAdjacentToSixOrEight && !isAdjacentToExistingHotNumbers && !wouldCreateAdjacentEights && !wouldCreateAdjacentSixes;
+          // All checks passed
+          return true;
           
           return isValid;
         });
@@ -1715,6 +1738,21 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
         numbers[chosenPos] = eight;
         eightPositions.push(chosenPos);
+        
+        // CRITICAL: Validate IMMEDIATELY after placing each 8 to catch any bugs
+        if (!noHotAdjacencyExpansion(numbers, customRules)) {
+          console.error(`❌ CRITICAL: Placed 8 at position ${chosenPos} created invalid adjacency!`);
+          throw new Error('RETRY_PLACEMENT');
+        }
+        
+        // Additional immediate check: verify no 8-8 adjacency was created
+        const neighbors = EXPANSION_NEIGHBORS[chosenPos] || [];
+        for (const neighbor of neighbors) {
+          if (numbers[neighbor] === 8) {
+            console.error(`❌ CRITICAL: 8-8 adjacency detected at positions ${chosenPos} and ${neighbor}!`);
+            throw new Error('RETRY_PLACEMENT');
+          }
+        }
         
         // Remove this position from available positions
         const index = availablePositions.indexOf(chosenPos);
