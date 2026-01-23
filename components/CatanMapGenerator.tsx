@@ -720,241 +720,246 @@ function repairClassicClustering(terrains: Terrain[], violationPos: number, cust
   return null; // Could not repair
 }
 
-// Expansion board generation (5-6 players) - COMPLETE REWRITE with strict rule enforcement
+// Expansion board generation (5-6 players) - STRICT BACKTRACKING REWRITE
 export function makeValidExpansionBoard(customRules: any): Board {
-  const MAX_ATTEMPTS = 500;
-  
+  const MAX_ATTEMPTS = 200;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    // Step 1: Place deserts
     const desertPositions = placeDesertsRandomly();
-    
-    // Step 2: Place resources ONE AT A TIME with strict validation
-    const terrains = new Array(30).fill(null) as (Terrain | null)[];
-    const resourcePool: Terrain[] = [
-      'grain', 'grain', 'grain', 'grain', 'grain', 'grain',
-      'wood', 'wood', 'wood', 'wood', 'wood', 'wood',
-      'sheep', 'sheep', 'sheep', 'sheep', 'sheep', 'sheep',
-      'brick', 'brick', 'brick', 'brick', 'brick',
-      'ore', 'ore', 'ore', 'ore', 'ore'
-    ];
-    
-    // Mark desert positions
-    desertPositions.forEach(pos => terrains[pos] = 'desert');
-    
-    // Get available positions
-    const availablePositions = Array.from({ length: 30 }, (_, i) => i)
-      .filter(i => !desertPositions.includes(i));
-    
-    // Shuffle resources for random placement
-    const shuffledResources = shuffleInPlace([...resourcePool]);
-    
-    // Place each resource one at a time, checking rules BEFORE placement
-    let resourcePlacementFailed = false;
-    for (const resource of shuffledResources) {
-      // Find all valid positions for this resource
-      const validPositions = availablePositions.filter(pos => {
-        // Check if placing this resource here would violate rules
-        const testTerrains = [...terrains];
-        testTerrains[pos] = resource;
-        
-        // Check cluster size (max 2 tiles can touch)
-        const visited = new Array(30).fill(false);
-        const clusterSize = getClusterSize(testTerrains as Terrain[], pos, resource, visited);
-        if (clusterSize > 2) {
-          return false;
-        }
-        
-        // Check for linear chains (3+ tiles in a row)
-        if (hasLinearChain(testTerrains as Terrain[], resource)) {
-          return false;
-        }
-        
-        return true;
-      });
-      
-      if (validPositions.length === 0) {
-        resourcePlacementFailed = true;
-        break;
-      }
-      
-      // Choose random valid position
-      const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-      terrains[chosenPos] = resource;
-      
-      // Remove from available positions
-      const index = availablePositions.indexOf(chosenPos);
-      if (index !== -1) {
-        availablePositions.splice(index, 1);
-      }
+    const terrains = generateExpansionTerrainsStrict(desertPositions);
+    if (!terrains) {
+      continue;
     }
-    
-    if (resourcePlacementFailed) {
-      continue; // Retry with new desert positions
+
+    const numbers = generateExpansionNumbersStrict(desertPositions, customRules);
+    if (!numbers) {
+      continue;
     }
-    
-    // Final validation for resources
-    const finalTerrains = terrains as Terrain[];
-    if (!terrainsPassClusterRule(finalTerrains, customRules) || hasAnyClustering(finalTerrains)) {
-      continue; // Retry
-    }
-    
-    // Step 3: Place numbers ONE AT A TIME with strict validation
-    const numbers = new Array(30).fill(null) as (number | null)[];
-    const numberPool = [2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12];
-    
-    // Mark desert positions
-    desertPositions.forEach(pos => numbers[pos] = null);
-    
-    // Get available positions for numbers
-    const availableNumberPositions = Array.from({ length: 30 }, (_, i) => i)
-      .filter(i => !desertPositions.includes(i));
-    
-    // Shuffle numbers for random placement
-    const shuffledNumbers = shuffleInPlace([...numberPool]);
-    
-    // Place each number one at a time, checking rules BEFORE placement
-    let numberPlacementFailed = false;
-    for (const numberToPlace of shuffledNumbers) {
-      // Find all valid positions for this number
-      const validPositions = availableNumberPositions.filter(pos => {
-        // Check all neighbors for violations
-        const neighbors = EXPANSION_NEIGHBORS[pos] || [];
-        
-        for (const neighbor of neighbors) {
-          const neighborNum = numbers[neighbor];
-          if (neighborNum === null) continue;
-          
-          // 6-6 adjacency: NEVER allowed
-          if (numberToPlace === 6 && neighborNum === 6) {
-            return false;
-          }
-          
-          // 8-8 adjacency: NEVER allowed
-          if (numberToPlace === 8 && neighborNum === 8) {
-            return false;
-          }
-          
-          // 6-8 adjacency: Check if rule is enforced
-          if (!customRules.sixEightCanTouch) {
-            if ((numberToPlace === 6 && neighborNum === 8) || (numberToPlace === 8 && neighborNum === 6)) {
-              return false;
-            }
-          }
-          
-          // Same number adjacency: Check if rule is enforced (excludes 6 and 8)
-          if (!customRules.sameNumbersCanTouch && numberToPlace === neighborNum && numberToPlace !== 6 && numberToPlace !== 8) {
-            return false;
-          }
-          
-          // 2-12 adjacency: Check if rule is enforced
-          if (!customRules.twoTwelveCanTouch) {
-            if ((numberToPlace === 2 && neighborNum === 12) || (numberToPlace === 12 && neighborNum === 2)) {
-              return false;
-            }
-          }
-        }
-        
-        return true;
-      });
-      
-      if (validPositions.length === 0) {
-        numberPlacementFailed = true;
-        break;
-      }
-      
-      // Choose random valid position
-      const chosenPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-      numbers[chosenPos] = numberToPlace;
-      
-      // Remove from available positions
-      const index = availableNumberPositions.indexOf(chosenPos);
-      if (index !== -1) {
-        availableNumberPositions.splice(index, 1);
-      }
-      
-      // Immediate validation after placement
-      if (!noHotAdjacencyExpansion(numbers, customRules)) {
-        numberPlacementFailed = true;
-        break;
-      }
-    }
-    
-    if (numberPlacementFailed) {
-      continue; // Retry with new board
-    }
-    
-    // Final validation
+
+    // Final sanity checks
     if (!validateNumberDistribution(numbers) || !noHotAdjacencyExpansion(numbers, customRules)) {
-      continue; // Retry
+      continue;
     }
-    
-    // Final brute force check for adjacency violations
-    let hasViolation = false;
-    for (let i = 0; i < 30; i++) {
-      const numA = numbers[i];
-      if (numA === null) continue;
-      
-      const neighbors = EXPANSION_NEIGHBORS[i] || [];
-      for (const neighbor of neighbors) {
-        const numB = numbers[neighbor];
-        if (numB === null) continue;
-        
-        // Check 6-6
-        if (numA === 6 && numB === 6) {
-          hasViolation = true;
-          break;
-        }
-        
-        // Check 8-8
-        if (numA === 8 && numB === 8) {
-          hasViolation = true;
-          break;
-        }
-        
-        // Check 6-8
-        if (!customRules.sixEightCanTouch && ((numA === 6 && numB === 8) || (numA === 8 && numB === 6))) {
-          hasViolation = true;
-          break;
-        }
-      }
-      if (hasViolation) break;
+
+    if (!passesResourceRules(terrains)) {
+      continue;
     }
-    
-    if (hasViolation) {
-      continue; // Retry
-    }
-    
-    // Final brute force check for resource violations
-    let hasResourceViolation = false;
-    const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
-    for (const resourceType of resourceTypes) {
-      if (hasLinearChain(finalTerrains, resourceType)) {
-        hasResourceViolation = true;
-        break;
-      }
-      
-      const visited = new Array(30).fill(false);
-      for (let i = 0; i < 30; i++) {
-        if (visited[i] || finalTerrains[i] !== resourceType) continue;
-        const clusterSize = getClusterSize(finalTerrains, i, resourceType, visited);
-        if (clusterSize > 2) {
-          hasResourceViolation = true;
-          break;
-        }
-      }
-      if (hasResourceViolation) break;
-    }
-    
-    if (hasResourceViolation) {
-      continue; // Retry
-    }
-    
-    // All validations passed!
+
     console.log('✅✅✅ VALID EXPANSION BOARD FOUND!');
-    return { terrains: finalTerrains, numbers };
+    return { terrains, numbers };
   }
-  
+
   throw new Error('CRITICAL: Could not generate valid expansion board after ' + MAX_ATTEMPTS + ' attempts');
+}
+
+function generateExpansionTerrainsStrict(desertPositions: number[]): Terrain[] | null {
+  const terrains = new Array(30).fill(null) as (Terrain | null)[];
+  desertPositions.forEach(pos => terrains[pos] = 'desert');
+
+  const positions = Array.from({ length: 30 }, (_, i) => i)
+    .filter(i => !desertPositions.includes(i));
+
+  const remaining: Record<Terrain, number> = {
+    grain: 6,
+    wood: 6,
+    sheep: 6,
+    brick: 5,
+    ore: 5,
+    desert: 0
+  };
+
+  const placeNext = (): boolean => {
+    if (positions.length === 0) return true;
+
+    const posIndex = pickMostConstrainedPosition(positions, terrains);
+    const pos = positions[posIndex];
+    positions.splice(posIndex, 1);
+
+    const candidates = shuffleInPlace(
+      (Object.keys(remaining) as Terrain[]).filter(t => t !== 'desert' && remaining[t] > 0)
+    );
+
+    for (const resource of candidates) {
+      if (!isResourcePlacementValid(terrains, pos, resource)) {
+        continue;
+      }
+
+      terrains[pos] = resource;
+      remaining[resource] -= 1;
+
+      if (placeNext()) {
+        return true;
+      }
+
+      remaining[resource] += 1;
+      terrains[pos] = null;
+    }
+
+    positions.splice(posIndex, 0, pos);
+    return false;
+  };
+
+  if (!placeNext()) {
+    return null;
+  }
+
+  return terrains as Terrain[];
+}
+
+function generateExpansionNumbersStrict(desertPositions: number[], customRules: any): (number | null)[] | null {
+  const numbers = new Array(30).fill(null) as (number | null)[];
+  desertPositions.forEach(pos => numbers[pos] = null);
+
+  const positions = Array.from({ length: 30 }, (_, i) => i)
+    .filter(i => !desertPositions.includes(i));
+
+  const remaining: Record<number, number> = {
+    2: 2, 3: 3, 4: 3, 5: 3, 6: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 2
+  };
+
+  const placeNext = (): boolean => {
+    if (positions.length === 0) return true;
+
+    const posIndex = pickMostConstrainedPosition(positions, numbers);
+    const pos = positions[posIndex];
+    positions.splice(posIndex, 1);
+
+    const candidates = shuffleInPlace(
+      Object.keys(remaining)
+        .map(k => Number(k))
+        .filter(n => remaining[n] > 0)
+    );
+
+    for (const num of candidates) {
+      if (!isNumberPlacementValid(numbers, pos, num, customRules)) {
+        continue;
+      }
+
+      numbers[pos] = num;
+      remaining[num] -= 1;
+
+      if (placeNext()) {
+        return true;
+      }
+
+      remaining[num] += 1;
+      numbers[pos] = null;
+    }
+
+    positions.splice(posIndex, 0, pos);
+    return false;
+  };
+
+  if (!placeNext()) {
+    return null;
+  }
+
+  return numbers;
+}
+
+function pickMostConstrainedPosition<T>(positions: number[], grid: (T | null)[]): number {
+  let bestIndex = 0;
+  let bestScore = -1;
+
+  for (let i = 0; i < positions.length; i++) {
+    const pos = positions[i];
+    const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+    const placedNeighbors = neighbors.filter(n => grid[n] !== null).length;
+
+    if (placedNeighbors > bestScore) {
+      bestScore = placedNeighbors;
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex;
+}
+
+function isResourcePlacementValid(terrains: (Terrain | null)[], pos: number, resource: Terrain): boolean {
+  terrains[pos] = resource;
+  const clusterSize = getConnectedResourceSize(terrains, pos, resource);
+  terrains[pos] = null;
+
+  // Strict: no cluster larger than 2 (prevents chains and triangles)
+  return clusterSize <= 2;
+}
+
+function getConnectedResourceSize(terrains: (Terrain | null)[], startPos: number, resource: Terrain): number {
+  const queue = [startPos];
+  const visited = new Array(30).fill(false);
+  let size = 0;
+
+  while (queue.length > 0) {
+    const pos = queue.shift()!;
+    if (visited[pos]) continue;
+    if (terrains[pos] !== resource) continue;
+    visited[pos] = true;
+    size += 1;
+
+    const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+    for (const neighbor of neighbors) {
+      if (!visited[neighbor] && terrains[neighbor] === resource) {
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return size;
+}
+
+function isNumberPlacementValid(
+  numbers: (number | null)[],
+  pos: number,
+  numberToPlace: number,
+  customRules: any
+): boolean {
+  const neighbors = EXPANSION_NEIGHBORS[pos] || [];
+
+  for (const neighbor of neighbors) {
+    const neighborNum = numbers[neighbor];
+    if (neighborNum === null) continue;
+
+    // 6-6 and 8-8 are ALWAYS forbidden
+    if (numberToPlace === 6 && neighborNum === 6) return false;
+    if (numberToPlace === 8 && neighborNum === 8) return false;
+
+    // 6-8 adjacency depends on checkbox
+    if (!customRules.sixEightCanTouch) {
+      if ((numberToPlace === 6 && neighborNum === 8) || (numberToPlace === 8 && neighborNum === 6)) {
+        return false;
+      }
+    }
+
+    // Same numbers adjacency depends on checkbox (excluding 6/8)
+    if (!customRules.sameNumbersCanTouch && numberToPlace === neighborNum && numberToPlace !== 6 && numberToPlace !== 8) {
+      return false;
+    }
+
+    // 2-12 adjacency depends on checkbox
+    if (!customRules.twoTwelveCanTouch) {
+      if ((numberToPlace === 2 && neighborNum === 12) || (numberToPlace === 12 && neighborNum === 2)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function passesResourceRules(terrains: Terrain[]): boolean {
+  const resourceTypes: Terrain[] = ['grain', 'wood', 'sheep', 'brick', 'ore'];
+
+  for (const resourceType of resourceTypes) {
+    const visited = new Array(30).fill(false);
+    for (let i = 0; i < 30; i++) {
+      if (visited[i] || terrains[i] !== resourceType) continue;
+      const clusterSize = getClusterSize(terrains, i, resourceType, visited);
+      if (clusterSize > 2) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 // Step 1: Randomly place 2 deserts anywhere on the map
