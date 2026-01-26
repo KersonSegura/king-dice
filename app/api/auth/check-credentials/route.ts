@@ -14,11 +14,13 @@ export async function GET() {
 
   return NextResponse.json({
     google: {
-      clientId: googleClientId ? googleClientId : 'NOT SET',
+      clientId: googleClientId || 'NOT SET',
       clientIdPreview: googleClientId ? `${googleClientId.substring(0, 20)}...${googleClientId.substring(googleClientId.length - 10)}` : 'NOT SET',
+      clientIdEndsWith: googleClientId ? googleClientId.substring(googleClientId.length - 20) : 'N/A',
       clientSecret: googleClientSecret ? `${googleClientSecret.substring(0, 6)}...${googleClientSecret.substring(googleClientSecret.length - 4)}` : 'NOT SET',
       clientSecretLength: googleClientSecret ? googleClientSecret.length : 0,
       clientSecretStartsWith: googleClientSecret ? googleClientSecret.substring(0, 6) : 'N/A',
+      clientSecretEndsWith: googleClientSecret ? googleClientSecret.substring(googleClientSecret.length - 4) : 'N/A',
       configured: !!(googleClientId && googleClientSecret),
     },
     facebook: {

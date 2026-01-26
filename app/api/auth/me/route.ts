@@ -1,30 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getUserFromToken } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // For now, let's return a mock response to help with debugging
-    // In a real app, this would check server-side sessions, JWT tokens, etc.
-    
-    // Check if there's any authentication info in the request
-    const authHeader = request.headers.get('authorization');
-    const cookies = request.cookies;
-    
-    console.log('Auth check - Headers:', {
-      authorization: authHeader,
-      cookies: cookies.getAll()
-    });
-    
-    // Mock response - replace this with real authentication logic
+    // Get token from cookie
+    const token = request.cookies.get('auth_token')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'No authentication token found' 
+        },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get user data
+    const authResult = await getUserFromToken(token);
+
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: authResult.message || 'Authentication failed' 
+        },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      user: {
-        id: 'debug-user-id',
-        username: 'debug-username', // Change this to your actual username
-        email: 'debug@example.com'
-      },
-      message: 'Debug authentication - replace with real auth'
+      user: authResult.user
     });
     
   } catch (error) {

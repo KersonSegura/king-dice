@@ -1526,7 +1526,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error updating favorite games:', error);
       showToast('Failed to update favorite categories', 'error');
-    }
+      }
   };
 
   const handleColorSave = async (colors: typeof profileColors) => {
@@ -1840,7 +1840,7 @@ export default function ProfilePage() {
                       rows={4}
                       placeholder="Tell us about yourself and your board game interests..."
                     />
-                  </div>
+                 </div>
                  <div className="flex space-x-3 pt-4">
                     <button
                       onClick={handleSave}
@@ -1934,7 +1934,7 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
-            </div>
+             </div>
 
             {/* Collection Summary Section */}
             <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -46,10 +47,39 @@ export async function GET(request: NextRequest) {
 // POST - Update user's privacy settings
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Check authentication
+    const token = request.cookies.get('auth_token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+    
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
     const { userId, isPrivate } = await request.json();
 
     if (!userId || typeof isPrivate !== 'boolean') {
       return NextResponse.json({ error: 'User ID and privacy setting are required' }, { status: 400 });
+    }
+
+    // SECURITY: Only allow users to update their own privacy settings
+    if (userId !== authenticatedUser.id) {
+      return NextResponse.json(
+        { error: 'Forbidden - You can only update your own privacy settings' },
+        { status: 403 }
+      );
     }
 
     const { data: updatedUser, error: updateError } = await supabaseAdmin
