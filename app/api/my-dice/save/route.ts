@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -11,9 +12,38 @@ interface SavePayload {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Check authentication first
+    const token = request.cookies.get('auth_token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+    
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
     const body = (await request.json()) as SavePayload;
     if (!body || !body.userId || !body.config) {
       return NextResponse.json({ error: 'Missing userId or config' }, { status: 400 });
+    }
+
+    // SECURITY: Only allow users to save their own dice config
+    if (body.userId !== authenticatedUser.id) {
+      return NextResponse.json(
+        { error: 'Forbidden - You can only save your own dice configuration' },
+        { status: 403 }
+      );
     }
 
     console.log('💾 Saving dice config for user:', body.userId);

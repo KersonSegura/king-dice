@@ -1,11 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Check authentication first
+    const token = request.cookies.get('auth_token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+    
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
     const { userId, diceConfig, profileImageUrl, username } = await request.json();
     
     console.log('💾 Saving dice configuration for user:', userId);
@@ -18,6 +40,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing userId, diceConfig, or profileImageUrl' },
         { status: 400 }
+      );
+    }
+
+    // SECURITY: Only allow users to update their own avatar and title
+    if (userId !== authenticatedUser.id) {
+      return NextResponse.json(
+        { error: 'Forbidden - You can only update your own avatar and title' },
+        { status: 403 }
       );
     }
     

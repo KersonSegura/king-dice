@@ -1,11 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { isUserAdmin } from '@/lib/admin-utils';
+import { getUserFromToken } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Check authentication first
+    const token = request.cookies.get('auth_token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+    
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
+
+    // SECURITY: Only admins can grant admin status
+    const isRequesterAdmin = authenticatedUser.isAdmin || isUserAdmin(
+      authenticatedUser.id,
+      authenticatedUser.username,
+      authenticatedUser.email
+    );
+
+    if (!isRequesterAdmin) {
+      return NextResponse.json(
+        { message: 'Forbidden - Only admins can grant admin status' },
+        { status: 403 }
+      );
+    }
+
     const { userId, username, email } = await request.json();
 
     if (!userId || !username || !email) {

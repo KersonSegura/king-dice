@@ -1,14 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Check authentication first
+    const token = request.cookies.get('auth_token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+    
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
     const { userId, colors } = await request.json();
 
     if (!userId || !colors) {
       return NextResponse.json(
         { message: 'User ID and colors are required' },
         { status: 400 }
+      );
+    }
+
+    // SECURITY: Only allow users to update their own profile colors
+    if (userId !== authenticatedUser.id) {
+      return NextResponse.json(
+        { message: 'Forbidden - You can only update your own profile colors' },
+        { status: 403 }
       );
     }
 
