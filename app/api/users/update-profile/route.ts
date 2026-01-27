@@ -127,10 +127,10 @@ export async function PUT(request: NextRequest) {
 
     // Check for KingDice variations to determine admin status
     // Check if user should be admin based on config
-    const isAdmin = isUserAdmin(userId, username, email);
+    const userShouldBeAdmin = isUserAdmin(userId, username, email);
 
     // Only check for existing usernames/emails if user is not admin
-    if (!isAdmin) {
+    if (!userShouldBeAdmin) {
       // Check if username already exists (excluding current user)
       const { data: existingUserByUsername } = await supabaseAdmin
         .from('users')
@@ -166,7 +166,7 @@ export async function PUT(request: NextRequest) {
     const updateData: any = {
       username,
       email,
-      isAdmin: isAdmin // Update admin status
+      isAdmin: userShouldBeAdmin // Update admin status
     };
 
     // Add bio if provided
@@ -223,7 +223,7 @@ export async function PUT(request: NextRequest) {
               username,
               email,
               passwordHash: '', // Empty password for now
-              isAdmin: isAdmin,
+              isAdmin: userShouldBeAdmin,
               bio: bio || null,
               favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
               profileColors: profileColors ? JSON.stringify(profileColors) : null,
