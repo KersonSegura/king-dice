@@ -145,7 +145,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#community-feed" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/feed" className="text-gray-400 hover:text-white transition-colors">
                   {t('feed')}
                 </Link>
               </li>

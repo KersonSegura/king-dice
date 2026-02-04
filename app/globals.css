@@ -20,6 +20,13 @@
   min-height: calc(100vh - 4rem) !important;
 }
 
+/* Embed mode (mobile app WebView): chat reaches top of viewport (layout padding handles header) */
+.embed-chat-full-height {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  min-height: 100vh !important;
+}
+
 @media (min-width: 640px) {
   .desktop-chat-height {
     height: 500px !important;
@@ -235,6 +242,27 @@ header {
 body {
   position: relative !important;
   padding-top: 4rem !important; /* Match header height (h-16 = 4rem) */
+}
+
+/* Embed mode (mobile app WebView): header handles top spacing */
+body.embed {
+  padding-top: 0 !important;
+}
+body.embed main {
+  padding-top: 0 !important;
+}
+
+/* Hide Back to Home subheader in embed mode (mobile has home in nav) */
+body.embed .kd-back-to-home {
+  display: none !important;
+}
+
+/* Hide header and footer in embed mode (mobile app – uses native nav) */
+body.embed header {
+  display: none !important;
+}
+body.embed footer {
+  display: none !important;
 }
 
 /* Ensure no parent elements interfere with sticky positioning */

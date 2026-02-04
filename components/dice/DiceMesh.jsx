@@ -150,7 +150,7 @@ function createPentagonalTrapezohedronGeometry() {
   return geometry;
 }
 
-function createShapeGeometry(shape) {
+export function createShapeGeometry(shape) {
   switch (shape) {
     case 'tetra':
       return new THREE.TetrahedronGeometry(0.9, 0);
@@ -442,7 +442,7 @@ function createThickLineGeometry(edgeGeometry, thickness = 0.03) {
   return geometry;
 }
 
-function computeFaceData(geometry, shape) {
+export function computeFaceData(geometry, shape) {
   if (!geometry) return [];
   const working = geometry.clone();
   const geom = working.index ? working.toNonIndexed() : working;

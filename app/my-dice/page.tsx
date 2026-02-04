@@ -904,8 +904,8 @@ export default function MyDicePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b">
+      {/* Header with back button - hidden in embed (mobile has home in nav) */}
+      <div className="kd-back-to-home bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link 
             href="/"
@@ -917,8 +917,8 @@ export default function MyDicePage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1">
-        <div className="mb-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-10 flex-1">
+        <div className="mb-8 px-4 sm:px-0">
           <div className="flex items-center space-x-3 mb-2">
             <div className="flex-1 flex items-center justify-between gap-2 sm:justify-start sm:gap-4">
               <h1 className="text-3xl font-bold text-gray-900">
@@ -958,7 +958,7 @@ export default function MyDicePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Center Preview */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+            <div className="bg-white rounded-none border border-gray-200 shadow-sm p-4">
               <div className="relative mx-auto aspect-square max-w-xl w-full">
                 {/* Layered preview using absolute fill images */}
                 {loading ? (
@@ -1105,6 +1105,11 @@ export default function MyDicePage() {
                             updateAvatar(imageUrl);
                           }
                           
+                          // Notify mobile app WebView to refresh avatar (when embedded in React Native)
+                          if (typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
+                            (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'KD_AVATAR_SAVED' }));
+                          }
+                          
                           showToast(tMyDice('diceSavedSuccessfully'), 'success');
                         } else {
                           const errorData = await saveRes.json();
@@ -1130,7 +1135,7 @@ export default function MyDicePage() {
 
           {/* Right Panel: Tabs + Assets */}
           <div>
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden relative">
+            <div className="bg-white rounded-none border border-gray-200 shadow-sm overflow-hidden relative">
               {/* Tabs */}
               <div className="grid grid-cols-4 border-b border-gray-200 overflow-hidden">
                   {TABS.map(tab => {
@@ -1201,8 +1206,8 @@ export default function MyDicePage() {
                   })}
               </div>
 
-              {/* Asset grid for active tab - shows 2 rows (4 items) at a time with internal scroll */}
-              <div className="p-4 max-h-[320px] overflow-y-auto overflow-x-hidden">
+              {/* Asset grid for active tab - tall enough to fit 4 options (2 rows) on screen */}
+              <div className="p-4 max-h-[520px] overflow-y-auto overflow-x-hidden">
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Optional None option for tabs except background and dice */}
                 {activeTab !== "background" && activeTab !== "dice" && (
@@ -1475,11 +1480,11 @@ export default function MyDicePage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">{tMyDice('tipsForLevelingUp')}</h3>
                 <ul className="space-y-2 text-sm text-gray-600">
-                  <li dangerouslySetInnerHTML={{ __html: tMyDice('qualityOverQuantity') }} />
-                  <li dangerouslySetInnerHTML={{ __html: tMyDice('beActiveDaily') }} />
-                  <li dangerouslySetInnerHTML={{ __html: tMyDice('helpOthers') }} />
-                  <li dangerouslySetInnerHTML={{ __html: tMyDice('shareYourCreations') }} />
-                  <li dangerouslySetInnerHTML={{ __html: tMyDice('engageWithContent') }} />
+                  <li>{tMyDice.rich('qualityOverQuantity', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
+                  <li>{tMyDice.rich('beActiveDaily', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
+                  <li>{tMyDice.rich('helpOthers', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
+                  <li>{tMyDice.rich('shareYourCreations', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
+                  <li>{tMyDice.rich('engageWithContent', { strong: (chunks) => <strong>{chunks}</strong> })}</li>
                 </ul>
               </div>
             </div>

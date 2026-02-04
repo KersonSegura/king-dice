@@ -1683,7 +1683,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: profileColors.background }}>
-      <div className="border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
+      <div className="kd-back-to-home border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
         <div className="max-w-6xl mx-auto">
           <Link 
             href="/" 
@@ -1693,7 +1693,7 @@ export default function ProfilePage() {
             Back to Home
           </Link>
         </div>
-        </div>
+      </div>
 
       {/* Cover Photo Section */}
       <div 

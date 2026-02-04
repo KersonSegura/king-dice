@@ -5,8 +5,8 @@ import ModernTooltip from '@/components/ModernTooltip';
 import PixelCanvasPreview from '@/components/PixelCanvasPreview';
 import Feed from '@/components/Feed';
 import ImageModal from '@/components/ImageModal';
-import { BookOpen, Users, Star, Globe, Search, Clock, Calendar, Crown, Square, Plus } from 'lucide-react';
-import HomePageFooter from '@/components/HomePageFooter';
+import { BookOpen, Users, Star, Globe, Search, Clock, Calendar, Crown, Plus } from 'lucide-react';
+import EmbedAwareFooter from '@/components/EmbedAwareFooter';
 import { useRouter } from 'next/navigation';
 import { ArrowUp, MessageCircle, Heart, X } from 'lucide-react';
 import Link from 'next/link';
@@ -510,6 +510,7 @@ export default function HomePage() {
   const closeImageModal = () => {
     setShowGalleryModal(false);
     setSelectedGalleryImage(null);
+    setSelectedCollection(null);
     setImageComments([]);
     
     // Remove image parameter from URL
@@ -903,79 +904,8 @@ export default function HomePage() {
               )}
             </div>
         
-        {/* Featured Collections Preview */}
+        {/* CTA: Go to your collection */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {featuredCollections.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
-              {featuredCollections.map((collection) => (
-                <Link
-                  key={collection.id}
-                  href={`/collection/${collection.username}`}
-                  className="group relative bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  {collection.collectionPhoto ? (
-                    <div className="aspect-[4/3] relative overflow-hidden">
-                      <Image
-                        src={collection.collectionPhoto}
-                        alt={`${collection.username}'s collection`}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        unoptimized={collection.collectionPhoto.includes('supabase.co')}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <div className="flex items-center space-x-2 mb-1">
-                          {collection.avatar ? (
-                            <Image
-                              src={collection.avatar}
-                              alt={collection.username}
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                              unoptimized={collection.avatar.includes('supabase.co')}
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-[#fbae17] flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">
-                                {collection.username.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <span className="text-white font-semibold text-sm">{collection.username}</span>
-                        </div>
-                        <p className="text-white/90 text-xs">{collection.gameCount} {t('games')}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="aspect-[4/3] bg-gradient-to-br from-[#fbae17]/20 to-[#fbae17]/5 flex items-center justify-center">
-                      <div className="text-center">
-                        {collection.avatar ? (
-                          <Image
-                            src={collection.avatar}
-                            alt={collection.username}
-                            width={48}
-                            height={48}
-                            className="rounded-full mx-auto mb-2"
-                            unoptimized={collection.avatar.includes('supabase.co')}
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-[#fbae17] flex items-center justify-center mx-auto mb-2">
-                            <span className="text-white text-lg font-bold">
-                              {collection.username.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <p className="text-gray-700 font-semibold">{collection.username}</p>
-                        <p className="text-gray-500 text-sm">{collection.gameCount} {t('games')}</p>
-                      </div>
-                    </div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {/* CTA: Go to your collection */}
           <div className="flex justify-center mb-8">
             <button
               type="button"
@@ -986,7 +916,7 @@ export default function HomePage() {
                 {isAuthenticated ? t('goToMyCollection') : t('startMyCollection')}
               </span>
             </button>
-            </div>
+          </div>
 
           {/* Benefits: 2 rows x 2 columns on mobile; keep labels single-line; align indentation consistently */}
           <div
@@ -1094,32 +1024,71 @@ export default function HomePage() {
               limit={10} 
               featuredDiceThroneId={featuredDiceThrone?.id}
               featuredKingsCardId={featuredKingsCard?.id}
+              featuredCollections={featuredCollections}
               onItemClick={(item) => {
-                // If it's a gallery image, open with ImageModal
                 if (item.type === 'gallery') {
-                  // Find the corresponding gallery image
-                  const galleryImage = galleryImages.find(img => img.id === item.id);
-                  if (galleryImage) {
-                    setSelectedGalleryImage(galleryImage);
-                    setShowGalleryModal(true);
-                    
-                    // Update URL with image parameter
-                    const currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('image', galleryImage.id);
-                    currentUrl.searchParams.delete('photo');
-                    window.history.pushState({}, '', currentUrl);
-                    
-                    // Load comments for this image
-                    if (user) {
-                      fetch(`/api/gallery/comments?imageId=${galleryImage.id}&userId=${user.id}`)
-                        .then(response => response.json())
-                        .then(data => setImageComments(data.comments || []))
-                        .catch(error => console.error('Error loading comments:', error));
-                    }
+                  let galleryImage = galleryImages.find(img => img.id === item.id);
+                  if (!galleryImage) {
+                    galleryImage = {
+                      id: item.id,
+                      title: item.title || 'Gallery image',
+                      description: (item as any).content || '',
+                      imageUrl: item.imageUrl || item.thumbnailUrl || '',
+                      thumbnailUrl: item.thumbnailUrl || item.imageUrl || '',
+                      author: {
+                        id: item.author.id,
+                        name: item.author.username,
+                        avatar: item.author.avatar || '/DiceLogo.svg',
+                        reputation: item.author.reputation || 0
+                      },
+                      category: item.category,
+                      createdAt: item.createdAt,
+                      votes: item.votes,
+                      userVote: item.userVote === 'up' ? 'up' : item.userVote === 'down' ? 'down' : undefined,
+                      views: (item.engagement as any)?.views || 0,
+                      downloads: (item.engagement as any)?.downloads || 0,
+                      comments: item.engagement?.comments || 0
+                    } as GalleryImage;
+                  }
+                  setSelectedCollection(null);
+                  setSelectedGalleryImage(galleryImage);
+                  const idx = galleryImages.findIndex(img => img.id === item.id);
+                  setSelectedImageIndex(idx >= 0 ? idx : 0);
+                  setShowGalleryModal(true);
+                  const currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.set('image', galleryImage.id);
+                  currentUrl.searchParams.delete('photo');
+                  window.history.pushState({}, '', currentUrl);
+                  if (user) {
+                    fetch(`/api/gallery/comments?imageId=${galleryImage.id}&userId=${user.id}`)
+                      .then(response => response.json())
+                      .then(data => setImageComments(data.comments || []))
+                      .catch(error => console.error('Error loading comments:', error));
                   }
                 } else if (item.type === 'post') {
-                  // For forum posts, navigate to the specific post
-                  router.push(`/forums/post/${item.id}`);
+                  window.location.href = `/forums/post/${item.id}`;
+                }
+              }}
+              onCollectionClick={(collection) => {
+                const matchingGallery = galleryImages.find(
+                  img => img.imageUrl === collection.collectionPhoto || img.thumbnailUrl === collection.collectionPhoto
+                );
+                if (matchingGallery) {
+                  setSelectedCollection(null);
+                  setSelectedGalleryImage(matchingGallery);
+                  setSelectedImageIndex(galleryImages.findIndex(img => img.id === matchingGallery.id));
+                  setShowGalleryModal(true);
+                  if (user) {
+                    fetch(`/api/gallery/comments?imageId=${matchingGallery.id}&userId=${user.id}`)
+                      .then(response => response.json())
+                      .then(data => setImageComments(data.comments || []))
+                      .catch(error => console.error('Error loading comments:', error));
+                  }
+                } else {
+                  setSelectedGalleryImage(null);
+                  setSelectedCollection(collection);
+                  setImageComments([]);
+                  setShowGalleryModal(true);
                 }
               }}
             />
@@ -1576,7 +1545,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
-                <Square className="w-8 h-8 text-primary-500 flex-none" />
+                <img src="/PixelCanvasIconYellowStroke.svg" alt="" className="w-8 h-8 flex-none" aria-hidden />
                 <span className="inline-block text-center leading-tight">{t('pixelCanvas')}</span>
               </h2>
               <p className="text-dark-600 max-w-2xl mx-auto">
@@ -1923,50 +1892,49 @@ export default function HomePage() {
       </section>
       </LazySection>
 
-      {/* Enhanced Homepage Footer */}
-      <div className="mt-auto">
-        <HomePageFooter />
-      </div>
+      {/* Enhanced Homepage Footer - hidden in embed mode (mobile app) */}
+      <EmbedAwareFooter />
 
       {/* Gallery Image Modal */}
-      {showGalleryModal && selectedGalleryImage && (
+      {showGalleryModal && (selectedGalleryImage || selectedCollection) && (
         <ImageModal
           isOpen={showGalleryModal}
           onClose={closeImageModal}
-          imageUrl={selectedGalleryImage.imageUrl}
-          title={selectedGalleryImage.title}
-          description={selectedGalleryImage.description}
+          imageUrl={selectedGalleryImage?.imageUrl ?? selectedCollection!.collectionPhoto ?? ''}
+          title={selectedGalleryImage?.title ?? `${selectedCollection!.username}'s collection`}
+          description={selectedGalleryImage?.description ?? `${selectedCollection?.gameCount ?? 0} games in collection`}
           author={{
-            name: selectedGalleryImage.author.name,
-            avatar: selectedGalleryImage.author.avatar,
-            title: (selectedGalleryImage.author as any)?.title ?? null
+            name: selectedGalleryImage?.author.name ?? selectedCollection!.username,
+            avatar: selectedGalleryImage?.author.avatar ?? selectedCollection!.avatar ?? '/DiceLogo.svg',
+            title: (selectedGalleryImage?.author as any)?.title ?? null
           }}
-          createdAt={selectedGalleryImage.createdAt}
-          category={selectedGalleryImage.category}
+          createdAt={selectedGalleryImage?.createdAt ?? ''}
+          category={selectedGalleryImage?.category ?? 'collections'}
           isFeatured={false}
-          onLike={() => handleLike(selectedGalleryImage.id)}
+          onLike={selectedGalleryImage ? () => handleLike(selectedGalleryImage.id) : undefined}
           onDelete={handleDeleteImage}
           onReport={() => {}}
           onEditDescription={() => {}}
-          isLiked={selectedGalleryImage.userVote === 'up'}
-          canDelete={!!(isAuthenticated && user && selectedGalleryImage.author.id === user.id)}
+          isLiked={selectedGalleryImage?.userVote === 'up'}
+          canDelete={!!(selectedGalleryImage && isAuthenticated && user && selectedGalleryImage.author.id === user.id)}
           canReport={!!(isAuthenticated && user)}
-          canEdit={!!(isAuthenticated && user && selectedGalleryImage.author.id === user.id)}
-          likeCount={selectedGalleryImage.votes?.upvotes || 0}
-          imageId={selectedGalleryImage.id}
+          canEdit={!!(selectedGalleryImage && isAuthenticated && user && selectedGalleryImage.author.id === user.id)}
+          likeCount={selectedGalleryImage?.votes?.upvotes ?? 0}
+          imageId={selectedGalleryImage?.id}
           comments={imageComments}
-          onAddComment={handleAddComment}
-          onDeleteComment={handleDeleteComment}
-          onLikeComment={handleLikeComment}
-          onReplyToComment={handleReplyToComment}
-          onReportComment={handleReportComment}
+          onAddComment={selectedGalleryImage ? handleAddComment : undefined}
+          onDeleteComment={selectedGalleryImage ? handleDeleteComment : undefined}
+          onLikeComment={selectedGalleryImage ? handleLikeComment : undefined}
+          onReplyToComment={selectedGalleryImage ? handleReplyToComment : undefined}
+          onReportComment={selectedGalleryImage ? handleReportComment : undefined}
           currentUserId={user?.id}
           isAuthenticated={isAuthenticated}
           currentUser={user}
-          onRefreshComments={refreshComments}
-          allImages={galleryImages}
+          onRefreshComments={selectedGalleryImage ? refreshComments : undefined}
+          allImages={selectedGalleryImage ? galleryImages : []}
           currentImageIndex={selectedImageIndex}
-          onNavigate={handleNavigate}
+          onNavigate={selectedGalleryImage ? handleNavigate : undefined}
+          secondaryAction={selectedCollection ? { label: t('viewCollection'), href: `/collection/${selectedCollection.username}` } : undefined}
         />
       )}
 

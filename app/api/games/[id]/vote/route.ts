@@ -202,7 +202,7 @@ export async function GET(
 
     return NextResponse.json({
       hasVoted: !!existingVote,
-      userRatingStars: existingVote ? existingVote.rating / 2 : null,
+      userRatingStars: (existingVote?.rating != null) ? denormalizeRating(existingVote.rating) : null,
       averageUserRatingRaw: averageUserRating,
       averageUserRatingStars: denormalizeRating(averageUserRating),
       totalVotes: totalVotes,

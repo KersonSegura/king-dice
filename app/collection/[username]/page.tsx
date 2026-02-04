@@ -1517,13 +1517,13 @@ export default function CollectionPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gray-900 shadow-sm border-b border-gray-800">
+      {/* Header with back button - hidden in embed (mobile has home in nav) - uses new header pattern */}
+      <div className="kd-back-to-home bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between flex-nowrap">
             <Link 
               href={`/profile/${username}`}
-              className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors whitespace-nowrap flex-shrink-0"
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5 flex-shrink-0" />
               <span className="font-medium text-sm sm:text-base">{safeT('backToProfile')}</span>

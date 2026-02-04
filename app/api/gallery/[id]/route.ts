@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, deleteFromStorage, STORAGE_BUCKETS } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
 
 async function getGalleryImage(id: string) {
   const { data, error } = await supabaseAdmin
@@ -19,8 +20,29 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // SECURITY: Check authentication first
+    const token = request.cookies.get('auth_token')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
     const { id } = await params;
-    const { authorId, description } = await request.json();
+    const { description } = await request.json();
 
     const image = await getGalleryImage(id);
     if (!image) {
@@ -28,8 +50,12 @@ export async function PATCH(
     }
 
     const ownerId = image.authorId ?? image.author_id;
-    if (ownerId !== authorId) {
-      return NextResponse.json({ message: 'You can only edit your own images' }, { status: 403 });
+    // SECURITY: Only allow users to edit their own images
+    if (ownerId !== authenticatedUser.id) {
+      return NextResponse.json(
+        { message: 'Forbidden - You can only edit your own images' },
+        { status: 403 }
+      );
     }
 
     const updatePayload = image.authorId !== undefined
@@ -60,8 +86,28 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // SECURITY: Check authentication first
+    const token = request.cookies.get('auth_token')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { message: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
     const { id } = await params;
-    const { authorId } = await request.json();
 
     const image = await getGalleryImage(id);
     if (!image) {
@@ -69,8 +115,12 @@ export async function DELETE(
     }
 
     const ownerId = image.authorId ?? image.author_id;
-    if (ownerId !== authorId) {
-      return NextResponse.json({ message: 'You can only delete your own images' }, { status: 403 });
+    // SECURITY: Only allow users to delete their own images
+    if (ownerId !== authenticatedUser.id) {
+      return NextResponse.json(
+        { message: 'Forbidden - You can only delete your own images' },
+        { status: 403 }
+      );
     }
 
     try {
@@ -97,7 +147,7 @@ export async function DELETE(
       return NextResponse.json({ message: 'Failed to delete image' }, { status: 500 });
     }
 
-    console.log(`Gallery image deleted: ${id} by user ${authorId}`);
+    console.log(`Gallery image deleted: ${id} by user ${authenticatedUser.id}`);
     return NextResponse.json({ message: 'Image deleted successfully' }, { status: 200 });
   } catch (error) {
     console.error('Error deleting image:', error);

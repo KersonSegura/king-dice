@@ -642,10 +642,10 @@ export function makeValidBoard(customRules: any): Board {
     // Final validation using the cluster rule function
     if (!terrainsPassClusterRule(terrains, customRules) || foundClusterViolation) {
       continue; // Retry
-    }
-    
-    const desertIdx = terrains.indexOf("desert");
-    const numbers = generateValidNumbers(desertIdx, customRules);
+  }
+  
+  const desertIdx = terrains.indexOf("desert");
+  const numbers = generateValidNumbers(desertIdx, customRules);
     
     // BRUTE FORCE: Check number adjacencies
     let foundAdjacencyViolation = false;
@@ -676,15 +676,15 @@ export function makeValidBoard(customRules: any): Board {
         }
       }
     }
-    
-    // CRITICAL: Final validation before returning
+  
+  // CRITICAL: Final validation before returning
     if (!noHotAdjacency(numbers, customRules) || foundAdjacencyViolation) {
       continue; // Retry
-    }
-    
-    return { terrains, numbers };
   }
   
+  return { terrains, numbers };
+}
+
   // If all attempts failed, throw error
   throw new Error('Failed to generate valid classic board - too many violations');
 }
@@ -724,9 +724,9 @@ function repairClassicClustering(terrains: Terrain[], violationPos: number, cust
 export function makeValidExpansionBoard(customRules: any): Board {
   const MAX_TERRAIN_ATTEMPTS = 2000;
   const MAX_NUMBER_ATTEMPTS = 3000;
-
+  
   for (let attempt = 0; attempt < MAX_TERRAIN_ATTEMPTS; attempt++) {
-    const desertPositions = placeDesertsRandomly();
+  const desertPositions = placeDesertsRandomly();
     const terrains = generateExpansionTerrainsRandom(desertPositions);
     if (!terrains) {
       continue;
@@ -1148,7 +1148,7 @@ function placeResourceTiles(desertPositions: number[]): Terrain[] {
       // Strict validation: check for any clustering (3+ tiles in a line)
       // For expansion maps, maximum 2 tiles of same resource can touch
       if (!hasAnyClustering(result)) {
-        return result;
+      return result;
       }
       // If clustering detected, continue trying
     }
@@ -1683,7 +1683,7 @@ function placeNumberTokens(desertPositions: number[], customRules: any): (number
   
   // Validate repaired board before returning
   if (noHotAdjacencyExpansion(repaired, customRules)) {
-    return repaired;
+  return repaired;
   }
   
   // If repair didn't work, return null to force retry
@@ -1977,9 +1977,9 @@ function placeNumbersSmartly(desertPositions: number[], customRules: any): (numb
         
         if (validPositions.length === 0) {
           // No valid position for this number - must retry entire placement
-          throw new Error('RETRY_PLACEMENT');
-        }
-        
+        throw new Error('RETRY_PLACEMENT');
+      }
+      
         // Choose a random valid position
         const chosenPosition = validPositions[Math.floor(Math.random() * validPositions.length)];
         
@@ -2566,22 +2566,22 @@ export function noHotAdjacencyExpansion(nums: (number|null)[], customRules: any)
       const b = nums[j];
       if (b === null) continue; // Skip null neighbors
       
-      // Rule 1: 6 cannot be adjacent to 8 and vice versa (unless custom rule allows)
+        // Rule 1: 6 cannot be adjacent to 8 and vice versa (unless custom rule allows)
       // CRITICAL: Check this for ANY position with 6 or 8, not just when both are in HOT
-      if ((a === 6 && b === 8) || (a === 8 && b === 6)) {
-        if (!customRules.sixEightCanTouch) {
+        if ((a === 6 && b === 8) || (a === 8 && b === 6)) {
+          if (!customRules.sixEightCanTouch) {
+            return false;
+          }
+        }
+      
+        // Rule 2: Two 6s can NEVER be adjacent to each other (ALWAYS enforced)
+        if (a === 6 && b === 6) {
           return false;
         }
-      }
       
-      // Rule 2: Two 6s can NEVER be adjacent to each other (ALWAYS enforced)
-      if (a === 6 && b === 6) {
-        return false;
-      }
-      
-      // Rule 3: Two 8s can NEVER be adjacent to each other (ALWAYS enforced)
-      if (a === 8 && b === 8) {
-        return false;
+        // Rule 3: Two 8s can NEVER be adjacent to each other (ALWAYS enforced)
+        if (a === 8 && b === 8) {
+          return false;
       }
     }
   }
@@ -3726,7 +3726,7 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
 
         {/* Map Container - Full width to use all available space */}
         {/* Map Container with mobile-specific padding */}
-        <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '24px', maxWidth: isMobile ? '100%' : '950px', width: '100%', overflow: 'hidden' }}>
+        <div className="bg-white rounded-lg" style={{ padding: isMobile ? '8px' : '24px', maxWidth: isMobile ? '100%' : '950px', width: '100%', overflow: 'hidden', boxShadow: 'none' }}>
             {/* Map Display Area - Responsive width for all screen sizes */}
     <div className="relative overflow-hidden bg-white" id="map-container" style={{ 
       width: isMobile ? '100%' : 'min(850px, 100%)', 
@@ -3741,9 +3741,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               <button
                 onClick={handleNominateClassicMap}
                 disabled={isGenerating || hexagons.length === 0 || isNominating}
-                className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="absolute top-2 right-2 z-10 p-2 rounded-full bg-transparent hover:bg-transparent border-0 outline-none shadow-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group [&:focus]:ring-0 [&:focus]:outline-none"
                 id="nomination-star-button"
                 title={tCatan('nominateThisClassicMap')}
+                style={{ boxShadow: 'none', filter: 'none' }}
               >
                 {isNominating ? (
                   <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
@@ -3770,10 +3771,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               <button
                 onClick={handleNominateExpansionMap}
                 disabled={isGenerating || hexagons.length === 0 || isNominating}
-                className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="absolute top-2 right-2 z-10 p-2 rounded-full bg-transparent hover:bg-transparent border-0 outline-none shadow-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group [&:focus]:ring-0 [&:focus]:outline-none"
                 id="nomination-star-button-expansion"
                 title={tCatan('nominateThisExpansionMap')}
-                style={{ fontSize: '0', lineHeight: '1' }}
+                style={{ fontSize: '0', lineHeight: '1', boxShadow: 'none', filter: 'none' }}
               >
                 {isNominating ? (
                   <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
@@ -3991,10 +3992,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
               <button
                 onClick={handleNominateClassicMap}
                 disabled={isGenerating || hexagons.length === 0 || isNominating}
-                className="absolute top-2 right-2 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="absolute top-2 right-2 p-2 rounded-full bg-transparent hover:bg-transparent border-0 outline-none shadow-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group [&:focus]:ring-0 [&:focus]:outline-none"
                 id="nomination-star-button-mobile"
                 title={tCatan('nominateThisClassicMap')}
-                style={{ zIndex: 99999, pointerEvents: 'auto' }}
+                style={{ zIndex: 99999, pointerEvents: 'auto', boxShadow: 'none', filter: 'none' }}
               >
                 {isNominating ? (
                   <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
@@ -4110,10 +4111,10 @@ export default function CatanMapGenerator({ className = '' }: CatanMapGeneratorP
           <button
             onClick={handleNominateExpansionMap}
             disabled={isGenerating || hexagons.length === 0 || isNominating}
-            className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+            className="absolute top-2 right-2 z-10 p-2 rounded-full bg-transparent hover:bg-transparent border-0 outline-none shadow-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group [&:focus]:ring-0 [&:focus]:outline-none"
             id="nomination-star-button-expansion"
             title={tCatan('nominateThisExpansionMap')}
-            style={{ fontSize: '0', lineHeight: '1' }}
+            style={{ fontSize: '0', lineHeight: '1', boxShadow: 'none', filter: 'none' }}
           >
             {isNominating ? (
               <div className="w-5 h-5 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>

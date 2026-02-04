@@ -1,16 +1,17 @@
 'use client';
 
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 interface LoadingScreenProps {
   message?: string;
   subMessage?: string;
 }
 
-export default function LoadingScreen({ 
-  message = "Loading", 
-  subMessage = "Please wait..." 
-}: LoadingScreenProps) {
+function LoadingScreenInner({ message = "Loading", subMessage = "Please wait..." }: LoadingScreenProps) {
+  const searchParams = useSearchParams();
+  if (searchParams.get('embed') === '1') return null;
   return (
     <div 
       style={{
@@ -50,5 +51,13 @@ export default function LoadingScreen({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoadingScreen(props: LoadingScreenProps) {
+  return (
+    <Suspense fallback={null}>
+      <LoadingScreenInner {...props} />
+    </Suspense>
   );
 }

@@ -273,8 +273,8 @@ export default function FriendsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="border-b border-gray-200 bg-white">
+      {/* Header with back button - hidden in embed (mobile has home in nav) */}
+      <div className="kd-back-to-home bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">

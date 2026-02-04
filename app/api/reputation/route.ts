@@ -6,8 +6,10 @@ import {
   getUserXPHistory,
   awardXP,
   canPerformDailyLogin,
-  getLevelProgress
+  getLevelProgress,
+  LEVELS
 } from '@/lib/reputation';
+import { createNotification } from '@/lib/notifications';
 
 
 // Force dynamic rendering
@@ -81,6 +83,18 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to award XP' },
         { status: 400 }
       );
+    }
+
+    // Create level-up notification when user levels up
+    if (result.leveledUp && result.newLevel) {
+      const levelInfo = LEVELS.find((l) => l.level === result.newLevel);
+      const levelName = levelInfo?.name || `Level ${result.newLevel}`;
+      await createNotification({
+        userId,
+        type: 'level_up',
+        message: `You reached ${levelName}!`,
+        url: `/profile/${username}`,
+      });
     }
 
     return NextResponse.json({ 

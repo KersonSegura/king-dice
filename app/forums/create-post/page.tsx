@@ -935,14 +935,16 @@ export default function CreatePostPage() {
         <div className="px-4 sm:px-0">
           <div className="flex items-start justify-between gap-4 mb-6">
           <div className="min-w-0">
-            <button
-              type="button"
-              onClick={() => router.push('/forums')}
-              className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {t('backToForums')}
-            </button>
+            <div className="kd-back-to-home mb-2">
+              <button
+                type="button"
+                onClick={() => router.push('/forums')}
+                className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {t('backToForums')}
+              </button>
+            </div>
             <h1 className="text-xl sm:text-3xl font-semibold text-gray-900 truncate">
               {t('createPostPageTitle')}
             </h1>

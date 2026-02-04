@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getUserFromToken } from '@/lib/auth';
+import { isUserAdmin } from '@/lib/admin-utils';
 import { LEVELS } from '@/lib/reputation';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized - Invalid token' },
         { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
+
+    // SECURITY: Only admins can set user levels
+    const isAdmin = authenticatedUser.isAdmin || isUserAdmin(
+      authenticatedUser.id,
+      authenticatedUser.username,
+      authenticatedUser.email
+    );
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden - Only admins can set user levels' },
+        { status: 403 }
       );
     }
 

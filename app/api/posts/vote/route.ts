@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { awardXP } from '@/lib/reputation';
+import { createNotification } from '@/lib/notifications';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
@@ -152,6 +153,19 @@ export async function POST(request: NextRequest) {
 
         if (xpResult?.leveledUp) {
           console.log(`🎉 ${postAuthor?.username || authorId} leveled up to level ${xpResult.newLevel} from receiving a like!`);
+        }
+
+        // Notify post author of like (only if voter is not the author)
+        if (userId !== authorId) {
+          await createNotification({
+            userId: authorId,
+            type: 'like',
+            actorId: userId,
+            entityType: 'post',
+            entityId: postId,
+            url: `/forums/post/${postId}`,
+            message: undefined, // inferTitle will use actor username
+          });
         }
       } catch (xpError) {
         console.error('[POST VOTE API] Error awarding XP:', xpError);

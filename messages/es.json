@@ -63,6 +63,7 @@
     "boardGame": "Juegos de Mesa",
     "collection": "",
     "goToMyCollection": "Ver mi colección",
+    "viewCollection": "Ver colección",
     "startMyCollection": "Crear mi colección",
     "hotGames": "Juegos Populares",
     "topRankedGames": "Mejor Valorados",
@@ -473,7 +474,9 @@
     "startDirectChat": "Iniciar Chat Directo",
     "askDiceBot": "¡Pregunta a Dado-Bot!",
     "askDiceBotDescription": "¡Chatea con Dado-Bot para reglas,\nestrategias y recomendaciones!",
-    "diceBotName": "Dado-Bot"
+    "gotIt": "Entendido",
+    "diceBotName": "Dado-Bot",
+    "signInToChat": "Inicia sesión para usar el chat"
   },
   "gallery": {
     "communityGallery": "Galería",

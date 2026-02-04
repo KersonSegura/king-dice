@@ -122,11 +122,26 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const userId = searchParams.get('userId') || '';
+    const offset = (page - 1) * limit;
 
-    const { data: postRows, error: postsError } = await executeSupabaseQuery(
-      () => supabaseAdmin.from('posts').select('*'),
-      { maxRetries: 2, baseDelay: 400, timeout: 15000 }
-    );
+    const runPostsQuery = async (useCamel: boolean) => {
+      let query = supabaseAdmin
+        .from('posts')
+        .select(selectColumns(useCamel), { count: 'exact' })
+        .order(useCamel ? 'createdAt' : 'created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+      if (authorId) {
+        query = query.eq(useCamel ? 'authorId' : 'author_id', authorId);
+      }
+      return executeSupabaseQuery(() => query, { maxRetries: 2, baseDelay: 400, timeout: 15000 });
+    };
+
+    let postsResult = await runPostsQuery(true);
+    if (postsResult.error && (postsResult.error.code === '42703' || postsResult.error.code === 'PGRST204')) {
+      postsResult = await runPostsQuery(false);
+    }
+
+    const { data: postRows, error: postsError } = postsResult;
 
     if (postsError) {
       throw postsError;
@@ -136,11 +151,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ posts: [], cached: false });
     }
 
-    const filteredRows = postRows.filter(row => {
-      if (!authorId) return true;
-      const rowAuthor = row.authorId ?? row.author_id;
-      return rowAuthor === authorId;
-    });
+    const filteredRows = postRows;
 
     const authorIds = Array.from(new Set(filteredRows.map(row => row.authorId ?? row.author_id).filter(Boolean)));
     let authorMap = new Map<string, any>();
@@ -160,12 +171,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const posts = filteredRows
+    const paginatedPosts = filteredRows
       .map(row => mapPostRow(row, authorMap))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const startIndex = (page - 1) * limit;
-    const paginatedPosts = posts.slice(startIndex, startIndex + limit);
 
     try {
       const ids = paginatedPosts.map(p => p.id);

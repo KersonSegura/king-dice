@@ -137,9 +137,9 @@ export default function AllGamesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex flex-col">
-      {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex flex-col overflow-x-hidden">
+      {/* Header with back button - hidden in embed (mobile has home in nav) */}
+      <div className="kd-back-to-home bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link 
             href="/"
@@ -151,7 +151,7 @@ export default function AllGamesPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full max-w-full">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-dark-900 mb-4">
@@ -163,10 +163,10 @@ export default function AllGamesPage() {
         </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div className="flex flex-row gap-4 items-center">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8 w-full max-w-full">
+            <div className="flex flex-row gap-3 items-center min-w-0">
               {/* Search */}
-              <div className="flex-1 w-full">
+              <div className="flex-1 w-full min-w-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-5 h-5" />
                   <input
@@ -182,11 +182,10 @@ export default function AllGamesPage() {
               {/* Filters Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center justify-center sm:space-x-2 px-3 sm:px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap flex-shrink-0"
+                className="flex items-center justify-center px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors whitespace-nowrap flex-shrink-0 w-12 h-10"
                 aria-label="Filters"
               >
                 <Filter className="w-5 h-5" />
-                <span className="hidden sm:inline">{tAllGames('filters') || 'Filters'}</span>
               </button>
             </div>
 
@@ -302,11 +301,14 @@ export default function AllGamesPage() {
           )}
 
           {/* Results Info */}
-          <div className="flex justify-between items-center mb-6">
-            <p className="text-dark-600">
-              {tAllGames('showingGames') || `Showing ${games.length} of ${(totalGames || 0).toLocaleString()} games`}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-6 w-full">
+            <p className="text-dark-600 text-sm break-words">
+              {tAllGames('showingGames', {
+                current: games.length,
+                total: totalGames || 0,
+              }) || `Showing ${games.length} of ${(totalGames || 0).toLocaleString()} games`}
             </p>
-            <p className="text-dark-600">
+            <p className="text-dark-600 text-sm">
               {tAllGames('page') || 'Page'} {currentPage} {tAllGames('of') || 'of'} {totalPages}
             </p>
           </div>
@@ -340,13 +342,13 @@ export default function AllGamesPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-8">
-              <div className="flex space-x-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 border border-dark-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-50"
+                  className="px-3 py-2 border border-dark-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-50 text-sm"
                 >
-                  {t('previous')}
+                  &lt;
                 </button>
                 
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -355,7 +357,7 @@ export default function AllGamesPage() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-4 py-2 rounded-lg ${
+                      className={`px-3 py-2 rounded-lg text-sm ${
                         page === currentPage
                           ? 'bg-primary-500 text-white'
                           : 'border border-dark-200 hover:bg-dark-50'
@@ -369,9 +371,9 @@ export default function AllGamesPage() {
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 border border-dark-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-50"
+                  className="px-3 py-2 border border-dark-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-50 text-sm"
                 >
-                  {t('next')}
+                  &gt;
                 </button>
               </div>
             </div>

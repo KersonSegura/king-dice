@@ -6,8 +6,12 @@ export type NotificationType =
   | 'comment'
   | 'reply'
   | 'like'
+  | 'gallery_like'
   | 'message'
-  | 'system';
+  | 'system'
+  | 'level_up'
+  | 'dice_of_week'
+  | 'card_of_week';
 
 export async function createNotification(params: {
   userId: string; // receiver

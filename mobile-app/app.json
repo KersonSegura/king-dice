@@ -4,10 +4,8 @@
     "slug": "king-dice",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,25 +19,25 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.kingdice.app",
-      "versionCode": 1
+      "versionCode": 1,
+      "usesCleartextTraffic": true,
+      "statusBar": {
+        "translucent": true,
+        "backgroundColor": "transparent"
+      }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+    "web": {},
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-asset"
     ],
     "scheme": "kingdice",
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
       }
     }
   }

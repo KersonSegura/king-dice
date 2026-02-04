@@ -7,8 +7,8 @@ import path from 'path';
 // Static import for emailService and generateVerificationCode
 import { emailService, generateVerificationCode } from '@/lib/email-service';
 
-// JWT Secret - in production, this should be in environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+// JWT Secret - MUST be set in environment variables
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '30d'; // Token expires in 30 days
 
 export interface TokenPayload {
@@ -59,9 +59,9 @@ export async function comparePassword(password: string, hash: string): Promise<b
  */
 export function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): string | null {
   try {
-    if (!JWT_SECRET || JWT_SECRET === 'your-super-secret-jwt-key-change-in-production') {
-      console.error('❌ JWT_SECRET is not set or using default value!');
-      return null;
+    if (!JWT_SECRET) {
+      console.error('❌ JWT_SECRET is not set in environment variables!');
+      throw new Error('JWT_SECRET is required but not configured');
     }
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   } catch (error) {

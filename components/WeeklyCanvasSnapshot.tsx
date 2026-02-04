@@ -264,7 +264,7 @@ export default function WeeklyCanvasSnapshot() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-none border border-gray-200 p-4">
         <div className="animate-pulse">
           <div className="flex items-center space-x-2 mb-3">
             <Calendar className="w-5 h-5 text-blue-500" />
@@ -277,7 +277,7 @@ export default function WeeklyCanvasSnapshot() {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 h-[500px] sm:h-[700px] flex flex-col">
+    <div className="bg-white rounded-none border border-gray-200 p-6 h-[500px] sm:h-[700px] flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Calendar className="w-5 h-5 text-blue-500" />
@@ -322,7 +322,7 @@ export default function WeeklyCanvasSnapshot() {
       
       <div 
         ref={containerRef}
-        className="bg-gray-100 rounded-lg p-2 flex-1 flex items-center justify-center overflow-hidden relative"
+        className="bg-gray-100 rounded-none p-2 flex-1 flex items-center justify-center overflow-hidden relative"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

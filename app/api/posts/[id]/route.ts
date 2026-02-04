@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -229,7 +230,7 @@ export async function DELETE(
       );
     }
 
-    console.log(`Forum post deleted: ${id} by user ${authorId}`);
+    console.log(`Forum post deleted: ${id} by user ${authenticatedUser.id}`);
 
     return NextResponse.json(
       { message: 'Post deleted successfully' },

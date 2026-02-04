@@ -55,7 +55,12 @@ function inferTitle(n: any): string {
     case 'comment': return `${n.actor?.username || 'Someone'} commented on your post`;
     case 'reply': return `${n.actor?.username || 'Someone'} replied to your comment`;
     case 'like': return `${n.actor?.username || 'Someone'} liked your post`;
-    default: return 'New notification';
+    case 'gallery_like': return `${n.actor?.username || 'Someone'} liked your gallery image`;
+    case 'level_up': return n.message || 'You leveled up!';
+    case 'dice_of_week': return n.message || 'Your post was selected as Dice of the Week!';
+    case 'card_of_week': return n.message || 'Your post was selected as Card of the Week!';
+    case 'message': return n.message || 'New message';
+    default: return n.message || 'New notification';
   }
 }
 

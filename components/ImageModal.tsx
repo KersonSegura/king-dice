@@ -70,6 +70,8 @@ interface ImageModalProps {
   allImages?: any[];
   currentImageIndex?: number;
   onNavigate?: (direction: 'prev' | 'next') => void;
+  // Optional secondary action (e.g. "View collection" for collection photos)
+  secondaryAction?: { label: string; href: string };
 }
 
 export default function ImageModal({ 
@@ -106,7 +108,8 @@ export default function ImageModal({
   onRefreshActivity,
   allImages = [],
   currentImageIndex = 0,
-  onNavigate
+  onNavigate,
+  secondaryAction
 }: ImageModalProps) {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -618,17 +621,28 @@ export default function ImageModal({
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                  <button
-                    onClick={onLike}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                      isLiked 
-                      ? 'text-red-600 hover:bg-red-50' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-                    <span>{likeCount || 0}</span>
-                  </button>
+                  {onLike && (
+                    <button
+                      onClick={onLike}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                        isLiked 
+                        ? 'text-red-600 hover:bg-red-50' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                      <span>{likeCount || 0}</span>
+                    </button>
+                  )}
+                  {secondaryAction && (
+                    <button
+                      type="button"
+                      onClick={() => { window.location.href = secondaryAction!.href; }}
+                      className="inline-flex items-center px-4 py-2 rounded-lg bg-[#fbae17] text-white font-semibold hover:bg-[#e0990e] transition-colors"
+                    >
+                      {secondaryAction.label}
+                    </button>
+                  )}
                   
                   {/* Featured Badge */}
                   {isFeatured && (

@@ -1531,8 +1531,8 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: profileColors.background }}>
-      {/* Back button */}
-      <div className="border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
+      {/* Back button - hidden in embed (mobile has home in nav) */}
+      <div className="kd-back-to-home border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
         <div className="max-w-6xl mx-auto">
           <Link 
             href="/" 
@@ -1572,7 +1572,7 @@ export default function UserProfilePage() {
             <button
               onClick={handleStartChat}
               disabled={isCreatingChat}
-              className={`p-2 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
+              className={`w-10 h-10 shrink-0 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
                 isCreatingChat ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
               }`}
               style={(() => {
@@ -1704,7 +1704,7 @@ export default function UserProfilePage() {
                     <button
                       onClick={handleStartChat}
                       disabled={isCreatingChat}
-                      className={`p-2 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
+                      className={`w-10 h-10 shrink-0 rounded-full text-sm font-semibold transition-all flex items-center justify-center shadow-md ${
                         isCreatingChat ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'
                       }`}
                       style={(() => {

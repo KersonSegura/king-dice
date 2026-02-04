@@ -212,8 +212,8 @@ export default function ShopPageClient() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col w-full overflow-x-hidden">
-      {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b w-full">
+      {/* Header with back button - hidden in embed (mobile has home in nav) */}
+      <div className="kd-back-to-home bg-white shadow-sm border-b w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full">
           <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
             <ArrowLeft className="w-5 h-5 mr-2" />

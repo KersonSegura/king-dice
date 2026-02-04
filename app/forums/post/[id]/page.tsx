@@ -20,7 +20,6 @@ import Image from "next/image";
 import ModerationAlert from "@/components/ModerationAlert";
 import ReportContent from "@/components/ReportContent";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
-import Footer from "@/components/Footer";
 import { ForumPost } from "@/types/forum";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -93,6 +92,16 @@ export default function PostDetailPage() {
 
   const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 10000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
   // Swipe from left to go back gesture state
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -124,48 +133,74 @@ export default function PostDetailPage() {
   useEffect(() => {
     const loadPost = async () => {
       try {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
           `/api/posts/${postId}${isAuthenticated && user ? `?userId=${user.id}` : ""}`,
           { cache: "no-store" },
         );
-        if (response.ok) {
-          const data = await response.json();
-          const foundPost = data.post;
-          if (foundPost) {
-            setPost(foundPost);
-
-            // Load comments for this post
-            const commentsUrl = `/api/posts/${postId}/comments?sortBy=${commentSortBy}${isAuthenticated && user ? `&userId=${user.id}` : ""}`;
-            const commentsResponse = await fetch(commentsUrl);
-            if (commentsResponse.ok) {
-              const commentsData = await commentsResponse.json();
-              setComments(commentsData.comments || []);
+        if (!response.ok) {
+          if (response.status === 404) {
+            if (typeof window !== "undefined") {
+              window.location.href = "/forums";
+            } else {
+              router.push("/forums");
             }
+            return;
+          }
+          throw new Error(`Failed to load post: ${response.status}`);
+        }
 
-            // Load list to compute similar posts
-            try {
-              const listRes = await fetch("/api/posts?page=1&limit=50", {
-                cache: "no-store",
-              });
-              if (listRes.ok) {
-                const list = await listRes.json();
-                const all = list.posts || [];
-                const similar = all
-                  .filter(
-                    (p: ForumPost) =>
-                      p.id !== postId && p.category === foundPost.category,
-                  )
-                  .slice(0, 3);
-                setSimilarPosts(similar);
-              }
-            } catch {}
+        const data = await response.json();
+        const foundPost = data.post;
+        if (!foundPost) {
+          if (typeof window !== "undefined") {
+            window.location.href = "/forums";
           } else {
-            // Post not found, redirect to forums
             router.push("/forums");
           }
+          return;
+        }
+
+        setPost(foundPost);
+
+        // Load comments for this post
+        try {
+          const commentsUrl = `/api/posts/${postId}/comments?sortBy=${commentSortBy}${isAuthenticated && user ? `&userId=${user.id}` : ""}`;
+          const commentsResponse = await fetchWithTimeout(commentsUrl);
+          if (commentsResponse.ok) {
+            const commentsData = await commentsResponse.json();
+            setComments(commentsData.comments || []);
+          }
+        } catch (commentsError) {
+          console.error("Error loading comments:", commentsError);
+        }
+
+        // Load list to compute similar posts
+        try {
+          const listRes = await fetchWithTimeout("/api/posts?page=1&limit=50", {
+            cache: "no-store",
+          });
+          if (listRes.ok) {
+            const list = await listRes.json();
+            const all = list.posts || [];
+            const similar = all
+              .filter(
+                (p: ForumPost) =>
+                  p.id !== postId && p.category === foundPost.category,
+              )
+              .slice(0, 3);
+            setSimilarPosts(similar);
+          }
+        } catch (similarError) {
+          console.error("Error loading similar posts:", similarError);
         }
       } catch (error) {
         console.error("Error loading post:", error);
+        showToast(tCommon("error"), "error");
+        if (typeof window !== "undefined") {
+          window.location.href = "/forums";
+        } else {
+          router.push("/forums");
+        }
       } finally {
         setLoading(false);
       }
@@ -173,9 +208,11 @@ export default function PostDetailPage() {
 
     if (postId) {
       loadPost();
+    } else {
+      setLoading(false);
     }
     // Re-run when auth/user resolves so we fetch with userId and get userVote
-  }, [postId, router, commentSortBy, isAuthenticated, user?.id]);
+  }, [postId, commentSortBy, isAuthenticated, user?.id]);
 
   // Reload comments when sort changes
   const reloadComments = async (sortOverride?: "best" | "newest" | "top") => {
@@ -808,7 +845,6 @@ export default function PostDetailPage() {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -828,7 +864,6 @@ export default function PostDetailPage() {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -912,7 +947,7 @@ export default function PostDetailPage() {
                       </span>
                       <div className="flex items-center space-x-1 text-xs text-gray-500">
                         <Calendar className="w-3 h-3" />
-                        <span>{formatDate(post.createdAt)}</span>
+                        <span suppressHydrationWarning>{formatDate(post.createdAt)}</span>
                       </div>
                     </div>
 
@@ -1069,7 +1104,7 @@ export default function PostDetailPage() {
                             ) : null}
                           </div>
                         </div>
-                        <div className="text-xs text-gray-500 whitespace-nowrap">
+                        <div className="text-xs text-gray-500 whitespace-nowrap" suppressHydrationWarning>
                           {formatDate(post.createdAt)}
                         </div>
                       </div>
@@ -1117,7 +1152,7 @@ export default function PostDetailPage() {
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
-                            <span>{formatDate(post.createdAt)}</span>
+                            <span suppressHydrationWarning>{formatDate(post.createdAt)}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <MessageSquare className="w-4 h-4" />
@@ -1334,7 +1369,7 @@ export default function PostDetailPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 text-xs text-gray-400 flex-shrink-0 leading-none">
-                                <span className="whitespace-nowrap">
+                                <span className="whitespace-nowrap" suppressHydrationWarning>
                                   {formatCommentTimestamp(comment.createdAt)}
                                 </span>
                                 {comment.isModerated &&
@@ -1620,7 +1655,6 @@ export default function PostDetailPage() {
           </div>
         </div>
       </div>
-      <Footer />
       {moderationAlert && (
         <ModerationAlert
           result={moderationAlert.result}

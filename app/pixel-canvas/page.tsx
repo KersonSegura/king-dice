@@ -643,9 +643,9 @@ export default function PixelCanvasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
-      {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      {/* Header with back button - hidden in embed (mobile has home in nav) */}
+      <div className="kd-back-to-home bg-white shadow-sm border-b">
+        <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
           <Link 
             href="/"
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
@@ -656,13 +656,21 @@ export default function PixelCanvasPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      {/* Main Content - full width, no side padding */}
+      <div className="w-full py-8 flex-1">
         {/* Header */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">{tPixel('title')}</h1>
+            <div className="flex flex-col items-center">
+              <div className="flex items-center justify-center space-x-3 mb-2">
+                <img
+                  src="/PixelCanvasIconYellowStroke.svg"
+                  alt=""
+                  className="w-10 h-10 flex-none"
+                  aria-hidden
+                />
+                <h1 className="text-4xl font-bold text-gray-900">{tPixel('title')}</h1>
+              </div>
               <p className="text-lg text-gray-600">{tPixel('subtitle')}</p>
             </div>
           </div>
@@ -680,7 +688,7 @@ export default function PixelCanvasPage() {
           
           {/* Right Column - Live Chat */}
           <div className="flex-1">
-            <div className="bg-white rounded-lg shadow-sm border p-6 h-[700px] flex flex-col">
+            <div className="bg-white rounded-none shadow-sm border p-6 h-[700px] flex flex-col">
               <div className="mb-4">
                 {/* Title - First Line */}
                 <h2 className="text-xl font-semibold text-gray-900 text-center mb-3">{tPixel('liveChat')}</h2>

@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { ArrowLeft, Users, Clock, Calendar, User, Building2, Star, Eye, Home, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, FileText, Play, Download, Globe, X, ExternalLink } from 'lucide-react';
 import VideoLinks from '@/components/VideoLinks';
 import PDFHandler from '@/components/PDFHandler';
-import { useState, useEffect, use, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTranslations, useLocale } from 'next-intl';
+import { useParams } from 'next/navigation';
 // import BackToTopButton from '@/components/BackToTopButton'; // Removed - using global one from layout
 
 interface Game {
@@ -28,6 +29,7 @@ interface Game {
   videoUrl?: string;
   pdfUrl?: string;
   pdfFile?: string;
+  hasPdfFile?: boolean;
   officialWebsite?: string;
   shopUrl?: string;
   amazonUrl?: string;
@@ -75,16 +77,24 @@ interface Game {
 
 async function getGame(id: string): Promise<Game | null> {
   try {
-    const response = await fetch(`/api/games/${id}`, {
-      cache: 'no-store'
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+    const isEmbed =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('embed') === '1';
+    const response = await fetch(`/api/games/${id}${isEmbed ? '?embed=1' : ''}`, {
+      cache: 'no-store',
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
+      console.warn('[GamePage] API returned', response.status, await response.text().catch(() => ''));
       return null;
     }
     
     const data = await response.json();
-    return data.game;
+    return data.game ?? null;
   } catch (error) {
     console.error('Error fetching game:', error);
     return null;
@@ -431,10 +441,13 @@ function renderRulesWithImages(text: string) {
   );
 }
 
-export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function GamePage() {
+  const params = useParams<{ id?: string }>();
+  const id = Array.isArray(params?.id) ? params?.id?.[0] : params?.id;
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
   const [showAllDesigners, setShowAllDesigners] = useState(false);
   const [showAllPublishers, setShowAllPublishers] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -479,6 +492,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const t = useTranslations('common');
   const tGame = useTranslations('game');
   const locale = useLocale();
+  const retryLoad = () => setRetryToken((t) => t + 1);
 
   // Check if desktop view and calculate available width
   useEffect(() => {
@@ -807,20 +821,54 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
   // Fetch game data
   useEffect(() => {
+    let isCancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    if (!id) {
+      setLoading(false);
+      setGame(null);
+      setError('missing_id');
+      return () => {
+        isCancelled = true;
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    }
+
     const fetchGame = async () => {
+      setLoading(true);
+      setError(null);
+      timeoutId = setTimeout(() => {
+        if (isCancelled) return;
+        setError('timeout');
+        setLoading(false);
+      }, 25000);
       try {
         const fetchedGame = await getGame(id);
+        if (isCancelled) return;
         setGame(fetchedGame);
+        if (!fetchedGame) {
+          setError('not_found');
+        }
       } catch (error) {
         console.error('Error fetching game:', error);
-        setGame(null);
+        if (!isCancelled) {
+          setGame(null);
+          setError('fetch_failed');
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
+        if (timeoutId) clearTimeout(timeoutId);
       }
     };
 
     fetchGame();
-  }, [id]);
+    return () => {
+      isCancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [id, retryToken]);
 
   // Set active tab to first available tab when game loads
   useEffect(() => {
@@ -863,6 +911,42 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
               className="opacity-60 mx-auto mb-4"
             />
             <p className="text-gray-600">{t('loadingGame')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    const errorMessage =
+      error === 'not_found'
+        ? (tGame('gameNotFound') || 'Game not found.')
+        : error === 'timeout'
+          ? 'Game took too long to load. Please try again.'
+          : error === 'missing_id'
+            ? 'Missing game id.'
+            : 'Unable to load game. Please try again.';
+    return (
+      <div className="fixed inset-0 bg-gray-50 z-50">
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">{errorMessage}</h2>
+            <div className="space-x-4">
+              <button
+                type="button"
+                onClick={retryLoad}
+                className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#fbae17]/90 transition-colors"
+              >
+                Retry
+              </button>
+              <Link
+                href="/boardgames"
+                className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {tGame('browseGames') || t('browseGames', {ns: 'header'}) || 'Browse Games'}
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -1079,22 +1163,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       {ratingModal}
-      {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link 
-            href="/"
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            {t('backToHome')}
-          </Link>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full overflow-x-hidden">
+      <div className="w-full px-0 py-8 overflow-x-hidden">
         {/* Game Header */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div className="bg-white rounded-none shadow-lg overflow-hidden mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div className="md:flex">
             {/* Game Image */}
             <div className="w-full max-w-[300px] mx-auto md:w-1/3 md:max-w-none lg:w-1/4" style={{ minWidth: isDesktop ? '304.01px' : '0' }}>
@@ -1532,7 +1603,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
         {/* Description Section */}
         {description?.fullDescription && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
+          <div className="bg-white rounded-none shadow-lg p-8 mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
               <Star className="w-6 h-6 mr-2 text-[#fbae17]" />
               {tGame('aboutThisGame')}
@@ -1577,7 +1648,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
         {/* Game Resources Section with Tabs */}
         {(rules?.rulesText || game?.videoUrl || game?.pdfUrl || game?.pdfFile || game?.shopUrl || game?.amazonUrl || (game?.shopItems && game.shopItems.length > 0) || game?.shopListMasterGameId) && (
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
+          <div className="bg-white rounded-none shadow-lg overflow-hidden mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
             {/* Tab Headers */}
             <div className="relative border-b border-gray-200" style={{ WebkitOverflowScrolling: 'touch' }}>
               <div
@@ -1718,7 +1789,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
-              {activeTab === 'pdf' && (game?.pdfUrl || game?.pdfFile) && (
+              {activeTab === 'pdf' && (game?.pdfUrl || game?.pdfFile || game?.hasPdfFile) && (
                 <div className="w-full">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <Download className="w-6 h-6 mr-2 text-[#fbae17]" />
@@ -1729,6 +1800,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                       <PDFHandler 
                         pdfUrl={game.pdfUrl}
                         pdfFile={game.pdfFile}
+                        hasPdfFile={game.hasPdfFile}
                         gameName={game.nameEn}
                         gameId={game.id}
                         isAdmin={false}

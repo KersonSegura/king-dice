@@ -6,6 +6,49 @@ import { cookies } from 'next/headers';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+
+function rewriteStorageUrl(url: string | null | undefined): string | null | undefined {
+  if (!url || typeof url !== 'string') return url;
+  const trimmed = url.trim();
+  if (!trimmed) return url;
+  // Already a full URL (Supabase or other)
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  if (trimmed.startsWith('data:')) return trimmed;
+  if (!supabaseUrl) return url;
+  const base = `${supabaseUrl}/storage/v1/object/public`;
+  if (trimmed.startsWith('/uploads/')) {
+    const filename = trimmed.replace(/^\/uploads\/?/, '');
+    return `${base}/uploads/uploads/${filename}`;
+  }
+  if (trimmed.startsWith('/gallery/')) {
+    const rel = trimmed.replace(/^\/gallery\/?/, '');
+    return `${base}/gallery/${rel}`;
+  }
+  if (trimmed.startsWith('/avatars/')) {
+    const rel = trimmed.replace(/^\/avatars\/?/, '');
+    return `${base}/uploads/avatars/${rel}`;
+  }
+  // dice-designs bucket (default avatars, My Dice composites)
+  if (trimmed.startsWith('/dice-designs/') || trimmed.startsWith('dice-designs/')) {
+    const rel = trimmed.replace(/^\/?dice-designs\/?/, '');
+    return `${base}/dice-designs/${rel}`;
+  }
+  if (trimmed.startsWith('generated/') || trimmed.includes('/generated/')) {
+    return `${base}/dice-designs/${trimmed.replace(/^\//, '')}`;
+  }
+  // Paths like "uploads/xxx" or "avatars/xxx" without leading slash
+  if (trimmed.startsWith('uploads/')) return `${base}/uploads/${trimmed}`;
+  if (trimmed.startsWith('avatars/')) return `${base}/uploads/${trimmed}`;
+  // Partial Supabase storage path (e.g. /storage/v1/object/public/bucket/path)
+  if (trimmed.startsWith('/storage/')) {
+    return `${supabaseUrl}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
+  }
+  // Static files served by Next.js (/DefaultDiceAvatar.svg, /DiceLogo.svg)
+  if (trimmed.startsWith('/') && /\.(svg|png|jpg|jpeg|webp)$/i.test(trimmed)) return url;
+  return url;
+}
+
 // Normalize text for search: handle "&" vs "and", remove punctuation, normalize spaces, lowercase
 function normalizeForSearch(text: string): string {
   if (!text) return '';
@@ -186,7 +229,7 @@ export async function GET(request: NextRequest) {
             id: user.id,
             username: user.username,
             email: user.email,
-            avatar: user.avatar,
+            avatar: rewriteStorageUrl(user.avatar) ?? user.avatar,
             isVerified: user.isVerified || user.is_verified || false,
             isAdmin: user.isAdmin || user.is_admin || false,
             isFollowing: isFollowing,
@@ -231,7 +274,6 @@ export async function GET(request: NextRequest) {
         
         if (normalizedWords.length > 0) {
           // Build query to find games containing any of the normalized words
-          // This will catch games like "Catan: Seafarers" when searching for "Catan Seafarers"
           const wordQueries = normalizedWords.map(word => `nameEn.ilike.%${word}%`);
           
           // Try searching with nameEn first
@@ -244,25 +286,48 @@ export async function GET(request: NextRequest) {
           dbGames = result1.data || [];
           gamesError = result1.error;
           
-          // If that didn't work or returned few results, also try name (legacy field)
-          if (gamesError || dbGames.length < normalizedWords.length) {
-            const wordQueriesName = normalizedWords.map(word => `name.ilike.%${word}%`);
-            const result2 = await supabaseAdmin
-              .from('games')
-              .select('*')
-              .or(wordQueriesName.join(','))
-              .limit(searchLimit);
-            
-            if (!result2.error && result2.data) {
-              // Merge results, avoiding duplicates
-              const existingIds = new Set(dbGames.map((g: any) => g.id));
-              const additionalGames = (result2.data || []).filter((g: any) => !existingIds.has(g.id));
-              dbGames = [...dbGames, ...additionalGames];
-              if (gamesError) gamesError = null;
-            }
+          // Fuzzy pattern: "Catan starfarers" -> %catan%starfarers% matches "Catan: Starfarers"
+          const fuzzyPattern = `%${normalizedWords.join('%')}%`;
+          const resultFuzzy = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .ilike('nameEn', fuzzyPattern)
+            .limit(searchLimit);
+          
+          if (!resultFuzzy.error && resultFuzzy.data) {
+            const existingIds = new Set(dbGames.map((g: any) => g.id));
+            const additionalGames = (resultFuzzy.data || []).filter((g: any) => !existingIds.has(g.id));
+            dbGames = [...dbGames, ...additionalGames];
           }
           
-          // Also try the original search query as a fallback
+          // Also try name (legacy field)
+          const wordQueriesName = normalizedWords.map(word => `name.ilike.%${word}%`);
+          const result2 = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .or(wordQueriesName.join(','))
+            .limit(searchLimit);
+          
+          if (!result2.error && result2.data) {
+            const existingIds = new Set(dbGames.map((g: any) => g.id));
+            const additionalGames = (result2.data || []).filter((g: any) => !existingIds.has(g.id));
+            dbGames = [...dbGames, ...additionalGames];
+            if (gamesError) gamesError = null;
+          }
+          
+          const result2Fuzzy = await supabaseAdmin
+            .from('games')
+            .select('*')
+            .ilike('name', fuzzyPattern)
+            .limit(searchLimit);
+          
+          if (!result2Fuzzy.error && result2Fuzzy.data) {
+            const existingIds = new Set(dbGames.map((g: any) => g.id));
+            const additionalGames = (result2Fuzzy.data || []).filter((g: any) => !existingIds.has(g.id));
+            dbGames = [...dbGames, ...additionalGames];
+          }
+          
+          // Original search query as fallback
           const originalPattern = `%${searchQuery}%`;
           const result3 = await supabaseAdmin
             .from('games')
@@ -271,7 +336,6 @@ export async function GET(request: NextRequest) {
             .limit(searchLimit);
           
           if (!result3.error && result3.data) {
-            // Merge results, avoiding duplicates
             const existingIds = new Set(dbGames.map((g: any) => g.id));
             const additionalGames = (result3.data || []).filter((g: any) => !existingIds.has(g.id));
             dbGames = [...dbGames, ...additionalGames];

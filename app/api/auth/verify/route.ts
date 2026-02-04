@@ -4,11 +4,18 @@ import { getUserFromToken } from '@/lib/auth';
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic';
 
+function getTokenFromRequest(request: NextRequest): string | null {
+  const cookie = request.cookies.get('auth_token')?.value;
+  if (cookie) return cookie;
+  const auth = request.headers.get('authorization');
+  if (auth?.startsWith('Bearer ')) return auth.slice(7);
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   console.log('🔍 Auth verify API called');
   try {
-    // Get token from cookie
-    const token = request.cookies.get('auth_token')?.value;
+    const token = getTokenFromRequest(request);
     console.log('🍪 Token found:', !!token);
 
     if (!token) {

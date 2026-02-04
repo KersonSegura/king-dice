@@ -3,10 +3,37 @@
  * This file centralizes all API endpoints and configuration
  */
 
+import { Platform } from 'react-native';
+
 // Base URL for the API - change this to your production URL
-export const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:3000' // Development - adjust if your dev server is different
-  : 'https://kingdice.gg'; // Production
+// For Android emulator, use 10.0.2.2 instead of localhost
+// For iOS simulator, use localhost
+// For physical device, set EXPO_PUBLIC_API_URL to your computer's IP (e.g. http://192.168.1.100:3000)
+const getApiBaseUrl = (): string => {
+  if (!__DEV__) {
+    return 'https://kingdice.gg'; // Production
+  }
+
+  // Override for physical device testing (set in .env or app.config.js)
+  const override = typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_URL;
+  if (override && typeof override === 'string') {
+    return override.replace(/\/$/, '');
+  }
+
+  // In React Native, detect platform
+  if (Platform.OS === 'android') {
+    // Android emulator uses 10.0.2.2 to access host machine's localhost
+    return 'http://10.0.2.2:3000';
+  } else if (Platform.OS === 'ios') {
+    // iOS simulator can use localhost
+    return 'http://localhost:3000';
+  } else {
+    // Web or other platforms
+    return 'http://localhost:3000';
+  }
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -18,6 +45,7 @@ export const API_ENDPOINTS = {
     VERIFY: '/api/auth/verify',
     RESET_PASSWORD: '/api/auth/reset-password',
     VERIFY_2FA: '/api/auth/verify-2fa-code',
+    VERIFY_EMAIL: '/api/auth/verify-email',
   },
   
   // User
@@ -31,7 +59,7 @@ export const API_ENDPOINTS = {
   // Games
   GAMES: {
     LIST: '/api/games',
-    DETAIL: (id: string) => `/api/game/${id}`,
+    DETAIL: (id: string) => `/api/games/${id}`,
     HOTNESS: '/api/games/hotness',
     MOST_PLAYED: '/api/games/most-played',
     SEARCH: (query: string) => `/api/games?search=${encodeURIComponent(query)}`,

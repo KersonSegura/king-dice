@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       .select('id, username, avatar, collectionPhoto, gamesList')
       .not('collectionPhoto', 'is', null)
       .not('gamesList', 'is', null)
-      .order('created_at', { ascending: false })
+      .order('createdAt', { ascending: false })
       .limit(limit * 3); // Fetch more to filter out empty collections
 
     if (error) {

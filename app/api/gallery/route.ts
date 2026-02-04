@@ -234,9 +234,28 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || 'all';
     const author = searchParams.get('author') || '';
     const userId = searchParams.get('userId') || '';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = (page - 1) * limit;
+
+    const useCamelCase = await detectCamelCase();
+    const authorLooksLikeId = author && author.length >= 8;
+
+    let query = supabaseAdmin
+      .from('gallery_images')
+      .select(selectColumns(useCamelCase), { count: 'exact' })
+      .order(useCamelCase ? 'createdAt' : 'created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (category && category !== 'all') {
+      query = query.eq('category', category);
+    }
+    if (authorLooksLikeId) {
+      query = query.eq(useCamelCase ? 'authorId' : 'author_id', author);
+    }
 
     const { data: galleryRows, error: galleryError } = await executeSupabaseQuery(
-      () => supabaseAdmin.from('gallery_images').select('*'),
+      () => query,
       { maxRetries: 2, baseDelay: 400, timeout: 15000 }
     );
 
@@ -306,11 +325,7 @@ export async function GET(request: NextRequest) {
         return rewritten;
       });
 
-    if (category && category !== 'all') {
-      images = images.filter(image => image.category === category);
-    }
-
-    if (author) {
+    if (author && !authorLooksLikeId) {
       images = images.filter(image => image.author.id === author || image.author.name === author);
     }
 
@@ -339,8 +354,6 @@ export async function GET(request: NextRequest) {
         console.error('Unexpected error fetching gallery votes:', error);
       }
     }
-
-    images.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return NextResponse.json({
       images,

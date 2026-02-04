@@ -3,7 +3,25 @@ import { authenticateUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, rememberMe } = await request.json();
+    const raw = await request.text();
+    if (!raw || !raw.trim()) {
+      console.warn('🔐 Login: empty request body');
+      return NextResponse.json(
+        { message: 'Request body is empty. Send JSON: { username, password, rememberMe? }' },
+        { status: 400 }
+      );
+    }
+    let body: { username?: string; password?: string; rememberMe?: boolean };
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      console.warn('🔐 Login: invalid JSON', raw.slice(0, 100));
+      return NextResponse.json(
+        { message: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+    const { username, password, rememberMe } = body;
 
     console.log('🔐 Login attempt for:', username);
 

@@ -47,12 +47,21 @@ function detectLocale(request: NextRequest): string {
 }
 
 export default function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Embed routes: force x-kd-embed so root layout hides Header (WebView often doesn't send custom headers on first load)
+  const requestHeaders = new Headers(request.headers);
+  if (pathname.startsWith('/embed')) {
+    requestHeaders.set('x-kd-embed', '1');
+  }
+
   // Detect locale
   const locale = detectLocale(request);
-  
-  // Create response
-  const response = NextResponse.next();
-  
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
   // Set locale cookie if not already set
   if (!request.cookies.get('locale')) {
     response.cookies.set('locale', locale, {

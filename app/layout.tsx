@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import './globals.css'
 import Header from '@/components/Header'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -9,7 +9,6 @@ import { ToastProvider } from '@/contexts/ToastContext'
 import { SocketProvider } from '@/contexts/SocketContext'
 import { ChatStateProvider } from '@/contexts/ChatStateContext'
 import ToastContainer from '@/components/ToastContainer'
-import FloatingChat from '@/components/FloatingChat'
 import BackToTopButton from '@/components/BackToTopButton'
 import Providers from '@/components/Providers'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -65,36 +64,17 @@ export default async function RootLayout({
 
   const messages = messagesMap[locale] || enMessages;
 
-  // Add global error handler to catch translation errors
-  if (typeof window !== 'undefined') {
-    window.addEventListener('error', (event) => {
-      if (event.message?.includes('t is not defined') || event.message?.includes('ReferenceError: t')) {
-        console.error('🔴 [Global Error Handler] Translation error caught:', {
-          message: event.message,
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
-          error: event.error,
-          stack: event.error?.stack
-        });
-        
-        // Try to get more info from the source
-        console.error('🔴 [Global Error Handler] Full error object:', event);
-        console.error('🔴 [Global Error Handler] Error target:', event.target);
-      }
-    });
-    
-    // Also catch unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
-      if (event.reason?.message?.includes('t is not defined') || event.reason?.message?.includes('ReferenceError: t')) {
-        console.error('🔴 [Global Error Handler] Unhandled promise rejection with t error:', event.reason);
-      }
-    });
+  let isEmbed = false;
+  try {
+    const hdrs = await headers();
+    isEmbed = hdrs.get('x-kd-embed') === '1';
+  } catch {
+    // headers() can throw in some edge cases
   }
 
   return (
-    <html lang={locale}>
-      <body className={`${inter.className}`} suppressHydrationWarning={true}>
+    <html lang={locale} suppressHydrationWarning>
+      <body className={`${inter.className}${isEmbed ? ' embed' : ''}`} suppressHydrationWarning>
         <Providers locale={locale} messages={messages}>
           <ErrorBoundary>
           <LevelUpProvider>
@@ -102,10 +82,9 @@ export default async function RootLayout({
               <SocketProvider>
                 <ChatStateProvider>
                   <ToastProvider>
-                    <Header />
+                    {!isEmbed && <Header />}
                     {children}
-                    <FloatingChat />
-                    <BackToTopButton />
+                    {!isEmbed && <BackToTopButton />}
                     <ToastContainer />
                   </ToastProvider>
                 </ChatStateProvider>

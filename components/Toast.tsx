@@ -60,12 +60,12 @@ export default function Toast({ message, type = 'success', duration = 4000, onCl
 
   return (
     <div
-      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-300 ease-in-out ${
+      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-300 ease-in-out w-[calc(100vw-2rem)] max-w-lg ${
         isLeaving ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
       }`}
     >
       <div
-        className={`flex items-center space-x-3 px-6 py-4 rounded-xl border shadow-xl backdrop-blur-sm max-w-2xl mx-auto ${getToastStyles()}`}
+        className={`flex items-center space-x-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-sm w-full ${getToastStyles()}`}
       >
         <div className="flex-shrink-0">
           {type === 'success' && <CheckCircle className={`w-5 h-5 ${getIconColor()}`} />}
@@ -73,8 +73,8 @@ export default function Toast({ message, type = 'success', duration = 4000, onCl
           {type === 'info' && <CheckCircle className={`w-5 h-5 ${getIconColor()}`} />}
         </div>
         
-        <div className="flex-1">
-          <p className="text-sm font-medium whitespace-nowrap">{message}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium break-words">{message}</p>
         </div>
         
         <button

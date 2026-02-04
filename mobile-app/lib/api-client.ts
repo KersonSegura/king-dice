@@ -1,49 +1,25 @@
 /**
  * API Client for King Dice Mobile App
  * Handles all HTTP requests with authentication and error handling
+ * Uses React Native's fetch API (compatible with Expo)
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL, getDefaultHeaders } from '../config/api';
 
 const TOKEN_KEY = 'auth_token';
+const TIMEOUT = 30000;
+
+interface RequestConfig {
+  headers?: Record<string, string>;
+  timeout?: number;
+}
 
 class ApiClient {
-  private client: AxiosInstance;
+  private baseURL: string;
 
   constructor() {
-    this.client = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Request interceptor to add auth token
-    this.client.interceptors.request.use(
-      async (config) => {
-        const token = await this.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Response interceptor for error handling
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid - clear it
-          await this.clearToken();
-        }
-        return Promise.reject(error);
-      }
-    );
+    this.baseURL = API_BASE_URL;
   }
 
   /**
@@ -81,43 +57,136 @@ class ApiClient {
   }
 
   /**
+   * Make an HTTP request with fetch
+   */
+  private async request<T>(
+    url: string,
+    options: RequestInit = {},
+    config?: RequestConfig
+  ): Promise<T> {
+    const token = await this.getToken();
+    const defaultHeaders = getDefaultHeaders(token || undefined);
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...defaultHeaders,
+      ...config?.headers,
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
+    const timeout = config?.timeout || TIMEOUT;
+
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(fullUrl, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        await this.clearToken();
+        throw new Error('Unauthorized - token expired or invalid');
+      }
+
+      // Check if response is ok
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Parse JSON response
+      let data: T;
+      try {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : ({} as T);
+      } catch (parseError) {
+        throw new Error('Invalid JSON response from server');
+      }
+      return data;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
    * Make a GET request
    */
-  async get<T>(url: string, config?: any): Promise<T> {
-    const response = await this.client.get<T>(url, config);
-    return response.data;
+  async get<T>(url: string, config?: RequestConfig): Promise<T> {
+    return this.request<T>(url, { method: 'GET' }, config);
   }
 
   /**
    * Make a POST request
    */
-  async post<T>(url: string, data?: any, config?: any): Promise<T> {
-    const response = await this.client.post<T>(url, data, config);
-    return response.data;
+  async post<T>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.request<T>(
+      url,
+      {
+        method: 'POST',
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      config
+    );
   }
 
   /**
    * Make a PUT request
    */
-  async put<T>(url: string, data?: any, config?: any): Promise<T> {
-    const response = await this.client.put<T>(url, data, config);
-    return response.data;
+  async put<T>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.request<T>(
+      url,
+      {
+        method: 'PUT',
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      config
+    );
   }
 
   /**
    * Make a DELETE request
    */
-  async delete<T>(url: string, config?: any): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
-    return response.data;
+  async delete<T>(url: string, config?: RequestConfig): Promise<T> {
+    return this.request<T>(url, { method: 'DELETE' }, config);
   }
 
   /**
    * Make a PATCH request
    */
-  async patch<T>(url: string, data?: any, config?: any): Promise<T> {
-    const response = await this.client.patch<T>(url, data, config);
-    return response.data;
+  async patch<T>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.request<T>(
+      url,
+      {
+        method: 'PATCH',
+        body: data ? JSON.stringify(data) : undefined,
+      },
+      config
+    );
   }
 }
 

@@ -63,6 +63,7 @@
     "boardGame": "Board Game",
     "collection": "collection",
     "goToMyCollection": "Go to my collection",
+    "viewCollection": "View collection",
     "startMyCollection": "Create my collection",
     "hotGames": "Hot Games",
     "topRankedGames": "Top Ranked Games",
@@ -473,7 +474,9 @@
     "startDirectChat": "Start Direct Chat",
     "askDiceBot": "Ask Dice-Bot!",
     "askDiceBotDescription": "Chat with Dice-Bot for rules, strategies, and game recommendations!",
-    "diceBotName": "Dice-Bot"
+    "gotIt": "Got it",
+    "diceBotName": "Dice-Bot",
+    "signInToChat": "Sign in to use chat"
   },
   "gallery": {
     "communityGallery": "Community Gallery",

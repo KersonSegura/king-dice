@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { awardXP } from '@/lib/reputation';
+import { createNotification } from '@/lib/notifications';
 import { supabaseAdmin } from '@/lib/supabase';
 
 function parseVotes(raw: any) {
@@ -214,6 +215,19 @@ export async function POST(request: NextRequest) {
         );
         if (xpResult?.leveledUp) {
           console.log(`🎉 ${mappedImage.author.name} leveled up to level ${xpResult.newLevel} from receiving a like on their image!`);
+        }
+
+        // Notify gallery author of like (only if voter is not the author)
+        if (userId !== mappedImage.author.id) {
+          await createNotification({
+            userId: mappedImage.author.id,
+            type: 'gallery_like',
+            actorId: userId,
+            entityType: 'gallery_image',
+            entityId: imageId,
+            url: `/community-gallery?imageId=${imageId}`,
+            message: undefined,
+          });
         }
       } catch (xpError) {
         console.error('Error awarding XP (non-critical):', xpError);

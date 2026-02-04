@@ -6,13 +6,14 @@ import { Download, ExternalLink, FileText, AlertCircle, Upload } from 'lucide-re
 interface PDFHandlerProps {
   pdfUrl?: string;
   pdfFile?: string;
+  hasPdfFile?: boolean;
   gameName: string;
   gameId: number;
   isAdmin?: boolean;
   onPDFUploaded?: () => void;
 }
 
-export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin = false, onPDFUploaded }: PDFHandlerProps) {
+export default function PDFHandler({ pdfUrl, pdfFile, hasPdfFile, gameName, gameId, isAdmin = false, onPDFUploaded }: PDFHandlerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -24,7 +25,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
 
     try {
       // If we have a local PDF file, serve it from our API
-      if (pdfFile) {
+      if (pdfFile || hasPdfFile) {
         window.open(`/api/games/${gameId}/pdf`, '_blank');
       } else if (pdfUrl) {
         // Remove chrome-extension wrapper if present
@@ -58,7 +59,7 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
     setError(null);
 
     try {
-      if (pdfFile) {
+      if (pdfFile || hasPdfFile) {
         // Download from our API
         const link = document.createElement('a');
         link.href = `/api/games/${gameId}/pdf`;
@@ -173,8 +174,9 @@ export default function PDFHandler({ pdfUrl, pdfFile, gameName, gameId, isAdmin 
     }
   };
 
-  const hasPDF = pdfFile || pdfUrl;
-  const isLocalPDF = !!pdfFile; // We have a local PDF file
+  const hasLocalPDF = typeof hasPdfFile === 'boolean' ? hasPdfFile : !!pdfFile;
+  const hasPDF = hasLocalPDF || !!pdfUrl;
+  const isLocalPDF = hasLocalPDF; // We have a local PDF file
   const isExternalLink = !!pdfUrl && !pdfFile; // We only have an external URL
 
   return (

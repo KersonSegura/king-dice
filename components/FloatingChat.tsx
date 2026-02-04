@@ -2,6 +2,7 @@
 
 // FloatingChat component for managing chat interface
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical, Trash2, Ban, Flag, LogOut, Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatState } from '@/contexts/ChatStateContext';
@@ -48,8 +49,8 @@ function getGroupChatColor(chatId: string): string {
   return GROUP_COLORS[index];
 }
 
-// Custom User Search Component
-function CustomChatList({ 
+// Custom User Search Component - exported for ChatPage
+export function CustomChatList({ 
   onSelectChat, 
   onCreateGroup, 
   onStartDirectChat, 
@@ -59,7 +60,8 @@ function CustomChatList({
   chatsWithUnread,
   onChatOpened,
   onStartGroupChatWithUser,
-  setChatsWithUnread
+  setChatsWithUnread,
+  fullPage = false,
 }: {
   onSelectChat: (chat: any) => void;
   onCreateGroup: () => void;
@@ -70,7 +72,8 @@ function CustomChatList({
   chatsWithUnread?: Map<string, number>;
   onChatOpened?: (chatId: string) => void;
   onStartGroupChatWithUser?: (targetUser: any) => void;
-  setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => void;
+  setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => Map<string, number>;
+  fullPage?: boolean;
 }) {
   const t = useTranslations('chat');
   const [searchQuery, setSearchQuery] = useState('');
@@ -297,9 +300,9 @@ function CustomChatList({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Search Bar */}
-      <div className="p-4 border-b">
-        <div className="relative">
+      {/* Search Bar - fullPage: search + create group on same row */}
+      <div className={`p-4 border-b ${fullPage ? 'flex items-center gap-2' : ''}`}>
+        <div className={`relative ${fullPage ? 'flex-1 min-w-0' : ''}`}>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
@@ -309,6 +312,15 @@ function CustomChatList({
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+        {fullPage && (
+          <button
+            onClick={onCreateGroup}
+            className="flex-shrink-0 flex items-center justify-center p-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors"
+            title="Create Group Chat"
+          >
+            <Users className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Results */}
@@ -524,19 +536,47 @@ function CustomChatList({
 }
 
 export default function FloatingChat() {
+  const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
+
+  // On dedicated /chat route, ChatPage renders the content - don't show popup
+  if (pathname?.startsWith('/chat')) {
+    return null;
+  }
   const contextChatState = useChatState();
   const t = useTranslations('chat');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showStartDirectChat, setShowStartDirectChat] = useState(false);
-  const [showAutoTooltip, setShowAutoTooltip] = useState(false);
   const [iconState, setIconState] = useState<'message' | 'bot'>('message');
-  const [hasShownTooltip, setHasShownTooltip] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [hideButton, setHideButton] = useState(false);
+  // Open chat automatically in embed mode when requested
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const embed = params.get('embed') === '1';
+    const openChat = params.get('openChat') === '1';
+    if (embed) setHideButton(true);
+    if (openChat) {
+      setIsChatOpen(true);
+      setSelectedChat(null);
+    }
+  }, []);
+
+  // Fallback: listen for openChatFromEmbed (from mobile WebView injected JS)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleOpenFromEmbed = () => {
+      setIsChatOpen(true);
+      setSelectedChat(null);
+    };
+    window.addEventListener('openChatFromEmbed', handleOpenFromEmbed);
+    return () => window.removeEventListener('openChatFromEmbed', handleOpenFromEmbed);
+  }, []);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [chatListRefreshTrigger, setChatListRefreshTrigger] = useState(0);
   const [initialGroupUser, setInitialGroupUser] = useState<any>(null);
@@ -796,23 +836,6 @@ export default function FloatingChat() {
       setIconState('message');
     }
   }, [isChatOpen, isAuthenticated]);
-
-  // Auto tooltip that appears once per session - ALWAYS call this hook
-  useEffect(() => {
-    if (!isChatOpen && isAuthenticated && !hasShownTooltip) {
-      const tooltipTimer = setTimeout(() => {
-        setShowAutoTooltip(true);
-        setHasShownTooltip(true);
-        
-        // Hide tooltip after 10 seconds
-        setTimeout(() => {
-          setShowAutoTooltip(false);
-        }, 10000);
-      }, 5000); // Show tooltip after 5 seconds of page load
-
-      return () => clearTimeout(tooltipTimer);
-    }
-  }, [isChatOpen, isAuthenticated, hasShownTooltip]);
 
   // Play message notification sound
   const playMessageSound = () => {
@@ -1123,7 +1146,8 @@ export default function FloatingChat() {
 
   return (
     <>
-      {/* Floating Chat Button - Always render but hide when chat is open */}
+      {/* Floating Chat Button - hidden in embed mode */}
+      {!hideButton && (
       <button
         onClick={() => {
           console.log('Chat button clicked! Current state:', { isChatOpen, selectedChat });
@@ -1165,16 +1189,23 @@ export default function FloatingChat() {
           </div>
         )}
       </button>
+      )}
 
       {/* Chat Interface - Only render when chat is open */}
       {isChatOpen && (
         <div 
-          className="bg-white shadow-xl border border-gray-200 
-          fixed top-16 left-0 right-0 w-full sm:fixed sm:top-20 sm:left-auto sm:right-4 sm:w-96 sm:rounded-lg
-          transform transition-transform duration-300 ease-in-out z-40 flex flex-col overflow-hidden desktop-chat-height mobile-chat-full-height"
+          className={`bg-white shadow-xl border border-gray-200 
+          fixed left-0 right-0 w-full sm:fixed sm:left-auto sm:right-4 sm:w-96 sm:rounded-lg
+          transform transition-transform duration-300 ease-in-out z-40 flex flex-col overflow-hidden desktop-chat-height mobile-chat-full-height
+          ${hideButton ? 'top-0 sm:top-0 embed-chat-full-height' : 'top-16 sm:top-20'}`}
         >
-          {/* Chat Header */}
-          <div className="flex items-center justify-between p-4 border-b sm:rounded-t-lg text-white" style={{ backgroundColor: '#fbae17' }}>
+          {/* Chat Header - in embed mode, panel is already positioned below mobile header */}
+          <div 
+            className="flex items-center justify-between p-4 border-b sm:rounded-t-lg text-white" 
+            style={{ 
+              backgroundColor: '#fbae17',
+            }}
+          >
             <div className="flex items-center space-x-3">
               {selectedChat && (
                 <button
@@ -1347,16 +1378,18 @@ export default function FloatingChat() {
                   )}
                 </div>
               )}
-              <button
-                onClick={() => {
-                  setIsChatOpen(false);
-                  setSelectedChat(null);
-                  setShowDropdown(false);
-                }}
-                className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {!hideButton && (
+                <button
+                  onClick={() => {
+                    setIsChatOpen(false);
+                    setSelectedChat(null);
+                    setShowDropdown(false);
+                  }}
+                  className="flex items-center justify-center text-white hover:text-gray-200 p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -1408,35 +1441,6 @@ export default function FloatingChat() {
             )}
           </div>
 
-        </div>
-      )}
-
-      {/* Auto Tooltip - appears once per session */}
-      {!isChatOpen && showAutoTooltip && (
-        <div className="fixed bottom-4 right-20 sm:bottom-20 sm:right-4 z-50 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm rounded-lg shadow-lg w-fit max-w-[22rem] tooltip-bounce">
-           <div className="flex items-start gap-2">
-             <div className="flex-1 min-w-0">
-               <div className="font-medium mb-1 flex items-center space-x-2">
-                 <img
-                   src="/DiceBotIconSmallWhite.svg"
-                   alt="Dice-Bot"
-                   className="w-4 h-4"
-                 />
-                 <span>{t('askDiceBot')}</span>
-               </div>
-               <div className="text-xs opacity-90 whitespace-pre-line">
-                 {t('askDiceBotDescription')}
-               </div>
-             </div>
-             <button
-               onClick={() => setShowAutoTooltip(false)}
-               className="flex-shrink-0 text-white hover:text-gray-200 transition-colors p-0.5"
-             >
-               <X className="w-4 h-4" />
-             </button>
-           </div>
-          {/* Mobile: Arrow pointing right, Desktop: Arrow pointing up */}
-          <div className="absolute bottom-1/2 -right-2 sm:bottom-auto sm:-right-2 sm:top-full sm:right-6 w-0 h-0 border-t-4 border-b-4 border-l-4 sm:border-l-4 sm:border-r-4 sm:border-t-4 border-transparent border-l-blue-600 sm:border-t-blue-600 transform translate-y-1/2 sm:translate-y-0"></div>
         </div>
       )}
 

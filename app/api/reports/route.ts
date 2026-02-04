@@ -1,8 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Report } from '@/lib/moderation';
+import { getUserFromToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Check authentication first
+    const token = request.cookies.get('auth_token')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token and get authenticated user
+    const authResult = await getUserFromToken(token);
+
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUser = authResult.user;
     const reportData = await request.json();
     
     // Handle both old Report interface and new extended interface
@@ -10,7 +32,7 @@ export async function POST(request: NextRequest) {
       ...reportData,
       contentType: reportData.contentType || reportData.targetType || 'other',
       contentId: reportData.contentId || reportData.targetId || '',
-      reporterId: reportData.reporterId || '',
+      reporterId: authenticatedUser.id, // SECURITY: Use authenticated user's ID, not from request
       reason: reportData.reason || 'other',
       description: reportData.description || '',
     };

@@ -1151,8 +1151,8 @@ function CommunityGalleryPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header with back button */}
-      <div className="bg-white shadow-sm border-b">
+      {/* Header with back button - hidden in embed (mobile has home in nav) */}
+      <div className="kd-back-to-home bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link 
             href="/"

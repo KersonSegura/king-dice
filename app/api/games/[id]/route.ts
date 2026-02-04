@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { executeSupabaseQuery } from '@/lib/supabase-helpers';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+/** Helper: query by gameId with fallback to game_id if column error */
+async function queryByGameId(
+  table: string,
+  select: string,
+  id: number,
+  orderOpt?: { column: string; ascending: boolean }
+) {
+  let q = supabaseAdmin.from(table).select(select);
+  if (orderOpt) q = q.order(orderOpt.column, { ascending: orderOpt.ascending });
+  let r = await q.eq('gameId', id);
+  if (r.error && (r.error.message?.includes('column') || r.error.code === 'PGRST116')) {
+    r = await q.eq('game_id', id);
+  }
+  return r;
+}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const isEmbed =
+      request.headers.get('x-kd-embed') === '1' ||
+      request.nextUrl.searchParams.get('embed') === '1';
     const { id: idString } = await params;
     const id = parseInt(idString);
 
@@ -19,12 +39,11 @@ export async function GET(
       );
     }
 
-    // Fetch base game data - select all columns to handle both naming conventions
-    const { data: game, error: gameError } = await supabaseAdmin
-      .from('games')
-      .select('*')
-      .eq('id', id)
-      .single();
+    // Fetch base game data with retry/timeout
+    const { data: game, error: gameError } = await executeSupabaseQuery(
+      () => supabaseAdmin.from('games').select('*').eq('id', id).single(),
+      { timeout: 15000 }
+    );
 
     if (gameError || !game) {
       console.error('Error fetching game:', gameError);
@@ -52,93 +71,45 @@ export async function GET(
       videoUrl: (game as any).videoUrl
     });
 
-    // Fetch related data in parallel
-    // Note: Supabase uses snake_case for column names
+    // Fetch related data in parallel (with gameId/game_id fallback for column naming)
     const [
-      { data: gameCategories, error: gcError },
-      { data: gameMechanics, error: gmError },
-      { data: descriptions, error: descError },
-      { data: rulesInitial, error: rulesError },
-      { data: baseGameExpansions, error: expError },
-      { data: shopItems, error: shopItemsError }
+      gameCategoriesResult,
+      gameMechanicsResult,
+      descriptionsResult,
+      rulesResult,
+      expansionsResult,
+      shopItemsResult
     ] = await Promise.all([
-      // Game Categories with category details - use camelCase (gameId)
-      supabaseAdmin
-        .from('game_categories')
-        .select(`
-          *,
-          category:categories(*)
-        `)
-        .eq('gameId', id),
-      
-      // Game Mechanics with mechanic details - use camelCase (gameId)
-      supabaseAdmin
-        .from('game_mechanics')
-        .select(`
-          *,
-          mechanic:mechanics(*)
-        `)
-        .eq('gameId', id),
-      
-      // Descriptions - use camelCase (gameId)
-      supabaseAdmin
-        .from('game_descriptions')
-        .select('*')
-        .eq('gameId', id),
-      
-      // Rules - game_rules table - use camelCase (gameId)
-      supabaseAdmin
-        .from('game_rules')
-        .select('*')
-        .eq('gameId', id),
-      
-      // Base Game Expansions - use camelCase (baseGameId)
-      supabaseAdmin
-        .from('expansions')
-        .select('*')
-        .eq('baseGameId', id),
-      // Shop items - sorted by order (will be handled after we check for master game)
-      supabaseAdmin
-        .from('game_shop_items')
-        .select('*')
-        .eq('gameId', id)
-        .order('order', { ascending: true })
+      queryByGameId('game_categories', '*, category:categories(*)', id),
+      queryByGameId('game_mechanics', '*, mechanic:mechanics(*)', id),
+      queryByGameId('game_descriptions', '*', id),
+      queryByGameId('game_rules', '*', id),
+      (async () => {
+        let r = await supabaseAdmin.from('expansions').select('*').eq('baseGameId', id);
+        if (r.error && (r.error.message?.includes('column') || r.error.code === 'PGRST116')) {
+          r = await supabaseAdmin.from('expansions').select('*').eq('base_game_id', id);
+        }
+        return r;
+      })(),
+      queryByGameId('game_shop_items', '*', id, { column: 'order', ascending: true })
     ]);
+
+    const { data: gameCategories, error: gcError } = gameCategoriesResult;
+    const { data: gameMechanics, error: gmError } = gameMechanicsResult;
+    const { data: descriptions, error: descError } = descriptionsResult;
+    const { data: rulesInitial, error: rulesError } = rulesResult;
+    const { data: baseGameExpansions, error: expError } = expansionsResult;
+    const { data: shopItems, error: shopItemsError } = shopItemsResult;
 
     // Log any errors (non-fatal, some relations might be empty)
     if (gcError) console.warn('[GAME API] Error fetching game categories:', gcError);
     if (gmError) console.warn('[GAME API] Error fetching game mechanics:', gmError);
     if (descError) console.warn('[GAME API] Error fetching descriptions:', descError);
-    // Handle rules query - try alternate column name if first attempt failed
-    let rules = rulesInitial;
-    let finalRulesError = rulesError;
-    
-    if (rulesError) {
-      console.error('[GAME API] Error fetching rules:', rulesError);
-      console.error('[GAME API] Rules error details:', JSON.stringify(rulesError, null, 2));
-      console.error('[GAME API] Attempted query: game_rules WHERE game_id =', id);
-      
-      // Try alternate column name if game_id failed
-      if (rulesError.message?.includes('column') || rulesError.code === 'PGRST116') {
-        console.log('[GAME API] Trying camelCase column name: gameId');
-        const { data: rulesAlt, error: rulesErrorAlt } = await supabaseAdmin
-          .from('game_rules')
-          .select('*')
-          .eq('gameId', id);
-        
-        if (!rulesErrorAlt && rulesAlt) {
-          console.log('[GAME API] Success with camelCase! Found', rulesAlt.length, 'rules');
-          // Use the alternate query result
-          rules = rulesAlt;
-          finalRulesError = null;
-        } else {
-          console.error('[GAME API] Also failed with camelCase:', rulesErrorAlt);
-          finalRulesError = rulesErrorAlt || rulesError;
-        }
-      }
-    }
+    if (rulesError) console.warn('[GAME API] Error fetching rules:', rulesError);
     if (expError) console.warn('[GAME API] Error fetching expansions:', expError);
     if (shopItemsError) console.warn('[GAME API] Error fetching shop items:', shopItemsError);
+
+    const rules = rulesInitial || [];
     
     // Check if this game links to another game's shop items
     const shopListMasterGameId = (game as any).shopListMasterGameId ?? (game as any).shop_list_master_game_id;
@@ -190,6 +161,7 @@ export async function GET(
     }
 
     // Transform the data - handle both camelCase (from explicit select) and snake_case (from Supabase default)
+    const hasPdfFile = Boolean((game as any).pdfFile ?? (game as any).pdf_file);
     const transformedGame = {
       // Main game fields - explicitly map to ensure we get both naming conventions
       id: game.id,
@@ -211,7 +183,8 @@ export async function GET(
       thumbnailUrl: (game as any).thumbnailUrl ?? (game as any).thumbnail_url,
       videoUrl: (game as any).videoUrl ?? (game as any).video_url,
       pdfUrl: (game as any).pdfUrl ?? (game as any).pdf_url,
-      pdfFile: (game as any).pdfFile ?? (game as any).pdf_file,
+      pdfFile: isEmbed ? null : ((game as any).pdfFile ?? (game as any).pdf_file),
+      hasPdfFile,
       officialWebsite: (game as any).officialWebsite ?? (game as any).official_website,
       amazonUrl: (game as any).amazonUrl ?? (game as any).amazon_url,
       bggRanking: (game as any).bggRanking ?? (game as any).bgg_ranking,

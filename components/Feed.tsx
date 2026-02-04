@@ -40,15 +40,25 @@ interface FeedItem {
   isPopular?: boolean;
 }
 
+interface FeaturedCollection {
+  id: string;
+  username: string;
+  avatar: string | null;
+  collectionPhoto: string | null;
+  gameCount: number;
+}
+
 interface FeedProps {
   userId?: string;
   limit?: number;
   onItemClick?: (item: FeedItem) => void;
+  onCollectionClick?: (collection: FeaturedCollection) => void;
   featuredDiceThroneId?: string;
   featuredKingsCardId?: string;
+  featuredCollections?: FeaturedCollection[];
 }
 
-export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThroneId, featuredKingsCardId }: FeedProps) {
+export default function Feed({ userId, limit = 20, onItemClick, onCollectionClick, featuredDiceThroneId, featuredKingsCardId, featuredCollections }: FeedProps) {
   const t = useTranslations('home');
   const { user, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -56,6 +66,81 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
+  const shuffleSeedRef = React.useRef<number>(Date.now());
+
+  const normalizedCollections = React.useMemo(() => {
+    const map = new Map<string, FeaturedCollection>();
+    (featuredCollections || []).forEach((collection) => {
+      const key = collection.collectionPhoto || collection.id;
+      if (!map.has(key)) {
+        map.set(key, collection);
+      }
+    });
+    return Array.from(map.values());
+  }, [featuredCollections]);
+
+  const collectionPhotoSet = React.useMemo(() => {
+    return new Set(
+      normalizedCollections
+        .map((collection) => collection.collectionPhoto)
+        .filter((photo): photo is string => Boolean(photo))
+    );
+  }, [normalizedCollections]);
+
+  const filteredFeedItems = React.useMemo(() => {
+    if (collectionPhotoSet.size === 0) return feedItems;
+    return feedItems.filter((item) => {
+      if (!item.imageUrl && !item.thumbnailUrl) return true;
+      if (item.imageUrl && collectionPhotoSet.has(item.imageUrl)) return false;
+      if (item.thumbnailUrl && collectionPhotoSet.has(item.thumbnailUrl)) return false;
+      return true;
+    });
+  }, [collectionPhotoSet, feedItems]);
+
+  const shuffledFeedItems = React.useMemo(() => {
+    if (filteredFeedItems.length === 0) return filteredFeedItems;
+    const seed = shuffleSeedRef.current;
+    const items = [...filteredFeedItems];
+    for (let i = items.length - 1; i > 0; i -= 1) {
+      const random = Math.abs(Math.sin(seed + i) * 10000) % 1;
+      const j = Math.floor(random * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+  }, [filteredFeedItems]);
+
+  const combinedItems = React.useMemo(() => {
+    if (normalizedCollections.length === 0) {
+      return shuffledFeedItems.map((item) => ({ type: 'feed' as const, item }));
+    }
+
+    const combined: Array<
+      | { type: 'feed'; item: FeedItem }
+      | { type: 'collection'; item: FeaturedCollection }
+    > = [];
+
+    const feed = [...shuffledFeedItems];
+    const collections = [...normalizedCollections];
+    let patternIndex = 0;
+    const pattern = [2, 4];
+
+    while (feed.length > 0 || collections.length > 0) {
+      const count = pattern[patternIndex % pattern.length];
+      for (let i = 0; i < count && feed.length > 0; i += 1) {
+        combined.push({ type: 'feed', item: feed.shift() as FeedItem });
+      }
+      if (collections.length > 0) {
+        combined.push({ type: 'collection', item: collections.shift() as FeaturedCollection });
+      }
+      patternIndex += 1;
+      if (feed.length === 0 && collections.length > 0) {
+        combined.push(...collections.map((collection) => ({ type: 'collection' as const, item: collection })));
+        break;
+      }
+    }
+
+    return combined;
+  }, [normalizedCollections, shuffledFeedItems]);
 
   // 1. Determine when we have a stable userId/auth state
   const [delayedUserId, setDelayedUserId] = useState<string | undefined>(userId);
@@ -313,70 +398,131 @@ export default function Feed({ userId, limit = 20, onItemClick, featuredDiceThro
     <div className="max-w-6xl mx-auto px-0 py-2 sm:p-2">
       {/* Feed Items - Instagram Style Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1">
-        {feedItems.map((item) => (
-          <div 
-            key={`${item.type}-${item.id}`} 
-            className="group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
-            onClick={() => onItemClick?.(item)}
-          >
-            {/* Main Image/Content - Square Aspect Ratio */}
-            <div className="aspect-square relative overflow-hidden bg-gray-100">
-              {item.imageUrl ? (
-                <Image
-                  src={item.thumbnailUrl || item.imageUrl}
-                  alt={item.title || 'Community post'}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-                  <div className="text-center p-3">
-                    <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-1" />
-                    <h3 className="text-xs font-medium text-gray-600 line-clamp-2">{item.title}</h3>
-                  </div>
-                </div>
-              )}
-              
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-4">
-                  <div className="flex items-center space-x-1 text-white">
-                    <Heart className="w-4 h-4" fill={item.userVote === 'up' ? '#ef4444' : 'none'} stroke={item.userVote === 'up' ? '#ef4444' : '#ffffff'} strokeWidth={1.5} />
-                    <span className="text-sm font-medium">{item.votes.upvotes - item.votes.downvotes}</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-white">
-                    <MessageCircle className="w-4 h-4" />
-                    <span className="text-sm font-medium">{item.engagement.comments}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Username and Follow indicator */}
-              <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="flex items-center space-x-1">
-                  <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
-                    {item.author.username}
-                  </div>
-                  {item.isFollowing && (
-                    <div className="bg-[#fbae17] text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                      Following
-                    </div>
+        {combinedItems.map((entry) => {
+          if (entry.type === 'collection') {
+            const collection = entry.item;
+            const handleCollectionClick = () => {
+              if (onCollectionClick) {
+                onCollectionClick(collection);
+              } else {
+                window.location.href = `/collection/${collection.username}`;
+              }
+            };
+            return (
+              <div
+                key={`collection-${collection.id}`}
+                role="button"
+                tabIndex={0}
+                onClick={handleCollectionClick}
+                onKeyDown={(e) => e.key === 'Enter' && handleCollectionClick()}
+                className="col-span-2 md:col-span-2 group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
+              >
+                <div className="aspect-[16/9] relative overflow-hidden bg-gray-100">
+                  {collection.collectionPhoto ? (
+                    <Image
+                      src={collection.collectionPhoto}
+                      alt={`${collection.username}'s collection`}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      unoptimized={collection.collectionPhoto.includes('supabase.co')}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#fbae17]/20 to-[#fbae17]/5" />
                   )}
-                </div>
-              </div>
-
-              {/* Featured item crown badge */}
-              {(item.id === featuredDiceThroneId || item.id === featuredKingsCardId) && (
-                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <div className="bg-[#fbae17] text-white p-1 rounded-full">
-                    <Crown className="w-3 h-3 fill-current" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <div className="flex items-center space-x-2 mb-1">
+                      {collection.avatar ? (
+                        <Image
+                          src={collection.avatar}
+                          alt={collection.username}
+                          width={24}
+                          height={24}
+                          className="rounded-full"
+                          unoptimized={collection.avatar.includes('supabase.co')}
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-[#fbae17] flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">
+                            {collection.username.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <span className="text-white font-semibold text-sm">{collection.username}</span>
+                    </div>
+                    <p className="text-white/90 text-xs">{collection.gameCount} {t('games')}</p>
                   </div>
                 </div>
-              )}
+              </div>
+            );
+          }
 
+          const item = entry.item;
+          return (
+            <div 
+              key={`${item.type}-${item.id}`} 
+              className="group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
+              onClick={() => onItemClick?.(item)}
+            >
+              {/* Main Image/Content - Square Aspect Ratio */}
+              <div className="aspect-square relative overflow-hidden bg-gray-100">
+                {item.imageUrl ? (
+                  <Image
+                    src={item.thumbnailUrl || item.imageUrl}
+                    alt={item.title || 'Community post'}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+                    <div className="text-center p-3">
+                      <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                      <h3 className="text-xs font-medium text-gray-600 line-clamp-2">{item.title}</h3>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-4">
+                    <div className="flex items-center space-x-1 text-white">
+                      <Heart className="w-4 h-4" fill={item.userVote === 'up' ? '#ef4444' : 'none'} stroke={item.userVote === 'up' ? '#ef4444' : '#ffffff'} strokeWidth={1.5} />
+                      <span className="text-sm font-medium">{item.votes.upvotes - item.votes.downvotes}</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-white">
+                      <MessageCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">{item.engagement.comments}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Username and Follow indicator */}
+                <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="flex items-center space-x-1">
+                    <div className="bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs font-medium">
+                      {item.author.username}
+                    </div>
+                    {item.isFollowing && (
+                      <div className="bg-[#fbae17] text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                        Following
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Featured item crown badge */}
+                {(item.id === featuredDiceThroneId || item.id === featuredKingsCardId) && (
+                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-[#fbae17] text-white p-1 rounded-full">
+                      <Crown className="w-3 h-3 fill-current" />
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Load More Button */}

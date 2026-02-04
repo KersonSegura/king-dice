@@ -502,7 +502,7 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
   return (
     <div className="group bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200">
       {ratingModal}
-      <div className="flex h-48">
+      <div className="flex h-48 w-full">
         {/* Left Section - Game Image (40% width) */}
         <Link href={`/game/${game.id}`} className="relative w-2/5 bg-gray-200 overflow-hidden cursor-pointer">
           {/* Ranking Badge */}
@@ -538,9 +538,9 @@ export default function GameCardWithVote({ game, voteData, imagePriority = false
         </Link>
         
         {/* Right Section - Game Information (60% width) */}
-        <div className="w-3/5 bg-white p-4 flex flex-col justify-between relative">
+        <div className="w-3/5 bg-white p-4 flex flex-col justify-between relative min-w-0">
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+            <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 break-words">
               {game.name}
             </h3>
             <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">

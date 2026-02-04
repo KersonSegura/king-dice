@@ -180,12 +180,12 @@ const SplitText = ({
   const renderTag = () => {
     const style = {
       textAlign,
-      display: isReady ? 'inline-block' : 'none', // Hide completely until text is split and ready to animate
       whiteSpace: 'normal',
       wordWrap: 'break-word',
       willChange: 'transform, opacity'
     } as React.CSSProperties;
-    const classes = `split-parent ${className}`;
+    // Use className for visibility to avoid hydration mismatch (display:none in style differs server vs client)
+    const classes = `split-parent ${isReady ? 'inline-block' : 'hidden'} ${className}`;
     
     switch (tag) {
       case 'h1':
