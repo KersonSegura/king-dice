@@ -1,17 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
-// Dynamically import the Canvas component with SSR disabled
-const DiceButtonCanvas = dynamic(() => import('./DiceButtonCanvas'), {
-  ssr: false,
-  loading: () => <div className="w-full h-full" />
-});
-
-export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
+export default function DiceButton({ dice, disabled, onAdd, canAdd, previewRef }) {
   const tDiceRoller = useTranslations('diceRoller');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -21,8 +14,11 @@ export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
 
   return (
     <div className="dice-option relative flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 pl-3 pr-5 py-3 md:px-6 md:min-w-[280px]">
-      <div className="h-20 w-20 rounded-2xl bg-slate-900/60 border border-white/10 flex-shrink-0">
-        {isMounted && <DiceButtonCanvas dice={dice} />}
+      <div
+        ref={previewRef}
+        className="h-20 w-20 rounded-2xl bg-slate-900/60 border border-white/10 flex-shrink-0"
+      >
+        {!isMounted && <div className="w-full h-full" />}
       </div>
       <div className="flex-1 min-w-0 -ml-2 md:ml-0">
         <p className="font-semibold text-white">{dice.label.toUpperCase()}</p>

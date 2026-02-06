@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft, X } from 'lucide-react';
+import { BookOpen, MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -513,8 +513,8 @@ function ForumsPageContent() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-3">
+        <div className="flex flex-col items-center mb-8 space-y-4">
+          <div className="flex items-center justify-center space-x-3">
             <Image 
               src="/ForumsIcon.svg" 
               alt="Forums" 
@@ -524,13 +524,14 @@ function ForumsPageContent() {
             />
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('communityForums')}</h1>
           </div>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+          <div className="flex flex-row flex-nowrap items-center gap-2 sm:gap-3 w-full">
             <button
               onClick={() => setShowGuidelines(true)}
-              className="btn-secondary text-sm sm:text-base"
+              className="btn-secondary w-11 h-11 p-0 flex items-center justify-center flex-shrink-0"
+              aria-label={t('communityGuidelines')}
+              title={t('communityGuidelines')}
             >
-              <span className="hidden sm:inline">{t('communityGuidelines')}</span>
-              <span className="sm:hidden">{t('guidelines')}</span>
+              <BookOpen className="w-4 h-4" />
             </button>
             <button
               onClick={() => {
@@ -540,7 +541,7 @@ function ForumsPageContent() {
                   setShowLoginModal(true);
                 }
               }}
-              className="btn-primary flex items-center justify-center space-x-2"
+              className="btn-primary flex-1 flex items-center justify-center space-x-2 min-w-0"
             >
               <Plus className="w-4 h-4" />
               <span>{t('newPost')}</span>

@@ -158,7 +158,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white chat-page">
       {selectedChat ? (
         <>
           {/* Minimal header when viewing a chat - no yellow */}
@@ -233,6 +233,44 @@ export default function ChatPage() {
               </div>
             )}
           </div>
+          {selectedChat.type !== 'bot' && (
+            <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 border-b border-gray-200 bg-white">
+              {selectedChat.type === 'direct' ? (
+                <>
+                  <div className="w-8 h-8 rounded-full border border-gray-300 flex-shrink-0 overflow-hidden bg-white">
+                    {selectedChat.participants?.find((p: any) => p.id !== user?.id)?.avatar ? (
+                      <img
+                        src={selectedChat.participants.find((p: any) => p.id !== user?.id)?.avatar}
+                        alt={selectedChat.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                        {(selectedChat.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-gray-900 truncate">{selectedChat.name}</div>
+                    <div className="text-xs text-gray-500">Online</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0"
+                    style={{ backgroundColor: getGroupChatColor(selectedChat.id) }}
+                  >
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-gray-900 truncate">{selectedChat.name}</div>
+                    <div className="text-xs text-gray-500">{selectedChat.participants?.length || 0} members</div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <div className="flex-1 min-h-0 overflow-hidden">
             {selectedChat.type === 'bot' ? (
               <ChatBot

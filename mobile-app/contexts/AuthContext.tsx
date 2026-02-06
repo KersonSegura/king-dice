@@ -36,7 +36,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOGIN_TIMEOUT_MS = 30000;
+const LOGIN_TIMEOUT_MS = 60000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -97,7 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signal: controller.signal,
     });
 
-    const res = await fetch(req);
+    let res: Response;
+    try {
+      res = await fetch(req);
+    } catch (err: any) {
+      clearTimeout(to);
+      const isAbort = err?.name === 'AbortError' || /abort/i.test(err?.message || '');
+      throw new Error(isAbort ? 'Connection timed out. Please check your network and try again.' : (err?.message || 'Network error'));
+    }
     clearTimeout(to);
 
     const text = await res.text();

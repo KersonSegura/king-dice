@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, createRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import DiceButton from './DiceButton';
+import DiceButtonPreviewCanvas from './DiceButtonPreviewCanvas';
+import DicePoolPreviewCanvas from './DicePoolPreviewCanvas';
 import diceTypes, { DEFAULT_DICE } from './diceTypes';
 import { getRandomRoll } from './diceLogic';
 
@@ -16,6 +18,13 @@ export default function DiceRoller() {
   const [rollSignal, setRollSignal] = useState(0);
   const [isRolling, setIsRolling] = useState(false);
   const completedCountRef = useRef(0);
+  const previewGridRef = useRef(null);
+  const [previewCanvasKey, setPreviewCanvasKey] = useState(0);
+  const poolPreviewRefs = useRef(new Map());
+  const previewRefs = useMemo(
+    () => diceTypes.map(() => createRef()),
+    []
+  );
 
   const addDiceToPool = (dice) => {
     if (dicePool.length >= 10) return; // Max 10 dice
@@ -27,6 +36,7 @@ export default function DiceRoller() {
     const newPool = dicePool.filter(d => d.id !== id);
     setDicePool(newPool);
     setRollResults([]); // Clear results when pool changes
+    poolPreviewRefs.current.delete(id);
   };
 
   const handleRoll = () => {
@@ -49,6 +59,16 @@ export default function DiceRoller() {
     return rollResults.reduce((sum, result) => sum + result, 0);
   }, [rollResults]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !previewGridRef.current) return;
+    if (!('ResizeObserver' in window)) return;
+    const ro = new ResizeObserver(() => {
+      setPreviewCanvasKey((k) => k + 1);
+    });
+    ro.observe(previewGridRef.current);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <section className="min-h-screen bg-slate-950 text-white px-6 py-16">
       <div className="max-w-5xl mx-auto space-y-10">
@@ -57,16 +77,22 @@ export default function DiceRoller() {
           <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">{tDiceRoller('addDiceToPool')}</h1>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-4xl mx-auto">
-          {diceTypes.map((dice) => (
+        <div ref={previewGridRef} className="relative grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-4xl mx-auto">
+          {diceTypes.map((dice, index) => (
             <DiceButton
               key={dice.label}
               dice={dice}
               disabled={isRolling}
               onAdd={() => addDiceToPool(dice)}
               canAdd={dicePool.length < 10}
+              previewRef={previewRefs[index]}
             />
           ))}
+          <DiceButtonPreviewCanvas
+            key={previewCanvasKey}
+            diceTypes={diceTypes}
+            previewRefs={previewRefs}
+          />
         </div>
 
         <div className="space-y-6">
@@ -96,15 +122,16 @@ export default function DiceRoller() {
               }
             `}} />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-              {dicePool.map((dice, index) => (
+              {dicePool.map((dice, index) => {
+                if (!poolPreviewRefs.current.has(dice.id)) {
+                  poolPreviewRefs.current.set(dice.id, createRef());
+                }
+                const previewRef = poolPreviewRefs.current.get(dice.id);
+                return (
                 <div key={dice.id} className="relative">
                   <DiceScene
-                    dice={dice}
-                    rollSignal={rollSignal}
-                    rollResult={rollResults[index] || null}
-                    onComplete={handleDiceComplete}
                     compact={true}
-                    mountDelay={index * 30}
+                    previewRef={previewRef}
                   />
                   {dicePool.length > 1 && (
                     <button
@@ -135,8 +162,16 @@ export default function DiceRoller() {
                     </button>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
+            <DicePoolPreviewCanvas
+              dicePool={dicePool}
+              rollSignal={rollSignal}
+              rollResults={rollResults}
+              onComplete={handleDiceComplete}
+              previewRefs={poolPreviewRefs.current}
+            />
 
             {/* Roll Button and Total */}
             <div className="flex items-center justify-center gap-3">

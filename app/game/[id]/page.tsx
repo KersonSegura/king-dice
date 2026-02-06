@@ -1886,7 +1886,7 @@ export default function GamePage() {
                               href={item.link || '#'}
                               target="_blank"
                               rel="noopener noreferrer sponsored"
-                              className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs mt-auto"
+                              className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#fbae17] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs mt-auto"
                             >
                               <span>{tGame('buyOnAmazon')}</span>
                               <ExternalLink className="w-3 h-3" />

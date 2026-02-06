@@ -729,7 +729,7 @@ export default function GameNightTrackerPage() {
               </p>
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="bg-[#fbae17] hover:bg-[#e0990f] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                className="bg-[#fbae17] hover:bg-[#fbae17] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
               >
                 {t('signIn')}
               </button>
@@ -1160,7 +1160,7 @@ export default function GameNightTrackerPage() {
               />
               <button
                 onClick={copyShareUrl}
-                className="text-[#fbae17] hover:text-[#e0990f] transition-colors"
+                className="text-[#fbae17] hover:text-[#fbae17] transition-colors"
                 title={tTracker('copyLink')}
               >
                 {shareCopied ? (
@@ -1285,7 +1285,7 @@ export default function GameNightTrackerPage() {
                   setShowColorPicker(false);
                   setPlayerForColorChange(null);
                 }}
-                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors"
+                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#fbae17] transition-colors"
               >
                 {tTracker('saveColor')}
               </button>

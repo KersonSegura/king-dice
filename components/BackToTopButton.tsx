@@ -81,7 +81,7 @@ export default function BackToTopButton() {
       onClick={scrollToTop}
       className={buttonClasses}
       style={{ backgroundColor: '#fbae17' }}
-      onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#e09915'}
+      onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#fbae17'}
       onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#fbae17'}
       aria-label="Back to top"
     >

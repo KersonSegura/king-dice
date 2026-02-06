@@ -5,13 +5,13 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/AppIcon.png",
     "splash": {
+      "image": "./assets/AppIcon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kingdice.app",
@@ -19,26 +19,15 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/AppIcon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.kingdice.app",
-      "versionCode": 1,
-      "usesCleartextTraffic": true,
-      "statusBar": {
-        "translucent": true,
-        "backgroundColor": "transparent"
-      }
+      "versionCode": 1
     },
     "web": {},
-    "plugins": [
-      "expo-router",
-      "expo-asset"
-    ],
+    "plugins": ["expo-router", "expo-asset", ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]],
     "scheme": "kingdice",
-    "extra": {
-      "router": {
-        "origin": false
-      }
-    }
+    "extra": { "router": { "origin": false } }
   }
 }

@@ -213,15 +213,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
 
   return (
     <div 
-      className={embedded ? "h-full bg-white flex flex-col overflow-hidden" : "fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50"}
+      className={embedded ? "flex-1 min-h-0 bg-white flex flex-col overflow-hidden" : "fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50"}
       style={!embedded ? { 
         height: '500px', 
         maxHeight: '500px', 
         minHeight: '500px',
         overflow: 'hidden'
       } : {
-        height: '100%',
-        maxHeight: '100%',
+        minHeight: 0,
         overflow: 'hidden'
       }}
     >
@@ -250,19 +249,24 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         </div>
       )}
 
-      {/* Messages - Fixed height scrollable container */}
+      {/* Messages */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4" 
+        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4"
         style={{ 
           scrollBehavior: 'smooth',
-          minHeight: 0,
-          maxHeight: '100%',
-          height: '100%',
-          overflowY: 'auto',
           overflowX: 'hidden'
         }}
       >
+        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full border border-gray-300 flex-shrink-0 overflow-hidden bg-white">
+            <img src="/DiceBotIcon.svg" alt="Dice-Bot" className="w-full h-full object-cover" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-gray-900 truncate">Dice-Bot</div>
+            <div className="text-xs text-gray-500">AI Assistant</div>
+          </div>
+        </div>
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -326,21 +330,23 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0 relative">
         <div className="flex space-x-2">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me about board games..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#fbae17] focus:border-transparent"
-            disabled={isLoading}
-          />
+          <div className="flex-1 relative">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Ask me about board games..."
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              disabled={isLoading}
+            />
+          </div>
           <button
             onClick={handleSendMessage}
             disabled={!message.trim() || isLoading}
-            className="px-4 py-2 bg-[#fbae17] text-white rounded-lg hover:bg-[#e0990e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>

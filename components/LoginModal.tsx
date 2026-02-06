@@ -191,8 +191,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         setIsLoading(false);
       }
     } else {
-      // Login logic
+      // Login logic - validate empty fields first (no popup)
+      if (!formData.username.trim() || !formData.password) {
+        setError('Please enter username and password');
+        setIsLoading(false);
+        return;
+      }
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
@@ -203,8 +210,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             password: formData.password,
             rememberMe: rememberPassword
           }),
-          credentials: 'include'
+          credentials: 'include',
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -239,32 +248,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           setShowPassword(false);
           setShowConfirmPassword(false);
         } else {
-          let errorMessage = 'Login failed. Please try again.';
-          try {
-            // Check if response is HTML (Cloudflare 522 error)
-            const text = await response.text();
-            if (text.includes('<!DOCTYPE') || text.includes('522') || text.includes('Connection timed out')) {
-              errorMessage = 'Database connection timeout. The database may be temporarily unavailable. Please try again in a few minutes.';
-            } else {
-              try {
-                const errorData = JSON.parse(text);
-                console.log('Login error response:', errorData);
-                errorMessage = errorData.message || errorMessage;
-              } catch (jsonError) {
-                // Not JSON, use the text or default message
-                errorMessage = `Login failed with status ${response.status}. Please try again.`;
-              }
-            }
-          } catch (parseError) {
-            console.error('Failed to parse error response:', parseError);
-            errorMessage = `Login failed with status ${response.status}. Please try again.`;
-          }
-          setError(errorMessage);
+          // Auth failure (401) or other error - show inline red text
+          const isAuthFailure = response.status === 401 || response.status === 400;
+          setError(isAuthFailure ? 'Incorrect username or password' : 'Connection error. Please try again.');
         }
       } catch (error) {
         console.error('Login error:', error);
-        // Check if it's a Cloudflare 522 timeout error
-        if (error instanceof Error && error.message.includes('<!DOCTYPE')) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          setError('Connection timed out. Please try again.');
+        } else if (error instanceof Error && error.message.includes('<!DOCTYPE')) {
           setError('Database connection timeout. The database may be temporarily unavailable. Please try again in a few minutes.');
         } else {
           setError('Network error. Please check your connection and try again.');
@@ -345,7 +337,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 placeholder={isRegistering ? "Enter username" : "Enter username or email"}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
+                required={isRegistering}
               />
             </div>
           </div>
@@ -385,7 +377,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
+                required={isRegistering}
               />
               <button
                 type="button"
@@ -453,7 +445,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           )}
 
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+            <div className="text-red-600 text-sm">
               {error}
             </div>
           )}

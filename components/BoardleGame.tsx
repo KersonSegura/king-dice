@@ -2390,7 +2390,7 @@ export function BoardleGame({}: BoardleGameProps) {
                     />
                     {/* Zoom indicator */}
                     {imageLoaded && (
-                      <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                      <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
                         {gameWon ? tBoardle('fullImage') : tBoardle('zoom', { percent: Math.round(getImageZoomLevel()) })}
                       </div>
                     )}
@@ -2474,7 +2474,7 @@ export function BoardleGame({}: BoardleGameProps) {
                         onClick={() => setShowCluesPopup(true)}
                         className="sm:hidden px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2"
                         style={{ backgroundColor: '#fbae17' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e09d14'}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                       >
                         <Lightbulb className="w-4 h-4" />
@@ -2542,7 +2542,7 @@ export function BoardleGame({}: BoardleGameProps) {
                         onClick={() => setShowCluesPopup(true)}
                         className="sm:hidden px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2"
                         style={{ backgroundColor: '#fbae17' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e09d14'}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                       >
                         <Lightbulb className="w-4 h-4" />
@@ -2601,7 +2601,7 @@ export function BoardleGame({}: BoardleGameProps) {
                          onClick={() => setShowCluesPopup(true)}
                          className="sm:hidden px-4 py-2 text-white rounded-lg transition-colors flex items-center gap-2"
                         style={{ backgroundColor: '#fbae17' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e09d14'}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
                        >
                          <Lightbulb className="w-4 h-4" />
@@ -2690,11 +2690,11 @@ export function BoardleGame({}: BoardleGameProps) {
                 <div className="flex justify-center">
                   {targetGameData?.imageUrl ? (
                                                                  <div 
-                                   className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100 select-none" 
-                                   style={{ width: '500px', height: '400px' }}
-                                  onContextMenu={(e) => e.preventDefault()}
-                                  onDragStart={(e) => e.preventDefault()}
-                                  onDrop={(e) => e.preventDefault()}
+                                  className="relative overflow-hidden rounded-lg shadow-lg bg-gray-100 select-none" 
+                                  style={{ width: '500px', height: '400px' }}
+                                 onContextMenu={(e) => e.preventDefault()}
+                                 onDragStart={(e) => e.preventDefault()}
+                                 onDrop={(e) => e.preventDefault()}
                                 >
                       {!imageLoaded && (
                         <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center z-10">
@@ -2726,7 +2726,7 @@ export function BoardleGame({}: BoardleGameProps) {
                       />
                       {/* Zoom indicator */}
                       {imageLoaded && (
-                        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                        <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
                                       {gameWon ? tBoardle('fullImage') : tBoardle('zoom', { percent: Math.round(getImageZoomLevel()) })}
                         </div>
                       )}

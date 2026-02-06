@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#f5f5f5',
-            backgroundImage: 'linear-gradient(to bottom, #fbae17, #e0990f)',
+            backgroundImage: 'linear-gradient(to bottom, #fbae17, #fbae17)',
             padding: '40px',
           }}
         >

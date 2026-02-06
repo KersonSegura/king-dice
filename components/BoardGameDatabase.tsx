@@ -2839,7 +2839,7 @@ You can use markdown formatting:
                                         href={game.pdfUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#e09915] transition-colors duration-200 shadow-md hover:shadow-lg"
+                                        className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#fbae17] transition-colors duration-200 shadow-md hover:shadow-lg"
                                       >
                                         <Download className="w-4 h-4 mr-2" />
                                         Open PDF Rules

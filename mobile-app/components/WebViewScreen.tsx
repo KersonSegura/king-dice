@@ -19,7 +19,8 @@ type Props = {
   title?: string;
   showHeader?: boolean;
   hideWebHeader?: boolean;
-  padBottom?: boolean;
+  /** Bottom padding in px. true = 80 (default), false = 0, or pass a number. */
+  padBottom?: boolean | number;
   embed?: boolean;
   interceptGameLinks?: boolean;
   disableScrollNav?: boolean;
@@ -117,6 +118,22 @@ const OPEN_CHAT_JS = `
   })();
 `;
 
+function buildBackgroundJs(color: string) {
+  return `
+  (function() {
+    try {
+      var s = document.createElement('style');
+      s.id = 'kd-embed-bg';
+      s.textContent = 'html,body{background:${color}!important;}';
+      var old = document.getElementById('kd-embed-bg');
+      if (old) old.remove();
+      (document.head || document.documentElement).appendChild(s);
+    } catch (e) {}
+    true;
+  })();
+`;
+}
+
 function buildGameLinkInterceptJs() {
   return `
   (function() {
@@ -184,6 +201,7 @@ export default function WebViewScreen({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const webViewRef = useRef<WebView>(null);
   const base = API_BASE_URL.replace(/\/$/, '');
   const logoUri = `${base}/Logo.png`;
   const rawPath = path.startsWith('/') ? path : `/${path}`;
@@ -199,8 +217,6 @@ export default function WebViewScreen({
       try {
         const data = JSON.parse(event.nativeEvent.data);
         if (data?.type === 'boot') {
-          setLoading(false);
-          setLoadError(null);
           return;
         }
         if (data?.type === 'openGame' && data?.id) {
@@ -224,13 +240,16 @@ export default function WebViewScreen({
     !disableScrollNav ? SCROLL_DETECT_JS : '',
   ].filter(Boolean).join('\n') || undefined;
 
+  const pageBg = '#ffffff';
+
   const injectedBeforeContentLoaded = hideWebHeader
-    ? buildHideHeaderJs()
-    : undefined;
+    ? [buildHideHeaderJs(), buildBackgroundJs(pageBg)].join('\n')
+    : buildBackgroundJs(pageBg);
 
   // Load timeout - game pages fetch from Supabase and can take a while
   useEffect(() => {
     setLoadError(null);
+    setLoading(true);
     timeoutRef.current = setTimeout(() => {
       setLoadError('Page took too long to load. Check your connection and try again.');
       setLoading(false);
@@ -245,8 +264,8 @@ export default function WebViewScreen({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    setLoading(false);
     setLoadError(null);
+    setLoading(false);
   }, []);
 
   const handleHttpError = useCallback((syntheticEvent: { nativeEvent: { description: string; statusCode: number } }) => {
@@ -265,11 +284,6 @@ export default function WebViewScreen({
     setReloadKey((k) => k + 1);
   }, []);
 
-  const handleLoadProgress = useCallback((event: { nativeEvent: { progress: number } }) => {
-    if (event.nativeEvent.progress > 0.2) {
-      setLoading(false);
-    }
-  }, []);
 
   const shouldInterceptGameLink = useCallback(
     (requestUrl: string) => {
@@ -294,7 +308,8 @@ export default function WebViewScreen({
     <View
       style={[
         styles.container,
-        padBottom && styles.padBottom,
+        padBottom !== false && (padBottom === true ? styles.padBottom : { paddingBottom: typeof padBottom === 'number' ? padBottom : 80 }),
+        { backgroundColor: pageBg },
       ]}
     >
       {showHeader && (
@@ -309,7 +324,7 @@ export default function WebViewScreen({
         </View>
       )}
       {(loading || loadError) && (
-        <View style={styles.loadingOverlay}>
+        <View style={[styles.loadingOverlay, { backgroundColor: pageBg }]}>
           {loadError ? (
             <>
               <Ionicons name="alert-circle-outline" size={48} color="#6b7280" style={{ marginBottom: 16 }} />
@@ -331,9 +346,10 @@ export default function WebViewScreen({
         </View>
       )}
       <WebView
+        ref={webViewRef}
         key={reloadKey}
         source={{ uri, headers }}
-        style={[styles.webview, (loading || loadError) && styles.webviewHidden]}
+        style={[styles.webview, { backgroundColor: pageBg }, (loading || loadError) && styles.webviewHidden]}
         javaScriptEnabled
         domStorageEnabled
         cacheEnabled
@@ -345,7 +361,11 @@ export default function WebViewScreen({
         onLoadStart={() => { setLoading(true); setLoadError(null); }}
         onLoadEnd={handleLoadEnd}
         onHttpError={handleHttpError}
-        onLoadProgress={handleLoadProgress}
+        onNavigationStateChange={(navState) => {
+          if (!navState.loading) {
+            setLoading(false);
+          }
+        }}
         onShouldStartLoadWithRequest={(request) => {
           if (!interceptGameLinks) return true;
           if (shouldInterceptGameLink(request.url)) return false;
@@ -358,7 +378,7 @@ export default function WebViewScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  container: { flex: 1, backgroundColor: '#ffffff' },
   padBottom: { paddingBottom: 80 },
   header: {
     flexDirection: 'row',
@@ -385,7 +405,13 @@ const styles = StyleSheet.create({
     height: 80,
     marginBottom: 24,
   },
-  loadingText: { fontSize: 16, color: '#6b7280' },
+  loadingText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    paddingHorizontal: 24,
+    maxWidth: 320,
+  },
   webviewHidden: { opacity: 0 },
   retryBtn: {
     marginTop: 16,

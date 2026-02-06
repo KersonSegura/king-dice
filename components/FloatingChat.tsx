@@ -1159,7 +1159,7 @@ export default function FloatingChat() {
           isChatOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         } ${
           unreadCount > 0 
-            ? 'bg-[#fbae17] hover:bg-[#e09915]' 
+            ? 'bg-[#fbae17] hover:bg-[#fbae17]' 
             : 'bg-blue-500 hover:bg-blue-600'
         }`}
       >

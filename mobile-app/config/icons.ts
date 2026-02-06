@@ -42,6 +42,7 @@ export const ICONS = {
   Settings: 'SettingsIcon.svg',
   SignOut: 'SingOutIcon.svg',
   DiceLogo: 'DiceLogo.svg',
+  AppIcon: 'AppIcon.svg',
   DefaultAvatar: 'DefaultDiceAvatar.svg',
 } as const;
 

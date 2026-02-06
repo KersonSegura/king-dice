@@ -1,9 +1,9 @@
 /**
  * Login screen - uses 3D D6 dice from dice-logo (same as Dice Roller).
- * Same icons as web (ProfileIconOff.svg, LockIcon.svg) and classic Google G.
+ * Same icons as web (ProfileIconOn.svg, LockIcon.svg) and classic Google G.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,17 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { API_BASE_URL } from '../config/api';
-import SvgIcon from '../components/SvgIcon';
+import { ProfileIconOnSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
 import GoogleSignInWebView from '../components/GoogleSignInWebView';
-import NativeDiceViewer from '../components/NativeDiceViewer';
+import NativeDiceViewer, { NativeDiceViewerRef } from '../components/NativeDiceViewer';
 import { apiClient } from '../lib/api-client';
+
+const DRAG_SENSITIVITY = 0.025;
 
 const base = typeof API_BASE_URL === 'string' ? API_BASE_URL.replace(/\/$/, '') : 'https://kingdice.gg';
 const GRAY_500 = '#6b7280';
@@ -39,6 +42,24 @@ export default function LoginScreen() {
   const [showGoogleWebView, setShowGoogleWebView] = useState(false);
   const { login, verifyTwoFactor, verifyAuth } = useAuth();
   const router = useRouter();
+  const diceViewerRef = useRef<NativeDiceViewerRef>(null);
+  const lastTranslationX = useRef(0);
+
+  const dicePanGesture = useMemo(() => {
+    return Gesture.Pan()
+      .runOnJS(true)
+      .onStart(() => {
+        lastTranslationX.current = 0;
+      })
+      .onUpdate((e) => {
+        const delta = (e.translationX - lastTranslationX.current) * DRAG_SENSITIVITY;
+        lastTranslationX.current = e.translationX;
+        diceViewerRef.current?.addRotation(delta);
+      })
+      .onFinalize(() => {
+        lastTranslationX.current = 0;
+      });
+  }, []);
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -132,22 +153,27 @@ export default function LoginScreen() {
         onSuccess={handleGoogleSuccess}
         url={mobileDoneUrl}
       />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.pack}>
-          <View style={styles.diceEmbedWrap}>
-            <NativeDiceViewer />
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+        <View style={styles.contentGroup}>
+          <View style={styles.diceContainer} collapsable={false}>
+            <NativeDiceViewer ref={diceViewerRef} />
+            <GestureDetector gesture={dicePanGesture}>
+              <View style={styles.diceTouchLayer} collapsable={false} />
+            </GestureDetector>
           </View>
+          <View style={styles.pack}>
           <Text style={styles.title}>King Dice</Text>
           <Text style={styles.subtitle}>Sign In</Text>
 
           <View style={styles.inputWrap}>
             <View style={styles.inputIcon}>
-              <SvgIcon name="ProfileOff" size={20} />
+              <ProfileIconOnSvg size={20} />
             </View>
             <TextInput
               style={styles.input}
@@ -161,7 +187,7 @@ export default function LoginScreen() {
 
           <View style={styles.inputWrap}>
             <View style={styles.inputIcon}>
-              <SvgIcon name="Lock" size={20} />
+              <LockIconSvg size={20} />
             </View>
             <TextInput
               style={styles.input}
@@ -202,8 +228,10 @@ export default function LoginScreen() {
             <Text style={styles.linkText}>Don't have an account? </Text>
             <Text style={styles.linkHighlight}>Register</Text>
           </TouchableOpacity>
+          </View>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </>
   );
 }
@@ -213,20 +241,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
+  contentGroup: {
+    alignItems: 'center',
   },
   pack: {
     width: '100%',
     maxWidth: 360,
     alignSelf: 'center',
   },
-  diceEmbedWrap: {
+  diceContainer: {
     width: '100%',
     height: 200,
+    marginBottom: 4,
+    position: 'relative',
+  },
+  diceTouchLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   title: {
     fontSize: 32,
@@ -258,6 +298,10 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginLeft: 12,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   input: {
     flex: 1,

@@ -503,7 +503,7 @@ export default function CatanMapGeneratorPage() {
                      style={{
                        backgroundColor: '#fbae17'
                      }}
-                     onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#e69c0f')}
+                     onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#fbae17')}
                      onMouseLeave={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#fbae17')}
                      onClick={loadMoreMaps}
                      disabled={isLoadingMore}

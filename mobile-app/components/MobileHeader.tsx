@@ -22,16 +22,17 @@ interface MenuItem {
   href?: string;
   section?: string;
   discord?: boolean;
+  iconSize?: number;
 }
 
 const TOOLS_ITEMS: MenuItem[] = [
-  { label: 'My Dice', svgIcon: 'MyDice', href: '/my-dice' },
-  { label: 'Game Night Tracker', svgIcon: 'GameNightTracker', href: '/game-night-tracker' },
-  { label: 'Catan Maps', svgIcon: 'Catan', href: '/catan-map-generator' },
-  { label: 'Pixel Canvas', svgIcon: 'PixelCanvas', href: '/pixel-canvas' },
-  { label: 'Boardle', svgIcon: 'Boardle', href: '/boardle' },
-  { label: 'Dice Roller', svgIcon: 'DiceRoller', href: '/dice-roller' },
-  { label: 'Digital Corner', svgIcon: 'DigitalCorner', href: '/digital-corner' },
+  { label: 'My Dice', svgIcon: 'MyDice', href: '/my-dice', iconSize: 28 },
+  { label: 'Game Night Tracker', svgIcon: 'GameNightTracker', href: '/game-night-tracker', iconSize: 28 },
+  { label: 'Catan Maps', svgIcon: 'Catan', href: '/catan-map-generator', iconSize: 28 },
+  { label: 'Pixel Canvas', svgIcon: 'PixelCanvas', href: '/pixel-canvas', iconSize: 22 },
+  { label: 'Boardle', svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
+  { label: 'Dice Roller', svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
+  { label: 'Digital Corner', svgIcon: 'DigitalCorner', href: '/digital-corner', iconSize: 28 },
 ];
 
 const HEADER_HEIGHT = 56;
@@ -193,16 +194,6 @@ export default function MobileHeader() {
                     <View style={styles.menuIconWrap}><SvgIcon name="Settings" size={24} /></View>
                     <Text style={styles.menuItemText}>Settings</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={async () => {
-                      setMenuOpen(false);
-                      await logout();
-                    }}
-                  >
-                    <View style={styles.menuIconWrap}><SvgIcon name="SignOut" size={24} /></View>
-                    <Text style={[styles.menuItemText, { color: '#ef4444' }]}>Logout</Text>
-                  </TouchableOpacity>
                 </>
               )}
             </View>
@@ -233,7 +224,7 @@ export default function MobileHeader() {
                   onPress={() => handleNavigation(item.href)}
                 >
                   <View style={styles.toolsIconWrap}>
-                    <SvgIcon name={item.svgIcon!} size={20} color="#ffffff" />
+                    <SvgIcon name={item.svgIcon!} size={item.iconSize || 20} color="#ffffff" />
                   </View>
                   <Text style={styles.menuItemText}>{item.label}</Text>
                 </TouchableOpacity>

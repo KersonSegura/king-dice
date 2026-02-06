@@ -1644,7 +1644,7 @@ export default function PostDetailPage() {
                   </Link>
                   <Link
                     href="/community-gallery"
-                    className="text-xs sm:text-sm text-[#fbae17] hover:text-[#e69c0f] font-medium"
+                    className="text-xs sm:text-sm text-[#fbae17] hover:text-[#fbae17] font-medium"
                   >
                     {t("seeMore")}
                   </Link>

@@ -17,7 +17,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import SvgIcon from '../components/SvgIcon';
+import { ProfileIconOnSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
@@ -26,7 +26,7 @@ import GoogleSignInWebView from '../components/GoogleSignInWebView';
 import { apiClient } from '../lib/api-client';
 
 const PRIMARY = '#fbae17';
-const PRIMARY_DARK = '#e09d14';
+const PRIMARY_DARK = '#fbae17';
 const GRAY_700 = '#374151';
 const GRAY_500 = '#6b7280';
 const GRAY_400 = '#9ca3af';
@@ -204,11 +204,11 @@ export default function RegisterScreen() {
         >
           <Text style={styles.title}>Create Account</Text>
 
-        {/* Username - exact SVG: ProfileIconOff.svg */}
+        {/* Username - ProfileIconOn.svg (bundled) */}
         <Text style={styles.label}>Username</Text>
         <View style={styles.inputWrap}>
           <View style={styles.inputIcon}>
-            <SvgIcon name="ProfileOff" size={20} />
+            <ProfileIconOnSvg size={20} />
           </View>
           <TextInput
             style={styles.input}
@@ -236,11 +236,11 @@ export default function RegisterScreen() {
           />
         </View>
 
-        {/* Password - exact SVG: LockIcon.svg */}
+        {/* Password - LockIcon.svg (bundled) */}
         <Text style={styles.label}>Password</Text>
         <View style={styles.inputWrap}>
           <View style={styles.inputIcon}>
-            <SvgIcon name="Lock" size={20} />
+            <LockIconSvg size={20} />
           </View>
           <TextInput
             style={[styles.input, styles.inputWithRight]}
@@ -259,11 +259,11 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Confirm Password - exact SVG: LockIcon.svg */}
+        {/* Confirm Password - LockIcon.svg (bundled) */}
         <Text style={styles.label}>Confirm Password</Text>
         <View style={styles.inputWrap}>
           <View style={styles.inputIcon}>
-            <SvgIcon name="Lock" size={20} />
+            <LockIconSvg size={20} />
           </View>
           <TextInput
             style={[styles.input, styles.inputWithRight]}
@@ -377,6 +377,10 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginLeft: 12,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   input: {
     flex: 1,

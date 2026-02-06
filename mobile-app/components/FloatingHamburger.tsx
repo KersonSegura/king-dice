@@ -19,6 +19,7 @@ interface MenuItem {
   href?: string;
   section?: string;
   discord?: boolean;
+  iconSize?: number;
 }
 
 export default function FloatingHamburger() {
@@ -51,8 +52,8 @@ export default function FloatingHamburger() {
     { label: 'Game Night Tracker', svgIcon: 'GameNightTracker', href: '/game-night-tracker' },
     { label: 'Catan Maps', svgIcon: 'Catan', href: '/catan-map-generator' },
     { label: 'Pixel Canvas', svgIcon: 'PixelCanvas', href: '/pixel-canvas' },
-    { label: 'Boardle', svgIcon: 'Boardle', href: '/boardle' },
-    { label: 'Dice Roller', svgIcon: 'DiceRoller', href: '/dice-roller' },
+    { label: 'Boardle', svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
+    { label: 'Dice Roller', svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
     { label: 'Digital Corner', svgIcon: 'DigitalCorner', href: '/digital-corner' },
     { label: 'Join Discord', ionicon: 'logo-discord', href: 'https://discord.gg/3xh7yUnnnW', discord: true },
   ];
@@ -97,7 +98,7 @@ export default function FloatingHamburger() {
                   >
                     {item.svgIcon && (
                       <View style={styles.menuIconWrap}>
-                        <SvgIcon name={item.svgIcon} size={24} />
+                        <SvgIcon name={item.svgIcon} size={item.iconSize || 24} />
                       </View>
                     )}
                     {item.ionicon && (
@@ -126,16 +127,6 @@ export default function FloatingHamburger() {
                   <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/settings' as any)}>
                     <View style={styles.menuIconWrap}><SvgIcon name="Settings" size={24} /></View>
                     <Text style={styles.menuItemText}>Settings</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={async () => {
-                      setOpen(false);
-                      await logout();
-                    }}
-                  >
-                    <View style={styles.menuIconWrap}><SvgIcon name="SignOut" size={24} /></View>
-                    <Text style={[styles.menuItemText, { color: '#ef4444' }]}>Logout</Text>
                   </TouchableOpacity>
                 </>
               )}

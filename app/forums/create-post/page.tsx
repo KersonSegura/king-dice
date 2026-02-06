@@ -1018,7 +1018,7 @@ export default function CreatePostPage() {
                   type="button"
                   onClick={() => setPostType('text')}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-                    postType === 'text' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-gray-50'
+                    postType === 'text' ? 'bg-primary-500 text-dark-900' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {tf('postTypeText', 'Text')}
@@ -1027,7 +1027,7 @@ export default function CreatePostPage() {
                   type="button"
                   onClick={() => setPostType('poll')}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium ${
-                    postType === 'poll' ? 'bg-primary-600 text-white' : 'text-gray-700 hover:bg-gray-50'
+                    postType === 'poll' ? 'bg-primary-500 text-dark-900' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {tf('postTypePoll', 'Poll')}
@@ -1114,7 +1114,7 @@ export default function CreatePostPage() {
                   <div className="mt-3 flex items-center justify-end">
                     <button
                       type="button"
-                      className="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-700 disabled:opacity-50"
+                      className="px-3 py-2 rounded-lg bg-primary-500 text-dark-900 text-sm hover:bg-primary-600 disabled:opacity-50"
                       disabled={pollOptions.length >= 6}
                       onClick={() => setPollOptions(prev => [...prev, { id: newOptionId(), text: '' }])}
                     >
@@ -1226,7 +1226,7 @@ export default function CreatePostPage() {
                       </button>
                       <button
                         type="button"
-                        className="px-3 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-700 disabled:opacity-50"
+                        className="px-3 py-2 rounded-lg bg-primary-500 text-dark-900 text-sm hover:bg-primary-600 disabled:opacity-50"
                         disabled={!linkUrl.trim()}
                         onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
                         onClick={handleInsertLink}
@@ -1309,7 +1309,7 @@ export default function CreatePostPage() {
             <button
               type="button"
               onClick={handlePublish}
-              className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-primary-500 text-white font-bold hover:bg-primary-600 inline-flex items-center justify-center gap-2 disabled:opacity-50"
               disabled={loading}
             >
               <Send className="w-4 h-4" />

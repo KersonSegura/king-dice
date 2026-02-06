@@ -1,10 +1,11 @@
 /**
  * Tab navigation – same icons as website (SVGs).
  * Tabs: Home, Feed, Chat, Collection, Profile.
- * No auth loading screen – WebViewScreen's loading overlay is the only loading UI.
+ * Shows loading screen until auth is known – avoids main page flash before login.
  */
 
 import { Tabs, useRouter } from 'expo-router';
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEffect } from 'react';
 
@@ -18,10 +19,14 @@ export default function TabsLayout() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Don't block on auth loading – render tabs immediately so WebViewScreen
-  // shows our single loading overlay. Auth redirect happens when verify completes.
-  if (!isLoading && !isAuthenticated) {
-    return null;
+  // Don't show main content until authenticated – prevents flash of main page before login
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#fbae17" />
+        <Text style={styles.loadingText}>{isLoading ? 'Loading…' : 'Redirecting…'}</Text>
+      </View>
+    );
   }
 
   return (
@@ -39,3 +44,17 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6b7280',
+  },
+});

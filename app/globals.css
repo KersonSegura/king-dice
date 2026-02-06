@@ -101,7 +101,7 @@
     margin: 0;
     padding: 0;
     width: 100%;
-    background-color: #111827; /* gray-900: prevents white flash on iOS overscroll */
+    background-color: #ffffff;
     /* overflow-x: hidden; */ /* Commented out - this was hiding right side content */
     /* height: 100%; */ /* Temporarily commented out - this might be preventing scrolling */
   }
@@ -132,6 +132,11 @@
   [class*="fixed"][class*="bottom-"][class*="right-"] {
     position: fixed !important;
   }
+}
+
+/* Embed (mobile WebView): keep chat subheader below app header */
+body.embed .chat-page {
+  padding-top: calc(var(--kd-safe-area-inset-top, 0px) + 56px);
 }
 
 .mobile-main-container {

@@ -2,10 +2,12 @@
  * Root layout for Expo Router
  * Sets up navigation and providers
  */
-import './polyfills';
+import '../polyfills';
+import 'react-native-gesture-handler';
 
 import { Stack, usePathname } from 'expo-router';
-import { AuthProvider } from '../contexts/AuthContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ScrollContextProvider, useScrollNav } from '../contexts/ScrollContext';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
@@ -19,8 +21,12 @@ function LayoutContent() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { navVisible } = useScrollNav();
+  const { isAuthenticated } = useAuth();
+  // Hide header/nav on login/register OR when not authenticated (loading/redirect phase)
   const hideNav =
-    pathname?.startsWith('/login') || pathname?.startsWith('/register');
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
+    !isAuthenticated;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
   const contentPaddingTop = hideNav ? 0 : (navVisible ? headerHeight : 0);
 
@@ -58,12 +64,14 @@ function LayoutContent() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <ScrollContextProvider>
-          <LayoutContent />
-        </ScrollContextProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <ScrollContextProvider>
+            <LayoutContent />
+          </ScrollContextProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

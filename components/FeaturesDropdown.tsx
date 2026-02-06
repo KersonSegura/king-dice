@@ -53,49 +53,49 @@ export default function FeaturesDropdown() {
       href: '/my-dice',
       icon: '/MyDiceIcon.svg',
       color: '#fbae17',
-      hoverColor: '#e0990f'
+      hoverColor: '#fbae17'
     }] : []),
     {
       name: t('gameNightTracker'),
       href: '/game-night-tracker',
       icon: '/GameNightTrackerIconWhite.svg',
       color: '#fbae17',
-      hoverColor: '#e0990f'
+      hoverColor: '#fbae17'
     },
     {
       name: t('catanMaps'),
       href: '/catan-map-generator',
       icon: '/CatanIcon.svg',
       color: '#fbae17',
-      hoverColor: '#e0990f'
+      hoverColor: '#fbae17'
     },
     {
       name: t('pixelCanvas'),
       href: '/pixel-canvas',
       icon: null, // Custom icon
       color: '#fbae17',
-      hoverColor: '#e0990f'
+      hoverColor: '#fbae17'
     },
     {
       name: t('boardle'),
       href: '/boardle',
       icon: '/BoardleIcon.svg',
       color: '#fbae17',
-      hoverColor: '#e0990f'
+      hoverColor: '#fbae17'
     },
     {
       name: t('diceRoller'),
       href: '/dice-roller',
       icon: '/DiceRollerIcon.svg',
       color: '#fbae17',
-      hoverColor: '#e0990f'
+      hoverColor: '#fbae17'
     },
     {
       name: t('digitalCorner'),
       href: '/digital-corner',
       icon: '/PCIcon.svg',
       color: '#fbae17',
-      hoverColor: '#e0990f'
+      hoverColor: '#fbae17'
     }
   ];
 
@@ -110,7 +110,7 @@ export default function FeaturesDropdown() {
       <button
         className="hidden md:flex items-center space-x-2 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium hover:opacity-90"
         style={{ backgroundColor: '#fbae17' }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0990f'}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fbae17'}
       >
         <Star className="w-5 h-5" fill="white" />

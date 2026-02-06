@@ -224,8 +224,8 @@ export default function ShopPageClient() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 pb-20 w-full min-w-0">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-4">
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center space-x-3 mb-4">
             <img
               src="/ShopIcon.svg"
               alt="Shop Icon"
@@ -263,7 +263,7 @@ export default function ShopPageClient() {
                   onClick={() => setSelectedCategory(null)}
                   className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors ${
                     selectedCategory === null
-                      ? 'bg-[#ffb905] text-white'
+                      ? 'bg-[#fbae17] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                   }`}
                 >
@@ -273,7 +273,7 @@ export default function ShopPageClient() {
                   onClick={() => setShowCategoryModal(true)}
                   className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-between gap-2 min-w-0 ${
                     selectedCategory !== null
-                      ? 'bg-[#ffb905] text-white'
+                      ? 'bg-[#fbae17] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                   }`}
                 >
@@ -311,7 +311,7 @@ export default function ShopPageClient() {
                             }}
                             className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors mb-1 ${
                               selectedCategory === category.id
-                                ? 'bg-[#ffb905] text-white'
+                                ? 'bg-[#fbae17] text-white'
                                 : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                             }`}
                           >
@@ -416,7 +416,7 @@ export default function ShopPageClient() {
                       href={item.link || '#'}
                       target="_blank"
                       rel="noopener noreferrer sponsored"
-                      className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#e09915] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs mt-auto"
+                      className="w-full inline-flex items-center justify-center bg-[#fbae17] hover:bg-[#fbae17] text-white font-medium py-1.5 px-3 rounded-lg transition-colors space-x-1.5 text-xs mt-auto"
                     >
                       <span>{tShop('buyOnAmazon')}</span>
                       <ExternalLink className="w-3 h-3" />

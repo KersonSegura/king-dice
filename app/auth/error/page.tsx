@@ -77,7 +77,7 @@ function AuthErrorContent() {
           <div className="space-y-3">
             <Link
               href="/"
-              className="block w-full bg-[#fbae17] hover:bg-[#e0990f] text-white font-semibold py-2 px-4 rounded-lg transition-colors text-center"
+              className="block w-full bg-[#fbae17] hover:bg-[#fbae17] text-white font-semibold py-2 px-4 rounded-lg transition-colors text-center"
             >
               Go to Home
             </Link>

@@ -698,7 +698,7 @@ export default function UserTrackerPage() {
                   setIsEditMode(true);
                 });
               }}
-              className="px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#e0990f] transition-colors"
+              className="px-4 py-2 bg-[#fbae17] text-white rounded-md hover:bg-[#fbae17] transition-colors"
             >
               {tTracker('createTracker') || 'Create Tracker'}
             </button>
@@ -1210,7 +1210,7 @@ export default function UserTrackerPage() {
               />
               <button
                 onClick={copyShareUrl}
-                className="text-[#fbae17] hover:text-[#e0990f] transition-colors"
+                className="text-[#fbae17] hover:text-[#fbae17] transition-colors"
                 title={tTracker('copyLink')}
               >
                 {shareCopied ? (
@@ -1333,7 +1333,7 @@ export default function UserTrackerPage() {
                   setShowColorPicker(false);
                   setPlayerForColorChange(null);
                 }}
-                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#e0990f] transition-colors"
+                className="flex-1 px-4 py-2 bg-[#fbae17] text-white rounded-none sm:rounded-md hover:bg-[#fbae17] transition-colors"
               >
                 {tTracker('saveColor')}
               </button>

@@ -26,7 +26,7 @@ export default function VideoLinks({ videoUrls, gameName }: VideoLinksProps) {
               href={video.originalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#e09915] transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-4 py-2 bg-[#fbae17] text-white rounded-lg text-sm font-medium hover:bg-[#fbae17] transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               <Play className="w-4 h-4 mr-2" />
               Video Tutorial {videos.length > 1 ? `${index + 1}` : ''}
