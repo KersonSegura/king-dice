@@ -17,7 +17,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ProfileIconOnSvg, LockIconSvg } from '../components/BundledAuthIcons';
+import { ProfileIconOffSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
@@ -204,11 +204,11 @@ export default function RegisterScreen() {
         >
           <Text style={styles.title}>Create Account</Text>
 
-        {/* Username - ProfileIconOn.svg (bundled) */}
+        {/* Username - ProfileIconOff.svg (bundled) */}
         <Text style={styles.label}>Username</Text>
         <View style={styles.inputWrap}>
           <View style={styles.inputIcon}>
-            <ProfileIconOnSvg size={20} />
+            <ProfileIconOffSvg size={20} />
           </View>
           <TextInput
             style={styles.input}

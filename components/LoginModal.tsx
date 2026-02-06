@@ -199,7 +199,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       }
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
@@ -318,7 +318,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4" noValidate>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {isRegistering ? 'Username' : 'Username or Email'}
@@ -334,7 +334,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <input
                 type="text"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) => { setFormData({ ...formData, username: e.target.value }); setError(''); }}
                 placeholder={isRegistering ? "Enter username" : "Enter username or email"}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required={isRegistering}
@@ -375,7 +375,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <input
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setError(''); }}
                 className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required={isRegistering}
               />

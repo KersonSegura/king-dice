@@ -21,11 +21,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { username, password, rememberMe } = body;
+    const username = typeof body.username === 'string' ? body.username.trim() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    const rememberMe = body.rememberMe;
 
     console.log('🔐 Login attempt for:', username);
 
-    // Validate input
     if (!username || !password) {
       return NextResponse.json(
         { message: 'Username and password are required' },
@@ -33,7 +34,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Authenticate user using secure authentication
     const authResult = await authenticateUser(username, password);
     
     console.log('🔐 Auth result:', { success: authResult.success, requiresTwoFactor: authResult.requiresTwoFactor });

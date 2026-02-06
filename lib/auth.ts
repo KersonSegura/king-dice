@@ -90,41 +90,29 @@ export async function authenticateUser(identifier: string, password: string): Pr
     console.log('🔐 authenticateUser: Starting authentication for:', identifier);
     console.log('🔐 Checking Supabase connection...');
     
-    // Find user by username or email with retry logic (case-insensitive)
+    // Find user by username or email (case-insensitive) - try username first, then email
     console.log('🔍 Searching for user:', identifier);
-    // Use case-insensitive matching for both username and email
-    // Try username first (case-insensitive)
     const usernameResult = await executeSupabaseQuery(
       () => supabaseAdmin
         .from('users')
-        .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled, isVerified')
-        .ilike('username', identifier)
+        .select('id, username, email, avatar, password_hash, isAdmin, level, xp, twoFactorEnabled, isVerified')
+        .ilike('username', identifier.trim())
         .limit(1),
-      {
-        maxRetries: 2,
-        baseDelay: 400,
-        timeout: 15000
-      }
+      { maxRetries: 0, timeout: 5000 }
     );
-    
+
     let users, error;
-    // If found by username, use that result
     if (!usernameResult.error && usernameResult.data && usernameResult.data.length > 0) {
       users = usernameResult.data;
       error = null;
     } else {
-      // If not found by username, try email (case-insensitive)
       const emailResult = await executeSupabaseQuery(
         () => supabaseAdmin
           .from('users')
-          .select('id, username, email, avatar, passwordHash, isAdmin, level, xp, twoFactorEnabled, isVerified')
-          .ilike('email', identifier)
+          .select('id, username, email, avatar, password_hash, isAdmin, level, xp, twoFactorEnabled, isVerified')
+          .ilike('email', identifier.trim())
           .limit(1),
-        {
-          maxRetries: 2,
-          baseDelay: 400,
-          timeout: 15000
-        }
+        { maxRetries: 0, timeout: 5000 }
       );
       users = emailResult.data;
       error = emailResult.error;
@@ -157,8 +145,8 @@ export async function authenticateUser(identifier: string, password: string): Pr
     const user = users[0];
     console.log('✅ User found:', user.username, 'ID:', user.id);
     
-    // Check if password hash exists (for existing users without hashed passwords)
-    if (!user.passwordHash) {
+    const passwordHash = user.password_hash ?? user.passwordHash;
+    if (!passwordHash) {
       console.log('❌ User has no password hash');
       return {
         success: false,
@@ -167,8 +155,7 @@ export async function authenticateUser(identifier: string, password: string): Pr
     }
 
     console.log('🔍 Verifying password...');
-    // Verify password
-    const isValidPassword = await comparePassword(password, user.passwordHash);
+    const isValidPassword = await comparePassword(password.trim(), passwordHash);
     if (!isValidPassword) {
       console.log('❌ Password verification failed');
       return {

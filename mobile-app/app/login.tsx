@@ -1,6 +1,6 @@
 /**
  * Login screen - uses 3D D6 dice from dice-logo (same as Dice Roller).
- * Same icons as web (ProfileIconOn.svg, LockIcon.svg) and classic Google G.
+ * Same icons as web (ProfileIconOff.svg, LockIcon.svg) and classic Google G.
  */
 
 import { useState, useRef, useMemo } from 'react';
@@ -14,11 +14,12 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { API_BASE_URL } from '../config/api';
-import { ProfileIconOnSvg, LockIconSvg } from '../components/BundledAuthIcons';
+import { ProfileIconOffSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
 import GoogleSignInWebView from '../components/GoogleSignInWebView';
 import NativeDiceViewer, { NativeDiceViewerRef } from '../components/NativeDiceViewer';
@@ -34,6 +35,8 @@ const GRAY_300 = '#d1d5db';
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twoFactorUserId, setTwoFactorUserId] = useState<string | null>(null);
@@ -62,8 +65,9 @@ export default function LoginScreen() {
   }, []);
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert('Error', 'Please enter username and password');
+    setError('');
+    if (!username.trim() || !password) {
+      setError('Please enter username and password');
       return;
     }
 
@@ -75,8 +79,10 @@ export default function LoginScreen() {
         return;
       }
       setTimeout(() => router.replace('/(tabs)'), 50);
-    } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials');
+    } catch (err: any) {
+      setError(err?.message?.includes('timeout') || err?.message?.includes('Network')
+        ? err.message
+        : 'Incorrect username or password');
     } finally {
       setLoading(false);
     }
@@ -173,14 +179,14 @@ export default function LoginScreen() {
 
           <View style={styles.inputWrap}>
             <View style={styles.inputIcon}>
-              <ProfileIconOnSvg size={20} />
+              <ProfileIconOffSvg size={20} />
             </View>
             <TextInput
               style={styles.input}
               placeholder="Username or email"
               placeholderTextColor={GRAY_500}
               value={username}
-              onChangeText={setUsername}
+              onChangeText={(v) => { setUsername(v); setError(''); }}
               autoCapitalize="none"
             />
           </View>
@@ -190,14 +196,25 @@ export default function LoginScreen() {
               <LockIconSvg size={20} />
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, styles.inputWithRight]}
               placeholder="Password"
               placeholderTextColor={GRAY_500}
               value={password}
-              onChangeText={setPassword}
-              secureTextEntry
+              onChangeText={(v) => { setPassword(v); setError(''); }}
+              secureTextEntry={!showPassword}
             />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={GRAY_500} />
+            </TouchableOpacity>
           </View>
+
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
 
           {loading ? (
             <ActivityIndicator size="large" color="#fbae17" style={styles.loader} />
@@ -295,6 +312,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     backgroundColor: '#fff',
+    position: 'relative',
   },
   inputIcon: {
     marginLeft: 12,
@@ -376,5 +394,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#fbae17',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  inputWithRight: {
+    paddingRight: 44,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    padding: 4,
   },
 });
