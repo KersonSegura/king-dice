@@ -98,7 +98,7 @@ export async function authenticateUser(identifier: string, password: string): Pr
         .select('id, username, email, avatar, password_hash, isAdmin, level, xp, twoFactorEnabled, isVerified')
         .ilike('username', identifier.trim())
         .limit(1),
-      { maxRetries: 0, timeout: 5000 }
+      { maxRetries: 1, timeout: 10000 }
     );
 
     let users, error;
@@ -112,7 +112,7 @@ export async function authenticateUser(identifier: string, password: string): Pr
           .select('id, username, email, avatar, password_hash, isAdmin, level, xp, twoFactorEnabled, isVerified')
           .ilike('email', identifier.trim())
           .limit(1),
-        { maxRetries: 0, timeout: 5000 }
+        { maxRetries: 1, timeout: 10000 }
       );
       users = emailResult.data;
       error = emailResult.error;

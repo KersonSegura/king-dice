@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { apiClient } from '../lib/api-client';
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS } from '../config/api';
 
 interface User {
   id: string;
@@ -36,7 +36,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOGIN_TIMEOUT_MS = 5000;
+const LOGIN_TIMEOUT_MS = 20000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -83,41 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string, rememberMe = false): Promise<LoginRequires2FA | void> => {
-    const base = API_BASE_URL.replace(/\/$/, '');
-    const url = `${base}${API_ENDPOINTS.AUTH.LOGIN}`;
-    const body = JSON.stringify({ username, password, rememberMe });
-
-    const controller = new AbortController();
-    const to = setTimeout(() => controller.abort(), LOGIN_TIMEOUT_MS);
-
-    const req = new Request(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body,
-      signal: controller.signal,
-    });
-
-    let res: Response;
-    try {
-      res = await fetch(req);
-    } catch (err: any) {
-      clearTimeout(to);
-      const isAbort = err?.name === 'AbortError' || /abort/i.test(err?.message || '');
-      throw new Error(isAbort ? 'Connection timed out. Please check your network and try again.' : (err?.message || 'Network error'));
-    }
-    clearTimeout(to);
-
-    const text = await res.text();
-    let data: { user?: User; token?: string; message?: string; requiresTwoFactor?: boolean; userId?: string };
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch {
-      throw new Error(res.ok ? 'Invalid response from server' : text || `HTTP ${res.status}`);
-    }
-
-    if (!res.ok) {
-      throw new Error(data.message || `Login failed (${res.status})`);
-    }
+    // Use apiClient (same as register, same as website flow) - ensures correct base URL
+    const data = await apiClient.post<{ user?: User; token?: string; message?: string; requiresTwoFactor?: boolean; userId?: string }>(
+      API_ENDPOINTS.AUTH.LOGIN,
+      { username: username.trim(), password, rememberMe },
+      { timeout: LOGIN_TIMEOUT_MS }
+    );
 
     if (data.requiresTwoFactor && data.userId) {
       return { requiresTwoFactor: true, userId: data.userId };
