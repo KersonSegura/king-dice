@@ -436,7 +436,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     localStorage.removeItem('kingdice_saved_password');
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary-500 focus:ring-primary-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-password" className="ml-2 block text-sm text-gray-700">
                 Remember my password
@@ -477,7 +477,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="w-full bg-primary-500 text-white py-2 px-4 rounded-md hover:bg-primary-500/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
               <>
@@ -561,7 +561,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               setIsLoading(false);
             }}
             disabled={isLoading}
-            className="text-primary-600 hover:text-primary-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-primary-500 hover:text-primary-500/90 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isRegistering 
               ? 'Already have an account? Sign in' 
