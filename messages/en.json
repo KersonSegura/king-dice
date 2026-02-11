@@ -55,7 +55,11 @@
     "digitalCorner": "Digital Corner",
     "gameNightTracker": "Game Night Tracker",
     "joinDiscord": "Join Discord",
-    "seeMore": "See More"
+    "seeMore": "See More",
+    "create": "Create",
+    "uploadImage": "Upload image",
+    "uploadDiscussion": "Upload discussion",
+    "account": "Account"
   },
   "home": {
     "shareCollection1": "Share your",
@@ -64,6 +68,7 @@
     "collection": "collection",
     "goToMyCollection": "Go to my collection",
     "viewCollection": "View collection",
+    "seeWholeCollection": "See whole collection",
     "startMyCollection": "Create my collection",
     "hotGames": "Hot Games",
     "topRankedGames": "Top Ranked Games",
@@ -452,6 +457,9 @@
     "createGroupWithUser": "Create group with this user",
     "noMessagesYet": "No messages yet",
     "recentChats": "Recent Chats",
+    "publicChats": "Public Chats",
+    "expand": "Expand",
+    "collapse": "Collapse",
     "aiAssistant": "AI Assistant - Always available",
     "members": "members",
     "justNow": "just now",

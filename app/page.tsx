@@ -222,6 +222,14 @@ export default function HomePage() {
   
   // Modal state
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<GalleryImage | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<{
+    id: string;
+    username: string;
+    avatar: string | null;
+    collectionPhoto: string | null;
+    gameCount: number;
+    previewGameImage: string | null;
+  } | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   
   // Delete confirmation state
@@ -1934,7 +1942,7 @@ export default function HomePage() {
           allImages={selectedGalleryImage ? galleryImages : []}
           currentImageIndex={selectedImageIndex}
           onNavigate={selectedGalleryImage ? handleNavigate : undefined}
-          secondaryAction={selectedCollection ? { label: t('viewCollection'), href: `/collection/${selectedCollection.username}` } : undefined}
+          secondaryAction={selectedCollection ? { label: t('seeWholeCollection'), href: `/collection/${selectedCollection.username}` } : undefined}
         />
       )}
 

@@ -55,7 +55,11 @@
     "digitalCorner": "Rincón Digital",
     "gameNightTracker": "Noche de Juegos",
     "joinDiscord": "Únete a Discord",
-    "seeMore": "Ver Más"
+    "seeMore": "Ver Más",
+    "create": "Crear",
+    "uploadImage": "Subir imagen",
+    "uploadDiscussion": "Subir discusión",
+    "account": "Cuenta"
   },
   "home": {
     "shareCollection1": "Comparte tu",
@@ -64,6 +68,7 @@
     "collection": "",
     "goToMyCollection": "Ver mi colección",
     "viewCollection": "Ver colección",
+    "seeWholeCollection": "Ver colección completa",
     "startMyCollection": "Crear mi colección",
     "hotGames": "Juegos Populares",
     "topRankedGames": "Mejor Valorados",
@@ -452,6 +457,9 @@
     "createGroupWithUser": "Crear grupo con este usuario",
     "noMessagesYet": "Aún no hay mensajes",
     "recentChats": "Chats Recientes",
+    "publicChats": "Chats Públicos",
+    "expand": "Expandir",
+    "collapse": "Contraer",
     "aiAssistant": "Asistente IA - Siempre disponible",
     "members": "miembros",
     "justNow": "ahora mismo",

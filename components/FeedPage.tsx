@@ -453,7 +453,7 @@ export default function FeedPage() {
           allImages={selectedGalleryImage ? galleryImages : []}
           currentImageIndex={selectedImageIndex}
           onNavigate={selectedGalleryImage ? handleNavigate : undefined}
-          secondaryAction={selectedCollection ? { label: t('viewCollection'), href: `/collection/${selectedCollection.username}` } : undefined}
+          secondaryAction={selectedCollection ? { label: t('seeWholeCollection'), href: `/collection/${selectedCollection.username}` } : undefined}
         />
       )}
 
