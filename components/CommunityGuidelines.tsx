@@ -12,14 +12,16 @@ interface CommunityGuidelinesProps {
 
 export default function CommunityGuidelines({ isOpen, onClose }: CommunityGuidelinesProps) {
   const t = useTranslations('gallery');
-  if (!isOpen) return null;
 
   // Prevent background scroll when modal is open (also avoids header overlap issues on mobile)
-  // ImageModal already does this; keep guidelines consistent.
+  // ImageModal already does this; keep guidelines consistent. Must run unconditionally (hooks rules).
   useEffect(() => {
+    if (!isOpen) return;
     lockBodyScroll();
     return () => unlockBodyScroll();
-  }, []);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   return (
     <div 

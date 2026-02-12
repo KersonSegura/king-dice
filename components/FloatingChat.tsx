@@ -823,11 +823,6 @@ export function CustomChatList({
 export default function FloatingChat() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
-
-  // On dedicated /chat route, ChatPage renders the content - don't show popup
-  if (pathname?.startsWith('/chat')) {
-    return null;
-  }
   const contextChatState = useChatState();
   const t = useTranslations('chat');
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -1314,7 +1309,10 @@ export default function FloatingChat() {
     }
   }, [isChatOpen, isAuthenticated, user?.id]);
 
-  // Early return AFTER all hooks
+  // Early returns only AFTER all hooks (React rules of hooks)
+  if (pathname?.startsWith('/chat')) {
+    return null;
+  }
   if (!isAuthenticated || !user) {
     return null;
   }

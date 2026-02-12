@@ -225,32 +225,7 @@ export default function ProfilePage() {
   const [imageLikes, setImageLikes] = useState<{[imageId: string]: boolean}>({});
   const [loadingComments, setLoadingComments] = useState(false);
 
-  // Early returns for loading and authentication states
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fbae17] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to view your profile</h1>
-          <Link href="/" className="btn-primary">
-            Go Home
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Drag and drop sensors with better responsiveness
+  // Drag and drop sensors - must be called unconditionally (before any return)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -1680,6 +1655,31 @@ export default function ProfilePage() {
 
   const coverTextClass = getTextColorClass(true);
   const coverSecondaryTextClass = getSecondaryTextColorClass(true);
+
+  // Early returns only after all hooks have run (React rules of hooks)
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fbae17] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to view your profile</h1>
+          <Link href="/" className="btn-primary">
+            Go Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: profileColors.background }}>

@@ -71,13 +71,13 @@ function applySvgColor(xml: string, color: string): string {
 
 export function SvgIcon({ name, size = 24, style, fallback, color }: Props) {
   const path = ICONS[name];
-  if (!path) return null;
   const base = API_BASE_URL.replace(/\/$/, '');
-  const uri = `${base}/${path}`;
-  const [xml, setXml] = useState<string | null>(svgCache.get(uri) || null);
+  const uri = path ? `${base}/${path}` : '';
+  const [xml, setXml] = useState<string | null>(uri ? (svgCache.get(uri) || null) : null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (!uri) return;
     setFailed(false);
     let isMounted = true;
     if (svgCache.has(uri)) {
@@ -104,6 +104,8 @@ export function SvgIcon({ name, size = 24, style, fallback, color }: Props) {
       isMounted = false;
     };
   }, [uri]);
+
+  if (!path) return null;
 
   if (!xml) {
     if (failed && fallback && fallback !== name) {
