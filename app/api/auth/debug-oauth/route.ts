@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Test 1: Check if user exists (without provider columns since they may not exist)
     const { data: existingUser, error: findError } = await supabaseAdmin
       .from('users')
-      .select('id, username, email, passwordHash, isVerified')
+      .select('id, username, email, password_hash, isVerified')
       .eq('email', testEmail)
       .maybeSingle();
     
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         id: testUserId,
         username: testUsername,
         email: testEmail,
-        passwordHash: null,
+        password_hash: null,
         level: 1,
         xp: 0,
         isAdmin: false,

@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kingdice.app",
@@ -26,8 +28,41 @@
       "versionCode": 1
     },
     "web": {},
-    "plugins": ["expo-router", "expo-asset", ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]],
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "android": {
+            "granularPermissions": [
+              "photo"
+            ]
+          }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow King Dice to access your photos.",
+          "cameraPermission": "Allow King Dice to access your camera."
+        }
+      ],
+      "expo-localization"
+    ],
     "scheme": "kingdice",
-    "extra": { "router": { "origin": false } }
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
   }
 }

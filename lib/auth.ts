@@ -76,149 +76,105 @@ export function generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): strin
 export function verifyToken(token: string): TokenPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as TokenPayload;
-  } catch (error) {
-    console.error('Token verification failed:', error);
+  } catch (error: unknown) {
+    // In dev, avoid noisy stack when token is from another env (e.g. production token on local server)
+    const isJwtError = error && typeof error === 'object' && (error as { name?: string }).name === 'JsonWebTokenError';
+    if (isJwtError && process.env.NODE_ENV === 'development') {
+      console.log('Token invalid or expired (expected if app had a token from production).');
+    } else {
+      console.error('Token verification failed:', error);
+    }
     return null;
   }
 }
 
 /**
- * Authenticate user with username/email and password
+ * Authenticate user with username/email and password.
+ * Secure: credentials checked server-side only; password hash never returned.
+ * Database: public.users with snake_case columns (password_hash, is_admin, is_verified, two_factor_enabled).
+ * Run migration ensure_users_snake_case_columns.sql once so the table uses these column names.
  */
 export async function authenticateUser(identifier: string, password: string): Promise<AuthResult> {
   try {
-    console.log('🔐 authenticateUser: Starting authentication for:', identifier);
-    console.log('🔐 Checking Supabase connection...');
-    
-    // Find user by username or email (case-insensitive) - try username first, then email
-    console.log('🔍 Searching for user:', identifier);
-    const usernameResult = await executeSupabaseQuery(
-      () => supabaseAdmin
-        .from('users')
-        .select('id, username, email, avatar, password_hash, isAdmin, level, xp, twoFactorEnabled, isVerified')
-        .ilike('username', identifier.trim())
-        .limit(1),
-      { maxRetries: 1, timeout: 10000 }
-    );
-
-    let users, error;
-    if (!usernameResult.error && usernameResult.data && usernameResult.data.length > 0) {
-      users = usernameResult.data;
-      error = null;
-    } else {
-      const emailResult = await executeSupabaseQuery(
-        () => supabaseAdmin
-          .from('users')
-          .select('id, username, email, avatar, password_hash, isAdmin, level, xp, twoFactorEnabled, isVerified')
-          .ilike('email', identifier.trim())
-          .limit(1),
-        { maxRetries: 1, timeout: 10000 }
-      );
-      users = emailResult.data;
-      error = emailResult.error;
+    const trimmed = identifier.trim();
+    if (!trimmed) {
+      return { success: false, message: 'Invalid username/email or password' };
     }
 
-    if (error) {
-      console.error('❌ Supabase query error:', error);
-      // Check if error message contains HTML (Cloudflare timeout page)
-      const errorMessage = error.message || String(error);
-      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html') || errorMessage.includes('timeout')) {
-        return {
-          success: false,
-          message: 'Database connection timeout. The database may be temporarily unavailable. Please try again in a few moments.'
-        };
+    // Only password column is snake_case (password_hash). Rest stay as in table (e.g. isAdmin, isVerified).
+    const fields = 'id, username, email, avatar, password_hash, isAdmin, level, xp, twoFactorEnabled, isVerified';
+    const [byUsername, byEmail] = await Promise.all([
+      supabaseAdmin.from('users').select(fields).ilike('username', trimmed).limit(1),
+      supabaseAdmin.from('users').select(fields).ilike('email', trimmed).limit(1),
+    ]);
+
+    const result = byUsername.data?.length ? byUsername : byEmail;
+    const err = byUsername.data?.length ? null : byEmail.error;
+    const rows = result.data;
+
+    if (err) {
+      const msg = err.message || String(err);
+      if (msg.includes('<!DOCTYPE') || msg.includes('<html') || msg.includes('timeout')) {
+        return { success: false, message: 'Database temporarily unavailable. Please try again.' };
       }
-      return {
-        success: false,
-        message: `Database connection failed: ${errorMessage}`
-      };
+      return { success: false, message: `Database connection failed: ${msg}` };
     }
 
-    if (!users || users.length === 0) {
-      console.log('❌ User not found:', identifier);
-      return {
-        success: false,
-        message: 'Invalid username/email or password'
-      };
+    if (!rows?.length) {
+      return { success: false, message: 'Invalid username/email or password' };
     }
 
-    const user = users[0];
-    console.log('✅ User found:', user.username, 'ID:', user.id);
-    
-    const passwordHash = user.password_hash ?? user.passwordHash;
+    const user = rows[0] as Record<string, unknown>;
+    const passwordHash = user.password_hash as string | null | undefined;
     if (!passwordHash) {
-      console.log('❌ User has no password hash');
-      return {
-        success: false,
-        message: 'Please reset your password to continue'
-      };
+      return { success: false, message: 'Please reset your password to continue' };
     }
 
-    console.log('🔍 Verifying password...');
-    const isValidPassword = await comparePassword(password.trim(), passwordHash);
-    if (!isValidPassword) {
-      console.log('❌ Password verification failed');
-      return {
-        success: false,
-        message: 'Invalid username/email or password'
-      };
+    const valid = await comparePassword(password.trim(), passwordHash);
+    if (!valid) {
+      return { success: false, message: 'Invalid username/email or password' };
     }
-    
-    console.log('✅ Password verified');
 
-    // Check if user's email is verified
     if (!user.isVerified) {
-      console.log('❌ User email not verified');
       return {
         success: false,
         message: 'Please verify your email address before signing in. Check your email for the verification code.'
       };
     }
 
-    // Check if 2FA is enabled
     if (user.twoFactorEnabled) {
       return {
         success: false,
         message: 'Two-factor authentication required',
         requiresTwoFactor: true,
-        userId: user.id
+        userId: String(user.id)
       };
     }
 
-    // Generate token for users without 2FA
-    console.log('🔑 Generating JWT token...');
     const token = generateToken({
-      userId: user.id,
-      username: user.username,
-      email: user.email,
-      isAdmin: user.isAdmin || false
+      userId: String(user.id),
+      username: String(user.username),
+      email: String(user.email),
+      isAdmin: !!(user.isAdmin)
     });
-    
-    if (!token) {
-      console.error('❌ Failed to generate token - JWT_SECRET might be missing');
-      return {
-        success: false,
-        message: 'Authentication failed: Token generation error'
-      };
-    }
-    
-    console.log('✅ Token generated successfully');
 
-    // Return user data (without password hash)
+    if (!token) {
+      return { success: false, message: 'Authentication failed. Please try again.' };
+    }
+
     return {
       success: true,
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar || '/DiceLogo.svg',
-        isAdmin: user.isAdmin || false,
-        level: user.level || 1,
-        xp: user.xp || 0
+        id: String(user.id),
+        username: String(user.username),
+        email: String(user.email),
+        avatar: (user.avatar != null && String(user.avatar)) || '/DiceLogo.svg',
+        isAdmin: !!(user.isAdmin),
+        level: (user.level != null ? Number(user.level) : 0) || 1,
+        xp: user.xp != null ? Number(user.xp) : 0
       },
       token
     };
-
   } catch (error) {
     console.error('❌ Authentication error:', error);
     console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
@@ -566,19 +522,14 @@ export async function registerUser(username: string, email: string, password: st
  */
 export async function getUserFromToken(token: string): Promise<AuthResult> {
   try {
-    console.log('🔍 getUserFromToken: Verifying token...');
     const payload = verifyToken(token);
     if (!payload) {
-      console.log('❌ getUserFromToken: Token verification failed');
       return {
         success: false,
         message: 'Invalid or expired token'
       };
     }
 
-    console.log('✅ getUserFromToken: Token valid, fetching user:', payload.userId);
-
-    // Get fresh user data from Supabase with retry logic
     const { data: user, error } = await executeSupabaseQuery(
       () => supabaseAdmin
         .from('users')
@@ -604,31 +555,29 @@ export async function getUserFromToken(token: string): Promise<AuthResult> {
     }
 
     if (!user) {
-      console.log('❌ getUserFromToken: User not found');
       return {
         success: false,
         message: 'User not found'
       };
     }
 
-    console.log('✅ getUserFromToken: User found:', user.username);
-
+    const u = user as Record<string, unknown>;
     return {
       success: true,
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar || '/DiceLogo.svg',
-        isAdmin: user.isAdmin || false,
-        level: user.level || 1,
-        xp: user.xp || 0
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        avatar: (u.avatar && String(u.avatar)) || '/DiceLogo.svg',
+        isAdmin: !!(u.isAdmin),
+        level: Number(u.level) || 1,
+        xp: Number(u.xp) || 0
       }
     };
-
   } catch (error) {
-    console.error('❌ getUserFromToken: Token validation error:', error);
-    console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
+    if (process.env.NODE_ENV !== 'development') {
+      console.error('❌ getUserFromToken: Token validation error:', error instanceof Error ? error.message : error);
+    }
     return {
       success: false,
       message: 'Invalid token'

@@ -14,12 +14,12 @@ import {
   Keyboard,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../lib/api-client';
 import { API_BASE_URL } from '../config/api';
+import { useLocale } from '../contexts/LocaleContext';
 
 const RECENT_KEY = 'kd_recent_searches';
 const MAX_RECENT = 20;
@@ -84,8 +84,8 @@ function AvatarImage({
 }
 
 export default function SearchScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useLocale();
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<SearchUser[]>([]);
   const [games, setGames] = useState<SearchGame[]>([]);
@@ -243,7 +243,7 @@ export default function SearchScreen() {
         <View style={styles.resultBody}>
           <Text style={styles.resultName} numberOfLines={1}>{g.name}</Text>
           <Text style={styles.resultSubtitle}>
-            {[g.year, g.players, g.duration].filter(Boolean).join(' · ') || 'Game'}
+            {[g.year, g.players, g.duration].filter(Boolean).join(' · ') || t('game')}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
@@ -273,7 +273,7 @@ export default function SearchScreen() {
         <View style={styles.resultBody}>
           <Text style={styles.resultName} numberOfLines={1}>{r.name}</Text>
           <Text style={styles.resultSubtitle}>
-            {r.type === 'user' ? r.username || 'User' : r.subtitle || 'Game'}
+            {r.type === 'user' ? r.username || t('user') : r.subtitle || t('game')}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
@@ -282,12 +282,12 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: 8 }]}>
       <View style={styles.searchBarWrap}>
         <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search users or games..."
+          placeholder={t('searchPlaceholder')}
           placeholderTextColor="#9ca3af"
           value={query}
           onChangeText={setQuery}
@@ -311,9 +311,9 @@ export default function SearchScreen() {
         {showRecent && (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent</Text>
+              <Text style={styles.sectionTitle}>{t('recent')}</Text>
               <TouchableOpacity onPress={clearRecent}>
-                <Text style={styles.clearText}>Clear all</Text>
+                <Text style={styles.clearText}>{t('clearAll')}</Text>
               </TouchableOpacity>
             </View>
             {recent.map((r, i) => (
@@ -335,7 +335,7 @@ export default function SearchScreen() {
             {users.length > 0 && (
               <>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Users</Text>
+                  <Text style={styles.sectionTitle}>{t('users')}</Text>
                 </View>
                 {users.map((u) => (
                   <React.Fragment key={u.id}>{renderUser(u)}</React.Fragment>
@@ -345,7 +345,7 @@ export default function SearchScreen() {
             {games.length > 0 && (
               <>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Games</Text>
+                  <Text style={styles.sectionTitle}>{t('games')}</Text>
                 </View>
                 {games.map((g) => (
                   <React.Fragment key={g.id}>{renderGame(g)}</React.Fragment>
@@ -358,16 +358,16 @@ export default function SearchScreen() {
         {showEmptyResults && (
           <View style={styles.emptyWrap}>
             <Ionicons name="search-outline" size={48} color="#d1d5db" />
-            <Text style={styles.emptyText}>No results for "{query.trim()}"</Text>
-            <Text style={styles.emptySubtext}>Try different keywords</Text>
+            <Text style={styles.emptyText}>{t('noResultsFor', { query: query.trim() })}</Text>
+            <Text style={styles.emptySubtext}>{t('tryDifferentKeywords')}</Text>
           </View>
         )}
 
         {!showRecent && !showResults && (
           <View style={styles.emptyWrap}>
             <Ionicons name="search-outline" size={48} color="#d1d5db" />
-            <Text style={styles.emptyText}>Search for users or games</Text>
-            <Text style={styles.emptySubtext}>Start typing to see results</Text>
+            <Text style={styles.emptyText}>{t('searchForUsersOrGames')}</Text>
+            <Text style={styles.emptySubtext}>{t('startTypingToSeeResults')}</Text>
           </View>
         )}
       </ScrollView>
@@ -385,7 +385,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ffffff',
     marginHorizontal: 12,
-    marginVertical: 12,
+    marginTop: 4,
+    marginBottom: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 12,
@@ -412,7 +413,7 @@ const styles = StyleSheet.create({
   resultsContent: {
     flexGrow: 1,
     minHeight: 200,
-    paddingBottom: 24,
+    paddingBottom: 100,
   },
   sectionHeader: {
     flexDirection: 'row',

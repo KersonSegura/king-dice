@@ -90,17 +90,17 @@ export async function POST(request: NextRequest) {
           id: userId,
           username: pendingRegistration.username,
           email: pendingRegistration.email,
-          passwordHash: pendingRegistration.password_hash,
+          password_hash: pendingRegistration.password_hash,
           avatar: pendingRegistration.avatar || '/DefaultDiceAvatar.svg',
           level: 1,
           xp: 0,
           isAdmin: false,
-          isVerified: true, // User is verified since they entered the code
+          isVerified: true,
           createdAt: now,
           updatedAt: now,
           joinDate: now
         })
-        .select('id, username, email, avatar, isAdmin, level, xp, isVerified')
+        .select('id, username, email, avatar, level, xp, isVerified')
         .single();
 
       if (createUserError || !newUser) {
@@ -169,7 +169,6 @@ export async function POST(request: NextRequest) {
         .update({ used: true })
         .eq('id', verificationCode.id);
 
-      // Verify the user's email
       const { error: updateError } = await supabaseAdmin
         .from('users')
         .update({ isVerified: true })

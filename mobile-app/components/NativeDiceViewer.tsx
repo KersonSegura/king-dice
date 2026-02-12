@@ -32,24 +32,18 @@ const KING_DICE_GLB_ASSET = require('../assets/Models/KingDice.glb');
 
 /** Load GLB from bundled asset. Try fetch (dev), then legacy Base64, then new File API. */
 async function loadBundledKingDiceGlb(): Promise<ArrayBuffer> {
-  console.log('[3D] 1. Loading KingDice.glb asset...');
   const glbAsset = Asset.fromModule(KING_DICE_GLB_ASSET);
   await glbAsset.downloadAsync();
   const glbUri = glbAsset.localUri || glbAsset.uri;
-  console.log('[3D] 2. Asset URI:', glbUri || '(null)');
   if (!glbUri) throw new Error('KingDice.glb not available');
 
   if (glbUri.startsWith('http://') || glbUri.startsWith('https://')) {
-    console.log('[3D] 3a. Using fetch (dev server)');
     const res = await fetch(glbUri);
     if (!res.ok) throw new Error(`Fetch GLB failed: ${res.status}`);
-    const buf = await res.arrayBuffer();
-    console.log('[3D] 3a. Fetch OK, size:', buf.byteLength);
-    return buf;
+    return res.arrayBuffer();
   }
 
   try {
-    console.log('[3D] 3b. Using legacy Base64 + atob');
     const base64 = await FileSystem.readAsStringAsync(glbUri, {
       encoding: FileSystem.EncodingType.Base64,
     });
@@ -58,16 +52,11 @@ async function loadBundledKingDiceGlb(): Promise<ArrayBuffer> {
     const binary = atobFn(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    console.log('[3D] 3b. Base64 decode OK, size:', bytes.byteLength);
     return bytes.buffer;
   } catch (legacyErr: any) {
-    console.log('[3D] 3b. Legacy Base64 failed:', legacyErr?.message);
     if (glbUri.startsWith('file://')) {
-      console.log('[3D] 3c. Trying File API');
       const file = new File(glbUri);
-      const buf = await file.arrayBuffer();
-      console.log('[3D] 3c. File API OK, size:', buf.byteLength);
-      return buf;
+      return file.arrayBuffer();
     }
     throw legacyErr;
   }
@@ -90,7 +79,6 @@ const NativeDiceViewer = forwardRef<NativeDiceViewerRef>((_, ref) => {
 
   const onContextCreate = async (gl: any) => {
     try {
-      console.log('[3D] onContextCreate: GL context ready');
       // Patch: React Native/expo-gl can return null/undefined from getShaderInfoLog/getProgramInfoLog
       // Three.js calls .trim() on these and crashes. Ensure they always return a string.
       const origGetShaderInfoLog = gl.getShaderInfoLog?.bind(gl);
@@ -134,15 +122,10 @@ const NativeDiceViewer = forwardRef<NativeDiceViewerRef>((_, ref) => {
       group.position.set(0, 0, 0);
       scene.add(group);
 
-      console.log('[3D] 4. Loading GLB buffer...');
       const glbBuffer = await loadBundledKingDiceGlb();
-      console.log('[3D] 5. Parsing GLB with GLTFLoader...');
       const loader = new GLTFLoader();
       const diceScene = await new Promise<THREE.Object3D>((resolve, reject) => {
-        loader.parse(glbBuffer, '', (gltf) => {
-          console.log('[3D] 6. GLB parsed OK');
-          resolve(gltf.scene);
-        }, reject);
+        loader.parse(glbBuffer, '', (gltf) => resolve(gltf.scene), reject);
       });
 
       diceScene.traverse((node: any) => {
@@ -190,7 +173,6 @@ const NativeDiceViewer = forwardRef<NativeDiceViewerRef>((_, ref) => {
     } catch (err: any) {
       const msg = err?.message || 'Failed to load 3D models';
       const stack = err?.stack ? `\n${String(err.stack).split('\n').slice(0, 5).join('\n')}` : '';
-      console.error('[3D] Error:', msg, err);
       setError(msg + stack);
     }
   };

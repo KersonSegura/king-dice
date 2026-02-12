@@ -56,6 +56,11 @@ export default function LanguageSwitcher({ variant = 'menu' }: LanguageSwitcherP
       // Set cookie
       document.cookie = `locale=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; sameSite=lax`;
       
+      // Notify mobile app so it can sync locale and reload the native shell (menus, search, etc.)
+      if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
+        (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'localeChanged', locale }));
+      }
+      
       // Update state
       setCurrentLocale(locale);
       setIsOpen(false);

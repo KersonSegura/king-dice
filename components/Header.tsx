@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, X, User, Settings, LogOut } from 'lucide-react';
+import { Search, Menu, X, User, Settings, LogOut, Plus } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +42,8 @@ export default function Header() {
   const desktopNavButtonRef = useRef<HTMLButtonElement>(null);
   const desktopNavMenuRef = useRef<HTMLDivElement>(null);
   const desktopNavHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
 
   // Simple hover handlers - no delays, just immediate response
   const openMenu = () => {
@@ -63,7 +65,19 @@ export default function Header() {
   useEffect(() => {
     setIsUserMenuOpen(false);
     setShowNotificationsPanel(false);
+    setShowCreateMenu(false);
   }, [pathname]);
+
+  // Close create menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (createMenuRef.current && !createMenuRef.current.contains(e.target as Node)) {
+        setShowCreateMenu(false);
+      }
+    };
+    if (showCreateMenu) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCreateMenu]);
 
   // Helper function to close menu and chat on mobile navigation
   const handleMobileNavigation = () => {
@@ -404,6 +418,42 @@ export default function Header() {
                      ref={desktopNavMenuRef}
                      className="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
                    >
+                     {/* Account Section - My Profile, Notifications */}
+                     {isAuthenticated && user && (
+                       <>
+                         <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                           {t('account')}
+                         </div>
+                         <Link
+                           href={`/profile/${user.username}`}
+                           onClick={() => setIsDesktopNavOpen(false)}
+                           className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                         >
+                           <Image src="/ProfileIconOn.svg" alt="Profile" width={20} height={20} className="w-5 h-5" />
+                           <span>{t('profile')}</span>
+                         </Link>
+                         <button
+                           type="button"
+                           onClick={() => {
+                             setIsDesktopNavOpen(false);
+                             setIsUserMenuOpen(true);
+                             setShowNotificationsPanel(true);
+                           }}
+                           className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors text-left"
+                         >
+                           <div className="relative">
+                             <Image src="/NotificationsIcon.svg" alt="Notifications" width={20} height={20} className="w-5 h-5" />
+                             {notifUnread > 0 && (
+                               <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] leading-4 px-1 rounded-full min-w-[14px] text-center">
+                                 {notifUnread > 99 ? '99+' : notifUnread}
+                               </span>
+                             )}
+                           </div>
+                           <span>{t('notifications')}</span>
+                         </button>
+                         <div className="border-t border-gray-200 my-2"></div>
+                       </>
+                     )}
                      <Link
                        href="/"
                        onClick={() => setIsDesktopNavOpen(false)}
@@ -517,6 +567,44 @@ export default function Header() {
              {/* Features Dropdown */}
              <FeaturesDropdown />
 
+            {/* Create (+) button - Upload image / Upload discussion */}
+            {isAuthenticated && (
+              <div className="relative flex-shrink-0 z-10" ref={createMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateMenu((v) => !v);
+                    if (!showCreateMenu) closeMenu();
+                  }}
+                  className="p-2 text-gray-600 hover:text-primary-500 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label={t('create')}
+                  aria-expanded={showCreateMenu}
+                >
+                  <Plus className="w-6 h-6" />
+                </button>
+                {showCreateMenu && (
+                  <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
+                    <Link
+                      href="/community-gallery?upload=true"
+                      onClick={() => { setShowCreateMenu(false); closeMenu(); }}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Image src="/GalleryIcon.svg" alt="" width={20} height={20} className="w-5 h-5 text-gray-500" />
+                      <span className="text-sm font-medium">{t('uploadImage')}</span>
+                    </Link>
+                    <Link
+                      href="/forums/create-post"
+                      onClick={() => { setShowCreateMenu(false); closeMenu(); }}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Image src="/ForumsIcon.svg" alt="" width={20} height={20} className="w-5 h-5 text-gray-500" />
+                      <span className="text-sm font-medium">{t('uploadDiscussion')}</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* User Menu Button - Always visible on mobile */}
             <div 
               className="relative flex-shrink-0 z-10"
@@ -526,6 +614,7 @@ export default function Header() {
                 <>
                   {/* Avatar Button with notification badge */}
                   <div className="relative" onClick={() => {
+                    setShowCreateMenu(false);
                     setIsUserMenuOpen(v => {
                       const newMenuState = !v;
                       // Close chat when opening profile menu on mobile
@@ -619,30 +708,8 @@ export default function Header() {
                               </div>
                             </div>
                           </div>
-                          {/* Menu Items */}
+                          {/* Menu Items - Notifications moved to hamburger menu */}
                           <div className="py-2">
-                            {/* Notifications preview */}
-                            {notifItems.length > 0 && (
-                              <div className="px-6 pb-3">
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-sm font-medium">{t('notifications')}</span>
-                                  {notifUnread > 0 && (
-                                    <button className="text-xs text-blue-600" onClick={markAllRead}>{t('markAllRead')}</button>
-                                  )}
-                                </div>
-                                <ul className="max-h-56 overflow-y-auto divide-y rounded-lg border border-gray-100">
-                                  {notifItems.slice(0, 6).map((n) => (
-                                    <li key={n.id} onMouseEnter={() => markOneRead(n.id)} className="p-3 flex items-center gap-3 bg-white hover:bg-gray-50 cursor-pointer" onClick={() => { if (n.url) window.location.href = n.url; }}>
-                                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0"></div>
-                                      <div className="min-w-0">
-                                        <p className="text-sm text-gray-800 truncate">{n.title}</p>
-                                        <p className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</p>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
                             <Link href={`/profile/${user?.username}`} onClick={closeMenu} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                                 <Image src="/ProfileIconOn.svg" alt="Profile Icon" width={26} height={26} className="w-6 h-6" />
@@ -667,18 +734,6 @@ export default function Header() {
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                               </div>
                             </Link>
-                            <button onClick={() => setShowNotificationsPanel(true)} className="w-full flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
-                              <div className="w-8 h-8 rounded-lg flex items-center justify-center relative">
-                                <Image src="/NotificationsIcon.svg" alt="Notifications Icon" width={24} height={24} className="w-6 h-6" />
-                                {isUserMenuOpen && notifUnread > 0 && (
-                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-4 px-1 rounded-full min-w-[14px] text-center">
-                                    {notifUnread > 99 ? '99+' : notifUnread}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex-1 text-left"><span className="text-sm font-medium">{t('notifications')}</span><p className="text-xs text-gray-500">{t('viewNotifications')}</p></div>
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity"><svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
-                            </button>
                             <Link href="/settings" onClick={closeMenu} className="flex items-center space-x-3 px-6 py-3 text-gray-700 hover:bg-gray-50 transition-all duration-200 group">
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center"><Image src="/SettingsIcon.svg" alt="Settings Icon" width={26} height={26} className="w-6 h-6" /></div>
                               <div className="flex-1"><span className="text-sm font-medium">{t('settings')}</span><p className="text-xs text-gray-500">{t('manageAccount')}</p></div>
@@ -780,6 +835,41 @@ export default function Header() {
                 />
                 <span className="font-medium">{t('home')}</span>
               </Link>
+
+              {/* Mobile Account Section - My Profile, Notifications */}
+              {isAuthenticated && user && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-1">{t('account')}</h3>
+                  <Link
+                    href={`/profile/${user.username}`}
+                    className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
+                    onClick={handleMobileNavigation}
+                  >
+                    <Image src="/ProfileIconOn.svg" alt="Profile" width={24} height={24} className="w-6 h-6" />
+                    <span className="font-medium">{t('profile')}</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      closeChatOnNavigation();
+                      setIsUserMenuOpen(true);
+                      setShowNotificationsPanel(true);
+                    }}
+                    className="w-full flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm text-left"
+                  >
+                    <div className="relative">
+                      <Image src="/NotificationsIcon.svg" alt="Notifications" width={24} height={24} className="w-6 h-6" />
+                      {notifUnread > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-4 px-1 rounded-full min-w-[14px] text-center">
+                          {notifUnread > 99 ? '99+' : notifUnread}
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-medium">{t('notifications')}</span>
+                  </button>
+                </div>
+              )}
               
               {/* Mobile Boardgames Section */}
               <div className="space-y-2">

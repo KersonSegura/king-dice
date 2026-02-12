@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, Text, Animated, PanResponder } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Text, Animated, PanResponder, ScrollView, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,7 @@ import SvgIcon from './SvgIcon';
 import NotificationsPopup from './NotificationsPopup';
 import type { IconName } from '../config/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
 import { useScrollNav } from '../contexts/ScrollContext';
 
 interface MenuItem {
@@ -25,15 +26,17 @@ interface MenuItem {
   iconSize?: number;
 }
 
-const TOOLS_ITEMS: MenuItem[] = [
-  { label: 'My Dice', svgIcon: 'MyDice', href: '/my-dice', iconSize: 28 },
-  { label: 'Game Night Tracker', svgIcon: 'GameNightTracker', href: '/game-night-tracker', iconSize: 28 },
-  { label: 'Catan Maps', svgIcon: 'Catan', href: '/catan-map-generator', iconSize: 28 },
-  { label: 'Pixel Canvas', svgIcon: 'PixelCanvas', href: '/pixel-canvas', iconSize: 22 },
-  { label: 'Boardle', svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
-  { label: 'Dice Roller', svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
-  { label: 'Digital Corner', svgIcon: 'DigitalCorner', href: '/digital-corner', iconSize: 28 },
-];
+function getToolsItems(t: (key: string) => string): MenuItem[] {
+  return [
+    { label: t('myDice'), svgIcon: 'MyDice', href: '/my-dice', iconSize: 28 },
+    { label: t('gameNightTracker'), svgIcon: 'GameNightTracker', href: '/game-night-tracker', iconSize: 28 },
+    { label: t('catanMaps'), svgIcon: 'Catan', href: '/catan-map-generator', iconSize: 28 },
+    { label: t('pixelCanvas'), svgIcon: 'PixelCanvas', href: '/pixel-canvas', iconSize: 22 },
+    { label: t('boardle'), svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
+    { label: t('diceRoller'), svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
+    { label: t('digitalCorner'), svgIcon: 'DigitalCorner', href: '/digital-corner', iconSize: 28 },
+  ];
+}
 
 const HEADER_HEIGHT = 56;
 
@@ -41,11 +44,24 @@ export default function MobileHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   const { user, isAuthenticated, logout } = useAuth();
   const { navVisible } = useScrollNav();
   const translateY = useRef(new Animated.Value(0)).current;
+  const menuItems: MenuItem[] = [
+    { section: t('boardGames') },
+    { label: t('allGames'), svgIcon: 'AllGames', href: '/all-games' },
+    { label: t('hotGames'), svgIcon: 'HotGames', href: '/hot-games' },
+    { label: t('topRanked'), svgIcon: 'TopRanked', href: '/top-ranked' },
+    { label: t('forums'), svgIcon: 'Forums', href: '/forums' },
+    { label: t('gallery'), svgIcon: 'Gallery', href: '/community-gallery' },
+    { label: t('shop'), svgIcon: 'Shop', href: '/shop' },
+    { label: t('joinDiscord'), ionicon: 'logo-discord', href: 'https://discord.gg/3xh7yUnnnW', discord: true },
+  ];
+  const toolsItems = getToolsItems(t);
 
   useEffect(() => {
     Animated.timing(translateY, {
@@ -84,18 +100,6 @@ export default function MobileHeader() {
     router.push(href as any);
   };
 
-  const menuItems: MenuItem[] = [
-    { label: 'Home', svgIcon: 'Home', href: '/(tabs)' },
-    { section: 'Board Games' },
-    { label: 'All Games', svgIcon: 'AllGames', href: '/all-games' },
-    { label: 'Hot Games', svgIcon: 'HotGames', href: '/hot-games' },
-    { label: 'Top Ranked', svgIcon: 'TopRanked', href: '/top-ranked' },
-    { label: 'Forums', svgIcon: 'Forums', href: '/forums' },
-    { label: 'Gallery', svgIcon: 'Gallery', href: '/community-gallery' },
-    { label: 'Shop', svgIcon: 'Shop', href: '/shop' },
-    { label: 'Join Discord', ionicon: 'logo-discord', href: 'https://discord.gg/3xh7yUnnnW', discord: true },
-  ];
-
   return (
     <>
       <Animated.View style={[styles.header, { paddingTop: insets.top, transform: [{ translateY }] }]}>
@@ -109,13 +113,16 @@ export default function MobileHeader() {
 
         <View style={styles.spacer} />
 
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => setNotificationsOpen(true)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <SvgIcon name="NotificationsGray" size={22} />
-        </TouchableOpacity>
+        {/* Create (+) button - only when authenticated */}
+        {isAuthenticated && (
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => setCreateMenuOpen(true)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="add" size={28} color="#1e1e1e" />
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={styles.toolsBtn}
@@ -137,9 +144,9 @@ export default function MobileHeader() {
       {/* Hamburger menu modal */}
       <Modal visible={menuOpen} animationType="slide" transparent onRequestClose={closeMenu}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={closeMenu}>
-          <View style={styles.menuContainer} onStartShouldSetResponder={() => true}>
+          <View style={[styles.menuContainer, { maxHeight: Dimensions.get('window').height - insets.top - 16 }]} onStartShouldSetResponder={() => true}>
             <View style={styles.menuHeader}>
-              <Text style={styles.menuTitle}>Menu</Text>
+              <Text style={styles.menuTitle}>{t('menu')}</Text>
               <TouchableOpacity onPress={closeMenu}>
                 <Ionicons name="close" size={26} color="#1e1e1e" />
               </TouchableOpacity>
@@ -147,7 +154,11 @@ export default function MobileHeader() {
             <View style={styles.dragHandle} {...menuPanResponder.panHandlers}>
               <View style={styles.dragHandleBar} />
             </View>
-            <View style={styles.menuContent}>
+            <ScrollView
+              style={[styles.menuContent, { maxHeight: Dimensions.get('window').height - insets.top - 16 - 140 }]}
+              contentContainerStyle={styles.menuContentContainer}
+              showsVerticalScrollIndicator={true}
+            >
               {menuItems.map((item, index) => {
                 if (item.section) {
                   return (
@@ -180,33 +191,67 @@ export default function MobileHeader() {
               {isAuthenticated && (
                 <>
                   <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionText}>Account</Text>
+                    <Text style={styles.sectionText}>{t('account')}</Text>
                   </View>
                   <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation(`/profile/${user?.username}` as any)}>
                     <View style={styles.menuIconWrap}><SvgIcon name="Profile" size={24} /></View>
-                    <Text style={styles.menuItemText}>My Profile</Text>
+                    <Text style={styles.menuItemText}>{t('myProfile')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.menuItem} onPress={() => { closeMenu(); setNotificationsOpen(true); }}>
+                    <View style={styles.menuIconWrap}><SvgIcon name="Notifications" size={24} /></View>
+                    <Text style={styles.menuItemText}>{t('notifications')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation(`/collection/${user?.username}` as any)}>
                     <View style={styles.menuIconWrap}><SvgIcon name="MyCollection" size={24} /></View>
-                    <Text style={styles.menuItemText}>My Collection</Text>
+                    <Text style={styles.menuItemText}>{t('myCollection')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/settings' as any)}>
                     <View style={styles.menuIconWrap}><SvgIcon name="Settings" size={24} /></View>
-                    <Text style={styles.menuItemText}>Settings</Text>
+                    <Text style={styles.menuItemText}>{t('settings')}</Text>
                   </TouchableOpacity>
                 </>
               )}
-            </View>
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>
 
       <NotificationsPopup visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
 
+      {/* Create (+) menu modal - Upload image / Upload discussion */}
+      <Modal visible={createMenuOpen} transparent animationType="fade" onRequestClose={() => setCreateMenuOpen(false)}>
+        <TouchableOpacity
+          style={styles.createMenuOverlay}
+          activeOpacity={1}
+          onPress={() => setCreateMenuOpen(false)}
+        >
+          <View style={styles.createMenuBox} onStartShouldSetResponder={() => true}>
+            <TouchableOpacity
+              style={styles.createMenuItem}
+              onPress={() => { setCreateMenuOpen(false); handleNavigation('/create-post' as any); }}
+            >
+              <View style={styles.createMenuIconWrap}>
+                <SvgIcon name="Gallery" size={22} />
+              </View>
+              <Text style={styles.createMenuLabel}>{t('uploadImage')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createMenuItem}
+              onPress={() => { setCreateMenuOpen(false); handleNavigation('/forums/create-post' as any); }}
+            >
+              <View style={styles.createMenuIconWrap}>
+                <SvgIcon name="Forums" size={22} />
+              </View>
+              <Text style={styles.createMenuLabel}>{t('uploadDiscussion')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Tools menu modal */}
       <Modal visible={toolsOpen} animationType="slide" transparent onRequestClose={closeTools}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={closeTools}>
-          <View style={styles.menuContainer} onStartShouldSetResponder={() => true}>
+          <View style={[styles.menuContainer, { maxHeight: Dimensions.get('window').height - insets.top - 16 }]} onStartShouldSetResponder={() => true}>
             <View style={styles.menuHeader}>
               <Text style={styles.menuTitle}>Tools</Text>
               <TouchableOpacity onPress={closeTools}>
@@ -216,8 +261,12 @@ export default function MobileHeader() {
             <View style={styles.dragHandle} {...toolsPanResponder.panHandlers}>
               <View style={styles.dragHandleBar} />
             </View>
-            <View style={styles.menuContent}>
-              {TOOLS_ITEMS.filter((item) => item.href !== '/my-dice' || isAuthenticated).map((item, index) => (
+            <ScrollView
+              style={[styles.menuContent, { maxHeight: Dimensions.get('window').height - insets.top - 16 - 140 }]}
+              contentContainerStyle={styles.menuContentContainer}
+              showsVerticalScrollIndicator={true}
+            >
+              {toolsItems.filter((item) => item.href !== '/my-dice' || isAuthenticated).map((item, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.toolsMenuItem}
@@ -229,7 +278,7 @@ export default function MobileHeader() {
                   <Text style={styles.menuItemText}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -271,6 +320,43 @@ const styles = StyleSheet.create({
   spacer: {
     flex: 1,
   },
+  createMenuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 60,
+    paddingRight: 12,
+  },
+  createMenuBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 8,
+    minWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  createMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  createMenuIconWrap: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  createMenuLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -280,6 +366,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    paddingBottom: 24,
+  },
+  menuContentContainer: {
     paddingBottom: 24,
   },
   dragHandle: {

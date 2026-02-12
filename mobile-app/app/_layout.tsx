@@ -8,12 +8,15 @@ import 'react-native-gesture-handler';
 import { Stack, usePathname } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { LocaleProvider } from '../contexts/LocaleContext';
 import { ScrollContextProvider, useScrollNav } from '../contexts/ScrollContext';
+import { TabRefreshProvider } from '../contexts/TabRefreshContext';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNav from '../components/BottomNav';
 import MobileHeader from '../components/MobileHeader';
+import { AppErrorBoundary } from '../components/AppErrorBoundary';
 
 const HEADER_CONTENT_HEIGHT = 56;
 
@@ -26,6 +29,7 @@ function LayoutContent() {
   const hideNav =
     pathname?.startsWith('/login') ||
     pathname?.startsWith('/register') ||
+    pathname?.startsWith('/create-post') ||
     !isAuthenticated;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
   const contentPaddingTop = hideNav ? 0 : (navVisible ? headerHeight : 0);
@@ -33,8 +37,8 @@ function LayoutContent() {
   return (
     <>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
-      <View style={{ flex: 1 }}>
-        <View style={{ flex: 1, paddingTop: contentPaddingTop }}>
+      <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+        <View style={{ flex: 1, paddingTop: contentPaddingTop, backgroundColor: '#f9fafb' }}>
               <Stack
               screenOptions={{
                 headerShown: false,
@@ -53,6 +57,7 @@ function LayoutContent() {
               <Stack.Screen name="game/[id]" />
               <Stack.Screen name="my-dice" />
               <Stack.Screen name="settings" />
+              <Stack.Screen name="create-post" options={{ headerShown: false }} />
             </Stack>
         </View>
         {!hideNav && <MobileHeader />}
@@ -66,11 +71,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <ScrollContextProvider>
-            <LayoutContent />
-          </ScrollContextProvider>
-        </AuthProvider>
+        <AppErrorBoundary>
+          <LocaleProvider>
+            <AuthProvider>
+              <ScrollContextProvider>
+                <TabRefreshProvider>
+                  <LayoutContent />
+                </TabRefreshProvider>
+              </ScrollContextProvider>
+            </AuthProvider>
+          </LocaleProvider>
+        </AppErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

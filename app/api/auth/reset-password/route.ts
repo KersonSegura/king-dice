@@ -21,45 +21,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user (case-insensitive for username/email)
-    // Try username first (case-insensitive)
-    let query = supabaseAdmin
-      .from('users')
-      .select('id, username, email, password_hash');
-    
-    const { data: usernameUsers, error: usernameError } = await query
-      .ilike('username', username)
-      .limit(1);
-    
-    let users, findError;
-    if (!usernameError && usernameUsers && usernameUsers.length > 0) {
-      users = usernameUsers;
-      findError = null;
-    } else {
-      // If not found by username, try email (case-insensitive)
-      const { data: emailUsers, error: emailError } = await supabaseAdmin
-        .from('users')
-        .select('id, username, email, password_hash')
-        .ilike('email', username)
-        .limit(1);
-      users = emailUsers;
-      findError = emailError;
-    }
+    // Find user (case-insensitive). public.users uses snake_case (password_hash).
+    const fields = 'id, username, email, password_hash';
+    const byUsername = await supabaseAdmin.from('users').select(fields).ilike('username', username).limit(1);
+    const byEmail = await supabaseAdmin.from('users').select(fields).ilike('email', username).limit(1);
 
-    if (findError || !users || users.length === 0) {
+    const result = byUsername.data?.length ? byUsername : byEmail;
+    const users = result.data;
+    const findError = byUsername.data?.length ? null : byEmail.error;
+
+    if (findError || !users?.length) {
       return NextResponse.json(
         { message: 'User not found' },
         { status: 404 }
       );
     }
 
-    const user = users[0];
+    const user = users[0] as { id: string; password_hash?: string | null };
+    const currentHash = user.password_hash;
 
-    // For users without password hash (migrated users), allow reset with any current password
-    if (!user.password_hash) {
-      // Hash the new password
+    if (!currentHash) {
       const newPasswordHash = await hashPassword(newPassword);
-      
       const { error: updateError } = await supabaseAdmin
         .from('users')
         .update({ password_hash: newPasswordHash })
@@ -80,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await comparePassword(currentPassword, user.password_hash);
+    const isCurrentPasswordValid = await comparePassword(currentPassword, currentHash);
     if (!isCurrentPasswordValid) {
       return NextResponse.json(
         { message: 'Current password is incorrect' },
@@ -88,10 +70,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash new password
     const newPasswordHash = await hashPassword(newPassword);
-
-    // Update password
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({ password_hash: newPasswordHash })

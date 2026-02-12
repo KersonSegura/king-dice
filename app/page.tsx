@@ -1081,8 +1081,8 @@ export default function HomePage() {
                 const matchingGallery = galleryImages.find(
                   img => img.imageUrl === collection.collectionPhoto || img.thumbnailUrl === collection.collectionPhoto
                 );
+                setSelectedCollection(collection);
                 if (matchingGallery) {
-                  setSelectedCollection(null);
                   setSelectedGalleryImage(matchingGallery);
                   setSelectedImageIndex(galleryImages.findIndex(img => img.id === matchingGallery.id));
                   setShowGalleryModal(true);
@@ -1094,7 +1094,6 @@ export default function HomePage() {
                   }
                 } else {
                   setSelectedGalleryImage(null);
-                  setSelectedCollection(collection);
                   setImageComments([]);
                   setShowGalleryModal(true);
                 }

@@ -5,13 +5,15 @@
  */
 
 import { Tabs, useRouter } from 'expo-router';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEffect } from 'react';
 
 export default function TabsLayout() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -22,9 +24,8 @@ export default function TabsLayout() {
   // Don't show main content until authenticated – prevents flash of main page before login
   if (!isAuthenticated) {
     return (
-      <View style={styles.loading}>
+      <View style={[styles.loading, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <ActivityIndicator size="large" color="#fbae17" />
-        <Text style={styles.loadingText}>{isLoading ? 'Loading…' : 'Redirecting…'}</Text>
       </View>
     );
   }
@@ -51,10 +52,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6b7280',
   },
 });

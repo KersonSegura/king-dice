@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { API_BASE_URL } from '../config/api';
 import { useScrollNav } from '../contexts/ScrollContext';
+import { useLocale } from '../contexts/LocaleContext';
 
 const LOAD_TIMEOUT_MS = 35000; // 35s - game page fetches API which can be slow
 
@@ -118,6 +119,30 @@ const OPEN_CHAT_JS = `
   })();
 `;
 
+/** Force chat layout in app WebView: fixed subheader, only .chat-scroll-body scrolls. */
+function buildChatScrollJs() {
+  return `
+  (function() {
+    try {
+      var s = document.createElement('style');
+      s.id = 'kd-embed-chat-scroll';
+      s.textContent = 'html,body{overflow:hidden!important;height:100%!important}' +
+        'body.embed .chat-page{overflow:hidden!important;display:flex!important;flex-direction:column!important;height:100vh!important;max-height:100vh!important;padding-top:0!important}' +
+        'body.embed .chat-page.chat-conversation-view{padding-top:0!important}' +
+        'body.embed .chat-page .chat-view-header{position:fixed!important;top:0!important;left:0!important;right:0!important;z-index:10!important;background:#fff!important}' +
+        'body.embed .chat-page .chat-scroll-body{flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding-top:56px!important;display:flex!important;flex-direction:column!important}' +
+        'body.embed .chat-page .chat-conversation-wrap{flex:1 1 0!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important}' +
+        'body.embed .chat-page .chat-conversation-wrap>div{flex:1 1 0!important;min-height:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important}' +
+        'body.embed .chat-messages-area{flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;padding-top:24px!important}';
+      var old = document.getElementById('kd-embed-chat-scroll');
+      if (old) old.remove();
+      (document.head || document.documentElement).appendChild(s);
+    } catch (e) {}
+    true;
+  })();
+`;
+}
+
 function buildBackgroundJs(color: string) {
   return `
   (function() {
@@ -196,6 +221,7 @@ export default function WebViewScreen({
 }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { setLocale } = useLocale();
   const { setNavVisible } = useScrollNav();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -211,6 +237,7 @@ export default function WebViewScreen({
   const uri = `${base}${withEmbed}${hash ? `#${hash}` : ''}`;
   const headers = embed ? { 'x-kd-embed': '1' } : undefined;
   const needsOpenChat = path.includes('openChat=1');
+  const isChatPath = path.includes('/chat');
 
   const handleMessage = useCallback(
     (event: { nativeEvent: { data: string } }) => {
@@ -223,19 +250,29 @@ export default function WebViewScreen({
           router.push(`/game/${data.id}` as any);
           return;
         }
+        if (data?.type === 'localeChanged' && (data?.locale === 'en' || data?.locale === 'es')) {
+          setLocale(data.locale);
+          return;
+        }
+        if (data?.type === 'navigateToProfile' && data?.username) {
+          router.push(`/profile/${data.username}` as any);
+          onMessage?.(event);
+          return;
+        }
         if (!disableScrollNav && data?.type === 'scroll' && typeof data.visible === 'boolean') {
           setNavVisible(data.visible);
         }
       } catch {}
       onMessage?.(event);
     },
-    [setNavVisible, onMessage]
+    [setLocale, setNavVisible, onMessage]
   );
 
   const injectedJs = [
     hideWebHeader ? buildHideHeaderJs() : '',
     buildStatusBarPaddingJs(insets.top),
     needsOpenChat ? OPEN_CHAT_JS : '',
+    isChatPath ? buildChatScrollJs() : '',
     interceptGameLinks ? buildGameLinkInterceptJs() : '',
     !disableScrollNav ? SCROLL_DETECT_JS : '',
   ].filter(Boolean).join('\n') || undefined;
@@ -340,7 +377,6 @@ export default function WebViewScreen({
                 style={styles.loadingLogo}
                 resizeMode="contain"
               />
-              <Text style={styles.loadingText}>Loading…</Text>
             </>
           )}
         </View>
@@ -403,14 +439,7 @@ const styles = StyleSheet.create({
   loadingLogo: {
     width: 80,
     height: 80,
-    marginBottom: 24,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    paddingHorizontal: 24,
-    maxWidth: 320,
+    marginBottom: 64,
   },
   webviewHidden: { opacity: 0 },
   retryBtn: {

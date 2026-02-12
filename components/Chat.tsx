@@ -39,34 +39,21 @@ interface Message {
 interface ChatProps {
   chatId: string;
   chatName: string;
-  chatType: 'direct' | 'group' | 'bot';
+  chatType: 'direct' | 'group' | 'bot' | 'public';
   participants: any[];
   onClose: () => void;
   onMessageSent?: () => void; // Callback to refresh chat list
+  /** When true (app WebView), no floating chat / popup; scroll is free, no auto-scroll after first load */
+  embed?: boolean;
 }
 
-export default function Chat({ chatId, chatName, chatType, participants, onClose, onMessageSent }: ChatProps) {
+export default function Chat({ chatId, chatName, chatType, participants, onClose, onMessageSent, embed = false }: ChatProps) {
   const t = useTranslations('chat');
   const { socket, isConnected } = useSocket();
   const { user } = useAuth();
   const { showToast, ToastContainer } = useToast();
 
-  // If it's a bot chat, render the ChatBot component
-  if (chatType === 'bot') {
-    return (
-      <div className="h-96 bg-white rounded-lg shadow-lg">
-        <ChatBot
-          isOpen={true}
-          onClose={onClose}
-          currentUser={user}
-        />
-      </div>
-    );
-  }
-
-  // TypeScript assertion: after the bot check, chatType can only be 'direct' | 'group'
-  const regularChatType = chatType as 'direct' | 'group';
-  
+  // All hooks must run unconditionally so the hook count never changes (avoids "useEffect dependency array changed size" error when switching bot vs regular chat)
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -87,10 +74,20 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const [mentionStartPos, setMentionStartPos] = useState(0);
   const [mentionSearchTimeout, setMentionSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   
+  const PAGE_SIZE = 15;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesAreaRef = useRef<HTMLDivElement>(null);
+  const scrollRestoreRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
+  const loadingOlderRef = useRef(false);
+  const pageRef = useRef(1);
+  const totalPagesRef = useRef(1);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mentionDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingOlder, setLoadingOlder] = useState(false);
 
   // Helpers for game mentions (@GameName -> link to /game/:id)
   const GAME_MENTION_REGEX = /@([A-Za-z0-9][A-Za-z0-9 \-\']{0,50})/g;
@@ -172,15 +169,19 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     return parts;
   };
 
-  // Load messages and mark as read
+  // Load initial page of messages (last 15) and mark as read (no-op for bot)
   useEffect(() => {
+    if (chatType === 'bot') return;
     const loadMessages = async () => {
       try {
-        const response = await fetch(`/api/messages?chatId=${chatId}`);
+        const response = await fetch(`/api/messages?chatId=${chatId}&page=1&limit=${PAGE_SIZE}`);
         if (response.ok) {
           const data = await response.json();
-          setMessages(data.messages);
-          
+          setMessages(data.messages || []);
+          const pagination = data.pagination || {};
+          setTotalPages(Math.max(1, pagination.totalPages || 1));
+          setPage(1);
+
           // Mark messages as read when chat is opened
           if (user?.id) {
             try {
@@ -191,7 +192,6 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
               });
             } catch (readError) {
               console.error('Error marking messages as read:', readError);
-              // Don't show error to user - this is not critical
             }
           }
         }
@@ -204,11 +204,12 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     };
 
     loadMessages();
-  }, [chatId, showToast, user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when chat or user changes
+  }, [chatId, user?.id, chatType]);
 
   // Real-time message updates using Supabase
   useEffect(() => {
-    if (!chatId || !user?.id) return;
+    if (chatType === 'bot' || !chatId || !user?.id) return;
 
     let channel: any;
     let active = true;
@@ -371,23 +372,130 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
         })();
       }
     };
-  }, [chatId, user?.id]);
+  }, [chatId, user?.id, chatType]);
 
-  // Auto-scroll to bottom - immediately when messages load, smooth for new messages
+  // Always scroll to bottom when conversation first loads (so we see the latest messages)
   useEffect(() => {
-    if (messages.length > 0 && messagesEndRef.current) {
-      // Scroll immediately on initial load, smooth for subsequent updates
-      messagesEndRef.current.scrollIntoView({ behavior: isInitialLoad ? 'auto' : 'smooth' });
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
+    if (chatType === 'bot' || messages.length === 0 || !isInitialLoad) return;
+    const scrollToBottom = () => {
+      const area = messagesAreaRef.current;
+      if (area) {
+        area.scrollTop = area.scrollHeight;
       }
+      const end = messagesEndRef.current;
+      if (end) {
+        end.scrollIntoView({ behavior: 'auto', block: 'end' });
+      }
+    };
+    setIsInitialLoad(false);
+    scrollToBottom();
+    const t1 = setTimeout(scrollToBottom, 50);
+    const t2 = setTimeout(scrollToBottom, 150);
+    const t3 = setTimeout(scrollToBottom, 350);
+    const t4 = setTimeout(scrollToBottom, 600);
+    let rafId = 0;
+    const scheduleRaf = () => {
+      rafId = requestAnimationFrame(() => {
+        scrollToBottom();
+        rafId = requestAnimationFrame(scrollToBottom);
+      });
+    };
+    scheduleRaf();
+    let ro: ResizeObserver | null = null;
+    const el = messagesAreaRef.current;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => scrollToBottom());
+      ro.observe(el);
+      const tStop = setTimeout(() => { ro?.disconnect(); }, 800);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+        clearTimeout(tStop);
+        if (rafId) cancelAnimationFrame(rafId);
+        ro?.disconnect();
+      };
     }
-  }, [messages, isInitialLoad]);
-  
-  // Reset initial load flag when chat changes
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [messages.length, isInitialLoad, chatType]);
+
+  // Web (non-embed): also auto-scroll when new messages arrive if user was near bottom
   useEffect(() => {
+    if (chatType === 'bot' || embed || messages.length === 0 || !messagesEndRef.current) return;
+    const scrollContainer = messagesEndRef.current.closest('.chat-scroll-body') || messagesEndRef.current.closest('.chat-messages-area');
+    const el = (scrollContainer instanceof HTMLElement ? scrollContainer : messagesAreaRef.current) as HTMLElement | null;
+    const nearBottom = !el || el.scrollHeight - el.clientHeight - el.scrollTop <= 120;
+    if (nearBottom && !isInitialLoad) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [embed, messages, isInitialLoad, chatType]);
+
+  // Reset initial-load when chat changes
+  useEffect(() => {
+    if (chatType === 'bot') return;
     setIsInitialLoad(true);
-  }, [chatId]);
+  }, [chatId, chatType]);
+
+  // Restore scroll position after prepending older messages
+  useEffect(() => {
+    const rest = scrollRestoreRef.current;
+    if (!rest || !messagesAreaRef.current) return;
+    const el = messagesAreaRef.current;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight - rest.scrollHeight + rest.scrollTop;
+      scrollRestoreRef.current = null;
+    });
+  }, [messages]);
+
+  pageRef.current = page;
+  totalPagesRef.current = totalPages;
+
+  // Load older messages when user scrolls up
+  useEffect(() => {
+    if (chatType === 'bot') return;
+    const el = messagesAreaRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (loadingOlderRef.current || pageRef.current >= totalPagesRef.current) return;
+      if (el.scrollTop > 80) return;
+      loadingOlderRef.current = true;
+      setLoadingOlder(true);
+      scrollRestoreRef.current = { scrollHeight: el.scrollHeight, scrollTop: el.scrollTop };
+      const nextPage = pageRef.current + 1;
+      fetch(`/api/messages?chatId=${chatId}&page=${nextPage}&limit=${PAGE_SIZE}`)
+        .then((res) => res.ok ? res.json() : Promise.reject(new Error('Failed to load')))
+        .then((data) => {
+          const newMessages = data.messages || [];
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const older = newMessages.filter((m: Message) => !existingIds.has(m.id));
+            if (older.length === 0) return prev;
+            return [...older, ...prev];
+          });
+          if ((data.messages || []).length > 0) {
+            setPage(nextPage);
+            pageRef.current = nextPage;
+          }
+          const total = Math.max(1, data.pagination?.totalPages ?? 1);
+          setTotalPages(total);
+          totalPagesRef.current = total;
+        })
+        .catch(() => {})
+        .finally(() => {
+          loadingOlderRef.current = false;
+          setLoadingOlder(false);
+        });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [chatId, loading, chatType]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -466,9 +574,16 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     // Add optimistic message immediately
     setMessages(prev => [...prev, optimisticMessage]);
 
-    // Scroll to bottom immediately
+    // In app (embed) do not auto-scroll after send (free scroll); on web scroll if user was near bottom
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      if (!messagesEndRef.current) return;
+      if (embed) return;
+      const scrollContainer = messagesEndRef.current.closest('.chat-page');
+      const el = scrollContainer instanceof HTMLElement ? scrollContainer : null;
+      const nearBottom = !el || el.scrollHeight - el.clientHeight - el.scrollTop <= 120;
+      if (nearBottom) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
     }, 50);
 
     try {
@@ -726,18 +841,22 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     }
   };
 
-  const getOtherParticipant = () => {
-    if (chatType === 'direct') {
-      return participants.find(p => p.id !== user?.id);
-    }
-    return null;
-  };
-
-  // Lock background scroll when chat UI is shown (especially on mobile)
+  // Lock background scroll when chat UI is shown (website). Skip in app (embed) so the chat page can scroll.
   useEffect(() => {
-    lockBodyScroll();
-    return () => unlockBodyScroll();
-  }, []);
+    if (chatType === 'bot') return;
+    if (!embed) {
+      lockBodyScroll();
+      return () => unlockBodyScroll();
+    }
+  }, [embed, chatType]);
+
+  if (chatType === 'bot') {
+    return (
+      <div className="h-96 bg-white rounded-lg shadow-lg">
+        <ChatBot isOpen={true} onClose={onClose} currentUser={user} />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -749,9 +868,14 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white">
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+      <div className="flex flex-col h-full min-h-0 bg-white">
+        {/* Messages – no redundant subheader; parent (ChatPage/FloatingChat) already shows name + avatar */}
+        <div ref={messagesAreaRef} className="chat-messages-area flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 min-h-0">
+          {loadingOlder && (
+            <div className="flex justify-center py-2">
+              <span className="text-sm text-gray-500">Loading…</span>
+            </div>
+          )}
           {messages.map((message) => (
             <div
               key={message.id}
@@ -861,7 +985,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                 onChange={handleTyping}
                 onKeyDown={handleKeyPress}
                 placeholder={t('typeAMessage')}
-                rows={2}
+                rows={1}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 disabled={false}
               />

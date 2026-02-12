@@ -5,7 +5,7 @@
  */
 
 import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL, getDefaultHeaders } from '../config/api';
+import { getApiBaseUrl, getDefaultHeaders } from '../config/api';
 
 const TOKEN_KEY = 'auth_token';
 const TIMEOUT = 30000;
@@ -16,12 +16,6 @@ interface RequestConfig {
 }
 
 class ApiClient {
-  private baseURL: string;
-
-  constructor() {
-    this.baseURL = API_BASE_URL;
-  }
-
   /**
    * Get stored authentication token
    */
@@ -78,7 +72,8 @@ class ApiClient {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
+    const base = getApiBaseUrl();
+    const fullUrl = url.startsWith('http') ? url : `${base}${url}`;
     const timeout = config?.timeout || TIMEOUT;
 
     // Create abort controller for timeout
@@ -89,39 +84,35 @@ class ApiClient {
       const response = await fetch(fullUrl, {
         ...options,
         headers,
+        credentials: 'include',
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      // Handle 401 Unauthorized
-      if (response.status === 401) {
-        await this.clearToken();
-        throw new Error('Unauthorized - token expired or invalid');
+      const text = await response.text();
+      let parsed: any = null;
+      if (text) {
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = null;
+        }
       }
 
-      // Check if response is ok
+      if (response.status === 401) {
+        await this.clearToken();
+      }
+
       if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          // If response isn't JSON, use status text
-          errorMessage = response.statusText || errorMessage;
-        }
+        const errorMessage =
+          parsed?.message ||
+          response.statusText ||
+          `HTTP error! status: ${response.status}`;
         throw new Error(errorMessage);
       }
 
-      // Parse JSON response
-      let data: T;
-      try {
-        const text = await response.text();
-        data = text ? JSON.parse(text) : ({} as T);
-      } catch (parseError) {
-        throw new Error('Invalid JSON response from server');
-      }
-      return data;
+      return (parsed ?? ({} as T)) as T;
     } catch (error: any) {
       clearTimeout(timeoutId);
       

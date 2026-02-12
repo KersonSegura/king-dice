@@ -274,7 +274,6 @@ export async function GET(request: NextRequest) {
     let authorMap = new Map<string, any>();
     if (authorIds.length > 0) {
       try {
-        console.log(`🔍 Fetching author data for ${authorIds.length} unique author IDs`);
         const { data: authors, error: authorError } = await executeSupabaseQuery(
           () => supabaseAdmin
             .from('users')
@@ -285,7 +284,6 @@ export async function GET(request: NextRequest) {
         if (authorError) {
           console.error('❌ Error fetching gallery authors:', authorError);
         } else if (authors) {
-          console.log(`✅ Found ${authors.length} authors out of ${authorIds.length} requested`);
           authorMap = new Map(authors.map(author => {
             const normalizedAuthor = {
               ...author,

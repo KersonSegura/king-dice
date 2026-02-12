@@ -31,8 +31,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '25');
 
-    console.log(`🎯 Getting MOST PLAYED GAMES (limit: ${limit})`);
-
     const { data, error } = await executeSupabaseQuery(
       async () => {
         return await supabaseAdmin
@@ -68,8 +66,6 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('❌ Error querying games:', error);
     }
-
-    console.log(`✅ Found ${foundGames.length} most played games`);
 
     return NextResponse.json({ 
       games: foundGames,

@@ -9,6 +9,7 @@ import { useSocket } from '@/contexts/SocketContext';
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser';
 import LoginModal from '@/components/LoginModal';
 import { useTranslations } from 'next-intl';
+import { unhidePublicChat } from '@/lib/publicChatHide';
 
 interface SteamGame {
   appid: number;
@@ -301,6 +302,9 @@ export default function DigitalCornerPage() {
         const data = await response.json();
         
         if (data.success && data.chat) {
+          // If the user previously hid this public chat from /chat, using it here unhides it.
+          unhidePublicChat('Digital Corner Public Chat');
+
           const messages = data.chat.messages || [];
           
           setChatMessages(messages);

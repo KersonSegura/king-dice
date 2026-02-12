@@ -340,6 +340,31 @@ export async function GET(request: NextRequest) {
             const additionalGames = (result3.data || []).filter((g: any) => !existingIds.has(g.id));
             dbGames = [...dbGames, ...additionalGames];
           }
+
+          // Fallback: try snake_case column name_en (common in Supabase/Postgres)
+          if (dbGames.length === 0) {
+            const resultNameEn = await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('name_en', originalPattern)
+              .limit(searchLimit);
+            if (!resultNameEn.error && resultNameEn.data?.length) {
+              dbGames = resultNameEn.data || [];
+              gamesError = null;
+            }
+            if (dbGames.length === 0) {
+              const wordQueriesNameEn = normalizedWords.map(word => `name_en.ilike.%${word}%`);
+              const resultOrNameEn = await supabaseAdmin
+                .from('games')
+                .select('*')
+                .or(wordQueriesNameEn.join(','))
+                .limit(searchLimit);
+              if (!resultOrNameEn.error && resultOrNameEn.data?.length) {
+                dbGames = resultOrNameEn.data || [];
+                gamesError = null;
+              }
+            }
+          }
         } else {
           // Fallback: use original search pattern if normalization produced no words
           const searchPattern = `%${searchQuery}%`;
@@ -351,6 +376,19 @@ export async function GET(request: NextRequest) {
           
           dbGames = result1.data || [];
           gamesError = result1.error;
+
+          // Try snake_case name_en if no results
+          if (dbGames.length === 0) {
+            const resultNameEn = await supabaseAdmin
+              .from('games')
+              .select('*')
+              .ilike('name_en', searchPattern)
+              .limit(searchLimit);
+            if (!resultNameEn.error && resultNameEn.data?.length) {
+              dbGames = resultNameEn.data || [];
+              gamesError = null;
+            }
+          }
         }
 
         if (gamesError) {

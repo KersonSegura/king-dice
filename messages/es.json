@@ -58,7 +58,7 @@
     "seeMore": "Ver Más",
     "create": "Crear",
     "uploadImage": "Subir imagen",
-    "uploadDiscussion": "Subir discusión",
+    "uploadDiscussion": "Crear post",
     "account": "Cuenta"
   },
   "home": {
@@ -68,7 +68,7 @@
     "collection": "",
     "goToMyCollection": "Ver mi colección",
     "viewCollection": "Ver colección",
-    "seeWholeCollection": "Ver colección completa",
+    "seeWholeCollection": "Ver Colección",
     "startMyCollection": "Crear mi colección",
     "hotGames": "Juegos Populares",
     "topRankedGames": "Mejor Valorados",
@@ -484,7 +484,29 @@
     "askDiceBotDescription": "¡Chatea con Dado-Bot para reglas,\nestrategias y recomendaciones!",
     "gotIt": "Entendido",
     "diceBotName": "Dado-Bot",
-    "signInToChat": "Inicia sesión para usar el chat"
+    "signInToChat": "Inicia sesión para usar el chat",
+    "viewMembers": "Ver miembros",
+    "seeProfile": "Ver perfil",
+    "report": "Reportar",
+    "deleteChat": "Eliminar chat",
+    "hideFromList": "Ocultar",
+    "deleteConversationTitle": "¿Eliminar conversación?",
+    "deleteConversationMessage": "¿Seguro que quieres eliminar este chat? Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "reportConversationTitle": "Reportar conversación",
+    "reportConversationMessage": "Tu mensaje se enviará a support@kingdice.gg. Describe el problema y lo revisaremos.",
+    "describeReportPlaceholder": "Describe qué quieres reportar...",
+    "sendToSupport": "Enviar a soporte",
+    "addPeopleToGroup": "Agregar personas al grupo",
+    "groupName": "Nombre del grupo",
+    "groupNamePlaceholder": "Escribe el nombre del grupo...",
+    "selectedMembers": "Miembros seleccionados",
+    "addMembers": "Agregar miembros",
+    "createGroup": "Crear grupo",
+    "searchForUsersToAdd": "Busca usuarios para agregar a tu grupo",
+    "digitalCornerPublicChat": "Chat Público Rincón Digital",
+    "pixelCanvasPublicChat": "Lienzo de Píxeles Chat Público"
   },
   "gallery": {
     "communityGallery": "Galería",
@@ -815,6 +837,10 @@
     "loadingMore": "Cargando más...",
     "scrollToLoadMore": "Desliza para cargar más",
     "noItemsToDisplay": "No hay elementos para mostrar"
+  },
+  "levelUp": {
+    "levelAchieved": "¡Nivel {level} alcanzado!",
+    "newItemsUnlocked": "Nuevos objetos desbloqueados"
   },
   "game": {
     "gameNotFoundDescription": "Lo sentimos, no pudimos encontrar el juego que buscas. Puede que haya sido eliminado o no exista.",

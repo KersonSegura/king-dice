@@ -3,36 +3,30 @@
  * This file centralizes all API endpoints and configuration
  */
 
-import { Platform } from 'react-native';
+const API_PORT = 3000;
 
-// Base URL for the API - change this to your production URL
-// For Android emulator, use 10.0.2.2 instead of localhost
-// For iOS simulator, use localhost
-// For physical device, set EXPO_PUBLIC_API_URL to your computer's IP (e.g. http://192.168.1.100:3000)
-const getApiBaseUrl = (): string => {
-  if (!__DEV__) {
-    return 'https://kingdice.gg'; // Production
-  }
-
-  // Override for physical device testing (set in .env or app.config.js)
+/** Resolve at call time so Expo Go hostUri is available (set after app load). */
+export function getApiBaseUrl(): string {
   const override = typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_URL;
   if (override && typeof override === 'string') {
     return override.replace(/\/$/, '');
   }
+  // In Expo Go / dev, use same host as Metro so physical devices reach your PC's Next.js server
+  try {
+    const Constants = require('expo-constants').default;
+    const hostUri =
+      (Constants.expoConfig as { hostUri?: string } | null)?.hostUri ??
+      (Constants.manifest as { hostUri?: string; debuggerHost?: string } | null)?.hostUri ??
+      (Constants.manifest as { hostUri?: string; debuggerHost?: string } | null)?.debuggerHost;
+    if (hostUri && typeof hostUri === 'string') {
+      const host = hostUri.split(':')[0];
+      if (host) return `http://${host}:${API_PORT}`;
+    }
+  } catch (_) {}
+  return 'https://kingdice.gg';
+}
 
-  // In React Native, detect platform
-  if (Platform.OS === 'android') {
-    // Android emulator uses 10.0.2.2 to access host machine's localhost
-    return 'http://10.0.2.2:3000';
-  } else if (Platform.OS === 'ios') {
-    // iOS simulator can use localhost
-    return 'http://localhost:3000';
-  } else {
-    // Web or other platforms
-    return 'http://localhost:3000';
-  }
-};
-
+/** Use getApiBaseUrl() when making requests so dev host is resolved at request time. */
 export const API_BASE_URL = getApiBaseUrl();
 
 // API Endpoints
@@ -89,7 +83,7 @@ export const getApiUrl = (endpoint: string): string => {
   
   // Remove leading slash if present to avoid double slashes
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  return `${API_BASE_URL}/${cleanEndpoint}`;
+  return `${getApiBaseUrl()}/${cleanEndpoint}`;
 };
 
 /**

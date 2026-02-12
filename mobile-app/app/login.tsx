@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
-import { API_BASE_URL } from '../config/api';
+import { getApiBaseUrl } from '../config/api';
 import { ProfileIconOffSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
 import GoogleSignInWebView from '../components/GoogleSignInWebView';
@@ -27,7 +27,7 @@ import { apiClient } from '../lib/api-client';
 
 const DRAG_SENSITIVITY = 0.025;
 
-const base = typeof API_BASE_URL === 'string' ? API_BASE_URL.replace(/\/$/, '') : 'https://kingdice.gg';
+const base = getApiBaseUrl().replace(/\/$/, '');
 const GRAY_500 = '#6b7280';
 const GRAY_700 = '#374151';
 const GRAY_300 = '#d1d5db';
@@ -48,7 +48,9 @@ export default function LoginScreen() {
   const diceViewerRef = useRef<NativeDiceViewerRef>(null);
   const lastTranslationX = useRef(0);
 
+  const canUseGestures = typeof Gesture?.Pan === 'function' && typeof GestureDetector === 'function';
   const dicePanGesture = useMemo(() => {
+    if (!canUseGestures) return null;
     return Gesture.Pan()
       .runOnJS(true)
       .onStart(() => {
@@ -62,7 +64,7 @@ export default function LoginScreen() {
       .onFinalize(() => {
         lastTranslationX.current = 0;
       });
-  }, []);
+  }, [canUseGestures]);
 
   const handleLogin = async () => {
     setError('');
@@ -80,9 +82,14 @@ export default function LoginScreen() {
       }
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (err: any) {
-      setError(err?.message?.includes('timeout') || err?.message?.includes('Network')
-        ? err.message
-        : 'Incorrect username or password');
+      const message = typeof err?.message === 'string' ? err.message : '';
+      if (message && (message.includes('timeout') || message.includes('Network') || message.includes('verify'))) {
+        setError(message);
+      } else if (message) {
+        setError(message);
+      } else {
+        setError('Incorrect username or password');
+      }
     } finally {
       setLoading(false);
     }
@@ -168,10 +175,18 @@ export default function LoginScreen() {
         >
         <View style={styles.contentGroup}>
           <View style={styles.diceContainer} collapsable={false}>
-            <NativeDiceViewer ref={diceViewerRef} />
-            <GestureDetector gesture={dicePanGesture}>
+            {NativeDiceViewer ? (
+              <NativeDiceViewer ref={diceViewerRef} />
+            ) : (
+              <View style={[styles.diceFallback, styles.diceTouchLayer]} collapsable={false} />
+            )}
+            {canUseGestures && dicePanGesture ? (
+              <GestureDetector gesture={dicePanGesture}>
+                <View style={styles.diceTouchLayer} collapsable={false} />
+              </GestureDetector>
+            ) : (
               <View style={styles.diceTouchLayer} collapsable={false} />
-            </GestureDetector>
+            )}
           </View>
           <View style={styles.pack}>
           <Text style={styles.title}>King Dice</Text>
@@ -284,6 +299,9 @@ const styles = StyleSheet.create({
   diceTouchLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
+  },
+  diceFallback: {
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 32,

@@ -30,11 +30,12 @@ async function simulateImageModeration(imageUrl: string): Promise<ImageModeratio
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 200));
 
-  // Basic file type validation
+  // Accept data URLs (base64) from gallery upload - they look like "data:image/jpeg;base64,..."
+  const isDataUrl = typeof imageUrl === 'string' && imageUrl.startsWith('data:image/');
   const validImageExtensions = /\.(jpg|jpeg|png|gif|webp)$/i;
-  const isValidImage = validImageExtensions.test(imageUrl);
+  const isFileUrlWithExtension = validImageExtensions.test(imageUrl);
 
-  if (!isValidImage) {
+  if (!isDataUrl && !isFileUrlWithExtension) {
     return {
       isAppropriate: false,
       confidence: 0.9,
@@ -46,10 +47,20 @@ async function simulateImageModeration(imageUrl: string): Promise<ImageModeratio
     };
   }
 
-  // Simulate content analysis based on URL patterns
+  // For data URLs we have no path to scan; treat as appropriate until real Vision API is used
+  if (isDataUrl) {
+    return {
+      isAppropriate: true,
+      confidence: 0.5,
+      flags: [],
+      nsfw: false,
+      violence: false,
+      weapons: false,
+    };
+  }
+
+  // For external URLs, check for obviously inappropriate path segments only (no random rejection)
   const lowerUrl = imageUrl.toLowerCase();
-  
-  // Check for potentially inappropriate content based on URL patterns
   const nsfwIndicators = ['nsfw', 'adult', 'explicit', 'nude'];
   const violenceIndicators = ['violence', 'blood', 'gore', 'weapon'];
   const weaponIndicators = ['gun', 'knife', 'weapon', 'armor'];
@@ -57,23 +68,15 @@ async function simulateImageModeration(imageUrl: string): Promise<ImageModeratio
   const isNsfw = nsfwIndicators.some(indicator => lowerUrl.includes(indicator));
   const hasViolence = violenceIndicators.some(indicator => lowerUrl.includes(indicator));
   const hasWeapons = weaponIndicators.some(indicator => lowerUrl.includes(indicator));
-
-  // Random simulation for more realistic results
-  const randomFactor = Math.random();
-  const simulatedNsfw = randomFactor < 0.05; // 5% chance
-  const simulatedViolence = randomFactor < 0.03; // 3% chance
-  const simulatedWeapons = randomFactor < 0.02; // 2% chance
-
-  const isInappropriate = isNsfw || hasViolence || hasWeapons || 
-                        simulatedNsfw || simulatedViolence || simulatedWeapons;
+  const isInappropriate = isNsfw || hasViolence || hasWeapons;
 
   return {
     isAppropriate: !isInappropriate,
     confidence: 0.8,
     flags: isInappropriate ? ['inappropriate_content'] : [],
-    nsfw: isNsfw || simulatedNsfw,
-    violence: hasViolence || simulatedViolence,
-    weapons: hasWeapons || simulatedWeapons,
+    nsfw: isNsfw,
+    violence: hasViolence,
+    weapons: hasWeapons,
     reason: isInappropriate ? 'Contenido inapropiado detectado' : undefined
   };
 } 

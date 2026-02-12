@@ -5,11 +5,20 @@ import { uploadToStorage, STORAGE_BUCKETS, supabaseAdmin } from '@/lib/supabase'
 import { getUserFromToken } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
+function getTokenFromRequest(request: NextRequest): string | null {
+  const auth = request.headers.get('authorization');
+  if (auth?.startsWith('Bearer ')) return auth.slice(7);
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
+    // Verify authentication (cookie for web, Bearer for mobile)
+    let token = getTokenFromRequest(request);
+    if (!token) {
+      const cookieStore = await cookies();
+      token = cookieStore.get('auth_token')?.value ?? null;
+    }
 
     if (!token) {
       return NextResponse.json(

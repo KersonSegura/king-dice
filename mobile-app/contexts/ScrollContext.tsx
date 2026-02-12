@@ -4,7 +4,7 @@
  * Bottom nav stays always visible.
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { usePathname } from 'expo-router';
 
 interface ScrollContextType {
@@ -15,13 +15,24 @@ interface ScrollContextType {
 const ScrollContext = createContext<ScrollContextType | undefined>(undefined);
 
 export function ScrollContextProvider({ children }: { children: ReactNode }) {
-  const [navVisible, setNavVisible] = useState(true);
+  const [navVisible, setNavVisibleState] = useState(true);
   const pathname = usePathname();
 
   // Reset header to visible when navigating to a new page
   useEffect(() => {
-    setNavVisible(true);
+    setNavVisibleState(true);
   }, [pathname]);
+
+  // On chat tab: never hide the header when scrolling (user requested header always visible on chat)
+  const setNavVisible = useCallback(
+    (visible: boolean) => {
+      const isChatTab =
+        pathname === '/(tabs)/chat' || pathname?.startsWith?.('/(tabs)/chat');
+      if (isChatTab && !visible) return;
+      setNavVisibleState(visible);
+    },
+    [pathname]
+  );
 
   return (
     <ScrollContext.Provider value={{ navVisible, setNavVisible }}>

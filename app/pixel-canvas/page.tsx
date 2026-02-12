@@ -10,6 +10,7 @@ import PixelCanvas from '@/components/PixelCanvas';
 import LoginModal from '@/components/LoginModal';
 import WeeklyCanvasSnapshot from '@/components/WeeklyCanvasSnapshot';
 import { useTranslations } from 'next-intl';
+import { unhidePublicChat } from '@/lib/publicChatHide';
 
 interface ChatMessage {
   id: string;
@@ -91,6 +92,9 @@ export default function PixelCanvasPage() {
         const data = await response.json();
         
         if (data.success && data.chat) {
+          // If the user previously hid this public chat from /chat, using it here unhides it.
+          unhidePublicChat('Pixel Canvas Public Chat');
+
           const messages = data.chat.messages || [];
           
           setChatMessages(messages);

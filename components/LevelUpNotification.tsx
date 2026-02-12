@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 interface LevelUpNotificationProps {
   isVisible: boolean;
@@ -10,6 +10,7 @@ interface LevelUpNotificationProps {
 }
 
 export default function LevelUpNotification({ isVisible, level, onClose }: LevelUpNotificationProps) {
+  const t = useTranslations('levelUp');
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -39,28 +40,36 @@ export default function LevelUpNotification({ isVisible, level, onClose }: Level
       
       {/* Level Up Image Container */}
       <div 
-        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ease-out ${
+        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ease-out flex flex-col items-center ${
           isAnimating 
             ? 'opacity-100 scale-100' 
             : 'opacity-0 scale-90'
         }`}
       >
-        {/* Level Up Image */}
-        <div className="relative">
-          <Image
+        {/* Level Up Image - display at natural size, max to fit viewport */}
+        <div className="relative flex justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={`/LevelUp/Level${level}.png`}
-            alt={`Level ${level} Achieved!`}
-            width={400}
-            height={400}
-            className="drop-shadow-2xl w-80 h-80 sm:w-96 sm:h-96 md:w-[400px] md:h-[400px]"
-            priority
+            alt={t('levelAchieved', { level })}
+            className="drop-shadow-2xl max-w-[90vw] max-h-[70vh] w-auto h-auto object-contain"
+            style={{ display: 'block' }}
           />
           
-          {/* Close Button */}
+          {/* Close Button - explicit circle via fixed size + borderRadius 50% */}
           <button
+            type="button"
             onClick={onClose}
-            className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-7 h-7 sm:w-8 sm:h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-base sm:text-lg font-bold transition-colors duration-200 shadow-lg"
             aria-label="Close level up notification"
+            className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 hover:bg-red-600 text-white text-xl font-bold transition-colors duration-200 shadow-lg flex items-center justify-center p-0 border-0"
+            style={{
+              width: 32,
+              height: 32,
+              minWidth: 32,
+              minHeight: 32,
+              borderRadius: '50%',
+              overflow: 'hidden',
+            }}
           >
             ×
           </button>
@@ -69,10 +78,10 @@ export default function LevelUpNotification({ isVisible, level, onClose }: Level
         {/* Celebration Text */}
         <div className="text-center mt-4 px-4">
           <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
-            Level {level} Achieved!
+            {t('levelAchieved', { level })}
           </h2>
           <p className="text-base sm:text-lg text-yellow-200 drop-shadow-md mt-2">
-            New items unlocked!
+            {t('newItemsUnlocked')}
           </p>
         </div>
       </div>

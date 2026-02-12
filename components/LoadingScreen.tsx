@@ -37,17 +37,13 @@ function LoadingScreenInner({ message = "Loading", subMessage = "Please wait..."
         }}
       >
         <div className="text-center">
-          <div className="mb-6">
-            <Image 
-              src="/DiceLogo.svg" 
-              alt="King Dice Logo" 
-              width={80} 
-              height={80}
-              className="mx-auto animate-pulse"
-            />
-          </div>
-          <h2 className="text-lg font-medium text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{message}</h2>
-          <p className="text-sm text-gray-600 mt-2 whitespace-nowrap overflow-hidden text-ellipsis">{subMessage}</p>
+          <Image 
+            src="/DiceLogo.svg" 
+            alt="King Dice Logo" 
+            width={80} 
+            height={80}
+            className="mx-auto animate-pulse"
+          />
         </div>
       </div>
     </div>

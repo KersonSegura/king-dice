@@ -13,33 +13,22 @@ function getTokenFromRequest(request: NextRequest): string | null {
 }
 
 export async function GET(request: NextRequest) {
-  console.log('🔍 Auth verify API called');
   try {
     const token = getTokenFromRequest(request);
-    console.log('🍪 Token found:', !!token);
-
     if (!token) {
-      console.log('❌ No token found, returning 401');
       return NextResponse.json(
         { message: 'No authentication token found' },
         { status: 401 }
       );
     }
 
-    // Verify token and get user data
-    console.log('🔐 Verifying token...');
     const authResult = await getUserFromToken(token);
-    console.log('✅ Auth result:', authResult.success);
-
     if (!authResult.success) {
-      console.log('❌ Auth failed:', authResult.message);
       return NextResponse.json(
         { message: authResult.message },
         { status: 401 }
       );
     }
-
-    console.log('✅ Auth successful for user:', authResult.user?.username);
     return NextResponse.json({
       user: authResult.user
     }, { status: 200 });

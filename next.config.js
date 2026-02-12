@@ -137,21 +137,16 @@ const nextConfig = {
 }
 
 module.exports = withSentryConfig(nextConfig, {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-
   org: "king-dice",
   project: "javascript-nextjs",
-
-  // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
 
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-  // Temporarily enable source maps to debug translation error
+  // Disable source map generation/upload in dev to reduce "Invalid source map" and Sentry noise
+  sourcemaps: {
+    disable: process.env.NODE_ENV === 'development',
+  },
   widenClientFileUpload: true,
-  hideSourceMaps: false,
+  hideSourceMaps: process.env.NODE_ENV === 'development',
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,

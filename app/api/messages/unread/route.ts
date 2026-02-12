@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     
     // If camelCase failed, try snake_case
     if (participantsError && (participantsError.code === '42703' || participantsError.code === 'PGRST116')) {
-      console.log('[UNREAD API] Trying snake_case column names...');
       const altResult = await supabaseAdmin
         .from('chat_participants')
         .select('chat_id, last_read_at')
@@ -92,8 +91,6 @@ export async function GET(request: NextRequest) {
       totalUnreadCount += count || 0;
     }
 
-    console.log(`📱 Unread count for user ${userId}: ${totalUnreadCount}`);
-
     return NextResponse.json({ 
       unreadCount: totalUnreadCount,
       success: true 
@@ -150,8 +147,6 @@ export async function POST(request: NextRequest) {
         details: updateError.message
       }, { status: 500 });
     }
-
-    console.log(`✅ Marked messages as read for user ${userId} in chat ${chatId}`);
 
     return NextResponse.json({ 
       success: true,

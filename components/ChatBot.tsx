@@ -83,20 +83,20 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         }]);
       }
     } else if (isOpen && !currentUser?.id) {
-      // Show sign-in message for unauthenticated users
+      // Same welcome for both app and web – no sign-in prompt in chat
       setMessages([{
-        id: 'signin',
-        text: "Hello! 👋 I'm Dice-Bot, your AI assistant for board games! 🎲\n\nTo chat with me, please sign in or create an account. It's free and only takes a moment!\n\nOnce you're signed in, I can help you with:\n• Board game rules and strategies\n• Game recommendations\n• King Dice platform features\n• And much more!\n\nSign in to get started! 🚀",
+        id: 'welcome',
+        text: "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
         isBot: true,
         timestamp: new Date()
       }]);
     }
-  }, [isOpen, currentUser?.id]);
+  }, [isOpen, currentUser?.id, embedded]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
 
-    // Check if user is authenticated - show fake bot message if not
+    // When not signed in, show short message and don't call API (avoids "sign in to use chat" in UI)
     if (!currentUser?.id) {
       const userMessage = {
         id: Date.now().toString(),
@@ -104,15 +104,13 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         isBot: false,
         timestamp: new Date()
       };
-
-      const signInMessage = {
+      const replyMessage = {
         id: (Date.now() + 1).toString(),
-        text: "Hello! 👋 I'm Dice-Bot, your AI assistant for board games! 🎲\n\nTo chat with me, please sign in or create an account. It's free and only takes a moment!\n\nOnce you're signed in, I can help you with:\n• Board game rules and strategies\n• Game recommendations\n• King Dice platform features\n• And much more!\n\nSign in to get started! 🚀",
+        text: "Sign in to send messages. I'm here when you're ready!",
         isBot: true,
         timestamp: new Date()
       };
-
-      setMessages(prev => [...prev, userMessage, signInMessage]);
+      setMessages(prev => [...prev, userMessage, replyMessage]);
       setMessage('');
       return;
     }
@@ -142,15 +140,15 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       if (!response.ok) {
         const errorData = await response.json();
         
-        // Handle authentication errors with fake bot message
+        // Auth/401: show one short generic message (never "sign in to use chat")
         if (errorData.requiresAuth || response.status === 401) {
-          const signInMessage = {
+          const replyMessage = {
             id: (Date.now() + 1).toString(),
-            text: "Hello! 👋 I'm Dice-Bot, your AI assistant for board games! 🎲\n\nTo chat with me, please sign in or create an account. It's free and only takes a moment!\n\nOnce you're signed in, I can help you with:\n• Board game rules and strategies\n• Game recommendations\n• King Dice platform features\n• And much more!\n\nSign in to get started! 🚀",
+            text: "Something went wrong. Please try again or check your connection.",
             isBot: true,
             timestamp: new Date()
           };
-          const updatedMessages = [...messages, userMessage, signInMessage];
+          const updatedMessages = [...messages, userMessage, replyMessage];
           setMessages(updatedMessages);
           if (currentUser?.id) {
             const storageKey = `dicebot-messages-${currentUser.id}`;
@@ -183,9 +181,13 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       }
     } catch (error: any) {
       console.error('Error sending message to bot:', error);
+      const raw = error?.message || '';
+      const safeMessage = raw && /sign in|signin|authentication required/i.test(raw)
+        ? "Sorry, I'm having trouble connecting right now. Please try again later!"
+        : (raw || "Sorry, I'm having trouble connecting right now. Please try again later!");
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: error?.message || "Sorry, I'm having trouble connecting right now. Please try again later!",
+        text: safeMessage,
         isBot: true,
         timestamp: new Date()
       };
@@ -249,24 +251,15 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         </div>
       )}
 
-      {/* Messages */}
+      {/* Messages – chat-messages-area in embed gets top padding and scroll styling */}
       <div 
         ref={messagesContainerRef}
-        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4"
+        className={`flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ${embedded ? 'chat-messages-area' : ''}`}
         style={{ 
           scrollBehavior: 'smooth',
           overflowX: 'hidden'
         }}
       >
-        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-2 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full border border-gray-300 flex-shrink-0 overflow-hidden bg-white">
-            <img src="/DiceBotIcon.svg" alt="Dice-Bot" className="w-full h-full object-cover" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-gray-900 truncate">Dice-Bot</div>
-            <div className="text-xs text-gray-500">AI Assistant</div>
-          </div>
-        </div>
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -338,7 +331,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="Ask me about board games..."
-              rows={2}
+              rows={1}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               disabled={isLoading}
             />

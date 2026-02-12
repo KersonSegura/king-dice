@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, ScrollView, Text, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,7 @@ import * as Linking from 'expo-linking';
 import SvgIcon from './SvgIcon';
 import type { IconName } from '../config/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
 
 interface MenuItem {
   label: string;
@@ -26,6 +27,7 @@ export default function FloatingHamburger() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useLocale();
   const { user, isAuthenticated, logout } = useAuth();
 
   const handleNavigation = (href?: string) => {
@@ -39,23 +41,22 @@ export default function FloatingHamburger() {
   };
 
   const menuItems: MenuItem[] = [
-    { label: 'Home', svgIcon: 'Home', href: '/(tabs)' },
-    { section: 'Board Games' },
-    { label: 'All Games', svgIcon: 'AllGames', href: '/all-games' },
-    { label: 'Hot Games', svgIcon: 'HotGames', href: '/hot-games' },
-    { label: 'Top Ranked', svgIcon: 'TopRanked', href: '/top-ranked' },
-    { label: 'Forums', svgIcon: 'Forums', href: '/forums' },
-    { label: 'Gallery', svgIcon: 'Gallery', href: '/community-gallery' },
-    { label: 'Shop', svgIcon: 'Shop', href: '/shop' },
-    { section: 'Features' },
-    ...(isAuthenticated ? [{ label: 'My Dice', svgIcon: 'MyDice', href: '/my-dice' }] : []),
-    { label: 'Game Night Tracker', svgIcon: 'GameNightTracker', href: '/game-night-tracker' },
-    { label: 'Catan Maps', svgIcon: 'Catan', href: '/catan-map-generator' },
-    { label: 'Pixel Canvas', svgIcon: 'PixelCanvas', href: '/pixel-canvas' },
-    { label: 'Boardle', svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
-    { label: 'Dice Roller', svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
-    { label: 'Digital Corner', svgIcon: 'DigitalCorner', href: '/digital-corner' },
-    { label: 'Join Discord', ionicon: 'logo-discord', href: 'https://discord.gg/3xh7yUnnnW', discord: true },
+    { section: t('boardGames') },
+    { label: t('allGames'), svgIcon: 'AllGames', href: '/all-games' },
+    { label: t('hotGames'), svgIcon: 'HotGames', href: '/hot-games' },
+    { label: t('topRanked'), svgIcon: 'TopRanked', href: '/top-ranked' },
+    { label: t('forums'), svgIcon: 'Forums', href: '/forums' },
+    { label: t('gallery'), svgIcon: 'Gallery', href: '/community-gallery' },
+    { label: t('shop'), svgIcon: 'Shop', href: '/shop' },
+    { section: t('features') },
+    ...(isAuthenticated ? [{ label: t('myDice'), svgIcon: 'MyDice', href: '/my-dice' }] : []),
+    { label: t('gameNightTracker'), svgIcon: 'GameNightTracker', href: '/game-night-tracker' },
+    { label: t('catanMaps'), svgIcon: 'Catan', href: '/catan-map-generator' },
+    { label: t('pixelCanvas'), svgIcon: 'PixelCanvas', href: '/pixel-canvas' },
+    { label: t('boardle'), svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
+    { label: t('diceRoller'), svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
+    { label: t('digitalCorner'), svgIcon: 'DigitalCorner', href: '/digital-corner' },
+    { label: t('joinDiscord'), ionicon: 'logo-discord', href: 'https://discord.gg/3xh7yUnnnW', discord: true },
   ];
 
   return (
@@ -74,14 +75,18 @@ export default function FloatingHamburger() {
 
       <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.menuContainer}>
+          <View style={[styles.menuContainer, { maxHeight: Dimensions.get('window').height - insets.top - 16 }]}>
             <View style={styles.menuHeader}>
-              <Text style={styles.menuTitle}>Menu</Text>
+              <Text style={styles.menuTitle}>{t('menu')}</Text>
               <TouchableOpacity onPress={() => setOpen(false)}>
                 <Ionicons name="close" size={26} color="#111827" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.menuContent}>
+            <ScrollView
+              style={[styles.menuContent, { maxHeight: Dimensions.get('window').height - insets.top - 16 - 60 }]}
+              contentContainerStyle={styles.menuContentContainer}
+              showsVerticalScrollIndicator={true}
+            >
               {menuItems.map((item, index) => {
                 if (item.section) {
                   return (
@@ -114,19 +119,19 @@ export default function FloatingHamburger() {
               {isAuthenticated && (
                 <>
                   <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionText}>Account</Text>
+                    <Text style={styles.sectionText}>{t('account')}</Text>
                   </View>
                   <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation(`/profile/${user?.username}` as any)}>
                     <View style={styles.menuIconWrap}><SvgIcon name="Profile" size={24} /></View>
-                    <Text style={styles.menuItemText}>My Profile</Text>
+                    <Text style={styles.menuItemText}>{t('myProfile')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation(`/collection/${user?.username}` as any)}>
                     <View style={styles.menuIconWrap}><SvgIcon name="MyCollection" size={24} /></View>
-                    <Text style={styles.menuItemText}>My Collection</Text>
+                    <Text style={styles.menuItemText}>{t('myCollection')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation('/settings' as any)}>
                     <View style={styles.menuIconWrap}><SvgIcon name="Settings" size={24} /></View>
-                    <Text style={styles.menuItemText}>Settings</Text>
+                    <Text style={styles.menuItemText}>{t('settings')}</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -165,8 +170,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '80%',
     paddingBottom: 20,
+  },
+  menuContentContainer: {
+    paddingBottom: 24,
   },
   menuHeader: {
     flexDirection: 'row',

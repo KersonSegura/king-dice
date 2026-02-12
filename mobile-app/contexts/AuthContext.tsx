@@ -36,7 +36,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOGIN_TIMEOUT_MS = 20000;
+const LOGIN_TIMEOUT_MS = 25000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -47,13 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!silent) setIsLoading(true);
       const response = await apiClient.get<{ user: User }>(API_ENDPOINTS.AUTH.VERIFY, {
-        timeout: 8000,
+        timeout: 25000,
       });
       if (response.user) {
         setUser(response.user);
       }
     } catch (error: any) {
-      if (!silent) console.log('Not authenticated:', error.message || 'No token found');
       setUser(null);
     } finally {
       if (!silent) setIsLoading(false);

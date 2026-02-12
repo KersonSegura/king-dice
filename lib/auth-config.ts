@@ -131,8 +131,8 @@ export const authOptions: NextAuthOptions = {
           id: userId,
           username,
           email: user.email,
-          avatar: defaultAvatar, // Always use default dice avatar for new OAuth users
-          passwordHash: null,
+          avatar: defaultAvatar,
+          password_hash: null,
           level: 1,
           xp: 0,
           isAdmin: false,
@@ -141,16 +141,12 @@ export const authOptions: NextAuthOptions = {
           updatedAt: now,
           joinDate: now,
         };
-        
-        // Try to insert with provider info, fallback without if columns don't exist
         let { error: createError } = await supabaseAdmin
           .from('users')
           .insert({ ...userData, provider: account?.provider || 'google', provider_id: account?.providerAccountId || '' })
           .select('id')
           .single();
-        
         if (createError && (createError.code === '42703' || createError.message?.includes('provider'))) {
-          // Retry without provider columns
           const { error: retryError } = await supabaseAdmin
             .from('users')
             .insert(userData)

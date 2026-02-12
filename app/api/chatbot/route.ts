@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Authentication required',
-          message: 'Please sign in to use the chatbot.',
+          message: 'Authentication required',
           requiresAuth: true
         },
         { status: 401 }
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Authentication failed',
-          message: 'Please sign in to use the chatbot.',
+          message: 'Authentication required',
           requiresAuth: true
         },
         { status: 401 }

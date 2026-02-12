@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Users, Search, Plus, Check } from 'lucide-react';
 import LoadingLogo from './LoadingLogo';
+import { useTranslations } from 'next-intl';
 
 interface User {
   id: string;
@@ -42,8 +43,9 @@ export default function GroupChatModal({
   const [hasSearched, setHasSearched] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const mousedownStartedInsideRef = useRef(false);
+  const t = useTranslations('chat');
 
-  // Search for users
+  // Search for users (only by query - do not re-run when selection changes)
   const searchUsers = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -53,17 +55,13 @@ export default function GroupChatModal({
 
     setLoading(true);
     setHasSearched(true);
-    
+
     try {
       const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
       if (response.ok) {
         const data = await response.json();
-        // Filter out current user, already selected users, and existing participants
-        const filteredUsers = (data.users || []).filter((u: User) => 
-          u.id !== currentUser?.id && 
-          !selectedUsers.find(selected => selected.id === u.id) &&
-          !existingParticipants.find(existing => existing.id === u.id)
-        );
+        // Only filter out current user; selected/existing are filtered at render so we don't re-search on select
+        const filteredUsers = (data.users || []).filter((u: User) => u.id !== currentUser?.id);
         setSearchResults(filteredUsers);
       }
     } catch (error) {
@@ -74,7 +72,7 @@ export default function GroupChatModal({
     }
   };
 
-  // Debounce search
+  // Debounce search - only re-run when searchQuery changes (not when selectedUsers changes)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length >= 2) {
@@ -86,7 +84,7 @@ export default function GroupChatModal({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedUsers, existingParticipants]);
+  }, [searchQuery]);
 
   // Toggle user selection
   const toggleUserSelection = (user: User) => {
@@ -184,8 +182,8 @@ export default function GroupChatModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 z-50" 
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pb-4 px-4 overflow-y-auto"
+      style={{ paddingTop: 'max(4rem, env(safe-area-inset-top, 0px) + 1rem)' }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
         // If mousedown is on backdrop, mark that it didn't start inside
@@ -196,8 +194,7 @@ export default function GroupChatModal({
     >
       <div 
         ref={modalContentRef}
-        className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col" 
-        style={{ transform: 'translateY(-20vh)' }}
+        className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[calc(100vh-6rem)] flex flex-col flex-shrink-0"
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}
       >
@@ -206,7 +203,7 @@ export default function GroupChatModal({
           <div className="flex items-center space-x-2">
             <Users className="w-5 h-5 text-blue-500" />
             <h3 className="text-lg font-semibold text-gray-900">
-              {existingChatId ? 'Add People to Group' : 'Create Group Chat'}
+              {existingChatId ? t('addPeopleToGroup') : t('createGroupChat')}
             </h3>
           </div>
           <button
@@ -220,16 +217,16 @@ export default function GroupChatModal({
         {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* Group Name Input - only show when creating new group */}
-          {!existingChatId && (
+            {!existingChatId && (
             <div className="p-4 border-b">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Group Name
+                {t('groupName')}
               </label>
               <input
                 type="text"
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
-                placeholder="Enter group name..."
+                placeholder={t('groupNamePlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 maxLength={50}
               />
@@ -237,10 +234,10 @@ export default function GroupChatModal({
           )}
 
           {/* Selected Users */}
-          {selectedUsers.length > 0 && (
+            {selectedUsers.length > 0 && (
             <div className="p-4 border-b">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Selected Members ({selectedUsers.length})
+                {t('selectedMembers')} ({selectedUsers.length})
               </label>
               <div className="flex flex-wrap gap-2">
                 {selectedUsers.map(user => (
@@ -275,13 +272,13 @@ export default function GroupChatModal({
           {/* User Search */}
           <div className="p-4 border-b">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Add Members
+              {t('addMembers')}
             </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search for users..."
+                placeholder={t('searchForUsers')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -293,20 +290,24 @@ export default function GroupChatModal({
           <div className="flex-1 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <LoadingLogo size={36} text="Searching..." />
+                <LoadingLogo size={36} text={t('searching')} />
               </div>
             ) : !hasSearched ? (
               <div className="flex items-center justify-center py-8 text-gray-500">
                 <Users className="w-8 h-8 mb-2" />
-                <p>Search for users to add to your group</p>
+                <p>{t('searchForUsersToAdd')}</p>
               </div>
-            ) : searchResults.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-gray-500">
-                <p>No users found</p>
-              </div>
-            ) : (
+            ) : (() => {
+              const displayedResults = searchResults.filter(
+                (u) => !existingParticipants.find((existing) => existing.id === u.id)
+              );
+              return displayedResults.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-gray-500">
+                  <p>{t('noUsersFound')}</p>
+                </div>
+              ) : (
               <div className="space-y-1">
-                {searchResults.map(user => {
+                {displayedResults.map(user => {
                   const isSelected = selectedUsers.find(u => u.id === user.id);
                   return (
                     <div
@@ -333,10 +334,10 @@ export default function GroupChatModal({
                         </h3>
                         <div className="flex items-center space-x-2">
                           {user.isVerified && (
-                            <span className="text-xs text-blue-500">✓ Verified</span>
+                            <span className="text-xs text-blue-500">✓ {t('verified')}</span>
                           )}
                           {user.isAdmin && (
-                            <span className="text-xs text-red-500">Admin</span>
+                            <span className="text-xs text-red-500">{t('admin')}</span>
                           )}
                         </div>
                       </div>
@@ -351,7 +352,8 @@ export default function GroupChatModal({
                   );
                 })}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
 
@@ -361,14 +363,14 @@ export default function GroupChatModal({
             onClick={onClose}
             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             onClick={handleCreateGroup}
             disabled={existingChatId ? selectedUsers.length === 0 : (!groupName.trim() || selectedUsers.length === 0)}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {existingChatId ? `Add People (${selectedUsers.length})` : `Create Group (${selectedUsers.length + 1})`}
+            {existingChatId ? t('addPeople') : t('createGroup')}
           </button>
         </div>
       </div>

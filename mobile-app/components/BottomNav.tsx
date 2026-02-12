@@ -11,6 +11,8 @@ import { usePathname, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import SvgIcon from './SvgIcon';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
+import { useTabRefresh } from '../contexts/TabRefreshContext';
 import { apiClient } from '../lib/api-client';
 import { API_BASE_URL } from '../config/api';
 
@@ -82,6 +84,8 @@ function AvatarImage({
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLocale();
+  const { requestRefresh } = useTabRefresh();
   const { user, logout, isLoading } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -157,7 +161,17 @@ export default function BottomNav() {
 
   const isActive = (href: string) => {
     if (href === '/(tabs)') return pathname === '/' || pathname === '/(tabs)';
+    if (href === '/(tabs)/feed') return pathname === '/feed' || pathname?.startsWith(href);
+    if (href === '/(tabs)/chat') return pathname === '/chat' || pathname?.startsWith(href);
     return pathname?.startsWith(href);
+  };
+
+  const handleNavPress = (href: string) => {
+    if (isActive(href)) {
+      requestRefresh(href);
+    } else {
+      router.replace(href as any);
+    }
   };
 
   return (
@@ -167,7 +181,7 @@ export default function BottomNav() {
           <TouchableOpacity
             key={item.key}
             style={[styles.item, isActive(item.href) && styles.itemActive]}
-            onPress={() => router.replace(item.href as any)}
+            onPress={() => handleNavPress(item.href)}
           >
             <View style={{ opacity: 1 }}>{item.icon}</View>
           </TouchableOpacity>
@@ -200,7 +214,6 @@ export default function BottomNav() {
               {isLoading ? (
                 <View style={styles.loadingRow}>
                   <ActivityIndicator size="small" color="#fbae17" />
-                  <Text style={styles.loadingText}>Loading...</Text>
                 </View>
               ) : !user ? (
                 <TouchableOpacity
@@ -211,7 +224,7 @@ export default function BottomNav() {
                   }}
                 >
                   <SvgIcon name="ProfileWhite" size={18} />
-                  <Text style={styles.signInText}>Sign In</Text>
+                  <Text style={styles.signInText}>{t('signIn')}</Text>
                 </TouchableOpacity>
               ) : (
                 <>
@@ -234,9 +247,9 @@ export default function BottomNav() {
                         <Text style={styles.userName} numberOfLines={1}>{user.username}</Text>
                         <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
                         <View style={styles.userStatsRow}>
-                          <Text style={styles.userStat}>Level {userStats.level}</Text>
+                          <Text style={styles.userStat}>{t('level')} {userStats.level}</Text>
                           <Text style={styles.userStatDot}>•</Text>
-                          <Text style={styles.userStat}>{userStats.posts} total posts</Text>
+                          <Text style={styles.userStat}>{userStats.posts} {t('totalPosts')}</Text>
                         </View>
                       </View>
                     </View>
@@ -246,22 +259,22 @@ export default function BottomNav() {
                     <TouchableOpacity style={styles.menuRow} onPress={() => { closeProfile(); if (user.username) router.push(`/profile/${user.username}` as any); }}>
                       <View style={styles.menuIconWrap}><SvgIcon name="Profile" size={24} /></View>
                       <View style={styles.menuLabelWrap}>
-                        <Text style={styles.menuLabel}>Profile</Text>
-                        <Text style={styles.menuSublabel}>View your profile</Text>
+                        <Text style={styles.menuLabel}>{t('profile')}</Text>
+                        <Text style={styles.menuSublabel}>{t('viewYourProfile')}</Text>
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.menuRow} onPress={() => { closeProfile(); if (user.username) router.push(`/collection/${user.username}` as any); }}>
                       <View style={styles.menuIconWrap}><SvgIcon name="MyCollection" size={24} /></View>
                       <View style={styles.menuLabelWrap}>
-                        <Text style={styles.menuLabel}>My Collection</Text>
-                        <Text style={styles.menuSublabel}>View your game collection</Text>
+                        <Text style={styles.menuLabel}>{t('myCollection')}</Text>
+                        <Text style={styles.menuSublabel}>{t('viewYourGameCollection')}</Text>
                       </View>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.menuRow} onPress={() => { closeProfile(); router.push('/settings' as any); }}>
                       <View style={styles.menuIconWrap}><SvgIcon name="Settings" size={24} /></View>
                       <View style={styles.menuLabelWrap}>
-                        <Text style={styles.menuLabel}>Settings</Text>
-                        <Text style={styles.menuSublabel}>Manage your account</Text>
+                        <Text style={styles.menuLabel}>{t('settings')}</Text>
+                        <Text style={styles.menuSublabel}>{t('manageYourAccount')}</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -277,8 +290,8 @@ export default function BottomNav() {
                   >
                     <View style={styles.menuIconWrap}><SvgIcon name="SignOut" size={24} /></View>
                     <View style={styles.menuLabelWrap}>
-                      <Text style={styles.logoutLabel}>Sign Out</Text>
-                      <Text style={styles.logoutSublabel}>Log out of your account</Text>
+                      <Text style={styles.logoutLabel}>{t('signOut')}</Text>
+                      <Text style={styles.logoutSublabel}>{t('logOutOfYourAccount')}</Text>
                     </View>
                   </TouchableOpacity>
                 </>

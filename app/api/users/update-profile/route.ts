@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest) {
           id: userId,
           username: username,
           email: email,
-          passwordHash: '', // Empty password for now
+          password_hash: '',
           isAdmin: isAdmin,
           bio: bio || null,
           favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,
@@ -162,11 +162,10 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Prepare update data with camelCase field names (Supabase uses camelCase)
     const updateData: any = {
       username,
       email,
-      isAdmin: userShouldBeAdmin // Update admin status
+      isAdmin: userShouldBeAdmin
     };
 
     // Add bio if provided
@@ -222,7 +221,7 @@ export async function PUT(request: NextRequest) {
               id: userId,
               username,
               email,
-              passwordHash: '', // Empty password for now
+              password_hash: '',
               isAdmin: userShouldBeAdmin,
               bio: bio || null,
               favoriteGames: favoriteGames ? JSON.stringify(favoriteGames) : null,

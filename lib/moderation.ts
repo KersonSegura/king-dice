@@ -59,7 +59,9 @@ export async function moderateImage(file: File | string): Promise<ImageModeratio
       imageData = file;
     }
 
-    const response = await fetch('/api/moderate/image', {
+    // Use absolute URL when running on server (e.g. from gallery upload route) so fetch works
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    const response = await fetch(`${baseUrl}/api/moderate/image`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,7 +76,17 @@ export async function moderateImage(file: File | string): Promise<ImageModeratio
     return await response.json();
   } catch (error) {
     console.error('Image moderation error:', error);
-    // Fallback to basic image validation
+    // Fallback: when we have a File, server already validated type; don't flag as inappropriate
+    if (file instanceof File && file.type.startsWith('image/')) {
+      return {
+        isAppropriate: true,
+        confidence: 0.5,
+        flags: [],
+        nsfw: false,
+        violence: false,
+        weapons: false,
+      };
+    }
     const fileName = file instanceof File ? file.name : file;
     return basicImageModeration(fileName);
   }

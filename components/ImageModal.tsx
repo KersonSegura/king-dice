@@ -545,8 +545,8 @@ export default function ImageModal({
           {/* Drag indicator bar at top */}
           <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mt-2 mb-1 drag-handle" />
           
-          {/* Header with Avatar, User, Date, [See whole collection], and Close Button */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 drag-handle gap-2">
+          {/* Header with Avatar, User, Date, and Close Button */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 drag-handle">
             <div className="flex items-center space-x-3 min-w-0 flex-1">
               <div 
                 className="w-8 h-8 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
@@ -570,14 +570,6 @@ export default function ImageModal({
                 <p className="text-xs text-gray-500">{createdAt ? formatRelativeTime(createdAt) : ''}</p>
               </div>
             </div>
-            {secondaryAction && (
-              <a
-                href={secondaryAction.href}
-                className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-[#fbae17] text-white text-sm font-semibold hover:bg-[#e0990e] transition-colors whitespace-nowrap"
-              >
-                {secondaryAction.label}
-              </a>
-            )}
             <button
               onClick={onClose}
               className="flex-shrink-0 text-gray-400 hover:text-gray-600"
@@ -1014,8 +1006,8 @@ export default function ImageModal({
 
         {/* Right Side - Content */}
         <div className="flex-1 flex flex-col">
-          {/* Header with [See whole collection] and Close Button */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 gap-2">
+          {/* Header with Close Button */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex items-center space-x-3 min-w-0 flex-1">
                 <div 
                   className="w-10 h-10 rounded-full border-2 border-black overflow-hidden flex-shrink-0"
@@ -1039,14 +1031,6 @@ export default function ImageModal({
                 <p className="text-sm text-gray-500">{createdAt ? formatDate(createdAt) : ''}</p>
               </div>
             </div>
-            {secondaryAction && (
-              <a
-                href={secondaryAction.href}
-                className="flex-shrink-0 px-4 py-2 rounded-lg bg-[#fbae17] text-white text-sm font-semibold hover:bg-[#e0990e] transition-colors whitespace-nowrap"
-              >
-                {secondaryAction.label}
-              </a>
-            )}
             <button
               onClick={onClose}
               className="flex-shrink-0 text-gray-400 hover:text-gray-600"

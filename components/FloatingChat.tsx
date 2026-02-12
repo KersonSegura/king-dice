@@ -3,7 +3,7 @@
 // FloatingChat component for managing chat interface
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { MessageCircle, X, Users, Search, Plus, Bot, ArrowLeft, MoreVertical, Trash2, Ban, Flag, LogOut, Eye } from 'lucide-react';
+import { MessageCircle, X, Users, Search, Plus, Minus, Bot, ArrowLeft, MoreVertical, Trash2, Ban, Flag, LogOut, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatState } from '@/contexts/ChatStateContext';
 import { closeMenusOnChatOpen } from '@/lib/closeChat';
@@ -62,6 +62,8 @@ export function CustomChatList({
   onStartGroupChatWithUser,
   setChatsWithUnread,
   fullPage = false,
+  onChatMenuAction,
+  hiddenPublicChats = [],
 }: {
   onSelectChat: (chat: any) => void;
   onCreateGroup: () => void;
@@ -74,14 +76,37 @@ export function CustomChatList({
   onStartGroupChatWithUser?: (targetUser: any) => void;
   setChatsWithUnread?: (updater: (prev: Map<string, number>) => Map<string, number>) => Map<string, number>;
   fullPage?: boolean;
+  onChatMenuAction?: (action: 'profile' | 'viewMembers' | 'report' | 'delete' | 'hide', chat: any, extra?: { username?: string }) => void;
+  hiddenPublicChats?: string[];
 }) {
   const t = useTranslations('chat');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [existingChats, setExistingChats] = useState<any[]>([]);
+  const [publicChats, setPublicChats] = useState<any[]>([]);
+  const [openMenuChatId, setOpenMenuChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  const PUBLIC_SECTION_STORAGE_KEY = 'chat_publicChatsSectionCollapsed';
+  const [publicSectionCollapsed, setPublicSectionCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem(PUBLIC_SECTION_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const togglePublicSection = () => {
+    setPublicSectionCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(PUBLIC_SECTION_STORAGE_KEY, next ? '1' : '0');
+      } catch {}
+      return next;
+    });
+  };
 
   // Load cached chats instantly from localStorage
   const loadCachedChats = (): any[] => {
@@ -220,6 +245,23 @@ export function CustomChatList({
     fetchExistingChats(true);
   }, [user?.id, refreshTrigger]);
 
+  // Fetch public chats (Digital Corner, Pixel Canvas) so they always appear unless hidden
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    Promise.all([
+      fetch('/api/digital-corner/chat').then((r) => r.ok ? r.json() : null),
+      fetch('/api/pixel-canvas/chat').then((r) => r.ok ? r.json() : null),
+    ]).then(([dc, pc]) => {
+      if (cancelled) return;
+      const list: any[] = [];
+      if (dc?.success && dc?.chat?.id) list.push({ id: dc.chat.id, name: dc.chat.name, type: 'public', participants: dc.chat.participants || [] });
+      if (pc?.success && pc?.chat?.id) list.push({ id: pc.chat.id, name: pc.chat.name, type: 'public', participants: pc.chat.participants || [] });
+      setPublicChats(list);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -233,6 +275,16 @@ export function CustomChatList({
 
     return () => clearTimeout(timer);
   }, [searchQuery, user?.id]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if ((e.target as Element).closest?.('[data-chat-menu]') == null) {
+        setOpenMenuChatId(null);
+      }
+    };
+    if (openMenuChatId) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuChatId]);
 
   // Start a direct chat with a user
   const startChatWithUser = async (targetUser: any) => {
@@ -369,44 +421,68 @@ export function CustomChatList({
           </div>
         )}
 
-        {/* Existing Chats */}
-        {!hasSearched && existingChats.length > 0 && (
+        {/* Recent Chats (user chats only) - exclude known public chats so they never blink here before publicChats loads */}
+        {!hasSearched && (() => {
+          const isKnownPublicChat = (c: any) =>
+            c.type === 'public' && (c.name === 'Digital Corner Public Chat' || c.name === 'Pixel Canvas Public Chat');
+          const existingWithoutPublic = existingChats.filter(
+            (c: any) => !isKnownPublicChat(c) && !publicChats.some((p: any) => p.id === c.id)
+          );
+          return existingWithoutPublic.slice(0, 7).length > 0;
+        })() && (
           <div className="border-b border-gray-100">
             <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               {t('recentChats')}
             </div>
-            {existingChats.slice(0, 5).map((chat) => {
-              // Get unread count from chat data or from real-time updates
+            {(() => {
+              const isKnownPublicChat = (c: any) =>
+                c.type === 'public' && (c.name === 'Digital Corner Public Chat' || c.name === 'Pixel Canvas Public Chat');
+              const existingWithoutPublic = existingChats.filter(
+                (c: any) => !isKnownPublicChat(c) && !publicChats.some((p: any) => p.id === c.id)
+              );
+              return existingWithoutPublic.slice(0, 7);
+            })().map((chat) => {
               const unreadCount = chatsWithUnread?.get(chat.id) || chat.unreadCount || 0;
+              const otherParticipant = chat.type === 'direct' && chat.participants
+                ? chat.participants.find((p: any) => p.id !== user?.id)
+                : null;
+              const showMenu = !!onChatMenuAction;
+              const menuOpen = openMenuChatId === chat.id;
               return (
               <div
                 key={chat.id}
                 onClick={() => {
-                  onSelectChat(chat);
-                  // Remove from unread map when opened
-                  if (onChatOpened) {
-                    onChatOpened(chat.id);
+                  if (!menuOpen) {
+                    onSelectChat(chat);
+                    if (onChatOpened) onChatOpened(chat.id);
                   }
                 }}
-                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors relative"
+                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors relative flex items-center gap-2"
               >
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-gray-200"
+                    style={(chat.type === 'public' && (chat.name === 'Digital Corner Public Chat' || chat.name === 'Pixel Canvas Public Chat')) ? { backgroundColor: '#fbae17' } : undefined}
+                  >
                     {chat.type === 'group' ? (
                       <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white"
+                        className="w-full h-full flex items-center justify-center text-white"
                         style={{ backgroundColor: getGroupChatColor(chat.id) }}
                       >
                         <Users className="w-6 h-6" />
                       </div>
+                    ) : chat.type === 'public' && chat.name === 'Digital Corner Public Chat' ? (
+                      <img src="/PCIcon.svg" alt="Digital Corner" className="w-7 h-7 object-contain" />
+                    ) : chat.type === 'public' && chat.name === 'Pixel Canvas Public Chat' ? (
+                      <img src="/PixelCanvasIconWhiteFill.svg" alt="Pixel Canvas" className="w-7 h-7 object-contain" />
                     ) : (
-                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                      <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
                         {chat.participants && chat.participants.length > 0 ? (
                           chat.participants.find((p: any) => p.id !== user?.id)?.avatar ? (
                             <img
                               src={chat.participants.find((p: any) => p.id !== user?.id)?.avatar}
                               alt={chat.name}
-                              className="w-12 h-12 rounded-full object-cover"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
                             chat.name.charAt(0).toUpperCase()
@@ -447,11 +523,218 @@ export function CustomChatList({
                     </div>
                   </div>
                   {unreadCount > 0 && (
-                    <div className="absolute top-1/2 -translate-y-1/2 right-4 min-w-[28px] h-7 bg-blue-500 text-white text-sm font-bold rounded-full flex items-center justify-center px-2">
+                    <div className="min-w-[28px] h-7 bg-blue-500 text-white text-sm font-bold rounded-full flex items-center justify-center px-2">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </div>
                   )}
                 </div>
+                {showMenu && (
+                  <div data-chat-menu className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuChatId(menuOpen ? null : chat.id);
+                      }}
+                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                      title={t('moreOptions')}
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                    {menuOpen && (
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                        {chat.type === 'group' && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuChatId(null);
+                              onChatMenuAction!('viewMembers', chat);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                            {t('viewMembers')}
+                          </button>
+                        )}
+                        {chat.type === 'direct' && otherParticipant?.username && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuChatId(null);
+                              onChatMenuAction!('profile', chat, { username: otherParticipant.username });
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <User className="w-4 h-4" />
+                            {t('seeProfile')}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuChatId(null);
+                            onChatMenuAction!('report', chat);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <Flag className="w-4 h-4" />
+                          {t('report')}
+                        </button>
+                        {(chat.type === 'public' && (chat.name === 'Digital Corner Public Chat' || chat.name === 'Pixel Canvas Public Chat')) && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuChatId(null);
+                              onChatMenuAction!('hide', chat);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <EyeOff className="w-4 h-4" />
+                            {t('hideFromList')}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuChatId(null);
+                            onChatMenuAction!('delete', chat);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {t('deleteChat')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+            })}
+          </div>
+        )}
+
+        {/* Public Chats (Digital Corner, Pixel Canvas) - section can be collapsed via +/- */}
+        {!hasSearched && publicChats.length > 0 && (
+          <div className="border-b border-gray-100">
+            <div
+              className="px-4 py-2 flex items-center justify-between gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+              aria-expanded={!publicSectionCollapsed}
+            >
+              <span>{t('publicChats')}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePublicSection();
+                }}
+                className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                title={publicSectionCollapsed ? t('expand') : t('collapse')}
+                aria-label={publicSectionCollapsed ? t('expand') : t('collapse')}
+              >
+                {publicSectionCollapsed ? (
+                  <Plus className="w-4 h-4" />
+                ) : (
+                  <Minus className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            {!publicSectionCollapsed && publicChats.map((chat) => {
+              const unreadCount = chatsWithUnread?.get(chat.id) || chat.unreadCount || 0;
+              const showMenu = !!onChatMenuAction;
+              const menuOpen = openMenuChatId === chat.id;
+              return (
+              <div
+                key={chat.id}
+                onClick={() => {
+                  if (!menuOpen) {
+                    onSelectChat(chat);
+                    if (onChatOpened) onChatOpened(chat.id);
+                  }
+                }}
+                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors relative flex items-center gap-2"
+              >
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-gray-200"
+                    style={{ backgroundColor: '#fbae17' }}
+                  >
+                    {chat.name === 'Digital Corner Public Chat' ? (
+                      <img src="/PCIcon.svg" alt="Digital Corner" className="w-7 h-7 object-contain" />
+                    ) : (
+                      <img src="/PixelCanvasIconWhiteFill.svg" alt="Pixel Canvas" className="w-7 h-7 object-contain" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-900 truncate">
+                      {chat.name === 'Digital Corner Public Chat' ? t('digitalCornerPublicChat') : chat.name === 'Pixel Canvas Public Chat' ? t('pixelCanvasPublicChat') : chat.name}
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      {chat.lastMessage ? (
+                        <p className="text-sm text-gray-500 truncate">
+                          {chat.lastMessage.content}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">
+                          {t('noMessagesYet')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {unreadCount > 0 && (
+                    <div className="min-w-[28px] h-7 bg-blue-500 text-white text-sm font-bold rounded-full flex items-center justify-center px-2">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </div>
+                  )}
+                </div>
+                {showMenu && (
+                  <div data-chat-menu className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuChatId(menuOpen ? null : chat.id);
+                      }}
+                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                      title={t('moreOptions')}
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                    {menuOpen && (
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuChatId(null);
+                            onChatMenuAction!('report', chat);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <Flag className="w-4 h-4" />
+                          {t('report')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuChatId(null);
+                            onChatMenuAction!('delete', chat);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {t('deleteChat')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
             })}
@@ -463,7 +746,7 @@ export function CustomChatList({
           <div className="flex items-center justify-center py-8">
             <LoadingLogo size={36} text={t('searching')} />
           </div>
-        ) : !hasSearched ? (
+        ) : !hasSearched && existingChats.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
             <p className="text-sm">{t('searchToStartChatting')}</p>
@@ -471,6 +754,8 @@ export function CustomChatList({
               {t('typeUsername')}
             </p>
           </div>
+        ) : !hasSearched && (existingChats.length > 0 || publicChats.length > 0) ? (
+          null
         ) : searchResults.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
