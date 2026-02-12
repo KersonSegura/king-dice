@@ -50,6 +50,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reject empty or corrupt uploads (common when mobile sends FormData with uri – file can arrive as 0 bytes)
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (buffer.length === 0) {
+      return NextResponse.json(
+        { error: 'Image file is empty. Try selecting the image again or use a different photo.' },
+        { status: 400 }
+      );
+    }
+
     // Use authenticated user data instead of trusting frontend
     const author = {
       id: authenticatedUser.id,
@@ -111,10 +120,7 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const fileExtension = file.name.split('.').pop() || 'jpg';
     const filename = `gallery-${timestamp}.${fileExtension}`;
-    
-    // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
-    
+
     const uploadResult = await uploadToStorage(
       STORAGE_BUCKETS.GALLERY,
       filename,
