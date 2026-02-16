@@ -439,6 +439,7 @@
     "privacyPolicy": "Política de Privacidad",
     "termsOfService": "Términos de Servicio",
     "communityRules": "Reglas de la Comunidad",
+    "childSafety": "Seguridad Infantil",
     "credits": "Créditos",
     "madeWithLove": "Hecho con {heart} para amantes de juegos de mesa",
     "joinDiscord": "Unirse a Discord",
@@ -484,6 +485,10 @@
     "askDiceBotDescription": "¡Chatea con Dado-Bot para reglas,\nestrategias y recomendaciones!",
     "gotIt": "Entendido",
     "diceBotName": "Dado-Bot",
+    "diceBotWelcome": "¡Hola! Soy Dado-Bot! 🎲 Tu asistente de IA 🤖\n\nEstoy aquí para ayudarte con juegos de mesa y preguntas sobre King Dice.\n\n¿En qué puedo ayudarte hoy?",
+    "diceBotSignInReply": "Inicia sesión para enviar mensajes. ¡Estoy aquí cuando estés listo!",
+    "diceBotClearChat": "Iniciar nueva conversación",
+    "diceBotPlaceholder": "Pregunta sobre juegos...",
     "signInToChat": "Inicia sesión para usar el chat",
     "viewMembers": "Ver miembros",
     "seeProfile": "Ver perfil",
@@ -2074,6 +2079,25 @@
         "description": "Tu participación y adherencia a estas reglas ayudan a hacer de King Dice un lugar acogedor para los entusiastas de los juegos de mesa de todo el mundo."
       }
     }
+  },
+  "childSafety": {
+    "title": "Estándares de Seguridad Infantil",
+    "subtitle": "King Dice está comprometido con la prevención de la explotación y el abuso sexual infantil (CSAE). Nuestros estándares están disponibles públicamente a continuación.",
+    "commitment": {
+      "title": "Nuestro Compromiso",
+      "intro": "King Dice tiene tolerancia cero con el contenido o comportamiento que explota, pone en peligro o daña a menores. Cumplimos con las leyes aplicables y trabajamos para mantener nuestra plataforma segura para todos.",
+      "point1": "Prohibimos cualquier contenido que sexualice o explote a menores.",
+      "point2": "Prohibimos contenido que ponga en peligro la seguridad física o emocional de menores.",
+      "point3": "Eliminamos el contenido que infrinja estas normas y tomamos medidas contra las cuentas que las vulneren.",
+      "point4": "Cooperamos con las autoridades cuando la ley lo exija."
+    },
+    "reporting": {
+      "title": "Cómo Reportar",
+      "intro": "Si ves contenido o comportamiento que pueda implicar explotación o abuso sexual infantil, o que ponga en peligro a menores, repórtalo de inmediato.",
+      "inApp": "Usa la opción Reportar en la publicación, comentario, conversación o perfil correspondiente en la app o en la web.",
+      "email": "Para asuntos urgentes o graves, contáctanos directamente en support@kingdice.gg. Tratamos todos los reportes con seriedad y los revisamos con prontitud."
+    },
+    "contact": "Contacto designado para seguridad infantil y cumplimiento CSAE: support@kingdice.gg"
   },
   "credits": {
     "title": "Créditos",

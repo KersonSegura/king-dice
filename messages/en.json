@@ -439,6 +439,7 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "communityRules": "Community Rules",
+    "childSafety": "Child Safety",
     "credits": "Credits",
     "madeWithLove": "Made with {heart} for board game lovers",
     "joinDiscord": "Join Discord",
@@ -484,6 +485,10 @@
     "askDiceBotDescription": "Chat with Dice-Bot for rules, strategies, and game recommendations!",
     "gotIt": "Got it",
     "diceBotName": "Dice-Bot",
+    "diceBotWelcome": "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
+    "diceBotSignInReply": "Sign in to send messages. I'm here when you're ready!",
+    "diceBotClearChat": "Start new conversation",
+    "diceBotPlaceholder": "Ask me about board games...",
     "signInToChat": "Sign in to use chat",
     "viewMembers": "View Members",
     "seeProfile": "See profile",
@@ -2054,6 +2059,25 @@
         "description": "Your participation and adherence to these rules help make King Dice a welcoming place for board game enthusiasts around the world."
       }
     }
+  },
+  "childSafety": {
+    "title": "Child Safety Standards",
+    "subtitle": "King Dice is committed to preventing child sexual exploitation and abuse (CSAE). Our standards are publicly available below.",
+    "commitment": {
+      "title": "Our Commitment",
+      "intro": "King Dice has zero tolerance for content or behavior that exploits, endangers, or harms minors. We comply with applicable laws and work to keep our platform safe for everyone.",
+      "point1": "We prohibit any content that sexualizes or exploits minors.",
+      "point2": "We prohibit content that endangers the physical or emotional safety of minors.",
+      "point3": "We remove violating content and take action against accounts that break these standards.",
+      "point4": "We cooperate with law enforcement when required by law."
+    },
+    "reporting": {
+      "title": "How to Report",
+      "intro": "If you see content or behavior that may involve child sexual exploitation or abuse, or that endangers minors, please report it immediately.",
+      "inApp": "Use the Report option on the relevant post, comment, conversation, or profile in the app or website.",
+      "email": "For urgent or serious concerns, contact us directly at support@kingdice.gg. We treat all reports seriously and review them promptly."
+    },
+    "contact": "Designated contact for child safety and CSAE compliance: support@kingdice.gg"
   },
   "credits": {
     "title": "Credits",

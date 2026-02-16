@@ -236,6 +236,9 @@ export default function Footer() {
                       <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
                       {t('communityRules')}
                     </Link>
+                    <Link href="/child-safety" className="text-gray-400 hover:text-white transition-colors">
+                      {t('childSafety')}
+                    </Link>
                     <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
                       {t('credits')}
                     </Link>
@@ -254,6 +257,9 @@ export default function Footer() {
                     <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
                     {t('communityRules')}
                   </Link>
+                  <Link href="/child-safety" className="text-gray-400 hover:text-white transition-colors">
+                    {t('childSafety')}
+                  </Link>
                   <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
                     {t('credits')}
                   </Link>
@@ -270,6 +276,9 @@ export default function Footer() {
                 <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
                   <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
                   {t('communityRules')}
+                </Link>
+                <Link href="/child-safety" className="text-gray-400 hover:text-white transition-colors">
+                  {t('childSafety')}
                 </Link>
                 <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
                   {t('credits')}
