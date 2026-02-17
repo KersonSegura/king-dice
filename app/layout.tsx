@@ -45,6 +45,9 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
+// Use dynamic rendering so locale cookie is read per request (avoids static render errors and ensures correct language)
+export const dynamic = 'force-dynamic'
+
 export default async function RootLayout({
   children,
 }: {
@@ -59,8 +62,10 @@ export default async function RootLayout({
       locale = cookieLocale;
     }
   } catch (error) {
-    // If cookies() fails, default to English
-    console.error('Error reading locale cookie:', error);
+    // If cookies() fails (e.g. during static analysis), default to English; avoid noisy logs
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Locale cookie read failed, using default:', (error as Error)?.message);
+    }
   }
 
   const messages = messagesMap[locale] || enMessages;

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-config';
+import { getUserFromToken } from '@/lib/auth';
+import { generateCode, setMobileAuthCode } from '@/lib/mobile-auth-codes';
 
 /**
  * This endpoint handles the OAuth callback after Google sign-in
@@ -52,10 +54,26 @@ export async function GET(request: NextRequest) {
     const redirectUrl = new URL(returnUrl, request.url);
     redirectUrl.searchParams.delete('error');
     redirectUrl.searchParams.delete('callbackUrl');
-    
+
+    // One-time code only for app WebView (mobile-done); webpage keeps using cookie only
+    const isMobileDone = redirectUrl.pathname === '/auth/mobile-done';
+    if (isMobileDone) {
+      const code = generateCode();
+      const userResult = await getUserFromToken(session.accessToken);
+      if (userResult.success && userResult.user) {
+        setMobileAuthCode(code, session.accessToken, {
+          id: userResult.user.id,
+          username: userResult.user.username,
+          email: userResult.user.email,
+          avatar: userResult.user.avatar,
+        });
+        redirectUrl.searchParams.set('code', code);
+      }
+    }
+
     const response = NextResponse.redirect(redirectUrl);
 
-    // Set the auth_token cookie that the existing system expects
+    // Set the auth_token cookie that the existing system expects (web)
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -65,7 +83,7 @@ export async function GET(request: NextRequest) {
     };
 
     response.cookies.set('auth_token', session.accessToken, cookieOptions);
-    
+
     console.log('✅ Auth token cookie set, redirecting to:', redirectUrl.toString());
 
     return response;

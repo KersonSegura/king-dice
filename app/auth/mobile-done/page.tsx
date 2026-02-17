@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
+function getCodeFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('code');
+}
+
 export default function MobileDonePage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'redirecting'>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -11,6 +17,24 @@ export default function MobileDonePage() {
 
     async function run() {
       try {
+        // Mobile app WebView: after Google OAuth we're redirected here with ?code= (no cookies needed)
+        const code = getCodeFromUrl();
+        if (code) {
+          const res = await fetch(`/api/auth/mobile-exchange-code?code=${encodeURIComponent(code)}`);
+          if (cancelled) return;
+          if (res.ok) {
+            const data = await res.json();
+            if (data.token && data.user && typeof (window as any).ReactNativeWebView !== 'undefined') {
+              (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth', token: data.token, user: data.user }));
+            }
+          } else {
+            setError('Session expired. Please try again.');
+          }
+          setStatus('success');
+          return;
+        }
+
+        // Web or first load: use cookie session
         const res = await fetch('/api/auth/mobile-session-token', { credentials: 'include' });
         if (cancelled) return;
 

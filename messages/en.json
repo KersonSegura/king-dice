@@ -345,6 +345,7 @@
     "alreadyHaveAccount": "Already have an account? Sign in",
     "dontHaveAccount": "Don't have an account? Create one",
     "continueWithFacebook": "Continue with Facebook",
+    "continueWithGoogle": "Continue with Google",
     "signingIn": "Signing in...",
     "creatingAccount": "Creating account..."
   },
