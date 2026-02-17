@@ -217,7 +217,7 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pb-6">
-          <div className="flex flex-col space-y-8">
+          <div className="flex flex-col space-y-6">
             {/* Row 1: All 5 policy links (same layout for all locales) */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
               <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
@@ -238,22 +238,22 @@ export default function Footer() {
               </Link>
             </div>
 
-            {/* Row 2: Copyright */}
-            <p className="text-gray-400 text-sm">
-              © {currentYear} King Dice. {t('allRightsReserved')}
-            </p>
-
-            {/* Row 3: Made with love - own line so never sits next to Credits */}
-            <p className="text-gray-400 text-sm flex items-center">
-              {t('madeWithLove', { heart: '❤️' }).split('❤️').map((part, i, arr) =>
-                i < arr.length - 1 ? (
-                  <React.Fragment key={i}>
-                    {part}
-                    <Heart className="w-4 h-4 mx-1 text-red-500" />
-                  </React.Fragment>
-                ) : part
-              )}
-            </p>
+            {/* Row 2: Copyright far left, Made with love far right */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <p className="text-gray-400 text-sm order-2 sm:order-1">
+                © {currentYear} King Dice. {t('allRightsReserved')}
+              </p>
+              <p className="text-gray-400 text-sm flex items-center order-1 sm:order-2">
+                {t('madeWithLove', { heart: '❤️' }).split('❤️').map((part, i, arr) =>
+                  i < arr.length - 1 ? (
+                    <React.Fragment key={i}>
+                      {part}
+                      <Heart className="w-4 h-4 mx-1 text-red-500" />
+                    </React.Fragment>
+                  ) : part
+                )}
+              </p>
+            </div>
           </div>
         </div>
       </div>

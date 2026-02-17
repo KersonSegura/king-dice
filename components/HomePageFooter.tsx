@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Mail, MessageCircle, Users, Gamepad2, Star, Shield, Crown, Coffee, Zap } from 'lucide-react';
@@ -288,76 +289,44 @@ export default function HomePageFooter() {
         </div>
       </div>
 
-      {/* Bottom Bar */}
+      {/* Bottom Bar - same layout as Footer.tsx: Row 1 = 5 links, Row 2 = copyright left | made with love right */}
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pb-6">
-          <div className="md:flex md:items-center md:justify-between">
-            <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-6">
-              <p className="text-gray-400 text-sm">
+          <div className="flex flex-col space-y-6">
+            {/* Row 1: All 5 policy links */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+              <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+                {t('privacyPolicy')}
+              </Link>
+              <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
+                {t('termsOfService')}
+              </Link>
+              <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
+                <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
+                {t('communityRules')}
+              </Link>
+              <Link href="/child-safety" className="text-gray-400 hover:text-white transition-colors">
+                {t('childSafety')}
+              </Link>
+              <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
+                {t('credits')}
+              </Link>
+            </div>
+
+            {/* Row 2: Copyright far left, Made with love far right */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <p className="text-gray-400 text-sm order-2 sm:order-1">
                 © {currentYear} King Dice. {t('allRightsReserved')}
               </p>
-              {locale === 'es' ? (
-                <>
-                  {/* Mobile: first line 2 cols, second line left/right */}
-                  <div className="text-sm md:hidden space-y-2">
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                      <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                        {t('privacyPolicy')}
-                      </Link>
-                      <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
-                        {t('termsOfService')}
-                      </Link>
-                    </div>
-                    {/* Align "Créditos" under the 2nd column (Términos de Servicio) */}
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                      <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
-                        <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
-                        {t('communityRules')}
-                      </Link>
-                      <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
-                        {t('credits')}
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Desktop: inline */}
-                  <div className="hidden md:flex md:items-center md:space-x-4 text-sm">
-                    <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                      {t('privacyPolicy')}
-                    </Link>
-                    <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
-                      {t('termsOfService')}
-                    </Link>
-                    <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
-                      <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
-                      {t('communityRules')}
-                    </Link>
-                    <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
-                      {t('credits')}
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:flex md:items-center md:space-x-4 md:gap-0">
-                  <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                    {t('privacyPolicy')}
-                  </Link>
-                  <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
-                    {t('termsOfService')}
-                  </Link>
-                  <Link href="/community-rules" className="text-gray-400 hover:text-white transition-colors flex items-center">
-                    <Shield className="w-4 h-4 mr-1" style={{ color: '#fbae17' }} />
-                    {t('communityRules')}
-                  </Link>
-                  <Link href="/credits" className="text-gray-400 hover:text-white transition-colors">
-                    {t('credits')}
-                  </Link>
-                </div>
-              )}
-            </div>
-            <div className="mt-4 md:mt-0">
-              <p className="text-gray-400 text-sm flex items-center">
-                {t('madeWithLove', { heart: '❤️' })}
+              <p className="text-gray-400 text-sm flex items-center order-1 sm:order-2">
+                {t('madeWithLove', { heart: '❤️' }).split('❤️').map((part, i, arr) =>
+                  i < arr.length - 1 ? (
+                    <React.Fragment key={i}>
+                      {part}
+                      <Heart className="w-4 h-4 mx-1 text-red-500" />
+                    </React.Fragment>
+                  ) : part
+                )}
               </p>
             </div>
           </div>
