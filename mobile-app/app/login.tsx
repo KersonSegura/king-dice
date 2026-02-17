@@ -13,16 +13,22 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  useWindowDimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
-import { getApiBaseUrl } from '../config/api';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import { getApiBaseUrl, OAUTH_BASE_URL } from '../config/api';
 import { ProfileIconOffSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
-import GoogleSignInWebView from '../components/GoogleSignInWebView';
 import NativeDiceViewer, { NativeDiceViewerRef } from '../components/NativeDiceViewer';
+import FloatingLanguageMenu from '../components/FloatingLanguageMenu';
 import { apiClient } from '../lib/api-client';
 
 const DRAG_SENSITIVITY = 0.025;
@@ -42,11 +48,12 @@ export default function LoginScreen() {
   const [twoFactorUserId, setTwoFactorUserId] = useState<string | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [verify2FALoading, setVerify2FALoading] = useState(false);
-  const [showGoogleWebView, setShowGoogleWebView] = useState(false);
   const { login, verifyTwoFactor, verifyAuth } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const diceViewerRef = useRef<NativeDiceViewerRef>(null);
   const lastTranslationX = useRef(0);
+  const { height: windowHeight } = useWindowDimensions();
 
   const canUseGestures = typeof Gesture?.Pan === 'function' && typeof GestureDetector === 'function';
   const dicePanGesture = useMemo(() => {
@@ -69,7 +76,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setError('');
     if (!username.trim() || !password) {
-      setError('Please enter username and password');
+      setError(t('pleaseEnterUsernameAndPassword'));
       return;
     }
 
@@ -88,7 +95,7 @@ export default function LoginScreen() {
       } else if (message) {
         setError(message);
       } else {
-        setError('Incorrect username or password');
+        setError(t('incorrectUsernameOrPassword'));
       }
     } finally {
       setLoading(false);
@@ -98,7 +105,7 @@ export default function LoginScreen() {
   const handleVerify2FA = async () => {
     const code = twoFactorCode.replace(/\D/g, '').slice(0, 6);
     if (code.length !== 6 || !twoFactorUserId) {
-      Alert.alert('Error', 'Please enter the 6-digit code from your email');
+      Alert.alert(t('verificationFailed'), t('pleaseEnter6DigitCode'));
       return;
     }
     try {
@@ -106,29 +113,54 @@ export default function LoginScreen() {
       await verifyTwoFactor(twoFactorUserId, code);
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (error: any) {
-      Alert.alert('Verification Failed', (error as Error).message || 'Invalid or expired code');
+      Alert.alert(t('verificationFailed'), (error as Error).message || t('invalidOrExpiredCode'));
     } finally {
       setVerify2FALoading(false);
     }
   };
 
-  const handleGoogleSignIn = () => setShowGoogleWebView(true);
-
   const handleGoogleSuccess = async (token: string) => {
     await apiClient.setToken(token);
     await verifyAuth();
-    setShowGoogleWebView(false);
     setTimeout(() => router.replace('/(tabs)'), 50);
   };
 
-  const mobileDoneUrl = `${base}/auth/mobile-done`;
+  const handleGoogleSignIn = async () => {
+    // Open /api/mobile-google which returns HTML that auto-POSTs to NextAuth → redirect to Google.
+    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app`;
+    const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
+    const googleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    const redirectUri = Linking.createURL('auth');
+    setGoogleLoading(true);
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(googleSignInUrl, redirectUri);
+      if (result.type === 'success' && result.url) {
+        const url = result.url;
+        const tokenMatch = url.match(/[?&]token=([^&]+)/);
+        const userMatch = url.match(/[?&]user=([^&]+)/);
+        if (tokenMatch && tokenMatch[1]) {
+          const token = decodeURIComponent(tokenMatch[1]);
+          let userJson = '';
+          if (userMatch && userMatch[1]) userJson = decodeURIComponent(userMatch[1]);
+          await handleGoogleSuccess(token);
+          return;
+        }
+      }
+      // User cancelled or flow failed; stay on login screen
+    } catch (e) {
+      console.warn('Google sign-in browser error:', e);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
 
   if (twoFactorUserId) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>King Dice</Text>
-        <Text style={styles.subtitle}>Two-factor authentication</Text>
-        <Text style={styles.twoFactorHint}>Enter the 6-digit code sent to your email.</Text>
+        <Text style={styles.subtitle}>{t('twoFactorTitle')}</Text>
+        <Text style={styles.twoFactorHint}>{t('twoFactorHint')}</Text>
         <View style={styles.inputWrap}>
           <TextInput
             style={styles.input}
@@ -148,11 +180,11 @@ export default function LoginScreen() {
           {verify2FALoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.primaryButtonText}>Verify</Text>
+            <Text style={styles.primaryButtonText}>{t('verify')}</Text>
           )}
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkWrap} onPress={() => setTwoFactorUserId(null)}>
-          <Text style={styles.linkHighlight}>Back to sign in</Text>
+          <Text style={styles.linkHighlight}>{t('backToSignIn')}</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -160,19 +192,19 @@ export default function LoginScreen() {
 
   return (
     <>
-      <GoogleSignInWebView
-        visible={showGoogleWebView}
-        onClose={() => setShowGoogleWebView(false)}
-        onSuccess={handleGoogleSuccess}
-        url={mobileDoneUrl}
-      />
       <View style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <FloatingLanguageMenu />
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.scrollContent, { minHeight: windowHeight }]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
         <View style={styles.contentGroup}>
           <View style={styles.diceContainer} collapsable={false}>
             {NativeDiceViewer ? (
@@ -190,7 +222,7 @@ export default function LoginScreen() {
           </View>
           <View style={styles.pack}>
           <Text style={styles.title}>King Dice</Text>
-          <Text style={styles.subtitle}>Sign In</Text>
+          <Text style={styles.subtitle}>{t('signIn')}</Text>
 
           <View style={styles.inputWrap}>
             <View style={styles.inputIcon}>
@@ -198,7 +230,7 @@ export default function LoginScreen() {
             </View>
             <TextInput
               style={styles.input}
-              placeholder="Username or email"
+              placeholder={t('usernameOrEmail')}
               placeholderTextColor={GRAY_500}
               value={username}
               onChangeText={(v) => { setUsername(v); setError(''); }}
@@ -212,7 +244,7 @@ export default function LoginScreen() {
             </View>
             <TextInput
               style={[styles.input, styles.inputWithRight]}
-              placeholder="Password"
+              placeholder={t('passwordPlaceholder')}
               placeholderTextColor={GRAY_500}
               value={password}
               onChangeText={(v) => { setPassword(v); setError(''); }}
@@ -235,13 +267,13 @@ export default function LoginScreen() {
             <ActivityIndicator size="large" color="#fbae17" style={styles.loader} />
           ) : (
             <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-              <Text style={styles.primaryButtonText}>Sign In</Text>
+              <Text style={styles.primaryButtonText}>{t('signIn')}</Text>
             </TouchableOpacity>
           )}
 
           <View style={styles.dividerWrap}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Or continue with</Text>
+            <Text style={styles.dividerText}>{t('orContinueWith')}</Text>
             <View style={styles.dividerLine} />
           </View>
 
@@ -253,16 +285,17 @@ export default function LoginScreen() {
             <View style={styles.googleIconWrap}>
               <GoogleLogoIcon size={22} />
             </View>
-            <Text style={styles.googleButtonText}>Continue with Google</Text>
+            <Text style={styles.googleButtonText}>{t('continueWithGoogle')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.linkWrap} onPress={() => router.push('/register')} disabled={loading}>
-            <Text style={styles.linkText}>Don't have an account? </Text>
-            <Text style={styles.linkHighlight}>Register</Text>
+            <Text style={styles.linkText}>{t('dontHaveAccount')}</Text>
+            <Text style={styles.linkHighlight}>{t('register')}</Text>
           </TouchableOpacity>
           </View>
         </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
     </>
   );
@@ -272,6 +305,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,

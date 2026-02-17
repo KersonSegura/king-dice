@@ -23,8 +23,11 @@ export function getApiBaseUrl(): string {
       if (host) return `http://${host}:${API_PORT}`;
     }
   } catch (_) {}
-  return 'https://kingdice.gg';
+  return 'https://www.kingdice.gg';
 }
+
+/** Use same host as web (www) so we hit /api/mobile-google and don't get redirected to the homepage. */
+export const OAUTH_BASE_URL = 'https://www.kingdice.gg';
 
 /** Use getApiBaseUrl() when making requests so dev host is resolved at request time. */
 export const API_BASE_URL = getApiBaseUrl();

@@ -20,9 +20,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { ProfileIconOffSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
-import { API_BASE_URL } from '../config/api';
-import GoogleSignInWebView from '../components/GoogleSignInWebView';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import { OAUTH_BASE_URL } from '../config/api';
 import { apiClient } from '../lib/api-client';
 
 const PRIMARY = '#fbae17';
@@ -36,6 +38,7 @@ const RED_600 = '#dc2626';
 const GREEN_600 = '#16a34a';
 
 export default function RegisterScreen() {
+  const { t } = useLocale();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,7 +50,6 @@ export default function RegisterScreen() {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
-  const [showGoogleWebView, setShowGoogleWebView] = useState(false);
   const { register, verifyEmail, verifyAuth } = useAuth();
   const router = useRouter();
 
@@ -130,16 +132,33 @@ export default function RegisterScreen() {
     }
   };
 
-  const base = typeof API_BASE_URL === 'string' ? API_BASE_URL.replace(/\/$/, '') : 'https://kingdice.gg';
-  const mobileDoneUrl = `${base}/auth/mobile-done`;
-
-  const handleGoogleSignIn = () => setShowGoogleWebView(true);
-
   const handleGoogleSuccess = async (token: string) => {
     await apiClient.setToken(token);
     await verifyAuth();
-    setShowGoogleWebView(false);
     setTimeout(() => router.replace('/(tabs)'), 50);
+  };
+
+  const handleGoogleSignIn = async () => {
+    // Use mobile-google page so the in-app browser POSTs to NextAuth and goes straight to Google.
+    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app`;
+    const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
+    const googleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    const redirectUri = Linking.createURL('auth');
+    setGoogleLoading(true);
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(googleSignInUrl, redirectUri);
+      if (result.type === 'success' && result.url) {
+        const tokenMatch = result.url.match(/[?&]token=([^&]+)/);
+        if (tokenMatch?.[1]) {
+          const token = decodeURIComponent(tokenMatch[1]);
+          await handleGoogleSuccess(token);
+        }
+      }
+    } catch (e) {
+      console.warn('Google sign-in browser error:', e);
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const RequirementRow = ({ met, label }: { met: boolean; label: string }) => (
@@ -187,12 +206,6 @@ export default function RegisterScreen() {
 
   return (
     <>
-      <GoogleSignInWebView
-        visible={showGoogleWebView}
-        onClose={() => setShowGoogleWebView(false)}
-        onSuccess={handleGoogleSuccess}
-        url={mobileDoneUrl}
-      />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -320,7 +333,7 @@ export default function RegisterScreen() {
           <View style={styles.googleIconWrap}>
             <GoogleLogoIcon size={22} />
           </View>
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
+          <Text style={styles.googleButtonText}>{t('continueWithGoogle')}</Text>
         </TouchableOpacity>
 
         {/* Already have an account? Sign in */}
@@ -329,8 +342,8 @@ export default function RegisterScreen() {
           onPress={() => router.push('/login')}
           disabled={loading}
         >
-          <Text style={styles.linkText}>Already have an account? </Text>
-          <Text style={styles.linkHighlight}>Sign in</Text>
+          <Text style={styles.linkText}>{t('alreadyHaveAccount')}</Text>
+          <Text style={styles.linkHighlight}>{t('signIn')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
