@@ -126,11 +126,11 @@ export default function LoginScreen() {
   };
 
   const handleGoogleSignIn = async () => {
-    // Open /api/mobile-google which returns HTML that auto-POSTs to NextAuth → redirect to Google.
-    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app`;
+    const redirectUri = Linking.createURL('auth');
+    // Server must redirect to this exact URI (exp:// in Expo Go, kingdice:// in production) so the app receives the token.
+    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&app_redirect_uri=${encodeURIComponent(redirectUri)}`;
     const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
     const googleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-    const redirectUri = Linking.createURL('auth');
     setGoogleLoading(true);
     try {
       const result = await WebBrowser.openAuthSessionAsync(googleSignInUrl, redirectUri);

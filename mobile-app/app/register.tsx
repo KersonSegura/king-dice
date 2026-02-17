@@ -140,10 +140,10 @@ export default function RegisterScreen() {
 
   const handleGoogleSignIn = async () => {
     // Use mobile-google page so the in-app browser POSTs to NextAuth and goes straight to Google.
-    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app`;
+    const redirectUri = Linking.createURL('auth');
+    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&app_redirect_uri=${encodeURIComponent(redirectUri)}`;
     const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
     const googleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-    const redirectUri = Linking.createURL('auth');
     setGoogleLoading(true);
     try {
       const result = await WebBrowser.openAuthSessionAsync(googleSignInUrl, redirectUri);

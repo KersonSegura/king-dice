@@ -24,8 +24,18 @@ export default function MobileDonePage() {
           if (cancelled) return;
           if (res.ok) {
             const data = await res.json();
-            if (data.token && data.user && typeof (window as any).ReactNativeWebView !== 'undefined') {
+            const isWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
+            const isAppBrowser = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('redirect') === 'app';
+            const appRedirectUri = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('app_redirect_uri') : null;
+            if (isWebView) {
               (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth', token: data.token, user: data.user }));
+            } else if (isAppBrowser && data.token) {
+              // Redirect to the app's redirect URI (exp:// in Expo Go, kingdice:// in production) so openAuthSessionAsync receives the token
+              const base = appRedirectUri || 'kingdice://auth';
+              const sep = base.includes('?') ? '&' : '?';
+              const backToApp = `${base}${sep}token=${encodeURIComponent(data.token)}&user=${encodeURIComponent(JSON.stringify(data.user))}`;
+              window.location.href = backToApp;
+              return;
             }
           } else {
             setError('Session expired. Please try again.');
