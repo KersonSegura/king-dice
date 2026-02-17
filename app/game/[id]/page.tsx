@@ -1163,7 +1163,7 @@ export default function GamePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       {ratingModal}
-      <div className="w-full px-0 py-8 overflow-x-hidden">
+      <div className="w-full px-0 md:px-4 lg:px-6 xl:px-8 py-8 overflow-x-hidden">
         {/* Game Header */}
         <div className="bg-white rounded-none shadow-lg overflow-hidden mb-8 mx-auto w-full" style={{ minWidth: isDesktop ? '1000px' : '0', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div className="md:flex">
