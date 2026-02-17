@@ -21,6 +21,7 @@ import { useLoginModal } from '@/hooks/useLoginModal';
 export default function Header() {
   const t = useTranslations('header');
   const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -787,7 +788,7 @@ export default function Header() {
                     height={16}
                     className="w-4 h-4"
                   />
-                  <span>Sign In</span>
+                  <span>{tAuth('signIn')}</span>
                 </button>
               )}
             </div>
