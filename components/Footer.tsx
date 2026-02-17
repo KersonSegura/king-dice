@@ -217,7 +217,7 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 md:pb-6">
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col space-y-6">
             {/* Desktop: Policy links on first line */}
             {locale === 'es' ? (
               <>
@@ -246,7 +246,7 @@ export default function Footer() {
                 </div>
 
                 {/* Desktop: separate line */}
-                <div className="hidden md:flex md:items-center md:space-x-4 text-sm">
+                <div className="hidden md:flex md:items-center md:space-x-4 md:mr-8 text-sm">
                   <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
                     {t('privacyPolicy')}
                   </Link>
@@ -266,7 +266,7 @@ export default function Footer() {
                 </div>
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:flex md:items-center md:space-x-4 md:gap-0">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:flex md:items-center md:space-x-4 md:gap-0 md:mr-8">
                 <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
                   {t('privacyPolicy')}
                 </Link>
@@ -287,7 +287,7 @@ export default function Footer() {
             )}
 
             {/* Desktop: Copyright and Made with love on second line */}
-            <div className="md:flex md:items-center md:justify-between">
+            <div className="md:flex md:items-center md:justify-between md:mt-1">
               <p className="text-gray-400 text-sm">
                 © {currentYear} King Dice. {t('allRightsReserved')}
               </p>
