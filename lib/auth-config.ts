@@ -31,10 +31,6 @@ if (!facebookClientId || !facebookClientSecret) {
   console.warn('⚠️ Facebook OAuth credentials not configured. Facebook sign-in will not work.');
 }
 
-// Canonical base URL for OAuth (must match Google Console redirect URIs exactly)
-const nextAuthBaseUrl = (process.env.NEXTAUTH_URL || 'https://kingdice.gg').replace(/\/$/, '');
-const googleRedirectUri = `${nextAuthBaseUrl}/api/auth/callback/google`;
-
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -43,7 +39,6 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         params: {
           scope: 'openid email profile',
-          redirect_uri: googleRedirectUri,
         },
       },
     }),

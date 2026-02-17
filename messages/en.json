@@ -349,6 +349,26 @@
     "signingIn": "Signing in...",
     "creatingAccount": "Creating account..."
   },
+  "authError": {
+    "title": "Authentication Error",
+    "goToHome": "Go to Home",
+    "tryAgain": "Try Again",
+    "contactSupport": "If this problem persists, please contact support with the error code above.",
+    "errorCode": "Error Code",
+    "Configuration": "There is a problem with the server configuration.",
+    "AccessDenied": "You do not have permission to sign in.",
+    "Verification": "The verification token has expired or has already been used.",
+    "OAuthCallback": "Error in OAuth callback. Check server logs for details.",
+    "OAuthSignin": "Error in OAuth sign-in process.",
+    "OAuthCreateAccount": "Could not create OAuth account.",
+    "EmailCreateAccount": "Could not create email account.",
+    "Callback": "Error in callback handler.",
+    "OAuthAccountNotLinked": "An account with this email already exists. Please sign in with your original method.",
+    "EmailSignin": "Error sending email.",
+    "CredentialsSignin": "Sign in failed. Check your credentials.",
+    "SessionRequired": "Please sign in to access this page.",
+    "Default": "An unexpected error occurred."
+  },
   "settings": {
     "language": "Language",
     "english": "English",

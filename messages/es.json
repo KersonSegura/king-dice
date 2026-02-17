@@ -349,6 +349,26 @@
     "signingIn": "Iniciando sesión...",
     "creatingAccount": "Creando cuenta..."
   },
+  "authError": {
+    "title": "Error de autenticación",
+    "goToHome": "Ir al inicio",
+    "tryAgain": "Intentar de nuevo",
+    "contactSupport": "Si el problema continúa, contacta a soporte con el código de error anterior.",
+    "errorCode": "Código de error",
+    "Configuration": "Hay un problema con la configuración del servidor.",
+    "AccessDenied": "No tienes permiso para iniciar sesión.",
+    "Verification": "El token de verificación ha expirado o ya fue usado.",
+    "OAuthCallback": "Error en la devolución de llamada de OAuth. Revisa los registros del servidor.",
+    "OAuthSignin": "Error en el proceso de inicio de sesión con OAuth.",
+    "OAuthCreateAccount": "No se pudo crear la cuenta OAuth.",
+    "EmailCreateAccount": "No se pudo crear la cuenta por correo.",
+    "Callback": "Error en el manejador de devolución de llamada.",
+    "OAuthAccountNotLinked": "Ya existe una cuenta con este correo. Inicia sesión con el método original.",
+    "EmailSignin": "Error al enviar el correo.",
+    "CredentialsSignin": "Error al iniciar sesión. Revisa tus credenciales.",
+    "SessionRequired": "Por favor inicia sesión para acceder a esta página.",
+    "Default": "Ocurrió un error inesperado."
+  },
   "settings": {
     "language": "Idioma",
     "english": "Inglés",
