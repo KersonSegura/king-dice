@@ -121,10 +121,28 @@ export default function MobileDonePage() {
     );
   }
 
+  // Build "Try again" URL for Session expired: clear cookies and restart Google sign-in
+  const tryAgainUrl =
+    typeof window !== 'undefined' && error === 'Session expired. Please try again.'
+      ? (() => {
+          const params = new URLSearchParams(window.location.search);
+          const appRedirectUri = params.get('app_redirect_uri');
+          const returnUrl = `${window.location.origin}/auth/mobile-done?redirect=app${appRedirectUri ? `&app_redirect_uri=${encodeURIComponent(appRedirectUri)}` : ''}`;
+          const callbackUrl = `${window.location.origin}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
+          return `${window.location.origin}/api/auth/clear-for-mobile?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+        })()
+      : null;
+
   return (
     <div style={{ padding: 24, textAlign: 'center' }}>
       {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
       {!error && <p>You’re signed in. You can close this window and return to the app.</p>}
+      {tryAgainUrl && (
+        <p style={{ marginTop: 16 }}>
+          <a href={tryAgainUrl} style={{ color: '#2563eb', fontWeight: 600 }}>Try again</a>
+          {' — sign in with a fresh session.'}
+        </p>
+      )}
       {fallbackOpenUrl && (
         <p style={{ marginTop: 16 }}>
           <a href={fallbackOpenUrl} style={{ color: '#2563eb', fontWeight: 600 }}>Tap here to open King Dice</a>
