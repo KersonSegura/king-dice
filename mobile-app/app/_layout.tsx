@@ -29,6 +29,7 @@ function LayoutContent() {
   const hideNav =
     pathname?.startsWith('/login') ||
     pathname?.startsWith('/register') ||
+    pathname?.startsWith('/auth') ||
     pathname?.startsWith('/create-post') ||
     !isAuthenticated;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
@@ -46,6 +47,7 @@ function LayoutContent() {
               }}
             >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="auth" />
               <Stack.Screen name="login" />
               <Stack.Screen name="register" />
               <Stack.Screen name="search" />

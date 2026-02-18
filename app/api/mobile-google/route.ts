@@ -104,9 +104,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 3) Redirect the user's browser to Google; forward cookies so callback works
+    // 3) Redirect the user's browser to Google; forward cookies so callback works.
+    // Clear any existing session cookies first so the in-app browser always starts fresh
+    // (avoids "session expired" when the user was previously signed in on kingdice.gg in that browser).
+    const clearCookie = (name: string) =>
+      `${name}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`;
+    const secure = origin.startsWith('https');
+    const prefix = secure ? '__Secure-' : '';
+
     const response = NextResponse.redirect(location, 302);
     response.headers.set('Cache-Control', 'no-store');
+    response.headers.append('Set-Cookie', clearCookie('auth_token'));
+    response.headers.append('Set-Cookie', clearCookie(`${prefix}next-auth.session-token`));
+    response.headers.append('Set-Cookie', clearCookie('next-auth.session-token'));
+    if (secure) {
+      response.headers.append('Set-Cookie', clearCookie('__Secure-authjs.session-token'));
+      response.headers.append('Set-Cookie', clearCookie('authjs.session-token'));
+    }
     for (const cookie of allSetCookies) {
       response.headers.append('Set-Cookie', cookie);
     }

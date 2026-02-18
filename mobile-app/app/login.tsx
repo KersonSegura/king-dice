@@ -24,6 +24,7 @@ import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 import { getApiBaseUrl, OAUTH_BASE_URL } from '../config/api';
 import { ProfileIconOffSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
@@ -127,13 +128,13 @@ export default function LoginScreen() {
 
   const handleGoogleSignIn = async () => {
     const redirectUri = Linking.createURL('auth');
-    // Server must redirect to this exact URI (exp:// in Expo Go, kingdice:// in production) so the app receives the token.
     const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&app_redirect_uri=${encodeURIComponent(redirectUri)}`;
     const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
     const googleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
     setGoogleLoading(true);
     try {
       const result = await WebBrowser.openAuthSessionAsync(googleSignInUrl, redirectUri);
+      WebBrowser.maybeCompleteAuthSession();
       if (result.type === 'success' && result.url) {
         const url = result.url;
         const tokenMatch = url.match(/[?&]token=([^&]+)/);
@@ -149,6 +150,7 @@ export default function LoginScreen() {
       // User cancelled or flow failed; stay on login screen
     } catch (e) {
       console.warn('Google sign-in browser error:', e);
+      WebBrowser.maybeCompleteAuthSession();
     } finally {
       setGoogleLoading(false);
     }
@@ -292,6 +294,13 @@ export default function LoginScreen() {
             <Text style={styles.linkText}>{t('dontHaveAccount')}</Text>
             <Text style={styles.linkHighlight}>{t('register')}</Text>
           </TouchableOpacity>
+
+          <Text style={styles.versionText}>
+            {Constants.expoConfig?.version ?? '?'}
+            {Platform.OS === 'android' && Constants.expoConfig?.android?.versionCode != null
+              ? ` (${Constants.expoConfig.android.versionCode})`
+              : ''}
+          </Text>
           </View>
         </View>
           </ScrollView>
@@ -453,6 +462,12 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontSize: 14,
     marginBottom: 12,
+    textAlign: 'center',
+  },
+  versionText: {
+    marginTop: 24,
+    fontSize: 12,
+    color: GRAY_500,
     textAlign: 'center',
   },
   inputWithRight: {
