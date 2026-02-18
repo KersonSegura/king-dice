@@ -8,9 +8,33 @@ function getCodeFromUrl(): string | null {
   return params.get('code');
 }
 
+function isAndroid(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /Android/i.test(navigator.userAgent);
+}
+
+/** Build URL that opens the app with token. On Android use intent URL so the in-app browser hands off to the app instead of showing "Unmatched Route". */
+function buildAppRedirect(
+  appRedirectUri: string | null,
+  token: string,
+  user: { id: string; username: string; email: string; avatar?: string }
+): string {
+  const base = appRedirectUri || 'kingdice://auth';
+  const sep = base.includes('?') ? '&' : '?';
+  const q = `token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify(user))}`;
+  const customUrl = `${base}${sep}${q}`;
+  if (isAndroid()) {
+    // Android in-app browser often doesn't hand off kingdice:// to the app; intent URL forces opening the app.
+    const pathAndQuery = `auth?${q}`;
+    return `intent://${pathAndQuery}#Intent;scheme=kingdice;package=com.kingdice.app;end`;
+  }
+  return customUrl;
+}
+
 export default function MobileDonePage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'redirecting'>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [fallbackOpenUrl, setFallbackOpenUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,11 +54,13 @@ export default function MobileDonePage() {
             if (isWebView) {
               (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth', token: data.token, user: data.user }));
             } else if (isAppBrowser && data.token) {
-              // Redirect to the app's redirect URI (exp:// in Expo Go, kingdice:// in production) so openAuthSessionAsync receives the token
-              const base = appRedirectUri || 'kingdice://auth';
-              const sep = base.includes('?') ? '&' : '?';
-              const backToApp = `${base}${sep}token=${encodeURIComponent(data.token)}&user=${encodeURIComponent(JSON.stringify(data.user))}`;
+              const backToApp = buildAppRedirect(appRedirectUri, data.token, data.user);
+              setFallbackOpenUrl(backToApp);
               window.location.href = backToApp;
+              // If the in-app browser doesn't hand off (e.g. Chrome blocks programmatic open), show a link so user can tap to open app
+              setTimeout(() => {
+                if (!cancelled) setStatus('success');
+              }, 2000);
               return;
             }
           } else {
@@ -97,7 +123,14 @@ export default function MobileDonePage() {
 
   return (
     <div style={{ padding: 24, textAlign: 'center' }}>
-      {error ? <p style={{ color: '#b91c1c' }}>{error}</p> : <p>You’re signed in. You can close this window and return to the app.</p>}
+      {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
+      {!error && <p>You’re signed in. You can close this window and return to the app.</p>}
+      {fallbackOpenUrl && (
+        <p style={{ marginTop: 16 }}>
+          <a href={fallbackOpenUrl} style={{ color: '#2563eb', fontWeight: 600 }}>Tap here to open King Dice</a>
+          {' if the app did not open.'}
+        </p>
+      )}
     </div>
   );
 }
