@@ -105,8 +105,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 3) Redirect the user's browser to Google; forward cookies so callback works.
-    // Force the in-app browser to forget any previous session so it never "remembers" a logged-in user.
-    // Clear-Site-Data clears all cookies for this origin (Chrome/Android in-app browser respects this).
+    // Clear only known session cookies so an old login isn't reused. Do NOT use Clear-Site-Data
+    // here — it wipes all cookies including the new ones we set below, so the callback then has
+    // no session and the user ends up on the main page signed out.
     const clearCookie = (name: string) =>
       `${name}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`;
     const secure = origin.startsWith('https');
@@ -114,7 +115,6 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.redirect(location, 302);
     response.headers.set('Cache-Control', 'no-store');
-    response.headers.set('Clear-Site-Data', '"cookies"');
     response.headers.append('Set-Cookie', clearCookie('auth_token'));
     response.headers.append('Set-Cookie', clearCookie(`${prefix}next-auth.session-token`));
     response.headers.append('Set-Cookie', clearCookie('next-auth.session-token'));
