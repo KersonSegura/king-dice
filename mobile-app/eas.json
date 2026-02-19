@@ -1,0 +1,36 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+"production": {
+    "autoIncrement": true,
+    "channel": "production",
+    "image": "ubuntu-24.04-jdk-17-ndk-r27b",
+    "android": {
+      "buildType": "app-bundle"
+    },
+    "ios": {}
+  }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      },
+      "ios": {}
+    }
+  }
+}
