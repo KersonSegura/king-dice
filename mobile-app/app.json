@@ -2,7 +2,7 @@
   "expo": {
     "name": "King Dice",
     "slug": "king-dice",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/AppIcon.png",
@@ -17,7 +17,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kingdice.app",
-      "buildNumber": "1"
+      "buildNumber": "3",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +28,16 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.kingdice.app",
-      "versionCode": 1
+      "versionCode": 3,
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {},
     "plugins": [
@@ -35,7 +47,8 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "minSdkVersion": 24
           }
         }
       ],
@@ -59,9 +72,19 @@
       "expo-localization"
     ],
     "scheme": "kingdice",
+    "updates": {
+      "url": "https://u.expo.dev/900115ed-b62a-4c58-bc12-635d0e3082bb",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "900115ed-b62a-4c58-bc12-635d0e3082bb"
       }
     }
   }

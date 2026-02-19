@@ -55,9 +55,10 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.delete('error');
     redirectUrl.searchParams.delete('callbackUrl');
 
-    // One-time code only for app WebView (mobile-done); webpage keeps using cookie only
-    const isMobileDone = redirectUrl.pathname === '/auth/mobile-done';
-    if (isMobileDone) {
+    // One-time code for mobile app return flow. Be tolerant with path/query variants.
+    const isAppRedirect = redirectUrl.searchParams.get('redirect') === 'app';
+    const isMobileDonePath = redirectUrl.pathname === '/auth/mobile-done' || redirectUrl.pathname === '/auth/mobile-done/';
+    if (isAppRedirect || isMobileDonePath) {
       const code = generateCode();
       const userResult = await getUserFromToken(session.accessToken);
       if (userResult.success && userResult.user) {

@@ -238,7 +238,13 @@ export default function RegisterScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: insets.top + 16,
+              paddingBottom: insets.bottom + 28,
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -385,9 +391,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-    paddingBottom: 40,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 24,
   },
   verifyScrollContent: {
     flexGrow: 1,
@@ -410,15 +415,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 24,
     backgroundColor: '#fff',
+    width: '100%',
+    maxWidth: 320,
+    alignSelf: 'center',
   },
   verifyCodeInput: {
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 24,
-    letterSpacing: 8,
+    letterSpacing: 6,
     color: '#111',
     minHeight: 56,
     maxHeight: 56,
+    textAlign: 'center',
   },
   title: {
     fontSize: 22,

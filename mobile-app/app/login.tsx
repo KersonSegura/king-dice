@@ -308,7 +308,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <Text style={styles.versionText}>
-            {Constants.expoConfig?.version ?? '?'}
+            v{Constants.expoConfig?.version ?? '?'}
             {Platform.OS === 'android' && Constants.expoConfig?.android?.versionCode != null
               ? ` (${Constants.expoConfig.android.versionCode})`
               : ''}

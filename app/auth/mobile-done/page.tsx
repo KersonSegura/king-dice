@@ -8,6 +8,12 @@ function getCodeFromUrl(): string | null {
   return params.get('code');
 }
 
+function isAppRedirectRequest(): boolean {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('redirect') === 'app';
+}
+
 function isAndroid(): boolean {
   if (typeof navigator === 'undefined') return false;
   return /Android/i.test(navigator.userAgent);
@@ -43,6 +49,7 @@ export default function MobileDonePage() {
       try {
         // Mobile app WebView: after Google OAuth we're redirected here with ?code= (no cookies needed)
         const code = getCodeFromUrl();
+        const appRedirectFlow = isAppRedirectRequest();
         if (code) {
           const res = await fetch(`/api/auth/mobile-exchange-code?code=${encodeURIComponent(code)}`);
           if (cancelled) return;
@@ -66,6 +73,14 @@ export default function MobileDonePage() {
           } else {
             setError('Session expired. Please try again.');
           }
+          setStatus('success');
+          return;
+        }
+
+        // In app redirect flow we expect a one-time code. If it's missing, restart flow via "Try again"
+        // instead of attempting the normal website cookie session path.
+        if (appRedirectFlow) {
+          setError('Session expired. Please try again.');
           setStatus('success');
           return;
         }

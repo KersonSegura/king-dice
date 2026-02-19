@@ -29,12 +29,14 @@ export class EmailService {
     // Production: set SMTP_USER, FROM_EMAIL (e.g. verify@kingdice.gg), and SMTP_PASS or OAuth in Vercel env
     const smtpUser = process.env.SMTP_USER || 'verify@kingdice.gg';
     
-    // Check if OAuth 2.0 is configured (preferred method)
-    this.useOAuth2 = oauth2Service.isConfigured();
-    
     // Remove spaces from password (Google displays app passwords with spaces)
     const rawPassword = process.env.SMTP_PASS || '';
     const smtpPass = rawPassword ? rawPassword.replace(/\s+/g, '') : undefined;
+    const hasSmtpPass = !!smtpPass;
+    
+    // Prefer SMTP password when present; OAuth is fallback when no SMTP_PASS exists.
+    // This avoids registration emails silently failing when OAuth refresh tokens expire.
+    this.useOAuth2 = oauth2Service.isConfigured() && !hasSmtpPass;
     
     // Business email address for sending verification emails
     this.fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.gg';
@@ -185,7 +187,11 @@ export class EmailService {
         // Production mode: send real email
         // Use Gmail API directly for OAuth 2.0 (more reliable than SMTP)
         if (this.useOAuth2) {
-          return await this.sendEmailViaGmailAPI(options);
+          const oauthSent = await this.sendEmailViaGmailAPI(options);
+          if (oauthSent) {
+            return true;
+          }
+          console.warn('⚠️ Gmail API send failed. Trying SMTP transporter fallback.');
         }
 
         // Use SMTP for non-OAuth methods (app passwords, SendGrid, etc.)
