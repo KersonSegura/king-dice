@@ -439,7 +439,10 @@ export async function registerUser(username: string, email: string, password: st
 
     console.log('✅ registerUser: Pending registration stored:', pendingRegistration.username);
 
-    // Send verification email
+    // Send verification email. If this fails, return an error so UI doesn't claim
+    // "verification code sent" when no email was actually delivered.
+    let verificationEmailSent = false;
+    let verificationEmailError = '';
     try {
       console.log('📧 registerUser: Attempting to send verification email...');
       console.log('📧 registerUser: Email service check:', {
@@ -452,8 +455,9 @@ export async function registerUser(username: string, email: string, password: st
         const emailSent = await emailService.sendRegistrationVerificationCode(email, verificationCode, username);
         if (!emailSent) {
           console.error('❌ registerUser: Failed to send verification email (emailSent=false)');
-          // Continue anyway - user can request a new code
+          verificationEmailError = 'sendRegistrationVerificationCode returned false';
         } else {
+          verificationEmailSent = true;
           console.log('✅ registerUser: Verification email sent successfully to:', email);
           if (!process.env.SMTP_PASS) {
             console.log('⚠️ registerUser: Running in development mode - email saved to file system or logged');
@@ -463,7 +467,7 @@ export async function registerUser(username: string, email: string, password: st
         console.error('❌ registerUser: emailService.sendRegistrationVerificationCode is not a function');
         console.error('❌ emailService:', emailService);
         console.error('❌ emailService type:', typeof emailService);
-        // Continue anyway - user can request a new code
+        verificationEmailError = 'email service method missing';
       }
     } catch (emailError) {
       console.error('❌ registerUser: Error sending verification email:', emailError);
@@ -471,7 +475,15 @@ export async function registerUser(username: string, email: string, password: st
         message: emailError instanceof Error ? emailError.message : String(emailError),
         stack: emailError instanceof Error ? emailError.stack : undefined
       });
-      // Continue anyway - user can request a new code
+      verificationEmailError = emailError instanceof Error ? emailError.message : String(emailError);
+    }
+
+    if (!verificationEmailSent) {
+      console.error('❌ registerUser: Registration created but verification email was not sent:', verificationEmailError);
+      return {
+        success: false,
+        message: 'We could not send your verification email right now. Please try again in a minute.'
+      };
     }
 
     // Return email and username (no userId since user doesn't exist yet)

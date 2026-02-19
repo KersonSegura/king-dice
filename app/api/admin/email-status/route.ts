@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
     const smtpPass = process.env.SMTP_PASS;
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
     const smtpPort = process.env.SMTP_PORT || '587';
-    const smtpUser = process.env.SMTP_USER || 'verify@kingdice.com';
-    const fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.com';
+    const smtpUser = process.env.SMTP_USER || 'verify@kingdice.gg';
+    const fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.gg';
 
     const isDevelopment = !smtpPass;
 
