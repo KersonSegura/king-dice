@@ -3,7 +3,7 @@
  * Same icons as web (ProfileIconOff.svg, LockIcon.svg) and classic Google G.
  */
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -74,6 +74,15 @@ export default function LoginScreen() {
       });
   }, [canUseGestures]);
 
+  // If already signed in (e.g. user pressed back and landed here), go to app and clear stack so back doesn't return to login
+  const { isAuthenticated } = useAuth();
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.dismissAll();
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated]);
+
   const handleLogin = async () => {
     setError('');
     if (!username.trim() || !password) {
@@ -88,6 +97,7 @@ export default function LoginScreen() {
         setTwoFactorUserId(result.userId);
         return;
       }
+      router.dismissAll();
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (err: any) {
       const message = typeof err?.message === 'string' ? err.message : '';
@@ -112,6 +122,7 @@ export default function LoginScreen() {
     try {
       setVerify2FALoading(true);
       await verifyTwoFactor(twoFactorUserId, code);
+      router.dismissAll();
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (error: any) {
       Alert.alert(t('verificationFailed'), (error as Error).message || t('invalidOrExpiredCode'));
@@ -123,6 +134,7 @@ export default function LoginScreen() {
   const handleGoogleSuccess = async (token: string) => {
     await apiClient.setToken(token);
     await verifyAuth();
+    router.dismissAll();
     setTimeout(() => router.replace('/(tabs)'), 50);
   };
 

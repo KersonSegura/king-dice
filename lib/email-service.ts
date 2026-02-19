@@ -26,7 +26,8 @@ export class EmailService {
     // Supports: Gmail (OAuth 2.0 or App Passwords), SendGrid, Mailgun, AWS SES, and other SMTP servers
     const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
     const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
-    const smtpUser = process.env.SMTP_USER || 'verify@kingdice.com';
+    // Production: set SMTP_USER, FROM_EMAIL (e.g. verify@kingdice.gg), and SMTP_PASS or OAuth in Vercel env
+    const smtpUser = process.env.SMTP_USER || 'verify@kingdice.gg';
     
     // Check if OAuth 2.0 is configured (preferred method)
     this.useOAuth2 = oauth2Service.isConfigured();
@@ -36,7 +37,7 @@ export class EmailService {
     const smtpPass = rawPassword ? rawPassword.replace(/\s+/g, '') : undefined;
     
     // Business email address for sending verification emails
-    this.fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.com';
+    this.fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.gg';
     
     // Check if we're in development (no password or OAuth configured)
     this.isDevelopment = !this.useOAuth2 && !smtpPass;

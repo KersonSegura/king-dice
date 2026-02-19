@@ -3,7 +3,7 @@
  * Username, Email, Password, Confirm Password, password requirements, Create Account, Sign in with Google.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OAUTH_BASE_URL } from '../config/api';
 import { apiClient } from '../lib/api-client';
 
@@ -50,8 +51,17 @@ export default function RegisterScreen() {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
-  const { register, verifyEmail, verifyAuth } = useAuth();
+  const { register, verifyEmail, verifyAuth, isAuthenticated } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  // If already signed in, go to app and clear stack so back doesn't return to register
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.dismissAll();
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated]);
 
   // Password requirement checks (same as web LoginModal)
   const passwordRequirements = {
@@ -107,6 +117,7 @@ export default function RegisterScreen() {
         setPendingVerificationEmail(result.user.email);
         return;
       }
+      router.dismissAll();
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'Could not create account');
@@ -124,6 +135,7 @@ export default function RegisterScreen() {
     try {
       setVerifyLoading(true);
       await verifyEmail(pendingVerificationEmail, code);
+      router.dismissAll();
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (error: any) {
       Alert.alert('Verification Failed', (error as Error).message || 'Invalid or expired code');
@@ -135,6 +147,7 @@ export default function RegisterScreen() {
   const handleGoogleSuccess = async (token: string) => {
     await apiClient.setToken(token);
     await verifyAuth();
+    router.dismissAll();
     setTimeout(() => router.replace('/(tabs)'), 50);
   };
 
@@ -147,6 +160,7 @@ export default function RegisterScreen() {
     setGoogleLoading(true);
     try {
       const result = await WebBrowser.openAuthSessionAsync(googleSignInUrl, redirectUri);
+      WebBrowser.maybeCompleteAuthSession();
       if (result.type === 'success' && result.url) {
         const tokenMatch = result.url.match(/[?&]token=([^&]+)/);
         if (tokenMatch?.[1]) {
@@ -156,6 +170,7 @@ export default function RegisterScreen() {
       }
     } catch (e) {
       console.warn('Google sign-in browser error:', e);
+      WebBrowser.maybeCompleteAuthSession();
     } finally {
       setGoogleLoading(false);
     }
@@ -171,20 +186,32 @@ export default function RegisterScreen() {
   if (pendingVerificationEmail) {
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Verify your email</Text>
+        <ScrollView
+          contentContainerStyle={[
+            styles.verifyScrollContent,
+            {
+              paddingTop: insets.top + 24,
+              paddingBottom: insets.bottom + 32,
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.verifyTitle}>Verify your email</Text>
           <Text style={styles.verifyHint}>
             We sent a 6-digit code to {pendingVerificationEmail}. Enter it below.
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="000000"
-            placeholderTextColor={GRAY_500}
-            value={verificationCode}
-            onChangeText={(v) => setVerificationCode(v.replace(/\D/g, '').slice(0, 6))}
-            keyboardType="number-pad"
-            maxLength={6}
-          />
+          <View style={styles.verifyCodeWrap}>
+            <TextInput
+              style={styles.verifyCodeInput}
+              placeholder="000000"
+              placeholderTextColor={GRAY_500}
+              value={verificationCode}
+              onChangeText={(v) => setVerificationCode(v.replace(/\D/g, '').slice(0, 6))}
+              keyboardType="number-pad"
+              maxLength={6}
+            />
+          </View>
           <TouchableOpacity
             style={[styles.primaryButton, verifyLoading && styles.primaryButtonDisabled]}
             onPress={handleVerifyCode}
@@ -196,7 +223,7 @@ export default function RegisterScreen() {
               <Text style={styles.primaryButtonText}>Verify</Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.linkWrap} onPress={() => setPendingVerificationEmail(null)}>
+          <TouchableOpacity style={[styles.linkWrap, { marginBottom: insets.bottom || 16 }]} onPress={() => setPendingVerificationEmail(null)}>
             <Text style={styles.linkHighlight}>Use a different email</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -362,16 +389,42 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 40,
   },
+  verifyScrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+  },
+  verifyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: GRAY_700,
+    marginBottom: 12,
+  },
+  verifyHint: {
+    fontSize: 14,
+    color: GRAY_500,
+    marginBottom: 20,
+  },
+  verifyCodeWrap: {
+    borderWidth: 1,
+    borderColor: GRAY_300,
+    borderRadius: 8,
+    marginBottom: 24,
+    backgroundColor: '#fff',
+  },
+  verifyCodeInput: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 24,
+    letterSpacing: 8,
+    color: '#111',
+    minHeight: 56,
+    maxHeight: 56,
+  },
   title: {
     fontSize: 22,
     fontWeight: '700',
     color: GRAY_700,
     marginBottom: 20,
-  },
-  verifyHint: {
-    fontSize: 14,
-    color: GRAY_500,
-    marginBottom: 16,
   },
   label: {
     fontSize: 14,

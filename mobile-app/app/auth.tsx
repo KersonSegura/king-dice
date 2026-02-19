@@ -65,7 +65,10 @@ export default function AuthCallbackScreen() {
       try {
         await apiClient.setToken(token);
         await verifyAuth();
-        if (!cancelled) setTimeout(() => router.replace('/(tabs)'), 50);
+        if (!cancelled) {
+          router.dismissAll();
+          setTimeout(() => router.replace('/(tabs)'), 50);
+        }
       } catch {
         if (!cancelled) setError('Sign-in failed');
       }
