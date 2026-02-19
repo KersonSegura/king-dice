@@ -62,7 +62,7 @@ async function loadBundledKingDiceGlb(): Promise<ArrayBuffer> {
   }
 }
 
-export type NativeDiceViewerRef = { addRotation: (delta: number) => void };
+export type NativeDiceViewerRef = { addRotation: (delta: number) => void; resetRotation: () => void };
 
 const NativeDiceViewer = forwardRef<NativeDiceViewerRef>((_, ref) => {
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +87,11 @@ const NativeDiceViewer = forwardRef<NativeDiceViewerRef>((_, ref) => {
     addRotation: (delta: number) => {
       lastUserInteractionTime.current = Date.now();
       targetRotationY.current += delta;
+    },
+    resetRotation: () => {
+      rotationY.current = 0;
+      targetRotationY.current = 0;
+      lastUserInteractionTime.current = 0;
     },
   }), []);
 

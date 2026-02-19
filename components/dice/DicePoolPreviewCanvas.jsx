@@ -66,6 +66,28 @@ export default function DicePoolPreviewCanvas({ dicePool, rollSignal, rollResult
     return null;
   };
 
+  /** Keep frame loop running during roll animation (fixes freeze in WebView/app when frameloop=demand). */
+  const RollInvalidate = () => {
+    const { invalidate } = useThree();
+    useEffect(() => {
+      if (!rollSignal) return;
+      const rollDurationMs = 2600; // SPIN_DURATION 1.3 + SETTLE_DURATION 0.6 + buffer
+      const endAt = performance.now() + rollDurationMs;
+      let rafId;
+      const tick = () => {
+        invalidate();
+        if (performance.now() < endAt) {
+          rafId = requestAnimationFrame(tick);
+        }
+      };
+      rafId = requestAnimationFrame(tick);
+      return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+      };
+    }, [rollSignal, invalidate]);
+    return null;
+  };
+
   return (
     <Canvas
       camera={{ position: [0, 1.5, 2.5], fov: 50 }}
@@ -75,6 +97,7 @@ export default function DicePoolPreviewCanvas({ dicePool, rollSignal, rollResult
       frameloop="demand"
     >
       <ScrollInvalidate />
+      <RollInvalidate />
       <View.Port />
       {ready &&
         dicePool.map((dice, index) => (

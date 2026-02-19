@@ -3,7 +3,7 @@
  * Same icons as web (ProfileIconOff.svg, LockIcon.svg) and classic Google G.
  */
 
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
@@ -73,6 +74,13 @@ export default function LoginScreen() {
         lastTranslationX.current = 0;
       });
   }, [canUseGestures]);
+
+  // Reset dice rotation when returning to this screen (e.g. back from Register) so it doesn't keep speeding up
+  useFocusEffect(
+    useCallback(() => {
+      diceViewerRef.current?.resetRotation?.();
+    }, [])
+  );
 
   // If already signed in (e.g. user pressed back and landed here), go to app and clear stack so back doesn't return to login
   const { isAuthenticated } = useAuth();
