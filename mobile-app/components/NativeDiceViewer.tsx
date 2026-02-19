@@ -4,7 +4,7 @@
  */
 import '../polyfills';
 
-import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Asset } from 'expo-asset';
@@ -69,6 +69,19 @@ const NativeDiceViewer = forwardRef<NativeDiceViewerRef>((_, ref) => {
   const rotationY = useRef(0);
   const targetRotationY = useRef(0);
   const lastUserInteractionTime = useRef(0);
+  const rafIdRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (rafIdRef.current != null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+  }, []);
 
   useImperativeHandle(ref, () => ({
     addRotation: (delta: number) => {
@@ -148,7 +161,8 @@ const NativeDiceViewer = forwardRef<NativeDiceViewerRef>((_, ref) => {
       group.add(diceScene);
 
       const render = () => {
-        requestAnimationFrame(render);
+        if (!isMountedRef.current) return;
+        rafIdRef.current = requestAnimationFrame(render);
         const w = gl.drawingBufferWidth || width;
         const h = gl.drawingBufferHeight || height;
         if (w > 0 && h > 0) {

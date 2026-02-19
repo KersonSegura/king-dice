@@ -39,26 +39,29 @@ export default function DiceButtonPreviewCanvas({ diceTypes, previewRefs }) {
     const { invalidate } = useThree();
     useEffect(() => {
       let rafId;
+      let keepInvalidatingUntil = 0;
       const onScroll = () => {
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => invalidate());
+        keepInvalidatingUntil = performance.now() + 140;
+        const tick = () => {
+          invalidate();
+          if (performance.now() < keepInvalidatingUntil) {
+            rafId = requestAnimationFrame(tick);
+          } else {
+            rafId = undefined;
+          }
+        };
+        if (!rafId) {
+          rafId = requestAnimationFrame(tick);
+        }
       };
-      window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+      window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll, { passive: true });
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('scroll', onScroll, { passive: true });
-        window.visualViewport.addEventListener('resize', onScroll, { passive: true });
-      }
       // Kick once after mount to ensure initial alignment
       onScroll();
       return () => {
         if (rafId) cancelAnimationFrame(rafId);
-        window.removeEventListener('scroll', onScroll, { capture: true });
+        window.removeEventListener('scroll', onScroll);
         window.removeEventListener('resize', onScroll);
-        if (window.visualViewport) {
-          window.visualViewport.removeEventListener('scroll', onScroll);
-          window.visualViewport.removeEventListener('resize', onScroll);
-        }
       };
     }, [invalidate]);
     return null;
@@ -70,7 +73,7 @@ export default function DiceButtonPreviewCanvas({ diceTypes, previewRefs }) {
       dpr={[1, 1.5]}
       className="fixed inset-0 pointer-events-none z-10"
       style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10 }}
-      frameloop="always"
+      frameloop="demand"
     >
       <ScrollInvalidate />
       <View.Port />

@@ -77,7 +77,7 @@ export default function DiceRoller() {
           <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">{tDiceRoller('addDiceToPool')}</h1>
         </div>
 
-        <div ref={previewGridRef} className="relative grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-4xl mx-auto">
+        <div ref={previewGridRef} className="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-5xl mx-auto">
           {diceTypes.map((dice, index) => (
             <DiceButton
               key={dice.label}

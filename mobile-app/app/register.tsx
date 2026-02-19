@@ -73,40 +73,40 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!username.trim() || !email.trim() || !password || !confirmPassword) {
-      Alert.alert('Error', 'All fields are required');
+      Alert.alert(t('errorTitle'), t('registerAllFieldsRequired'));
       return;
     }
 
     if (username.trim().length < 3) {
-      Alert.alert('Error', 'Username must be at least 3 characters');
+      Alert.alert(t('errorTitle'), t('registerUsernameMin'));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert(t('errorTitle'), t('registerValidEmail'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert(t('errorTitle'), t('registerPasswordsDontMatch'));
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+      Alert.alert(t('errorTitle'), t('registerPasswordMin'));
       return;
     }
     if (!/[A-Z]/.test(password)) {
-      Alert.alert('Error', 'Password must contain at least one uppercase letter');
+      Alert.alert(t('errorTitle'), t('registerPasswordUpper'));
       return;
     }
     if (!/[a-z]/.test(password)) {
-      Alert.alert('Error', 'Password must contain at least one lowercase letter');
+      Alert.alert(t('errorTitle'), t('registerPasswordLower'));
       return;
     }
     if (!/[0-9]/.test(password)) {
-      Alert.alert('Error', 'Password must contain at least one number');
+      Alert.alert(t('errorTitle'), t('registerPasswordNumber'));
       return;
     }
 
@@ -115,12 +115,13 @@ export default function RegisterScreen() {
       const result = await register(username.trim(), email.trim(), password);
       if (result?.requiresVerification && result.user) {
         setPendingVerificationEmail(result.user.email);
+        Alert.alert(t('verifyEmailTitle'), t('verifyEmailSpamReminder'));
         return;
       }
       router.dismissAll();
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'Could not create account');
+      Alert.alert(t('registerFailedTitle'), error.message || t('registerFailedMessage'));
     } finally {
       setLoading(false);
     }
@@ -129,7 +130,7 @@ export default function RegisterScreen() {
   const handleVerifyCode = async () => {
     const code = verificationCode.replace(/\D/g, '').slice(0, 6);
     if (code.length !== 6 || !pendingVerificationEmail) {
-      Alert.alert('Error', 'Please enter the 6-digit code from your email');
+      Alert.alert(t('errorTitle'), t('pleaseEnter6DigitCode'));
       return;
     }
     try {
@@ -138,7 +139,7 @@ export default function RegisterScreen() {
       router.dismissAll();
       setTimeout(() => router.replace('/(tabs)'), 50);
     } catch (error: any) {
-      Alert.alert('Verification Failed', (error as Error).message || 'Invalid or expired code');
+      Alert.alert(t('verificationFailed'), (error as Error).message || t('invalidOrExpiredCode'));
     } finally {
       setVerifyLoading(false);
     }
@@ -197,9 +198,9 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.verifyTitle}>Verify your email</Text>
+          <Text style={styles.verifyTitle}>{t('verifyEmailTitle')}</Text>
           <Text style={styles.verifyHint}>
-            We sent a 6-digit code to {pendingVerificationEmail}. Enter it below.
+            {t('verifyEmailHint', { email: pendingVerificationEmail ?? '' })}
           </Text>
           <View style={styles.verifyCodeWrap}>
             <TextInput
@@ -220,11 +221,11 @@ export default function RegisterScreen() {
             {verifyLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.primaryButtonText}>Verify</Text>
+              <Text style={styles.primaryButtonText}>{t('verify')}</Text>
             )}
           </TouchableOpacity>
           <TouchableOpacity style={[styles.linkWrap, { marginBottom: insets.bottom || 16 }]} onPress={() => setPendingVerificationEmail(null)}>
-            <Text style={styles.linkHighlight}>Use a different email</Text>
+            <Text style={styles.linkHighlight}>{t('useDifferentEmail')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -248,17 +249,17 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>{t('createAccountTitle')}</Text>
 
         {/* Username - ProfileIconOff.svg (bundled) */}
-        <Text style={styles.label}>Username</Text>
+        <Text style={styles.label}>{t('registerUsernameLabel')}</Text>
         <View style={styles.inputWrap}>
           <View style={styles.inputIcon}>
             <ProfileIconOffSvg size={20} />
           </View>
           <TextInput
             style={styles.input}
-            placeholder="Enter username"
+            placeholder={t('registerUsernamePlaceholder')}
             placeholderTextColor={GRAY_500}
             value={username}
             onChangeText={setUsername}
@@ -268,12 +269,12 @@ export default function RegisterScreen() {
         </View>
 
         {/* Email */}
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>{t('authEmailLabel')}</Text>
         <View style={styles.inputWrap}>
           <Ionicons name="mail-outline" size={20} color={GRAY_500} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Enter email"
+            placeholder={t('registerEmailPlaceholder')}
             placeholderTextColor={GRAY_500}
             value={email}
             onChangeText={setEmail}
@@ -283,14 +284,14 @@ export default function RegisterScreen() {
         </View>
 
         {/* Password - LockIcon.svg (bundled) */}
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>{t('passwordLabel')}</Text>
         <View style={styles.inputWrap}>
           <View style={styles.inputIcon}>
             <LockIconSvg size={20} />
           </View>
           <TextInput
             style={[styles.input, styles.inputWithRight]}
-            placeholder="Password"
+            placeholder={t('passwordPlaceholder')}
             placeholderTextColor={GRAY_500}
             value={password}
             onChangeText={setPassword}
@@ -306,14 +307,14 @@ export default function RegisterScreen() {
         </View>
 
         {/* Confirm Password - LockIcon.svg (bundled) */}
-        <Text style={styles.label}>Confirm Password</Text>
+        <Text style={styles.label}>{t('confirmPasswordLabel')}</Text>
         <View style={styles.inputWrap}>
           <View style={styles.inputIcon}>
             <LockIconSvg size={20} />
           </View>
           <TextInput
             style={[styles.input, styles.inputWithRight]}
-            placeholder="Confirm password"
+            placeholder={t('confirmPasswordPlaceholder')}
             placeholderTextColor={GRAY_500}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -330,11 +331,11 @@ export default function RegisterScreen() {
 
         {/* Password Requirements (same as web) */}
         <View style={styles.reqBox}>
-          <Text style={styles.reqTitle}>Password Requirements:</Text>
-          <RequirementRow met={passwordRequirements.minLength} label="At least 8 characters" />
-          <RequirementRow met={passwordRequirements.hasUppercase} label="At least one uppercase letter" />
-          <RequirementRow met={passwordRequirements.hasLowercase} label="At least one lowercase letter" />
-          <RequirementRow met={passwordRequirements.hasNumber} label="At least one number" />
+          <Text style={styles.reqTitle}>{t('passwordRequirementsTitle')}</Text>
+          <RequirementRow met={passwordRequirements.minLength} label={t('registerPasswordMin')} />
+          <RequirementRow met={passwordRequirements.hasUppercase} label={t('registerPasswordUpper')} />
+          <RequirementRow met={passwordRequirements.hasLowercase} label={t('registerPasswordLower')} />
+          <RequirementRow met={passwordRequirements.hasNumber} label={t('registerPasswordNumber')} />
         </View>
 
         {/* Create Account button */}
@@ -346,14 +347,14 @@ export default function RegisterScreen() {
           {loading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.primaryButtonText}>Create Account</Text>
+            <Text style={styles.primaryButtonText}>{t('createAccountButton')}</Text>
           )}
         </TouchableOpacity>
 
         {/* Or continue with */}
         <View style={styles.dividerWrap}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>Or continue with</Text>
+          <Text style={styles.dividerText}>{t('orContinueWith')}</Text>
           <View style={styles.dividerLine} />
         </View>
 

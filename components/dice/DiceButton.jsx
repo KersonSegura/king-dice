@@ -13,14 +13,14 @@ export default function DiceButton({ dice, disabled, onAdd, canAdd, previewRef }
   }, []);
 
   return (
-    <div className="dice-option relative flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 pl-3 pr-5 py-3 md:px-6 md:min-w-[280px]">
+    <div className="dice-option relative flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 md:px-6 w-full sm:min-w-[250px] md:min-w-[300px]">
       <div
         ref={previewRef}
         className="h-20 w-20 rounded-2xl bg-slate-900/60 border border-white/10 flex-shrink-0"
       >
         {!isMounted && <div className="w-full h-full" />}
       </div>
-      <div className="flex-1 min-w-0 -ml-2 md:ml-0">
+      <div className="flex-1 min-w-0">
         <p className="font-semibold text-white">{dice.label.toUpperCase()}</p>
         <p className="text-xs uppercase tracking-wide text-white/60 whitespace-nowrap">{tDiceRoller('faces', { count: dice.faces })}</p>
       </div>
