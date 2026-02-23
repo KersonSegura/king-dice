@@ -1,6 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
+import AppleProvider from 'next-auth/providers/apple';
 import { supabaseAdmin } from './supabase';
 import { generateToken } from './auth';
 import { generateDefaultAvatar } from './auth';
@@ -10,6 +11,8 @@ const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const facebookClientId = process.env.FACEBOOK_CLIENT_ID?.trim();
 const facebookClientSecret = process.env.FACEBOOK_CLIENT_SECRET?.trim();
+const appleClientId = process.env.APPLE_CLIENT_ID?.trim();
+const appleClientSecret = process.env.APPLE_CLIENT_SECRET?.trim();
 
 // Log credential status (without exposing secrets)
 if (process.env.NODE_ENV === 'production') {
@@ -29,6 +32,10 @@ if (!googleClientId || !googleClientSecret) {
 
 if (!facebookClientId || !facebookClientSecret) {
   console.warn('⚠️ Facebook OAuth credentials not configured. Facebook sign-in will not work.');
+}
+
+if (!appleClientId || !appleClientSecret) {
+  console.warn('⚠️ Apple OAuth credentials not configured. Apple sign-in will not work.');
 }
 
 export const authOptions: NextAuthOptions = {
@@ -53,6 +60,16 @@ export const authOptions: NextAuthOptions = {
       },
       httpOptions: {
         timeout: 10000, // 10 seconds timeout for Facebook API calls
+      },
+    }),
+    AppleProvider({
+      clientId: appleClientId || '',
+      clientSecret: appleClientSecret || '',
+      authorization: {
+        params: {
+          scope: 'name email',
+          response_mode: 'form_post',
+        },
       },
     }),
   ],

@@ -12,6 +12,7 @@ import { WebView } from 'react-native-webview';
 import { API_BASE_URL } from '../config/api';
 import { useScrollNav } from '../contexts/ScrollContext';
 import { useLocale } from '../contexts/LocaleContext';
+import { apiClient } from '../lib/api-client';
 
 const LOAD_TIMEOUT_MS = 35000; // 35s - game page fetches API which can be slow
 
@@ -159,6 +160,23 @@ function buildBackgroundJs(color: string) {
 `;
 }
 
+function buildAuthCookieJs(token: string | null) {
+  const safeToken = token ? encodeURIComponent(token) : '';
+  return `
+  (function() {
+    try {
+      var securePart = window.location.protocol === 'https:' ? '; Secure' : '';
+      if (${token ? 'true' : 'false'}) {
+        document.cookie = 'auth_token=${safeToken}; Path=/; Max-Age=2592000; SameSite=Lax' + securePart;
+      } else {
+        document.cookie = 'auth_token=; Path=/; Max-Age=0; SameSite=Lax' + securePart;
+      }
+    } catch (e) {}
+    true;
+  })();
+`;
+}
+
 function buildGameLinkInterceptJs() {
   return `
   (function() {
@@ -226,6 +244,8 @@ export default function WebViewScreen({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const webViewRef = useRef<WebView>(null);
   const base = API_BASE_URL.replace(/\/$/, '');
@@ -235,7 +255,10 @@ export default function WebViewScreen({
   const sep = pathPart.includes('?') ? '&' : '?';
   const withEmbed = embed ? `${pathPart}${sep}embed=1` : pathPart;
   const uri = `${base}${withEmbed}${hash ? `#${hash}` : ''}`;
-  const headers = embed ? { 'x-kd-embed': '1' } : undefined;
+  const headers = {
+    ...(embed ? { 'x-kd-embed': '1' } : {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  };
   const needsOpenChat = path.includes('openChat=1');
   const isChatPath = path.includes('/chat');
 
@@ -279,9 +302,25 @@ export default function WebViewScreen({
 
   const pageBg = '#ffffff';
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const token = await apiClient.getToken();
+        if (!mounted) return;
+        setAuthToken(token);
+      } finally {
+        if (mounted) setAuthReady(true);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [path, reloadKey]);
+
   const injectedBeforeContentLoaded = hideWebHeader
-    ? [buildHideHeaderJs(), buildBackgroundJs(pageBg)].join('\n')
-    : buildBackgroundJs(pageBg);
+    ? [buildAuthCookieJs(authToken), buildHideHeaderJs(), buildBackgroundJs(pageBg)].join('\n')
+    : [buildAuthCookieJs(authToken), buildBackgroundJs(pageBg)].join('\n');
 
   // Load timeout - game pages fetch from Supabase and can take a while
   useEffect(() => {
@@ -381,34 +420,38 @@ export default function WebViewScreen({
           )}
         </View>
       )}
-      <WebView
-        ref={webViewRef}
-        key={reloadKey}
-        source={{ uri, headers }}
-        style={[styles.webview, { backgroundColor: pageBg }, (loading || loadError) && styles.webviewHidden]}
-        javaScriptEnabled
-        domStorageEnabled
-        cacheEnabled
-        scalesPageToFit
-        startInLoadingState={false}
-        mixedContentMode="always"
-        injectedJavaScriptBeforeContentLoaded={injectedBeforeContentLoaded}
-        injectedJavaScript={injectedJs}
-        onLoadStart={() => { setLoading(true); setLoadError(null); }}
-        onLoadEnd={handleLoadEnd}
-        onHttpError={handleHttpError}
-        onNavigationStateChange={(navState) => {
-          if (!navState.loading) {
-            setLoading(false);
-          }
-        }}
-        onShouldStartLoadWithRequest={(request) => {
-          if (!interceptGameLinks) return true;
-          if (shouldInterceptGameLink(request.url)) return false;
-          return true;
-        }}
-        onMessage={handleMessage}
-      />
+      {authReady && (
+        <WebView
+          ref={webViewRef}
+          key={reloadKey}
+          source={{ uri, headers }}
+          style={[styles.webview, { backgroundColor: pageBg }, (loading || loadError) && styles.webviewHidden]}
+          javaScriptEnabled
+          domStorageEnabled
+          cacheEnabled
+          scalesPageToFit
+          startInLoadingState={false}
+          mixedContentMode="always"
+          sharedCookiesEnabled
+          thirdPartyCookiesEnabled
+          injectedJavaScriptBeforeContentLoaded={injectedBeforeContentLoaded}
+          injectedJavaScript={injectedJs}
+          onLoadStart={() => { setLoading(true); setLoadError(null); }}
+          onLoadEnd={handleLoadEnd}
+          onHttpError={handleHttpError}
+          onNavigationStateChange={(navState) => {
+            if (!navState.loading) {
+              setLoading(false);
+            }
+          }}
+          onShouldStartLoadWithRequest={(request) => {
+            if (!interceptGameLinks) return true;
+            if (shouldInterceptGameLink(request.url)) return false;
+            return true;
+          }}
+          onMessage={handleMessage}
+        />
+      )}
     </View>
   );
 }

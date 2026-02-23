@@ -47,6 +47,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [twoFactorUserId, setTwoFactorUserId] = useState<string | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [verify2FALoading, setVerify2FALoading] = useState(false);
@@ -139,7 +140,7 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleSuccess = async (token: string) => {
+  const handleOAuthSuccess = async (token: string) => {
     await apiClient.setToken(token);
     await verifyAuth();
     router.dismissAll();
@@ -163,7 +164,7 @@ export default function LoginScreen() {
           const token = decodeURIComponent(tokenMatch[1]);
           let userJson = '';
           if (userMatch && userMatch[1]) userJson = decodeURIComponent(userMatch[1]);
-          await handleGoogleSuccess(token);
+          await handleOAuthSuccess(token);
           return;
         }
       }
@@ -173,6 +174,33 @@ export default function LoginScreen() {
       WebBrowser.maybeCompleteAuthSession();
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    if (Platform.OS !== 'ios') return;
+    const redirectUri = Linking.createURL('auth');
+    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&app_redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
+    const appleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-apple?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    setAppleLoading(true);
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(appleSignInUrl, redirectUri);
+      WebBrowser.maybeCompleteAuthSession();
+      if (result.type === 'success' && result.url) {
+        const url = result.url;
+        const tokenMatch = url.match(/[?&]token=([^&]+)/);
+        if (tokenMatch?.[1]) {
+          const token = decodeURIComponent(tokenMatch[1]);
+          await handleOAuthSuccess(token);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Apple sign-in browser error:', e);
+      WebBrowser.maybeCompleteAuthSession();
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -309,6 +337,19 @@ export default function LoginScreen() {
             </View>
             <Text style={styles.googleButtonText}>{t('continueWithGoogle')}</Text>
           </TouchableOpacity>
+
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={[styles.appleButton, appleLoading && styles.primaryButtonDisabled]}
+              onPress={handleAppleSignIn}
+              disabled={appleLoading}
+            >
+              <View style={styles.appleIconWrap}>
+                <Ionicons name="logo-apple" size={22} color="#111827" />
+              </View>
+              <Text style={styles.appleButtonText}>{t('continueWithApple')}</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity style={styles.linkWrap} onPress={() => router.push('/register')} disabled={loading}>
             <Text style={styles.linkText}>{t('dontHaveAccount')}</Text>
@@ -455,10 +496,30 @@ const styles = StyleSheet.create({
     borderColor: GRAY_300,
     backgroundColor: '#fff',
   },
+  appleButton: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: GRAY_300,
+    backgroundColor: '#fff',
+  },
   googleIconWrap: {
     marginRight: 10,
   },
+  appleIconWrap: {
+    marginRight: 10,
+  },
   googleButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: GRAY_700,
+  },
+  appleButtonText: {
     fontSize: 16,
     fontWeight: '500',
     color: GRAY_700,

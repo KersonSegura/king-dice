@@ -48,6 +48,7 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
@@ -145,7 +146,7 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleGoogleSuccess = async (token: string) => {
+  const handleOAuthSuccess = async (token: string) => {
     await apiClient.setToken(token);
     await verifyAuth();
     router.dismissAll();
@@ -166,7 +167,7 @@ export default function RegisterScreen() {
         const tokenMatch = result.url.match(/[?&]token=([^&]+)/);
         if (tokenMatch?.[1]) {
           const token = decodeURIComponent(tokenMatch[1]);
-          await handleGoogleSuccess(token);
+          await handleOAuthSuccess(token);
         }
       }
     } catch (e) {
@@ -174,6 +175,31 @@ export default function RegisterScreen() {
       WebBrowser.maybeCompleteAuthSession();
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    if (Platform.OS !== 'ios') return;
+    const redirectUri = Linking.createURL('auth');
+    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&app_redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
+    const appleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-apple?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    setAppleLoading(true);
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(appleSignInUrl, redirectUri);
+      WebBrowser.maybeCompleteAuthSession();
+      if (result.type === 'success' && result.url) {
+        const tokenMatch = result.url.match(/[?&]token=([^&]+)/);
+        if (tokenMatch?.[1]) {
+          const token = decodeURIComponent(tokenMatch[1]);
+          await handleOAuthSuccess(token);
+        }
+      }
+    } catch (e) {
+      console.warn('Apple sign-in browser error:', e);
+      WebBrowser.maybeCompleteAuthSession();
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -370,6 +396,19 @@ export default function RegisterScreen() {
           <Text style={styles.googleButtonText}>{t('continueWithGoogle')}</Text>
         </TouchableOpacity>
 
+        {Platform.OS === 'ios' && (
+          <TouchableOpacity
+            style={[styles.appleButton, appleLoading && styles.primaryButtonDisabled]}
+            onPress={handleAppleSignIn}
+            disabled={appleLoading}
+          >
+            <View style={styles.appleIconWrap}>
+              <Ionicons name="logo-apple" size={22} color={GRAY_700} />
+            </View>
+            <Text style={styles.appleButtonText}>{t('continueWithApple')}</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Already have an account? Sign in */}
         <TouchableOpacity
           style={styles.linkWrap}
@@ -547,10 +586,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     minHeight: 48,
   },
+  appleButton: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: GRAY_300,
+    backgroundColor: '#fff',
+    minHeight: 48,
+  },
   googleIconWrap: {
     marginRight: 10,
   },
+  appleIconWrap: {
+    marginRight: 10,
+  },
   googleButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: GRAY_700,
+  },
+  appleButtonText: {
     fontSize: 16,
     fontWeight: '500',
     color: GRAY_700,
