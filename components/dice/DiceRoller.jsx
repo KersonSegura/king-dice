@@ -18,7 +18,7 @@ const CoinFlipScene = dynamic(() => import('./CoinFlipScene'), {
 });
 
 const ROLL_ANIMATION_MS = 1000;
-const ROLL_TICK_MS = 80;
+const ROLL_TICK_MS = 130;
 const TIMER_PRESETS = [
   { key: '30s', labelKey: 'timerPreset30s', seconds: 30 },
   { key: '1m', labelKey: 'timerPreset1m', seconds: 60 },
@@ -406,7 +406,7 @@ export default function DiceRoller() {
                                 style={{
                                   transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
                                   transition: isRolling
-                                    ? 'transform 85ms linear'
+                                    ? 'transform 130ms linear'
                                     : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
                                 }}
                               >
@@ -537,6 +537,7 @@ export default function DiceRoller() {
                   onClick={() => handleTimerPreset(preset.key)}
                   className={clsx(
                     'rounded-xl border px-3 py-3 text-sm font-semibold transition flex items-center justify-center gap-2',
+                    preset.key === 'custom' && 'col-span-2 w-full md:col-span-1',
                     selectedTimerKey === preset.key
                       ? 'bg-amber-400 text-slate-950 border-amber-300'
                       : 'bg-slate-900/40 text-slate-200 border-white/10 hover:border-white/30'
