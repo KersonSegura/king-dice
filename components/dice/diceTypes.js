@@ -5,7 +5,9 @@ const diceTypes = [
     description: 'Tetrahedron – perfect for quick damage rolls.',
     color: '#F97316',
     gradient: 'linear-gradient(135deg, #FDBA74, #F97316)',
-    shape: 'tetra'
+    shape: 'tetra',
+    iconSvg: '/D4DieIcon.svg',
+    dieSvg: '/D4Die.svg'
   },
   {
     label: 'd6',
@@ -13,7 +15,9 @@ const diceTypes = [
     description: 'Classic cube for most tabletop games.',
     color: '#22C55E',
     gradient: 'linear-gradient(135deg, #6EE7B7, #22C55E)',
-    shape: 'cube'
+    shape: 'cube',
+    iconSvg: '/D6DieIcon.svg',
+    dieSvg: '/D6Die.svg'
   },
   {
     label: 'd8',
@@ -21,7 +25,9 @@ const diceTypes = [
     description: 'Great for spells and mid-tier damage.',
     color: '#0EA5E9',
     gradient: 'linear-gradient(135deg, #7DD3FC, #0EA5E9)',
-    shape: 'octa'
+    shape: 'octa',
+    iconSvg: '/D8DieIcon.svg',
+    dieSvg: '/D8Die.svg'
   },
   {
     label: 'd10',
@@ -29,7 +35,9 @@ const diceTypes = [
     description: 'Used for percentage checks and ranged attacks.',
     color: '#6366F1',
     gradient: 'linear-gradient(135deg, #C4B5FD, #6366F1)',
-    shape: 'pentagonal'
+    shape: 'pentagonal',
+    iconSvg: '/D10DieIcon.svg',
+    dieSvg: '/D10Die.svg'
   },
   {
     label: 'd12',
@@ -37,7 +45,9 @@ const diceTypes = [
     description: 'Heavy hitters and unique class abilities.',
     color: '#EC4899',
     gradient: 'linear-gradient(135deg, #F9A8D4, #EC4899)',
-    shape: 'dodeca'
+    shape: 'dodeca',
+    iconSvg: '/D12DieIcon.svg',
+    dieSvg: '/D12Die.svg'
   },
   {
     label: 'd20',
@@ -45,7 +55,9 @@ const diceTypes = [
     description: 'Checks, saves, and critical moments.',
     color: '#F97316',
     gradient: 'linear-gradient(135deg, #FDE68A, #EA580C)',
-    shape: 'icosa'
+    shape: 'icosa',
+    iconSvg: '/D20DieIcon.svg',
+    dieSvg: '/D20Die.svg'
   }
 ];
 

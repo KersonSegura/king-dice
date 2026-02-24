@@ -1,24 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
-export default function DiceButton({ dice, disabled, onAdd, canAdd, previewRef }) {
+export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
   const tDiceRoller = useTranslations('diceRoller');
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   return (
     <div className="dice-option relative flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 md:px-6 w-full sm:min-w-[250px] md:min-w-[300px]">
-      <div
-        ref={previewRef}
-        className="h-20 w-20 rounded-2xl bg-slate-900/60 border border-white/10 flex-shrink-0"
-      >
-        {!isMounted && <div className="w-full h-full" />}
+      <div className="h-20 w-20 rounded-2xl bg-slate-900/60 border border-white/10 flex-shrink-0 grid place-items-center">
+        <img
+          src={dice.iconSvg}
+          alt={`${dice.label.toUpperCase()} icon`}
+          className="h-12 w-12 object-contain"
+          draggable={false}
+        />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-white">{dice.label.toUpperCase()}</p>
