@@ -5,6 +5,11 @@ const { withSentryConfig } = require("@sentry/nextjs");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      { source: '/dice-roller', destination: '/virtual-tools', permanent: true },
+    ];
+  },
   typescript: {
     // ⚠️ Temporarily disable TypeScript errors during build for deployment
     // TODO: Fix TypeScript errors after deployment

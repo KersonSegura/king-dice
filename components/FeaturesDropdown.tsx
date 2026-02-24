@@ -85,7 +85,7 @@ export default function FeaturesDropdown() {
     },
     {
       name: t('diceRoller'),
-      href: '/dice-roller',
+      href: '/virtual-tools',
       icon: '/DiceRollerIcon.svg',
       color: '#fbae17',
       hoverColor: '#fbae17'

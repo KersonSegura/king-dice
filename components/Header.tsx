@@ -1045,7 +1045,7 @@ export default function Header() {
                 </Link>
                 
                 <Link
-                  href="/dice-roller"
+                  href="/virtual-tools"
                   className="flex items-center space-x-3 px-4 py-3 text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors shadow-sm"
                   onClick={handleMobileNavigation}
                 >

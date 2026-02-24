@@ -54,7 +54,7 @@ export default function FloatingHamburger() {
     { label: t('catanMaps'), svgIcon: 'Catan', href: '/catan-map-generator' },
     { label: t('pixelCanvas'), svgIcon: 'PixelCanvas', href: '/pixel-canvas' },
     { label: t('boardle'), svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
-    { label: t('diceRoller'), svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
+    { label: t('diceRoller'), svgIcon: 'DiceRoller', href: '/virtual-tools', iconSize: 28 },
     { label: t('digitalCorner'), svgIcon: 'DigitalCorner', href: '/digital-corner' },
     { label: t('joinDiscord'), ionicon: 'logo-discord', href: 'https://discord.gg/3xh7yUnnnW', discord: true },
   ];

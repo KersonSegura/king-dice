@@ -11,7 +11,7 @@ import { getRandomRoll } from './diceLogic';
 const CoinFlipScene = dynamic(() => import('./CoinFlipScene'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[280px] rounded-xl bg-slate-800/50 flex items-center justify-center">
+    <div className="w-full h-[280px] rounded-xl flex items-center justify-center">
       <span className="text-white/60">Loading coin...</span>
     </div>
   ),
@@ -20,11 +20,11 @@ const CoinFlipScene = dynamic(() => import('./CoinFlipScene'), {
 const ROLL_ANIMATION_MS = 1000;
 const ROLL_TICK_MS = 80;
 const TIMER_PRESETS = [
-  { key: '30s', label: '30 sec', seconds: 30 },
-  { key: '1m', label: '1 min', seconds: 60 },
-  { key: '2m', label: '2 min', seconds: 120 },
-  { key: '5m', label: '5 min', seconds: 300 },
-  { key: 'custom', label: 'Custom', seconds: null },
+  { key: '30s', labelKey: 'timerPreset30s', seconds: 30 },
+  { key: '1m', labelKey: 'timerPreset1m', seconds: 60 },
+  { key: '2m', labelKey: 'timerPreset2m', seconds: 120 },
+  { key: '5m', labelKey: 'timerPreset5m', seconds: 300 },
+  { key: 'custom', labelKey: 'timerPresetCustom', seconds: null },
 ];
 
 function getFaceSequence(faces) {
@@ -243,7 +243,7 @@ export default function DiceRoller() {
             )}
           >
             <img src={activeTool === 'dice' ? '/DiceIconOn.svg' : '/DiceIconOff.svg'} alt="" className="w-6 h-6" aria-hidden />
-            <span>Dice</span>
+            <span>{tDiceRoller('tabDice')}</span>
           </button>
           <button
             type="button"
@@ -256,7 +256,7 @@ export default function DiceRoller() {
             )}
           >
             <img src={activeTool === 'coin' ? '/CoinIconOn.svg' : '/CoinIconOff.svg'} alt="" className="w-6 h-6" aria-hidden />
-            <span>Coin Flip</span>
+            <span>{tDiceRoller('tabCoinFlip')}</span>
           </button>
           <button
             type="button"
@@ -269,7 +269,7 @@ export default function DiceRoller() {
             )}
           >
             <img src={activeTool === 'timer' ? '/TimerIconOn.svg' : '/TimerIconOff.svg'} alt="" className="w-6 h-6" aria-hidden />
-            <span>Timer</span>
+            <span>{tDiceRoller('tabTimer')}</span>
           </button>
         </div>
 
@@ -415,7 +415,7 @@ export default function DiceRoller() {
 
         {activeTool === 'coin' && (
           <div className="rounded-2xl bg-slate-900/60 border border-white/10 p-6 md:p-8">
-            <h2 className="text-xl font-semibold text-slate-200 text-center mb-4">Coin Flip</h2>
+            <h2 className="text-xl font-semibold text-slate-200 text-center mb-4">{tDiceRoller('coinFlipTitle')}</h2>
             <div className="w-full max-w-sm mx-auto aspect-square rounded-xl overflow-hidden" style={{ height: 280 }}>
               <CoinFlipScene
                 flipTrigger={coinFlipTrigger}
@@ -430,7 +430,7 @@ export default function DiceRoller() {
                 onClick={() => setCoinFlipTrigger((t) => t + 1)}
                 className="px-8 py-3 rounded-full text-lg font-semibold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-500/30 transition"
               >
-                Flip
+                {tDiceRoller('flip')}
               </button>
             </div>
           </div>
@@ -442,7 +442,7 @@ export default function DiceRoller() {
               type="button"
               onClick={() => setTimerSoundMuted((m) => !m)}
               className={clsx(
-                'absolute top-4 right-4 p-2 rounded-lg transition',
+                'absolute bottom-4 right-4 p-2 rounded-lg transition',
                 timerSoundMuted ? 'text-slate-500 hover:text-slate-400' : 'text-slate-300 hover:text-white'
               )}
               title={timerSoundMuted ? 'Unmute timer sound' : 'Mute timer sound'}
@@ -454,7 +454,7 @@ export default function DiceRoller() {
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
               )}
             </button>
-            <h2 className="text-xl font-semibold text-slate-200 text-center">Timer</h2>
+            <h2 className="text-xl font-semibold text-slate-200 text-center">{tDiceRoller('timerTitle')}</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {TIMER_PRESETS.map((preset) => (
                 <button
@@ -469,7 +469,7 @@ export default function DiceRoller() {
                   )}
                 >
                   <img src={selectedTimerKey === preset.key ? '/TimerIconOn.svg' : '/TimerIconOff.svg'} alt="" className="w-5 h-5" aria-hidden />
-                  <span>{preset.label}</span>
+                  <span>{tDiceRoller(preset.labelKey)}</span>
                 </button>
               ))}
             </div>
@@ -496,7 +496,7 @@ export default function DiceRoller() {
                   >
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
                   </button>
-                  <span className="text-xs uppercase text-white/50 mt-1">min</span>
+                  <span className="text-xs uppercase text-white/50 mt-1">{tDiceRoller('timerMin')}</span>
                 </div>
                 <span className="text-4xl md:text-5xl font-black text-white/80">:</span>
                 <div className="flex flex-col items-center gap-1">
@@ -519,7 +519,7 @@ export default function DiceRoller() {
                   >
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
                   </button>
-                  <span className="text-xs uppercase text-white/50 mt-1">sec</span>
+                  <span className="text-xs uppercase text-white/50 mt-1">{tDiceRoller('timerSec')}</span>
                 </div>
               </div>
             )}
@@ -540,7 +540,7 @@ export default function DiceRoller() {
                     : 'bg-green-500 hover:bg-green-400 text-slate-950'
                 )}
               >
-                Start
+                {tDiceRoller('timerStart')}
               </button>
               <button
                 type="button"
@@ -553,14 +553,14 @@ export default function DiceRoller() {
                     : 'bg-red-500 hover:bg-red-400 text-white'
                 )}
               >
-                Stop
+                {tDiceRoller('timerStop')}
               </button>
               <button
                 type="button"
                 onClick={restartTimer}
                 className="rounded-lg px-5 py-2 font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
               >
-                Restart
+                {tDiceRoller('timerRestart')}
               </button>
             </div>
           </div>

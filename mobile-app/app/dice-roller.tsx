@@ -1,5 +1,5 @@
-import WebViewScreen from '../components/WebViewScreen';
+import { Redirect } from 'expo-router';
 
 export default function DiceRoller() {
-  return <WebViewScreen path="/dice-roller" title="Virtual Tools" />;
+  return <Redirect href="/virtual-tools" />;
 }

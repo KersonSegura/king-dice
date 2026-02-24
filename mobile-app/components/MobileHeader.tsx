@@ -33,7 +33,7 @@ function getToolsItems(t: (key: string) => string): MenuItem[] {
     { label: t('catanMaps'), svgIcon: 'Catan', href: '/catan-map-generator', iconSize: 28 },
     { label: t('pixelCanvas'), svgIcon: 'PixelCanvas', href: '/pixel-canvas', iconSize: 22 },
     { label: t('boardle'), svgIcon: 'Boardle', href: '/boardle', iconSize: 28 },
-    { label: t('diceRoller'), svgIcon: 'DiceRoller', href: '/dice-roller', iconSize: 28 },
+    { label: t('diceRoller'), svgIcon: 'DiceRoller', href: '/virtual-tools', iconSize: 28 },
     { label: t('digitalCorner'), svgIcon: 'DigitalCorner', href: '/digital-corner', iconSize: 28 },
   ];
 }
