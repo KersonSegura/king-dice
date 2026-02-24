@@ -3,14 +3,14 @@
 import { Suspense, useRef, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
-import { Canvas, ContactShadows, Environment } from './r3f-wrapper';
+import { Canvas } from './r3f-wrapper';
 import * as THREE from 'three';
 
 const COIN_URL = '/Models/Coin.glb';
 const FLIP_DURATION_MS = 1400;
 const SPIN_TURNS = 6;
 const EASE_OUT = (t) => 1 - Math.pow(1 - t, 3);
-const COIN_BRIGHTNESS = 1.15;
+const COIN_BRIGHTNESS = 1.0;
 
 function cloneAndBrightenMaterial(mat) {
   if (!mat || !mat.clone) return mat;
@@ -74,12 +74,12 @@ function CoinModel({ flipTrigger, onFlipEnd }) {
     const size = b.getSize(new THREE.Vector3());
     const center = b.getCenter(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = maxDim > 0 ? Math.min(1.4 / maxDim, 2) : 1;
+    const scale = maxDim > 0 ? Math.min(1.25 / maxDim, 1.75) : 1;
     return { scale, center };
   }, [coinClone]);
 
   return (
-    <group ref={groupRef} position={[0, 0.05, 0]} scale={box.scale}>
+    <group ref={groupRef} position={[0, -0.02, 0]} scale={box.scale}>
       <primitive object={coinClone} position={[-box.center.x, -box.center.y, -box.center.z]} />
     </group>
   );
@@ -89,8 +89,7 @@ export default function CoinFlipScene({ flipTrigger, onFlipEnd, className, style
   return (
     <div className={className} style={{ ...style, background: 'transparent' }}>
       <Canvas
-        camera={{ position: [0, 0, 1.6], fov: 50 }}
-        shadows
+        camera={{ position: [0, 0, 1.9], fov: 54 }}
         dpr={[1, 1.5]}
         gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
         onCreated={({ gl }) => {
@@ -98,15 +97,11 @@ export default function CoinFlipScene({ flipTrigger, onFlipEnd, className, style
         }}
         style={{ width: '100%', height: '100%', background: 'transparent' }}
       >
-        <color attach="background" args={['transparent']} />
-        <ambientLight intensity={0.45} />
-        <directionalLight castShadow intensity={1.4} position={[2, 5, 4]} shadow-mapSize-width={512} shadow-mapSize-height={512} />
-        <directionalLight intensity={0.5} position={[-2, 2, 2]} />
-        <pointLight intensity={0.4} position={[0, 2, 2]} color="#fef3c7" />
+        <ambientLight intensity={0.32} />
+        <directionalLight intensity={0.75} position={[2, 4, 3]} />
+        <directionalLight intensity={0.22} position={[-2, 2, 2]} />
         <Suspense fallback={null}>
           <CoinModel flipTrigger={flipTrigger} onFlipEnd={onFlipEnd} />
-          <ContactShadows position={[0, -0.92, 0]} opacity={0.35} scale={3.5} blur={2} far={1.2} />
-          <Environment preset="studio" intensity={0.6} />
         </Suspense>
       </Canvas>
     </div>
