@@ -327,14 +327,12 @@ export default function DiceRoller() {
                     return (
                     <div key={dice.id} className="relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-visible">
                       <div className="relative h-28 w-28 md:h-32 md:w-32">
-                        {dice.faces !== 4 && (
-                          <img
-                            src={dice.dieSvg}
-                            alt={`${dice.label.toUpperCase()} die`}
-                            className="h-full w-full object-contain select-none"
-                            draggable={false}
-                          />
-                        )}
+                        <img
+                          src={dice.dieSvg}
+                          alt={`${dice.label.toUpperCase()} die`}
+                          className="h-full w-full object-contain select-none"
+                          draggable={false}
+                        />
                         <div className="absolute inset-0 grid place-items-center pointer-events-none">
                           {showQuestionMark ? (
                             <span className="text-white font-black text-5xl md:text-6xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]">
