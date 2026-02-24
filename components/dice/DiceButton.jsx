@@ -3,22 +3,27 @@
 import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
-export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
+export default function DiceButton({ dice, disabled, onAdd, canAdd, isShaking = false }) {
   const tDiceRoller = useTranslations('diceRoller');
 
   return (
-    <div className="dice-option relative flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 md:px-6 w-full sm:min-w-[250px] md:min-w-[300px]">
-      <div className="h-20 w-20 rounded-2xl bg-slate-900/60 border border-white/10 flex-shrink-0 grid place-items-center">
+    <div
+      className={clsx(
+        'dice-option relative flex items-center gap-2 md:gap-4 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-2 py-2 md:px-4 md:py-3 w-full min-w-0',
+        isShaking && 'animate-[diceOptionShake_320ms_ease-out]'
+      )}
+    >
+      <div className="h-12 w-12 md:h-20 md:w-20 rounded-xl md:rounded-2xl bg-slate-900/60 border border-white/10 flex-shrink-0 grid place-items-center">
         <img
           src={dice.iconSvg}
           alt={`${dice.label.toUpperCase()} icon`}
-          className="h-12 w-12 object-contain"
+          className="h-8 w-8 md:h-12 md:w-12 object-contain"
           draggable={false}
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-white">{dice.label.toUpperCase()}</p>
-        <p className="text-xs uppercase tracking-wide text-white/60 whitespace-nowrap">{tDiceRoller('faces', { count: dice.faces })}</p>
+        <p className="font-semibold text-sm md:text-base text-white">{dice.label.toUpperCase()}</p>
+        <p className="text-[10px] md:text-xs uppercase tracking-wide text-white/60 whitespace-nowrap">{tDiceRoller('faces', { count: dice.faces })}</p>
       </div>
       <button
         type="button"
@@ -53,6 +58,13 @@ export default function DiceButton({ dice, disabled, onAdd, canAdd }) {
         +
       </button>
       <style dangerouslySetInnerHTML={{__html: `
+        @keyframes diceOptionShake {
+          0% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          50% { transform: translateX(4px); }
+          75% { transform: translateX(-3px); }
+          100% { transform: translateX(0); }
+        }
         @media (min-width: 768px) {
           .dice-add-btn {
             width: 2.5rem !important;

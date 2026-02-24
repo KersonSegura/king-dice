@@ -352,7 +352,7 @@ export default function DiceRoller() {
 
         {activeTool === 'dice' && (
           <>
-            <div className="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-5xl mx-auto">
+            <div className="relative grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 max-w-5xl mx-auto">
               {diceTypes.map((dice) => (
                 <DiceButton
                   key={dice.label}
@@ -360,6 +360,7 @@ export default function DiceRoller() {
                   disabled={isRolling}
                   onAdd={() => addDiceToPool(dice)}
                   canAdd={dicePool.length < 10}
+                  isShaking={dicePool.some((d) => d.id === lastAddedDiceId && d.label === dice.label)}
                 />
               ))}
             </div>
@@ -389,13 +390,6 @@ export default function DiceRoller() {
                   font-size: 0.75rem !important;
                 }
               }
-              @keyframes diceAddedShake {
-                0% { transform: translateX(0); }
-                25% { transform: translateX(-4px); }
-                50% { transform: translateX(4px); }
-                75% { transform: translateX(-3px); }
-                100% { transform: translateX(0); }
-              }
             `}} />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                   {dicePool.map((dice, index) => {
@@ -403,13 +397,7 @@ export default function DiceRoller() {
                     const values = getFaceSequence(dice.faces);
                     const showQuestionMark = !isRolling && !dice.hasRolled;
                     return (
-                    <div
-                      key={dice.id}
-                      className={clsx(
-                        'relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-visible',
-                        lastAddedDiceId === dice.id && 'animate-[diceAddedShake_320ms_ease-out]'
-                      )}
-                    >
+                    <div key={dice.id} className="relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-visible">
                       <div className="relative h-28 w-28 md:h-32 md:w-32">
                         <img
                           src={dice.dieSvg}
