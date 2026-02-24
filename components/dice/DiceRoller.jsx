@@ -8,13 +8,17 @@ import diceTypes, { DEFAULT_DICE } from './diceTypes';
 import { getRandomRoll } from './diceLogic';
 
 const ROLL_ANIMATION_MS = 1000;
-const ROLL_TICK_MS = 90;
+const ROLL_TICK_MS = 80;
+
+function getFaceSequence(faces) {
+  return Array.from({ length: faces }, (_, i) => i + 1);
+}
 
 export default function DiceRoller() {
   const tDiceRoller = useTranslations('diceRoller');
   const [dicePool, setDicePool] = useState([{ ...DEFAULT_DICE, id: Date.now() }]); // Array of dice in the pool with unique IDs
   const [rollResults, setRollResults] = useState([]); // Array of roll results
-  const [displayResults, setDisplayResults] = useState([]);
+  const [slotIndices, setSlotIndices] = useState([0]);
   const [isRolling, setIsRolling] = useState(false);
   const rollIntervalRef = useRef(null);
   const rollTimeoutRef = useRef(null);
@@ -29,7 +33,7 @@ export default function DiceRoller() {
     const newPool = dicePool.filter(d => d.id !== id);
     setDicePool(newPool);
     setRollResults([]); // Clear results when pool changes
-    setDisplayResults([]);
+    setSlotIndices((prev) => prev.filter((_, index) => newPool[index] !== undefined));
   };
 
   const handleRoll = () => {
@@ -40,7 +44,13 @@ export default function DiceRoller() {
     const finalResults = dicePool.map(dice => getRandomRoll(dice.faces));
     setIsRolling(true);
     rollIntervalRef.current = setInterval(() => {
-      setDisplayResults(dicePool.map((dice) => getRandomRoll(dice.faces)));
+      setSlotIndices((prev) =>
+        dicePool.map((dice, index) => {
+          const current = prev[index] ?? 0;
+          const jump = 1 + Math.floor(Math.random() * 3);
+          return (current + jump) % dice.faces;
+        })
+      );
     }, ROLL_TICK_MS);
 
     rollTimeoutRef.current = setTimeout(() => {
@@ -49,7 +59,7 @@ export default function DiceRoller() {
         rollIntervalRef.current = null;
       }
       setRollResults(finalResults);
-      setDisplayResults(finalResults);
+      setSlotIndices(finalResults.map((value) => value - 1));
       setIsRolling(false);
     }, ROLL_ANIMATION_MS);
   };
@@ -59,11 +69,14 @@ export default function DiceRoller() {
   }, [rollResults]);
 
   useEffect(() => {
-    setDisplayResults((prev) => {
-      const next = dicePool.map((_, index) => prev[index] ?? null);
+    setSlotIndices((prev) => {
+      const next = dicePool.map((dice, index) => {
+        const current = prev[index] ?? 0;
+        return current % dice.faces;
+      });
       return next;
     });
-  }, [dicePool.length]);
+  }, [dicePool]);
 
   useEffect(() => {
     return () => {
@@ -120,18 +133,38 @@ export default function DiceRoller() {
             `}} />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
               {dicePool.map((dice, index) => {
-                const value = displayResults[index];
+                const slotIndex = slotIndices[index] ?? 0;
+                const values = getFaceSequence(dice.faces);
                 return (
-                <div key={dice.id} className="relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-hidden">
-                  <div className={clsx('relative h-28 w-28 md:h-32 md:w-32', isRolling && 'animate-pulse')}>
+                <div key={dice.id} className="relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-visible">
+                  <div className="relative h-28 w-28 md:h-32 md:w-32">
                     <img
                       src={dice.dieSvg}
                       alt={`${dice.label.toUpperCase()} die`}
                       className="h-full w-full object-contain select-none"
                       draggable={false}
                     />
-                    <div className="absolute inset-0 grid place-items-center text-white font-black text-4xl md:text-5xl tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]">
-                      {value ?? '?'}
+                    <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                      <div className="relative h-11 md:h-14 w-10 md:w-12 overflow-hidden">
+                        <div
+                          className="flex flex-col items-center"
+                          style={{
+                            transform: `translateY(-${slotIndex * 100}%)`,
+                            transition: isRolling
+                              ? 'transform 85ms linear'
+                              : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+                          }}
+                        >
+                          {values.map((num) => (
+                            <span
+                              key={`${dice.id}-${num}`}
+                              className="h-11 md:h-14 w-10 md:w-12 grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
+                            >
+                              {num}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="absolute bottom-3 left-0 right-0 text-center text-xs uppercase tracking-wide text-white/70">
