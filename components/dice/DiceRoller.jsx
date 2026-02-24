@@ -1,11 +1,21 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 import DiceButton from './DiceButton';
 import diceTypes, { DEFAULT_DICE } from './diceTypes';
 import { getRandomRoll } from './diceLogic';
+
+const CoinFlipScene = dynamic(() => import('./CoinFlipScene'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[280px] rounded-xl bg-slate-800/50 flex items-center justify-center">
+      <span className="text-white/60">Loading coin...</span>
+    </div>
+  ),
+});
 
 const ROLL_ANIMATION_MS = 1000;
 const ROLL_TICK_MS = 80;
@@ -37,11 +47,39 @@ export default function DiceRoller() {
   const rollTimeoutRef = useRef(null);
   const [activeTool, setActiveTool] = useState('dice');
   const [selectedTimerKey, setSelectedTimerKey] = useState('30s');
-  const [customSecondsInput, setCustomSecondsInput] = useState('90');
+  const [customMinutes, setCustomMinutes] = useState(0);
+  const [customSeconds, setCustomSeconds] = useState(30);
   const [timerDuration, setTimerDuration] = useState(30);
   const [remainingSeconds, setRemainingSeconds] = useState(30);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerSoundMuted, setTimerSoundMuted] = useState(false);
   const timerDoneRef = useRef(false);
+  const [coinFlipTrigger, setCoinFlipTrigger] = useState(0);
+
+  const totalFromCustom = customMinutes * 60 + customSeconds;
+  const clampCustom = (mins, secs) => {
+    const m = Math.max(0, Math.min(59, mins));
+    const s = Math.max(0, Math.min(59, secs));
+    return { mins: m, secs: s };
+  };
+  const setCustomMinutesClamped = (v) => {
+    const { mins } = clampCustom(v, customSeconds);
+    setCustomMinutes(mins);
+    if (selectedTimerKey === 'custom') {
+      const total = Math.max(1, mins * 60 + customSeconds);
+      setTimerDuration(total);
+      if (!isTimerRunning) setRemainingSeconds(total);
+    }
+  };
+  const setCustomSecondsClamped = (v) => {
+    const { secs } = clampCustom(customMinutes, v);
+    setCustomSeconds(secs);
+    if (selectedTimerKey === 'custom') {
+      const total = Math.max(1, customMinutes * 60 + secs);
+      setTimerDuration(total);
+      if (!isTimerRunning) setRemainingSeconds(total);
+    }
+  };
 
   const addDiceToPool = (dice) => {
     if (dicePool.length >= 10) return; // Max 10 dice
@@ -118,13 +156,34 @@ export default function DiceRoller() {
       timerDoneRef.current = true;
       setIsTimerRunning(false);
       if (typeof window !== 'undefined') {
-        window.alert('Timer finished');
+        if (!timerSoundMuted) {
+          try {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (Ctx) {
+              const ctx = new Ctx();
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sawtooth';
+              osc.frequency.setValueAtTime(180, ctx.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.5);
+              gain.gain.setValueAtTime(0.15, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.5);
+            }
+          } catch (_) {}
+        }
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([200, 100, 200, 100, 200]);
+        }
       }
     }
     if (remainingSeconds > 0) {
       timerDoneRef.current = false;
     }
-  }, [remainingSeconds, isTimerRunning]);
+  }, [remainingSeconds, isTimerRunning, timerSoundMuted]);
 
   const handleTimerPreset = (presetKey) => {
     setSelectedTimerKey(presetKey);
@@ -132,9 +191,13 @@ export default function DiceRoller() {
     timerDoneRef.current = false;
 
     if (presetKey === 'custom') {
-      const parsed = Math.max(1, parseInt(customSecondsInput || '1', 10) || 1);
-      setTimerDuration(parsed);
-      setRemainingSeconds(parsed);
+      const total = Math.min(59 * 60 + 59, Math.max(1, timerDuration));
+      const mins = Math.min(59, Math.floor(total / 60));
+      const secs = total % 60;
+      setCustomMinutes(mins);
+      setCustomSeconds(secs);
+      setTimerDuration(total);
+      setRemainingSeconds(total);
       return;
     }
 
@@ -142,14 +205,6 @@ export default function DiceRoller() {
     if (!preset || preset.seconds == null) return;
     setTimerDuration(preset.seconds);
     setRemainingSeconds(preset.seconds);
-  };
-
-  const applyCustomTimer = () => {
-    const parsed = Math.max(1, parseInt(customSecondsInput || '1', 10) || 1);
-    setTimerDuration(parsed);
-    setRemainingSeconds(parsed);
-    setIsTimerRunning(false);
-    timerDoneRef.current = false;
   };
 
   const startTimer = () => {
@@ -182,37 +237,40 @@ export default function DiceRoller() {
             type="button"
             onClick={() => setActiveTool('dice')}
             className={clsx(
-              'rounded-xl border px-4 py-3 font-semibold transition',
+              'rounded-xl border px-4 py-3 font-semibold transition flex items-center justify-center gap-2',
               activeTool === 'dice'
                 ? 'bg-amber-400 text-slate-950 border-amber-300'
                 : 'bg-slate-900/60 text-slate-200 border-white/10 hover:border-white/30'
             )}
           >
-            Dice
+            <img src="/DiceIcon.svg" alt="" className="w-6 h-6" aria-hidden />
+            <span>Dice</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTool('coin')}
             className={clsx(
-              'rounded-xl border px-4 py-3 font-semibold transition',
+              'rounded-xl border px-4 py-3 font-semibold transition flex items-center justify-center gap-2',
               activeTool === 'coin'
                 ? 'bg-amber-400 text-slate-950 border-amber-300'
                 : 'bg-slate-900/60 text-slate-200 border-white/10 hover:border-white/30'
             )}
           >
-            Coin Flip
+            <img src="/CoinIcon.svg" alt="" className="w-6 h-6" aria-hidden />
+            <span>Coin Flip</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTool('timer')}
             className={clsx(
-              'rounded-xl border px-4 py-3 font-semibold transition',
+              'rounded-xl border px-4 py-3 font-semibold transition flex items-center justify-center gap-2',
               activeTool === 'timer'
                 ? 'bg-amber-400 text-slate-950 border-amber-300'
                 : 'bg-slate-900/60 text-slate-200 border-white/10 hover:border-white/30'
             )}
           >
-            Timer
+            <img src="/TimerIcon.svg" alt="" className="w-6 h-6" aria-hidden />
+            <span>Timer</span>
           </button>
         </div>
 
@@ -270,7 +328,7 @@ export default function DiceRoller() {
                           draggable={false}
                         />
                         <div className="absolute inset-0 grid place-items-center pointer-events-none">
-                          <div className="relative h-11 md:h-14 w-10 md:w-12 overflow-hidden">
+                          <div className="relative h-11 md:h-14 w-14 md:w-16 overflow-hidden">
                             <div
                               className="flex flex-col items-center"
                               style={{
@@ -283,7 +341,7 @@ export default function DiceRoller() {
                               {values.map((num) => (
                                 <span
                                   key={`${dice.id}-${num}`}
-                                  className="h-11 md:h-14 w-10 md:w-12 grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
+                                  className="h-11 md:h-14 w-14 md:w-16 min-w-[3.5rem] md:min-w-[4rem] grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
                                 >
                                   {num}
                                 </span>
@@ -357,11 +415,25 @@ export default function DiceRoller() {
         )}
 
         {activeTool === 'coin' && (
-          <div className="rounded-2xl bg-slate-900/60 border border-white/10 p-8 text-center">
-            <h2 className="text-xl font-semibold text-slate-200 mb-3">Coin Flip</h2>
-            <p className="text-slate-400">
-              3D coin flip model placeholder. We can plug your model here next and keep the same tab.
-            </p>
+          <div className="rounded-2xl bg-slate-900/60 border border-white/10 p-6 md:p-8">
+            <h2 className="text-xl font-semibold text-slate-200 text-center mb-4">Coin Flip</h2>
+            <div className="w-full max-w-sm mx-auto aspect-square rounded-xl bg-slate-800/50 overflow-hidden" style={{ height: 280 }}>
+              <CoinFlipScene
+                flipTrigger={coinFlipTrigger}
+                onFlipEnd={() => {}}
+                className="w-full h-full"
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setCoinFlipTrigger((t) => t + 1)}
+                className="px-8 py-3 rounded-full text-lg font-semibold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-500/30 transition"
+              >
+                Flip
+              </button>
+            </div>
           </div>
         )}
 
@@ -388,32 +460,77 @@ export default function DiceRoller() {
             </div>
 
             {selectedTimerKey === 'custom' && (
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-                <label className="flex-1">
-                  <span className="block text-sm text-slate-300 mb-1">Custom seconds</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={customSecondsInput}
-                    onChange={(e) => setCustomSecondsInput(e.target.value)}
-                    className="w-full rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={applyCustomTimer}
-                  className="rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold px-4 py-2 transition"
-                >
-                  Apply
-                </button>
+              <div className="flex items-center justify-center gap-4 sm:gap-8">
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCustomMinutesClamped(customMinutes + 1)}
+                    disabled={isTimerRunning || customMinutes >= 59}
+                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                    aria-label="Add 1 minute"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                  </button>
+                  <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customMinutes).padStart(2, '0')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setCustomMinutesClamped(customMinutes - 1)}
+                    disabled={isTimerRunning || customMinutes <= 0}
+                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                    aria-label="Subtract 1 minute"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                  </button>
+                  <span className="text-xs uppercase text-white/50 mt-1">min</span>
+                </div>
+                <span className="text-4xl md:text-5xl font-black text-white/80">:</span>
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCustomSecondsClamped(customSeconds + 1)}
+                    disabled={isTimerRunning || customSeconds >= 59}
+                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                    aria-label="Add 1 second"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                  </button>
+                  <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customSeconds).padStart(2, '0')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setCustomSecondsClamped(customSeconds - 1)}
+                    disabled={isTimerRunning || customSeconds <= 0}
+                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                    aria-label="Subtract 1 second"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                  </button>
+                  <span className="text-xs uppercase text-white/50 mt-1">sec</span>
+                </div>
               </div>
             )}
 
             <div className="rounded-xl border border-white/10 bg-slate-900/40 p-6 text-center">
-              <div className="text-5xl md:text-6xl font-black tracking-wider text-white">{formatTime(remainingSeconds)}</div>
+              <div className="text-5xl md:text-6xl font-black tracking-wider text-white tabular-nums">{formatTime(remainingSeconds)}</div>
             </div>
 
-            <div className="flex flex-wrap gap-3 justify-center">
+            <div className="flex flex-wrap gap-3 justify-center items-center">
+              <button
+                type="button"
+                onClick={() => setTimerSoundMuted((m) => !m)}
+                className={clsx(
+                  'rounded-lg px-4 py-2 font-semibold transition flex items-center gap-2',
+                  timerSoundMuted ? 'bg-slate-600 text-slate-400' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                )}
+                title={timerSoundMuted ? 'Unmute timer sound' : 'Mute timer sound'}
+                aria-label={timerSoundMuted ? 'Unmute timer sound' : 'Mute timer sound'}
+              >
+                {timerSoundMuted ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><line x1="17" y1="9" x2="23" y2="15" strokeWidth={2} /><line x1="23" y1="9" x2="17" y2="15" strokeWidth={2} /></svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                )}
+                <span>{timerSoundMuted ? 'Unmute' : 'Mute'}</span>
+              </button>
               <button
                 type="button"
                 onClick={startTimer}
