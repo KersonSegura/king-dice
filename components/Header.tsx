@@ -1052,7 +1052,7 @@ export default function Header() {
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fbae17' }}>
                     <Image
                       src="/DiceRollerIcon.svg"
-                      alt="Dice Roller"
+                      alt="Virtual Tools"
                       width={20}
                       height={20}
                       className="w-5 h-5"

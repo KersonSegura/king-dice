@@ -174,7 +174,7 @@ export default function DiceRoller() {
       <div className="max-w-5xl mx-auto space-y-10">
         <div className="text-center space-y-3">
           <p className="text-sm uppercase tracking-[0.25em] text-amber-300/80">{tDiceRoller('virtualDiceStudio')}</p>
-          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">Tools</h1>
+          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">Virtual Tools</h1>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -188,7 +188,7 @@ export default function DiceRoller() {
                 : 'bg-slate-900/60 text-slate-200 border-white/10 hover:border-white/30'
             )}
           >
-            Dice Roller
+            Dice
           </button>
           <button
             type="button"
@@ -274,7 +274,7 @@ export default function DiceRoller() {
                             <div
                               className="flex flex-col items-center"
                               style={{
-                                transform: `translateY(-${slotIndex * 100}%)`,
+                                transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
                                 transition: isRolling
                                   ? 'transform 85ms linear'
                                   : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',

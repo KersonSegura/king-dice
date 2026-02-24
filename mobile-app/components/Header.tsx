@@ -57,7 +57,7 @@ export default function Header() {
     { label: 'Catan Maps', svgIcon: 'Catan', href: '/catan-map-generator' },
     { label: 'Pixel Canvas', svgIcon: 'PixelCanvas', href: '/pixel-canvas' },
     { label: 'Boardle', svgIcon: 'Boardle', href: '/boardle' },
-    { label: 'Dice Roller', svgIcon: 'DiceRoller', href: '/dice-roller' },
+    { label: 'Virtual Tools', svgIcon: 'DiceRoller', href: '/dice-roller' },
     { label: 'Digital Corner', svgIcon: 'DigitalCorner', href: '/digital-corner' },
     { label: 'Join Discord', ionicon: 'logo-discord', href: 'https://discord.gg/3xh7yUnnnW', discord: true },
   ];
