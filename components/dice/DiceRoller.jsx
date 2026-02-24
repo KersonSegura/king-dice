@@ -55,6 +55,10 @@ export default function DiceRoller() {
   const [timerSoundMuted, setTimerSoundMuted] = useState(false);
   const timerDoneRef = useRef(false);
   const [coinFlipTrigger, setCoinFlipTrigger] = useState(0);
+  const holdAdjustTimeoutRef = useRef(null);
+  const holdAdjustIntervalRef = useRef(null);
+  const customMinutesRef = useRef(0);
+  const customSecondsRef = useRef(30);
 
   const totalFromCustom = customMinutes * 60 + customSeconds;
   const clampCustom = (mins, secs) => {
@@ -63,22 +67,59 @@ export default function DiceRoller() {
     return { mins: m, secs: s };
   };
   const setCustomMinutesClamped = (v) => {
-    const { mins } = clampCustom(v, customSeconds);
+    const currentSeconds = customSecondsRef.current;
+    const { mins } = clampCustom(v, currentSeconds);
     setCustomMinutes(mins);
     if (selectedTimerKey === 'custom') {
-      const total = Math.max(1, mins * 60 + customSeconds);
+      const total = Math.max(1, mins * 60 + currentSeconds);
       setTimerDuration(total);
       if (!isTimerRunning) setRemainingSeconds(total);
     }
   };
   const setCustomSecondsClamped = (v) => {
-    const { secs } = clampCustom(customMinutes, v);
+    const currentMinutes = customMinutesRef.current;
+    const { secs } = clampCustom(currentMinutes, v);
     setCustomSeconds(secs);
     if (selectedTimerKey === 'custom') {
-      const total = Math.max(1, customMinutes * 60 + secs);
+      const total = Math.max(1, currentMinutes * 60 + secs);
       setTimerDuration(total);
       if (!isTimerRunning) setRemainingSeconds(total);
     }
+  };
+  const adjustCustomMinutes = (delta) => {
+    setCustomMinutesClamped(customMinutesRef.current + delta);
+  };
+  const adjustCustomSeconds = (delta) => {
+    setCustomSecondsClamped(customSecondsRef.current + delta);
+  };
+
+  const clearHoldAdjust = () => {
+    if (holdAdjustTimeoutRef.current) {
+      clearTimeout(holdAdjustTimeoutRef.current);
+      holdAdjustTimeoutRef.current = null;
+    }
+    if (holdAdjustIntervalRef.current) {
+      clearInterval(holdAdjustIntervalRef.current);
+      holdAdjustIntervalRef.current = null;
+    }
+  };
+
+  const startHoldAdjust = (stepFn) => {
+    if (isTimerRunning) return;
+    clearHoldAdjust();
+    holdAdjustTimeoutRef.current = setTimeout(() => {
+      let tickMs = 160;
+      let ticks = 0;
+      holdAdjustIntervalRef.current = setInterval(() => {
+        stepFn();
+        ticks += 1;
+        if (ticks === 8 && tickMs !== 80) {
+          clearInterval(holdAdjustIntervalRef.current);
+          tickMs = 80;
+          holdAdjustIntervalRef.current = setInterval(stepFn, tickMs);
+        }
+      }, tickMs);
+    }, 280);
   };
 
   const addDiceToPool = (dice) => {
@@ -144,9 +185,18 @@ export default function DiceRoller() {
   }, [dicePool]);
 
   useEffect(() => {
+    customMinutesRef.current = customMinutes;
+  }, [customMinutes]);
+
+  useEffect(() => {
+    customSecondsRef.current = customSeconds;
+  }, [customSeconds]);
+
+  useEffect(() => {
     return () => {
       if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
       if (rollTimeoutRef.current) clearTimeout(rollTimeoutRef.current);
+      clearHoldAdjust();
     };
   }, []);
 
@@ -182,8 +232,8 @@ export default function DiceRoller() {
                 osc.stop(start + duration);
               };
               const t = ctx.currentTime;
-              playTone(523.25, t, 0.12, 0.12);
-              playTone(659.25, t + 0.14, 0.18, 0.1);
+              playTone(523.25, t, 0.12, 0.22);
+              playTone(659.25, t + 0.14, 0.18, 0.2);
             }
           } catch (_) {}
         }
@@ -503,7 +553,13 @@ export default function DiceRoller() {
                 <div className="flex flex-col items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setCustomMinutesClamped(customMinutes + 1)}
+                    onClick={() => adjustCustomMinutes(1)}
+                    onMouseDown={() => startHoldAdjust(() => adjustCustomMinutes(1))}
+                    onMouseUp={clearHoldAdjust}
+                    onMouseLeave={clearHoldAdjust}
+                    onTouchStart={() => startHoldAdjust(() => adjustCustomMinutes(1))}
+                    onTouchEnd={clearHoldAdjust}
+                    onTouchCancel={clearHoldAdjust}
                     disabled={isTimerRunning || customMinutes >= 59}
                     className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
                     aria-label="Add 1 minute"
@@ -513,7 +569,13 @@ export default function DiceRoller() {
                   <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customMinutes).padStart(2, '0')}</span>
                   <button
                     type="button"
-                    onClick={() => setCustomMinutesClamped(customMinutes - 1)}
+                    onClick={() => adjustCustomMinutes(-1)}
+                    onMouseDown={() => startHoldAdjust(() => adjustCustomMinutes(-1))}
+                    onMouseUp={clearHoldAdjust}
+                    onMouseLeave={clearHoldAdjust}
+                    onTouchStart={() => startHoldAdjust(() => adjustCustomMinutes(-1))}
+                    onTouchEnd={clearHoldAdjust}
+                    onTouchCancel={clearHoldAdjust}
                     disabled={isTimerRunning || customMinutes <= 0}
                     className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
                     aria-label="Subtract 1 minute"
@@ -526,7 +588,13 @@ export default function DiceRoller() {
                 <div className="flex flex-col items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setCustomSecondsClamped(customSeconds + 1)}
+                    onClick={() => adjustCustomSeconds(1)}
+                    onMouseDown={() => startHoldAdjust(() => adjustCustomSeconds(1))}
+                    onMouseUp={clearHoldAdjust}
+                    onMouseLeave={clearHoldAdjust}
+                    onTouchStart={() => startHoldAdjust(() => adjustCustomSeconds(1))}
+                    onTouchEnd={clearHoldAdjust}
+                    onTouchCancel={clearHoldAdjust}
                     disabled={isTimerRunning || customSeconds >= 59}
                     className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
                     aria-label="Add 1 second"
@@ -536,7 +604,13 @@ export default function DiceRoller() {
                   <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customSeconds).padStart(2, '0')}</span>
                   <button
                     type="button"
-                    onClick={() => setCustomSecondsClamped(customSeconds - 1)}
+                    onClick={() => adjustCustomSeconds(-1)}
+                    onMouseDown={() => startHoldAdjust(() => adjustCustomSeconds(-1))}
+                    onMouseUp={clearHoldAdjust}
+                    onMouseLeave={clearHoldAdjust}
+                    onTouchStart={() => startHoldAdjust(() => adjustCustomSeconds(-1))}
+                    onTouchEnd={clearHoldAdjust}
+                    onTouchCancel={clearHoldAdjust}
                     disabled={isTimerRunning || customSeconds <= 0}
                     className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
                     aria-label="Subtract 1 second"
