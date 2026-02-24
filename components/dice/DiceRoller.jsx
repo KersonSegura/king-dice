@@ -23,7 +23,7 @@ const CoinFlipScene = dynamic(() => import('./CoinFlipScene'), {
 });
 
 const ROLL_ANIMATION_MS = 1000;
-const ROLL_TICK_MS = 90;
+const ROLL_TICK_MS = 120;
 const TIMER_PRESETS = [
   { key: '30s', labelKey: 'timerPreset30s', seconds: 30 },
   { key: '1m', labelKey: 'timerPreset1m', seconds: 60 },
@@ -64,6 +64,7 @@ export default function DiceRoller() {
   const holdAdjustIntervalRef = useRef(null);
   const customMinutesRef = useRef(0);
   const customSecondsRef = useRef(30);
+  const [lastAddedDiceId, setLastAddedDiceId] = useState(null);
 
   const totalFromCustom = customMinutes * 60 + customSeconds;
   const clampCustom = (mins, secs) => {
@@ -129,7 +130,13 @@ export default function DiceRoller() {
 
   const addDiceToPool = (dice) => {
     if (dicePool.length >= 10) return; // Max 10 dice
-    setDicePool([...dicePool, { ...dice, id: Date.now() + Math.random(), hasRolled: false }]);
+    const newDie = { ...dice, id: Date.now() + Math.random(), hasRolled: false };
+    setDicePool([...dicePool, newDie]);
+    setLastAddedDiceId(newDie.id);
+    setTimeout(() => setLastAddedDiceId((current) => (current === newDie.id ? null : current)), 360);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(16);
+    }
   };
 
   const removeDiceFromPool = (id) => {
@@ -144,6 +151,9 @@ export default function DiceRoller() {
     setDicePool(newPool);
     setRollResults([]); // Clear results when pool changes
     setSlotIndices(newSlotIndices);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(20);
+    }
   };
 
   const handleRoll = () => {
@@ -379,6 +389,13 @@ export default function DiceRoller() {
                   font-size: 0.75rem !important;
                 }
               }
+              @keyframes diceAddedShake {
+                0% { transform: translateX(0); }
+                25% { transform: translateX(-4px); }
+                50% { transform: translateX(4px); }
+                75% { transform: translateX(-3px); }
+                100% { transform: translateX(0); }
+              }
             `}} />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                   {dicePool.map((dice, index) => {
@@ -386,7 +403,13 @@ export default function DiceRoller() {
                     const values = getFaceSequence(dice.faces);
                     const showQuestionMark = !isRolling && !dice.hasRolled;
                     return (
-                    <div key={dice.id} className="relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-visible">
+                    <div
+                      key={dice.id}
+                      className={clsx(
+                        'relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-visible',
+                        lastAddedDiceId === dice.id && 'animate-[diceAddedShake_320ms_ease-out]'
+                      )}
+                    >
                       <div className="relative h-28 w-28 md:h-32 md:w-32">
                         <img
                           src={dice.dieSvg}
@@ -411,7 +434,7 @@ export default function DiceRoller() {
                                 style={{
                                   transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
                                   transition: isRolling
-                                    ? 'none'
+                                    ? 'transform 120ms linear'
                                     : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
                                 }}
                               >
