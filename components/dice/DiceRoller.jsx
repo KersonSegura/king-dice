@@ -161,17 +161,22 @@ export default function DiceRoller() {
             const Ctx = window.AudioContext || window.webkitAudioContext;
             if (Ctx) {
               const ctx = new Ctx();
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'sawtooth';
-              osc.frequency.setValueAtTime(180, ctx.currentTime);
-              osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.5);
-              gain.gain.setValueAtTime(0.15, ctx.currentTime);
-              gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-              osc.start(ctx.currentTime);
-              osc.stop(ctx.currentTime + 0.5);
+              const playTone = (freq, start, duration, vol) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, start);
+                gain.gain.setValueAtTime(0, start);
+                gain.gain.linearRampToValueAtTime(vol, start + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(start);
+                osc.stop(start + duration);
+              };
+              const t = ctx.currentTime;
+              playTone(523.25, t, 0.12, 0.12);
+              playTone(659.25, t + 0.14, 0.18, 0.1);
             }
           } catch (_) {}
         }

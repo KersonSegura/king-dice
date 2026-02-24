@@ -10,6 +10,16 @@ const COIN_URL = '/Models/Coin.glb';
 const FLIP_DURATION_MS = 1400;
 const SPIN_TURNS = 6;
 const EASE_OUT = (t) => 1 - Math.pow(1 - t, 3);
+const COIN_BRIGHTNESS = 1.15;
+
+function cloneAndBrightenMaterial(mat) {
+  if (!mat || !mat.clone) return mat;
+  const cloned = mat.clone();
+  if (cloned.color && cloned.color.clone) {
+    cloned.color = cloned.color.clone().multiplyScalar(COIN_BRIGHTNESS);
+  }
+  return cloned;
+}
 
 function CoinModel({ flipTrigger, onFlipEnd }) {
   const groupRef = useRef(null);
@@ -21,10 +31,8 @@ function CoinModel({ flipTrigger, onFlipEnd }) {
         child.castShadow = true;
         child.receiveShadow = true;
         if (child.material) {
-          const mat = Array.isArray(child.material) ? child.material[0] : child.material;
-          if (mat && mat.color && mat.color.clone) {
-            mat.color = mat.color.clone().multiplyScalar(1.45);
-          }
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          child.material = mats.length > 1 ? mats.map((m) => cloneAndBrightenMaterial(m)) : cloneAndBrightenMaterial(mats[0]);
         }
       }
     });
@@ -66,12 +74,12 @@ function CoinModel({ flipTrigger, onFlipEnd }) {
     const size = b.getSize(new THREE.Vector3());
     const center = b.getCenter(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = maxDim > 0 ? 1.2 / maxDim : 1;
+    const scale = maxDim > 0 ? Math.min(1.4 / maxDim, 2) : 1;
     return { scale, center };
   }, [coinClone]);
 
   return (
-    <group ref={groupRef} position={[0, 0, 0]} scale={box.scale}>
+    <group ref={groupRef} position={[0, 0.05, 0]} scale={box.scale}>
       <primitive object={coinClone} position={[-box.center.x, -box.center.y, -box.center.z]} />
     </group>
   );
@@ -79,13 +87,16 @@ function CoinModel({ flipTrigger, onFlipEnd }) {
 
 export default function CoinFlipScene({ flipTrigger, onFlipEnd, className, style }) {
   return (
-    <div className={className} style={style}>
+    <div className={className} style={{ ...style, background: 'transparent' }}>
       <Canvas
-        camera={{ position: [0, 0, 2.2], fov: 45 }}
+        camera={{ position: [0, 0, 1.6], fov: 50 }}
         shadows
         dpr={[1, 1.5]}
-        gl={{ alpha: true, antialias: true }}
-        style={{ width: '100%', height: '100%' }}
+        gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
+        onCreated={({ gl }) => {
+          gl.setClearColor(0x000000, 0);
+        }}
+        style={{ width: '100%', height: '100%', background: 'transparent' }}
       >
         <color attach="background" args={['transparent']} />
         <ambientLight intensity={0.45} />
