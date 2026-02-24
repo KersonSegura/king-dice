@@ -345,7 +345,12 @@ export default function DiceRoller() {
                               ?
                             </span>
                           ) : (
-                            <div className="relative h-11 md:h-14 w-14 md:w-16 overflow-hidden">
+                            <div
+                              className={clsx(
+                                'relative h-11 md:h-14 w-14 md:w-16 overflow-hidden',
+                                dice.faces === 4 && 'translate-y-1.5 md:translate-y-2'
+                              )}
+                            >
                               <div
                                 className="flex flex-col items-center"
                                 style={{
