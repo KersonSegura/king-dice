@@ -227,8 +227,7 @@ export default function DiceRoller() {
   return (
     <section className="min-h-screen bg-slate-950 text-white px-6 py-16">
       <div className="max-w-5xl mx-auto space-y-10">
-        <div className="text-center space-y-3">
-          <p className="text-sm uppercase tracking-[0.25em] text-amber-300/80">{tDiceRoller('virtualDiceStudio')}</p>
+        <div className="text-center">
           <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">Virtual Tools</h1>
         </div>
 
@@ -243,7 +242,7 @@ export default function DiceRoller() {
                 : 'bg-slate-900/60 text-slate-200 border-white/10 hover:border-white/30'
             )}
           >
-            <img src="/DiceIcon.svg" alt="" className="w-6 h-6" aria-hidden />
+            <img src={activeTool === 'dice' ? '/DiceIconOn.svg' : '/DiceIconOff.svg'} alt="" className="w-6 h-6" aria-hidden />
             <span>Dice</span>
           </button>
           <button
@@ -256,7 +255,7 @@ export default function DiceRoller() {
                 : 'bg-slate-900/60 text-slate-200 border-white/10 hover:border-white/30'
             )}
           >
-            <img src="/CoinIcon.svg" alt="" className="w-6 h-6" aria-hidden />
+            <img src={activeTool === 'coin' ? '/CoinIconOn.svg' : '/CoinIconOff.svg'} alt="" className="w-6 h-6" aria-hidden />
             <span>Coin Flip</span>
           </button>
           <button
@@ -269,7 +268,7 @@ export default function DiceRoller() {
                 : 'bg-slate-900/60 text-slate-200 border-white/10 hover:border-white/30'
             )}
           >
-            <img src="/TimerIcon.svg" alt="" className="w-6 h-6" aria-hidden />
+            <img src={activeTool === 'timer' ? '/TimerIconOn.svg' : '/TimerIconOff.svg'} alt="" className="w-6 h-6" aria-hidden />
             <span>Timer</span>
           </button>
         </div>
@@ -417,7 +416,7 @@ export default function DiceRoller() {
         {activeTool === 'coin' && (
           <div className="rounded-2xl bg-slate-900/60 border border-white/10 p-6 md:p-8">
             <h2 className="text-xl font-semibold text-slate-200 text-center mb-4">Coin Flip</h2>
-            <div className="w-full max-w-sm mx-auto aspect-square rounded-xl bg-slate-800/50 overflow-hidden" style={{ height: 280 }}>
+            <div className="w-full max-w-sm mx-auto aspect-square rounded-xl overflow-hidden" style={{ height: 280 }}>
               <CoinFlipScene
                 flipTrigger={coinFlipTrigger}
                 onFlipEnd={() => {}}
@@ -438,7 +437,23 @@ export default function DiceRoller() {
         )}
 
         {activeTool === 'timer' && (
-          <div className="rounded-2xl bg-slate-900/60 border border-white/10 p-6 md:p-8 space-y-6">
+          <div className="relative rounded-2xl bg-slate-900/60 border border-white/10 p-6 md:p-8 space-y-6">
+            <button
+              type="button"
+              onClick={() => setTimerSoundMuted((m) => !m)}
+              className={clsx(
+                'absolute top-4 right-4 p-2 rounded-lg transition',
+                timerSoundMuted ? 'text-slate-500 hover:text-slate-400' : 'text-slate-300 hover:text-white'
+              )}
+              title={timerSoundMuted ? 'Unmute timer sound' : 'Mute timer sound'}
+              aria-label={timerSoundMuted ? 'Unmute timer sound' : 'Mute timer sound'}
+            >
+              {timerSoundMuted ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><line x1="17" y1="9" x2="23" y2="15" strokeWidth={2} /><line x1="23" y1="9" x2="17" y2="15" strokeWidth={2} /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              )}
+            </button>
             <h2 className="text-xl font-semibold text-slate-200 text-center">Timer</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {TIMER_PRESETS.map((preset) => (
@@ -453,7 +468,7 @@ export default function DiceRoller() {
                       : 'bg-slate-900/40 text-slate-200 border-white/10 hover:border-white/30'
                   )}
                 >
-                  <span aria-hidden="true">⌛</span>
+                  <img src={selectedTimerKey === preset.key ? '/TimerIconOn.svg' : '/TimerIconOff.svg'} alt="" className="w-5 h-5" aria-hidden />
                   <span>{preset.label}</span>
                 </button>
               ))}
@@ -513,24 +528,7 @@ export default function DiceRoller() {
               <div className="text-5xl md:text-6xl font-black tracking-wider text-white tabular-nums">{formatTime(remainingSeconds)}</div>
             </div>
 
-            <div className="flex flex-wrap gap-3 justify-center items-center">
-              <button
-                type="button"
-                onClick={() => setTimerSoundMuted((m) => !m)}
-                className={clsx(
-                  'rounded-lg px-4 py-2 font-semibold transition flex items-center gap-2',
-                  timerSoundMuted ? 'bg-slate-600 text-slate-400' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-                )}
-                title={timerSoundMuted ? 'Unmute timer sound' : 'Mute timer sound'}
-                aria-label={timerSoundMuted ? 'Unmute timer sound' : 'Mute timer sound'}
-              >
-                {timerSoundMuted ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><line x1="17" y1="9" x2="23" y2="15" strokeWidth={2} /><line x1="23" y1="9" x2="17" y2="15" strokeWidth={2} /></svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                )}
-                <span>{timerSoundMuted ? 'Unmute' : 'Mute'}</span>
-              </button>
+            <div className="flex flex-wrap gap-3 justify-center">
               <button
                 type="button"
                 onClick={startTimer}

@@ -20,6 +20,12 @@ function CoinModel({ flipTrigger, onFlipEnd }) {
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+        if (child.material) {
+          const mat = Array.isArray(child.material) ? child.material[0] : child.material;
+          if (mat && mat.color && mat.color.clone) {
+            mat.color = mat.color.clone().multiplyScalar(1.45);
+          }
+        }
       }
     });
     return clone;
@@ -82,12 +88,14 @@ export default function CoinFlipScene({ flipTrigger, onFlipEnd, className, style
         style={{ width: '100%', height: '100%' }}
       >
         <color attach="background" args={['transparent']} />
-        <ambientLight intensity={0.7} />
-        <directionalLight castShadow intensity={1} position={[3, 4, 3]} shadow-mapSize-width={512} shadow-mapSize-height={512} />
+        <ambientLight intensity={0.45} />
+        <directionalLight castShadow intensity={1.4} position={[2, 5, 4]} shadow-mapSize-width={512} shadow-mapSize-height={512} />
+        <directionalLight intensity={0.5} position={[-2, 2, 2]} />
+        <pointLight intensity={0.4} position={[0, 2, 2]} color="#fef3c7" />
         <Suspense fallback={null}>
           <CoinModel flipTrigger={flipTrigger} onFlipEnd={onFlipEnd} />
-          <ContactShadows position={[0, -0.5, 0]} opacity={0.4} scale={4} blur={1.5} />
-          <Environment preset="studio" />
+          <ContactShadows position={[0, -0.92, 0]} opacity={0.35} scale={3.5} blur={2} far={1.2} />
+          <Environment preset="studio" intensity={0.6} />
         </Suspense>
       </Canvas>
     </div>
