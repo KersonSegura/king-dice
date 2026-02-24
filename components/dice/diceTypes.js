@@ -7,7 +7,7 @@ const diceTypes = [
     gradient: 'linear-gradient(135deg, #FDBA74, #F97316)',
     shape: 'tetra',
     iconSvg: '/D4DieIconBtn.svg',
-    dieSvg: '/D4Die.svg?v=3'
+    dieSvg: '/D4Die.svg?v=4'
   },
   {
     label: 'd6',

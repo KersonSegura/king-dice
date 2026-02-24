@@ -88,10 +88,16 @@ export default function DiceRoller() {
 
   const removeDiceFromPool = (id) => {
     if (dicePool.length <= 1) return; // Keep at least 1 die
-    const newPool = dicePool.filter(d => d.id !== id);
+    const oldPool = dicePool;
+    const oldSlotIndices = slotIndices;
+    const newPool = oldPool.filter((d) => d.id !== id);
+    const newSlotIndices = newPool.map((die) => {
+      const oldIndex = oldPool.findIndex((d) => d.id === die.id);
+      return oldSlotIndices[oldIndex] ?? 0;
+    });
     setDicePool(newPool);
     setRollResults([]); // Clear results when pool changes
-    setSlotIndices((prev) => prev.filter((_, index) => newPool[index] !== undefined));
+    setSlotIndices(newSlotIndices);
   };
 
   const handleRoll = () => {

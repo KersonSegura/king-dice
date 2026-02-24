@@ -6,7 +6,7 @@ import { useGLTF } from '@react-three/drei';
 import { Canvas } from './r3f-wrapper';
 import * as THREE from 'three';
 
-const COIN_URL = '/Models/Coin.glb';
+const COIN_URL = '/Models/Coin.glb?v=2';
 const FLIP_DURATION_MS = 1400;
 const SPIN_TURNS = 6;
 const EASE_OUT = (t) => 1 - Math.pow(1 - t, 3);
