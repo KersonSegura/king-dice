@@ -1,5 +1,3 @@
-const DICE_ICON_VERSION = 2;
-
 const diceTypes = [
   {
     label: 'd4',
@@ -8,7 +6,7 @@ const diceTypes = [
     color: '#F97316',
     gradient: 'linear-gradient(135deg, #FDBA74, #F97316)',
     shape: 'tetra',
-    iconSvg: `/D4DieIconBtn.svg?v=${DICE_ICON_VERSION}`,
+    iconSvg: '/D4DieIconBtn.svg',
     dieSvg: '/D4Die.svg?v=3'
   },
   {
@@ -18,7 +16,7 @@ const diceTypes = [
     color: '#22C55E',
     gradient: 'linear-gradient(135deg, #6EE7B7, #22C55E)',
     shape: 'cube',
-    iconSvg: `/D6DieIconBtn.svg?v=${DICE_ICON_VERSION}`,
+    iconSvg: '/D6DieIconBtn.svg',
     dieSvg: '/D6Die.svg?v=2'
   },
   {
@@ -28,7 +26,7 @@ const diceTypes = [
     color: '#0EA5E9',
     gradient: 'linear-gradient(135deg, #7DD3FC, #0EA5E9)',
     shape: 'octa',
-    iconSvg: `/D8DieIconBtn.svg?v=${DICE_ICON_VERSION}`,
+    iconSvg: '/D8DieIconBtn.svg',
     dieSvg: '/D8Die.svg?v=2'
   },
   {
@@ -38,7 +36,7 @@ const diceTypes = [
     color: '#6366F1',
     gradient: 'linear-gradient(135deg, #C4B5FD, #6366F1)',
     shape: 'pentagonal',
-    iconSvg: `/D10DieIconBtn.svg?v=${DICE_ICON_VERSION}`,
+    iconSvg: '/D10DieIconBtn.svg',
     dieSvg: '/D10Die.svg?v=2'
   },
   {
@@ -48,7 +46,7 @@ const diceTypes = [
     color: '#EC4899',
     gradient: 'linear-gradient(135deg, #F9A8D4, #EC4899)',
     shape: 'dodeca',
-    iconSvg: `/D12DieIconBtn.svg?v=${DICE_ICON_VERSION}`,
+    iconSvg: '/D12DieIconBtn.svg',
     dieSvg: '/D12Die.svg?v=2'
   },
   {
@@ -58,7 +56,7 @@ const diceTypes = [
     color: '#F97316',
     gradient: 'linear-gradient(135deg, #FDE68A, #EA580C)',
     shape: 'icosa',
-    iconSvg: `/D20DieIconBtn.svg?v=${DICE_ICON_VERSION}`,
+    iconSvg: '/D20DieIconBtn.svg',
     dieSvg: '/D20Die.svg?v=2'
   }
 ];

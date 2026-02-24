@@ -39,7 +39,7 @@ function formatTime(totalSeconds) {
 
 export default function DiceRoller() {
   const tDiceRoller = useTranslations('diceRoller');
-  const [dicePool, setDicePool] = useState([{ ...DEFAULT_DICE, id: Date.now() }]); // Array of dice in the pool with unique IDs
+  const [dicePool, setDicePool] = useState([{ ...DEFAULT_DICE, id: Date.now(), hasRolled: false }]); // Array of dice in the pool with unique IDs
   const [rollResults, setRollResults] = useState([]); // Array of roll results
   const [slotIndices, setSlotIndices] = useState([0]);
   const [isRolling, setIsRolling] = useState(false);
@@ -83,7 +83,7 @@ export default function DiceRoller() {
 
   const addDiceToPool = (dice) => {
     if (dicePool.length >= 10) return; // Max 10 dice
-    setDicePool([...dicePool, { ...dice, id: Date.now() + Math.random() }]);
+    setDicePool([...dicePool, { ...dice, id: Date.now() + Math.random(), hasRolled: false }]);
   };
 
   const removeDiceFromPool = (id) => {
@@ -118,6 +118,7 @@ export default function DiceRoller() {
       }
       setRollResults(finalResults);
       setSlotIndices(finalResults.map((value) => value - 1));
+      setDicePool((prev) => prev.map((d) => (d.hasRolled ? d : { ...d, hasRolled: true })));
       setIsRolling(false);
     }, ROLL_ANIMATION_MS);
   };
@@ -322,36 +323,45 @@ export default function DiceRoller() {
                   {dicePool.map((dice, index) => {
                     const slotIndex = slotIndices[index] ?? 0;
                     const values = getFaceSequence(dice.faces);
+                    const showQuestionMark = !isRolling && !dice.hasRolled;
                     return (
                     <div key={dice.id} className="relative rounded-2xl border border-white/10 bg-slate-900/40 h-[200px] grid place-items-center overflow-visible">
                       <div className="relative h-28 w-28 md:h-32 md:w-32">
-                        <img
-                          src={dice.dieSvg}
-                          alt={`${dice.label.toUpperCase()} die`}
-                          className="h-full w-full object-contain select-none"
-                          draggable={false}
-                        />
+                        {dice.faces !== 4 && (
+                          <img
+                            src={dice.dieSvg}
+                            alt={`${dice.label.toUpperCase()} die`}
+                            className="h-full w-full object-contain select-none"
+                            draggable={false}
+                          />
+                        )}
                         <div className="absolute inset-0 grid place-items-center pointer-events-none">
-                          <div className="relative h-11 md:h-14 w-14 md:w-16 overflow-hidden">
-                            <div
-                              className="flex flex-col items-center"
-                              style={{
-                                transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
-                                transition: isRolling
-                                  ? 'transform 85ms linear'
-                                  : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
-                              }}
-                            >
-                              {values.map((num) => (
-                                <span
-                                  key={`${dice.id}-${num}`}
-                                  className="h-11 md:h-14 w-14 md:w-16 min-w-[3.5rem] md:min-w-[4rem] grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
-                                >
-                                  {num}
-                                </span>
-                              ))}
+                          {showQuestionMark ? (
+                            <span className="text-white font-black text-5xl md:text-6xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]">
+                              ?
+                            </span>
+                          ) : (
+                            <div className="relative h-11 md:h-14 w-14 md:w-16 overflow-hidden">
+                              <div
+                                className="flex flex-col items-center"
+                                style={{
+                                  transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
+                                  transition: isRolling
+                                    ? 'transform 85ms linear'
+                                    : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                }}
+                              >
+                                {values.map((num) => (
+                                  <span
+                                    key={`${dice.id}-${num}`}
+                                    className="h-11 md:h-14 w-14 md:w-16 min-w-[3.5rem] md:min-w-[4rem] grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
+                                  >
+                                    {num}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                       <div className="absolute bottom-3 left-0 right-0 text-center text-xs uppercase tracking-wide text-white/70">
