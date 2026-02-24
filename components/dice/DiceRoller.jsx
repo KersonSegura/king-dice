@@ -339,18 +339,18 @@ export default function DiceRoller() {
                           className="h-full w-full object-contain select-none"
                           draggable={false}
                         />
-                        <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                        <div
+                          className={clsx(
+                            'absolute inset-0 grid place-items-center pointer-events-none',
+                            dice.faces === 4 && 'translate-y-2 md:translate-y-3'
+                          )}
+                        >
                           {showQuestionMark ? (
                             <span className="text-white font-black text-5xl md:text-6xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]">
                               ?
                             </span>
                           ) : (
-                            <div
-                              className={clsx(
-                                'relative h-11 md:h-14 w-14 md:w-16 overflow-hidden',
-                                dice.faces === 4 && 'translate-y-1.5 md:translate-y-2'
-                              )}
-                            >
+                            <div className="relative h-11 md:h-14 w-14 md:w-16 overflow-hidden">
                               <div
                                 className="flex flex-col items-center"
                                 style={{
