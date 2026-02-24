@@ -1372,6 +1372,7 @@
     "tabTimer": "Timer",
     "coinFlipTitle": "Coin Flip",
     "flip": "Flip",
+    "loadingCoin": "Loading coin...",
     "timerTitle": "Timer",
     "timerPreset30s": "30 sec",
     "timerPreset1m": "1 min",

@@ -1392,6 +1392,7 @@
     "tabTimer": "Temporizador",
     "coinFlipTitle": "Lanzar Moneda",
     "flip": "Lanzar",
+    "loadingCoin": "Cargando moneda...",
     "timerTitle": "Temporizador",
     "timerPreset30s": "30 seg",
     "timerPreset1m": "1 min",

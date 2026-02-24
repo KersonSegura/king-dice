@@ -8,17 +8,22 @@ import DiceButton from './DiceButton';
 import diceTypes, { DEFAULT_DICE } from './diceTypes';
 import { getRandomRoll } from './diceLogic';
 
+function CoinLoading() {
+  const tDiceRoller = useTranslations('diceRoller');
+  return (
+    <div className="w-full h-[280px] rounded-xl flex items-center justify-center">
+      <span className="text-white/60">{tDiceRoller('loadingCoin')}</span>
+    </div>
+  );
+}
+
 const CoinFlipScene = dynamic(() => import('./CoinFlipScene'), {
   ssr: false,
-  loading: () => (
-    <div className="w-full h-[280px] rounded-xl flex items-center justify-center">
-      <span className="text-white/60">Loading coin...</span>
-    </div>
-  ),
+  loading: CoinLoading,
 });
 
 const ROLL_ANIMATION_MS = 1000;
-const ROLL_TICK_MS = 130;
+const ROLL_TICK_MS = 90;
 const TIMER_PRESETS = [
   { key: '30s', labelKey: 'timerPreset30s', seconds: 30 },
   { key: '1m', labelKey: 'timerPreset1m', seconds: 60 },
@@ -406,7 +411,7 @@ export default function DiceRoller() {
                                 style={{
                                   transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
                                   transition: isRolling
-                                    ? 'transform 130ms linear'
+                                    ? 'none'
                                     : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
                                 }}
                               >
