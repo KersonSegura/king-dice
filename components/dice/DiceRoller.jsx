@@ -32,9 +32,9 @@ const TIMER_PRESETS = [
 ];
 const TURN_TABLES = [
   { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTable.svg', sizeClass: 'w-36 h-36' },
-  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTable.svg', sizeClass: 'w-52 h-40', desktopRotateClass: 'md:rotate-90' },
+  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTable.svg', sizeClass: 'w-44 h-32', desktopRotateClass: 'md:rotate-90' },
   { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTable.svg', sizeClass: 'w-52 h-44', desktopRotateClass: 'md:rotate-90' },
-  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTable.svg', sizeClass: 'w-36 h-36' },
+  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTable.svg', sizeClass: 'w-32 h-32' },
 ];
 
 function getFaceSequence(faces) {
@@ -80,12 +80,12 @@ export default function DiceRoller() {
   const [lastAddedDiceId, setLastAddedDiceId] = useState(null);
   const [turnTableKey, setTurnTableKey] = useState('circle');
   const [turnPlayerNames, setTurnPlayerNames] = useState(['Player 1', 'Player 2', 'Player 3', 'Player 4']);
-  const [turnMinutes, setTurnMinutes] = useState(3);
+  const [turnMinutes, setTurnMinutes] = useState(1);
   const [turnSeconds, setTurnSeconds] = useState(0);
   const [turnGameStarted, setTurnGameStarted] = useState(false);
   const [turnCurrentIndex, setTurnCurrentIndex] = useState(0);
   const [turnCount, setTurnCount] = useState(1);
-  const [turnRemainingSeconds, setTurnRemainingSeconds] = useState(180);
+  const [turnRemainingSeconds, setTurnRemainingSeconds] = useState(60);
   const [turnIsRunning, setTurnIsRunning] = useState(false);
   const [turnAutoPass, setTurnAutoPass] = useState(false);
   const [turnDirection, setTurnDirection] = useState(1);
@@ -934,10 +934,11 @@ export default function DiceRoller() {
                   </button>
                 </div>
 
+                <div className="text-center text-sm font-semibold text-white/70">
+                  Turn {turnCount}
+                </div>
+
                 <div className="relative rounded-2xl border border-white/10 bg-slate-900/40 min-h-[360px] p-4">
-                  <div className="relative z-10 text-center text-sm font-semibold text-white/70 mb-2">
-                    Turn {turnCount}
-                  </div>
                   <div className="absolute inset-0 grid place-items-center pointer-events-none">
                     <img
                       src={TURN_TABLES.find((t) => t.key === turnTableKey)?.src}
