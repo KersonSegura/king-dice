@@ -23,13 +23,18 @@ const CoinFlipScene = dynamic(() => import('./CoinFlipScene'), {
 });
 
 const ROLL_ANIMATION_MS = 1000;
-const ROLL_TICK_MS = 120;
 const TIMER_PRESETS = [
   { key: '30s', labelKey: 'timerPreset30s', seconds: 30 },
   { key: '1m', labelKey: 'timerPreset1m', seconds: 60 },
   { key: '2m', labelKey: 'timerPreset2m', seconds: 120 },
   { key: '5m', labelKey: 'timerPreset5m', seconds: 300 },
   { key: 'custom', labelKey: 'timerPresetCustom', seconds: null },
+];
+const TURN_TABLES = [
+  { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTable.svg', sizeClass: 'w-44 h-44' },
+  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTable.svg', sizeClass: 'w-52 h-40' },
+  { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTable.svg', sizeClass: 'w-52 h-44' },
+  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTable.svg', sizeClass: 'w-44 h-44' },
 ];
 
 function getFaceSequence(faces) {
@@ -42,16 +47,24 @@ function formatTime(totalSeconds) {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+function formatSignedTime(totalSeconds) {
+  const negative = totalSeconds < 0;
+  const abs = Math.abs(totalSeconds);
+  const mins = Math.floor(abs / 60);
+  const secs = abs % 60;
+  return `${negative ? '-' : ''}${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
 export default function DiceRoller() {
   const tDiceRoller = useTranslations('diceRoller');
   const [dicePool, setDicePool] = useState([{ ...DEFAULT_DICE, id: Date.now(), hasRolled: false }]); // Array of dice in the pool with unique IDs
   const [rollResults, setRollResults] = useState([]); // Array of roll results
   const [slotIndices, setSlotIndices] = useState([0]);
   const [isRolling, setIsRolling] = useState(false);
-  const rollIntervalRef = useRef(null);
   const rollTimeoutRef = useRef(null);
   const [activeTool, setActiveTool] = useState('dice');
   const [selectedTimerKey, setSelectedTimerKey] = useState('30s');
+  const [timerMode, setTimerMode] = useState('regular');
   const [customMinutes, setCustomMinutes] = useState(0);
   const [customSeconds, setCustomSeconds] = useState(30);
   const [timerDuration, setTimerDuration] = useState(30);
@@ -65,6 +78,16 @@ export default function DiceRoller() {
   const customMinutesRef = useRef(0);
   const customSecondsRef = useRef(30);
   const [lastAddedDiceId, setLastAddedDiceId] = useState(null);
+  const [turnTableKey, setTurnTableKey] = useState('circle');
+  const [turnPlayerNames, setTurnPlayerNames] = useState(['Jeff', 'Tom', 'Charlie', 'Jerry']);
+  const [turnMinutes, setTurnMinutes] = useState(3);
+  const [turnSeconds, setTurnSeconds] = useState(0);
+  const [turnGameStarted, setTurnGameStarted] = useState(false);
+  const [turnCurrentIndex, setTurnCurrentIndex] = useState(0);
+  const [turnRemainingSeconds, setTurnRemainingSeconds] = useState(180);
+  const [turnIsRunning, setTurnIsRunning] = useState(false);
+  const [turnAutoPass, setTurnAutoPass] = useState(false);
+  const [turnDirection, setTurnDirection] = useState(1);
 
   const totalFromCustom = customMinutes * 60 + customSeconds;
   const clampCustom = (mins, secs) => {
@@ -97,6 +120,37 @@ export default function DiceRoller() {
   };
   const adjustCustomSeconds = (delta) => {
     setCustomSecondsClamped(customSecondsRef.current + delta);
+  };
+  const turnDurationSeconds = turnMinutes * 60 + turnSeconds;
+  const getNextTurnIndex = (index, total) => {
+    if (total <= 0) return 0;
+    return (index + turnDirection + total) % total;
+  };
+  const updateTurnPlayerName = (index, value) => {
+    const sanitized = value.replace(/\s+/g, ' ').trimStart().slice(0, 14);
+    setTurnPlayerNames((prev) => prev.map((name, i) => (i === index ? sanitized : name)));
+  };
+  const addTurnPlayer = () => {
+    setTurnPlayerNames((prev) => (prev.length >= 6 ? prev : [...prev, `Player ${prev.length + 1}`]));
+  };
+  const removeTurnPlayer = (index) => {
+    setTurnPlayerNames((prev) => {
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((_, i) => i !== index);
+      setTurnCurrentIndex((current) => Math.min(current, next.length - 1));
+      return next;
+    });
+  };
+  const startTurnGame = () => {
+    const duration = Math.max(1, turnDurationSeconds);
+    setTurnGameStarted(true);
+    setTurnCurrentIndex(0);
+    setTurnRemainingSeconds(duration);
+    setTurnIsRunning(false);
+  };
+  const nextTurn = () => {
+    setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
+    setTurnRemainingSeconds(Math.max(1, turnDurationSeconds));
   };
 
   const clearHoldAdjust = () => {
@@ -158,26 +212,12 @@ export default function DiceRoller() {
 
   const handleRoll = () => {
     if (dicePool.length === 0 || isRolling) return;
-    if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
     if (rollTimeoutRef.current) clearTimeout(rollTimeoutRef.current);
 
     const finalResults = dicePool.map(dice => getRandomRoll(dice.faces));
     setIsRolling(true);
-    rollIntervalRef.current = setInterval(() => {
-      setSlotIndices((prev) =>
-        dicePool.map((dice, index) => {
-          const current = prev[index] ?? 0;
-          const jump = 1 + Math.floor(Math.random() * 3);
-          return (current + jump) % dice.faces;
-        })
-      );
-    }, ROLL_TICK_MS);
 
     rollTimeoutRef.current = setTimeout(() => {
-      if (rollIntervalRef.current) {
-        clearInterval(rollIntervalRef.current);
-        rollIntervalRef.current = null;
-      }
       setRollResults(finalResults);
       setSlotIndices(finalResults.map((value) => value - 1));
       setDicePool((prev) => prev.map((d) => (d.hasRolled ? d : { ...d, hasRolled: true })));
@@ -209,7 +249,6 @@ export default function DiceRoller() {
 
   useEffect(() => {
     return () => {
-      if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
       if (rollTimeoutRef.current) clearTimeout(rollTimeoutRef.current);
       clearHoldAdjust();
     };
@@ -222,6 +261,26 @@ export default function DiceRoller() {
     }, 1000);
     return () => clearInterval(intervalId);
   }, [isTimerRunning]);
+
+  useEffect(() => {
+    if (timerMode !== 'turn' || !turnGameStarted || !turnIsRunning) return;
+    const intervalId = setInterval(() => {
+      setTurnRemainingSeconds((prev) => {
+        const next = prev - 1;
+        if (next <= 0 && turnAutoPass) {
+          setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
+          return Math.max(1, turnDurationSeconds);
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, [timerMode, turnGameStarted, turnIsRunning, turnAutoPass, turnDurationSeconds, turnPlayerNames.length, turnDirection]);
+
+  useEffect(() => {
+    if (timerMode !== 'turn' || turnGameStarted || turnIsRunning) return;
+    setTurnRemainingSeconds(Math.max(1, turnDurationSeconds));
+  }, [timerMode, turnDurationSeconds, turnGameStarted, turnIsRunning]);
 
   useEffect(() => {
     if (remainingSeconds === 0 && isTimerRunning && !timerDoneRef.current) {
@@ -390,6 +449,14 @@ export default function DiceRoller() {
                   font-size: 0.75rem !important;
                 }
               }
+              @keyframes diceRollLoop {
+                from { transform: translateY(0); }
+                to { transform: translateY(-50%); }
+              }
+              .dice-roll-loop {
+                animation: diceRollLoop 0.6s linear infinite;
+                will-change: transform;
+              }
             `}} />
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                   {dicePool.map((dice, index) => {
@@ -417,24 +484,35 @@ export default function DiceRoller() {
                             </span>
                           ) : (
                             <div className="relative h-11 md:h-14 w-14 md:w-16 overflow-hidden">
-                              <div
-                                className="flex flex-col items-center"
-                                style={{
-                                  transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
-                                  transition: isRolling
-                                    ? 'transform 120ms linear'
-                                    : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
-                                }}
-                              >
-                                {values.map((num) => (
-                                  <span
-                                    key={`${dice.id}-${num}`}
-                                    className="h-11 md:h-14 w-14 md:w-16 min-w-[3.5rem] md:min-w-[4rem] grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
-                                  >
-                                    {num}
-                                  </span>
-                                ))}
-                              </div>
+                              {isRolling ? (
+                                <div className="dice-roll-loop flex flex-col items-center">
+                                  {[...values, ...values].map((num, idx) => (
+                                    <span
+                                      key={`${dice.id}-rolling-${idx}`}
+                                      className="h-11 md:h-14 w-14 md:w-16 min-w-[3.5rem] md:min-w-[4rem] grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
+                                    >
+                                      {num}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div
+                                  className="flex flex-col items-center"
+                                  style={{
+                                    transform: `translateY(-${(slotIndex * 100) / dice.faces}%)`,
+                                    transition: 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                  }}
+                                >
+                                  {values.map((num) => (
+                                    <span
+                                      key={`${dice.id}-${num}`}
+                                      className="h-11 md:h-14 w-14 md:w-16 min-w-[3.5rem] md:min-w-[4rem] grid place-items-center text-white font-black text-4xl md:text-5xl leading-none tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.55)]"
+                                    >
+                                      {num}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -545,139 +623,392 @@ export default function DiceRoller() {
               )}
             </button>
             <h2 className="text-xl font-semibold text-slate-200 text-center">{tDiceRoller('timerTitle')}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {TIMER_PRESETS.map((preset) => (
-                <button
-                  key={preset.key}
-                  type="button"
-                  onClick={() => handleTimerPreset(preset.key)}
-                  className={clsx(
-                    'rounded-xl border px-3 py-3 text-sm font-semibold transition flex items-center justify-center gap-2',
-                    preset.key === 'custom' && 'col-span-2 w-full md:col-span-1',
-                    selectedTimerKey === preset.key
-                      ? 'bg-amber-400 text-slate-950 border-amber-300'
-                      : 'bg-slate-900/40 text-slate-200 border-white/10 hover:border-white/30'
-                  )}
-                >
-                  <img src={selectedTimerKey === preset.key ? '/TimerIconOn.svg' : '/TimerIconOff.svg'} alt="" className="w-5 h-5" aria-hidden />
-                  <span>{tDiceRoller(preset.labelKey)}</span>
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setTimerMode('regular')}
+                className={clsx(
+                  'rounded-xl border px-3 py-3 text-sm font-semibold transition',
+                  timerMode === 'regular'
+                    ? 'bg-amber-400 text-slate-950 border-amber-300'
+                    : 'bg-slate-900/40 text-slate-200 border-white/10 hover:border-white/30'
+                )}
+              >
+                Regular Timer
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimerMode('turn')}
+                className={clsx(
+                  'rounded-xl border px-3 py-3 text-sm font-semibold transition',
+                  timerMode === 'turn'
+                    ? 'bg-amber-400 text-slate-950 border-amber-300'
+                    : 'bg-slate-900/40 text-slate-200 border-white/10 hover:border-white/30'
+                )}
+              >
+                Turn Timer
+              </button>
             </div>
 
-            {selectedTimerKey === 'custom' && (
-              <div className="flex items-center justify-center gap-4 sm:gap-8">
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => adjustCustomMinutes(1)}
-                    onMouseDown={() => startHoldAdjust(() => adjustCustomMinutes(1))}
-                    onMouseUp={clearHoldAdjust}
-                    onMouseLeave={clearHoldAdjust}
-                    onTouchStart={() => startHoldAdjust(() => adjustCustomMinutes(1))}
-                    onTouchEnd={clearHoldAdjust}
-                    onTouchCancel={clearHoldAdjust}
-                    disabled={isTimerRunning || customMinutes >= 59}
-                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
-                    aria-label="Add 1 minute"
-                  >
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
-                  </button>
-                  <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customMinutes).padStart(2, '0')}</span>
-                  <button
-                    type="button"
-                    onClick={() => adjustCustomMinutes(-1)}
-                    onMouseDown={() => startHoldAdjust(() => adjustCustomMinutes(-1))}
-                    onMouseUp={clearHoldAdjust}
-                    onMouseLeave={clearHoldAdjust}
-                    onTouchStart={() => startHoldAdjust(() => adjustCustomMinutes(-1))}
-                    onTouchEnd={clearHoldAdjust}
-                    onTouchCancel={clearHoldAdjust}
-                    disabled={isTimerRunning || customMinutes <= 0}
-                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
-                    aria-label="Subtract 1 minute"
-                  >
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
-                  </button>
-                  <span className="text-xs uppercase text-white/50 mt-1">{tDiceRoller('timerMin')}</span>
+            {timerMode === 'regular' && (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {TIMER_PRESETS.map((preset) => (
+                    <button
+                      key={preset.key}
+                      type="button"
+                      onClick={() => handleTimerPreset(preset.key)}
+                      className={clsx(
+                        'rounded-xl border px-3 py-3 text-sm font-semibold transition flex items-center justify-center gap-2',
+                        preset.key === 'custom' && 'col-span-2 w-full md:col-span-1',
+                        selectedTimerKey === preset.key
+                          ? 'bg-amber-400 text-slate-950 border-amber-300'
+                          : 'bg-slate-900/40 text-slate-200 border-white/10 hover:border-white/30'
+                      )}
+                    >
+                      <img src={selectedTimerKey === preset.key ? '/TimerIconOn.svg' : '/TimerIconOff.svg'} alt="" className="w-5 h-5" aria-hidden />
+                      <span>{tDiceRoller(preset.labelKey)}</span>
+                    </button>
+                  ))}
                 </div>
-                <span className="text-4xl md:text-5xl font-black text-white/80">:</span>
-                <div className="flex flex-col items-center gap-1">
+
+                {selectedTimerKey === 'custom' && (
+                  <div className="flex items-center justify-center gap-4 sm:gap-8">
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => adjustCustomMinutes(1)}
+                        onMouseDown={() => startHoldAdjust(() => adjustCustomMinutes(1))}
+                        onMouseUp={clearHoldAdjust}
+                        onMouseLeave={clearHoldAdjust}
+                        onTouchStart={() => startHoldAdjust(() => adjustCustomMinutes(1))}
+                        onTouchEnd={clearHoldAdjust}
+                        onTouchCancel={clearHoldAdjust}
+                        disabled={isTimerRunning || customMinutes >= 59}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                        aria-label="Add 1 minute"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                      </button>
+                      <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customMinutes).padStart(2, '0')}</span>
+                      <button
+                        type="button"
+                        onClick={() => adjustCustomMinutes(-1)}
+                        onMouseDown={() => startHoldAdjust(() => adjustCustomMinutes(-1))}
+                        onMouseUp={clearHoldAdjust}
+                        onMouseLeave={clearHoldAdjust}
+                        onTouchStart={() => startHoldAdjust(() => adjustCustomMinutes(-1))}
+                        onTouchEnd={clearHoldAdjust}
+                        onTouchCancel={clearHoldAdjust}
+                        disabled={isTimerRunning || customMinutes <= 0}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                        aria-label="Subtract 1 minute"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                      </button>
+                      <span className="text-xs uppercase text-white/50 mt-1">{tDiceRoller('timerMin')}</span>
+                    </div>
+                    <span className="text-4xl md:text-5xl font-black text-white/80">:</span>
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => adjustCustomSeconds(1)}
+                        onMouseDown={() => startHoldAdjust(() => adjustCustomSeconds(1))}
+                        onMouseUp={clearHoldAdjust}
+                        onMouseLeave={clearHoldAdjust}
+                        onTouchStart={() => startHoldAdjust(() => adjustCustomSeconds(1))}
+                        onTouchEnd={clearHoldAdjust}
+                        onTouchCancel={clearHoldAdjust}
+                        disabled={isTimerRunning || customSeconds >= 59}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                        aria-label="Add 1 second"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                      </button>
+                      <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customSeconds).padStart(2, '0')}</span>
+                      <button
+                        type="button"
+                        onClick={() => adjustCustomSeconds(-1)}
+                        onMouseDown={() => startHoldAdjust(() => adjustCustomSeconds(-1))}
+                        onMouseUp={clearHoldAdjust}
+                        onMouseLeave={clearHoldAdjust}
+                        onTouchStart={() => startHoldAdjust(() => adjustCustomSeconds(-1))}
+                        onTouchEnd={clearHoldAdjust}
+                        onTouchCancel={clearHoldAdjust}
+                        disabled={isTimerRunning || customSeconds <= 0}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
+                        aria-label="Subtract 1 second"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                      </button>
+                      <span className="text-xs uppercase text-white/50 mt-1">{tDiceRoller('timerSec')}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-white/10 bg-slate-900/40 p-6 text-center">
+                  <div className="text-5xl md:text-6xl font-black tracking-wider text-white tabular-nums">{formatTime(remainingSeconds)}</div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 justify-center">
                   <button
                     type="button"
-                    onClick={() => adjustCustomSeconds(1)}
-                    onMouseDown={() => startHoldAdjust(() => adjustCustomSeconds(1))}
-                    onMouseUp={clearHoldAdjust}
-                    onMouseLeave={clearHoldAdjust}
-                    onTouchStart={() => startHoldAdjust(() => adjustCustomSeconds(1))}
-                    onTouchEnd={clearHoldAdjust}
-                    onTouchCancel={clearHoldAdjust}
-                    disabled={isTimerRunning || customSeconds >= 59}
-                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
-                    aria-label="Add 1 second"
+                    onClick={startTimer}
+                    disabled={isTimerRunning}
+                    className={clsx(
+                      'rounded-lg px-5 py-2 font-semibold transition',
+                      isTimerRunning
+                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                        : 'bg-green-500 hover:bg-green-400 text-slate-950'
+                    )}
                   >
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                    {tDiceRoller('timerStart')}
                   </button>
-                  <span className="text-4xl md:text-5xl font-black tabular-nums text-white w-14 text-center">{String(customSeconds).padStart(2, '0')}</span>
                   <button
                     type="button"
-                    onClick={() => adjustCustomSeconds(-1)}
-                    onMouseDown={() => startHoldAdjust(() => adjustCustomSeconds(-1))}
-                    onMouseUp={clearHoldAdjust}
-                    onMouseLeave={clearHoldAdjust}
-                    onTouchStart={() => startHoldAdjust(() => adjustCustomSeconds(-1))}
-                    onTouchEnd={clearHoldAdjust}
-                    onTouchCancel={clearHoldAdjust}
-                    disabled={isTimerRunning || customSeconds <= 0}
-                    className="p-2 rounded-lg text-white/90 hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition"
-                    aria-label="Subtract 1 second"
+                    onClick={stopTimer}
+                    disabled={!isTimerRunning}
+                    className={clsx(
+                      'rounded-lg px-5 py-2 font-semibold transition',
+                      !isTimerRunning
+                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                        : 'bg-red-500 hover:bg-red-400 text-white'
+                    )}
                   >
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                    {tDiceRoller('timerStop')}
                   </button>
-                  <span className="text-xs uppercase text-white/50 mt-1">{tDiceRoller('timerSec')}</span>
+                  <button
+                    type="button"
+                    onClick={restartTimer}
+                    className="rounded-lg px-5 py-2 font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
+                  >
+                    {tDiceRoller('timerRestart')}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {timerMode === 'turn' && !turnGameStarted && (
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h3 className="text-sm uppercase tracking-wide text-white/60">Choose your table</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {TURN_TABLES.map((table) => (
+                      <button
+                        key={table.key}
+                        type="button"
+                        onClick={() => setTurnTableKey(table.key)}
+                        className={clsx(
+                          'rounded-xl border p-3 transition bg-slate-900/40 flex flex-col items-center gap-2',
+                          turnTableKey === table.key
+                            ? 'border-amber-300 bg-amber-400/20'
+                            : 'border-white/10 hover:border-white/30'
+                        )}
+                      >
+                        <img src={table.src} alt={table.label} className="h-12 object-contain" draggable={false} />
+                        <span className="text-xs font-semibold">{table.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm uppercase tracking-wide text-white/60">Players</h3>
+                    <button
+                      type="button"
+                      onClick={addTurnPlayer}
+                      disabled={turnPlayerNames.length >= 6}
+                      className="rounded-lg px-3 py-1.5 text-sm font-semibold bg-amber-400 hover:bg-amber-300 text-slate-950 disabled:opacity-50"
+                    >
+                      + Add Player
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {turnPlayerNames.map((name, index) => (
+                      <div key={`turn-player-${index}`} className="flex items-center gap-2">
+                        <input
+                          value={name}
+                          onChange={(e) => updateTurnPlayerName(index, e.target.value)}
+                          placeholder={`Player ${index + 1}`}
+                          maxLength={14}
+                          className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white placeholder:text-white/40"
+                        />
+                        {turnPlayerNames.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeTurnPlayer(index)}
+                            className="rounded-lg px-2.5 py-2 text-xs font-bold bg-red-500 hover:bg-red-400 text-white"
+                            aria-label="Remove player"
+                          >
+                            x
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="text-sm uppercase tracking-wide text-white/60">Turn Time</h3>
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setTurnMinutes((v) => Math.min(59, v + 1))}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 transition"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                      </button>
+                      <span className="text-4xl font-black tabular-nums text-white w-14 text-center">{String(turnMinutes).padStart(2, '0')}</span>
+                      <button
+                        type="button"
+                        onClick={() => setTurnMinutes((v) => Math.max(0, v - 1))}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 transition"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                      </button>
+                      <span className="text-xs uppercase text-white/50 mt-1">min</span>
+                    </div>
+                    <span className="text-4xl font-black text-white/80">:</span>
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setTurnSeconds((v) => Math.min(59, v + 1))}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 transition"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+                      </button>
+                      <span className="text-4xl font-black tabular-nums text-white w-14 text-center">{String(turnSeconds).padStart(2, '0')}</span>
+                      <button
+                        type="button"
+                        onClick={() => setTurnSeconds((v) => Math.max(0, v - 1))}
+                        className="p-2 rounded-lg text-white/90 hover:bg-white/10 transition"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                      </button>
+                      <span className="text-xs uppercase text-white/50 mt-1">sec</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={startTurnGame}
+                    className="rounded-full px-7 py-3 font-semibold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg shadow-amber-500/30"
+                  >
+                    Start Playing
+                  </button>
                 </div>
               </div>
             )}
 
-            <div className="rounded-xl border border-white/10 bg-slate-900/40 p-6 text-center">
-              <div className="text-5xl md:text-6xl font-black tracking-wider text-white tabular-nums">{formatTime(remainingSeconds)}</div>
-            </div>
+            {timerMode === 'turn' && turnGameStarted && (
+              <div className="space-y-5">
+                <div className="flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={() => setTurnDirection((d) => d * -1)}
+                    className="rounded-lg border border-white/10 px-3 py-2 text-sm bg-slate-900/40 hover:border-white/30"
+                  >
+                    Direction: {turnDirection === 1 ? 'Right' : 'Left'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTurnGameStarted(false);
+                      setTurnIsRunning(false);
+                    }}
+                    className="rounded-lg border border-white/10 px-3 py-2 text-sm bg-slate-900/40 hover:border-white/30"
+                  >
+                    Edit Setup
+                  </button>
+                </div>
 
-            <div className="flex flex-wrap gap-3 justify-center">
-              <button
-                type="button"
-                onClick={startTimer}
-                disabled={isTimerRunning}
-                className={clsx(
-                  'rounded-lg px-5 py-2 font-semibold transition',
-                  isTimerRunning
-                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                    : 'bg-green-500 hover:bg-green-400 text-slate-950'
-                )}
-              >
-                {tDiceRoller('timerStart')}
-              </button>
-              <button
-                type="button"
-                onClick={stopTimer}
-                disabled={!isTimerRunning}
-                className={clsx(
-                  'rounded-lg px-5 py-2 font-semibold transition',
-                  !isTimerRunning
-                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                    : 'bg-red-500 hover:bg-red-400 text-white'
-                )}
-              >
-                {tDiceRoller('timerStop')}
-              </button>
-              <button
-                type="button"
-                onClick={restartTimer}
-                className="rounded-lg px-5 py-2 font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
-              >
-                {tDiceRoller('timerRestart')}
-              </button>
-            </div>
+                <div className="relative rounded-2xl border border-white/10 bg-slate-900/40 min-h-[300px] p-4">
+                  <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                    <img
+                      src={TURN_TABLES.find((t) => t.key === turnTableKey)?.src}
+                      alt="Selected table"
+                      className={clsx('object-contain opacity-95', TURN_TABLES.find((t) => t.key === turnTableKey)?.sizeClass)}
+                      draggable={false}
+                    />
+                  </div>
+                  <div className="relative h-[280px]">
+                    {turnPlayerNames.map((name, index) => {
+                      const count = turnPlayerNames.length;
+                      const angle = (-Math.PI / 2) + (index * (Math.PI * 2 / count));
+                      const radius = 120;
+                      const x = 50 + (Math.cos(angle) * radius * 100) / 280;
+                      const y = 50 + (Math.sin(angle) * radius * 100) / 280;
+                      const displayName = name.trim() || `Player ${index + 1}`;
+                      return (
+                        <div
+                          key={`seat-${index}`}
+                          className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
+                          style={{ left: `${x}%`, top: `${y}%` }}
+                        >
+                          <span className="text-xs md:text-sm text-white max-w-[84px] truncate text-center mb-1">
+                            {displayName}
+                          </span>
+                          <img src="/Turn%20Timer/PlayerCircle.svg" alt="" className={clsx('w-12 h-12', turnCurrentIndex === index && 'drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]')} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="text-center space-y-3">
+                  <p className="text-3xl md:text-4xl font-semibold">
+                    {(turnPlayerNames[turnCurrentIndex] || `Player ${turnCurrentIndex + 1}`)}'s turn
+                  </p>
+                  <p className="text-6xl md:text-7xl font-black tabular-nums">{formatSignedTime(turnRemainingSeconds)}</p>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTurnIsRunning(true)}
+                    disabled={turnIsRunning}
+                    className={clsx(
+                      'rounded-lg px-4 py-3 font-semibold transition',
+                      turnIsRunning ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-400 text-slate-950'
+                    )}
+                  >
+                    Start
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTurnIsRunning(false)}
+                    disabled={!turnIsRunning}
+                    className={clsx(
+                      'rounded-lg px-4 py-3 font-semibold transition',
+                      !turnIsRunning ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-400 text-white'
+                    )}
+                  >
+                    Pause
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextTurn}
+                    className="rounded-lg px-4 py-3 font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
+                  >
+                    Next Turn
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTurnAutoPass((v) => !v)}
+                    className={clsx(
+                      'rounded-lg px-4 py-3 font-semibold transition',
+                      turnAutoPass ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-slate-900/50 hover:bg-slate-800 text-white border border-white/10'
+                    )}
+                  >
+                    Auto Pass: {turnAutoPass ? 'On' : 'Off'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
