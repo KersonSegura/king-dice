@@ -31,10 +31,10 @@ const TIMER_PRESETS = [
   { key: 'custom', labelKey: 'timerPresetCustom', seconds: null },
 ];
 const TURN_TABLES = [
-  { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTable.svg', sizeClass: 'w-44 h-44' },
+  { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTable.svg', sizeClass: 'w-36 h-36' },
   { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTable.svg', sizeClass: 'w-52 h-40', desktopRotateClass: 'md:rotate-90' },
   { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTable.svg', sizeClass: 'w-52 h-44', desktopRotateClass: 'md:rotate-90' },
-  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTable.svg', sizeClass: 'w-44 h-44' },
+  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTable.svg', sizeClass: 'w-36 h-36' },
 ];
 
 function getFaceSequence(faces) {
@@ -84,6 +84,7 @@ export default function DiceRoller() {
   const [turnSeconds, setTurnSeconds] = useState(0);
   const [turnGameStarted, setTurnGameStarted] = useState(false);
   const [turnCurrentIndex, setTurnCurrentIndex] = useState(0);
+  const [turnCount, setTurnCount] = useState(1);
   const [turnRemainingSeconds, setTurnRemainingSeconds] = useState(180);
   const [turnIsRunning, setTurnIsRunning] = useState(false);
   const [turnAutoPass, setTurnAutoPass] = useState(false);
@@ -145,11 +146,13 @@ export default function DiceRoller() {
     const duration = Math.max(1, turnDurationSeconds);
     setTurnGameStarted(true);
     setTurnCurrentIndex(0);
+    setTurnCount(1);
     setTurnRemainingSeconds(duration);
     setTurnIsRunning(true);
   };
   const nextTurn = () => {
     setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
+    setTurnCount((count) => count + 1);
     setTurnRemainingSeconds(Math.max(1, turnDurationSeconds));
   };
 
@@ -269,6 +272,7 @@ export default function DiceRoller() {
         const next = prev - 1;
         if (next <= 0 && turnAutoPass) {
           setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
+          setTurnCount((count) => count + 1);
           return Math.max(1, turnDurationSeconds);
         }
         return next;
@@ -930,7 +934,10 @@ export default function DiceRoller() {
                   </button>
                 </div>
 
-                <div className="relative rounded-2xl border border-white/10 bg-slate-900/40 min-h-[300px] p-4">
+                <div className="relative rounded-2xl border border-white/10 bg-slate-900/40 min-h-[360px] p-4">
+                  <div className="relative z-10 text-center text-sm font-semibold text-white/70 mb-2">
+                    Turn {turnCount}
+                  </div>
                   <div className="absolute inset-0 grid place-items-center pointer-events-none">
                     <img
                       src={TURN_TABLES.find((t) => t.key === turnTableKey)?.src}
@@ -943,13 +950,13 @@ export default function DiceRoller() {
                       draggable={false}
                     />
                   </div>
-                  <div className="relative h-[280px]">
+                  <div className="relative h-[330px]">
                     {turnPlayerNames.map((name, index) => {
                       const count = turnPlayerNames.length;
                       const angle = (-Math.PI / 2) + (index * (Math.PI * 2 / count));
-                      const radius = 120;
-                      const x = 50 + (Math.cos(angle) * radius * 100) / 280;
-                      const y = 50 + (Math.sin(angle) * radius * 100) / 280;
+                      const radius = 140;
+                      const x = 50 + (Math.cos(angle) * radius * 100) / 330;
+                      const y = 50 + (Math.sin(angle) * radius * 100) / 330;
                       const displayName = name.trim() || `Player ${index + 1}`;
                       const isCurrentPlayer = turnCurrentIndex === index;
                       const isOvertime = isCurrentPlayer && turnRemainingSeconds < 0;
@@ -982,7 +989,9 @@ export default function DiceRoller() {
                   <p className="text-3xl md:text-4xl font-semibold">
                     {(turnPlayerNames[turnCurrentIndex] || `Player ${turnCurrentIndex + 1}`)}'s turn
                   </p>
-                  <p className="text-6xl md:text-7xl font-black tabular-nums">{formatSignedTime(turnRemainingSeconds)}</p>
+                  <p className={clsx('text-6xl md:text-7xl font-black tabular-nums', turnRemainingSeconds < 0 ? 'text-red-500' : 'text-white')}>
+                    {formatSignedTime(turnRemainingSeconds)}
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-3">
