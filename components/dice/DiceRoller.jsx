@@ -31,10 +31,10 @@ const TIMER_PRESETS = [
   { key: 'custom', labelKey: 'timerPresetCustom', seconds: null },
 ];
 const TURN_TABLES = [
-  { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTableFixed.svg', sizeClass: 'w-36 h-36' },
-  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTableFixed.svg', sizeClass: 'w-44 h-32', desktopRotateClass: 'md:rotate-90' },
-  { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTableFixed.svg', sizeClass: 'w-52 h-44', desktopRotateClass: 'md:rotate-90' },
-  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTableFixed.svg', sizeClass: 'w-32 h-32' },
+  { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTableFixed.svg', sizeClass: 'w-40 h-40' },
+  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTableFixed.svg', sizeClass: 'w-48 h-36', desktopRotateClass: 'md:rotate-90' },
+  { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTableFixed.svg', sizeClass: 'w-56 h-48', desktopRotateClass: 'md:rotate-90' },
+  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTableFixed.svg', sizeClass: 'w-36 h-36' },
 ];
 
 const TURN_DESKTOP_LAYOUTS = {
