@@ -32,8 +32,8 @@ const TIMER_PRESETS = [
 ];
 const TURN_TABLES = [
   { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTable.svg', sizeClass: 'w-44 h-44' },
-  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTable.svg', sizeClass: 'w-52 h-40' },
-  { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTable.svg', sizeClass: 'w-52 h-44' },
+  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTable.svg', sizeClass: 'w-52 h-40', desktopRotateClass: 'md:rotate-90' },
+  { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTable.svg', sizeClass: 'w-52 h-44', desktopRotateClass: 'md:rotate-90' },
   { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTable.svg', sizeClass: 'w-44 h-44' },
 ];
 
@@ -804,7 +804,12 @@ export default function DiceRoller() {
                             : 'border-white/10 hover:border-white/30'
                         )}
                       >
-                        <img src={table.src} alt={table.label} className="h-12 object-contain" draggable={false} />
+                        <img
+                          src={table.src}
+                          alt={table.label}
+                          className={clsx('h-12 object-contain transition-transform', table.desktopRotateClass)}
+                          draggable={false}
+                        />
                         <span className="text-xs font-semibold">{table.label}</span>
                       </button>
                     ))}
@@ -930,7 +935,11 @@ export default function DiceRoller() {
                     <img
                       src={TURN_TABLES.find((t) => t.key === turnTableKey)?.src}
                       alt="Selected table"
-                      className={clsx('object-contain opacity-95', TURN_TABLES.find((t) => t.key === turnTableKey)?.sizeClass)}
+                      className={clsx(
+                        'object-contain opacity-95 transition-transform',
+                        TURN_TABLES.find((t) => t.key === turnTableKey)?.sizeClass,
+                        TURN_TABLES.find((t) => t.key === turnTableKey)?.desktopRotateClass
+                      )}
                       draggable={false}
                     />
                   </div>
@@ -942,6 +951,8 @@ export default function DiceRoller() {
                       const x = 50 + (Math.cos(angle) * radius * 100) / 280;
                       const y = 50 + (Math.sin(angle) * radius * 100) / 280;
                       const displayName = name.trim() || `Player ${index + 1}`;
+                      const isCurrentPlayer = turnCurrentIndex === index;
+                      const isOvertime = isCurrentPlayer && turnRemainingSeconds < 0;
                       return (
                         <div
                           key={`seat-${index}`}
@@ -951,7 +962,16 @@ export default function DiceRoller() {
                           <span className="text-xs md:text-sm text-white max-w-[84px] truncate text-center mb-1">
                             {displayName}
                           </span>
-                          <img src="/Turn%20Timer/PlayerCircle.svg" alt="" className={clsx('w-12 h-12', turnCurrentIndex === index && 'drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]')} />
+                          <div
+                            className={clsx(
+                              'relative w-12 h-12 rounded-full',
+                              isCurrentPlayer && !isOvertime && 'bg-emerald-500',
+                              isOvertime && 'bg-red-500',
+                              isCurrentPlayer && 'drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]'
+                            )}
+                          >
+                            <img src="/Turn%20Timer/PlayerCircle.svg" alt="" className="w-12 h-12" />
+                          </div>
                         </div>
                       );
                     })}
@@ -965,12 +985,12 @@ export default function DiceRoller() {
                   <p className="text-6xl md:text-7xl font-black tabular-nums">{formatSignedTime(turnRemainingSeconds)}</p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="flex flex-wrap justify-center gap-3">
                   <button
                     type="button"
                     onClick={() => setTurnIsRunning((v) => !v)}
                     className={clsx(
-                      'rounded-lg px-4 py-3 font-semibold transition flex items-center justify-center',
+                      'rounded-lg w-14 h-12 font-semibold transition flex items-center justify-center',
                       turnIsRunning ? 'bg-red-500 hover:bg-red-400 text-white' : 'bg-green-500 hover:bg-green-400 text-slate-950'
                     )}
                     aria-label={turnIsRunning ? 'Pause turn timer' : 'Start turn timer'}
@@ -989,7 +1009,7 @@ export default function DiceRoller() {
                   <button
                     type="button"
                     onClick={nextTurn}
-                    className="rounded-lg px-4 py-3 font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
+                    className="rounded-lg w-32 h-12 text-sm font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
                   >
                     Next Turn
                   </button>
@@ -997,7 +1017,7 @@ export default function DiceRoller() {
                     type="button"
                     onClick={() => setTurnAutoPass((v) => !v)}
                     className={clsx(
-                      'rounded-lg px-4 py-3 font-semibold transition',
+                      'rounded-lg w-32 h-12 text-sm leading-tight font-semibold transition',
                       turnAutoPass ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-slate-900/50 hover:bg-slate-800 text-white border border-white/10'
                     )}
                   >
