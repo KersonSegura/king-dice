@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import clsx from 'clsx';
 import DiceButton from './DiceButton';
 import diceTypes, { DEFAULT_DICE } from './diceTypes';
@@ -88,6 +88,7 @@ function formatSignedTime(totalSeconds) {
 
 export default function DiceRoller() {
   const tDiceRoller = useTranslations('diceRoller');
+  const locale = useLocale();
   const [dicePool, setDicePool] = useState([{ ...DEFAULT_DICE, id: Date.now(), hasRolled: false }]); // Array of dice in the pool with unique IDs
   const [rollResults, setRollResults] = useState([]); // Array of roll results
   const [slotIndices, setSlotIndices] = useState([0]);
@@ -110,7 +111,12 @@ export default function DiceRoller() {
   const customSecondsRef = useRef(30);
   const [lastAddedDiceId, setLastAddedDiceId] = useState(null);
   const [turnTableKey, setTurnTableKey] = useState('circle');
-  const [turnPlayerNames, setTurnPlayerNames] = useState(['Player 1', 'Player 2', 'Player 3', 'Player 4']);
+  const [turnPlayerNames, setTurnPlayerNames] = useState([
+    tDiceRoller('turnPlayerDefault', { count: 1 }),
+    tDiceRoller('turnPlayerDefault', { count: 2 }),
+    tDiceRoller('turnPlayerDefault', { count: 3 }),
+    tDiceRoller('turnPlayerDefault', { count: 4 }),
+  ]);
   const [turnMinutes, setTurnMinutes] = useState(1);
   const [turnSeconds, setTurnSeconds] = useState(0);
   const [turnGameStarted, setTurnGameStarted] = useState(false);
@@ -121,6 +127,7 @@ export default function DiceRoller() {
   const [turnAutoPass, setTurnAutoPass] = useState(false);
   const [turnDirection, setTurnDirection] = useState(1);
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
+  const turnDoneRef = useRef(false);
 
   const totalFromCustom = customMinutes * 60 + customSeconds;
   const clampCustom = (mins, secs) => {
@@ -164,7 +171,9 @@ export default function DiceRoller() {
     setTurnPlayerNames((prev) => prev.map((name, i) => (i === index ? sanitized : name)));
   };
   const addTurnPlayer = () => {
-    setTurnPlayerNames((prev) => (prev.length >= 6 ? prev : [...prev, `Player ${prev.length + 1}`]));
+    setTurnPlayerNames((prev) => (
+      prev.length >= 6 ? prev : [...prev, tDiceRoller('turnPlayerDefault', { count: prev.length + 1 })]
+    ));
   };
   const removeTurnPlayer = (index) => {
     setTurnPlayerNames((prev) => {
@@ -180,12 +189,14 @@ export default function DiceRoller() {
     setTurnCurrentIndex(0);
     setTurnCount(1);
     setTurnRemainingSeconds(duration);
+    turnDoneRef.current = false;
     setTurnIsRunning(true);
   };
   const nextTurn = () => {
     setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
     setTurnCount((count) => count + 1);
     setTurnRemainingSeconds(Math.max(1, turnDurationSeconds));
+    turnDoneRef.current = false;
   };
   const getTurnSeatPosition = (index, count) => {
     const safeCount = Math.max(2, Math.min(6, count));
@@ -204,6 +215,37 @@ export default function DiceRoller() {
       left: 50 + Math.cos(angle) * layout.xRadius,
       top: 50 + Math.sin(angle) * layout.yRadius,
     };
+  };
+  const playTimerDoneSignal = () => {
+    if (typeof window !== 'undefined') {
+      if (!timerSoundMuted) {
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) {
+            const ctx = new Ctx();
+            const playTone = (freq, start, duration, vol) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, start);
+              gain.gain.setValueAtTime(0, start);
+              gain.gain.linearRampToValueAtTime(vol, start + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(start);
+              osc.stop(start + duration);
+            };
+            const t = ctx.currentTime;
+            playTone(523.25, t, 0.12, 0.22);
+            playTone(659.25, t + 0.14, 0.18, 0.2);
+          }
+        } catch (_) {}
+      }
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 200]);
+      }
+    }
   };
 
   const clearHoldAdjust = () => {
@@ -301,6 +343,17 @@ export default function DiceRoller() {
   }, [customSeconds]);
 
   useEffect(() => {
+    setTurnPlayerNames((prev) =>
+      prev.map((name, idx) => {
+        if (/^(Player|Jugador)\s+\d+$/i.test(name.trim())) {
+          return tDiceRoller('turnPlayerDefault', { count: idx + 1 });
+        }
+        return name;
+      })
+    );
+  }, [locale, tDiceRoller]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const media = window.matchMedia('(min-width: 1024px)');
     const update = () => setIsDesktopViewport(media.matches);
@@ -329,16 +382,21 @@ export default function DiceRoller() {
     const intervalId = setInterval(() => {
       setTurnRemainingSeconds((prev) => {
         const next = prev - 1;
+        if (next === 0 && !turnDoneRef.current) {
+          turnDoneRef.current = true;
+          playTimerDoneSignal();
+        }
         if (next <= 0 && turnAutoPass) {
           setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
           setTurnCount((count) => count + 1);
+          turnDoneRef.current = false;
           return Math.max(1, turnDurationSeconds);
         }
         return next;
       });
     }, 1000);
     return () => clearInterval(intervalId);
-  }, [timerMode, turnGameStarted, turnIsRunning, turnAutoPass, turnDurationSeconds, turnPlayerNames.length, turnDirection]);
+  }, [timerMode, turnGameStarted, turnIsRunning, turnAutoPass, turnDurationSeconds, turnPlayerNames.length, turnDirection, timerSoundMuted]);
 
   useEffect(() => {
     if (timerMode !== 'turn' || turnGameStarted || turnIsRunning) return;
@@ -349,35 +407,7 @@ export default function DiceRoller() {
     if (remainingSeconds === 0 && isTimerRunning && !timerDoneRef.current) {
       timerDoneRef.current = true;
       setIsTimerRunning(false);
-      if (typeof window !== 'undefined') {
-        if (!timerSoundMuted) {
-          try {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (Ctx) {
-              const ctx = new Ctx();
-              const playTone = (freq, start, duration, vol) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, start);
-                gain.gain.setValueAtTime(0, start);
-                gain.gain.linearRampToValueAtTime(vol, start + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(start);
-                osc.stop(start + duration);
-              };
-              const t = ctx.currentTime;
-              playTone(523.25, t, 0.12, 0.22);
-              playTone(659.25, t + 0.14, 0.18, 0.2);
-            }
-          } catch (_) {}
-        }
-        if (typeof navigator !== 'undefined' && navigator.vibrate) {
-          navigator.vibrate([200, 100, 200, 100, 200]);
-        }
-      }
+      playTimerDoneSignal();
     }
     if (remainingSeconds > 0) {
       timerDoneRef.current = false;
@@ -977,7 +1007,7 @@ export default function DiceRoller() {
                   <button
                     type="button"
                     onClick={() => setTurnDirection((d) => d * -1)}
-                    className="rounded-lg border border-white/10 px-3 py-2 text-sm bg-slate-900/40 hover:border-white/30"
+                    className="rounded-lg border border-white/10 px-3 py-2 text-xs md:text-sm bg-slate-900/40 hover:border-white/30"
                   >
                     {tDiceRoller('turnDirection')}: {turnDirection === 1 ? tDiceRoller('turnClockwise') : tDiceRoller('turnCounterclockwise')}
                   </button>
@@ -1031,7 +1061,7 @@ export default function DiceRoller() {
                               'relative w-12 h-12 rounded-full',
                               isCurrentPlayer && !isOvertime && 'bg-emerald-500',
                               isOvertime && 'bg-red-500',
-                              isCurrentPlayer && 'drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]'
+                              isCurrentPlayer && 'ring-2 ring-amber-300 shadow-[0_0_14px_rgba(250,204,21,0.55)]'
                             )}
                           >
                             <img src="/Turn%20Timer/PlayerCircle.svg" alt="" className="w-12 h-12" />
@@ -1044,7 +1074,9 @@ export default function DiceRoller() {
 
                 <div className="text-center space-y-3">
                   <p className="text-3xl md:text-4xl font-semibold">
-                    {tDiceRoller('turnCurrentPlayer', { player: turnPlayerNames[turnCurrentIndex] || `Player ${turnCurrentIndex + 1}` })}
+                    {tDiceRoller('turnCurrentPlayer', {
+                      player: turnPlayerNames[turnCurrentIndex] || tDiceRoller('turnPlayerDefault', { count: turnCurrentIndex + 1 }),
+                    })}
                   </p>
                   <p className={clsx('text-6xl md:text-7xl font-black tabular-nums', turnRemainingSeconds < 0 ? 'text-red-500' : 'text-white')}>
                     {formatSignedTime(turnRemainingSeconds)}
