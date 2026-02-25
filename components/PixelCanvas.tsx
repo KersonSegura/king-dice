@@ -1534,7 +1534,6 @@ export default function PixelCanvas({
             <div className="text-sm text-blue-800">
               <p className="font-medium mb-2">{tPixel('hints')}</p>
                               <ul className="space-y-1">
-                  <li>• {tPixel('cooldownHint')}<br /><strong>{tPixel('cooldownSecondsValue')}</strong></li>
                   <li>• {tPixel('singleClickHint')}</li>
                   <li>• {tPixel('dragHint')}</li>
                   <li className="bg-yellow-100 border border-yellow-300 rounded-lg p-2 mt-2">
