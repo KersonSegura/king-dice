@@ -79,7 +79,7 @@ export default function DiceRoller() {
   const customSecondsRef = useRef(30);
   const [lastAddedDiceId, setLastAddedDiceId] = useState(null);
   const [turnTableKey, setTurnTableKey] = useState('circle');
-  const [turnPlayerNames, setTurnPlayerNames] = useState(['Jeff', 'Tom', 'Charlie', 'Jerry']);
+  const [turnPlayerNames, setTurnPlayerNames] = useState(['Player 1', 'Player 2', 'Player 3', 'Player 4']);
   const [turnMinutes, setTurnMinutes] = useState(3);
   const [turnSeconds, setTurnSeconds] = useState(0);
   const [turnGameStarted, setTurnGameStarted] = useState(false);
@@ -146,7 +146,7 @@ export default function DiceRoller() {
     setTurnGameStarted(true);
     setTurnCurrentIndex(0);
     setTurnRemainingSeconds(duration);
-    setTurnIsRunning(false);
+    setTurnIsRunning(true);
   };
   const nextTurn = () => {
     setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
@@ -753,36 +753,35 @@ export default function DiceRoller() {
                 <div className="flex flex-wrap gap-3 justify-center">
                   <button
                     type="button"
-                    onClick={startTimer}
-                    disabled={isTimerRunning}
+                    onClick={() => (isTimerRunning ? stopTimer() : startTimer())}
                     className={clsx(
-                      'rounded-lg px-5 py-2 font-semibold transition',
+                      'rounded-lg h-11 w-11 flex items-center justify-center font-semibold transition',
                       isTimerRunning
-                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                        ? 'bg-red-500 hover:bg-red-400 text-white'
                         : 'bg-green-500 hover:bg-green-400 text-slate-950'
                     )}
+                    aria-label={isTimerRunning ? tDiceRoller('timerStop') : tDiceRoller('timerStart')}
                   >
-                    {tDiceRoller('timerStart')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={stopTimer}
-                    disabled={!isTimerRunning}
-                    className={clsx(
-                      'rounded-lg px-5 py-2 font-semibold transition',
-                      !isTimerRunning
-                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-red-500 hover:bg-red-400 text-white'
+                    {isTimerRunning ? (
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <rect x="6" y="5" width="4" height="14" rx="1" />
+                        <rect x="14" y="5" width="4" height="14" rx="1" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 ml-0.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
                     )}
-                  >
-                    {tDiceRoller('timerStop')}
                   </button>
                   <button
                     type="button"
                     onClick={restartTimer}
-                    className="rounded-lg px-5 py-2 font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
+                    className="rounded-lg h-11 w-11 flex items-center justify-center font-semibold transition bg-amber-400 hover:bg-amber-300 text-slate-950"
+                    aria-label={tDiceRoller('timerRestart')}
                   >
-                    {tDiceRoller('timerRestart')}
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                      <path d="M12 5a7 7 0 1 1-6.65 9.18 1 1 0 1 1 1.9-.62A5 5 0 1 0 8.3 8.3L10 10H5V5l1.9 1.9A6.97 6.97 0 0 1 12 5z" />
+                    </svg>
                   </button>
                 </div>
               </>
@@ -969,25 +968,23 @@ export default function DiceRoller() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <button
                     type="button"
-                    onClick={() => setTurnIsRunning(true)}
-                    disabled={turnIsRunning}
+                    onClick={() => setTurnIsRunning((v) => !v)}
                     className={clsx(
-                      'rounded-lg px-4 py-3 font-semibold transition',
-                      turnIsRunning ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-400 text-slate-950'
+                      'rounded-lg px-4 py-3 font-semibold transition flex items-center justify-center',
+                      turnIsRunning ? 'bg-red-500 hover:bg-red-400 text-white' : 'bg-green-500 hover:bg-green-400 text-slate-950'
                     )}
+                    aria-label={turnIsRunning ? 'Pause turn timer' : 'Start turn timer'}
                   >
-                    Start
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTurnIsRunning(false)}
-                    disabled={!turnIsRunning}
-                    className={clsx(
-                      'rounded-lg px-4 py-3 font-semibold transition',
-                      !turnIsRunning ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-400 text-white'
+                    {turnIsRunning ? (
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <rect x="6" y="5" width="4" height="14" rx="1" />
+                        <rect x="14" y="5" width="4" height="14" rx="1" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 ml-0.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
                     )}
-                  >
-                    Pause
                   </button>
                   <button
                     type="button"
