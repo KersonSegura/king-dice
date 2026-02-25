@@ -31,11 +31,42 @@ const TIMER_PRESETS = [
   { key: 'custom', labelKey: 'timerPresetCustom', seconds: null },
 ];
 const TURN_TABLES = [
-  { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTable.svg', sizeClass: 'w-36 h-36' },
-  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTable.svg', sizeClass: 'w-44 h-32', desktopRotateClass: 'md:rotate-90' },
-  { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTable.svg', sizeClass: 'w-52 h-44', desktopRotateClass: 'md:rotate-90' },
-  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTable.svg', sizeClass: 'w-32 h-32' },
+  { key: 'square', label: 'Square', src: '/Turn%20Timer/SquareTableFixed.svg', sizeClass: 'w-36 h-36' },
+  { key: 'rectangle', label: 'Rectangle', src: '/Turn%20Timer/RectangleTableFixed.svg', sizeClass: 'w-44 h-32', desktopRotateClass: 'md:rotate-90' },
+  { key: 'oval', label: 'Oval', src: '/Turn%20Timer/OvalTableFixed.svg', sizeClass: 'w-52 h-44', desktopRotateClass: 'md:rotate-90' },
+  { key: 'circle', label: 'Circle', src: '/Turn%20Timer/CircleTableFixed.svg', sizeClass: 'w-32 h-32' },
 ];
+
+const TURN_DESKTOP_LAYOUTS = {
+  square: {
+    2: { xRadius: 26, yRadius: 0, angleOffset: -Math.PI / 2 },
+    3: { xRadius: 28, yRadius: 24, angleOffset: -Math.PI / 2 },
+    4: { xRadius: 27, yRadius: 27, angleOffset: -Math.PI / 4 },
+    5: { xRadius: 30, yRadius: 27, angleOffset: -Math.PI / 2 },
+    6: { xRadius: 30, yRadius: 28, angleOffset: -Math.PI / 2 },
+  },
+  rectangle: {
+    2: { xRadius: 22, yRadius: 0, angleOffset: -Math.PI / 2 },
+    3: { xRadius: 23, yRadius: 28, angleOffset: -Math.PI / 2 },
+    4: { xRadius: 22, yRadius: 30, angleOffset: -Math.PI / 4 },
+    5: { xRadius: 24, yRadius: 33, angleOffset: -Math.PI / 2 },
+    6: { xRadius: 24, yRadius: 34, angleOffset: -Math.PI / 2 },
+  },
+  oval: {
+    2: { xRadius: 23, yRadius: 0, angleOffset: -Math.PI / 2 },
+    3: { xRadius: 24, yRadius: 30, angleOffset: -Math.PI / 2 },
+    4: { xRadius: 24, yRadius: 32, angleOffset: -Math.PI / 4 },
+    5: { xRadius: 25, yRadius: 35, angleOffset: -Math.PI / 2 },
+    6: { xRadius: 25, yRadius: 36, angleOffset: -Math.PI / 2 },
+  },
+  circle: {
+    2: { xRadius: 26, yRadius: 0, angleOffset: -Math.PI / 2 },
+    3: { xRadius: 30, yRadius: 28, angleOffset: -Math.PI / 2 },
+    4: { xRadius: 29, yRadius: 29, angleOffset: -Math.PI / 4 },
+    5: { xRadius: 31, yRadius: 30, angleOffset: -Math.PI / 2 },
+    6: { xRadius: 31, yRadius: 31, angleOffset: -Math.PI / 2 },
+  },
+};
 
 function getFaceSequence(faces) {
   return Array.from({ length: faces }, (_, i) => i + 1);
@@ -89,6 +120,7 @@ export default function DiceRoller() {
   const [turnIsRunning, setTurnIsRunning] = useState(false);
   const [turnAutoPass, setTurnAutoPass] = useState(false);
   const [turnDirection, setTurnDirection] = useState(1);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
 
   const totalFromCustom = customMinutes * 60 + customSeconds;
   const clampCustom = (mins, secs) => {
@@ -136,7 +168,7 @@ export default function DiceRoller() {
   };
   const removeTurnPlayer = (index) => {
     setTurnPlayerNames((prev) => {
-      if (prev.length <= 1) return prev;
+      if (prev.length <= 2) return prev;
       const next = prev.filter((_, i) => i !== index);
       setTurnCurrentIndex((current) => Math.min(current, next.length - 1));
       return next;
@@ -154,6 +186,24 @@ export default function DiceRoller() {
     setTurnCurrentIndex((current) => getNextTurnIndex(current, turnPlayerNames.length));
     setTurnCount((count) => count + 1);
     setTurnRemainingSeconds(Math.max(1, turnDurationSeconds));
+  };
+  const getTurnSeatPosition = (index, count) => {
+    const safeCount = Math.max(2, Math.min(6, count));
+    if (!isDesktopViewport) {
+      const angle = (-Math.PI / 2) + (index * (Math.PI * 2 / safeCount));
+      const radius = 42;
+      return {
+        left: 50 + Math.cos(angle) * radius,
+        top: 50 + Math.sin(angle) * radius,
+      };
+    }
+    const tableLayouts = TURN_DESKTOP_LAYOUTS[turnTableKey] || TURN_DESKTOP_LAYOUTS.circle;
+    const layout = tableLayouts[safeCount] || tableLayouts[6];
+    const angle = layout.angleOffset + (index * (Math.PI * 2 / safeCount));
+    return {
+      left: 50 + Math.cos(angle) * layout.xRadius,
+      top: 50 + Math.sin(angle) * layout.yRadius,
+    };
   };
 
   const clearHoldAdjust = () => {
@@ -249,6 +299,15 @@ export default function DiceRoller() {
   useEffect(() => {
     customSecondsRef.current = customSeconds;
   }, [customSeconds]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const media = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktopViewport(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -842,7 +901,7 @@ export default function DiceRoller() {
                           maxLength={14}
                           className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2 text-sm text-white placeholder:text-white/40"
                         />
-                        {turnPlayerNames.length > 1 && (
+                        {turnPlayerNames.length > 2 && (
                           <button
                             type="button"
                             onClick={() => removeTurnPlayer(index)}
@@ -920,7 +979,7 @@ export default function DiceRoller() {
                     onClick={() => setTurnDirection((d) => d * -1)}
                     className="rounded-lg border border-white/10 px-3 py-2 text-sm bg-slate-900/40 hover:border-white/30"
                   >
-                    Direction: {turnDirection === 1 ? 'Right' : 'Left'}
+                    Direction: {turnDirection === 1 ? 'Clockwise' : 'Counterclockwise'}
                   </button>
                   <button
                     type="button"
@@ -954,10 +1013,7 @@ export default function DiceRoller() {
                   <div className="relative h-[330px]">
                     {turnPlayerNames.map((name, index) => {
                       const count = turnPlayerNames.length;
-                      const angle = (-Math.PI / 2) + (index * (Math.PI * 2 / count));
-                      const radius = 140;
-                      const x = 50 + (Math.cos(angle) * radius * 100) / 330;
-                      const y = 50 + (Math.sin(angle) * radius * 100) / 330;
+                      const seatPosition = getTurnSeatPosition(index, count);
                       const displayName = name.trim() || `Player ${index + 1}`;
                       const isCurrentPlayer = turnCurrentIndex === index;
                       const isOvertime = isCurrentPlayer && turnRemainingSeconds < 0;
@@ -965,7 +1021,7 @@ export default function DiceRoller() {
                         <div
                           key={`seat-${index}`}
                           className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                          style={{ left: `${x}%`, top: `${y}%` }}
+                          style={{ left: `${seatPosition.left}%`, top: `${seatPosition.top}%` }}
                         >
                           <span className="text-xs md:text-sm text-white max-w-[84px] truncate text-center mb-1">
                             {displayName}
