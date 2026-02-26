@@ -5,6 +5,13 @@ import { requireAdminFromRequest } from '@/lib/admin-guard';
 export const dynamic = 'force-dynamic';
 
 type StorageSize = { bucket: string; bytes: number };
+type AnalyticsSummary = {
+  active_24h?: number;
+  active_7d?: number;
+  top_links?: Array<{ path: string; visits: number }>;
+  top_locations?: Array<{ country_code: string; city: string; visits: number }>;
+  source_breakdown?: Array<{ source: string; visits: number }>;
+};
 
 function startDate(daysAgo: number) {
   const d = new Date();
@@ -54,34 +61,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status });
     }
 
-    const since24h = startDate(1);
-    const since7d = startDate(7);
     const since30d = startDate(30);
 
     const [
       usersTotalRes,
-      usersActive7dRes,
-      usersActive24hRes,
       gamesTotalRes,
       postsTotalRes,
       galleryTotalRes,
       messagesTotalRes,
       newUsers30dRes,
-      topGalleryRes,
+      analyticsSummaryRes,
+      dbSizeRes,
     ] = await Promise.all([
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).gte('updatedAt', since7d),
-      supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).gte('updatedAt', since24h),
       supabaseAdmin.from('games').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('posts').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('gallery_images').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('messages').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).gte('createdAt', since30d),
-      supabaseAdmin
-        .from('gallery_images')
-        .select('id, title, views, downloads')
-        .order('views', { ascending: false })
-        .limit(10),
+      supabaseAdmin.rpc('get_admin_analytics_summary', {
+        p_since: since30d,
+        p_top_n: 12,
+      }),
+      supabaseAdmin.rpc('get_database_size_bytes'),
     ]);
 
     const bucketSizes: StorageSize[] = [];
@@ -91,13 +93,22 @@ export async function GET(request: NextRequest) {
     }
 
     const totalStorageBytes = bucketSizes.reduce((sum, b) => sum + b.bytes, 0);
+    const dbSizeBytes = Number(dbSizeRes.data || 0) || 0;
+    const dbQuotaBytes = Number(process.env.SUPABASE_DB_QUOTA_BYTES || 0) || 0;
+    const dbRemainingBytes = dbQuotaBytes > 0 ? Math.max(dbQuotaBytes - dbSizeBytes, 0) : null;
+    const analyticsSummary = (analyticsSummaryRes.data || {}) as AnalyticsSummary;
+    const topLinks = Array.isArray(analyticsSummary.top_links) ? analyticsSummary.top_links : [];
+    const topLocations = Array.isArray(analyticsSummary.top_locations) ? analyticsSummary.top_locations : [];
+    const sourceBreakdown = Array.isArray(analyticsSummary.source_breakdown)
+      ? analyticsSummary.source_breakdown
+      : [];
 
     return NextResponse.json({
       success: true,
       metrics: {
         totalUsers: usersTotalRes.count || 0,
-        activeUsers24h: usersActive24hRes.count || 0,
-        activeUsers7d: usersActive7dRes.count || 0,
+        activeUsers24h: Number(analyticsSummary.active_24h || 0),
+        activeUsers7d: Number(analyticsSummary.active_7d || 0),
         newUsers30d: newUsers30dRes.count || 0,
         totalGames: gamesTotalRes.count || 0,
         totalPosts: postsTotalRes.count || 0,
@@ -107,27 +118,30 @@ export async function GET(request: NextRequest) {
       storage: {
         totalUsedBytes: totalStorageBytes,
         totalUsedPretty: formatBytes(totalStorageBytes),
+        databaseUsedBytes: dbSizeBytes,
+        databaseUsedPretty: formatBytes(dbSizeBytes),
+        databaseQuotaBytes: dbQuotaBytes,
+        databaseQuotaPretty: dbQuotaBytes > 0 ? formatBytes(dbQuotaBytes) : null,
+        databaseRemainingBytes: dbRemainingBytes,
+        databaseRemainingPretty: dbRemainingBytes != null ? formatBytes(dbRemainingBytes) : null,
         buckets: bucketSizes.map((b) => ({
           bucket: b.bucket,
           usedBytes: b.bytes,
           usedPretty: formatBytes(b.bytes),
         })),
-        databaseRemaining: 'Not available via current database API',
       },
       traffic: {
-        summary:
-          'Traffic by URL/location is not currently tracked in a dedicated analytics table. This dashboard shows available database activity metrics.',
-        topVisitedLinks:
-          topGalleryRes.data?.map((item) => ({
-            path: `/community-gallery/${item.id}`,
-            title: item.title,
-            views: item.views || 0,
-            downloads: item.downloads || 0,
-          })) || [],
+        summary: 'Tracked from live page views over the last 30 days.',
+        sourceBreakdown,
+        topVisitedLinks: topLinks,
       },
       locations: {
-        available: false,
-        message: 'Location analytics are not available yet (no geo-tracking source configured).',
+        available: topLocations.length > 0,
+        message:
+          topLocations.length > 0
+            ? 'Approximate location from edge headers (country/city when available).'
+            : 'No location analytics collected yet.',
+        topLocations,
       },
       generatedAt: new Date().toISOString(),
     });

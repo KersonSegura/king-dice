@@ -15,16 +15,20 @@ type DashboardResponse = {
   };
   storage: {
     totalUsedPretty: string;
-    databaseRemaining: string;
+    databaseUsedPretty: string;
+    databaseQuotaPretty: string | null;
+    databaseRemainingPretty: string | null;
     buckets: Array<{ bucket: string; usedPretty: string }>;
   };
   traffic: {
     summary: string;
-    topVisitedLinks: Array<{ path: string; title: string; views: number; downloads: number }>;
+    sourceBreakdown: Array<{ source: string; visits: number }>;
+    topVisitedLinks: Array<{ path: string; visits: number }>;
   };
   locations: {
     available: boolean;
     message: string;
+    topLocations: Array<{ country_code: string; city: string; visits: number }>;
   };
   generatedAt: string;
 };
@@ -218,8 +222,15 @@ export default function AdminPage() {
             <section className="grid md:grid-cols-2 gap-4">
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <h2 className="text-lg font-semibold mb-3">Storage</h2>
-                <p className="text-sm text-white/80">Used: {dashboard.storage.totalUsedPretty}</p>
-                <p className="text-sm text-white/60">Remaining DB storage: {dashboard.storage.databaseRemaining}</p>
+                <p className="text-sm text-white/80">Storage Buckets Used: {dashboard.storage.totalUsedPretty}</p>
+                <p className="text-sm text-white/80">Database Used: {dashboard.storage.databaseUsedPretty}</p>
+                <p className="text-sm text-white/60">
+                  Database Quota:{' '}
+                  {dashboard.storage.databaseQuotaPretty || 'Set SUPABASE_DB_QUOTA_BYTES in env to show quota'}
+                </p>
+                <p className="text-sm text-white/60">
+                  Remaining DB storage: {dashboard.storage.databaseRemainingPretty || 'Unknown (quota not configured)'}
+                </p>
                 <div className="mt-3 space-y-1">
                   {dashboard.storage.buckets.map((bucket) => (
                     <p key={bucket.bucket} className="text-xs text-white/70">
@@ -231,15 +242,24 @@ export default function AdminPage() {
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <h2 className="text-lg font-semibold mb-3">Traffic + Popular Links</h2>
                 <p className="text-xs text-white/60 mb-3">{dashboard.traffic.summary}</p>
+                <div className="mb-3">
+                  <p className="text-xs text-white/60 mb-1">Source breakdown</p>
+                  <div className="flex flex-wrap gap-2">
+                    {dashboard.traffic.sourceBreakdown.map((item) => (
+                      <span key={item.source} className="text-xs rounded-full border border-white/20 px-2 py-1">
+                        {item.source}: {item.visits}
+                      </span>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   {dashboard.traffic.topVisitedLinks.length === 0 && (
                     <p className="text-sm text-white/60">No tracked link visits available yet.</p>
                   )}
                   {dashboard.traffic.topVisitedLinks.slice(0, 6).map((link) => (
-                    <div key={`${link.path}-${link.title}`} className="text-sm border-b border-white/10 pb-1">
-                      <p className="font-medium">{link.title || link.path}</p>
-                      <p className="text-white/60">{link.path}</p>
-                      <p className="text-white/70">Views: {link.views} | Downloads: {link.downloads}</p>
+                    <div key={link.path} className="text-sm border-b border-white/10 pb-1">
+                      <p className="font-medium">{link.path}</p>
+                      <p className="text-white/70">Visits: {link.visits}</p>
                     </div>
                   ))}
                 </div>
@@ -249,6 +269,16 @@ export default function AdminPage() {
             <section className="rounded-xl border border-white/10 bg-white/5 p-4">
               <h2 className="text-lg font-semibold mb-2">Locations</h2>
               <p className="text-sm text-white/70">{dashboard.locations.message}</p>
+              <div className="mt-3 space-y-2">
+                {dashboard.locations.topLocations.slice(0, 8).map((loc) => (
+                  <div key={`${loc.country_code}-${loc.city}`} className="text-sm border-b border-white/10 pb-1">
+                    <p className="font-medium">
+                      {loc.city}, {loc.country_code}
+                    </p>
+                    <p className="text-white/70">Visits: {loc.visits}</p>
+                  </div>
+                ))}
+              </div>
             </section>
           </>
         )}

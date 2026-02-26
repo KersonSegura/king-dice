@@ -32,22 +32,45 @@ type Props = {
 /** JS to detect scroll direction and post to RN for header/nav hide-on-scroll */
 const SCROLL_DETECT_JS = `
 (function() {
-  var lastY = 0;
+  var lastY = window.scrollY || document.documentElement.scrollTop || 0;
+  var lastToggleY = lastY;
+  var lastVisible = true;
+  var lastEmitAt = 0;
   var ticking = false;
-  var threshold = 30;
+  var HIDE_DELTA = 90;
+  var SHOW_DELTA = 55;
+  var TOP_THRESHOLD = 12;
+  var COOLDOWN_MS = 220;
+
+  function emitVisible(nextVisible, y) {
+    if (nextVisible === lastVisible) return;
+    var now = Date.now();
+    if (now - lastEmitAt < COOLDOWN_MS) return;
+    lastVisible = nextVisible;
+    lastEmitAt = now;
+    lastToggleY = y;
+    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
+      JSON.stringify({ type: 'scroll', visible: nextVisible })
+    );
+  }
+
   function onScroll() {
     var y = window.scrollY || document.documentElement.scrollTop;
-    if (y < 10) {
-      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll', visible: true }));
-    } else if (y > lastY + threshold) {
-      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll', visible: false }));
-      lastY = y;
-    } else if (y < lastY - threshold) {
-      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll', visible: true }));
-      lastY = y;
+    var movingDown = y > lastY;
+    var movingUp = y < lastY;
+
+    if (y <= TOP_THRESHOLD) {
+      emitVisible(true, y);
+    } else if (movingDown && y - lastToggleY >= HIDE_DELTA) {
+      emitVisible(false, y);
+    } else if (movingUp && lastToggleY - y >= SHOW_DELTA) {
+      emitVisible(true, y);
     }
+
+    lastY = y;
     ticking = false;
   }
+
   function requestTick() {
     if (!ticking) {
       ticking = true;
@@ -234,7 +257,7 @@ export default function WebViewScreen({
   padBottom = true,
   embed = true,
   interceptGameLinks = true,
-  disableScrollNav = true,
+  disableScrollNav = false,
   onMessage,
 }: Props) {
   const router = useRouter();
@@ -257,6 +280,7 @@ export default function WebViewScreen({
   const uri = `${base}${withEmbed}${hash ? `#${hash}` : ''}`;
   const headers = {
     ...(embed ? { 'x-kd-embed': '1' } : {}),
+    'x-kd-client': 'mobile-app',
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
   };
   const needsOpenChat = path.includes('openChat=1');

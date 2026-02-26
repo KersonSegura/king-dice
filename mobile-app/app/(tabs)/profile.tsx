@@ -18,7 +18,13 @@ export default function ProfileScreen() {
 
   if (user?.username) {
     return (
-      <WebViewScreen path={`/profile/${user.username}`} title="My Profile" showHeader={false} hideWebHeader />
+      <WebViewScreen
+        path={`/profile/${user.username}`}
+        title="My Profile"
+        showHeader={false}
+        hideWebHeader
+        disableScrollNav
+      />
     );
   }
 

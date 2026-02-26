@@ -11,6 +11,7 @@ import { ChatStateProvider } from '@/contexts/ChatStateContext'
 import ToastContainer from '@/components/ToastContainer'
 import BackToTopButton from '@/components/BackToTopButton'
 import FloatingChat from '@/components/FloatingChat'
+import AnalyticsTracker from '@/components/AnalyticsTracker'
 import Providers from '@/components/Providers'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import enMessages from '../messages/en.json'
@@ -88,6 +89,7 @@ export default async function RootLayout({
               <SocketProvider>
                 <ChatStateProvider>
                   <ToastProvider>
+                    <AnalyticsTracker />
                     {!isEmbed && <Header />}
                     {children}
                     {!isEmbed && <BackToTopButton />}

@@ -382,7 +382,8 @@ export default function DiceRoller() {
     const intervalId = setInterval(() => {
       setTurnRemainingSeconds((prev) => {
         const next = prev - 1;
-        if (next === 0 && !turnDoneRef.current) {
+        // Use <= 0 so the timeout signal still fires if any tick skips exactly 0.
+        if (next <= 0 && !turnDoneRef.current) {
           turnDoneRef.current = true;
           playTimerDoneSignal();
         }
