@@ -33,7 +33,9 @@ function LayoutContent() {
     pathname?.startsWith('/create-post') ||
     !isAuthenticated;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  const contentPaddingTop = hideNav ? 0 : (navVisible ? headerHeight : 0);
+  // Keep header space reserved to avoid WebView jump when header hides.
+  // The header itself animates via translateY, but layout height stays stable.
+  const contentPaddingTop = hideNav ? 0 : headerHeight;
 
   return (
     <>

@@ -104,6 +104,7 @@ export default function DiceRoller() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerSoundMuted, setTimerSoundMuted] = useState(false);
   const timerDoneRef = useRef(false);
+  const audioCtxRef = useRef(null);
   const [coinFlipTrigger, setCoinFlipTrigger] = useState(0);
   const holdAdjustTimeoutRef = useRef(null);
   const holdAdjustIntervalRef = useRef(null);
@@ -222,7 +223,13 @@ export default function DiceRoller() {
         try {
           const Ctx = window.AudioContext || window.webkitAudioContext;
           if (Ctx) {
-            const ctx = new Ctx();
+            if (!audioCtxRef.current) {
+              audioCtxRef.current = new Ctx();
+            }
+            const ctx = audioCtxRef.current;
+            if (ctx.state === 'suspended') {
+              ctx.resume().catch(() => {});
+            }
             const playTone = (freq, start, duration, vol) => {
               const osc = ctx.createOscillator();
               const gain = ctx.createGain();
@@ -366,6 +373,10 @@ export default function DiceRoller() {
     return () => {
       if (rollTimeoutRef.current) clearTimeout(rollTimeoutRef.current);
       clearHoldAdjust();
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
     };
   }, []);
 

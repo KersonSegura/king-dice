@@ -33,14 +33,15 @@ type Props = {
 const SCROLL_DETECT_JS = `
 (function() {
   var lastY = window.scrollY || document.documentElement.scrollTop || 0;
-  var lastToggleY = lastY;
+  var hideAnchorY = lastY;
+  var showAnchorY = lastY;
   var lastVisible = true;
   var lastEmitAt = 0;
   var ticking = false;
-  var HIDE_DELTA = 90;
-  var SHOW_DELTA = 55;
+  var HIDE_DELTA = 56;
+  var SHOW_DELTA = 10;
   var TOP_THRESHOLD = 12;
-  var COOLDOWN_MS = 220;
+  var COOLDOWN_MS = 120;
 
   function emitVisible(nextVisible, y) {
     if (nextVisible === lastVisible) return;
@@ -48,7 +49,11 @@ const SCROLL_DETECT_JS = `
     if (now - lastEmitAt < COOLDOWN_MS) return;
     lastVisible = nextVisible;
     lastEmitAt = now;
-    lastToggleY = y;
+    if (nextVisible) {
+      showAnchorY = y;
+    } else {
+      hideAnchorY = y;
+    }
     window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
       JSON.stringify({ type: 'scroll', visible: nextVisible })
     );
@@ -61,10 +66,20 @@ const SCROLL_DETECT_JS = `
 
     if (y <= TOP_THRESHOLD) {
       emitVisible(true, y);
-    } else if (movingDown && y - lastToggleY >= HIDE_DELTA) {
-      emitVisible(false, y);
-    } else if (movingUp && lastToggleY - y >= SHOW_DELTA) {
-      emitVisible(true, y);
+    } else if (movingDown) {
+      showAnchorY = y;
+      if (y - hideAnchorY >= HIDE_DELTA) {
+        emitVisible(false, y);
+      }
+    } else if (movingUp) {
+      hideAnchorY = y;
+      if (showAnchorY - y >= SHOW_DELTA) {
+        emitVisible(true, y);
+      }
+    }
+
+    if (!movingDown && !movingUp) {
+      // no-op
     }
 
     lastY = y;
