@@ -16,6 +16,7 @@ import { useLocale } from '../contexts/LocaleContext';
 import { apiClient } from '../lib/api-client';
 
 const LOAD_TIMEOUT_MS = 35000; // 35s - game page fetches API which can be slow
+const NATIVE_HEADER_HEIGHT = 56;
 
 type Props = {
   path: string;
@@ -106,7 +107,7 @@ function buildHideHeaderJs() {
       var s = document.createElement('style');
       s.id = 'kd-embed-hide-header';
       s.textContent = 'header{display:none!important}footer{display:none!important}' +
-        'body{padding-top:0!important}main{padding-top:0!important}' +
+        'body{padding-top:${NATIVE_HEADER_HEIGHT}px!important}main{padding-top:${NATIVE_HEADER_HEIGHT}px!important}' +
         '.kd-back-to-home{display:none!important}';
       var old = document.getElementById('kd-embed-hide-header');
       if (old) old.remove();
@@ -129,8 +130,8 @@ function buildStatusBarPaddingJs(paddingTop: number) {
         var s = document.createElement('style');
         s.id = 'kd-embed-safe-area';
         s.textContent = ':root{--kd-safe-area-inset-top:' + pt + 'px}' +
-          'body{padding-top:0!important}' +
-          'main{padding-top:0!important}';
+          'body{padding-top:${NATIVE_HEADER_HEIGHT}px!important}' +
+          'main{padding-top:${NATIVE_HEADER_HEIGHT}px!important}';
         var old = document.getElementById('kd-embed-safe-area');
         if (old) old.remove();
         (document.head || document.documentElement).appendChild(s);
@@ -323,7 +324,7 @@ export default function WebViewScreen({
           return;
         }
         if (data?.type === 'timer_timeout') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
           return;
         }
         if (!disableScrollNav && data?.type === 'scroll' && typeof data.visible === 'boolean') {

@@ -9,7 +9,7 @@ import { Stack, usePathname } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LocaleProvider } from '../contexts/LocaleContext';
-import { ScrollContextProvider, useScrollNav } from '../contexts/ScrollContext';
+import { ScrollContextProvider } from '../contexts/ScrollContext';
 import { TabRefreshProvider } from '../contexts/TabRefreshContext';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
@@ -18,12 +18,9 @@ import BottomNav from '../components/BottomNav';
 import MobileHeader from '../components/MobileHeader';
 import { AppErrorBoundary } from '../components/AppErrorBoundary';
 
-const HEADER_CONTENT_HEIGHT = 56;
-
 function LayoutContent() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { navVisible } = useScrollNav();
   const { isAuthenticated } = useAuth();
   // Hide header/nav on login/register OR when not authenticated (loading/redirect phase)
   const hideNav =
@@ -32,37 +29,40 @@ function LayoutContent() {
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/create-post') ||
     !isAuthenticated;
-  const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Keep header space reserved to avoid WebView jump when header hides.
-  // The header itself animates via translateY, but layout height stays stable.
-  const contentPaddingTop = hideNav ? 0 : headerHeight;
+  // Content starts right below the status bar; the native header overlays
+  // the first 56px (like Instagram). When the header hides, content stays put.
+  const contentPaddingTop = hideNav ? 0 : insets.top;
 
   return (
     <>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
       <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+        {/* Permanent white status bar background so phone UI stays visible */}
+        {!hideNav && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#ffffff', zIndex: 150 }} />
+        )}
         <View style={{ flex: 1, paddingTop: contentPaddingTop, backgroundColor: '#f9fafb' }}>
-              <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { flex: 1, backgroundColor: '#f9fafb' },
-              }}
-            >
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="login" />
-              <Stack.Screen name="register" />
-              <Stack.Screen name="search" />
-              <Stack.Screen name="shop" />
-              <Stack.Screen name="forums" />
-              <Stack.Screen name="community-gallery" />
-              <Stack.Screen name="all-games" />
-              <Stack.Screen name="open" />
-              <Stack.Screen name="game/[id]" />
-              <Stack.Screen name="my-dice" />
-              <Stack.Screen name="settings" />
-              <Stack.Screen name="create-post" options={{ headerShown: false }} />
-            </Stack>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { flex: 1, backgroundColor: '#f9fafb' },
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="auth" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="register" />
+            <Stack.Screen name="search" />
+            <Stack.Screen name="shop" />
+            <Stack.Screen name="forums" />
+            <Stack.Screen name="community-gallery" />
+            <Stack.Screen name="all-games" />
+            <Stack.Screen name="open" />
+            <Stack.Screen name="game/[id]" />
+            <Stack.Screen name="my-dice" />
+            <Stack.Screen name="settings" />
+            <Stack.Screen name="create-post" options={{ headerShown: false }} />
+          </Stack>
         </View>
         {!hideNav && <MobileHeader />}
         {!hideNav && <BottomNav />}
