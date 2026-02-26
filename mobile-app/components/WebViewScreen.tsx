@@ -160,14 +160,15 @@ const OPEN_CHAT_JS = `
   })();
 `;
 
-/** Force chat layout in app WebView: fixed subheader, only .chat-scroll-body scrolls. */
+/** Force chat layout in app WebView: fixed subheader, only .chat-scroll-body scrolls. No overlay – chat uses full header padding. */
 function buildChatScrollJs() {
   return `
   (function() {
     try {
       var s = document.createElement('style');
       s.id = 'kd-embed-chat-scroll';
-      s.textContent = 'html,body{overflow:hidden!important;height:100%!important}' +
+      s.textContent = 'body.embed:has(.chat-page){padding-top:0!important}' +
+        'html,body{overflow:hidden!important;height:100%!important}' +
         'body.embed .chat-page{overflow:hidden!important;display:flex!important;flex-direction:column!important;height:100vh!important;max-height:100vh!important;padding-top:0!important}' +
         'body.embed .chat-page.chat-conversation-view{padding-top:0!important}' +
         'body.embed .chat-page .chat-view-header{position:fixed!important;top:0!important;left:0!important;right:0!important;z-index:10!important;background:#fff!important}' +

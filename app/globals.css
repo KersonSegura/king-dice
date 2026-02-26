@@ -134,6 +134,11 @@
   }
 }
 
+/* Embed (mobile WebView): reserve space for native app header overlay (chat has its own layout) */
+body.embed:not(:has(.chat-page)) {
+  padding-top: 56px !important;
+}
+
 /* Embed (mobile WebView): only lock scroll on the chat page; other pages scroll normally */
 html:has(body.embed.embed-no-scroll) {
   height: 100% !important;

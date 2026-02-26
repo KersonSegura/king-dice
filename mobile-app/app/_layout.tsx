@@ -29,9 +29,11 @@ function LayoutContent() {
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/create-post') ||
     !isAuthenticated;
-  // Content starts right below the status bar; the native header overlays
-  // the first 56px (like Instagram). When the header hides, content stays put.
-  const contentPaddingTop = hideNav ? 0 : insets.top;
+  const HEADER_CONTENT_HEIGHT = 56;
+  const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
+  // Chat: no overlay – WebView starts below header (original behavior).
+  // Other pages: content under status bar; header overlays first 56px (Instagram-style).
+  const contentPaddingTop = hideNav ? 0 : pathname?.includes('chat') ? headerHeight : insets.top;
 
   return (
     <>
