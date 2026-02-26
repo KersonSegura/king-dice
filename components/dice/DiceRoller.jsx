@@ -252,6 +252,11 @@ export default function DiceRoller() {
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 200]);
       }
+      if (window.ReactNativeWebView?.postMessage) {
+        try {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'timer_timeout' }));
+        } catch (_) {}
+      }
     }
   };
 

@@ -8,6 +8,7 @@ import { View, StyleSheet, TouchableOpacity, Text, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { WebView } from 'react-native-webview';
 import { API_BASE_URL } from '../config/api';
 import { useScrollNav } from '../contexts/ScrollContext';
@@ -319,6 +320,10 @@ export default function WebViewScreen({
         if (data?.type === 'navigateToProfile' && data?.username) {
           router.push(`/profile/${data.username}` as any);
           onMessage?.(event);
+          return;
+        }
+        if (data?.type === 'timer_timeout') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
           return;
         }
         if (!disableScrollNav && data?.type === 'scroll' && typeof data.visible === 'boolean') {
