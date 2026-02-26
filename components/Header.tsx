@@ -319,6 +319,8 @@ export default function Header() {
     }
   }, [isAuthenticated, user]);
 
+  if (pathname?.startsWith('/admin')) return null;
+
   return (
     <header className="bg-white shadow-md border-b border-dark-200">
       <div className="w-full px-2 sm:px-6 md:px-8 lg:px-12">

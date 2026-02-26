@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get('q') || '').trim();
+    const blockedOnly = searchParams.get('blocked') === '1';
     const limit = Math.min(Number(searchParams.get('limit') || 25), 100);
 
     let query = supabaseAdmin
@@ -23,6 +24,9 @@ export async function GET(request: NextRequest) {
 
     if (q) {
       query = query.or(`username.ilike.%${q}%,email.ilike.%${q}%`);
+    }
+    if (blockedOnly) {
+      query = query.eq('isVerified', false);
     }
 
     const { data, error } = await query;

@@ -4,11 +4,10 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Vibration } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { WebView } from 'react-native-webview';
 import { API_BASE_URL } from '../config/api';
 import { useScrollNav } from '../contexts/ScrollContext';
@@ -43,6 +42,7 @@ const SCROLL_DETECT_JS = `
   var HIDE_DELTA = 56;
   var SHOW_DELTA = 10;
   var TOP_THRESHOLD = 12;
+  var BOTTOM_THRESHOLD = 20;
   var COOLDOWN_MS = 120;
 
   function emitVisible(nextVisible, y) {
@@ -65,6 +65,8 @@ const SCROLL_DETECT_JS = `
     var y = window.scrollY || document.documentElement.scrollTop;
     var movingDown = y > lastY;
     var movingUp = y < lastY;
+    var maxY = Math.max(0, (document.documentElement.scrollHeight - window.innerHeight));
+    var atBottom = maxY > 0 && y >= maxY - BOTTOM_THRESHOLD;
 
     if (y <= TOP_THRESHOLD) {
       emitVisible(true, y);
@@ -73,15 +75,11 @@ const SCROLL_DETECT_JS = `
       if (y - hideAnchorY >= HIDE_DELTA) {
         emitVisible(false, y);
       }
-    } else if (movingUp) {
+    } else if (movingUp && !atBottom) {
       hideAnchorY = y;
       if (showAnchorY - y >= SHOW_DELTA) {
         emitVisible(true, y);
       }
-    }
-
-    if (!movingDown && !movingUp) {
-      // no-op
     }
 
     lastY = y;
@@ -100,14 +98,16 @@ const SCROLL_DETECT_JS = `
 `;
 
 function buildHideHeaderJs() {
-  /* Inject CSS only - do not modify body/header/footer attributes to avoid React hydration mismatch */
+  const h = NATIVE_HEADER_HEIGHT;
+  /* Inject CSS: header overlay height as top padding on all page roots */
   return `
   (function() {
     try {
       var s = document.createElement('style');
       s.id = 'kd-embed-hide-header';
       s.textContent = 'header{display:none!important}footer{display:none!important}' +
-        'body{padding-top:${NATIVE_HEADER_HEIGHT}px!important}main{padding-top:${NATIVE_HEADER_HEIGHT}px!important}' +
+        'body{padding-top:${h}px!important}main{padding-top:${h}px!important}' +
+        '#__next{padding-top:${h}px!important}html{padding-top:0!important}' +
         '.kd-back-to-home{display:none!important}';
       var old = document.getElementById('kd-embed-hide-header');
       if (old) old.remove();
@@ -121,17 +121,17 @@ function buildHideHeaderJs() {
 `;
 }
 
-function buildStatusBarPaddingJs(paddingTop: number) {
+function buildStatusBarPaddingJs(fullTopInset: number) {
+  const h = NATIVE_HEADER_HEIGHT;
   return `
   (function() {
-    var pt = ${paddingTop};
+    var pt = ${fullTopInset};
     function apply() {
       try {
         var s = document.createElement('style');
         s.id = 'kd-embed-safe-area';
         s.textContent = ':root{--kd-safe-area-inset-top:' + pt + 'px}' +
-          'body{padding-top:${NATIVE_HEADER_HEIGHT}px!important}' +
-          'main{padding-top:${NATIVE_HEADER_HEIGHT}px!important}';
+          'body{padding-top:${h}px!important}main{padding-top:${h}px!important}#__next{padding-top:${h}px!important}';
         var old = document.getElementById('kd-embed-safe-area');
         if (old) old.remove();
         (document.head || document.documentElement).appendChild(s);
@@ -324,7 +324,7 @@ export default function WebViewScreen({
           return;
         }
         if (data?.type === 'timer_timeout') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+          Vibration.vibrate(1000);
           return;
         }
         if (!disableScrollNav && data?.type === 'scroll' && typeof data.visible === 'boolean') {
@@ -338,7 +338,7 @@ export default function WebViewScreen({
 
   const injectedJs = [
     hideWebHeader ? buildHideHeaderJs() : '',
-    buildStatusBarPaddingJs(insets.top),
+    buildStatusBarPaddingJs(insets.top + NATIVE_HEADER_HEIGHT),
     needsOpenChat ? OPEN_CHAT_JS : '',
     isChatPath ? buildChatScrollJs() : '',
     interceptGameLinks ? buildGameLinkInterceptJs() : '',

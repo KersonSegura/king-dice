@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
       newUsers30dRes,
       analyticsSummaryRes,
       dbSizeRes,
+      pendingReportsRes,
     ] = await Promise.all([
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('games').select('*', { count: 'exact', head: true }),
@@ -84,6 +85,7 @@ export async function GET(request: NextRequest) {
         p_top_n: 12,
       }),
       supabaseAdmin.rpc('get_database_size_bytes'),
+      supabaseAdmin.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     ]);
 
     const bucketSizes: StorageSize[] = [];
@@ -92,6 +94,7 @@ export async function GET(request: NextRequest) {
       bucketSizes.push({ bucket, bytes: size });
     }
 
+    const pendingReportsCount = pendingReportsRes.count ?? 0;
     const totalStorageBytes = bucketSizes.reduce((sum, b) => sum + b.bytes, 0);
     const dbSizeBytes = Number(dbSizeRes.data || 0) || 0;
     const dbQuotaBytes = Number(process.env.SUPABASE_DB_QUOTA_BYTES || 0) || 0;
@@ -114,6 +117,7 @@ export async function GET(request: NextRequest) {
         totalPosts: postsTotalRes.count || 0,
         totalGalleryImages: galleryTotalRes.count || 0,
         totalMessages: messagesTotalRes.count || 0,
+        pendingReports: pendingReportsCount,
       },
       storage: {
         totalUsedBytes: totalStorageBytes,
