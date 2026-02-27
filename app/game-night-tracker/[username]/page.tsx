@@ -1054,30 +1054,38 @@ export default function UserTrackerPage() {
                     );
                   })
                 )}
-                {/* Bulk +1 buttons for all players (Game Nights / Games Played) */}
+                {/* Bulk +1 buttons aligned under Game Nights / Games Played columns */}
                 {isEditMode && isOwnTracker && players.length > 0 && (
                   <tr className="bg-white">
-                    <td className="px-7 sm:px-6 pt-2 pb-1 whitespace-nowrap text-left bg-white" colSpan={7}>
-                      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                        <span className="text-xs sm:text-sm text-gray-500">
-                          {tTracker('bulkActionsLabel') || 'Quick actions for all players:'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => incrementAllPlayersField('gameNights')}
-                          className="inline-flex items-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
-                        >
-                          +1 {tTracker('gameNightsShort') || tTracker('gameNights')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => incrementAllPlayersField('gamesPlayed')}
-                          className="inline-flex items-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
-                        >
-                          +1 {tTracker('gamesPlayedShort') || tTracker('gamesPlayed')}
-                        </button>
-                      </div>
+                    {/* Player name */}
+                    <td className="px-4 pt-1 pb-3" />
+                    {/* Victories */}
+                    <td className="px-4 pt-1 pb-3" />
+                    {/* Game Nights (+1 all) */}
+                    <td className="px-4 pt-1 pb-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => incrementAllPlayersField('gameNights')}
+                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
+                      >
+                        +1
+                      </button>
                     </td>
+                    {/* Games Played (+1 all) */}
+                    <td className="px-4 pt-1 pb-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => incrementAllPlayersField('gamesPlayed')}
+                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
+                      >
+                        +1
+                      </button>
+                    </td>
+                    {/* Win rate / Win % */}
+                    <td className="px-4 pt-1 pb-3" />
+                    <td className="px-4 pt-1 pb-3" />
+                    {/* Actions column (only present in edit mode) */}
+                    {isEditMode && isOwnTracker && <td className="px-4 pt-1 pb-3" />}
                   </tr>
                 )}
                 {/* Add Player Row - shown only in edit mode */}
