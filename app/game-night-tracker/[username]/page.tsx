@@ -1066,7 +1066,7 @@ export default function UserTrackerPage() {
                       <button
                         type="button"
                         onClick={() => incrementAllPlayersField('gameNights')}
-                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
+                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-[#fbae17] hover:bg-[#fbae17]/90 text-white border border-[#fbae17] transition-colors"
                       >
                         +1
                       </button>
@@ -1076,7 +1076,7 @@ export default function UserTrackerPage() {
                       <button
                         type="button"
                         onClick={() => incrementAllPlayersField('gamesPlayed')}
-                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
+                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-[#fbae17] hover:bg-[#fbae17]/90 text-white border border-[#fbae17] transition-colors"
                       >
                         +1
                       </button>
