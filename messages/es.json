@@ -1387,6 +1387,7 @@
   },
   "diceRoller": {
     "virtualDiceStudio": "Estudio Virtual de Dados",
+    "virtualToolsTitle": "Herramientas Virtuales",
     "tabDice": "Tirar Dados",
     "tabCoinFlip": "Lanzar Moneda",
     "tabTimer": "Temporizador",
@@ -1487,6 +1488,9 @@
     "bar": "Barras",
     "byUser": "por {username}",
     "totalMatchesPlayed": "Total de Partidas",
+    "bulkActionsLabel": "Acciones rápidas +1:",
+    "gameNightsShort": "Noches de juego",
+    "gamesPlayedShort": "Partidas jugadas",
     "selectPlayerColor": "Seleccionar Color del Jugador",
     "saveColor": "Guardar Color",
     "colorHexCode": "Código Hex del Color",

@@ -1367,6 +1367,7 @@
   },
   "diceRoller": {
     "virtualDiceStudio": "Virtual Dice Studio",
+    "virtualToolsTitle": "Virtual Tools",
     "tabDice": "Dice Roller",
     "tabCoinFlip": "Coin Flip",
     "tabTimer": "Timer",
@@ -1467,6 +1468,9 @@
     "bar": "Bar",
     "byUser": "by {username}",
     "totalMatchesPlayed": "Total Matches Played",
+    "bulkActionsLabel": "Quick +1 actions:",
+    "gameNightsShort": "Game Nights",
+    "gamesPlayedShort": "Games Played",
     "selectPlayerColor": "Select Player Color",
     "saveColor": "Save Color",
     "colorHexCode": "Color Hex Code",

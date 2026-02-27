@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import clsx from 'clsx';
 import DiceButton from './DiceButton';
@@ -129,6 +129,151 @@ export default function DiceRoller() {
   const [turnDirection, setTurnDirection] = useState(1);
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const turnDoneRef = useRef(false);
+
+  const isAppEmbed = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('embed') === '1' || Boolean(window.ReactNativeWebView);
+    } catch {
+      return Boolean(window.ReactNativeWebView);
+    }
+  }, []);
+
+  const SESSION_KEY = 'kd_virtual_tools_state_v1';
+  const restoredRef = useRef(false);
+
+  const saveSessionState = useCallback(() => {
+    if (!isAppEmbed || typeof window === 'undefined') return;
+    try {
+      const payload = {
+        v: 1,
+        savedAt: Date.now(),
+        activeTool,
+        timerMode,
+        timerSoundMuted,
+        // Regular timer
+        selectedTimerKey,
+        customMinutes,
+        customSeconds,
+        timerDuration,
+        remainingSeconds,
+        isTimerRunning,
+        // Turn timer
+        turnTableKey,
+        turnPlayerNames,
+        turnMinutes,
+        turnSeconds,
+        turnGameStarted,
+        turnCurrentIndex,
+        turnCount,
+        turnRemainingSeconds,
+        turnIsRunning,
+        turnAutoPass,
+        turnDirection,
+      };
+      window.sessionStorage?.setItem(SESSION_KEY, JSON.stringify(payload));
+    } catch (_) {}
+  }, [
+    isAppEmbed,
+    activeTool,
+    timerMode,
+    timerSoundMuted,
+    selectedTimerKey,
+    customMinutes,
+    customSeconds,
+    timerDuration,
+    remainingSeconds,
+    isTimerRunning,
+    turnTableKey,
+    turnPlayerNames,
+    turnMinutes,
+    turnSeconds,
+    turnGameStarted,
+    turnCurrentIndex,
+    turnCount,
+    turnRemainingSeconds,
+    turnIsRunning,
+    turnAutoPass,
+    turnDirection,
+  ]);
+
+  const pauseAndSave = useCallback(() => {
+    // Requirement: pause when app backgrounds or user navigates away in-app.
+    if (isTimerRunning) setIsTimerRunning(false);
+    if (turnIsRunning) setTurnIsRunning(false);
+    saveSessionState();
+  }, [isTimerRunning, turnIsRunning, saveSessionState]);
+
+  useEffect(() => {
+    if (!isAppEmbed || typeof window === 'undefined') return;
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+
+    try {
+      const raw = window.sessionStorage?.getItem(SESSION_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw || '{}');
+      if (!parsed || parsed.v !== 1) return;
+
+      if (typeof parsed.activeTool === 'string') setActiveTool(parsed.activeTool);
+      if (parsed.timerMode === 'regular' || parsed.timerMode === 'turn') setTimerMode(parsed.timerMode);
+      setTimerSoundMuted(Boolean(parsed.timerSoundMuted));
+
+      if (typeof parsed.selectedTimerKey === 'string') setSelectedTimerKey(parsed.selectedTimerKey);
+      if (Number.isFinite(parsed.customMinutes)) setCustomMinutes(Math.max(0, Math.min(59, Number(parsed.customMinutes))));
+      if (Number.isFinite(parsed.customSeconds)) setCustomSeconds(Math.max(0, Math.min(59, Number(parsed.customSeconds))));
+      if (Number.isFinite(parsed.timerDuration)) setTimerDuration(Math.max(1, Math.min(59 * 60 + 59, Number(parsed.timerDuration))));
+      if (Number.isFinite(parsed.remainingSeconds)) setRemainingSeconds(Math.max(0, Number(parsed.remainingSeconds)));
+      // Always restore paused to avoid running in background.
+      setIsTimerRunning(false);
+
+      if (typeof parsed.turnTableKey === 'string') setTurnTableKey(parsed.turnTableKey);
+      if (Array.isArray(parsed.turnPlayerNames) && parsed.turnPlayerNames.length >= 2) {
+        setTurnPlayerNames(parsed.turnPlayerNames.slice(0, 6).map((x) => String(x)));
+      }
+      if (Number.isFinite(parsed.turnMinutes)) setTurnMinutes(Math.max(0, Math.min(59, Number(parsed.turnMinutes))));
+      if (Number.isFinite(parsed.turnSeconds)) setTurnSeconds(Math.max(0, Math.min(59, Number(parsed.turnSeconds))));
+      setTurnGameStarted(Boolean(parsed.turnGameStarted));
+      if (Number.isFinite(parsed.turnCurrentIndex)) setTurnCurrentIndex(Math.max(0, Number(parsed.turnCurrentIndex)));
+      if (Number.isFinite(parsed.turnCount)) setTurnCount(Math.max(1, Number(parsed.turnCount)));
+      if (Number.isFinite(parsed.turnRemainingSeconds)) setTurnRemainingSeconds(Number(parsed.turnRemainingSeconds));
+      setTurnAutoPass(Boolean(parsed.turnAutoPass));
+      setTurnDirection(parsed.turnDirection === -1 ? -1 : 1);
+      // Always restore paused to avoid running in background.
+      setTurnIsRunning(false);
+      turnDoneRef.current = false;
+      timerDoneRef.current = false;
+    } catch (_) {}
+  }, [isAppEmbed]);
+
+  useEffect(() => {
+    if (!isAppEmbed) return;
+    const t = setTimeout(() => saveSessionState(), 250);
+    return () => clearTimeout(t);
+  }, [isAppEmbed, saveSessionState]);
+
+  useEffect(() => {
+    if (!isAppEmbed || typeof window === 'undefined') return;
+    const onPauseEvent = () => pauseAndSave();
+    const onVis = () => {
+      if (document.hidden) pauseAndSave();
+    };
+    window.addEventListener('kd_app_pause_timers', onPauseEvent);
+    window.addEventListener('pagehide', onPauseEvent);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('kd_app_pause_timers', onPauseEvent);
+      window.removeEventListener('pagehide', onPauseEvent);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [isAppEmbed, pauseAndSave]);
+
+  useEffect(() => {
+    return () => {
+      saveSessionState();
+    };
+  }, [saveSessionState]);
 
   const totalFromCustom = customMinutes * 60 + customSeconds;
   const clampCustom = (mins, secs) => {
@@ -474,7 +619,9 @@ export default function DiceRoller() {
     <section className="min-h-screen bg-slate-950 text-white px-6 py-16">
       <div className="max-w-5xl mx-auto space-y-10">
         <div className="text-center">
-          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">Virtual Tools</h1>
+          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-slate-300 px-2">
+            {tDiceRoller('virtualToolsTitle')}
+          </h1>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

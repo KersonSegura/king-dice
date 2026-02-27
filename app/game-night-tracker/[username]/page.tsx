@@ -454,6 +454,24 @@ export default function UserTrackerPage() {
     setGameTabs(updatedTabs);
   };
 
+  const incrementAllPlayersField = (field: 'gameNights' | 'gamesPlayed') => {
+    const updatedTabs = gameTabs.map(tab => {
+      if (tab.id !== activeTabId) return tab;
+      const updatedPlayers = tab.players.map((p) => {
+        const nextValue = (p[field] || 0) + 1;
+        const nextPlayer: Player = { ...p, [field]: nextValue };
+        if (field === 'gamesPlayed') {
+          const { winRate, winRatePercentage } = calculateWinRate(nextPlayer.victories, nextPlayer.gamesPlayed);
+          nextPlayer.winRate = winRate;
+          nextPlayer.winRatePercentage = winRatePercentage;
+        }
+        return nextPlayer;
+      });
+      return { ...tab, players: updatedPlayers };
+    });
+    setGameTabs(updatedTabs);
+  };
+
   // Add player
   const addPlayer = () => {
     const updatedTabs = gameTabs.map(tab => {
@@ -1035,6 +1053,32 @@ export default function UserTrackerPage() {
                       </tr>
                     );
                   })
+                )}
+                {/* Bulk +1 buttons for all players (Game Nights / Games Played) */}
+                {isEditMode && isOwnTracker && players.length > 0 && (
+                  <tr className="bg-white">
+                    <td className="px-7 sm:px-6 pt-2 pb-1 whitespace-nowrap text-left bg-white" colSpan={7}>
+                      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          {tTracker('bulkActionsLabel') || 'Quick actions for all players:'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => incrementAllPlayersField('gameNights')}
+                          className="inline-flex items-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
+                        >
+                          +1 {tTracker('gameNightsShort') || tTracker('gameNights')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => incrementAllPlayersField('gamesPlayed')}
+                          className="inline-flex items-center px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 transition-colors"
+                        >
+                          +1 {tTracker('gamesPlayedShort') || tTracker('gamesPlayed')}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 )}
                 {/* Add Player Row - shown only in edit mode */}
                 {isEditMode && isOwnTracker && (
