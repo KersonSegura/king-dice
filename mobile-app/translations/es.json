@@ -127,5 +127,11 @@
   "verifyEmailHint": "Enviamos un código de 6 dígitos a {email}. Escríbelo abajo.",
   "verifyEmailSpamReminder": "Enviamos tu código por correo. Si no lo ves, revisa también la carpeta de spam.",
   "useDifferentEmail": "Usar un correo diferente",
-  "passwordRequirementsTitle": "Requisitos de contraseña:"
+  "passwordRequirementsTitle": "Requisitos de contraseña:",
+  "iAgreeToThe": "Acepto los",
+  "termsOfService": "Términos de Servicio",
+  "andThe": "y las",
+  "communityGuidelines": "Normas de la Comunidad",
+  "mustAcceptTerms": "Debes aceptar los Términos de Servicio y las Normas de la Comunidad para crear una cuenta",
+  "byContinuingYouAgree": "Al continuar, aceptas nuestros"
 }

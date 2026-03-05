@@ -3,6 +3,7 @@ import { moderateText } from '@/lib/moderation';
 import { awardXP } from '@/lib/reputation';
 import { supabaseAdmin } from '@/lib/supabase';
 import { executeSupabaseQuery } from '@/lib/supabase-helpers';
+import { getAllBlockedUserIds } from '@/lib/blocked-users';
 
 // Force dynamic so likes/replies reflect immediately when navigating back
 export const dynamic = 'force-dynamic';
@@ -171,9 +172,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const paginatedPosts = filteredRows
+    let paginatedPosts = filteredRows
       .map(row => mapPostRow(row, authorMap))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    // Filter out content from blocked users (both users I blocked and users who blocked me)
+    if (userId) {
+      const blockedUserIds = await getAllBlockedUserIds(userId);
+      if (blockedUserIds.length > 0) {
+        const blockedSet = new Set(blockedUserIds);
+        paginatedPosts = paginatedPosts.filter(post => !blockedSet.has(post.author.id));
+      }
+    }
 
     try {
       const ids = paginatedPosts.map(p => p.id);

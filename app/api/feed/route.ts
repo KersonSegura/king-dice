@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getAllBlockedUserIds } from '@/lib/blocked-users';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -173,13 +174,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const posts = postsRows
+    let posts = postsRows
       .map(row => mapPostRow(row, authorMap))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const galleryImages = galleryRows
+    let galleryImages = galleryRows
       .map(row => mapGalleryRow(row, authorMap, supabaseUrl))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    // Filter out content from blocked users (both users I blocked and users who blocked me)
+    if (userId) {
+      const blockedUserIds = await getAllBlockedUserIds(userId);
+      if (blockedUserIds.length > 0) {
+        const blockedSet = new Set(blockedUserIds);
+        posts = posts.filter(post => !blockedSet.has(post.author.id));
+        galleryImages = galleryImages.filter(image => !blockedSet.has(image.author.id));
+      }
+    }
 
     const allItems = [
       ...posts.map(post => ({

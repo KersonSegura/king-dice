@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { executeSupabaseQuery } from '@/lib/supabase-helpers';
+import { getAllBlockedUserIds } from '@/lib/blocked-users';
 
 export const dynamic = 'force-dynamic';
 
@@ -325,6 +326,15 @@ export async function GET(request: NextRequest) {
 
     if (author && !authorLooksLikeId) {
       images = images.filter(image => image.author.id === author || image.author.name === author);
+    }
+
+    // Filter out content from blocked users (both users I blocked and users who blocked me)
+    if (userId) {
+      const blockedUserIds = await getAllBlockedUserIds(userId);
+      if (blockedUserIds.length > 0) {
+        const blockedSet = new Set(blockedUserIds);
+        images = images.filter(image => !blockedSet.has(image.author.id));
+      }
     }
 
     if (userId && images.length > 0) {

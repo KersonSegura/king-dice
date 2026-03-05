@@ -28,6 +28,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberPassword, setRememberPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [twoFactorData, setTwoFactorData] = useState<{
@@ -132,6 +133,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
       if (!/[0-9]/.test(formData.password)) {
         setError('Password must contain at least one number');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!acceptedTerms) {
+        setError(tAuth('mustAcceptTerms'));
         setIsLoading(false);
         return;
       }
@@ -476,6 +483,38 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </div>
           )}
 
+          {isRegistering && (
+            <div className="flex items-start">
+              <input
+                id="accept-terms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="h-4 w-4 mt-0.5 text-primary-500 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="accept-terms" className="ml-2 block text-sm text-gray-700">
+                {tAuth('iAgreeToThe')}{' '}
+                <a 
+                  href="/terms-of-service" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary-500 hover:text-primary-600 underline"
+                >
+                  {tAuth('termsOfService')}
+                </a>
+                {' '}{tAuth('andThe')}{' '}
+                <a 
+                  href="/community-guidelines" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary-500 hover:text-primary-600 underline"
+                >
+                  {tAuth('communityGuidelines')}
+                </a>
+              </label>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
@@ -552,6 +591,27 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <span className="font-medium">{tAuth('continueWithGoogle')}</span>
               </button>
             </div>
+
+            <p className="mt-4 text-xs text-center text-gray-500">
+              {tAuth('byContinuingYouAgree')}{' '}
+              <a 
+                href="/terms-of-service" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-500 hover:text-primary-600 underline"
+              >
+                {tAuth('termsOfService')}
+              </a>
+              {' '}{tAuth('andThe')}{' '}
+              <a 
+                href="/community-guidelines" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-500 hover:text-primary-600 underline"
+              >
+                {tAuth('communityGuidelines')}
+              </a>
+            </p>
           </>
         )}
 

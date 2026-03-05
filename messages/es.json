@@ -347,7 +347,13 @@
     "continueWithFacebook": "Continuar con Facebook",
     "continueWithGoogle": "Continuar con Google",
     "signingIn": "Iniciando sesión...",
-    "creatingAccount": "Creando cuenta..."
+    "creatingAccount": "Creando cuenta...",
+    "iAgreeToThe": "Acepto los",
+    "termsOfService": "Términos de Servicio",
+    "andThe": "y las",
+    "communityGuidelines": "Normas de la Comunidad",
+    "mustAcceptTerms": "Debes aceptar los Términos de Servicio y las Normas de la Comunidad para crear una cuenta",
+    "byContinuingYouAgree": "Al continuar, aceptas nuestros"
   },
   "authError": {
     "title": "Error de autenticación",
