@@ -2171,6 +2171,90 @@
     },
     "contact": "Contacto designado para seguridad infantil y cumplimiento CSAE: support@kingdice.gg"
   },
+  "communityGuidelinesPage": {
+    "title": "Normas de la Comunidad",
+    "subtitle": "Ayúdanos a mantener un ambiente respetuoso y acogedor para todos los entusiastas de los juegos de mesa.",
+    "welcome": {
+      "title": "¡Bienvenido a King Dice!",
+      "description": "Nuestra comunidad está dedicada a compartir la pasión por los juegos de mesa. Estas normas ayudan a garantizar que todos tengan una experiencia positiva. Al usar King Dice, aceptas seguir estas reglas."
+    },
+    "allowed": {
+      "title": "Contenido Permitido",
+      "description": "Fomentamos los siguientes tipos de contenido e interacciones:",
+      "point1": "Discusiones sobre juegos de mesa, estrategias y mecánicas de juego",
+      "point2": "Fotos de tus colecciones de juegos, montajes y noches de juegos",
+      "point3": "Reseñas de juegos, recomendaciones y comparaciones",
+      "point4": "Preguntas sobre reglas y cómo jugar",
+      "point5": "Eventos de juegos de mesa, encuentros y anuncios de torneos",
+      "point6": "Conversaciones amistosas y hacer nuevos amigos jugadores"
+    },
+    "prohibited": {
+      "title": "Contenido Prohibido",
+      "description": "El siguiente contenido y comportamiento no está permitido:",
+      "point1": "Contenido sexual, violento o inapropiado",
+      "point2": "Spam, publicidad no autorizada o solicitud comercial",
+      "point3": "Discurso de odio, discriminación o acoso de cualquier tipo",
+      "point4": "Información personal de otros usuarios sin consentimiento",
+      "point5": "Contenido que promueva actividades ilegales",
+      "point6": "Suplantación de otros usuarios o figuras públicas",
+      "point7": "Enlaces maliciosos, malware o intentos de phishing",
+      "point8": "Negatividad excesiva, trolleo o comportamiento disruptivo"
+    },
+    "interactions": {
+      "title": "Interacciones entre Usuarios",
+      "respect": {
+        "title": "Sé Respetuoso",
+        "description": "Trata a los demás como quieres que te traten. Los desacuerdos están bien, pero mantén las discusiones civiles y enfocadas en el tema, no en la persona."
+      },
+      "blocking": {
+        "title": "Bloquear Usuarios",
+        "description": "Si alguien te molesta, puedes bloquearlo. Cuando bloqueas a un usuario, no verás su contenido y no podrán enviarte mensajes."
+      },
+      "reporting": {
+        "title": "Reportar Problemas",
+        "description": "Si ves contenido que viola estas normas, por favor repórtalo. Revisamos todos los reportes y tomamos las medidas apropiadas."
+      }
+    },
+    "moderation": {
+      "title": "Reportes y Moderación",
+      "description": "Nos tomamos en serio la seguridad de la comunidad. Nuestro equipo revisa el contenido reportado y toma medidas cuando se violan las normas.",
+      "howToReport": {
+        "title": "Cómo Reportar Contenido",
+        "point1": "Haz clic en el menú (tres puntos) en cualquier publicación, comentario o perfil",
+        "point2": "Selecciona 'Reportar' y elige el motivo",
+        "point3": "Agrega cualquier detalle adicional que nos ayude a entender el problema"
+      },
+      "response": {
+        "title": "Nuestra Respuesta",
+        "description": "Nuestro objetivo es revisar todos los reportes en un plazo de 24 horas. Puede que no siempre recibas una respuesta directa, pero cada reporte es revisado y se toman medidas cuando corresponde."
+      }
+    },
+    "consequences": {
+      "title": "Consecuencias por Violaciones",
+      "description": "Violar estas normas puede resultar en las siguientes acciones:",
+      "firstOffense": {
+        "title": "Primera Ofensa",
+        "description": "Advertencia y eliminación del contenido"
+      },
+      "repeat": {
+        "title": "Violaciones Repetidas",
+        "description": "Suspensión temporal (1-7 días)"
+      },
+      "severe": {
+        "title": "Violaciones Graves",
+        "description": "Suspensión extendida o baneo permanente"
+      },
+      "permanent": {
+        "title": "Tolerancia Cero",
+        "description": "Contenido ilegal, CSAM o acoso severo resulta en baneo permanente inmediato y puede ser reportado a las autoridades"
+      }
+    },
+    "contact": {
+      "title": "¿Preguntas o Inquietudes?",
+      "description": "Si tienes preguntas sobre estas normas o necesitas reportar un problema urgente, contáctanos:",
+      "email": "Correo electrónico"
+    }
+  },
   "credits": {
     "title": "Créditos",
     "subtitle": "Reconociendo a las personas, herramientas y recursos que hacen posible King Dice.",

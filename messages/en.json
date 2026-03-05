@@ -2151,6 +2151,90 @@
     },
     "contact": "Designated contact for child safety and CSAE compliance: support@kingdice.gg"
   },
+  "communityGuidelinesPage": {
+    "title": "Community Guidelines",
+    "subtitle": "Help us maintain a respectful and welcoming environment for all board game enthusiasts.",
+    "welcome": {
+      "title": "Welcome to King Dice!",
+      "description": "Our community is dedicated to sharing the passion for board games. These guidelines help ensure everyone has a positive experience. By using King Dice, you agree to follow these rules."
+    },
+    "allowed": {
+      "title": "Allowed Content",
+      "description": "We encourage the following types of content and interactions:",
+      "point1": "Discussions about board games, strategies, and game mechanics",
+      "point2": "Photos of your game collections, setups, and game nights",
+      "point3": "Game reviews, recommendations, and comparisons",
+      "point4": "Questions about rules and how to play",
+      "point5": "Board game events, meetups, and tournament announcements",
+      "point6": "Friendly conversations and making new gaming friends"
+    },
+    "prohibited": {
+      "title": "Prohibited Content",
+      "description": "The following content and behavior is not allowed:",
+      "point1": "Sexual, violent, or otherwise inappropriate content",
+      "point2": "Spam, unauthorized advertising, or commercial solicitation",
+      "point3": "Hate speech, discrimination, or harassment of any kind",
+      "point4": "Personal information of other users without consent",
+      "point5": "Content that promotes illegal activities",
+      "point6": "Impersonation of other users or public figures",
+      "point7": "Malicious links, malware, or phishing attempts",
+      "point8": "Excessive negativity, trolling, or disruptive behavior"
+    },
+    "interactions": {
+      "title": "User Interactions",
+      "respect": {
+        "title": "Be Respectful",
+        "description": "Treat others the way you want to be treated. Disagreements are fine, but keep discussions civil and focused on the topic, not the person."
+      },
+      "blocking": {
+        "title": "Blocking Users",
+        "description": "If someone is bothering you, you can block them. When you block a user, you won't see their content and they won't be able to message you."
+      },
+      "reporting": {
+        "title": "Reporting Issues",
+        "description": "If you see content that violates these guidelines, please report it. We review all reports and take appropriate action."
+      }
+    },
+    "moderation": {
+      "title": "Reporting & Moderation",
+      "description": "We take community safety seriously. Our team reviews reported content and takes action when guidelines are violated.",
+      "howToReport": {
+        "title": "How to Report Content",
+        "point1": "Click the menu (three dots) on any post, comment, or profile",
+        "point2": "Select 'Report' and choose the reason",
+        "point3": "Add any additional details that help us understand the issue"
+      },
+      "response": {
+        "title": "Our Response",
+        "description": "We aim to review all reports within 24 hours. You may not always receive a direct response, but every report is reviewed and action is taken when appropriate."
+      }
+    },
+    "consequences": {
+      "title": "Consequences for Violations",
+      "description": "Violating these guidelines may result in the following actions:",
+      "firstOffense": {
+        "title": "First Offense",
+        "description": "Warning and content removal"
+      },
+      "repeat": {
+        "title": "Repeat Violations",
+        "description": "Temporary suspension (1-7 days)"
+      },
+      "severe": {
+        "title": "Severe Violations",
+        "description": "Extended suspension or permanent ban"
+      },
+      "permanent": {
+        "title": "Zero Tolerance",
+        "description": "Illegal content, CSAM, or severe harassment results in immediate permanent ban and may be reported to authorities"
+      }
+    },
+    "contact": {
+      "title": "Questions or Concerns?",
+      "description": "If you have questions about these guidelines or need to report an urgent issue, contact us:",
+      "email": "Email"
+    }
+  },
   "credits": {
     "title": "Credits",
     "subtitle": "Acknowledging the people, tools, and resources that make King Dice possible.",
