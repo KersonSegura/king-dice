@@ -838,14 +838,16 @@ export default function FloatingChat() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    const embed = params.get('embed') === '1';
+    const embedParam = params.get('embed') === '1';
+    const embedClass = document.body.classList.contains('embed');
+    const isEmbed = embedParam || embedClass;
     const openChat = params.get('openChat') === '1';
-    if (embed) setHideButton(true);
+    if (isEmbed) setHideButton(true);
     if (openChat) {
       setIsChatOpen(true);
       setSelectedChat(null);
     }
-  }, []);
+  }, [pathname]);
 
   // Fallback: listen for openChatFromEmbed (from mobile WebView injected JS)
   useEffect(() => {
@@ -864,13 +866,16 @@ export default function FloatingChat() {
   const [showViewMembers, setShowViewMembers] = useState(false);
   const [chatsWithUnread, setChatsWithUnread] = useState<Map<string, number>>(new Map());
 
-  // Lock background scroll while chat UI is open (mobile especially)
+  // Lock background scroll while chat UI is open (only on mobile, not desktop)
   useEffect(() => {
     if (isChatOpen) {
-      lockBodyScroll();
-      return () => unlockBodyScroll();
+      // Only lock scroll on mobile devices (< 640px which is Tailwind's sm breakpoint)
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+      if (isMobile) {
+        lockBodyScroll();
+        return () => unlockBodyScroll();
+      }
     }
-    unlockBodyScroll();
     return;
   }, [isChatOpen]);
 
