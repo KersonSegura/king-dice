@@ -30,10 +30,10 @@ export default function EmojiPicker({ onEmojiSelect, isOpen, onClose }: EmojiPic
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-96"
+        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
           <h3 className="text-lg font-semibold">Choose an emoji</h3>
           <button
             onClick={onClose}
@@ -43,9 +43,9 @@ export default function EmojiPicker({ onEmojiSelect, isOpen, onClose }: EmojiPic
           </button>
         </div>
         
-        <div className="p-4">
+        <div className="p-4 flex flex-col flex-1 min-h-0">
           {/* Category tabs */}
-          <div className="flex flex-wrap gap-1 mb-4">
+          <div className="flex flex-wrap gap-1 mb-4 flex-shrink-0">
             {Object.keys(emojiCategories).map((category) => (
               <button
                 key={category}
@@ -62,7 +62,7 @@ export default function EmojiPicker({ onEmojiSelect, isOpen, onClose }: EmojiPic
           </div>
           
           {/* Emoji grid */}
-          <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
+          <div className="grid grid-cols-8 gap-1 overflow-y-auto flex-1 min-h-0">
             {emojiCategories[selectedCategory as keyof typeof emojiCategories].map((emoji, index) => (
               <button
                 key={index}

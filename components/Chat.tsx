@@ -84,6 +84,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mentionDropdownRef = useRef<HTMLDivElement>(null);
+  const hasMarkedReadRef = useRef(false);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -169,7 +170,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     return parts;
   };
 
-  // Load initial page of messages (last 15) and mark as read (no-op for bot)
+  // Load initial page of messages (last 15)
   useEffect(() => {
     if (chatType === 'bot') return;
     const loadMessages = async () => {
@@ -181,19 +182,6 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
           const pagination = data.pagination || {};
           setTotalPages(Math.max(1, pagination.totalPages || 1));
           setPage(1);
-
-          // Mark messages as read when chat is opened
-          if (user?.id) {
-            try {
-              await fetch('/api/messages/unread', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, chatId })
-              });
-            } catch (readError) {
-              console.error('Error marking messages as read:', readError);
-            }
-          }
         }
       } catch (error) {
         console.error('Error loading messages:', error);
@@ -340,23 +328,8 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
               return [...prev, fullMessage];
             });
 
-            // Mark as read if chat is open and message is from another user
-            if (messageSenderId !== user.id) {
-              try {
-                await fetch('/api/messages/unread', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ userId: user.id, chatId })
-                });
-                
-                // Notify parent to update unread count
-                if (onMessageSent) {
-                  onMessageSent();
-                }
-              } catch (error) {
-                // Silent fail - not critical
-              }
-            }
+            // Reset hasMarkedRead so the visibility observer marks the new message as read
+            hasMarkedReadRef.current = false;
           }
         })
         .subscribe();
@@ -374,57 +347,93 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
     };
   }, [chatId, user?.id, chatType]);
 
-  // Always scroll to bottom when conversation first loads (so we see the latest messages)
+  // Scroll to bottom when conversation first loads (so we see the latest messages)
   useEffect(() => {
     if (chatType === 'bot' || messages.length === 0 || !isInitialLoad) return;
-    const scrollToBottom = () => {
+    
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
       const area = messagesAreaRef.current;
       if (area) {
         area.scrollTop = area.scrollHeight;
       }
-      const end = messagesEndRef.current;
-      if (end) {
-        end.scrollIntoView({ behavior: 'auto', block: 'end' });
+      setIsInitialLoad(false);
+    });
+  }, [messages.length, isInitialLoad, chatType]);
+
+  // Mark messages as read when they become visible (using IntersectionObserver)
+  // This ensures messages are marked as read just by viewing them, not requiring any action
+  useEffect(() => {
+    if (chatType === 'bot' || !user?.id || !chatId || messages.length === 0) return;
+    
+    // Debounce the mark-as-read call to avoid spamming the API
+    let markReadTimeout: NodeJS.Timeout | null = null;
+    
+    const markAsRead = async () => {
+      if (hasMarkedReadRef.current) return;
+      hasMarkedReadRef.current = true;
+      
+      try {
+        await fetch('/api/messages/unread', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, chatId })
+        });
+        // Notify mobile app to refresh unread count
+        if (typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
+          (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'chatMessagesRead' }));
+        }
+        // Notify parent to update chat list
+        if (onMessageSent) {
+          onMessageSent();
+        }
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+        hasMarkedReadRef.current = false; // Allow retry on error
       }
     };
-    setIsInitialLoad(false);
-    scrollToBottom();
-    const t1 = setTimeout(scrollToBottom, 50);
-    const t2 = setTimeout(scrollToBottom, 150);
-    const t3 = setTimeout(scrollToBottom, 350);
-    const t4 = setTimeout(scrollToBottom, 600);
-    let rafId = 0;
-    const scheduleRaf = () => {
-      rafId = requestAnimationFrame(() => {
-        scrollToBottom();
-        rafId = requestAnimationFrame(scrollToBottom);
-      });
-    };
-    scheduleRaf();
-    let ro: ResizeObserver | null = null;
-    const el = messagesAreaRef.current;
-    if (el && typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => scrollToBottom());
-      ro.observe(el);
-      const tStop = setTimeout(() => { ro?.disconnect(); }, 800);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-        clearTimeout(t4);
-        clearTimeout(tStop);
-        if (rafId) cancelAnimationFrame(rafId);
-        ro?.disconnect();
-      };
+
+    // Use IntersectionObserver to detect when message area is visible
+    const area = messagesAreaRef.current;
+    if (!area) {
+      // Fallback: mark as read after a short delay if no scroll area
+      markReadTimeout = setTimeout(markAsRead, 500);
+      return () => { if (markReadTimeout) clearTimeout(markReadTimeout); };
     }
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
-      if (rafId) cancelAnimationFrame(rafId);
+
+    // Create observer for the messages area
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // If any part of the messages area is visible, mark as read
+        if (entries.some(entry => entry.isIntersecting)) {
+          // Small delay to ensure user actually sees the messages
+          if (markReadTimeout) clearTimeout(markReadTimeout);
+          markReadTimeout = setTimeout(markAsRead, 300);
+        }
+      },
+      { threshold: 0.1 } // Trigger when at least 10% is visible
+    );
+
+    observer.observe(area);
+
+    // Also mark as read on scroll (user is actively viewing)
+    const handleScroll = () => {
+      if (markReadTimeout) clearTimeout(markReadTimeout);
+      markReadTimeout = setTimeout(markAsRead, 300);
     };
-  }, [messages.length, isInitialLoad, chatType]);
+    area.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      area.removeEventListener('scroll', handleScroll);
+      if (markReadTimeout) clearTimeout(markReadTimeout);
+    };
+  }, [chatType, user?.id, chatId, messages.length, onMessageSent]);
+
+  // Reset the hasMarkedRead flag when chat changes
+  useEffect(() => {
+    hasMarkedReadRef.current = false;
+  }, [chatId]);
 
   // Web (non-embed): also auto-scroll when new messages arrive if user was near bottom
   useEffect(() => {
