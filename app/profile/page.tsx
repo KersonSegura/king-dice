@@ -1682,7 +1682,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: profileColors.background }}>
+    <div className="min-h-screen relative pb-20" style={{ backgroundColor: profileColors.background }}>
       <div className="kd-back-to-home border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
         <div className="max-w-6xl mx-auto">
           <Link 
@@ -2319,7 +2319,7 @@ export default function ProfilePage() {
 
 
                            {/* Recent Activity */}
-            <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
+            <div className="rounded-lg shadow-sm border border-gray-200 p-6 mb-20" style={{ backgroundColor: profileColors.containers }}>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
               <div className="space-y-3">
                 {recentActivity.length > 0 ? (

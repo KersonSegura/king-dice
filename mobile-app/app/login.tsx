@@ -24,11 +24,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { getApiBaseUrl, OAUTH_BASE_URL } from '../config/api';
 import { ProfileIconOffSvg, LockIconSvg } from '../components/BundledAuthIcons';
 import GoogleLogoIcon from '../components/GoogleLogoIcon';
-import GoogleSignInWebView from '../components/GoogleSignInWebView';
 import NativeDiceViewer, { NativeDiceViewerRef } from '../components/NativeDiceViewer';
 import FloatingLanguageMenu from '../components/FloatingLanguageMenu';
 import { apiClient } from '../lib/api-client';
@@ -48,9 +48,6 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
-  const [oauthModalVisible, setOauthModalVisible] = useState(false);
-  const [oauthModalUrl, setOauthModalUrl] = useState('');
-  const [oauthModalTitle, setOauthModalTitle] = useState('');
   const [twoFactorUserId, setTwoFactorUserId] = useState<string | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [verify2FALoading, setVerify2FALoading] = useState(false);
@@ -150,28 +147,51 @@ export default function LoginScreen() {
     setTimeout(() => router.replace('/(tabs)'), 50);
   };
 
-  const handleGoogleSignIn = () => {
-    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app`;
-    const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
-    const googleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-    setOauthModalUrl(googleSignInUrl);
-    setOauthModalTitle(t('signInWithGoogle'));
-    setOauthModalVisible(true);
+  const runOAuthInSystemBrowser = async (authUrl: string) => {
+    const redirectUrl = `${OAUTH_BASE_URL}/auth/mobile-callback`;
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+      if (result.type === 'success' && result.url) {
+        const u = new URL(result.url);
+        const token = u.searchParams.get('token');
+        const userStr = u.searchParams.get('user');
+        if (token && userStr) {
+          await handleOAuthSuccess(token);
+          return;
+        }
+      }
+      if (result.type === 'cancel') return;
+      setError(t('signInFailedTryAgain') || 'Sign-in was cancelled or failed. Please try again.');
+    } catch (e) {
+      setError(t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
+    }
   };
 
-  const handleAppleSignIn = () => {
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&browser=1`;
+      const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
+      const authUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      await runOAuthInSystemBrowser(authUrl);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
     if (Platform.OS !== 'ios') return;
-    const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app`;
-    const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
-    const appleSignInUrl = `${OAUTH_BASE_URL}/api/mobile-apple?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-    setOauthModalUrl(appleSignInUrl);
-    setOauthModalTitle(t('continueWithApple'));
-    setOauthModalVisible(true);
-  };
-
-  const handleOAuthModalSuccess = async (token: string) => {
-    setOauthModalVisible(false);
-    await handleOAuthSuccess(token);
+    setAppleLoading(true);
+    setError('');
+    try {
+      const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&browser=1`;
+      const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
+      const authUrl = `${OAUTH_BASE_URL}/api/mobile-apple?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      await runOAuthInSystemBrowser(authUrl);
+    } finally {
+      setAppleLoading(false);
+    }
   };
 
 
@@ -298,24 +318,38 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity
-            style={styles.googleButton}
+            style={[styles.googleButton, googleLoading && styles.primaryButtonDisabled]}
             onPress={handleGoogleSignIn}
+            disabled={googleLoading}
           >
-            <View style={styles.googleIconWrap}>
-              <GoogleLogoIcon size={22} />
-            </View>
-            <Text style={styles.googleButtonText}>{t('continueWithGoogle')}</Text>
+            {googleLoading ? (
+              <ActivityIndicator size="small" color={GRAY_700} />
+            ) : (
+              <>
+                <View style={styles.googleIconWrap}>
+                  <GoogleLogoIcon size={22} />
+                </View>
+                <Text style={styles.googleButtonText}>{t('continueWithGoogle')}</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           {Platform.OS === 'ios' && (
             <TouchableOpacity
-              style={styles.appleButton}
+              style={[styles.appleButton, appleLoading && styles.primaryButtonDisabled]}
               onPress={handleAppleSignIn}
+              disabled={appleLoading}
             >
-              <View style={styles.appleIconWrap}>
-                <Ionicons name="logo-apple" size={22} color="#111827" />
-              </View>
-              <Text style={styles.appleButtonText}>{t('continueWithApple')}</Text>
+              {appleLoading ? (
+                <ActivityIndicator size="small" color={GRAY_700} />
+              ) : (
+                <>
+                  <View style={styles.appleIconWrap}>
+                    <Ionicons name="logo-apple" size={22} color="#111827" />
+                  </View>
+                  <Text style={styles.appleButtonText}>{t('continueWithApple')}</Text>
+                </>
+              )}
             </TouchableOpacity>
           )}
 
@@ -352,14 +386,6 @@ export default function LoginScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
-
-      <GoogleSignInWebView
-        visible={oauthModalVisible}
-        onClose={() => setOauthModalVisible(false)}
-        onSuccess={handleOAuthModalSuccess}
-        url={oauthModalUrl}
-        title={oauthModalTitle}
-      />
     </>
   );
 }

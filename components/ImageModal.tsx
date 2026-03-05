@@ -155,6 +155,13 @@ export default function ImageModal({
     };
   }, [isOpen, description]);
 
+  // Notify mobile app to hide native header overlay when modal is open (so overlay stays behind pop-up)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
+      (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'imageModalOpen', open: isOpen }));
+    }
+  }, [isOpen]);
+
   const formatUserTitle = (rawTitle?: string | null) => {
     if (!rawTitle) return '';
     const extracted = rawTitle.includes('/dice/Titles/')
@@ -508,7 +515,7 @@ export default function ImageModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[100] p-0 sm:p-4 overscroll-none touch-none"
+      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[200] p-0 sm:p-4 overscroll-none touch-none"
       style={{ 
         pointerEvents: 'auto',
         opacity: isDragging ? Math.max(0.3, 1 - dragY / 400) : 1,
@@ -726,7 +733,7 @@ export default function ImageModal({
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-gray-200 p-4 comments-section">
+            <div className="border-t border-gray-200 p-4 pb-24 comments-section">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">
                 {tGallery('comments')} ({comments.reduce((total, comment) => total + 1 + ((comment as any).replies ? (comment as any).replies.length : 0), 0)})
               </h3>

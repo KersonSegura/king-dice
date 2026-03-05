@@ -1067,6 +1067,7 @@ export default function MyDicePage() {
                                   <button
                     onClick={async () => {
                       try {
+                        const isNativeAppEmbed = typeof window !== 'undefined' && Boolean((window as any).ReactNativeWebView);
 
                         
                         // Generate the composite image
@@ -1110,15 +1111,22 @@ export default function MyDicePage() {
                             (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'KD_AVATAR_SAVED' }));
                           }
                           
-                          showToast(tMyDice('diceSavedSuccessfully'), 'success');
+                          if (!isNativeAppEmbed) {
+                            showToast(tMyDice('diceSavedSuccessfully'), 'success');
+                          }
                         } else {
                           const errorData = await saveRes.json();
                           console.error('❌ Failed to save dice:', errorData);
-                          showToast(tMyDice('failedToSaveDice'), 'error');
+                          if (!isNativeAppEmbed) {
+                            showToast(tMyDice('failedToSaveDice'), 'error');
+                          }
                         }
                       } catch (error) {
                         console.error('❌ Error saving dice:', error);
-                        showToast(tMyDice('errorSavingDice'), 'error');
+                        const isNativeAppEmbed = typeof window !== 'undefined' && Boolean((window as any).ReactNativeWebView);
+                        if (!isNativeAppEmbed) {
+                          showToast(tMyDice('errorSavingDice'), 'error');
+                        }
                       }
                     }}
                     className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"

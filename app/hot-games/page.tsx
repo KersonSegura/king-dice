@@ -102,7 +102,7 @@ export default function HotGamesPage() {
   }, [user?.id, isAuthenticated]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
       {/* Header with back button - hidden in embed (mobile has home in nav) */}
       <div className="kd-back-to-home bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -118,15 +118,15 @@ export default function HotGamesPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
                 <Image 
                   src="/FireIcon.svg" 
                   alt="Fire Icon" 
                   width={48} 
                   height={48}
-                  className="w-12 h-12"
+                  className="w-12 h-12 flex-none"
                 />
-                {tHotGames('title') || t('hotGames', {ns: 'header'}) || 'Hot Games'}
+                <span className="whitespace-nowrap">{tHotGames('title') || t('hotGames', {ns: 'header'}) || 'Hot Games'}</span>
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 {tHotGames('description') || 'The 50 hottest games today'}

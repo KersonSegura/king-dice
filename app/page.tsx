@@ -1107,7 +1107,7 @@ export default function HomePage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-dark-900 mb-4 flex items-center justify-center gap-3 text-center">
               <Image 
                 src="/FireIcon.svg" 
                 alt="Fire Icon" 
@@ -1115,7 +1115,7 @@ export default function HomePage() {
                 height={32}
                 className="w-8 h-8 flex-none"
               />
-              <span className="inline-block text-center leading-tight">{t('hotGames')}</span>
+              <span className="inline-block text-center leading-tight whitespace-nowrap">{t('hotGames')}</span>
             </h2>
             <p className="text-dark-600 max-w-2xl mx-auto">
               {t('hotGamesDescription')}

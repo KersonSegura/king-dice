@@ -1043,18 +1043,21 @@ export default function DigitalCornerPage() {
           {/* Live Chat Section */}
            <div className="space-y-6 pb-20">
             <div className="bg-white rounded-lg shadow-sm border p-6 h-[700px] flex flex-col">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">{tDigitalCorner('liveChat')}</h2>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Users className="w-4 h-4" />
-                            <span>{onlineUsers} {tDigitalCorner('online')}</span>
-                          </div>
-                          <div className="flex items-center space-x-1 text-xs text-gray-400">
-                            <span>🕐</span>
-                            <span>{tDigitalCorner('resetsAtMidnight')}</span>
-                          </div>
-                        </div>
+              <div className="mb-4">
+                {/* Title - First Line */}
+                <h2 className="text-xl font-semibold text-gray-900 text-center mb-3">{tDigitalCorner('liveChat')}</h2>
+                
+                {/* Stats - Second Line */}
+                <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 flex-wrap gap-2">
+                  <div className="flex items-center space-x-1">
+                    <Users className="w-4 h-4" />
+                    <span>{onlineUsers} {tDigitalCorner('online')}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-xs text-gray-400">
+                    <span>🕐</span>
+                    <span>{tDigitalCorner('resetsAtMidnight')}</span>
+                  </div>
+                </div>
               </div>
               
               {/* Chat Messages */}

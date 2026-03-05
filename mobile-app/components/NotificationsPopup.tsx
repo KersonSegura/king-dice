@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
 import { apiClient } from '../lib/api-client';
 
 const FETCH_TIMEOUT_MS = 6000;
@@ -82,6 +83,7 @@ type Props = {
 
 export default function NotificationsPopup({ visible, onClose }: Props) {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -163,9 +165,9 @@ export default function NotificationsPopup({ visible, onClose }: Props) {
           {!isAuthenticated || !user ? (
             <View style={styles.emptyWrap}>
               <Ionicons name="notifications-outline" size={48} color="#9ca3af" />
-              <Text style={styles.emptyText}>Sign in to see your notifications</Text>
+              <Text style={styles.emptyText}>{t('signInToSeeNotifications')}</Text>
               <Text style={styles.emptySubtext}>
-                Level ups, comments, likes, new followers, and more will appear here.
+                {t('notificationsEmptySubtext')}
               </Text>
             </View>
           ) : loading ? (
@@ -179,7 +181,7 @@ export default function NotificationsPopup({ visible, onClose }: Props) {
           ) : items.length === 0 ? (
             <View style={styles.emptyWrap}>
               <Ionicons name="notifications-off-outline" size={48} color="#9ca3af" />
-              <Text style={styles.emptyText}>No new notifications</Text>
+              <Text style={styles.emptyText}>{t('noNewNotifications')}</Text>
             </View>
           ) : (
             <FlatList

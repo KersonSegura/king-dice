@@ -93,6 +93,7 @@
   "passwordPlaceholder": "Contraseña",
   "pleaseEnterUsernameAndPassword": "Escribe usuario y contraseña",
   "incorrectUsernameOrPassword": "Usuario o contraseña incorrectos",
+  "signInFailedTryAgain": "El inicio de sesión fue cancelado o falló. Inténtalo de nuevo.",
   "orContinueWith": "O continuar con",
   "dontHaveAccount": "¿No tienes cuenta? ",
   "register": "Registrarse",

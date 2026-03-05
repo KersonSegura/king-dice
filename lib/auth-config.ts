@@ -38,6 +38,61 @@ if (!appleClientId || !appleClientSecret) {
   console.warn('⚠️ Apple OAuth credentials not configured. Apple sign-in will not work.');
 }
 
+async function findUserByEmailOrProvider(params: {
+  email?: string | null;
+  provider?: string;
+  providerAccountId?: string | null;
+}) {
+  const email = params.email?.trim().toLowerCase();
+  if (email) {
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id, username, email, avatar, isAdmin, level, xp')
+      .eq('email', email)
+      .maybeSingle();
+    if (!error && data) return data;
+  }
+
+  if (params.provider && params.providerAccountId) {
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id, username, email, avatar, isAdmin, level, xp')
+      .eq('provider', params.provider)
+      .eq('provider_id', params.providerAccountId)
+      .maybeSingle();
+    if (!error && data) return data;
+  }
+
+  return null;
+}
+
+async function linkProviderToExistingUser(params: {
+  userId: string;
+  provider?: string;
+  providerAccountId?: string | null;
+}) {
+  if (!params.provider || !params.providerAccountId) return;
+  try {
+    const { error } = await supabaseAdmin
+      .from('users')
+      .update({
+        provider: params.provider,
+        provider_id: params.providerAccountId,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq('id', params.userId);
+    if (error && (error.code === '42703' || error.message?.includes('provider'))) {
+      // Schema without provider columns: ignore, email-based linking still works.
+      return;
+    }
+    if (error) {
+      console.warn('⚠️ Could not link provider to existing user:', error.message);
+    }
+  } catch (e) {
+    console.warn('⚠️ Exception while linking provider:', e instanceof Error ? e.message : e);
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -78,31 +133,29 @@ export const authOptions: NextAuthOptions = {
       // Standard OAuth flow: match by email, create if doesn't exist, sign in if exists
       console.log('🔄 SIGNIN CALLBACK - Email:', user?.email, 'Provider:', account?.provider);
       
-      // Must have email for OAuth
-      if (!user?.email) {
-        console.error('❌ No email in OAuth user object');
-        return false;
-      }
-      
       try {
-        // Check if user exists by email (standard OAuth approach)
-        const { data: existingUser, error: findError } = await supabaseAdmin
-          .from('users')
-          .select('id, username, email')
-          .eq('email', user.email)
-          .maybeSingle();
+        const existingUser = await findUserByEmailOrProvider({
+          email: user?.email ?? null,
+          provider: account?.provider,
+          providerAccountId: account?.providerAccountId ?? null,
+        });
 
-        if (findError) {
-          console.error('❌ Database error finding user:', findError.message);
-          // Don't fail sign-in on database errors - let it proceed
-          // The JWT callback will handle user creation if needed
-          return true;
-        }
-        
         if (existingUser) {
           // User exists - allow sign-in (standard OAuth behavior)
           console.log('✅ User exists, allowing sign-in:', existingUser.email);
+          // If the user signed in with a new OAuth provider but same email, link provider for future lookups.
+          await linkProviderToExistingUser({
+            userId: existingUser.id,
+            provider: account?.provider,
+            providerAccountId: account?.providerAccountId ?? null,
+          });
           return true;
+        }
+
+        // New user creation requires an email.
+        if (!user?.email) {
+          console.error('❌ OAuth user has no email and no provider-linked account found');
+          return false;
         }
         
         // New user - create account
@@ -188,34 +241,33 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, account }) {
       // Initial sign in - get user from database and generate JWT
-      if (account && user && user.email) {
-        console.log('🔄 JWT callback - Getting user data for:', user.email);
+      if (account && user) {
+        console.log('🔄 JWT callback - Getting user data for:', user.email || '[no-email]');
         
         try {
           // Get user from database - retry with delay if needed (user might have just been created)
           let dbUser = null;
           
           for (let attempt = 1; attempt <= 3; attempt++) {
-            const { data, error: fetchError } = await supabaseAdmin
-              .from('users')
-              .select('id, username, email, avatar, isAdmin, level, xp')
-              .eq('email', user.email)
-              .maybeSingle();
+            dbUser = await findUserByEmailOrProvider({
+              email: user.email ?? null,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId ?? null,
+            });
 
-            if (!fetchError && data) {
-              dbUser = data;
+            if (dbUser) {
               break;
             }
             
             if (attempt < 3) {
               await new Promise(resolve => setTimeout(resolve, 300 * attempt));
             } else {
-              console.error('❌ Could not find user after retries:', fetchError?.message);
+              console.error('❌ Could not find user after retries');
             }
           }
 
           if (!dbUser) {
-            console.error('❌ User not found in database for email:', user.email);
+            console.error('❌ User not found in database for OAuth user');
             // Return token without accessToken - will be handled by session callback
             return token;
           }

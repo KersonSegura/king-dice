@@ -4,18 +4,22 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Vibration } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Vibration, AppState } from 'react-native';
+import { useRouter, usePathname } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { API_BASE_URL } from '../config/api';
 import { useScrollNav } from '../contexts/ScrollContext';
+import { useImageModal } from '../contexts/ImageModalContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { apiClient } from '../lib/api-client';
 
 const LOAD_TIMEOUT_MS = 35000; // 35s - game page fetches API which can be slow
 const NATIVE_HEADER_HEIGHT = 56;
+const PAUSE_TIMERS_JS = `(function(){try{window.dispatchEvent(new Event('kd_app_pause_timers'));}catch(e){}true;})();`;
 
 type Props = {
   path: string;
@@ -212,6 +216,7 @@ function buildAuthCookieJs(token: string | null) {
       } else {
         document.cookie = 'auth_token=; Path=/; Max-Age=0; SameSite=Lax' + securePart;
       }
+      document.cookie = 'kd-embed=1; Path=/; Max-Age=86400; SameSite=Lax' + securePart;
     } catch (e) {}
     true;
   })();
@@ -279,9 +284,11 @@ export default function WebViewScreen({
   onMessage,
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { setLocale } = useLocale();
   const { setNavVisible } = useScrollNav();
+  const { setImageModalOpen } = useImageModal();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -292,6 +299,7 @@ export default function WebViewScreen({
   const base = API_BASE_URL.replace(/\/$/, '');
   const logoUri = `${base}/Logo.png`;
   const rawPath = path.startsWith('/') ? path : `/${path}`;
+  const isVirtualToolsPath = rawPath.startsWith('/virtual-tools');
   const [pathPart, hash] = rawPath.includes('#') ? rawPath.split('#') : [rawPath, ''];
   const sep = pathPart.includes('?') ? '&' : '?';
   const withEmbed = embed ? `${pathPart}${sep}embed=1` : pathPart;
@@ -303,6 +311,43 @@ export default function WebViewScreen({
   };
   const needsOpenChat = path.includes('openChat=1');
   const isChatPath = path.includes('/chat');
+
+  const navigation = useNavigation();
+  const isOpenScreen = pathname === '/open' || (typeof pathname === 'string' && pathname.startsWith('/open'));
+
+  // When on /open screen: swipe-back should first try WebView.goBack() if it has history
+  useEffect(() => {
+    if (!isOpenScreen) return;
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (webViewRef.current?.canGoBack?.()) {
+        e.preventDefault();
+        webViewRef.current?.goBack?.();
+      }
+    });
+    return unsubscribe;
+  }, [isOpenScreen, navigation]);
+
+  // Virtual Tools timers should pause when user leaves the screen or app backgrounds.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (isVirtualToolsPath) {
+          webViewRef.current?.injectJavaScript(PAUSE_TIMERS_JS);
+        }
+        setImageModalOpen(false);
+      };
+    }, [isVirtualToolsPath, setImageModalOpen])
+  );
+
+  useEffect(() => {
+    if (!isVirtualToolsPath) return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        webViewRef.current?.injectJavaScript(PAUSE_TIMERS_JS);
+      }
+    });
+    return () => sub.remove();
+  }, [isVirtualToolsPath]);
 
   const handleMessage = useCallback(
     (event: { nativeEvent: { data: string } }) => {
@@ -331,10 +376,13 @@ export default function WebViewScreen({
         if (!disableScrollNav && data?.type === 'scroll' && typeof data.visible === 'boolean') {
           setNavVisible(data.visible);
         }
+        if (data?.type === 'imageModalOpen' && typeof data.open === 'boolean') {
+          setImageModalOpen(data.open);
+        }
       } catch {}
       onMessage?.(event);
     },
-    [setLocale, setNavVisible, onMessage]
+    [setLocale, setNavVisible, setImageModalOpen, onMessage]
   );
 
   const injectedJs = [
@@ -426,6 +474,30 @@ export default function WebViewScreen({
     [router]
   );
 
+  // Intercept game links and deep links (forum posts, etc.) for native stack / swipe-back
+  const handleShouldStartLoad = useCallback(
+    (request: { url: string; navigationType?: string }) => {
+      if (interceptGameLinks && shouldInterceptGameLink(request.url)) return false;
+      try {
+        const url = new URL(request.url);
+        const ourHost = new URL(base).hostname;
+        if (url.hostname !== ourHost && url.hostname !== 'kingdice.gg' && url.hostname !== 'www.kingdice.gg') {
+          return true;
+        }
+        const targetPath = url.pathname || '/';
+        const isOnTab = pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/index' ||
+          pathname === '/(tabs)/feed' || pathname === '/(tabs)/chat' || pathname === '/(tabs)/collection' || pathname === '/(tabs)/profile';
+        const isSamePath = targetPath === rawPath || targetPath === pathPart;
+        if (isOnTab && !isSamePath && (targetPath.startsWith('/forums/post/') || targetPath.startsWith('/collection/') || targetPath.startsWith('/profile/'))) {
+          router.push(`/open?path=${encodeURIComponent(url.pathname + url.search)}` as any);
+          return false;
+        }
+      } catch {}
+      return true;
+    },
+    [base, interceptGameLinks, pathname, pathPart, rawPath, router, shouldInterceptGameLink]
+  );
+
   return (
     <View
       style={[
@@ -490,11 +562,7 @@ export default function WebViewScreen({
               setLoading(false);
             }
           }}
-          onShouldStartLoadWithRequest={(request) => {
-            if (!interceptGameLinks) return true;
-            if (shouldInterceptGameLink(request.url)) return false;
-            return true;
-          }}
+          onShouldStartLoadWithRequest={handleShouldStartLoad}
           onMessage={handleMessage}
         />
       )}

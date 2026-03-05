@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
+import { setPendingImageUri } from './pendingImageUri';
 
 const GRID_GAP = 2;
 
@@ -144,6 +145,8 @@ export default function CreatePostSelectPhoto() {
 
   const goNext = () => {
     if (!selectedUri) return;
+    // Pass URI in memory so it is not truncated by URL params (long file:// paths caused 0-byte uploads)
+    setPendingImageUri(selectedUri);
     router.push({ pathname: '/create-post/details', params: { imageUri: selectedUri } });
   };
 

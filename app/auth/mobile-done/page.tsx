@@ -14,6 +14,13 @@ function isAppRedirectRequest(): boolean {
   return params.get('redirect') === 'app';
 }
 
+/** System browser flow (openAuthSessionAsync): redirect to mobile-callback with token so the app can capture the URL. */
+function isSystemBrowserFlow(): boolean {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('browser') === '1';
+}
+
 function isAndroid(): boolean {
   if (typeof navigator === 'undefined') return false;
   return /Android/i.test(navigator.userAgent);
@@ -57,9 +64,18 @@ export default function MobileDonePage() {
             const data = await res.json();
             const isWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
             const isAppBrowser = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('redirect') === 'app';
+            const useSystemBrowser = isSystemBrowserFlow();
             const appRedirectUri = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('app_redirect_uri') : null;
             if (isWebView) {
               (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth', token: data.token, user: data.user }));
+            } else if (useSystemBrowser && data.token && data.user) {
+              // System browser (openAuthSessionAsync): redirect to mobile-callback so the app captures the URL
+              const params = new URLSearchParams({
+                token: data.token,
+                user: JSON.stringify(data.user),
+              });
+              window.location.href = `${window.location.origin}/auth/mobile-callback?${params.toString()}`;
+              return;
             } else if (isAppBrowser && data.token) {
               const backToApp = buildAppRedirect(appRedirectUri, data.token, data.user);
               setFallbackOpenUrl(backToApp);

@@ -84,6 +84,7 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mentionDropdownRef = useRef<HTMLDivElement>(null);
+  const cursorPositionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const hasMarkedReadRef = useRef(false);
 
   const [page, setPage] = useState(1);
@@ -993,6 +994,14 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
                 value={newMessage}
                 onChange={handleTyping}
                 onKeyDown={handleKeyPress}
+                onSelect={() => {
+                  const el = inputRef.current;
+                  if (el) cursorPositionRef.current = { start: el.selectionStart, end: el.selectionEnd };
+                }}
+                onBlur={() => {
+                  const el = inputRef.current;
+                  if (el) cursorPositionRef.current = { start: el.selectionStart, end: el.selectionEnd };
+                }}
                 placeholder={t('typeAMessage')}
                 rows={1}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
@@ -1059,6 +1068,16 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
               )}
             </div>
             <button
+              type="button"
+              onMouseDown={() => {
+                const el = inputRef.current;
+                if (el) {
+                  cursorPositionRef.current = {
+                    start: el.selectionStart ?? newMessage.length,
+                    end: el.selectionEnd ?? newMessage.length,
+                  };
+                }
+              }}
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="p-2 text-gray-500 hover:text-gray-700"
               title={t('addEmoji')}
@@ -1082,7 +1101,22 @@ export default function Chat({ chatId, chatName, chatType, participants, onClose
       <EmojiPicker
         isOpen={showEmojiPicker}
         onClose={() => setShowEmojiPicker(false)}
-        onEmojiSelect={(emoji) => setNewMessage(prev => prev + emoji)}
+        closeOnSelect={false}
+        onEmojiSelect={(emoji) => {
+          const { start, end } = cursorPositionRef.current;
+          setNewMessage(prev => {
+            const safeStart = Math.min(Math.max(0, start), prev.length);
+            const safeEnd = Math.min(Math.max(safeStart, end), prev.length);
+            const next = prev.slice(0, safeStart) + emoji + prev.slice(safeEnd);
+            const newCursor = safeStart + emoji.length;
+            setTimeout(() => {
+              inputRef.current?.focus();
+              inputRef.current?.setSelectionRange(newCursor, newCursor);
+              cursorPositionRef.current = { start: newCursor, end: newCursor };
+            }, 0);
+            return next;
+          });
+        }}
       />
 
       <ToastContainer />

@@ -343,6 +343,23 @@ body.embed footer {
   display: none !important;
 }
 
+/* Hide floating chat button in embed mode (mobile app has native chat) */
+body.embed [class*="fixed"][class*="bottom-"][class*="right-"][class*="z-50"],
+body.embed #floating-chat-button {
+  display: none !important;
+}
+
+/* Embed: Modals (ImageModal, etc.) must appear above native app header overlay (z-index 150) */
+body.embed [class*="z-[100]"],
+body.embed .fixed.inset-0[class*="z-"] {
+  z-index: 200 !important;
+}
+
+/* Embed: Add bottom padding to modal content so comments aren't cut off by native bottom nav (~80px) */
+body.embed .fixed.inset-0 .overflow-y-auto {
+  padding-bottom: 100px !important;
+}
+
 /* Ensure no parent elements interfere with sticky positioning */
 main, #__next, [data-reactroot] {
   position: relative !important;

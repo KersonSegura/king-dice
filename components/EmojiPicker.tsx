@@ -7,6 +7,8 @@ interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  /** If false, picker stays open after selecting an emoji so user can add more or keep typing */
+  closeOnSelect?: boolean;
 }
 
 const emojiCategories = {
@@ -19,7 +21,7 @@ const emojiCategories = {
   'Symbols': ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵', '🚭', '❗', '❕', '❓', '❔', '‼️', '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🈳', '🈂️', '🛂', '🛃', '🛄', '🛅', '🚹', '🚺', '🚼', '🚻', '🚮', '🎦', '📶', '🈁', '🔣', '🔤', '🔡', '🔠', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
 };
 
-export default function EmojiPicker({ onEmojiSelect, isOpen, onClose }: EmojiPickerProps) {
+export default function EmojiPicker({ onEmojiSelect, isOpen, onClose, closeOnSelect = false }: EmojiPickerProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('Smileys & People');
 
   if (!isOpen) return null;
@@ -68,7 +70,7 @@ export default function EmojiPicker({ onEmojiSelect, isOpen, onClose }: EmojiPic
                 key={index}
                 onClick={() => {
                   onEmojiSelect(emoji);
-                  onClose();
+                  if (closeOnSelect) onClose();
                 }}
                 className="w-8 h-8 text-lg hover:bg-gray-100 rounded transition-colors flex items-center justify-center"
               >

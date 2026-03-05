@@ -10,13 +10,17 @@ import { View, StyleSheet, TouchableOpacity, Modal, Image, Text, ActivityIndicat
 import { usePathname, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import SvgIcon from './SvgIcon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { useTabRefresh } from '../contexts/TabRefreshContext';
+import { useChatUnread } from '../contexts/ChatUnreadContext';
 import { apiClient } from '../lib/api-client';
 import { API_BASE_URL } from '../config/api';
 
-const NAV_HEIGHT = 76;
+/** Exported so chat (and other tabs) can add padding to avoid content behind the nav bar. */
+export const BOTTOM_NAV_BASE_HEIGHT = 76;
+const NAV_HEIGHT = BOTTOM_NAV_BASE_HEIGHT;
 
 const NAV_ICON_SIZE = 28;
 const AVATAR_BTN_SIZE = 44;
@@ -84,9 +88,11 @@ function AvatarImage({
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
   const { t } = useLocale();
   const { requestRefresh } = useTabRefresh();
   const { user, logout, isLoading } = useAuth();
+  const { unreadCount: unreadChatCount } = useChatUnread();
   const [profileOpen, setProfileOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [chatIconState, setChatIconState] = useState<'chat' | 'bot'>('chat');
@@ -132,6 +138,7 @@ export default function BottomNav() {
     return () => clearInterval(interval);
   }, [isOnChatTab]);
 
+
   const closeProfile = () => setProfileOpen(false);
 
   const profilePanResponder = useRef(
@@ -153,7 +160,18 @@ export default function BottomNav() {
     { key: 'feed', icon: <SvgIcon name="CommunityFeedGray" size={FEED_ICON_SIZE} fallback="Community" />, href: '/(tabs)/feed' },
     {
       key: 'chat',
-      icon: <SvgIcon name={chatIconState === 'chat' ? 'ChatGray' : 'DiceBotSmallGray'} size={CHAT_ICON_SIZE} />,
+      icon: (
+        <View>
+          <SvgIcon name={chatIconState === 'chat' ? 'ChatGray' : 'DiceBotSmallGray'} size={CHAT_ICON_SIZE} />
+          {unreadChatCount > 0 && (
+            <View style={styles.chatBadge}>
+              <Text style={styles.chatBadgeText}>
+                {unreadChatCount > 99 ? '99+' : unreadChatCount}
+              </Text>
+            </View>
+          )}
+        </View>
+      ),
       href: '/(tabs)/chat',
     },
     { key: 'shop', icon: <SvgIcon name="ShopGray" size={NAV_ICON_SIZE} />, href: '/shop' },
@@ -176,7 +194,7 @@ export default function BottomNav() {
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: 12 + insets.bottom, height: NAV_HEIGHT + insets.bottom }]}>
         {items.map((item) => (
           <TouchableOpacity
             key={item.key}
@@ -502,5 +520,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ef4444',
     marginTop: 2,
+  },
+  chatBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  chatBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
   },
 });

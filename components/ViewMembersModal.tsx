@@ -20,13 +20,16 @@ interface ViewMembersModalProps {
   onClose: () => void;
   members: User[];
   groupName: string;
+  /** When provided (e.g. in app embed), clicking a member calls this instead of using Link. */
+  onNavigateToProfile?: (username: string) => void;
 }
 
 export default function ViewMembersModal({ 
   isOpen, 
   onClose, 
   members,
-  groupName
+  groupName,
+  onNavigateToProfile
 }: ViewMembersModalProps) {
   const { user } = useAuth();
   const [followStatuses, setFollowStatuses] = useState<{[userId: string]: boolean}>({});
@@ -196,45 +199,64 @@ export default function ViewMembersModal({
                 const isFollowing = followStatuses[member.id] || false;
                 const isUpdating = updatingUsers.has(member.id);
                 
+                const memberContent = (
+                      <>
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden">
+                            {member.avatar ? (
+                              <Image
+                                src={member.avatar}
+                                alt={member.username || 'User'}
+                                width={40}
+                                height={40}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              member.username.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-sm font-semibold text-gray-900 truncate">
+                              {member.username}
+                            </h3>
+                            {member.isVerified && (
+                              <span className="text-xs text-blue-500">✓ Verified</span>
+                            )}
+                            {member.isAdmin && (
+                              <span className="text-xs text-red-500">Admin</span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    );
+
                 return (
                   <div
                     key={member.id}
                     className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                   >
-                    <Link
-                      href={`/profile/${member.username}`}
-                      onClick={handleResultClick}
-                      className="flex items-center space-x-3 flex-1 min-w-0"
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden">
-                          {member.avatar ? (
-                            <Image
-                              src={member.avatar}
-                              alt={member.username || 'User'}
-                              width={40}
-                              height={40}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            member.username.charAt(0).toUpperCase()
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-sm font-semibold text-gray-900 truncate">
-                            {member.username}
-                          </h3>
-                          {member.isVerified && (
-                            <span className="text-xs text-blue-500">✓ Verified</span>
-                          )}
-                          {member.isAdmin && (
-                            <span className="text-xs text-red-500">Admin</span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
+                    {onNavigateToProfile ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onNavigateToProfile(member.username);
+                          onClose();
+                        }}
+                        className="flex items-center space-x-3 flex-1 min-w-0 text-left"
+                      >
+                        {memberContent}
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/profile/${member.username}`}
+                        onClick={handleResultClick}
+                        className="flex items-center space-x-3 flex-1 min-w-0"
+                      >
+                        {memberContent}
+                      </Link>
+                    )}
                     {!isCurrentUser && (
                       <button
                         onClick={(e) => handleFollow(member.id, e)}

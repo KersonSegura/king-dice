@@ -49,9 +49,12 @@ function detectLocale(request: NextRequest): string {
 export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Embed routes: force x-kd-embed so root layout hides Header (WebView often doesn't send custom headers on first load)
+  // App WebView: never show Header/FloatingChat. Detect via cookie (set on first load, sent on all navigations)
   const requestHeaders = new Headers(request.headers);
-  if (pathname.startsWith('/embed')) {
+  const hasEmbedCookie = request.cookies.get('kd-embed')?.value === '1';
+  const hasEmbedParam = request.nextUrl.searchParams.get('embed') === '1';
+  const refererHasEmbed = request.headers.get('referer')?.includes('embed=1');
+  if (pathname.startsWith('/embed') || hasEmbedCookie || hasEmbedParam || refererHasEmbed) {
     requestHeaders.set('x-kd-embed', '1');
   }
 

@@ -11,6 +11,21 @@ function getTokenFromRequest(request: NextRequest): string | null {
   return null;
 }
 
+/** Reject buffers that are not valid image files (magic bytes). Prevents broken/corrupt uploads on app or web. */
+function isValidImageBuffer(buffer: Buffer): boolean {
+  if (buffer.length < 12) return false;
+  const u8 = new Uint8Array(buffer);
+  // JPEG: FF D8 FF
+  if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) return true;
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4e && u8[3] === 0x47) return true;
+  // GIF: GIF87a or GIF89a
+  if (u8[0] === 0x47 && u8[1] === 0x49 && u8[2] === 0x46 && (u8[3] === 0x38 || u8[3] === 0x39)) return true;
+  // WebP: RIFF....WEBP
+  if (u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46 && u8[8] === 0x57 && u8[9] === 0x45 && u8[10] === 0x42 && u8[11] === 0x50) return true;
+  return false;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication (cookie for web, Bearer for mobile)
@@ -55,6 +70,13 @@ export async function POST(request: NextRequest) {
     if (buffer.length === 0) {
       return NextResponse.json(
         { error: 'Image file is empty. Try selecting the image again or use a different photo.' },
+        { status: 400 }
+      );
+    }
+    // Reject non-image or corrupt data so the same file never appears broken on app or web
+    if (!isValidImageBuffer(buffer)) {
+      return NextResponse.json(
+        { error: 'File is not a valid image (JPEG, PNG, GIF, or WebP). Please choose another photo.' },
         { status: 400 }
       );
     }

@@ -79,7 +79,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize OpenAI client only when needed
-    if (!process.env.OPENAI_API_KEY) {
+    const hasKey = !!process.env.OPENAI_API_KEY;
+    if (!hasKey) {
+      // Safe log for debugging (never log the key)
+      console.warn('OPENAI_API_KEY is not set in this environment. Check Vercel env vars or local .env.');
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
     }
 
@@ -97,13 +100,13 @@ You ONLY answer questions about:
 - Game recommendations and comparisons / Recomendaciones y comparaciones de juegos
 - King Dice platform features (Pixel Canvas, Catan Maps, Boardle, My Dice) / Características de King Dice
 - User profiles and collections / Perfiles de usuarios y colecciones
-- Game database and community features / Base de datos de juegos y características de la comunidad
+- Community features / Características de la comunidad
 
 For off-topic questions, politely redirect in the user's language:
 - English: "I'm here to help with board games and King Dice features! Ask me about games, rules, or our platform."
 - Spanish: "¡Estoy aquí para ayudar con juegos de mesa y características de King Dice! Pregúntame sobre juegos, reglas o nuestra plataforma."
 
-Always be helpful, friendly, and knowledgeable about board games. When relevant, mention that users can find more games in the King Dice database at /boardgames.`;
+Always be helpful, friendly, and knowledgeable about board games. Never mention or link to internal or developer-only pages (e.g. /boardgames).`;
 
     // Use the Chat Completions API
     const completion = await openai.chat.completions.create({

@@ -23,12 +23,13 @@ export function ScrollContextProvider({ children }: { children: ReactNode }) {
     setNavVisibleState(true);
   }, [pathname]);
 
-  // On chat tab: never hide the header when scrolling (user requested header always visible on chat)
+  // On chat or search: never hide the header when scrolling (header always visible)
   const setNavVisible = useCallback(
     (visible: boolean) => {
       const isChatTab =
         pathname === '/(tabs)/chat' || pathname?.startsWith?.('/(tabs)/chat');
-      if (isChatTab && !visible) return;
+      const isSearchPage = pathname === '/search' || pathname?.startsWith?.('/search');
+      if ((isChatTab || isSearchPage) && !visible) return;
       setNavVisibleState(visible);
     },
     [pathname]

@@ -9,18 +9,24 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import WebViewScreen from '../../components/WebViewScreen';
+import { BOTTOM_NAV_BASE_HEIGHT } from '../../components/BottomNav';
 import { useLocale } from '../../contexts/LocaleContext';
 import { useTabRefresh } from '../../contexts/TabRefreshContext';
+import { useChatUnread } from '../../contexts/ChatUnreadContext';
 
 const CHAT_HREF = '/(tabs)/chat';
 
 export default function ChatScreen() {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
   const { t } = useLocale();
   const { refreshRequest, lastRequestedPath } = useTabRefresh();
+  const { refreshUnreadCount } = useChatUnread();
   const [chatKey, setChatKey] = useState(0);
   const hasLeftTabRef = useRef(false);
+  const chatPadBottom = BOTTOM_NAV_BASE_HEIGHT + insets.bottom + 12;
 
   useEffect(() => {
     if (pathname?.startsWith(CHAT_HREF) && lastRequestedPath === CHAT_HREF) {
@@ -46,8 +52,12 @@ export default function ChatScreen() {
       if (data?.type === 'navigateToProfile') {
         setChatKey((k) => k + 1);
       }
+      // When messages are marked as read in a chat, refresh the unread count
+      if (data?.type === 'chatMessagesRead') {
+        refreshUnreadCount();
+      }
     } catch {}
-  }, []);
+  }, [refreshUnreadCount]);
 
   return (
     <WebViewScreen
@@ -58,6 +68,7 @@ export default function ChatScreen() {
       hideWebHeader
       disableScrollNav
       embed={true}
+      padBottom={chatPadBottom}
       onMessage={handleMessage}
     />
   );

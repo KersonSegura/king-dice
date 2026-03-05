@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, X, Loader2 } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 import { useSocket } from '@/contexts/SocketContext';
 
 interface ChatBotProps {
@@ -9,9 +10,43 @@ interface ChatBotProps {
   onClose: () => void;
   currentUser: any;
   embedded?: boolean; // New prop to hide header when embedded
+  /** When this value increments, bot clears messages and resets to welcome (used by chat page header menu). */
+  clearChatTrigger?: number;
+  onClearChatDone?: () => void;
 }
 
-const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedded = false }) => {
+const FALLBACK_WELCOME_EN =
+  "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?";
+const FALLBACK_WELCOME_ES =
+  "¡Hola! Soy Dado-Bot! 🎲 Tu asistente de IA 🤖\n\nEstoy aquí para ayudarte con juegos de mesa y preguntas sobre King Dice.\n\n¿En qué puedo ayudarte hoy?";
+const FALLBACK_SIGN_IN_EN = "Sign in to send messages. I'm here when you're ready!";
+const FALLBACK_SIGN_IN_ES = "Inicia sesión para enviar mensajes. ¡Estoy aquí cuando estés listo!";
+
+function isMissingKey(value: string, key: string): boolean {
+  return !value || value.includes(key) || value.startsWith('chat.');
+}
+
+const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedded = false, clearChatTrigger = 0, onClearChatDone }) => {
+  const t = useTranslations('chat');
+  const locale = useLocale();
+  const rawWelcome = t('diceBotWelcome');
+  const rawSignInReply = t('diceBotSignInReply');
+  const rawPlaceholder = t('diceBotPlaceholder');
+  const welcomeText = !isMissingKey(rawWelcome, 'diceBotWelcome')
+    ? rawWelcome
+    : locale === 'es'
+      ? FALLBACK_WELCOME_ES
+      : FALLBACK_WELCOME_EN;
+  const signInReplyText = !isMissingKey(rawSignInReply, 'diceBotSignInReply')
+    ? rawSignInReply
+    : locale === 'es'
+      ? FALLBACK_SIGN_IN_ES
+      : FALLBACK_SIGN_IN_EN;
+  const placeholderText = !isMissingKey(rawPlaceholder, 'diceBotPlaceholder')
+    ? rawPlaceholder
+    : locale === 'es'
+      ? 'Pregunta sobre juegos...'
+      : 'Ask me about board games...';
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<{
     id: string;
@@ -51,11 +86,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       if (savedMessages) {
         try {
           const parsedMessages = JSON.parse(savedMessages);
-          // Convert timestamp strings back to Date objects
-          const messagesWithDates = parsedMessages.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          }));
+          // Convert timestamp strings back to Date objects and show welcome in current locale
+          const messagesWithDates = parsedMessages.map((msg: any, index: number) => {
+            const base = { ...msg, timestamp: new Date(msg.timestamp) };
+            if (index === 0 && base.id === 'welcome') {
+              return { ...base, text: welcomeText };
+            }
+            return base;
+          });
           setMessages(messagesWithDates);
           console.log('Loaded', messagesWithDates.length, 'previous bot messages');
           
@@ -68,7 +106,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
           // Add welcome message if loading fails
           setMessages([{
             id: 'welcome',
-            text: "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
+            text: welcomeText,
             isBot: true,
             timestamp: new Date()
           }]);
@@ -77,7 +115,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         // Add welcome message for new users
         setMessages([{
           id: 'welcome',
-          text: "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
+          text: welcomeText,
           isBot: true,
           timestamp: new Date()
         }]);
@@ -86,12 +124,26 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       // Same welcome for both app and web – no sign-in prompt in chat
       setMessages([{
         id: 'welcome',
-        text: "Hello! I'm Dice-Bot! 🎲 Your AI assistant 🤖\n\nI'm here to help with board games and King Dice related questions.\n\nWhat can I help you with today?",
+        text: welcomeText,
         isBot: true,
         timestamp: new Date()
       }]);
     }
-  }, [isOpen, currentUser?.id, embedded]);
+  }, [isOpen, currentUser?.id, embedded, welcomeText]);
+
+  // When parent (e.g. ChatPage header menu) requests a clear, reset to welcome only
+  useEffect(() => {
+    if (clearChatTrigger <= 0) return;
+    const welcomeOnly = [{ id: 'welcome', text: welcomeText, isBot: true, timestamp: new Date() }];
+    setMessages(welcomeOnly);
+    if (currentUser?.id) {
+      try {
+        localStorage.removeItem(`dicebot-messages-${currentUser.id}`);
+      } catch {}
+    }
+    onClearChatDone?.();
+    setTimeout(() => scrollToBottom(), 50);
+  }, [clearChatTrigger, currentUser?.id, welcomeText, onClearChatDone]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
@@ -106,7 +158,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
       };
       const replyMessage = {
         id: (Date.now() + 1).toString(),
-        text: "Sign in to send messages. I'm here when you're ready!",
+        text: signInReplyText,
         isBot: true,
         timestamp: new Date()
       };
@@ -226,7 +278,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
         overflow: 'hidden'
       }}
     >
-      {/* Header - only show if not embedded */}
+      {/* Header - only when popup (not embedded) */}
       {!embedded && (
         <div className="bg-[#fbae17] text-white p-4 rounded-t-lg flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-3">
@@ -330,7 +382,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose, currentUser, embedde
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Ask me about board games..."
+              placeholder={placeholderText}
               rows={1}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               disabled={isLoading}

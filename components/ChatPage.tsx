@@ -1,4 +1,4 @@
-'use client';
+Ok 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -50,6 +50,7 @@ export default function ChatPage({ embed = false }: { embed?: boolean }) {
   const [showAutoTooltip, setShowAutoTooltip] = useState(false);
   const [hasShownTooltip, setHasShownTooltip] = useState(false);
   const [hiddenPublicChats, setHiddenPublicChats] = useState<string[]>(() => getHiddenPublicChats());
+  const [diceBotClearTrigger, setDiceBotClearTrigger] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isHideablePublicChat = (chat: any) =>
@@ -201,6 +202,14 @@ export default function ChatPage({ embed = false }: { embed?: boolean }) {
     setShowViewMembers(true);
   };
 
+  const handleOpenProfile = (username: string) => {
+    if (embed && typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
+      (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'navigateToProfile', username }));
+    } else {
+      router.push(`/profile/${username}`);
+    }
+  };
+
   const otherParticipant = selectedChat?.type === 'direct' && selectedChat?.participants
     ? selectedChat.participants.find((p: any) => p.id !== user?.id)
     : null;
@@ -304,40 +313,65 @@ export default function ChatPage({ embed = false }: { embed?: boolean }) {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200"
-              style={(selectedChat.type === 'public' && (selectedChat.name === 'Digital Corner Public Chat' || selectedChat.name === 'Pixel Canvas Public Chat')) ? { backgroundColor: '#fbae17' } : undefined}
-            >
-              {selectedChat.type === 'bot' ? (
-                <img src="/DiceBotIcon.svg" alt="Dice-Bot" className="w-5 h-5" />
-              ) : selectedChat.type === 'public' && selectedChat.name === 'Digital Corner Public Chat' ? (
-                <img src="/PCIcon.svg" alt="Digital Corner" className="w-5 h-5 object-contain" />
-              ) : selectedChat.type === 'public' && selectedChat.name === 'Pixel Canvas Public Chat' ? (
-                <img src="/PixelCanvasIconWhiteFill.svg" alt="Pixel Canvas" className="w-5 h-5 object-contain" />
-              ) : selectedChat.type === 'group' ? (
+            {(selectedChat.type === 'direct' || selectedChat.type === 'group') ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedChat.type === 'direct' && otherParticipant?.username) {
+                    handleOpenProfile(otherParticipant.username);
+                  } else if (selectedChat.type === 'group') {
+                    handleViewMembers();
+                  }
+                }}
+                className="flex items-center gap-3 flex-1 min-w-0 text-left rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
                 <div
-                  className="w-full h-full flex items-center justify-center text-white"
-                  style={{ backgroundColor: getGroupChatColor(selectedChat.id) }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200"
+                  style={selectedChat.type === 'group' ? { backgroundColor: getGroupChatColor(selectedChat.id) } : undefined}
                 >
-                  <Users className="w-4 h-4" />
-                </div>
-              ) : (
-                <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
-                  {selectedChat.participants?.find((p: any) => p.id !== user?.id)?.avatar ? (
-                    <img
-                      src={selectedChat.participants.find((p: any) => p.id !== user?.id)?.avatar}
-                      alt={selectedChat.name}
-                      className="w-full h-full object-cover"
-                    />
+                  {selectedChat.type === 'group' ? (
+                    <div className="w-full h-full flex items-center justify-center text-white">
+                      <Users className="w-4 h-4" />
+                    </div>
                   ) : (
-                    selectedChat.name?.charAt(0)?.toUpperCase() || '?'
+                    <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                      {otherParticipant?.avatar ? (
+                        <img
+                          src={otherParticipant.avatar}
+                          alt={selectedChat.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        selectedChat.name?.charAt(0)?.toUpperCase() || '?'
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-            <h2 className="flex-1 min-w-0 text-base font-semibold text-gray-900 truncate">
-              {selectedChat.type === 'public' ? getPublicChatDisplayName(selectedChat.name) : selectedChat.name}
-            </h2>
+                <h2 className="flex-1 min-w-0 text-base font-semibold text-gray-900 truncate">
+                  {selectedChat.name}
+                </h2>
+              </button>
+            ) : (
+              <>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200"
+                  style={(selectedChat.type === 'public' && (selectedChat.name === 'Digital Corner Public Chat' || selectedChat.name === 'Pixel Canvas Public Chat')) ? { backgroundColor: '#fbae17' } : undefined}
+                >
+                  {selectedChat.type === 'bot' ? (
+                    <img src="/DiceBotIcon.svg" alt="Dice-Bot" className="w-5 h-5" />
+                  ) : selectedChat.type === 'public' && selectedChat.name === 'Digital Corner Public Chat' ? (
+                    <img src="/PCIcon.svg" alt="Digital Corner" className="w-5 h-5 object-contain" />
+                  ) : selectedChat.type === 'public' && selectedChat.name === 'Pixel Canvas Public Chat' ? (
+                    <img src="/PixelCanvasIconWhiteFill.svg" alt="Pixel Canvas" className="w-5 h-5 object-contain" />
+                  ) : null}
+                </div>
+                <h2 className="flex-1 min-w-0 text-base font-semibold text-gray-900 truncate">
+                  {selectedChat.type === 'public'
+                    ? getPublicChatDisplayName(selectedChat.name)
+                    : t('diceBotName')}
+                </h2>
+              </>
+            )}
             {selectedChat.type === 'group' && (
               <button
                 onClick={() => setShowAddPeople(true)}
@@ -347,8 +381,7 @@ export default function ChatPage({ embed = false }: { embed?: boolean }) {
                 <Plus className="w-5 h-5" />
               </button>
             )}
-            {selectedChat.type !== 'bot' && (
-              <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
@@ -358,59 +391,72 @@ export default function ChatPage({ embed = false }: { embed?: boolean }) {
                 </button>
                 {showDropdown && (
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    {selectedChat.type === 'group' && (
+                    {selectedChat.type === 'bot' ? (
                       <button
                         onClick={() => {
                           setShowDropdown(false);
-                          setShowViewMembers(true);
+                          setDiceBotClearTrigger((t) => t + 1);
                         }}
-                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        <Eye className="w-4 h-4" />
-                        {t('viewMembers')}
+                        {t('diceBotClearChat')}
                       </button>
+                    ) : (
+                      <>
+                        {selectedChat.type === 'group' && (
+                          <button
+                            onClick={() => {
+                              setShowDropdown(false);
+                              setShowViewMembers(true);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                            {t('viewMembers')}
+                          </button>
+                        )}
+                        {selectedChat.type === 'direct' && otherParticipant?.username && (
+                          <button
+                            onClick={() => {
+                              setShowDropdown(false);
+                              const username = otherParticipant.username;
+                              if (embed && typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
+                                (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'navigateToProfile', username }));
+                              } else {
+                                router.push(`/profile/${username}`);
+                              }
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <User className="w-4 h-4" />
+                            {t('seeProfile')}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setShowDropdown(false);
+                            handleReportChat();
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                        >
+                          <Flag className="w-4 h-4" />
+                          {t('report')}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowDropdown(false);
+                            handleDeleteChat();
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {t('deleteChat')}
+                        </button>
+                      </>
                     )}
-                    {selectedChat.type === 'direct' && otherParticipant?.username && (
-                      <button
-                        onClick={() => {
-                          setShowDropdown(false);
-                          const username = otherParticipant.username;
-                          if (embed && typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
-                            (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'navigateToProfile', username }));
-                          } else {
-                            router.push(`/profile/${username}`);
-                          }
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                      >
-                        <User className="w-4 h-4" />
-                        {t('seeProfile')}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setShowDropdown(false);
-                        handleReportChat();
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                      <Flag className="w-4 h-4" />
-                      {t('report')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDropdown(false);
-                        handleDeleteChat();
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      {t('deleteChat')}
-                    </button>
                   </div>
                 )}
               </div>
-            )}
           </div>
           <div className="chat-scroll-body flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="chat-conversation-wrap flex-1 min-h-0 overflow-hidden">
@@ -420,6 +466,8 @@ export default function ChatPage({ embed = false }: { embed?: boolean }) {
                 onClose={handleBackToChatList}
                 currentUser={user}
                 embedded={true}
+                clearChatTrigger={diceBotClearTrigger}
+                onClearChatDone={() => setDiceBotClearTrigger(0)}
               />
             ) : (
               <Chat
@@ -478,6 +526,7 @@ export default function ChatPage({ embed = false }: { embed?: boolean }) {
         onClose={() => { setShowViewMembers(false); setViewMembersChat(null); }}
         members={(viewMembersChat || selectedChat)?.participants || []}
         groupName={(viewMembersChat || selectedChat)?.name || 'Group'}
+        onNavigateToProfile={embed ? handleOpenProfile : undefined}
       />
 
       {/* Delete conversation confirmation */}

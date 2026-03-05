@@ -5,9 +5,8 @@ import { getUserFromToken } from '@/lib/auth';
 import { generateCode, setMobileAuthCode } from '@/lib/mobile-auth-codes';
 
 /**
- * This endpoint handles the OAuth callback after Google sign-in
- * It syncs NextAuth session with the custom auth_token cookie system
- * and redirects the user back to where they started
+ * Completes mobile OAuth callback (Google/Apple).
+ * Syncs NextAuth session into auth_token and redirects back to app/web.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -29,8 +28,15 @@ export async function GET(request: NextRequest) {
     console.log('🔄 OAuth callback completion - Getting session...');
     console.log('📋 Return URL:', returnUrl);
     
-    // Get NextAuth session (should be established by now)
-    const session = await getServerSession(authOptions);
+    // Get NextAuth session. Apple can occasionally lag one redirect, so retry briefly.
+    let session = await getServerSession(authOptions);
+    if (!session?.accessToken) {
+      for (let i = 0; i < 4; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        session = await getServerSession(authOptions);
+        if (session?.accessToken) break;
+      }
+    }
     
     console.log('📋 Session data:', session ? {
       hasAccessToken: !!session.accessToken,

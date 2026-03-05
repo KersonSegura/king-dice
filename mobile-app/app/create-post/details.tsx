@@ -21,6 +21,8 @@ import { useLocale } from '../../contexts/LocaleContext';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../lib/api-client';
 import { API_BASE_URL } from '../../config/api';
+import * as FileSystem from 'expo-file-system';
+import { getPendingImageUri, clearPendingImageUri } from './pendingImageUri';
 
 const CATEGORIES = [
   { id: 'collections', nameKey: 'categoryGameCollections' },
@@ -38,7 +40,9 @@ export default function CreatePostDetails() {
   const insets = useSafeAreaInsets();
   const { t } = useLocale();
   const { width, height } = useWindowDimensions();
-  const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
+  const params = useLocalSearchParams<{ imageUri: string }>();
+  // Prefer in-memory URI so long file:// paths are not truncated by route params (which caused 0-byte uploads)
+  const imageUri = getPendingImageUri() ?? params.imageUri ?? undefined;
   const [category, setCategory] = useState(CATEGORIES[0].id);
   const [description, setDescription] = useState('');
   const [tagsStr, setTagsStr] = useState('');
@@ -107,6 +111,7 @@ export default function CreatePostDetails() {
   }, [height, insets.top]);
 
   const handleCancel = () => {
+    clearPendingImageUri();
     router.replace('/');
   };
 
@@ -124,12 +129,33 @@ export default function CreatePostDetails() {
         return;
       }
 
-      const filename = imageUri.split('/').pop() || `image-${Date.now()}.jpg`;
+      // Copy image to a cache file so fetch always reads real bytes (content:// and long file:// params can send 0 bytes)
+      const cacheFileName = `upload-${Date.now()}.jpg`;
+      const cacheUri = `${FileSystem.cacheDirectory}${cacheFileName}`;
+      try {
+        const base64 = await FileSystem.readAsStringAsync(imageUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        if (!base64 || base64.length === 0) {
+          Alert.alert(t('uploadFailed'), t('errorImageEmptyOrInvalid'));
+          setUploading(false);
+          return;
+        }
+        await FileSystem.writeAsStringAsync(cacheUri, base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } catch (e) {
+        console.error('Copy image to cache failed', e);
+        Alert.alert(t('uploadFailed'), t('errorImageEmptyOrInvalid'));
+        setUploading(false);
+        return;
+      }
+
       const formData = new FormData();
       formData.append('image', {
-        uri: imageUri,
+        uri: cacheUri,
         type: 'image/jpeg',
-        name: filename,
+        name: cacheFileName,
       } as any);
       formData.append('title', '');
       formData.append('description', description);
@@ -151,6 +177,8 @@ export default function CreatePostDetails() {
         setUploading(false);
         return;
       }
+      clearPendingImageUri();
+      FileSystem.deleteAsync(cacheUri, { idempotent: true }).catch(() => {});
       Alert.alert(t('uploadSuccess'), t('uploadSuccessMessage'), [
         { text: 'OK', onPress: () => router.replace('/community-gallery') },
       ]);

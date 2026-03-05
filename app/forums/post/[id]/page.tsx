@@ -881,7 +881,7 @@ export default function PostDetailPage() {
       };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
       <div className="flex-1 py-8">
         <div
           ref={contentRef}

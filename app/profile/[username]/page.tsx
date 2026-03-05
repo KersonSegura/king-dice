@@ -1530,7 +1530,7 @@ export default function UserProfilePage() {
   const coverSecondaryTextClass = getSecondaryTextColorClass(true);
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: profileColors.background }}>
+    <div className="min-h-screen relative pb-20" style={{ backgroundColor: profileColors.background }}>
       {/* Back button - hidden in embed (mobile has home in nav) */}
       <div className="kd-back-to-home border-b border-gray-200 px-4 py-3" style={{ backgroundColor: profileColors.containers }}>
         <div className="max-w-6xl mx-auto">
@@ -2249,7 +2249,7 @@ export default function UserProfilePage() {
             />
 
             {/* Recent Activity */}
-            <div className="rounded-lg shadow-sm border border-gray-200 p-6" style={{ backgroundColor: profileColors.containers }}>
+            <div className="rounded-lg shadow-sm border border-gray-200 p-6 mb-20" style={{ backgroundColor: profileColors.containers }}>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('recentActivity')}</h3>
               <div className="space-y-3">
                 {userPosts.length > 0 || userImages.length > 0 ? (
