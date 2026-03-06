@@ -17,7 +17,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kingdice.app",
-      "buildNumber": "4",
+      "buildNumber": "20",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -69,7 +70,14 @@
           "cameraPermission": "Allow King Dice to access your camera."
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.REPLACE_WITH_YOUR_CLIENT_ID"
+        }
+      ]
     ],
     "scheme": "kingdice",
     "updates": {

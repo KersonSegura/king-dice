@@ -151,9 +151,9 @@ export default function LoginScreen() {
     setError('');
     try {
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-      const webClientId = (process as any).env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      const webClientId = Constants.expoConfig?.extra?.googleWebClientId ?? (process as any).env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
       if (!webClientId) {
-        setError('Google sign-in not configured. Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to .env');
+        setError('Google sign-in not configured. Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to mobile-app/.env');
         return;
       }
       GoogleSignin.configure({ webClientId });

@@ -17,11 +17,19 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "404642348674-af8b9ihfidarjehmurp3tn14vkq2hr6f.apps.googleusercontent.com"
+      },
       "android": {
         "buildType": "app-bundle",
         "image": "ubuntu-24.04-jdk-17-ndk-r27b"
       },
       "ios": {}
+    },
+    "production-manual": {
+      "extends": "production",
+      "autoIncrement": false,
+      "channel": "production"
     }
   },
   "submit": {
@@ -33,6 +41,9 @@
       "ios": {
         "ascAppId": "6759346479"
       }
+    },
+    "production-manual": {
+      "extends": "production"
     }
   }
 }

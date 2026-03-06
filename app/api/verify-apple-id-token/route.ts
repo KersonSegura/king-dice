@@ -23,10 +23,12 @@ async function verifyAppleIdentityToken(
   const decoded = jwt.decode(identityToken, { complete: true }) as { header: { kid: string }; payload: jwt.JwtPayload } | null;
   if (!decoded?.header?.kid) throw new Error('Invalid token format');
   const signingKey = await getAppleSigningKey(decoded.header.kid);
+  // Native iOS returns aud=com.kingdice.app (bundle ID); web returns aud=com.kingdice.websignin (service ID). Accept both.
+  const validAudiences = [clientId, 'com.kingdice.app'].filter(Boolean);
   const payload = jwt.verify(identityToken, signingKey, {
     algorithms: ['RS256'],
     issuer: 'https://appleid.apple.com',
-    audience: clientId,
+    audience: validAudiences,
   }) as jwt.JwtPayload;
   return payload;
 }

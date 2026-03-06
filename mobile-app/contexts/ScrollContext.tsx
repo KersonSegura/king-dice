@@ -2,17 +2,25 @@
  * Scroll context for header visibility on scroll.
  * Header hides on scroll down, shows on scroll up.
  * Bottom nav stays always visible.
+ *
+ * Split into state + dispatch so WebViewScreen (which only calls setNavVisible)
+ * does NOT re-render when navVisible changes - prevents WebView blank/flicker
+ * when overlay shows on scroll up.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { usePathname } from 'expo-router';
 
-interface ScrollContextType {
+interface ScrollStateContextType {
   navVisible: boolean;
+}
+
+interface ScrollDispatchContextType {
   setNavVisible: (visible: boolean) => void;
 }
 
-const ScrollContext = createContext<ScrollContextType | undefined>(undefined);
+const ScrollStateContext = createContext<ScrollStateContextType | undefined>(undefined);
+const ScrollDispatchContext = createContext<ScrollDispatchContextType | undefined>(undefined);
 
 export function ScrollContextProvider({ children }: { children: ReactNode }) {
   const [navVisible, setNavVisibleState] = useState(true);
@@ -35,20 +43,36 @@ export function ScrollContextProvider({ children }: { children: ReactNode }) {
     [pathname]
   );
 
+  const stateValue = useMemo(() => ({ navVisible }), [navVisible]);
+  const dispatchValue = useMemo(() => ({ setNavVisible }), [setNavVisible]);
+
   return (
-    <ScrollContext.Provider value={{ navVisible, setNavVisible }}>
-      {children}
-    </ScrollContext.Provider>
+    <ScrollStateContext.Provider value={stateValue}>
+      <ScrollDispatchContext.Provider value={dispatchValue}>
+        {children}
+      </ScrollDispatchContext.Provider>
+    </ScrollStateContext.Provider>
   );
 }
 
-export function useScrollNav(): ScrollContextType {
-  const ctx = useContext(ScrollContext);
-  if (ctx === undefined) {
+/** Use when you need navVisible (e.g. MobileHeader) - re-renders when overlay state changes */
+export function useScrollNav() {
+  const state = useContext(ScrollStateContext);
+  const dispatch = useContext(ScrollDispatchContext);
+  if (state === undefined || dispatch === undefined) {
     return {
       navVisible: true,
       setNavVisible: () => {},
     };
   }
-  return ctx;
+  return { ...state, ...dispatch };
+}
+
+/** Use when you only need setNavVisible (e.g. WebViewScreen) - does NOT re-render when navVisible changes */
+export function useScrollDispatch() {
+  const dispatch = useContext(ScrollDispatchContext);
+  if (dispatch === undefined) {
+    return { setNavVisible: () => {} };
+  }
+  return dispatch;
 }

@@ -23,6 +23,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getApiBaseUrl, OAUTH_BASE_URL } from '../config/api';
 import { apiClient } from '../lib/api-client';
@@ -164,9 +165,9 @@ export default function RegisterScreen() {
     setOauthError('');
     try {
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-      const webClientId = (process as any).env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      const webClientId = Constants.expoConfig?.extra?.googleWebClientId ?? (process as any).env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
       if (!webClientId) {
-        setOauthError('Google sign-in not configured. Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to .env');
+        setOauthError('Google sign-in not configured. Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to mobile-app/.env');
         return;
       }
       GoogleSignin.configure({ webClientId });

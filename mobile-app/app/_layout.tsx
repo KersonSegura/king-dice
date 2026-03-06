@@ -77,11 +77,12 @@ function LayoutContent() {
     <>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
       <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-        {/* Permanent white status bar background so phone UI stays visible - hide when image modal open */}
-        {!hideNav && !isImageModalOpen && (
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#ffffff', zIndex: 150 }} />
+        {/* Permanent white status bar background - always visible */}
+        {!hideNav && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#ffffff', zIndex: 100 }} />
         )}
-        <View style={{ flex: 1, paddingTop: contentPaddingTop, backgroundColor: '#f9fafb' }}>
+        {/* Content: higher z-index when image modal open so post popup appears above overlay */}
+        <View style={{ flex: 1, paddingTop: contentPaddingTop, backgroundColor: '#f9fafb', zIndex: isImageModalOpen ? 200 : 0 }}>
           <Stack
             screenOptions={{
               headerShown: false,
@@ -104,7 +105,7 @@ function LayoutContent() {
             <Stack.Screen name="create-post" options={{ headerShown: false }} />
           </Stack>
         </View>
-        {!hideNav && !isImageModalOpen && <MobileHeader />}
+        {!hideNav && <MobileHeader />}
         {!hideNav && <BottomNav />}
       </View>
     </>

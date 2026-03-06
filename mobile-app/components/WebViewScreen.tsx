@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { API_BASE_URL } from '../config/api';
-import { useScrollNav } from '../contexts/ScrollContext';
+import { useScrollDispatch } from '../contexts/ScrollContext';
 import { useImageModal } from '../contexts/ImageModalContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { apiClient } from '../lib/api-client';
@@ -34,20 +34,40 @@ type Props = {
   onMessage?: (event: { nativeEvent: { data: string } }) => void;
 };
 
-/** JS to detect scroll direction and post to RN for header/nav hide-on-scroll */
+/** JS to detect scroll direction and post to RN for header/nav hide-on-scroll.
+ * Listens to window, document, and common scroll containers so it works
+ * whether the page uses document scroll or a scroll container (main, #__next). */
 const SCROLL_DETECT_JS = `
 (function() {
-  var lastY = window.scrollY || document.documentElement.scrollTop || 0;
-  var hideAnchorY = lastY;
-  var showAnchorY = lastY;
+  var lastY = 0;
+  var hideAnchorY = 0;
+  var showAnchorY = 0;
   var lastVisible = true;
   var lastEmitAt = 0;
   var ticking = false;
+  var scrollTarget = null;
   var HIDE_DELTA = 56;
   var SHOW_DELTA = 10;
   var TOP_THRESHOLD = 12;
   var BOTTOM_THRESHOLD = 20;
   var COOLDOWN_MS = 120;
+
+  function getScrollFromTarget(el) {
+    if (!el) return null;
+    if (el === document || el === window) {
+      return { y: window.scrollY || document.documentElement.scrollTop, maxY: Math.max(0, document.documentElement.scrollHeight - window.innerHeight) };
+    }
+    var y = el.scrollTop || 0;
+    var maxY = Math.max(0, el.scrollHeight - el.clientHeight);
+    return { y: y, maxY: maxY };
+  }
+
+  function getScrollState() {
+    var el = scrollTarget || document.scrollingElement || document.documentElement;
+    var s = getScrollFromTarget(el);
+    if (s) return s;
+    return { y: window.scrollY || document.documentElement.scrollTop || 0, maxY: Math.max(0, document.documentElement.scrollHeight - window.innerHeight) };
+  }
 
   function emitVisible(nextVisible, y) {
     if (nextVisible === lastVisible) return;
@@ -66,10 +86,11 @@ const SCROLL_DETECT_JS = `
   }
 
   function onScroll() {
-    var y = window.scrollY || document.documentElement.scrollTop;
+    var s = getScrollState();
+    var y = s.y;
+    var maxY = s.maxY;
     var movingDown = y > lastY;
     var movingUp = y < lastY;
-    var maxY = Math.max(0, (document.documentElement.scrollHeight - window.innerHeight));
     var atBottom = maxY > 0 && y >= maxY - BOTTOM_THRESHOLD;
 
     if (y <= TOP_THRESHOLD) {
@@ -90,13 +111,36 @@ const SCROLL_DETECT_JS = `
     ticking = false;
   }
 
-  function requestTick() {
+  function handleScroll(e) {
+    var t = e && e.target;
+    if (t && t !== document && t !== window && t.scrollTop !== undefined) {
+      scrollTarget = t;
+    } else {
+      scrollTarget = document.scrollingElement || document.documentElement;
+    }
     if (!ticking) {
       ticking = true;
       requestAnimationFrame(onScroll);
     }
   }
-  window.addEventListener('scroll', requestTick, { passive: true });
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  document.addEventListener('scroll', handleScroll, { passive: true });
+  var main = document.querySelector('main');
+  if (main && main.scrollHeight > main.clientHeight && !main._kdScrollAttached) {
+    main._kdScrollAttached = true;
+    main.addEventListener('scroll', handleScroll, { passive: true });
+  }
+  var next = document.getElementById('__next');
+  if (next && next.scrollHeight > next.clientHeight && !next._kdScrollAttached) {
+    next._kdScrollAttached = true;
+    next.addEventListener('scroll', handleScroll, { passive: true });
+  }
+
+  var init = getScrollState();
+  lastY = init.y;
+  hideAnchorY = init.y;
+  showAnchorY = init.y;
   true;
 })();
 `;
@@ -287,7 +331,7 @@ export default function WebViewScreen({
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { setLocale } = useLocale();
-  const { setNavVisible } = useScrollNav();
+  const { setNavVisible } = useScrollDispatch();
   const { setImageModalOpen } = useImageModal();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -335,8 +379,9 @@ export default function WebViewScreen({
           webViewRef.current?.injectJavaScript(PAUSE_TIMERS_JS);
         }
         setImageModalOpen(false);
+        setNavVisible(true); // Ensure overlay shows when leaving (e.g. back from post with modal)
       };
-    }, [isVirtualToolsPath, setImageModalOpen])
+    }, [isVirtualToolsPath, setImageModalOpen, setNavVisible])
   );
 
   useEffect(() => {
@@ -378,6 +423,10 @@ export default function WebViewScreen({
         }
         if (data?.type === 'imageModalOpen' && typeof data.open === 'boolean') {
           setImageModalOpen(data.open);
+          // When modal closes, restore overlay visibility (overlay is always rendered; we just show it again)
+          if (!data.open) {
+            setNavVisible(true);
+          }
         }
       } catch {}
       onMessage?.(event);
