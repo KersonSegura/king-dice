@@ -26,6 +26,6 @@
       "SKIP_ENV_VALIDATION": "true"
     }
   },
-  "installCommand": "rm -rf node_modules && npm install",
+  "installCommand": "npm install",
   "buildCommand": "rm -rf .next node_modules/.prisma node_modules/@prisma/client/node_modules/.prisma && npx prisma generate --schema=./prisma/schema.prisma && npm run build"
 }

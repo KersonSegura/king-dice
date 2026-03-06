@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import verifyAppleToken from 'verify-apple-id-token';
+import jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateToken, generateDefaultAvatar } from '@/lib/auth';
 
 const appleClientId = process.env.APPLE_CLIENT_ID?.trim();
+const APPLE_KEYS_URL = 'https://appleid.apple.com/auth/keys';
+
+async function getAppleSigningKey(kid: string): Promise<crypto.KeyObject> {
+  const response = await fetch(APPLE_KEYS_URL);
+  if (!response.ok) throw new Error('Could not fetch Apple signing keys');
+  const { keys } = (await response.json()) as { keys: Array<{ kid?: string; [k: string]: unknown }> };
+  const key = keys.find((k) => k.kid === kid);
+  if (!key) throw new Error('Apple signing key not found');
+  return crypto.createPublicKey({ key, format: 'jwk' });
+}
+
+async function verifyAppleIdentityToken(
+  identityToken: string,
+  clientId: string
+): Promise<jwt.JwtPayload> {
+  const decoded = jwt.decode(identityToken, { complete: true }) as { header: { kid: string }; payload: jwt.JwtPayload } | null;
+  if (!decoded?.header?.kid) throw new Error('Invalid token format');
+  const signingKey = await getAppleSigningKey(decoded.header.kid);
+  const payload = jwt.verify(identityToken, signingKey, {
+    algorithms: ['RS256'],
+    issuer: 'https://appleid.apple.com',
+    audience: clientId,
+  }) as jwt.JwtPayload;
+  return payload;
+}
 
 /**
  * POST /api/verify-apple-id-token
@@ -25,10 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'identityToken is required' }, { status: 400 });
     }
 
-    const jwtClaims = await verifyAppleToken({
-      idToken: identityToken,
-      clientId: appleClientId,
-    });
+    const jwtClaims = await verifyAppleIdentityToken(identityToken, appleClientId);
 
     const providerId = jwtClaims.sub;
     const email = (jwtClaims.email as string)?.trim()?.toLowerCase();
