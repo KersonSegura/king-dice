@@ -13,7 +13,7 @@ import { LocaleProvider } from '../contexts/LocaleContext';
 import { ScrollContextProvider } from '../contexts/ScrollContext';
 import { TabRefreshProvider } from '../contexts/TabRefreshContext';
 import { ChatUnreadProvider } from '../contexts/ChatUnreadContext';
-import { ImageModalProvider, useImageModal } from '../contexts/ImageModalContext';
+import { ImageModalProvider } from '../contexts/ImageModalContext';
 import { StatusBar } from 'expo-status-bar';
 import { View, BackHandler } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +26,6 @@ function LayoutContent() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAuthenticated } = useAuth();
-  const { isImageModalOpen } = useImageModal();
 
   // Prevent Android back button from navigating to login/register after authenticated.
   // If on a main tab and user presses back, minimize the app instead of going back.
@@ -66,23 +65,28 @@ function LayoutContent() {
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/create-post') ||
     !isAuthenticated;
+
   const HEADER_CONTENT_HEIGHT = 56;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Chat & Search: no overlay – content starts below header (solid header).
+  // Solid header pages: content starts below header (no overlay effect).
   // Other pages: content under status bar; header overlays first 56px (Instagram-style).
-  const needsSolidHeader = pathname?.includes('chat') || pathname?.includes('search');
+  const needsSolidHeader =
+    pathname?.includes('chat') ||
+    pathname?.includes('search') ||
+    pathname?.includes('profile') ||
+    pathname?.includes('settings') ||
+    pathname?.includes('collection');
   const contentPaddingTop = hideNav ? 0 : needsSolidHeader ? headerHeight : insets.top;
 
   return (
     <>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
       <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-        {/* Permanent white status bar background - always visible */}
+        {/* Permanent white status bar background so phone UI stays visible */}
         {!hideNav && (
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#ffffff', zIndex: 100 }} />
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: '#ffffff', zIndex: 150 }} />
         )}
-        {/* Content: higher z-index when image modal open so post popup appears above overlay */}
-        <View style={{ flex: 1, paddingTop: contentPaddingTop, backgroundColor: '#f9fafb', zIndex: isImageModalOpen ? 200 : 0 }}>
+        <View style={{ flex: 1, paddingTop: contentPaddingTop, backgroundColor: '#f9fafb' }}>
           <Stack
             screenOptions={{
               headerShown: false,

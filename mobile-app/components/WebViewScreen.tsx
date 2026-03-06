@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { API_BASE_URL } from '../config/api';
-import { useScrollDispatch } from '../contexts/ScrollContext';
+import { useScrollNav } from '../contexts/ScrollContext';
 import { useImageModal } from '../contexts/ImageModalContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { apiClient } from '../lib/api-client';
@@ -331,7 +331,7 @@ export default function WebViewScreen({
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { setLocale } = useLocale();
-  const { setNavVisible } = useScrollDispatch();
+  const { setNavVisible } = useScrollNav();
   const { setImageModalOpen } = useImageModal();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -379,9 +379,8 @@ export default function WebViewScreen({
           webViewRef.current?.injectJavaScript(PAUSE_TIMERS_JS);
         }
         setImageModalOpen(false);
-        setNavVisible(true); // Ensure overlay shows when leaving (e.g. back from post with modal)
       };
-    }, [isVirtualToolsPath, setImageModalOpen, setNavVisible])
+    }, [isVirtualToolsPath, setImageModalOpen])
   );
 
   useEffect(() => {
@@ -423,10 +422,6 @@ export default function WebViewScreen({
         }
         if (data?.type === 'imageModalOpen' && typeof data.open === 'boolean') {
           setImageModalOpen(data.open);
-          // When modal closes, restore overlay visibility (overlay is always rendered; we just show it again)
-          if (!data.open) {
-            setNavVisible(true);
-          }
         }
       } catch {}
       onMessage?.(event);

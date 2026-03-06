@@ -129,6 +129,7 @@ export default function ImageModal({
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [startTime, setStartTime] = useState(0);
+  const [isEmbed, setIsEmbed] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Translation hooks - must be called unconditionally
@@ -155,7 +156,14 @@ export default function ImageModal({
     };
   }, [isOpen, description]);
 
-  // Notify mobile app to hide native header overlay when modal is open (so overlay stays behind pop-up)
+  // Check if we're in embed mode (mobile app WebView)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsEmbed(document.body.classList.contains('embed'));
+    }
+  }, []);
+
+  // Notify mobile app when modal opens/closes
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).ReactNativeWebView?.postMessage) {
       (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: 'imageModalOpen', open: isOpen }));
@@ -515,11 +523,13 @@ export default function ImageModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[200] p-0 sm:p-4 overscroll-none touch-none"
+      className="fixed left-0 right-0 bottom-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[200] p-0 sm:p-4 overscroll-none touch-none"
       style={{ 
         pointerEvents: 'auto',
         opacity: isDragging ? Math.max(0.3, 1 - dragY / 400) : 1,
-        transition: isDragging ? 'none' : 'opacity 0.3s ease-out'
+        transition: isDragging ? 'none' : 'opacity 0.3s ease-out',
+        // In embed mode (mobile app), start below native header (--kd-safe-area-inset-top includes status bar + 56px header)
+        top: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
       }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {

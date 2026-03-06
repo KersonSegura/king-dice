@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "404642348674",
+    "project_id": "king-dice",
+    "storage_bucket": "king-dice.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404642348674:android:a57c631ab2c4b91bd8be9b",
+        "android_client_info": {
+          "package_name": "com.kingdice.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "404642348674-7138cc5c375r881cbmtg2gpu465pccao.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXTOXJhNCGH35kyqYxMIe_Sx7xzY9Nx08"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "404642348674-7138cc5c375r881cbmtg2gpu465pccao.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

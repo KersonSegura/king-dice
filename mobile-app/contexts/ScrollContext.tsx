@@ -2,77 +2,75 @@
  * Scroll context for header visibility on scroll.
  * Header hides on scroll down, shows on scroll up.
  * Bottom nav stays always visible.
- *
- * Split into state + dispatch so WebViewScreen (which only calls setNavVisible)
- * does NOT re-render when navVisible changes - prevents WebView blank/flicker
- * when overlay shows on scroll up.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { usePathname } from 'expo-router';
+import { useImageModal } from './ImageModalContext';
 
-interface ScrollStateContextType {
+interface ScrollContextType {
   navVisible: boolean;
-}
-
-interface ScrollDispatchContextType {
   setNavVisible: (visible: boolean) => void;
 }
 
-const ScrollStateContext = createContext<ScrollStateContextType | undefined>(undefined);
-const ScrollDispatchContext = createContext<ScrollDispatchContextType | undefined>(undefined);
+const ScrollContext = createContext<ScrollContextType | undefined>(undefined);
 
 export function ScrollContextProvider({ children }: { children: ReactNode }) {
   const [navVisible, setNavVisibleState] = useState(true);
   const pathname = usePathname();
+  const { isImageModalOpen } = useImageModal();
+
+  // Use ref to track isImageModalOpen so setNavVisible callback doesn't need to be recreated
+  const isImageModalOpenRef = useRef(isImageModalOpen);
+  useEffect(() => {
+    isImageModalOpenRef.current = isImageModalOpen;
+  }, [isImageModalOpen]);
 
   // Reset header to visible when navigating to a new page
   useEffect(() => {
     setNavVisibleState(true);
   }, [pathname]);
 
-  // On chat or search: never hide the header when scrolling (header always visible)
+  // When image modal opens, force header to show (solid header while modal is open)
+  useEffect(() => {
+    if (isImageModalOpen) {
+      setNavVisibleState(true);
+    }
+  }, [isImageModalOpen]);
+
+  // On certain pages: never hide the header (solid header behavior)
   const setNavVisible = useCallback(
     (visible: boolean) => {
+      // When image modal is open, always keep header visible (use ref to get current value)
+      if (isImageModalOpenRef.current && !visible) return;
+
       const isChatTab =
         pathname === '/(tabs)/chat' || pathname?.startsWith?.('/(tabs)/chat');
       const isSearchPage = pathname === '/search' || pathname?.startsWith?.('/search');
-      if ((isChatTab || isSearchPage) && !visible) return;
+      const isProfilePage = pathname?.includes?.('profile');
+      const isSettingsPage = pathname?.includes?.('settings');
+      const isCollectionPage = pathname?.includes?.('collection');
+      // Never hide header on these pages
+      if ((isChatTab || isSearchPage || isProfilePage || isSettingsPage || isCollectionPage) && !visible) return;
       setNavVisibleState(visible);
     },
     [pathname]
   );
 
-  const stateValue = useMemo(() => ({ navVisible }), [navVisible]);
-  const dispatchValue = useMemo(() => ({ setNavVisible }), [setNavVisible]);
-
   return (
-    <ScrollStateContext.Provider value={stateValue}>
-      <ScrollDispatchContext.Provider value={dispatchValue}>
-        {children}
-      </ScrollDispatchContext.Provider>
-    </ScrollStateContext.Provider>
+    <ScrollContext.Provider value={{ navVisible, setNavVisible }}>
+      {children}
+    </ScrollContext.Provider>
   );
 }
 
-/** Use when you need navVisible (e.g. MobileHeader) - re-renders when overlay state changes */
-export function useScrollNav() {
-  const state = useContext(ScrollStateContext);
-  const dispatch = useContext(ScrollDispatchContext);
-  if (state === undefined || dispatch === undefined) {
+export function useScrollNav(): ScrollContextType {
+  const ctx = useContext(ScrollContext);
+  if (ctx === undefined) {
     return {
       navVisible: true,
       setNavVisible: () => {},
     };
   }
-  return { ...state, ...dispatch };
-}
-
-/** Use when you only need setNavVisible (e.g. WebViewScreen) - does NOT re-render when navVisible changes */
-export function useScrollDispatch() {
-  const dispatch = useContext(ScrollDispatchContext);
-  if (dispatch === undefined) {
-    return { setNavVisible: () => {} };
-  }
-  return dispatch;
+  return ctx;
 }

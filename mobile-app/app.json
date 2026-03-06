@@ -19,6 +19,7 @@
       "bundleIdentifier": "com.kingdice.app",
       "buildNumber": "20",
       "usesAppleSignIn": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -28,6 +29,7 @@
         "foregroundImage": "./assets/AppIcon.png",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile": "./google-services.json",
       "package": "com.kingdice.app",
       "versionCode": 21,
       "permissions": [
@@ -72,12 +74,7 @@
       ],
       "expo-localization",
       "expo-apple-authentication",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.REPLACE_WITH_YOUR_CLIENT_ID"
-        }
-      ]
+      "@react-native-google-signin/google-signin"
     ],
     "scheme": "kingdice",
     "updates": {
