@@ -460,23 +460,11 @@ export default function ImageModal({
 
   // Touch handlers for swipe down to close
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Only allow dragging from the top area (header or image area)
-    // Don't allow dragging if starting from comments section
+    // Only allow dragging from the top drag handle area (indicator bar and header)
     const target = e.target as HTMLElement;
-    const isCommentsArea = target.closest('.comments-section') || 
-                          target.closest('textarea') ||
-                          target.closest('button');
+    const isDragHandle = target.closest('.drag-handle');
     
-    if (isCommentsArea) {
-      return; // Don't interfere with comments interaction
-    }
-    
-    const isDraggableArea = target.closest('.drag-handle') || 
-                           target.closest('img') || 
-                           (target.closest('.sm\\:hidden') && 
-                            !target.closest('.comments-section')); // Mobile layout container but not comments
-    
-    if (isDraggableArea) {
+    if (isDragHandle) {
       setIsDragging(true);
       const touchY = e.touches[0].clientY;
       setStartY(touchY);
@@ -547,7 +535,7 @@ export default function ImageModal({
       >
         {/* Mobile Layout - Instagram Style */}
         <div 
-          className="sm:hidden flex flex-col h-full drag-handle"
+          className="sm:hidden flex flex-col h-full"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -555,14 +543,14 @@ export default function ImageModal({
             transform: isDragging ? `translateY(${dragY}px)` : 'translateY(0)',
             transition: isDragging ? 'none' : 'transform 0.3s ease-out',
             opacity: isDragging ? Math.max(0.7, 1 - dragY / 600) : 1,
-            // In embed mode (mobile app), add padding at top to position content below native header
-            paddingTop: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
+            // In embed mode (mobile app), small padding so drag indicator doesn't touch header edge
+            paddingTop: isEmbed ? '8px' : 0,
           }}
         >
-          {/* Drag indicator bar at top */}
-          <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mt-2 mb-1 drag-handle" />
+          {/* Drag indicator bar at top - this is the drag handle */}
+          <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mt-1 mb-1 drag-handle" />
           
-          {/* Header with Avatar, User, Date, and Close Button */}
+          {/* Header with Avatar, User, Date, and Close Button - also a drag handle */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 drag-handle">
             <div className="flex items-center space-x-3 min-w-0 flex-1">
               <div 
