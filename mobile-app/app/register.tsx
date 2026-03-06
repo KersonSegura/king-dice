@@ -23,9 +23,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { OAUTH_BASE_URL } from '../config/api';
+import { getApiBaseUrl, OAUTH_BASE_URL } from '../config/api';
 import { apiClient } from '../lib/api-client';
 
 const PRIMARY = '#fbae17';
@@ -160,34 +159,35 @@ export default function RegisterScreen() {
     setTimeout(() => router.replace('/(tabs)'), 50);
   };
 
-  const runOAuthInSystemBrowser = async (authUrl: string) => {
-    const redirectUrl = `${OAUTH_BASE_URL}/auth/mobile-callback`;
-    try {
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
-      if (result.type === 'success' && result.url) {
-        const u = new URL(result.url);
-        const token = u.searchParams.get('token');
-        const userStr = u.searchParams.get('user');
-        if (token && userStr) {
-          await handleOAuthSuccess(token);
-          return;
-        }
-      }
-      if (result.type === 'cancel') return;
-      setOauthError(t('signInFailedTryAgain') || 'Sign-in was cancelled or failed. Please try again.');
-    } catch (e) {
-      setOauthError(t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
-    }
-  };
-
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     setOauthError('');
     try {
-      const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&browser=1`;
-      const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
-      const authUrl = `${OAUTH_BASE_URL}/api/mobile-google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-      await runOAuthInSystemBrowser(authUrl);
+      const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+      const webClientId = (process as any).env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      if (!webClientId) {
+        setOauthError('Google sign-in not configured. Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to .env');
+        return;
+      }
+      GoogleSignin.configure({ webClientId });
+      const result = await GoogleSignin.signIn();
+      const idToken = result?.type === 'success' ? result.data?.idToken : null;
+      if (!idToken) return;
+      const apiUrl = `${getApiBaseUrl()}/api/verify-google-id-token`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.token) {
+        await handleOAuthSuccess(data.token);
+      } else {
+        setOauthError(data.message || t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
+      }
+    } catch (e: any) {
+      if (e?.code === 'SIGN_IN_CANCELLED' || e?.message?.includes('cancel')) return;
+      setOauthError(e?.message || t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
     } finally {
       setGoogleLoading(false);
     }
@@ -198,10 +198,32 @@ export default function RegisterScreen() {
     setAppleLoading(true);
     setOauthError('');
     try {
-      const returnUrl = `${OAUTH_BASE_URL}/auth/mobile-done?redirect=app&browser=1`;
-      const callbackUrl = `${OAUTH_BASE_URL}/api/auth/callback/google-complete?return=${encodeURIComponent(returnUrl)}`;
-      const authUrl = `${OAUTH_BASE_URL}/api/mobile-apple?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-      await runOAuthInSystemBrowser(authUrl);
+      const AppleAuth = await import('expo-apple-authentication');
+      const credential = await AppleAuth.signInAsync({
+        requestedScopes: [
+          AppleAuth.AppleAuthenticationScope.FULL_NAME,
+          AppleAuth.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential?.identityToken) return;
+      const apiUrl = `${getApiBaseUrl()}/api/verify-apple-id-token`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identityToken: credential.identityToken,
+          fullName: credential.fullName,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.token) {
+        await handleOAuthSuccess(data.token);
+      } else {
+        setOauthError(data.message || t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
+      }
+    } catch (e: any) {
+      if (e?.code === 'ERR_REQUEST_CANCELED') return;
+      setOauthError(e?.message || t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
     } finally {
       setAppleLoading(false);
     }
