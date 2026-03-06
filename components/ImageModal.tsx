@@ -541,11 +541,7 @@ export default function ImageModal({
         ref={modalContentRef}
         className="bg-white w-full h-full rounded-none sm:rounded-lg sm:max-w-6xl sm:max-h-[90vh] overflow-hidden flex flex-col sm:flex-row touch-none"
         data-scroll-lock-root
-        style={{ 
-          pointerEvents: 'auto',
-          // In embed mode (mobile app), add padding at top to position content below native header
-          paddingTop: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
-        }}
+        style={{ pointerEvents: 'auto' }}
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}
       >
@@ -559,6 +555,8 @@ export default function ImageModal({
             transform: isDragging ? `translateY(${dragY}px)` : 'translateY(0)',
             transition: isDragging ? 'none' : 'transform 0.3s ease-out',
             opacity: isDragging ? Math.max(0.7, 1 - dragY / 600) : 1,
+            // In embed mode (mobile app), add padding at top to position content below native header
+            paddingTop: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
           }}
         >
           {/* Drag indicator bar at top */}
