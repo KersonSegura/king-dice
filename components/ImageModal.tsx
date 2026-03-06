@@ -523,13 +523,11 @@ export default function ImageModal({
 
   return (
     <div 
-      className="fixed left-0 right-0 bottom-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[200] p-0 sm:p-4 overscroll-none touch-none"
+      className="fixed inset-0 bg-black/50 flex items-stretch sm:items-center justify-center z-[200] p-0 sm:p-4 overscroll-none touch-none"
       style={{ 
         pointerEvents: 'auto',
         opacity: isDragging ? Math.max(0.3, 1 - dragY / 400) : 1,
         transition: isDragging ? 'none' : 'opacity 0.3s ease-out',
-        // In embed mode (mobile app), start below native header (--kd-safe-area-inset-top includes status bar + 56px header)
-        top: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
       }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
@@ -543,7 +541,11 @@ export default function ImageModal({
         ref={modalContentRef}
         className="bg-white w-full h-full rounded-none sm:rounded-lg sm:max-w-6xl sm:max-h-[90vh] overflow-hidden flex flex-col sm:flex-row touch-none"
         data-scroll-lock-root
-        style={{ pointerEvents: 'auto' }}
+        style={{ 
+          pointerEvents: 'auto',
+          // In embed mode (mobile app), add padding at top to position content below native header
+          paddingTop: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
+        }}
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}
       >

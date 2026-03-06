@@ -20,11 +20,17 @@ export function ScrollContextProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { isImageModalOpen } = useImageModal();
 
-  // Use ref to track isImageModalOpen so setNavVisible callback doesn't need to be recreated
+  // Use refs to track current values so setNavVisible callback doesn't need to be recreated
   const isImageModalOpenRef = useRef(isImageModalOpen);
+  const pathnameRef = useRef(pathname);
+  
   useEffect(() => {
     isImageModalOpenRef.current = isImageModalOpen;
   }, [isImageModalOpen]);
+  
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   // Reset header to visible when navigating to a new page
   useEffect(() => {
@@ -38,23 +44,30 @@ export function ScrollContextProvider({ children }: { children: ReactNode }) {
     }
   }, [isImageModalOpen]);
 
+  // Check if current page should have solid (always visible) header
+  const isSolidHeaderPage = useCallback((path: string | null | undefined) => {
+    if (!path) return false;
+    const isChatTab = path === '/(tabs)/chat' || path.startsWith?.('/(tabs)/chat');
+    const isSearchPage = path === '/search' || path.startsWith?.('/search');
+    const isProfilePage = path.includes?.('profile');
+    const isSettingsPage = path.includes?.('settings');
+    const isCollectionPage = path.includes?.('collection');
+    return isChatTab || isSearchPage || isProfilePage || isSettingsPage || isCollectionPage;
+  }, []);
+
   // On certain pages: never hide the header (solid header behavior)
+  // Use refs to always get current values without recreating callback
   const setNavVisible = useCallback(
     (visible: boolean) => {
-      // When image modal is open, always keep header visible (use ref to get current value)
+      // When image modal is open, always keep header visible
       if (isImageModalOpenRef.current && !visible) return;
 
-      const isChatTab =
-        pathname === '/(tabs)/chat' || pathname?.startsWith?.('/(tabs)/chat');
-      const isSearchPage = pathname === '/search' || pathname?.startsWith?.('/search');
-      const isProfilePage = pathname?.includes?.('profile');
-      const isSettingsPage = pathname?.includes?.('settings');
-      const isCollectionPage = pathname?.includes?.('collection');
-      // Never hide header on these pages
-      if ((isChatTab || isSearchPage || isProfilePage || isSettingsPage || isCollectionPage) && !visible) return;
+      // Never hide header on solid header pages
+      if (isSolidHeaderPage(pathnameRef.current) && !visible) return;
+      
       setNavVisibleState(visible);
     },
-    [pathname]
+    [isSolidHeaderPage]
   );
 
   return (
