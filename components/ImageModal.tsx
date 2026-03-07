@@ -586,7 +586,7 @@ export default function ImageModal({
           {/* Scrollable body (Instagram-like full screen) */}
           <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y">
             {/* Image - Full Width */}
-            <div className="w-full bg-gray-100 flex items-center justify-center relative group h-[55dvh] max-h-[70dvh] touch-none drag-handle">
+            <div className="w-full bg-gray-100 flex items-center justify-center relative group h-[55dvh] max-h-[70dvh]">
               {/* Navigation Arrows */}
               {onNavigate && allImages.length > 1 && (
                 <>
