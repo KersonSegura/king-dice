@@ -340,6 +340,12 @@ export default function WebViewScreen({
   const [authReady, setAuthReady] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const webViewRef = useRef<WebView>(null);
+  
+  // Use refs to always have access to latest callbacks without recreating handleMessage
+  const setNavVisibleRef = useRef(setNavVisible);
+  const setImageModalOpenRef = useRef(setImageModalOpen);
+  useEffect(() => { setNavVisibleRef.current = setNavVisible; }, [setNavVisible]);
+  useEffect(() => { setImageModalOpenRef.current = setImageModalOpen; }, [setImageModalOpen]);
   const base = API_BASE_URL.replace(/\/$/, '');
   const logoUri = `${base}/Logo.png`;
   const rawPath = path.startsWith('/') ? path : `/${path}`;
@@ -418,15 +424,17 @@ export default function WebViewScreen({
           return;
         }
         if (!disableScrollNav && data?.type === 'scroll' && typeof data.visible === 'boolean') {
-          setNavVisible(data.visible);
+          // Use ref to always get latest setNavVisible callback
+          setNavVisibleRef.current(data.visible);
         }
         if (data?.type === 'imageModalOpen' && typeof data.open === 'boolean') {
-          setImageModalOpen(data.open);
+          // Use ref to always get latest setImageModalOpen callback
+          setImageModalOpenRef.current(data.open);
         }
       } catch {}
       onMessage?.(event);
     },
-    [setLocale, setNavVisible, setImageModalOpen, onMessage]
+    [setLocale, onMessage, disableScrollNav, router]
   );
 
   const injectedJs = [
