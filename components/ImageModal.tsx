@@ -543,9 +543,9 @@ export default function ImageModal({
             transform: isDragging ? `translateY(${dragY}px)` : 'translateY(0)',
             transition: isDragging ? 'none' : 'transform 0.3s ease-out',
             opacity: isDragging ? Math.max(0.7, 1 - dragY / 600) : 1,
-            // In embed mode (mobile app), position content below native header
-            // --kd-safe-area-inset-top = status bar + 56px header
-            paddingTop: isEmbed ? 'calc(var(--kd-safe-area-inset-top, 0px) + 4px)' : 0,
+            // In embed mode (mobile app), position content right below native header
+            // --kd-safe-area-inset-top = status bar + 56px header (set by WebViewScreen)
+            paddingTop: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
           }}
         >
           {/* Drag indicator bar at top - this is the drag handle */}
