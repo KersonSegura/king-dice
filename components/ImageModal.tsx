@@ -543,13 +543,14 @@ export default function ImageModal({
             transform: isDragging ? `translateY(${dragY}px)` : 'translateY(0)',
             transition: isDragging ? 'none' : 'transform 0.3s ease-out',
             opacity: isDragging ? Math.max(0.7, 1 - dragY / 600) : 1,
-            // In embed mode (mobile app), position content right below native header
-            // --kd-safe-area-inset-top = status bar + 56px header (set by WebViewScreen)
-            paddingTop: isEmbed ? 'var(--kd-safe-area-inset-top, 0px)' : 0,
           }}
         >
           {/* Drag indicator bar at top - this is the drag handle */}
-          <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mt-2 mb-1 drag-handle" />
+          {/* In embed mode, use margin to position just below native header (56px) */}
+          <div 
+            className="w-12 h-1 bg-gray-400 rounded-full mx-auto mb-1 drag-handle"
+            style={{ marginTop: isEmbed ? '60px' : '8px' }}
+          />
           
           {/* Header with Avatar, User, Date, and Close Button - also a drag handle */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 drag-handle">
