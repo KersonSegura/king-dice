@@ -29,6 +29,7 @@ export default function HomeScreen() {
       title="Home"
       showHeader={false}
       hideWebHeader
+      debugWebView
     />
   );
 }
