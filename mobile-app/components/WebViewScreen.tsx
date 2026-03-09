@@ -627,7 +627,7 @@ export default function WebViewScreen({
           ref={webViewRef}
           key={reloadKey}
           source={{ uri, headers }}
-          style={[styles.webview, { backgroundColor: pageBg }, (loading || loadError) && styles.webviewHidden]}
+          style={[styles.webview, { backgroundColor: pageBg }]}
           javaScriptEnabled
           domStorageEnabled
           cacheEnabled
@@ -698,7 +698,6 @@ const styles = StyleSheet.create({
     height: 80,
     marginBottom: 64,
   },
-  webviewHidden: { opacity: 0 },
   debugOverlay: {
     position: 'absolute',
     left: 8,
