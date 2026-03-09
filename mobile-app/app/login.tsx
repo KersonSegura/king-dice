@@ -150,13 +150,25 @@ export default function LoginScreen() {
     setGoogleLoading(true);
     setError('');
     try {
-      const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+      const { GoogleSignin, statusCodes } = await import('@react-native-google-signin/google-signin');
       const webClientId = Constants.expoConfig?.extra?.googleWebClientId ?? (process as any).env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
       if (!webClientId) {
-        setError('Google sign-in not configured. Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to mobile-app/.env');
+        setError('Google sign-in not configured. Add EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID to .env');
         return;
       }
-      GoogleSignin.configure({ webClientId });
+      
+      // Configure Google Sign-In with web client ID (works for both Android and iOS)
+      GoogleSignin.configure({
+        webClientId,
+        offlineAccess: false,
+      });
+      
+      // Check if user is already signed in and sign out first to ensure fresh sign-in
+      const isSignedIn = await GoogleSignin.hasPreviousSignIn();
+      if (isSignedIn) {
+        await GoogleSignin.signOut();
+      }
+      
       const result = await GoogleSignin.signIn();
       const idToken = result?.type === 'success' ? result.data?.idToken : null;
       if (!idToken) {
@@ -175,7 +187,11 @@ export default function LoginScreen() {
         setError(data.message || t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
       }
     } catch (e: any) {
-      if (e?.code === 'SIGN_IN_CANCELLED' || e?.message?.includes('cancel')) return;
+      // Handle specific Google Sign-In error codes
+      if (e?.code === 'SIGN_IN_CANCELLED' || e?.code === statusCodes?.SIGN_IN_CANCELLED || e?.message?.includes('cancel')) {
+        return; // User cancelled - not an error
+      }
+      console.error('Google Sign-In error:', e?.code, e?.message, e);
       setError(e?.message || t('signInFailedTryAgain') || 'Sign-in failed. Please try again.');
     } finally {
       setGoogleLoading(false);

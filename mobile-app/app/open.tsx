@@ -23,5 +23,5 @@ export default function OpenScreen() {
   }
 
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return <WebViewScreen path={cleanPath} title="" disableScrollNav={false} />;
+  return <WebViewScreen path={cleanPath} title="" />;
 }
