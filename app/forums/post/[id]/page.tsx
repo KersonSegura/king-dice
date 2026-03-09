@@ -1508,32 +1508,36 @@ export default function PostDetailPage() {
                     </h2>
                   </div>
                   <div className="space-y-3">
-                    {similarPosts.map((similarPost) => (
-                      <Link
-                        key={similarPost.id}
-                        href={`/forums/post/${similarPost.id}`}
-                        className="block p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                      >
-                        <div className="space-y-2">
-                          <h3 className="text-xs sm:text-sm font-medium text-gray-900 hover:text-blue-600 line-clamp-2 break-words">
-                            {similarPost.title}
-                          </h3>
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span className="truncate">
-                              {similarPost.author.name}
-                            </span>
-                            <span className="flex-shrink-0 ml-2">
-                              {Math.max(
-                                0,
-                                similarPost.votes.upvotes -
-                                  similarPost.votes.downvotes,
-                              )}{" "}
-                              {t("votes")}
-                            </span>
+                    {similarPosts.map((similarPost) => {
+                      // For poll posts, show total poll votes; for regular posts, show comments count
+                      const isPoll = similarPost.postType === 'poll' && similarPost.poll;
+                      const displayCount = isPoll 
+                        ? (similarPost.poll?.totalVotes ?? 0)
+                        : similarPost.replies;
+                      const displayLabel = isPoll ? t("votes") : t("comments");
+                      
+                      return (
+                        <Link
+                          key={similarPost.id}
+                          href={`/forums/post/${similarPost.id}`}
+                          className="block p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                        >
+                          <div className="space-y-2">
+                            <h3 className="text-xs sm:text-sm font-medium text-gray-900 hover:text-blue-600 line-clamp-2 break-words">
+                              {similarPost.title}
+                            </h3>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span className="truncate">
+                                {similarPost.author.name}
+                              </span>
+                              <span className="flex-shrink-0 ml-2">
+                                {displayCount} {displayLabel}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               )}
