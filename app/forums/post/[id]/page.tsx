@@ -1514,7 +1514,10 @@ export default function PostDetailPage() {
                       const displayCount = isPoll 
                         ? (similarPost.poll?.totalVotes ?? 0)
                         : similarPost.replies;
-                      const displayLabel = isPoll ? t("votes") : t("comments");
+                      // Use singular or plural form based on count
+                      const displayLabel = isPoll 
+                        ? (displayCount === 1 ? t("vote") : t("votes"))
+                        : (displayCount === 1 ? t("comment") : t("comments"));
                       
                       return (
                         <Link

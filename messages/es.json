@@ -697,6 +697,7 @@
     "deleteCommentConfirm": "¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.",
     "comment": "comentario",
     "comments": "comentarios",
+    "vote": "voto",
     "votes": "votos",
     "verified": "Verificado",
     "repShort": "rep",
