@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "404642348674-v43hpana4s034ei0sr29batj9gire28o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kingdice.app",
+            "certificate_hash": "eea537768177ab6e5c144c88f5ce77ba44cd6914"
+          }
+        },
+        {
+          "client_id": "404642348674-170316hk373kl90qoovcpnb94vt0l9hc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kingdice.app",
+            "certificate_hash": "666870df9f768e9e2aad8aeaeb573ff13278c4c4"
+          }
+        },
+        {
           "client_id": "404642348674-7138cc5c375r881cbmtg2gpu465pccao.apps.googleusercontent.com",
           "client_type": 3
         }
