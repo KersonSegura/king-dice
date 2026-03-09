@@ -147,7 +147,7 @@ const SCROLL_DETECT_JS = `
 
 function buildHideHeaderJs() {
   const h = NATIVE_HEADER_HEIGHT;
-  /* Inject CSS: header overlay height as top padding on all page roots */
+  /* Inject CSS: header overlay height as top padding on all page roots + full-width game page containers */
   return `
   (function() {
     try {
@@ -156,7 +156,12 @@ function buildHideHeaderJs() {
       s.textContent = 'header{display:none!important}footer{display:none!important}' +
         'body{padding-top:${h}px!important}main{padding-top:${h}px!important}' +
         '#__next{padding-top:${h}px!important}html{padding-top:0!important}' +
-        '.kd-back-to-home{display:none!important}';
+        '.kd-back-to-home{display:none!important}' +
+        /* Game page full-width containers in embed mode */
+        'body.embed .max-w-7xl{max-width:100%!important;padding-left:0!important;padding-right:0!important}' +
+        'body.embed .bg-white.rounded-none.shadow-lg{border-radius:0!important;margin-left:0!important;margin-right:0!important}' +
+        'body.embed .bg-white.rounded-none.shadow-lg>div{padding-left:16px!important;padding-right:16px!important}' +
+        'body.embed .bg-white.rounded-none.shadow-lg .p-8{padding-left:16px!important;padding-right:16px!important}';
       var old = document.getElementById('kd-embed-hide-header');
       if (old) old.remove();
       (document.head || document.documentElement).appendChild(s);
