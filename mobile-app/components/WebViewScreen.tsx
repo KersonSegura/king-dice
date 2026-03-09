@@ -31,8 +31,6 @@ type Props = {
   embed?: boolean;
   interceptGameLinks?: boolean;
   disableScrollNav?: boolean;
-  /** Diagnostic overlay: logs WebView load/navigation events on screen. */
-  debugWebView?: boolean;
   onMessage?: (event: { nativeEvent: { data: string } }) => void;
 };
 
@@ -342,7 +340,6 @@ export default function WebViewScreen({
   embed = true,
   interceptGameLinks = true,
   disableScrollNav = false,
-  debugWebView = false,
   onMessage,
 }: Props) {
   const router = useRouter();
@@ -365,13 +362,6 @@ export default function WebViewScreen({
   useEffect(() => { setNavVisibleRef.current = setNavVisible; }, [setNavVisible]);
   useEffect(() => { setImageModalOpenRef.current = setImageModalOpen; }, [setImageModalOpen]);
 
-  const [debugLines, setDebugLines] = useState<string[]>([]);
-  const pushDebug = useCallback((line: string) => {
-    if (!debugWebView) return;
-    const ts = new Date();
-    const stamp = ts.toTimeString().slice(0, 8) + '.' + String(ts.getMilliseconds()).padStart(3, '0');
-    setDebugLines((prev) => [`${stamp} ${line}`, ...prev].slice(0, 10));
-  }, [debugWebView]);
   const base = API_BASE_URL.replace(/\/$/, '');
   const logoUri = `${base}/Logo.png`;
   const rawPath = path.startsWith('/') ? path : `/${path}`;
@@ -498,16 +488,14 @@ export default function WebViewScreen({
   useEffect(() => {
     setLoadError(null);
     setLoading(true);
-    pushDebug(`timeout-arm uri=${uri}`);
     timeoutRef.current = setTimeout(() => {
       setLoadError('Page took too long to load. Check your connection and try again.');
       setLoading(false);
-      pushDebug(`timeout-fire uri=${uri}`);
     }, LOAD_TIMEOUT_MS);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [uri, pushDebug]);
+  }, [uri]);
 
   const handleLoadEnd = useCallback(() => {
     if (timeoutRef.current) {
@@ -516,8 +504,7 @@ export default function WebViewScreen({
     }
     setLoadError(null);
     setLoading(false);
-    pushDebug(`loadEnd`);
-  }, [pushDebug]);
+  }, []);
 
   const handleHttpError = useCallback((syntheticEvent: { nativeEvent: { description: string; statusCode: number } }) => {
     const { statusCode } = syntheticEvent.nativeEvent;
@@ -527,15 +514,13 @@ export default function WebViewScreen({
     }
     setLoading(false);
     setLoadError(statusCode === 404 ? 'Page not found.' : `Failed to load (${statusCode}). Try again.`);
-    pushDebug(`httpError status=${statusCode}`);
-  }, [pushDebug]);
+  }, []);
 
   const retryLoad = useCallback(() => {
     setLoadError(null);
     setLoading(true);
     setReloadKey((k) => k + 1);
-    pushDebug(`retry`);
-  }, [pushDebug]);
+  }, []);
 
 
   const shouldInterceptGameLink = useCallback(
@@ -560,7 +545,6 @@ export default function WebViewScreen({
   // Intercept game links and deep links (forum posts, etc.) for native stack / swipe-back
   const handleShouldStartLoad = useCallback(
     (request: { url: string; navigationType?: string }) => {
-      pushDebug(`shouldStart url=${String(request?.url || '')} type=${String(request?.navigationType || '')}`);
       if (interceptGameLinks && shouldInterceptGameLink(request.url)) return false;
       try {
         const url = new URL(request.url);
@@ -579,7 +563,7 @@ export default function WebViewScreen({
       } catch {}
       return true;
     },
-    [base, interceptGameLinks, pathname, pathPart, rawPath, router, shouldInterceptGameLink, pushDebug]
+    [base, interceptGameLinks, pathname, pathPart, rawPath, router, shouldInterceptGameLink]
   );
 
   return (
@@ -638,15 +622,10 @@ export default function WebViewScreen({
           thirdPartyCookiesEnabled
           injectedJavaScriptBeforeContentLoaded={injectedBeforeContentLoaded}
           injectedJavaScript={injectedJs}
-          onLoadStart={() => { 
-            setLoading(true); 
-            setLoadError(null); 
-            pushDebug(`loadStart uri=${uri}`);
-          }}
+          onLoadStart={() => { setLoading(true); setLoadError(null); }}
           onLoadEnd={handleLoadEnd}
           onHttpError={handleHttpError}
           onNavigationStateChange={(navState) => {
-            pushDebug(`navState loading=${String(!!navState.loading)} url=${String((navState as any)?.url || '')}`);
             if (!navState.loading) {
               setLoading(false);
             }
@@ -654,17 +633,6 @@ export default function WebViewScreen({
           onShouldStartLoadWithRequest={handleShouldStartLoad}
           onMessage={handleMessage}
         />
-      )}
-
-      {debugWebView && (
-        <View pointerEvents="none" style={[styles.debugOverlay, { bottom: (padBottom !== false ? 90 : 12) + insets.bottom }]}>
-          <Text style={styles.debugTitle}>WebView debug (loading={String(loading)})</Text>
-          {debugLines.map((l, idx) => (
-            <Text key={`${idx}-${l}`} style={styles.debugLine} numberOfLines={1}>
-              {l}
-            </Text>
-          ))}
-        </View>
       )}
     </View>
   );
@@ -698,18 +666,6 @@ const styles = StyleSheet.create({
     height: 80,
     marginBottom: 64,
   },
-  debugOverlay: {
-    position: 'absolute',
-    left: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    zIndex: 50,
-  },
-  debugTitle: { color: '#fff', fontSize: 12, fontWeight: '700', marginBottom: 4 },
-  debugLine: { color: '#fff', fontSize: 11, fontFamily: 'monospace' },
   retryBtn: {
     marginTop: 16,
     paddingHorizontal: 24,

@@ -31,7 +31,6 @@ export default function FeedScreen() {
       title={t('feed')}
       showHeader={false}
       hideWebHeader
-      debugWebView
     />
   );
 }
