@@ -735,6 +735,29 @@ export default function HomePage() {
     }
   };
 
+  const handleBlockUserFromGallery = async (authorId: string) => {
+    if (!user || authorId === user.id) return;
+    if (!confirm(t('blockUserConfirm') || 'Block this user? Their content will be hidden from your feed.')) return;
+    try {
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'block', friendId: authorId }),
+        credentials: 'include',
+      });
+      if (response.ok) {
+        setGalleryImages(prev => prev.filter((img: any) => img.author?.id !== authorId));
+        closeImageModal();
+        showToast(t('blockUserSuccess') || 'User blocked. Their content is hidden from your feed.', 'success');
+      } else {
+        const err = await response.json();
+        showToast(err.error || 'Failed to block user', 'error');
+      }
+    } catch {
+      showToast('Failed to block user', 'error');
+    }
+  };
+
   const handleReportComment = async (commentId: string, reason: string, details?: string) => {
     if (!user) return;
 
@@ -1911,10 +1934,13 @@ export default function HomePage() {
           title={selectedGalleryImage?.title ?? `${selectedCollection!.username}'s collection`}
           description={selectedGalleryImage?.description ?? `${selectedCollection?.gameCount ?? 0} games in collection`}
           author={{
+            id: selectedGalleryImage?.author?.id ?? (selectedCollection as any)?.userId,
             name: selectedGalleryImage?.author.name ?? selectedCollection!.username,
             avatar: selectedGalleryImage?.author.avatar ?? selectedCollection!.avatar ?? '/DiceLogo.svg',
             title: (selectedGalleryImage?.author as any)?.title ?? null
           }}
+          authorId={selectedGalleryImage?.author?.id ?? (selectedCollection as any)?.userId}
+          onBlockUser={selectedGalleryImage && user ? handleBlockUserFromGallery : undefined}
           createdAt={selectedGalleryImage?.createdAt ?? ''}
           category={selectedGalleryImage?.category ?? 'collections'}
           isFeatured={false}

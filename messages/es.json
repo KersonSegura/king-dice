@@ -118,7 +118,9 @@
     "todaysMysteryGame": "Juego Misterioso de Hoy",
     "playBoardleNow": "Jugar Boardle Ahora",
     "newGameIn": "Nuevo juego en",
-    "calculating": "calculando..."
+    "calculating": "calculando...",
+    "blockUserConfirm": "¿Bloquear a este usuario? Su contenido se ocultará de tu feed.",
+    "blockUserSuccess": "Usuario bloqueado. Su contenido está oculto de tu feed."
   },
   "profile": {
     "profile": "Perfil",
@@ -565,6 +567,7 @@
     "publishDraft": "Publicar borrador",
     "deleteImage": "Eliminar imagen",
     "reportImage": "Reportar imagen",
+    "blockUser": "Bloquear usuario",
     "like": "Me gusta",
     "viewComments": "Ver comentarios",
     "signInToVote": "Inicia sesión para votar",
@@ -663,6 +666,9 @@
     "edit": "Editar",
     "delete": "Eliminar",
     "report": "Reportar",
+    "blockUser": "Bloquear usuario",
+    "blockUserConfirm": "¿Bloquear a este usuario? Sus publicaciones se ocultarán de tu feed y no podrá enviarte mensajes.",
+    "blockUserSuccess": "Usuario bloqueado. Su contenido está oculto de tu feed.",
     "signInToPost": "Por favor inicia sesión para crear una publicación",
     "title": "Título",
     "content": "Contenido",

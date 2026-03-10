@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLevelProgress } from '@/lib/reputation';
+import { getAllBlockedUserIds } from '@/lib/blocked-users';
+import { getUserFromToken } from '@/lib/auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -57,6 +59,21 @@ export async function GET(request: NextRequest) {
     }
 
     const user = users;
+
+    // If viewer is logged in, hide profile when there is a block (viewer blocked them or they blocked viewer)
+    const token = request.cookies.get('auth_token')?.value || request.cookies.get('token')?.value;
+    if (token) {
+      const authResult = await getUserFromToken(token);
+      if (authResult.success && authResult.user) {
+        const viewerId = authResult.user.id;
+        if (viewerId !== user.id) {
+          const blockedIds = await getAllBlockedUserIds(viewerId);
+          if (blockedIds.includes(user.id)) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+          }
+        }
+      }
+    }
 
     // Calculate level progress using the same function as level-progress route
     const levelProgress = await getLevelProgress(user.id);

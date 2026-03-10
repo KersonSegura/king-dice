@@ -118,7 +118,9 @@
     "todaysMysteryGame": "Today's Mystery Game",
     "playBoardleNow": "Play Boardle Now",
     "newGameIn": "New game in",
-    "calculating": "calculating..."
+    "calculating": "calculating...",
+    "blockUserConfirm": "Block this user? Their content will be hidden from your feed.",
+    "blockUserSuccess": "User blocked. Their content is hidden from your feed."
   },
   "profile": {
     "profile": "Profile",
@@ -565,6 +567,7 @@
     "publishDraft": "Publish draft",
     "deleteImage": "Delete image",
     "reportImage": "Report image",
+    "blockUser": "Block user",
     "like": "Like",
     "viewComments": "View comments",
     "signInToVote": "Sign in to vote",
@@ -663,6 +666,9 @@
     "edit": "Edit",
     "delete": "Delete",
     "report": "Report",
+    "blockUser": "Block user",
+    "blockUserConfirm": "Block this user? Their posts will be hidden from your feed and they will not be able to message you.",
+    "blockUserSuccess": "User blocked. Their content is hidden from your feed.",
     "deletePost": "Delete Post",
     "deleteComment": "Delete Comment",
     "categoryGeneral": "General Discussion",

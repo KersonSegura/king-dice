@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { BookOpen, MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft, X } from 'lucide-react';
+import { BookOpen, MessageSquare, ThumbsUp, ThumbsDown, Flag, Plus, User, Calendar, MessageCircle, Lock, Trash2, ArrowUp, ArrowLeft, X, Ban, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -52,6 +52,8 @@ function ForumsPageContent() {
   const [moderationAlert, setModerationAlert] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [openPostMenuId, setOpenPostMenuId] = useState<string | null>(null);
+  const postMenuRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [votingPosts, setVotingPosts] = useState<Set<string>>(new Set());
@@ -133,6 +135,18 @@ function ForumsPageContent() {
       setSelectedAuthor(authorParam);
     }
   }, [searchParams]);
+
+  // Close post menu when clicking outside
+  useEffect(() => {
+    if (!openPostMenuId) return;
+    const close = (e: MouseEvent) => {
+      if (postMenuRef.current && !postMenuRef.current.contains(e.target as Node)) {
+        setOpenPostMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [openPostMenuId]);
 
   // Load posts and categories
   useEffect(() => {
@@ -363,6 +377,32 @@ function ForumsPageContent() {
   const handleReport = (post: ForumPost) => {
     setReportingPost(post);
     setShowReport(true);
+  };
+
+  const handleBlockUser = async (authorId: string) => {
+    if (!isAuthenticated || !user) {
+      setShowLoginModal(true);
+      return;
+    }
+    if (authorId === user.id) return;
+    if (!confirm(t('blockUserConfirm') || 'Block this user? Their posts will be hidden from your feed and they will not be able to message you.')) return;
+    try {
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'block', friendId: authorId }),
+        credentials: 'include',
+      });
+      if (response.ok) {
+        setPosts(prev => prev.filter(p => p.author.id !== authorId));
+        showToast(t('blockUserSuccess') || 'User blocked. Their content is hidden from your feed.', 'success');
+      } else {
+        const err = await response.json();
+        showToast(err.error || 'Failed to block user', 'error');
+      }
+    } catch {
+      showToast('Failed to block user', 'error');
+    }
   };
 
   const handleDeletePost = (postId: string) => {
@@ -710,35 +750,64 @@ function ForumsPageContent() {
                       </div>
                     </div>
                     
-                    {/* Action buttons - Delete and Report */}
-                    <div className="flex items-center space-x-2">
-                      {/* Delete button - only show to post author */}
-                      {isAuthenticated && user && post.author.id === user.id && (
+                    {/* Action: Delete for own post, or 3-dot menu (Report / Block) for others */}
+                    <div className="flex items-center relative">
+                      {isAuthenticated && user && post.author.id === user.id ? (
                         <ModernTooltip content={t('delete') + ' ' + t('post')} position="top">
                           <button
                             onClick={() => handleDeletePost(post.id)}
                             className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            aria-label={t('delete') + ' ' + t('post')}
                           >
                             <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                         </ModernTooltip>
-                      )}
-                      
-                      {/* Report button */}
-                      <ModernTooltip content={!isAuthenticated ? tCommon('pleaseSignIn') + ' to ' + t('report').toLowerCase() : t('report') + ' ' + t('post')} position="top">
-                        <button
-                          onClick={() => {
-                            if (isAuthenticated) {
-                              handleReport(post);
-                            } else {
-                              setShowLoginModal(true);
-                            }
-                          }}
-                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      ) : (
+                        <div
+                          ref={openPostMenuId === post.id ? postMenuRef : undefined}
+                          className="relative"
                         >
-                          <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </button>
-                      </ModernTooltip>
+                          <ModernTooltip content={!isAuthenticated ? tCommon('pleaseSignIn') : t('report') + ' / ' + (t('blockUser') || 'Block')} position="top">
+                            <button
+                              onClick={() => {
+                                if (!isAuthenticated) {
+                                  setShowLoginModal(true);
+                                  return;
+                                }
+                                setOpenPostMenuId(prev => prev === post.id ? null : post.id);
+                              }}
+                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors rounded"
+                              aria-label={t('report')}
+                            >
+                              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
+                            </button>
+                          </ModernTooltip>
+                          {openPostMenuId === post.id && (
+                            <div className="absolute right-0 top-full mt-1 py-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                              <button
+                                onClick={() => {
+                                  handleReport(post);
+                                  setOpenPostMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <Flag className="w-4 h-4 text-gray-500" />
+                                {t('report')} {t('post')}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleBlockUser(post.author.id);
+                                  setOpenPostMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <Ban className="w-4 h-4 text-gray-500" />
+                                {t('blockUser') || 'Block user'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

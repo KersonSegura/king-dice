@@ -68,8 +68,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow King Dice to access your photos.",
-          "cameraPermission": "Allow King Dice to access your camera."
+          "photosPermission": "Choose photos from your library to share in posts, e.g. your board game setup or collection.",
+          "cameraPermission": "Take photos of your board game setup to share in posts and the gallery."
         }
       ],
       "expo-localization",

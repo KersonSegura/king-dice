@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getUserFromToken } from '@/lib/auth';
+import { emailService } from '@/lib/email-service';
 
 // GET - Get user's friends list
 
@@ -58,10 +60,26 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Send friend request or accept/decline
+// POST - Send friend request or accept/decline/block (requires auth for mutate actions)
 export async function POST(request: NextRequest) {
   try {
-    const { action, userId, friendId } = await request.json();
+    const body = await request.json();
+    const { action, userId: bodyUserId, friendId } = body;
+
+    // For mutate actions, require auth and use authenticated user as userId
+    const mutateActions = ['send_request', 'accept', 'decline', 'unfriend', 'block'];
+    let userId = bodyUserId;
+    if (mutateActions.includes(action)) {
+      const token = request.cookies.get('auth_token')?.value;
+      if (!token) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const authResult = await getUserFromToken(token);
+      if (!authResult.success || !authResult.user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      userId = authResult.user.id;
+    }
 
     if (!userId || !friendId) {
       return NextResponse.json({ error: 'User ID and Friend ID are required' }, { status: 400 });
@@ -182,6 +200,24 @@ export async function POST(request: NextRequest) {
           .from('friendships')
           .insert({ user_id: userId, friend_id: friendId, status: 'blocked' });
         if (blockErr) return NextResponse.json({ error: 'Failed to block' }, { status: 500 });
+
+        // Notify developer (Guideline 1.2: blocking should notify developer of inappropriate content)
+        try {
+          const { data: blocker } = await supabaseAdmin.from('users').select('username').eq('id', userId).single();
+          const { data: blocked } = await supabaseAdmin.from('users').select('username').eq('id', friendId).single();
+          const blockerName = (blocker as any)?.username || userId;
+          const blockedName = (blocked as any)?.username || friendId;
+          const supportEmail = process.env.SUPPORT_EMAIL || 'support@kingdice.gg';
+          const text = `User "${blockerName}" (${userId}) blocked user "${blockedName}" (${friendId}). Their content is now hidden from the blocker's feed. Consider reviewing for inappropriate content.`;
+          await emailService.sendEmail({
+            to: supportEmail,
+            subject: `[King Dice] User block: ${blockerName} blocked ${blockedName}`,
+            html: `<p>${text.replace(/\n/g, '<br>')}</p>`,
+            text,
+          });
+        } catch (e) {
+          console.error('Block notification email failed:', e);
+        }
 
         return NextResponse.json({ success: true });
       }

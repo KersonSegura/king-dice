@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getUserFromToken } from '@/lib/auth';
+import { getAllBlockedUserIds } from '@/lib/blocked-users';
 import { cookies } from 'next/headers';
 
 // Force dynamic rendering
@@ -165,7 +166,7 @@ export async function GET(request: NextRequest) {
           return usernameA.localeCompare(usernameB);
         });
 
-        // Get current user ID for follow status checking
+        // Get current user ID for follow status and blocked filtering
         let currentUserId: string | null = null;
         try {
           const cookieStore = await cookies();
@@ -180,11 +181,25 @@ export async function GET(request: NextRequest) {
           console.log('[SEARCH API] Could not get current user for follow status:', error);
         }
 
-        // Get follow status for each user if current user is logged in
-        let followingUserIds: Set<string> = new Set();
+        // Filter out blocked users: searcher must not see users they blocked or who blocked them
+        let usersForResponse = sortedUsers;
         if (currentUserId && sortedUsers.length > 0) {
           try {
-            const userIds = sortedUsers.slice(0, limit).map((u: any) => u.id).filter(Boolean);
+            const blockedIds = await getAllBlockedUserIds(currentUserId);
+            if (blockedIds.length > 0) {
+              const blockedSet = new Set(blockedIds);
+              usersForResponse = sortedUsers.filter((u: any) => !blockedSet.has(u.id));
+            }
+          } catch (err) {
+            console.error('[SEARCH API] Error filtering blocked users:', err);
+          }
+        }
+
+        // Get follow status for each user if current user is logged in
+        let followingUserIds: Set<string> = new Set();
+        if (currentUserId && usersForResponse.length > 0) {
+          try {
+            const userIds = usersForResponse.slice(0, limit).map((u: any) => u.id).filter(Boolean);
             if (userIds.length > 0) {
               // Use the same column naming as the follow API route (camelCase)
               const { data: follows, error: followError } = await supabaseAdmin
@@ -220,7 +235,7 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        users = sortedUsers.slice(0, limit).map((user: any) => {
+        users = usersForResponse.slice(0, limit).map((user: any) => {
           const isFollowing = followingUserIds.has(user.id);
           if (currentUserId) {
             console.log(`[SEARCH API] User ${user.username} (${user.id}): isFollowing=${isFollowing} (currentUserId: ${currentUserId})`);
@@ -237,7 +252,7 @@ export async function GET(request: NextRequest) {
           };
         });
 
-        console.log('[SEARCH API] Final user results:', users.length);
+        console.log('[SEARCH API] Final user results (after blocked filter):', users.length);
 
         // Log errors if any
         if (usernameResult.error) {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
-import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check } from 'lucide-react';
+import { X, MessageCircle, Heart, Flag, Trash2, ChevronLeft, ChevronRight, Edit2, Check, Ban } from 'lucide-react';
 import ExpandableText from './ExpandableText';
 import ReportContent from './ReportContent';
 import { useLocale, useTranslations } from 'next-intl';
@@ -37,10 +37,13 @@ interface ImageModalProps {
   alt?: string;
   description?: string;
   author?: {
+    id?: string;
     name: string;
     avatar: string;
     title?: string | null;
   };
+  authorId?: string;
+  onBlockUser?: (authorId: string) => void | Promise<void>;
   createdAt?: string;
   category?: string;
   isFeatured?: boolean;
@@ -82,6 +85,8 @@ export default function ImageModal({
   alt,
   description, 
   author,
+  authorId,
+  onBlockUser,
   createdAt,
   category,
   isFeatured,
@@ -672,7 +677,15 @@ export default function ImageModal({
                       <Trash2 className="w-5 h-5" />
                     </button>
                   )}
-                  
+                  {onBlockUser && authorId && currentUserId && authorId !== currentUserId && (
+                    <button
+                      onClick={() => onBlockUser(authorId)}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title={tGallery('blockUser') || 'Block user'}
+                    >
+                      <Ban className="w-5 h-5" />
+                    </button>
+                  )}
                   {canReport && onReport && (
                     <button
                       onClick={handleImageReport}
@@ -1135,7 +1148,15 @@ export default function ImageModal({
                       <Trash2 className="w-5 h-5" />
                     </button>
                 )}
-                
+                {onBlockUser && authorId && currentUserId && authorId !== currentUserId && (
+                    <button
+                      onClick={() => onBlockUser(authorId)}
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title={tGallery('blockUser') || 'Block user'}
+                    >
+                      <Ban className="w-5 h-5" />
+                    </button>
+                )}
                 {canReport && onReport && (
                     <button
                       onClick={handleImageReport}
