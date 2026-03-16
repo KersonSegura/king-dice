@@ -417,7 +417,7 @@ export default function Feed({ userId, limit = 20, onItemClick, onCollectionClic
                 onKeyDown={(e) => e.key === 'Enter' && handleCollectionClick()}
                 className="col-span-2 md:col-span-2 group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
               >
-                <div className="aspect-[16/9] md:aspect-square relative overflow-hidden bg-gray-100">
+                <div className="aspect-[16/9] md:aspect-[2/1] relative overflow-hidden bg-gray-100">
                   {collection.collectionPhoto ? (
                     <Image
                       src={collection.collectionPhoto}
