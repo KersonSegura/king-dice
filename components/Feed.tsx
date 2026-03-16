@@ -351,7 +351,7 @@ export default function Feed({ userId, limit = 20, onItemClick, onCollectionClic
   if (loading && page === 1) {
     return (
       <div className="max-w-6xl mx-auto px-0 py-2 sm:p-2">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1">
           {[...Array(20)].map((_, i) => (
             <div key={i} className="aspect-square bg-gray-200 animate-pulse"></div>
           ))}
@@ -417,7 +417,7 @@ export default function Feed({ userId, limit = 20, onItemClick, onCollectionClic
                 onKeyDown={(e) => e.key === 'Enter' && handleCollectionClick()}
                 className="col-span-2 md:col-span-2 group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
               >
-                <div className="aspect-[16/9] relative overflow-hidden bg-gray-100">
+                <div className="aspect-[16/9] md:aspect-square relative overflow-hidden bg-gray-100">
                   {collection.collectionPhoto ? (
                     <Image
                       src={collection.collectionPhoto}
@@ -464,8 +464,8 @@ export default function Feed({ userId, limit = 20, onItemClick, onCollectionClic
               className="group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
               onClick={() => onItemClick?.(item)}
             >
-              {/* Main Image/Content - Square on mobile, 16:9 on desktop to match collection tiles */}
-              <div className="aspect-square md:aspect-[16/9] relative overflow-hidden bg-gray-100">
+              {/* Main Image/Content - Square aspect ratio */}
+              <div className="aspect-square relative overflow-hidden bg-gray-100">
                 {item.imageUrl ? (
                   <Image
                     src={item.thumbnailUrl || item.imageUrl}
