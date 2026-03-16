@@ -464,8 +464,8 @@ export default function Feed({ userId, limit = 20, onItemClick, onCollectionClic
               className="group relative bg-white overflow-hidden hover:z-10 transition-all duration-200 cursor-pointer"
               onClick={() => onItemClick?.(item)}
             >
-              {/* Main Image/Content - Square Aspect Ratio */}
-              <div className="aspect-square relative overflow-hidden bg-gray-100">
+              {/* Main Image/Content - Square on mobile, 16:9 on desktop to match collection tiles */}
+              <div className="aspect-square md:aspect-[16/9] relative overflow-hidden bg-gray-100">
                 {item.imageUrl ? (
                   <Image
                     src={item.thumbnailUrl || item.imageUrl}
