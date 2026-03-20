@@ -125,7 +125,7 @@
   "registerFailedTitle": "Registration Failed",
   "registerFailedMessage": "Could not create account",
   "verifyEmailTitle": "Verify your email",
-  "verifyEmailHint": "We sent a 6-digit code to {email}. Enter it below.",
+  "verifyEmailHint": "We sent a 6-digit code to {{email}}. Enter it below.",
   "verifyEmailSpamReminder": "We sent your code by email. If you don't see it, check your spam folder too.",
   "useDifferentEmail": "Use a different email",
   "passwordRequirementsTitle": "Password Requirements:",

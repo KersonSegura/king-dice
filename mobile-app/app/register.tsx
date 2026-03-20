@@ -271,6 +271,7 @@ export default function RegisterScreen() {
           <Text style={styles.verifyHint}>
             {t('verifyEmailHint', { email: pendingVerificationEmail ?? '' })}
           </Text>
+          <Text style={styles.verifySpamReminder}>{t('verifyEmailSpamReminder')}</Text>
           <View style={styles.verifyCodeWrap}>
             <TextInput
               style={styles.verifyCodeInput}
@@ -531,7 +532,12 @@ const styles = StyleSheet.create({
   verifyHint: {
     fontSize: 14,
     color: GRAY_500,
-    marginBottom: 20,
+    marginBottom: 8,
+  },
+  verifySpamReminder: {
+    fontSize: 14,
+    color: GRAY_500,
+    marginBottom: 16,
   },
   verifyCodeWrap: {
     borderWidth: 1,
