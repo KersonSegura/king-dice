@@ -12,12 +12,15 @@ interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
+  headers?: Record<string, string>;
 }
 
 // Email service for sending verification codes and other emails
 export class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private fromEmail: string;
+  private replyToEmail: string;
   private isDevelopment: boolean;
   private useOAuth2: boolean;
 
@@ -40,6 +43,7 @@ export class EmailService {
     
     // Business email address for sending verification emails
     this.fromEmail = process.env.FROM_EMAIL || 'verify@kingdice.gg';
+    this.replyToEmail = process.env.REPLY_TO_EMAIL || 'support@kingdice.gg';
     
     // Check if we're in development (no password or OAuth configured)
     this.isDevelopment = !this.useOAuth2 && !smtpPass;
@@ -206,6 +210,12 @@ export class EmailService {
           subject: options.subject,
           html: options.html,
           text: options.text || options.subject, // Fallback text version
+          replyTo: options.replyTo || this.replyToEmail,
+          headers: {
+            'Auto-Submitted': 'auto-generated',
+            'X-Auto-Response-Suppress': 'All',
+            ...options.headers,
+          },
         };
 
         const info = await this.transporter.sendMail(mailOptions);
@@ -293,10 +303,23 @@ export class EmailService {
         `From: King Dice <${this.fromEmail}>`,
         `To: ${options.to}`,
         `Subject: ${encodeSubject(options.subject)}`,
+        `Reply-To: ${options.replyTo || this.replyToEmail}`,
+        'Auto-Submitted: auto-generated',
+        'X-Auto-Response-Suppress: All',
         'MIME-Version: 1.0',
+        'Content-Type: multipart/alternative; boundary="kd_boundary"',
+        '',
+        '--kd_boundary',
+        'Content-Type: text/plain; charset=utf-8',
+        '',
+        options.text || options.subject,
+        '',
+        '--kd_boundary',
         'Content-Type: text/html; charset=utf-8',
         '',
-        options.html
+        options.html,
+        '',
+        '--kd_boundary--',
       ].join('\n');
 
       // Encode message in base64url format
@@ -332,11 +355,11 @@ export class EmailService {
   }
 
   async sendVerificationCode(email: string, code: string, username: string): Promise<boolean> {
-    const subject = 'King Dice - Two-Factor Authentication Code';
+    const subject = 'Your King Dice sign-in code';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #fbae17; margin: 0;">🎲 King Dice</h1>
+          <h1 style="color: #fbae17; margin: 0;">King Dice</h1>
           <p style="color: #666; margin: 5px 0 0 0;">Two-Factor Authentication</p>
         </div>
         
@@ -360,20 +383,35 @@ export class EmailService {
         </div>
       </div>
     `;
+    const text = [
+      'King Dice',
+      '',
+      `Hello ${username},`,
+      '',
+      'Use this code to complete your sign in:',
+      code,
+      '',
+      'This code expires in 10 minutes.',
+      "If you didn't request this code, you can ignore this email.",
+    ].join('\n');
 
     return await this.sendEmail({
       to: email,
       subject,
-      html
+      html,
+      text,
+      headers: {
+        'X-Entity-Ref-ID': `kd-login-${Date.now()}`,
+      },
     });
   }
 
   async sendRegistrationVerificationCode(email: string, code: string, username: string): Promise<boolean> {
-    const subject = 'King Dice - Verify Your Email Address';
+    const subject = 'Verify your King Dice email address';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #fbae17; margin: 0;">🎲 King Dice</h1>
+          <h1 style="color: #fbae17; margin: 0;">King Dice</h1>
           <p style="color: #666; margin: 5px 0 0 0;">Email Verification</p>
         </div>
         
@@ -397,11 +435,26 @@ export class EmailService {
         </div>
       </div>
     `;
+    const text = [
+      'King Dice',
+      '',
+      `Hello ${username},`,
+      '',
+      'Use this code to verify your email address:',
+      code,
+      '',
+      'This code expires in 10 minutes.',
+      "If you didn't create an account with King Dice, you can ignore this email.",
+    ].join('\n');
 
     return await this.sendEmail({
       to: email,
       subject,
-      html
+      html,
+      text,
+      headers: {
+        'X-Entity-Ref-ID': `kd-register-${Date.now()}`,
+      },
     });
   }
 }
