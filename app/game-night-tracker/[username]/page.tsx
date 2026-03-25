@@ -332,7 +332,12 @@ export default function UserTrackerPage() {
         setTrackerName(data.tracker.tracker_name);
         setGameTabs(data.tracker.game_tabs || [{ id: 'tab-1', name: 'All Games', players: [] }]);
         setActiveTabId('tab-1');
-        if (user?.username) {
+        // Use share_id-based URL so both web and mobile can open the shared view.
+        const shareId = data?.tracker?.share_id;
+        if (shareId) {
+          setShareUrl(`${window.location.origin}/game-night-tracker?share=${encodeURIComponent(shareId)}&openApp=1`);
+        } else if (user?.username) {
+          // Fallback for legacy trackers (should be rare).
           setShareUrl(`${window.location.origin}/game-night-tracker/${user.username}`);
         }
         return data.tracker;
@@ -366,7 +371,10 @@ export default function UserTrackerPage() {
             setGameTabs([{ id: 'tab-1', name: data.tracker.game_filter || 'All Games', players: data.tracker.players || [] }]);
           }
           // Set share URL
-          if (user?.username && data.tracker.user_id === user.id) {
+          const shareId = data?.tracker?.share_id;
+          if (shareId) {
+            setShareUrl(`${window.location.origin}/game-night-tracker?share=${encodeURIComponent(shareId)}&openApp=1`);
+          } else if (user?.username && data.tracker.user_id === user.id) {
             setShareUrl(`${window.location.origin}/game-night-tracker/${user.username}`);
           } else {
             setShareUrl(`${window.location.origin}/game-night-tracker/${usernameParam}`);
@@ -640,7 +648,10 @@ export default function UserTrackerPage() {
       if (response.ok) {
         const data = await response.json();
         setCurrentTracker(data.tracker);
-        if (user?.username) {
+        const shareId = data?.tracker?.share_id;
+        if (shareId) {
+          setShareUrl(`${window.location.origin}/game-night-tracker?share=${encodeURIComponent(shareId)}&openApp=1`);
+        } else if (user?.username) {
           setShareUrl(`${window.location.origin}/game-night-tracker/${user.username}`);
         }
         showToast(tTracker('saved'), 'success');
@@ -659,7 +670,14 @@ export default function UserTrackerPage() {
   // Copy share URL
   const copyShareUrl = async () => {
     if (!shareUrl) {
-      if (user?.username) {
+      const shareId = currentTracker?.share_id;
+      if (shareId) {
+        const url = `${window.location.origin}/game-night-tracker?share=${encodeURIComponent(shareId)}&openApp=1`;
+        await navigator.clipboard.writeText(url);
+        setShareCopied(true);
+        showToast(tTracker('linkCopied'), 'success');
+        setTimeout(() => setShareCopied(false), 2000);
+      } else if (user?.username) {
         const url = `${window.location.origin}/game-night-tracker/${user.username}`;
         await navigator.clipboard.writeText(url);
         setShareCopied(true);

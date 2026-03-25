@@ -5,7 +5,7 @@ import { oauth2Service } from './oauth-service';
 
 // Email service for sending verification codes
 // For development, we'll use a simple file-based approach
-// In production, you'd use a real email service like SendGrid, AWS SES, etc.
+// In production, use SMTP with aligned SPF/DKIM/DMARC for the sending domain (see docs/EMAIL-DELIVERABILITY.md).
 
 interface EmailOptions {
   to: string;
@@ -14,6 +14,16 @@ interface EmailOptions {
   text?: string;
   replyTo?: string;
   headers?: Record<string, string>;
+}
+
+/** Headers that help inbox placement for automated transactional mail (not marketing). */
+function defaultTransactionalHeaders(overrides?: Record<string, string>): Record<string, string> {
+  return {
+    'Auto-Submitted': 'auto-generated',
+    'X-Auto-Response-Suppress': 'All',
+    'X-Transaction-Type': 'transactional',
+    ...overrides,
+  };
 }
 
 // Email service for sending verification codes and other emails
@@ -209,13 +219,9 @@ export class EmailService {
           to: options.to,
           subject: options.subject,
           html: options.html,
-          text: options.text || options.subject, // Fallback text version
+          text: options.text || options.subject, // Fallback text version (multipart/alternative when both set)
           replyTo: options.replyTo || this.replyToEmail,
-          headers: {
-            'Auto-Submitted': 'auto-generated',
-            'X-Auto-Response-Suppress': 'All',
-            ...options.headers,
-          },
+          headers: defaultTransactionalHeaders(options.headers),
         };
 
         const info = await this.transporter.sendMail(mailOptions);
@@ -298,14 +304,18 @@ export class EmailService {
         return chunks.map(chunk => `=?UTF-8?B?${chunk}?=`).join('\n ');
       };
 
+      const mergedHeaders = defaultTransactionalHeaders(options.headers);
+      const extraHeaderLines = Object.entries(mergedHeaders).map(
+        ([k, v]) => `${k}: ${String(v).replace(/\r?\n/g, ' ')}`
+      );
+
       // Create email message in RFC 2822 format
       const emailMessage = [
         `From: King Dice <${this.fromEmail}>`,
         `To: ${options.to}`,
         `Subject: ${encodeSubject(options.subject)}`,
         `Reply-To: ${options.replyTo || this.replyToEmail}`,
-        'Auto-Submitted: auto-generated',
-        'X-Auto-Response-Suppress: All',
+        ...extraHeaderLines,
         'MIME-Version: 1.0',
         'Content-Type: multipart/alternative; boundary="kd_boundary"',
         '',

@@ -324,6 +324,67 @@ export default function GameNightTrackerPage() {
     }
   }, [isAuthenticated, authLoading, user?.username, router]);
 
+  // If a share link is opened with `openApp=1`, try to hand off to the native app.
+  // If the app isn't installed, we fall back to the web page.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const openApp = urlParams.get('openApp');
+    if (openApp !== '1') return;
+
+    const shareId = urlParams.get('share');
+    const deepLink = `kingdice://game-night-tracker${shareId ? `?share=${encodeURIComponent(shareId)}` : ''}`;
+
+    // Remove openApp so the fallback doesn't re-trigger this effect.
+    const fallbackUrl = new URL(window.location.href);
+    fallbackUrl.searchParams.delete('openApp');
+    const fallbackStr = fallbackUrl.toString();
+
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    if (!isMobile) return;
+
+    const isAndroid = /Android/i.test(ua);
+    if (isAndroid) {
+      // Android: use intent URL so the OS can automatically fall back to the web URL.
+      const pathAndQuery = `game-night-tracker${shareId ? `?share=${encodeURIComponent(shareId)}` : ''}`;
+      const intentUrl = `intent://${pathAndQuery}#Intent;scheme=kingdice;package=com.kingdice.app;S.browser_fallback_url=${encodeURIComponent(
+        fallbackStr
+      )};end`;
+      window.location.href = intentUrl;
+      return;
+    }
+
+    let didBecomeHidden = false;
+    const handleCancel = () => {
+      didBecomeHidden = true;
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) didBecomeHidden = true;
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleCancel);
+    window.addEventListener('pagehide', handleCancel as any);
+
+    // Give the OS/app a moment to open. If it doesn't, go back to the web URL.
+    const t = setTimeout(() => {
+      if (!didBecomeHidden) {
+        window.location.replace(fallbackStr);
+      }
+    }, 1400);
+
+    // Attempt to open the app.
+    window.location.href = deepLink;
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleCancel);
+      window.removeEventListener('pagehide', handleCancel as any);
+      clearTimeout(t);
+    };
+  }, []);
+
   // Show login modal if not authenticated (similar to Pixel Canvas)
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -351,7 +412,7 @@ export default function GameNightTrackerPage() {
             // Legacy: convert old format to tabs
             setGameTabs([{ id: 'tab-1', name: data.tracker.game_filter || 'All Games', players: data.tracker.players || [] }]);
           }
-          setShareUrl(`${window.location.origin}/game-night-tracker?share=${shareId}`);
+          setShareUrl(`${window.location.origin}/game-night-tracker?share=${encodeURIComponent(shareId)}&openApp=1`);
         }
       }
     } catch (error) {
@@ -403,7 +464,7 @@ export default function GameNightTrackerPage() {
             // Legacy: convert old format to tabs
             setGameTabs([{ id: 'tab-1', name: tracker.game_filter || 'All Games', players: tracker.players || [] }]);
           }
-          setShareUrl(`${window.location.origin}/game-night-tracker?share=${tracker.share_id}`);
+          setShareUrl(`${window.location.origin}/game-night-tracker?share=${encodeURIComponent(tracker.share_id)}&openApp=1`);
         }
       }
     } catch (error) {
@@ -619,12 +680,9 @@ export default function GameNightTrackerPage() {
       if (response.ok) {
         const data = await response.json();
         setCurrentTracker(data.tracker);
-        // Use username-based URL if available, otherwise use share link
-        if (data.tracker.user_id && user?.id === data.tracker.user_id && user?.username) {
-          setShareUrl(`${window.location.origin}/game-night-tracker/${user.username}`);
-        } else {
-          setShareUrl(`${window.location.origin}/game-night-tracker?share=${data.tracker.share_id}`);
-        }
+        // Prefer share_id-based URL so the native app can open the correct shared view.
+        // We always include openApp=1 so a copied link attempts to open the app first.
+        setShareUrl(`${window.location.origin}/game-night-tracker?share=${encodeURIComponent(data.tracker.share_id)}&openApp=1`);
         showToast(tTracker('saved'), 'success');
         setIsEditMode(false); // Exit edit mode after saving
       } else {
