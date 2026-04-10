@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, deleteFromStorage, STORAGE_BUCKETS } from '@/lib/supabase';
 import { getUserFromToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
+
+function getTokenFromRequest(request: NextRequest): string | null {
+  const auth = request.headers.get('authorization');
+  if (auth?.startsWith('Bearer ')) return auth.slice(7);
+  return null;
+}
 
 async function getGalleryImage(id: string) {
   const { data, error } = await supabaseAdmin
@@ -20,8 +27,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // SECURITY: Check authentication first
-    const token = request.cookies.get('auth_token')?.value;
+    // SECURITY: Check authentication first (cookie for web, Bearer for mobile)
+    let token = getTokenFromRequest(request);
+    if (!token) {
+      const cookieStore = await cookies();
+      token = cookieStore.get('auth_token')?.value ?? null;
+    }
 
     if (!token) {
       return NextResponse.json(
@@ -86,8 +97,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // SECURITY: Check authentication first
-    const token = request.cookies.get('auth_token')?.value;
+    // SECURITY: Check authentication first (cookie for web, Bearer for mobile)
+    let token = getTokenFromRequest(request);
+    if (!token) {
+      const cookieStore = await cookies();
+      token = cookieStore.get('auth_token')?.value ?? null;
+    }
 
     if (!token) {
       return NextResponse.json(
