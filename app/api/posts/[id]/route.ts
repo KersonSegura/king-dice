@@ -230,7 +230,7 @@ export async function DELETE(
       );
     }
 
-    console.log(`Forum post deleted: ${id} by user ${authenticatedUser.id}`);
+    console.log(`Forum post deleted: ${id} by user ${authorId}`);
 
     return NextResponse.json(
       { message: 'Post deleted successfully' },
