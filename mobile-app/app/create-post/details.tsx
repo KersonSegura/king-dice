@@ -20,8 +20,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale } from '../../contexts/LocaleContext';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../lib/api-client';
-import { API_BASE_URL } from '../../config/api';
-import * as FileSystem from 'expo-file-system';
+import { getApiBaseUrl } from '../../config/api';
+/**
+ * SDK 54+: `import 'expo-file-system'` exposes stubs that THROW for getInfoAsync/readAsStringAsync/etc.
+ * Real implementations live in `expo-file-system/legacy` (see legacyWarnings in the main package).
+ */
+import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { getPendingImageUri, clearPendingImageUri } from './pendingImageUri';
 
@@ -31,20 +35,33 @@ import { getPendingImageUri, clearPendingImageUri } from './pendingImageUri';
  */
 async function prepareImageForUpload(sourceUri: string): Promise<{ uri: string; fileName: string }> {
   const fileName = `upload-${Date.now()}.jpg`;
-  const cacheUri = `${FileSystem.cacheDirectory}${fileName}`;
+  const cacheDir = FileSystem.cacheDirectory;
+  if (!cacheDir) {
+    throw new Error('cache directory unavailable');
+  }
+  const cacheUri = `${cacheDir}${fileName}`;
 
   try {
     const result = await ImageManipulator.manipulateAsync(sourceUri, [], {
       compress: 0.92,
       format: ImageManipulator.SaveFormat.JPEG,
+      base64: true,
     });
+    // Prefer embedded base64 so we always materialize bytes even if getInfoAsync omits size on some iOS builds.
+    if (result.base64 && result.base64.length > 0) {
+      await FileSystem.writeAsStringAsync(cacheUri, result.base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return { uri: cacheUri, fileName };
+    }
     const info = await FileSystem.getInfoAsync(result.uri);
-    const size = info.exists && 'size' in info ? (info as { size?: number }).size : 0;
-    if (info.exists && size && size > 0) {
+    const rawSize = info.exists && 'size' in info ? (info as { size?: number }).size : undefined;
+    const hasBytes = info.exists && rawSize !== 0 && (rawSize === undefined || (rawSize ?? 0) > 0);
+    if (hasBytes) {
       return { uri: result.uri, fileName };
     }
   } catch (e) {
-    console.warn('prepareImageForUpload: manipulateAsync failed', e);
+    console.warn('prepareImageForUpload: manipulateAsync/materialize failed', e);
   }
 
   try {
@@ -69,6 +86,31 @@ async function prepareImageForUpload(sourceUri: string): Promise<{ uri: string; 
     encoding: FileSystem.EncodingType.Base64,
   });
   return { uri: cacheUri, fileName };
+}
+
+/** React Native: fetch() + FormData often sends an empty file part on iOS; XHR multipart matches browser behavior. */
+function galleryUploadWithXHR(
+  url: string,
+  formData: FormData,
+  token: string
+): Promise<{ ok: boolean; status: number; data: Record<string, unknown> }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.responseType = 'text';
+    xhr.onload = () => {
+      let data: Record<string, unknown> = {};
+      try {
+        if (xhr.responseText) data = JSON.parse(xhr.responseText) as Record<string, unknown>;
+      } catch {
+        data = {};
+      }
+      resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, data });
+    };
+    xhr.onerror = () => reject(new Error('Network request failed'));
+    xhr.send(formData as any);
+  });
 }
 
 const CATEGORIES = [
@@ -200,18 +242,10 @@ export default function CreatePostDetails() {
       formData.append('category', category);
       if (tags.length) formData.append('tags', tags.join(','));
 
-      const response = await fetch(`${API_BASE_URL}/api/gallery/upload`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Let fetch set Content-Type for FormData
-        },
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        Alert.alert(t('uploadFailed'), data.error || t('errorTryAgain'));
+      const uploadUrl = `${getApiBaseUrl()}/api/gallery/upload`;
+      const { ok, data } = await galleryUploadWithXHR(uploadUrl, formData, token);
+      if (!ok) {
+        Alert.alert(t('uploadFailed'), String(data.error ?? t('errorTryAgain')));
         setUploading(false);
         return;
       }
