@@ -233,6 +233,8 @@
     "createdForumPost": "Created a forum post",
     "uploadedToGallery": "Uploaded to gallery",
     "untitledImage": "Untitled image",
+    "imageDeletedSuccessfully": "Image deleted successfully",
+    "imageReportNotImplemented": "Image reporting is not available yet.",
     "noRecentActivity": "No recent activity",
     "gameCollection": "Game Collection",
     "addGame": "Add Game",

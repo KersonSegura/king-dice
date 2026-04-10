@@ -233,6 +233,8 @@
     "createdForumPost": "Creó una publicación en el foro",
     "uploadedToGallery": "Subió a la galería",
     "untitledImage": "Imagen sin título",
+    "imageDeletedSuccessfully": "Imagen eliminada correctamente",
+    "imageReportNotImplemented": "El reporte de imágenes aún no está disponible.",
     "noRecentActivity": "No hay actividad reciente",
     "gameCollection": "Colección de Juegos",
     "addGame": "Agregar Juego",

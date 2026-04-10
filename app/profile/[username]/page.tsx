@@ -561,6 +561,47 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleDeleteGalleryImage = async () => {
+    if (!selectedImage?.imageId) return;
+
+    if (!isAuthenticated || !user?.id) {
+      showToast(tCommon('pleaseSignIn'), 'info');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/gallery/${selectedImage.imageId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorId: user.id }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        showToast(error.message || tCommon('error'), 'error');
+        throw new Error(error.message || 'Failed to delete image');
+      }
+
+      const deletedId = selectedImage.imageId;
+
+      setUserImages(prev => prev.filter(img => img.id !== deletedId));
+      setShowImageModal(false);
+      setSelectedImage(null);
+      setImageComments([]);
+
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('image');
+        url.searchParams.delete('photo');
+        window.history.replaceState({}, '', url);
+      }
+
+      showToast(t('imageDeletedSuccessfully'), 'success');
+    } catch (e) {
+      console.error('Error deleting gallery image:', e);
+    }
+  };
+
   // Load user profile data
   const loadUserProfile = async () => {
     if (!username) return;
@@ -2340,8 +2381,14 @@ export default function UserProfilePage() {
         onReportComment={handleReportGalleryComment}
         onRefreshComments={() => selectedImage?.imageId && loadImageComments(selectedImage.imageId)}
         onRefreshActivity={() => {}}
-        onDelete={() => showToast('Please log in to delete images', 'info')}
-        onReport={() => showToast('Please log in to report images', 'info')}
+        onDelete={handleDeleteGalleryImage}
+        onReport={async (_reason: string, _details?: string) => {
+          if (!isAuthenticated || !user?.id) {
+            showToast(tCommon('pleaseSignIn'), 'info');
+            return;
+          }
+          showToast(t('imageReportNotImplemented'), 'info');
+        }}
         onEditDescription={handleEditDescription}
         canDelete={!!(isAuthenticated && user && selectedImage?.author?.name === user.username)}
         canReport={!!(isAuthenticated && user)}
