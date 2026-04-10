@@ -22,7 +22,51 @@ import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../lib/api-client';
 import { API_BASE_URL } from '../../config/api';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { getPendingImageUri, clearPendingImageUri } from './pendingImageUri';
+
+/** Prepare a local file:// URI for multipart upload. Base64 round-trip fails for many Android content:// and some iOS assets. */
+async function prepareImageForUpload(sourceUri: string): Promise<{ uri: string; fileName: string }> {
+  const fileName = `upload-${Date.now()}.jpg`;
+  const cacheUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+  try {
+    await FileSystem.copyAsync({ from: sourceUri, to: cacheUri });
+    const info = await FileSystem.getInfoAsync(cacheUri);
+    const size = info.exists && 'size' in info ? (info as { size?: number }).size : 0;
+    if (info.exists && size && size > 0) {
+      return { uri: cacheUri, fileName };
+    }
+    await FileSystem.deleteAsync(cacheUri, { idempotent: true }).catch(() => {});
+  } catch (e) {
+    console.warn('prepareImageForUpload: copyAsync failed', e);
+  }
+
+  try {
+    const result = await ImageManipulator.manipulateAsync(sourceUri, [], {
+      compress: 0.9,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+    const info = await FileSystem.getInfoAsync(result.uri);
+    const size = info.exists && 'size' in info ? (info as { size?: number }).size : 0;
+    if (info.exists && size && size > 0) {
+      return { uri: result.uri, fileName };
+    }
+  } catch (e) {
+    console.warn('prepareImageForUpload: manipulateAsync failed', e);
+  }
+
+  const base64 = await FileSystem.readAsStringAsync(sourceUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  if (!base64 || base64.length === 0) {
+    throw new Error('empty or unreadable image');
+  }
+  await FileSystem.writeAsStringAsync(cacheUri, base64, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return { uri: cacheUri, fileName };
+}
 
 const CATEGORIES = [
   { id: 'collections', nameKey: 'categoryGameCollections' },
@@ -129,23 +173,14 @@ export default function CreatePostDetails() {
         return;
       }
 
-      // Copy image to a cache file so fetch always reads real bytes (content:// and long file:// params can send 0 bytes)
-      const cacheFileName = `upload-${Date.now()}.jpg`;
-      const cacheUri = `${FileSystem.cacheDirectory}${cacheFileName}`;
+      let uploadUri: string;
+      let uploadFileName: string;
       try {
-        const base64 = await FileSystem.readAsStringAsync(imageUri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        if (!base64 || base64.length === 0) {
-          Alert.alert(t('uploadFailed'), t('errorImageEmptyOrInvalid'));
-          setUploading(false);
-          return;
-        }
-        await FileSystem.writeAsStringAsync(cacheUri, base64, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+        const prepared = await prepareImageForUpload(imageUri);
+        uploadUri = prepared.uri;
+        uploadFileName = prepared.fileName;
       } catch (e) {
-        console.error('Copy image to cache failed', e);
+        console.error('Prepare image for upload failed', e);
         Alert.alert(t('uploadFailed'), t('errorImageEmptyOrInvalid'));
         setUploading(false);
         return;
@@ -153,9 +188,9 @@ export default function CreatePostDetails() {
 
       const formData = new FormData();
       formData.append('image', {
-        uri: cacheUri,
+        uri: uploadUri,
         type: 'image/jpeg',
-        name: cacheFileName,
+        name: uploadFileName,
       } as any);
       formData.append('title', '');
       formData.append('description', description);
@@ -178,7 +213,7 @@ export default function CreatePostDetails() {
         return;
       }
       clearPendingImageUri();
-      FileSystem.deleteAsync(cacheUri, { idempotent: true }).catch(() => {});
+      FileSystem.deleteAsync(uploadUri, { idempotent: true }).catch(() => {});
       Alert.alert(t('uploadSuccess'), t('uploadSuccessMessage'), [
         { text: 'OK', onPress: () => router.replace('/community-gallery') },
       ]);

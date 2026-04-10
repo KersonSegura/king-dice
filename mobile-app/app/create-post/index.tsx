@@ -137,8 +137,9 @@ export default function CreatePostSelectPhoto() {
 
   const onSelectAsset = async (asset: MediaLibrary.Asset) => {
     const info = await MediaLibrary.getAssetInfoAsync(asset);
-    if (info.localUri) {
-      const uri = await toUploadableUri(info.localUri);
+    const raw = info.localUri || asset.uri;
+    if (raw) {
+      const uri = await toUploadableUri(raw);
       setSelectedUri(uri);
     }
   };
