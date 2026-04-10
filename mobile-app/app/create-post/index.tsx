@@ -25,9 +25,12 @@ import { setPendingImageUri } from './pendingImageUri';
 
 const GRID_GAP = 2;
 
-/** On iOS, the picker can return ph:// (Photo Library) URIs that fetch/upload cannot read. Convert to file://. */
+/** Normalize iOS Photos URIs to a readable path (ph://, assets-library://). */
 async function toUploadableUri(uri: string): Promise<string> {
-  if (!uri.startsWith('ph://')) return uri;
+  const needsNormalize =
+    uri.startsWith('ph://') ||
+    uri.startsWith('assets-library://');
+  if (!needsNormalize) return uri;
   try {
     const result = await ImageManipulator.manipulateAsync(uri, [], {
       compress: 1,
@@ -35,7 +38,7 @@ async function toUploadableUri(uri: string): Promise<string> {
     });
     return result.uri;
   } catch (e) {
-    console.warn('Failed to resolve ph:// URI', e);
+    console.warn('Failed to normalize photo URI', e);
     return uri;
   }
 }
@@ -136,7 +139,9 @@ export default function CreatePostSelectPhoto() {
   };
 
   const onSelectAsset = async (asset: MediaLibrary.Asset) => {
-    const info = await MediaLibrary.getAssetInfoAsync(asset);
+    const info = await MediaLibrary.getAssetInfoAsync(asset, {
+      shouldDownloadFromNetwork: true,
+    } as { shouldDownloadFromNetwork?: boolean });
     const raw = info.localUri || asset.uri;
     if (raw) {
       const uri = await toUploadableUri(raw);

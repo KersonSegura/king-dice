@@ -25,10 +25,27 @@ import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { getPendingImageUri, clearPendingImageUri } from './pendingImageUri';
 
-/** Prepare a local file:// URI for multipart upload. Base64 round-trip fails for many Android content:// and some iOS assets. */
+/** Prepare a local file:// URI for multipart upload.
+ * iOS: copyAsync/base64 often fail for ph://, iCloud placeholders, and some file:// temp paths; ImageManipulator materializes a real JPEG first.
+ * Android: content:// is handled by manipulator or copy.
+ */
 async function prepareImageForUpload(sourceUri: string): Promise<{ uri: string; fileName: string }> {
   const fileName = `upload-${Date.now()}.jpg`;
   const cacheUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+  try {
+    const result = await ImageManipulator.manipulateAsync(sourceUri, [], {
+      compress: 0.92,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+    const info = await FileSystem.getInfoAsync(result.uri);
+    const size = info.exists && 'size' in info ? (info as { size?: number }).size : 0;
+    if (info.exists && size && size > 0) {
+      return { uri: result.uri, fileName };
+    }
+  } catch (e) {
+    console.warn('prepareImageForUpload: manipulateAsync failed', e);
+  }
 
   try {
     await FileSystem.copyAsync({ from: sourceUri, to: cacheUri });
@@ -40,20 +57,6 @@ async function prepareImageForUpload(sourceUri: string): Promise<{ uri: string; 
     await FileSystem.deleteAsync(cacheUri, { idempotent: true }).catch(() => {});
   } catch (e) {
     console.warn('prepareImageForUpload: copyAsync failed', e);
-  }
-
-  try {
-    const result = await ImageManipulator.manipulateAsync(sourceUri, [], {
-      compress: 0.9,
-      format: ImageManipulator.SaveFormat.JPEG,
-    });
-    const info = await FileSystem.getInfoAsync(result.uri);
-    const size = info.exists && 'size' in info ? (info as { size?: number }).size : 0;
-    if (info.exists && size && size > 0) {
-      return { uri: result.uri, fileName };
-    }
-  } catch (e) {
-    console.warn('prepareImageForUpload: manipulateAsync failed', e);
   }
 
   const base64 = await FileSystem.readAsStringAsync(sourceUri, {
