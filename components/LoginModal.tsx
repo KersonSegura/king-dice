@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { X, Mail, Eye, EyeOff } from 'lucide-react';
@@ -17,7 +18,6 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { login } = useAuth();
   const tAuth = useTranslations('auth');
-  const [hasFixedHeaderOffset, setHasFixedHeaderOffset] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -65,30 +65,40 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   }, []);
 
-  // Center relative to visible content area (under fixed header) on web.
-  // In embed (mobile WebView) there is no fixed header, so don't offset.
+  // Lock document scroll while open. Web: freeze body in place (stops window scrollbar).
+  // Embed WebView: keep existing scroll-lock helpers (avoid body position:fixed quirks).
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const isEmbed = document.body.classList.contains('embed');
-      setHasFixedHeaderOffset(!isEmbed);
-    } catch {
-      setHasFixedHeaderOffset(true);
-    }
-  }, []);
+    if (!isOpen) return;
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
+    const html = document.documentElement;
+    const body = document.body;
+    const isEmbed = body.classList.contains('embed');
+    const scrollY = window.scrollY;
+
+    if (isEmbed) {
       lockBodyScroll();
-    } else {
-      unlockBodyScroll();
+      return () => {
+        unlockBodyScroll();
+      };
     }
+
+    html.style.setProperty('overflow', 'hidden', 'important');
+    body.style.setProperty('overflow', 'hidden', 'important');
+    body.style.setProperty('position', 'fixed', 'important');
+    body.style.setProperty('top', `-${scrollY}px`, 'important');
+    body.style.setProperty('left', '0', 'important');
+    body.style.setProperty('right', '0', 'important');
+    body.style.setProperty('width', '100%', 'important');
 
     return () => {
-      if (isOpen) {
-        unlockBodyScroll();
-      }
+      body.style.removeProperty('position');
+      body.style.removeProperty('top');
+      body.style.removeProperty('left');
+      body.style.removeProperty('right');
+      body.style.removeProperty('width');
+      html.style.removeProperty('overflow');
+      body.style.removeProperty('overflow');
+      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
@@ -310,35 +320,31 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   };
 
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4"
-      style={{ overscrollBehavior: 'none', touchAction: 'none' }}
-      onWheel={(e) => {
-        // Extra safety: if any scroll escapes lockBodyScroll, block it at the overlay.
-        if (e.target === e.currentTarget) e.preventDefault();
-      }}
-      onTouchMove={(e) => {
-        if (e.target === e.currentTarget) e.preventDefault();
-      }}
-      onClick={handleBackdropClick}
-      onMouseDown={(e) => {
-        // If mousedown is on backdrop, mark that it didn't start inside
-        if (e.target === e.currentTarget) {
-          mousedownStartedInsideRef.current = false;
-        }
-      }}
-    >
+  return createPortal(
+    <>
+      <div
+        className="fixed inset-0 z-[1000] flex min-h-0 items-center justify-center bg-black/50 p-4"
+        style={{ overscrollBehavior: 'none', touchAction: 'none' }}
+        onWheel={(e) => {
+          if (e.target === e.currentTarget) e.preventDefault();
+        }}
+        onTouchMove={(e) => {
+          if (e.target === e.currentTarget) e.preventDefault();
+        }}
+        onClick={handleBackdropClick}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) {
+            mousedownStartedInsideRef.current = false;
+          }
+        }}
+      >
       <div 
         ref={modalContentRef}
         data-scroll-lock-root
-        className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
-        style={
-          hasFixedHeaderOffset
-            ? { transform: 'translateY(-2rem)', touchAction: 'auto', overscrollBehavior: 'contain' }
-            : { touchAction: 'auto', overscrollBehavior: 'contain' }
-        }
+        className="box-border max-h-[min(90dvh,90vh)] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 sm:p-6 mx-4"
+        style={{ touchAction: 'auto', overscrollBehavior: 'contain' }}
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}
       >
@@ -663,8 +669,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </button>
         </div>
       </div>
-      
-      {/* Two-Factor Authentication Modal */}
+      </div>
       {showTwoFactor && twoFactorData && (
         <TwoFactorModal
           isOpen={showTwoFactor}
@@ -685,6 +690,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           isRegistration={isRegistering} // Pass registration flag so modal knows email was already sent
         />
       )}
-    </div>
+    </>,
+    document.body
   );
 } 
