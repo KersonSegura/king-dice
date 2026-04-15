@@ -65,15 +65,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   }, []);
 
-  // Lock document scroll while open. Web: freeze body in place (stops window scrollbar).
-  // Embed WebView: keep existing scroll-lock helpers (avoid body position:fixed quirks).
+  // Lock document scroll while open.
+  // Avoid `position: fixed` on body: it becomes a containing block in some browsers and breaks
+  // viewport-centered `fixed` children (login panel drifts low). Use overflow + capture listeners.
   useEffect(() => {
     if (!isOpen) return;
 
     const html = document.documentElement;
     const body = document.body;
     const isEmbed = body.classList.contains('embed');
-    const scrollY = window.scrollY;
 
     if (isEmbed) {
       lockBodyScroll();
@@ -84,21 +84,23 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     html.style.setProperty('overflow', 'hidden', 'important');
     body.style.setProperty('overflow', 'hidden', 'important');
-    body.style.setProperty('position', 'fixed', 'important');
-    body.style.setProperty('top', `-${scrollY}px`, 'important');
-    body.style.setProperty('left', '0', 'important');
-    body.style.setProperty('right', '0', 'important');
-    body.style.setProperty('width', '100%', 'important');
+
+    const panelSelector = '#login-modal-panel';
+
+    const blockScrollOutsidePanel = (e: Event) => {
+      const t = (e as any)?.target;
+      if (t instanceof Element && t.closest(panelSelector)) return;
+      e.preventDefault();
+    };
+
+    document.addEventListener('wheel', blockScrollOutsidePanel, { passive: false, capture: true });
+    document.addEventListener('touchmove', blockScrollOutsidePanel, { passive: false, capture: true });
 
     return () => {
-      body.style.removeProperty('position');
-      body.style.removeProperty('top');
-      body.style.removeProperty('left');
-      body.style.removeProperty('right');
-      body.style.removeProperty('width');
+      document.removeEventListener('wheel', blockScrollOutsidePanel, true);
+      document.removeEventListener('touchmove', blockScrollOutsidePanel, true);
       html.style.removeProperty('overflow');
       body.style.removeProperty('overflow');
-      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
@@ -325,25 +327,23 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   return createPortal(
     <>
       <div
-        className="fixed inset-0 z-[1000] flex min-h-0 items-center justify-center bg-black/50 p-4"
+        className="fixed inset-0 z-[1000] bg-black/50"
         style={{ overscrollBehavior: 'none', touchAction: 'none' }}
-        onWheel={(e) => {
-          if (e.target === e.currentTarget) e.preventDefault();
-        }}
-        onTouchMove={(e) => {
-          if (e.target === e.currentTarget) e.preventDefault();
-        }}
+        aria-hidden
         onClick={handleBackdropClick}
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) {
             mousedownStartedInsideRef.current = false;
           }
         }}
-      >
-      <div 
+      />
+      <div
+        id="login-modal-panel"
         ref={modalContentRef}
         data-scroll-lock-root
-        className="box-border max-h-[min(90dvh,90vh)] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 sm:p-6 mx-4"
+        role="dialog"
+        aria-modal="true"
+        className="fixed left-1/2 top-1/2 z-[1001] box-border max-h-[min(90dvh,90vh)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg bg-white p-4 sm:p-6 shadow-xl"
         style={{ touchAction: 'auto', overscrollBehavior: 'contain' }}
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}
@@ -668,7 +668,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             }
           </button>
         </div>
-      </div>
       </div>
       {showTwoFactor && twoFactorData && (
         <TwoFactorModal
