@@ -311,14 +311,24 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   if (!isOpen) return null;
 
+  // The site uses a fixed header (~4rem) and body padding-top.
+  // We want the modal to feel centered in the *visible* area, but slightly higher than true center.
+  const topOffset = hasFixedHeaderOffset ? '3rem' : '0px';
+  const height = hasFixedHeaderOffset ? 'calc(100dvh - 3rem)' : '100dvh';
+
   return (
     <div 
       className="fixed left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4"
       style={
-        hasFixedHeaderOffset
-          ? { top: '4rem', height: 'calc(100dvh - 4rem)' }
-          : { top: 0, height: '100dvh' }
+        { top: topOffset, height, overscrollBehavior: 'none', touchAction: 'none' }
       }
+      onWheel={(e) => {
+        // Extra safety: if any scroll escapes lockBodyScroll, block it at the overlay.
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
+      onTouchMove={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
         // If mousedown is on backdrop, mark that it didn't start inside
@@ -329,7 +339,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     >
       <div 
         ref={modalContentRef}
+        data-scroll-lock-root
         className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
+        style={hasFixedHeaderOffset ? { transform: 'translateY(-0.75rem)', touchAction: 'auto', overscrollBehavior: 'contain' } : { touchAction: 'auto', overscrollBehavior: 'contain' }}
         onMouseDown={handleModalContentMouseDown}
         onClick={handleModalContentClick}
       >
