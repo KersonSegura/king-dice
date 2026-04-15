@@ -17,6 +17,7 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { login } = useAuth();
   const tAuth = useTranslations('auth');
+  const [hasFixedHeaderOffset, setHasFixedHeaderOffset] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -61,6 +62,18 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         }));
         setRememberPassword(true);
       }
+    }
+  }, []);
+
+  // Center relative to visible content area (under fixed header) on web.
+  // In embed (mobile WebView) there is no fixed header, so don't offset.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const isEmbed = document.body.classList.contains('embed');
+      setHasFixedHeaderOffset(!isEmbed);
+    } catch {
+      setHasFixedHeaderOffset(true);
     }
   }, []);
 
@@ -300,7 +313,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4"
+      className="fixed left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4"
+      style={
+        hasFixedHeaderOffset
+          ? { top: '4rem', height: 'calc(100dvh - 4rem)' }
+          : { top: 0, height: '100dvh' }
+      }
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
         // If mousedown is on backdrop, mark that it didn't start inside
