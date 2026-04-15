@@ -8,6 +8,7 @@ const nextConfig = {
   async redirects() {
     return [
       { source: '/dice-roller', destination: '/virtual-tools', permanent: true },
+      { source: '/login', destination: '/sign-in', permanent: true },
     ];
   },
   typescript: {

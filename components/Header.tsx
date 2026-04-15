@@ -11,13 +11,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getUserPostCount } from '@/lib/user-posts';
 import { lockBodyScroll, unlockBodyScroll } from '@/lib/scrollLock';
 import { closeChatOnNavigation, closeMenusOnChatOpen } from '@/lib/closeChat';
-import LoginModal from './LoginModal';
 import FeaturesDropdown from './FeaturesDropdown';
 import BoardgamesDropdown from './BoardgamesDropdown';
 import SearchBar from './SearchBar';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useLoginModal } from '@/hooks/useLoginModal';
-
 export default function Header() {
   const t = useTranslations('header');
   const tCommon = useTranslations('common');
@@ -25,7 +22,6 @@ export default function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useLoginModal();
   const [userStats, setUserStats] = useState({ level: 1, posts: 0 });
   const { user, isAuthenticated, logout, isLoading } = useAuth();
   const { items: notifItems, unread: notifUnread, markAllRead, markOneRead } = useNotifications();
@@ -777,8 +773,8 @@ export default function Header() {
                   <span className="text-gray-600">{tCommon('loading')}...</span>
                 </div>
               ) : (
-                <button
-                  onClick={() => setShowLoginModal(true)}
+                <Link
+                  href="/sign-in"
                   className="flex items-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded-lg transition-colors font-medium"
                 >
                   <Image
@@ -789,7 +785,7 @@ export default function Header() {
                     className="w-4 h-4"
                   />
                   <span>{tAuth('signIn')}</span>
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -1097,8 +1093,6 @@ export default function Header() {
         )}
       </div>
 
-      {/* Login Modal */}
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </header>
   );
 } 
