@@ -300,7 +300,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4"
       onClick={handleBackdropClick}
       onMouseDown={(e) => {
         // If mousedown is on backdrop, mark that it didn't start inside
